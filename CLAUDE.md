@@ -137,6 +137,44 @@ def inefficient_attention(q, k, v):
 - Profile memory usage with `torch.cuda.memory_allocated()`
 - Compare outputs across optimization levels for correctness
 
+## Semantic Code Understanding System
+
+### New Feature: AI-Powered Code Analysis
+The project now includes a sophisticated semantic code understanding system that can analyze ML/AI code and extract high-level concepts, optimization opportunities, and educational insights.
+
+#### Key Components
+- **Semantic Agent**: `src/kernel_pytorch/semantic_agent/architecture.py` - Core analysis engine
+- **LLM Understanding**: `src/kernel_pytorch/semantic_agent/llm_understanding.py` - Advanced concept extraction
+- **Concept Mapping**: `src/kernel_pytorch/semantic_agent/concept_mapping.py` - Code-to-concept mapping system
+
+#### Usage Examples
+```bash
+# Run semantic analysis demo
+python demo_semantic_agent.py
+
+# Test semantic agent on kernel optimization examples
+PYTHONPATH=src python3 test_semantic_agent_on_kernels.py
+
+# Interactive semantic code understanding
+PYTHONPATH=src python3 interactive_semantic_demo.py
+```
+
+#### Interactive Demo Features
+The `interactive_semantic_demo.py` provides an interactive interface with commands:
+- `analyze <example>` - Analyze pre-loaded code examples
+- `custom` - Analyze your own code input
+- `explain <concept>` - Get concept explanations
+- `compare <ex1> <ex2>` - Compare implementations
+- `mapping <example>` - Show concept mappings
+- `optimize <example>` - Get optimization suggestions
+
+#### Semantic Analysis Capabilities
+- **Concept Detection**: Identifies transformers, attention, convolution, optimizations
+- **Pattern Recognition**: Finds kernel fusion, mixed precision, memory optimization
+- **Educational Insights**: Provides learning paths and explanations
+- **Optimization Suggestions**: Recommends improvements based on detected patterns
+- **Cross-Framework Understanding**: Works with PyTorch, TensorFlow patterns
+
 ## Project Goals
 
 This repository is designed to teach:
@@ -145,3 +183,4 @@ This repository is designed to teach:
 3. Progressive optimization from simple to advanced techniques
 4. Memory access patterns and performance impact
 5. Designing components that are both semantically clear and computationally efficient
+6. **NEW**: How AI can semantically understand and analyze ML/AI code for education and optimization
