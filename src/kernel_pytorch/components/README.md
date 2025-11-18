@@ -203,11 +203,11 @@ results = compare_optimization_levels(implementations, input_shape=(4, 128, 512)
 ## 🔧 **Development Guidelines**
 
 ### **Adding New Components**
-1. **Implement semantic behavior first** - ensure correctness
+1. **Implement computational behavior first** - ensure correctness
 2. **Add Level 1 optimization** - use PyTorch built-ins effectively
 3. **Identify fusion opportunities** - plan Level 2 optimizations
 4. **Consider hardware constraints** - plan advanced optimizations
-5. **Add comprehensive tests** - verify semantic preservation
+5. **Add comprehensive tests** - verify computational preservation
 
 ### **Performance Testing**
 ```python
@@ -227,9 +227,9 @@ class NewOptimizedComponent(nn.Module):
         pass
 ```
 
-### **Semantic Verification**
+### **Computational Verification**
 ```python
-def test_semantic_preservation():
+def test_computational_preservation():
     """Ensure all optimization levels produce identical outputs"""
     basic = BasicOptimizedAttention()
     jit = JITOptimizedAttention()
@@ -262,7 +262,7 @@ def test_semantic_preservation():
 
 ## 🎯 **Next Steps**
 
-1. **Explore semantic preservation** - Run identical inputs through all levels
+1. **Explore computational preservation** - Run identical inputs through all levels
 2. **Profile performance characteristics** - Understand optimization impact
 3. **Study implementation details** - Learn from each optimization strategy
 4. **Implement your own components** - Apply learned patterns to new architectures

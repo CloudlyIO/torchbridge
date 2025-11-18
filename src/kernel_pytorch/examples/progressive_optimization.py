@@ -386,7 +386,7 @@ def run_progressive_optimization_demo():
     demo.create_models(dim, num_heads, vocab_size)
     print(f"Created {len(demo.models)} model variants")
 
-    # Compare outputs for semantic equivalence
+    # Compare outputs for computational equivalence
     demo.compare_outputs(input_ids)
 
     # Benchmark performance

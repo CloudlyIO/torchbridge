@@ -335,7 +335,7 @@ normalized = norm(input_tensor)
 This is an educational project designed to demonstrate kernel optimization concepts. Feel free to:
 
 - Add new optimization examples
-- Implement additional semantic ML models
+- Implement additional neural network optimization examples
 - Improve profiling and benchmarking tools
 - Enhance documentation and tutorials
 

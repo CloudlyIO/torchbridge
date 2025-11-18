@@ -385,7 +385,7 @@ class FullyJITTransformerBlock(nn.Module):
 class JITOptimizedTransformer(nn.Module):
     """
     Complete transformer using JIT-optimized components.
-    Demonstrates progressive optimization while maintaining semantic clarity.
+    Demonstrates progressive optimization while maintaining computational clarity.
     """
     def __init__(
         self,

@@ -2,7 +2,7 @@
 Custom CUDA Kernels for Optimized Operations
 
 These kernels demonstrate maximum control over GPU execution,
-showing how to implement fused operations for specific ML semantics.
+showing how to implement fused operations for specific neural network patterns.
 */
 
 #include <torch/extension.h>

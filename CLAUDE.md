@@ -46,8 +46,8 @@ python -c "import kernel_pytorch; print('✓ Installation successful')"
 # Run progressive optimization demo
 python src/kernel_pytorch/examples/progressive_optimization.py
 
-# Run semantic ML models demo
-python src/kernel_pytorch/examples/semantic_ml_models.py
+# Run progressive optimization demo
+python demo_progressive_optimization.py
 
 # Quick profiling test
 python src/kernel_pytorch/utils/profiling.py
@@ -105,7 +105,7 @@ def inefficient_attention(q, k, v):
 
 ## Key Educational Concepts
 
-### ML Semantics Preserved Across All Levels
+### Computational Correctness Preserved Across All Levels
 - **Autoregressive Generation**: Causal attention patterns
 - **Spatial Reasoning**: Vision transformer patch attention
 - **Message Passing**: Graph neural network aggregation
@@ -137,50 +137,44 @@ def inefficient_attention(q, k, v):
 - Profile memory usage with `torch.cuda.memory_allocated()`
 - Compare outputs across optimization levels for correctness
 
-## Semantic Code Understanding System
+## AI-Powered Optimization Assistant
 
-### New Feature: AI-Powered Code Analysis
-The project now includes a sophisticated semantic code understanding system that can analyze ML/AI code and extract high-level concepts, optimization opportunities, and educational insights.
+### New Feature: Intelligent GPU Optimization
+The project now includes an advanced compiler optimization assistant that can automatically analyze PyTorch models and provide intelligent optimization recommendations.
 
 #### Key Components
-- **Semantic Agent**: `src/kernel_pytorch/semantic_agent/architecture.py` - Core analysis engine
-- **LLM Understanding**: `src/kernel_pytorch/semantic_agent/llm_understanding.py` - Advanced concept extraction
-- **Concept Mapping**: `src/kernel_pytorch/semantic_agent/concept_mapping.py` - Code-to-concept mapping system
+- **Optimization Assistant**: `src/kernel_pytorch/utils/compiler_optimization_assistant.py` - AI-powered optimization analysis
+- **Validation Framework**: `src/kernel_pytorch/utils/validation_framework.py` - Automated correctness testing
+- **GPU Integration**: `src/kernel_pytorch/gpu_integration/` - Advanced GPU optimization tools
 
 #### Usage Examples
 ```bash
-# Run semantic analysis demo
-python demo_semantic_agent.py
+# Run optimization assistant demo
+python demo_compiler_optimization.py
 
-# Test semantic agent on kernel optimization examples
-PYTHONPATH=src python3 test_semantic_agent_on_kernels.py
-
-# Interactive semantic code understanding
-PYTHONPATH=src python3 interactive_semantic_demo.py
+# Interactive optimization analysis
+PYTHONPATH=src python3 -c "
+from kernel_pytorch.utils.compiler_optimization_assistant import CompilerOptimizationAssistant
+import torch.nn as nn
+assistant = CompilerOptimizationAssistant()
+model = nn.Sequential(nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
+result = assistant.optimize_model(model, interactive=True)
+"
 ```
 
-#### Interactive Demo Features
-The `interactive_semantic_demo.py` provides an interactive interface with commands:
-- `analyze <example>` - Analyze pre-loaded code examples
-- `custom` - Analyze your own code input
-- `explain <concept>` - Get concept explanations
-- `compare <ex1> <ex2>` - Compare implementations
-- `mapping <example>` - Show concept mappings
-- `optimize <example>` - Get optimization suggestions
-
-#### Semantic Analysis Capabilities
-- **Concept Detection**: Identifies transformers, attention, convolution, optimizations
-- **Pattern Recognition**: Finds kernel fusion, mixed precision, memory optimization
-- **Educational Insights**: Provides learning paths and explanations
-- **Optimization Suggestions**: Recommends improvements based on detected patterns
-- **Cross-Framework Understanding**: Works with PyTorch, TensorFlow patterns
+#### Optimization Analysis Capabilities
+- **Automatic Model Analysis**: Identifies optimization opportunities in PyTorch models
+- **Intelligent Recommendations**: Provides prioritized optimization suggestions with implementation guidance
+- **Performance Prediction**: Estimates speedup potential for different optimizations
+- **Educational Tutorials**: Explains optimization techniques with step-by-step guidance
+- **Validation Integration**: Automatically tests optimization correctness
 
 ## Project Goals
 
 This repository is designed to teach:
 1. How PyTorch operations map to GPU computation graphs
-2. The relationship between ML semantics and kernel efficiency
+2. The relationship between neural network computation and kernel efficiency
 3. Progressive optimization from simple to advanced techniques
 4. Memory access patterns and performance impact
-5. Designing components that are both semantically clear and computationally efficient
-6. **NEW**: How AI can semantically understand and analyze ML/AI code for education and optimization
+5. Designing components that are both computationally correct and efficient
+6. **NEW**: How AI can automatically analyze and optimize ML/AI code for maximum performance

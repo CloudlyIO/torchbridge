@@ -571,7 +571,7 @@ class TritonOptimizedTransformerBlock(torch.nn.Module):
     """
     Complete transformer block using Triton-optimized components.
     Demonstrates how to combine custom kernels while maintaining
-    the semantic structure of transformer architecture.
+    the computational structure of transformer architecture.
     """
     def __init__(self, dim: int, num_heads: int, mlp_ratio: int = 4):
         super().__init__()

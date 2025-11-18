@@ -2,8 +2,8 @@
 """
 Standalone Progressive Optimization Demo
 
-This script demonstrates the same ML concepts implemented with different
-levels of kernel optimization, showing semantic equivalence while
+This script demonstrates the same neural network computations implemented with different
+levels of kernel optimization, showing computational equivalence while
 highlighting performance improvements.
 """
 
@@ -172,8 +172,8 @@ def main():
         except Exception as e:
             print(f"   ❌ Failed: {e}")
 
-    # Verify semantic equivalence
-    print(f"\n🔍 Semantic Equivalence Check:")
+    # Verify computational equivalence
+    print(f"\n🔍 Computational Equivalence Check:")
     print("-" * 40)
 
     if len(results) >= 2:
@@ -217,12 +217,12 @@ def main():
     print("-" * 40)
     print("   1. ✅ All optimization levels produce identical results")
     print("   2. 🚀 Progressive optimization improves performance")
-    print("   3. 🧠 Kernel patterns preserve ML semantics")
+    print("   3. 🧠 Kernel patterns preserve computational correctness")
     print("   4. 💾 Memory access patterns matter significantly")
     print("   5. 🔧 Understanding GPU architecture enables better design")
 
     print(f"\n🎯 Next Steps:")
-    print("   • Explore semantic_ml_models.py for complete model examples")
+    print("   • Explore examples/ directory for complete optimization examples")
     print("   • Use profiling.py tools for detailed analysis")
     print("   • Try different input sizes to see scaling behavior")
     print("   • Experiment with custom kernel implementations")

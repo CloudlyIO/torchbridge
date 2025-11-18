@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kernel-optimized-pytorch"
 version = "0.1.0"
-description = "Kernel-optimized PyTorch components for understanding ML semantics at the GPU level"
+description = "Kernel-optimized PyTorch components for understanding GPU optimization at the hardware level"
 authors = [{name = "Shah Rahman", email = "shah@example.com"}]
 readme = "README.md"
 license = {text = "MIT"}
