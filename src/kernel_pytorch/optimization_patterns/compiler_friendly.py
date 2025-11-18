@@ -32,6 +32,7 @@ from dataclasses import dataclass
 from enum import Enum
 import warnings
 import inspect
+import math
 
 
 class CompilationCompatibility(Enum):
