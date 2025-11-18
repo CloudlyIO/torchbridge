@@ -63,7 +63,7 @@ optimized_output = model(input_tensor)  # Runs 2-4x faster
 
 ## 🏗️ Progressive Optimization Levels
 
-The project implements the same ML semantics across **5 progressive optimization levels**:
+The project demonstrates GPU optimization across **5 progressive optimization levels**:
 
 ### Level 1: PyTorch Native Optimizations
 - Uses built-in operations that automatically map to optimized kernels (cuDNN, cuBLAS)
@@ -90,30 +90,44 @@ The project implements the same ML semantics across **5 progressive optimization
 - Demonstrates warp-level operations and shared memory usage
 - **Files**: `src/kernel_pytorch/cuda_kernels/`
 
-## 🧠 Semantic ML Models Included
+## 🔧 GPU Optimization Framework
 
-### 1. Language Model (Autoregressive Generation)
+### 1. Optimization Patterns Library
 ```python
-from kernel_pytorch.examples.semantic_ml_models import KernelOptimizedLanguageModel
+from kernel_pytorch.optimization_patterns import (
+    identify_fusion_opportunities,
+    analyze_memory_access_patterns,
+    check_compilation_compatibility
+)
 
-model = KernelOptimizedLanguageModel(vocab_size=10000, dim=512)
-# Demonstrates: Causal attention, autoregressive generation, token prediction
+# Analyze your model for optimization opportunities
+model = YourTransformerModel()
+sample_input = torch.randn(4, 128, 512)
+
+fusion_opportunities = identify_fusion_opportunities(model, sample_input)
+memory_analysis = analyze_memory_access_patterns(model, sample_input)
+compatibility = check_compilation_compatibility(model, sample_input)
 ```
 
-### 2. Vision Transformer (Spatial Attention)
+### 2. Custom Kernel Integration
 ```python
-from kernel_pytorch.examples.semantic_ml_models import KernelOptimizedVisionTransformer
+from kernel_pytorch.gpu_integration import (
+    CustomKernelWrapper,
+    TritonKernelOptimizer
+)
 
-model = KernelOptimizedVisionTransformer(image_size=224, num_classes=1000)
-# Demonstrates: Patch embedding, spatial positional encoding, global attention
+# Integrate custom kernels for maximum performance
+optimizer = TritonKernelOptimizer()
+custom_kernel = optimizer.optimize_fused_linear_gelu(input_shape, weight_shape, device)
 ```
 
-### 3. Graph Neural Network (Message Passing)
+### 3. Advanced Profiling Tools
 ```python
-from kernel_pytorch.examples.semantic_ml_models import KernelOptimizedGraphNeuralNetwork
+from kernel_pytorch.optimization_patterns import ComputeIntensityProfiler
 
-model = KernelOptimizedGraphNeuralNetwork(node_features=64, num_classes=10)
-# Demonstrates: Message passing, graph pooling, relational reasoning
+# Analyze compute bottlenecks in your models
+profiler = ComputeIntensityProfiler()
+intensity_analysis = profiler.profile_model(model, [sample_input])
 ```
 
 ## 🚀 Quick Start
@@ -202,12 +216,12 @@ print(report)
 4. **Shared Memory Usage**: Exploiting GPU memory hierarchy
 5. **Warp-Level Operations**: Utilizing GPU hardware primitives
 
-### ML Semantic Preservation
+### GPU Performance Optimization
 
-- **Autoregressive Modeling**: Causal attention and sequential generation
-- **Spatial Reasoning**: Vision transformers with patch-based attention
-- **Relational Learning**: Graph neural networks with message passing
-- **Representation Learning**: Embedding spaces and feature hierarchies
+- **Memory Bandwidth Optimization**: Coalesced memory access and efficient data movement
+- **Compute Utilization**: Maximizing GPU core usage and arithmetic intensity
+- **Kernel Fusion**: Combining operations to reduce memory traffic
+- **Hardware Acceleration**: Leveraging Tensor Cores and specialized GPU features
 
 ### Kernel Optimization Patterns
 
@@ -279,9 +293,8 @@ src/kernel_pytorch/
 │   └── cuda_interface.cpp    # Python binding interface
 ├── triton_kernels/      # Level 4: Triton kernel implementations
 │   └── fused_ops.py          # Python-based GPU kernels
-├── examples/            # Complete model demonstrations
-│   ├── progressive_optimization.py  # Optimization level comparison
-│   └── semantic_ml_models.py       # Educational ML model examples
+├── examples/            # GPU optimization demonstrations
+│   └── progressive_optimization.py  # Optimization level comparison
 └── utils/               # Profiling and benchmarking tools
     └── profiling.py          # Performance analysis utilities
 ```
@@ -291,10 +304,10 @@ src/kernel_pytorch/
 After working with this project, you'll understand:
 
 1. **How PyTorch operations map to GPU computation graphs**
-2. **The relationship between ML semantics and kernel efficiency**
+2. **GPU kernel optimization principles and best practices**
 3. **Progressive optimization strategies from simple to advanced**
 4. **Memory access patterns and their performance impact**
-5. **How to design ML components that are both semantically clear and computationally efficient**
+5. **How to design PyTorch components that compile efficiently and run fast**
 
 ## 🔬 Advanced Examples
 
@@ -347,4 +360,4 @@ MIT License - Feel free to use this code for educational and research purposes.
 
 ---
 
-**🎯 Remember**: The goal is to understand how ML semantics can be preserved while achieving optimal kernel efficiency. Each optimization level maintains the same semantic behavior while progressively improving performance through better alignment with GPU computation patterns.
+**🎯 Remember**: The goal is to understand how to achieve optimal GPU performance through compiler optimization. Each optimization level maintains the same computational behavior while progressively improving performance through better alignment with GPU computation patterns.

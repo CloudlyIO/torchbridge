@@ -1,6 +1,6 @@
 # Learning Guides and Tutorials
 
-Comprehensive educational pathways for mastering ML kernel optimization, semantic code understanding, and GPU programming concepts through hands-on learning.
+Comprehensive educational pathways for mastering ML kernel optimization, GPU performance analysis, and GPU programming concepts through hands-on learning.
 
 ## 🎓 **Learning Philosophy**
 
@@ -26,11 +26,11 @@ Perfect for getting familiar with the repository and core concepts.
 - Batch processing techniques
 - Performance measurement basics
 
-#### [**Tutorial 3: Semantic Code Understanding**](03_semantic_agent_intro.md)
-- Using the interactive semantic demo
-- Analyzing your own ML code
-- Understanding concept mapping
-- Getting optimization suggestions
+#### [**Tutorial 3: Advanced Compiler Optimization**](03_compiler_optimization.md)
+- PyTorch 2.0 torch.compile fundamentals
+- Optimization pattern identification
+- Performance measurement and validation
+- Production deployment strategies
 
 **Expected Outcome**: Basic familiarity with optimization concepts and ability to use repository tools.
 
@@ -67,28 +67,28 @@ Comprehensive understanding of optimization techniques across all levels.
 
 ---
 
-### **🧠 Semantic Understanding Path** (1-2 weeks)
-Mastering AI-powered code analysis and understanding.
+### **🧠 GPU Architecture Understanding Path** (1-2 weeks)
+Mastering GPU hardware and optimization principles.
 
-#### [**Tutorial 8: Semantic Agent Architecture**](08_semantic_agent_deep_dive.md)
-- Understanding ML concept hierarchies
-- Code pattern recognition
-- Building custom semantic patterns
-- Integration with optimization workflows
+#### [**Tutorial 8: GPU Memory Hierarchy**](08_gpu_memory_optimization.md)
+- GPU memory types and characteristics
+- Memory access pattern optimization
+- Cache-friendly algorithm design
+- Memory bandwidth measurement
 
-#### [**Tutorial 9: LLM-Style Code Analysis**](09_llm_code_analysis.md)
-- Deep code understanding techniques
-- Educational recommendation generation
-- Research opportunity identification
-- Cross-framework pattern recognition
+#### [**Tutorial 9: Kernel Fusion Strategies**](09_kernel_fusion_strategies.md)
+- Operation fusion identification
+- Fusion pattern implementation
+- Performance impact measurement
+- Compiler-friendly fusion design
 
-#### [**Tutorial 10: Code-to-Concept Mapping**](10_concept_mapping_tutorial.md)
-- Bidirectional concept mapping
-- Evidence extraction and confidence scoring
-- Optimization opportunity detection
-- Learning path generation
+#### [**Tutorial 10: Multi-GPU Optimization**](10_multi_gpu_optimization.md)
+- Data parallelism strategies
+- Model parallelism techniques
+- Communication optimization
+- Scaling efficiency analysis
 
-**Expected Outcome**: Ability to analyze and understand complex ML codebases semantically.
+**Expected Outcome**: Deep understanding of GPU hardware and ability to optimize for specific architectures.
 
 ---
 
@@ -129,8 +129,8 @@ Complete projects that integrate multiple concepts and techniques.
 #### [**Project 1: Custom Transformer Optimization**](project_01_transformer_optimization.md)
 Build a fully optimized transformer with all 5 optimization levels.
 
-#### [**Project 2: Semantic Analysis Tool Development**](project_02_semantic_tool.md)
-Create your own semantic code understanding tool for specific ML domains.
+#### [**Project 2: Custom Kernel Library Development**](project_02_custom_kernels.md)
+Build a custom GPU kernel library with automatic optimization selection.
 
 #### [**Project 3: Multi-Platform Kernel Library**](project_03_multiplatform_library.md)
 Develop a cross-platform GPU kernel library with automatic optimization selection.
@@ -159,7 +159,7 @@ Focus: Understanding research concepts and implementing novel techniques.
 ### **For Educators** 👩‍🏫
 Focus: Understanding pedagogy and creating educational content.
 
-**Recommended Path**: Quick Start → Semantic Understanding → Selected Advanced
+**Recommended Path**: Quick Start → GPU Architecture Understanding → Selected Advanced
 **Key Tutorials**: 1-3, 8-10, plus tutorial creation guides
 **Timeline**: 3-4 weeks
 

@@ -5,8 +5,8 @@ This document outlines cutting-edge research directions and unsolved problems in
 ## 🎯 **Vision Statement**
 
 Transform this repository into the **definitive educational resource** for understanding the intersection of:
-- **Machine Learning Semantics** and **GPU Hardware Optimization**
-- **AI-Driven Code Understanding** and **Automated Kernel Generation**
+- **GPU Hardware Optimization** and **Compiler Technology**
+- **AI-Driven Performance Analysis** and **Automated Kernel Generation**
 - **Research Innovation** and **Educational Accessibility**
 
 ## 🔬 **Active Research Areas (2024-2025)**
@@ -22,23 +22,23 @@ Based on comprehensive analysis of cutting-edge developments, here are the key r
 
 #### **Research Opportunities in Our Repository**
 
-##### **Semantic Agent → Optimization Agent Pipeline**
+##### **Performance Analysis → Optimization Agent Pipeline**
 ```python
 # Future Integration: From Analysis to Optimization
 class OptimizationPipeline:
     def __init__(self):
-        self.semantic_agent = SemanticCodeAgent()           # Current: Analysis
+        self.profiler = ComputeIntensityProfiler()           # Current: Analysis
         self.optimization_agent = KernelOptimizationAgent()  # Future: Generation
         self.validation_agent = PerformanceValidationAgent() # Future: Testing
 
     def optimize_code(self, ml_code):
-        # Step 1: Understand semantic patterns
-        concepts = self.semantic_agent.analyze_code(ml_code)
+        # Step 1: Analyze performance characteristics
+        performance_profile = self.profiler.profile_model(ml_code)
 
         # Step 2: Generate optimized variants
         optimizations = self.optimization_agent.generate_variants(
             code=ml_code,
-            concepts=concepts,
+            bottlenecks=performance_profile['bottlenecks'],
             target_hardware="H100"
         )
 
@@ -48,14 +48,14 @@ class OptimizationPipeline:
 ```
 
 ##### **Research Implementation Strategy**
-1. **Phase 1**: Extend semantic agent to identify optimization opportunities
+1. **Phase 1**: Extend performance profiling to identify optimization opportunities
 2. **Phase 2**: Integrate with code generation models (CodeT5, StarCoder)
 3. **Phase 3**: Develop multi-agent coordination for complex optimizations
 4. **Phase 4**: Add hardware-specific optimization targeting
 
 #### **Specific Research Questions**
-- How can semantic understanding guide kernel optimization strategies?
-- What role do concept hierarchies play in optimization decision-making?
+- How can performance analysis guide automated kernel optimization strategies?
+- What role do compute intensity patterns play in optimization decision-making?
 - How do we ensure optimization correctness while maximizing performance?
 
 ### **2. Cross-Platform Hardware Abstraction** 🌐
@@ -80,8 +80,8 @@ class HardwareAgnosticOptimizer:
         }
 
     def optimize_for_platform(self, code, target_platform):
-        # Semantic analysis (platform-independent)
-        concepts = self.semantic_agent.analyze_code(code)
+        # Performance analysis (platform-independent)
+        profile = self.performance_profiler.analyze_code(code)
 
         # Platform-specific optimization
         adapter = self.platform_adapters[target_platform]
@@ -208,7 +208,7 @@ class QuantizationOptimizedComponents:
     def optimize_for_precision(self, model, target_precision, accuracy_threshold):
         optimizer = self.precision_levels[target_precision]
 
-        # Quantize while maintaining semantic correctness
+        # Quantize while maintaining computational correctness
         quantized_model = optimizer.quantize(model)
 
         # Validate accuracy preservation
@@ -329,7 +329,7 @@ class HardwareAwareTransformers:
 ### **Phase 1: Foundation Enhancement (Q1 2025)**
 
 #### **Immediate Priorities**
-1. **Extend Semantic Agent**
+1. **Extend Performance Profiler**
    - Add optimization opportunity detection
    - Implement cross-platform pattern recognition
    - Create energy consumption analysis capabilities
@@ -345,7 +345,7 @@ class HardwareAwareTransformers:
    - Add performance benchmarking guides
 
 #### **Deliverables**
-- Enhanced semantic agent with optimization detection
+- Enhanced performance profiler with optimization detection
 - Cross-platform kernel examples (CUDA + ROCm + Intel)
 - Comprehensive tutorial documentation
 - Research collaboration framework
@@ -461,7 +461,7 @@ class HardwareAwareTransformers:
 #### **Publication Topics**
 1. **Educational Framework Papers**
    - "Progressive Kernel Optimization: An Educational Framework"
-   - "Semantic Code Understanding for ML Optimization Education"
+   - "Performance Analysis Frameworks for ML Optimization Education"
 
 2. **Research Contribution Papers**
    - "LLM-Driven GPU Kernel Optimization: A Multi-Agent Approach"
