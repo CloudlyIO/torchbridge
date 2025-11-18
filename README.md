@@ -1,6 +1,6 @@
 # PyTorch GPU Compiler Optimization
 
-**Master building PyTorch neural network components that achieve maximum GPU performance through compiler optimization.**
+**Building PyTorch neural network components that achieve maximum GPU performance through compiler optimization.**
 
 This repository provides **production-ready optimized components** and **practical optimization techniques** for PyTorch neural network development, focusing on real-world GPU performance improvements through `torch.compile` and advanced compiler integration.
 

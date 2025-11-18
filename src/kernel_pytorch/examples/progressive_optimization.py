@@ -1,8 +1,8 @@
 """
 Progressive Optimization Examples
 
-This module demonstrates how the same ML concepts can be implemented
-with different levels of kernel optimization, showing the semantic
+This module demonstrates how the same neural network computations can be implemented
+with different levels of kernel optimization, showing the computational
 equivalence while highlighting performance improvements.
 """
 
@@ -45,7 +45,7 @@ except ImportError:
 class ProgressiveOptimizationDemo:
     """
     Demonstrates the same transformer model implemented with
-    different levels of optimization to show semantic equivalence
+    different levels of optimization to show computational equivalence
     and performance improvements.
     """
 
@@ -123,8 +123,8 @@ class ProgressiveOptimizationDemo:
             }
 
     def compare_outputs(self, input_ids: torch.Tensor, tolerance: float = 1e-5):
-        """Verify that all models produce semantically equivalent outputs"""
-        print("Comparing model outputs for semantic equivalence...")
+        """Verify that all models produce computationally equivalent outputs"""
+        print("Comparing model outputs for computational equivalence...")
         print("="*60)
 
         outputs = {}
@@ -400,9 +400,9 @@ def run_progressive_optimization_demo():
     demo.demonstrate_kernel_concepts()
 
     print("\nDemo complete! Key takeaways:")
-    print("1. All optimization levels produce semantically equivalent results")
+    print("1. All optimization levels produce computationally equivalent results")
     print("2. Progressive optimization improves performance while maintaining correctness")
-    print("3. Understanding kernel patterns helps design better ML models")
+    print("3. Understanding kernel patterns helps design better neural network models")
     print("4. Memory access patterns significantly impact performance")
 
 

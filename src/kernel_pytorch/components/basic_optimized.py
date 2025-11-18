@@ -312,7 +312,7 @@ class OptimizedTransformerBlock(nn.Module):
     Complete transformer block with kernel-optimized components.
 
     Demonstrates how to combine optimized components while
-    maintaining the semantic meaning of transformer architecture.
+    maintaining the computational correctness of transformer architecture.
     """
     def __init__(self, dim: int, num_heads: int, mlp_ratio: int = 4):
         super().__init__()
@@ -358,11 +358,11 @@ class PositionalEncoding(nn.Module):
         return x + self.pe[:, :seq_len]
 
 
-# Example usage demonstrating semantic ML concepts
+# Example usage demonstrating GPU optimization concepts
 class SimpleTransformer(nn.Module):
     """
     Complete transformer model showing how optimized components
-    maintain semantic meaning while improving kernel efficiency.
+    maintain computational correctness while improving kernel efficiency.
     """
     def __init__(
         self,

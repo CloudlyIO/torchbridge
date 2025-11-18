@@ -2,7 +2,7 @@
 Level 2: TorchScript JIT Optimized Components
 
 These components use TorchScript's JIT compilation to enable kernel fusion
-and graph-level optimizations while maintaining Python semantics.
+and graph-level optimizations while maintaining Python compatibility.
 """
 
 import torch

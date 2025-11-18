@@ -1,6 +1,6 @@
 # PyTorch Components - Progressive Optimization Guide
 
-This directory contains neural network components demonstrating **5 progressive optimization levels** that maintain identical ML semantics while achieving increasing performance through better alignment with GPU computation patterns.
+This directory contains neural network components demonstrating **5 progressive optimization levels** that maintain identical computational behavior while achieving increasing performance through better alignment with GPU computation patterns.
 
 ## 🎯 **Core Philosophy**
 
@@ -143,9 +143,9 @@ __global__ void flash_attention_kernel(
 - Complete hardware feature access
 - Platform-specific optimization opportunities
 
-## 🧠 **ML Semantic Preservation**
+## 🧠 **Computational Equivalence**
 
-All optimization levels implement identical ML semantics:
+All optimization levels implement identical computational behavior:
 
 ### **Transformer Components**
 - **Autoregressive Generation**: Causal attention for language modeling
@@ -269,4 +269,4 @@ def test_semantic_preservation():
 
 ---
 
-**Remember**: Each optimization level teaches fundamental concepts about the relationship between ML semantics and GPU computation. The goal is understanding how to design components that are both semantically clear and computationally efficient!
+**Remember**: Each optimization level teaches fundamental concepts about the relationship between neural network computation and GPU hardware. The goal is understanding how to design components that are both mathematically correct and computationally efficient!
