@@ -373,11 +373,11 @@ class TestUltraPrecision:
 
     def test_adaptive_precision_allocator(self, device):
         """Test adaptive precision allocator"""
-        allocator = AdaptivePrecisionAllocator()
-
-        # Create simple model
+        # Create simple model first
         model = nn.Linear(128, 64).to(device)
         sample_input = torch.randn(16, 128, device=device)
+
+        allocator = AdaptivePrecisionAllocator(model)
 
         # Optimize model precision
         optimization_results = allocator.optimize_model_precision(model, sample_input)
@@ -707,7 +707,7 @@ class TestIntegration:
         )
 
         # Apply quantization
-        quantizer = FP4Quantizer(device=device)
+        quantizer = FP4Quantizer()
 
         # Test combined forward pass
         x = torch.randn(2, 64, 256, device=device)

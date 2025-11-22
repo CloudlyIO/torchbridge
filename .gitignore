@@ -230,3 +230,14 @@ Thumbs.db
 
 # Build artifacts for custom CUDA extensions
 kernel_pytorch_cuda.cpython-*
+
+# Project-specific temporary files
+pipeline_report_*.json
+profile_results/
+benchmarks_output/
+test_results/temp/
+
+# Demo outputs and generated files
+demo_outputs/
+*.benchmark
+*.profiling

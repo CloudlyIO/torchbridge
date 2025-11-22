@@ -9,10 +9,10 @@ Orchestrates execution of all demos with multiple modes:
 - Validate: Comprehensive correctness testing
 
 Usage:
-    python demos/run_all_demos.py --quick
-    python demos/run_all_demos.py --full
-    python demos/run_all_demos.py --interactive
-    python demos/run_all_demos.py --validate
+    python3 demos/run_all_demos.py --quick
+    python3 demos/run_all_demos.py --full
+    python3 demos/run_all_demos.py --interactive
+    python3 demos/run_all_demos.py --validate
 """
 
 import sys

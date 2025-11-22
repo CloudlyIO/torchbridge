@@ -168,19 +168,18 @@ class FlashLightKernelCompiler:
     def _compile_causal_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile causal (autoregressive) attention kernel"""
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def causal_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized causal attention with fused operations"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
 
             # Scaled dot-product with causal masking
-            scale = 1.0 / (head_dim ** 0.5)
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * scale
 
             # Apply causal mask (fused with softmax for efficiency)
-            mask = torch.triu(torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool), diagonal=1)
+            mask = torch.triu(torch.ones(seq_len_actual, seq_len_actual, device=q.device, dtype=torch.bool), diagonal=1)
             scores = scores.masked_fill(mask, float('-inf'))
 
             # Softmax and attention computation
@@ -189,26 +188,37 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return causal_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(causal_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data to ensure it works
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            # Fallback to uncompiled version if compilation fails
+            warnings.warn("torch.compile failed for causal attention, using uncompiled version", UserWarning)
+            return causal_attention_kernel
 
     def _compile_sliding_window_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile sliding window attention kernel"""
         window_size = kwargs.get('window_size', 512)
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def sliding_window_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized sliding window attention"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
-            scale = 1.0 / (head_dim ** 0.5)
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * scale
 
             # Create sliding window mask
-            mask = torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool)
-            for i in range(seq_len):
+            mask = torch.ones(seq_len_actual, seq_len_actual, device=q.device, dtype=torch.bool)
+            for i in range(seq_len_actual):
                 start = max(0, i - window_size // 2)
-                end = min(seq_len, i + window_size // 2 + 1)
+                end = min(seq_len_actual, i + window_size // 2 + 1)
                 mask[i, start:end] = False
 
             scores = scores.masked_fill(mask, float('-inf'))
@@ -219,26 +229,37 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return sliding_window_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(sliding_window_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data to ensure it works
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            # Fallback to uncompiled version if compilation fails
+            warnings.warn("torch.compile failed for sliding window attention, using uncompiled version", UserWarning)
+            return sliding_window_attention_kernel
 
     def _compile_dilated_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile dilated attention kernel"""
         dilation_rate = kwargs.get('dilation_rate', 2)
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def dilated_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized dilated attention for long sequences"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
-            scale = 1.0 / (head_dim ** 0.5)
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * scale
 
             # Create dilated pattern mask
-            mask = torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool)
-            for i in range(seq_len):
+            mask = torch.ones(seq_len_actual, seq_len_actual, device=q.device, dtype=torch.bool)
+            for i in range(seq_len_actual):
                 # Allow attention to positions at regular intervals
-                for j in range(0, seq_len, dilation_rate):
+                for j in range(0, seq_len_actual, dilation_rate):
                     if abs(i - j) <= 1:  # Local connections
                         mask[i, j] = False
                     elif (j - i) % dilation_rate == 0 and j <= i:  # Dilated connections
@@ -252,34 +273,45 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return dilated_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(dilated_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            warnings.warn("torch.compile failed for dilated attention, using uncompiled version", UserWarning)
+            return dilated_attention_kernel
 
     def _compile_global_local_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile global-local attention kernel"""
         local_window = kwargs.get('local_window', 256)
         global_tokens = kwargs.get('global_tokens', 64)
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def global_local_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized global-local attention pattern"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
-            scale = 1.0 / (head_dim ** 0.5)
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * scale
 
             # Create global-local mask
-            mask = torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool)
+            mask = torch.ones(seq_len_actual, seq_len_actual, device=q.device, dtype=torch.bool)
+            global_tokens_actual = min(global_tokens, seq_len_actual)
 
-            for i in range(seq_len):
+            for i in range(seq_len_actual):
                 # Global tokens can attend to everything
-                if i < global_tokens:
+                if i < global_tokens_actual:
                     mask[i, :] = False
                 # Other tokens can attend to global tokens and local window
                 else:
-                    mask[i, :global_tokens] = False  # Attend to global tokens
-                    start = max(global_tokens, i - local_window // 2)
-                    end = min(seq_len, i + local_window // 2 + 1)
+                    mask[i, :global_tokens_actual] = False  # Attend to global tokens
+                    start = max(global_tokens_actual, i - local_window // 2)
+                    end = min(seq_len_actual, i + local_window // 2 + 1)
                     mask[i, start:end] = False  # Local attention window
 
             scores = scores.masked_fill(mask, float('-inf'))
@@ -290,33 +322,43 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return global_local_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(global_local_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            warnings.warn("torch.compile failed for global-local attention, using uncompiled version", UserWarning)
+            return global_local_attention_kernel
 
     def _compile_sparse_block_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile sparse block attention kernel"""
         block_size = kwargs.get('block_size', 64)
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def sparse_block_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized sparse block attention"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
-            scale = 1.0 / (head_dim ** 0.5)
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * scale
 
             # Create block-sparse mask
-            mask = torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool)
+            mask = torch.ones(seq_len_actual, seq_len_actual, device=q.device, dtype=torch.bool)
 
-            num_blocks = (seq_len + block_size - 1) // block_size
+            num_blocks = (seq_len_actual + block_size - 1) // block_size
             for block_i in range(num_blocks):
                 for block_j in range(num_blocks):
                     # Allow attention within same block and adjacent blocks
                     if abs(block_i - block_j) <= 1:
                         start_i = block_i * block_size
-                        end_i = min((block_i + 1) * block_size, seq_len)
+                        end_i = min((block_i + 1) * block_size, seq_len_actual)
                         start_j = block_j * block_size
-                        end_j = min((block_j + 1) * block_size, seq_len)
+                        end_j = min((block_j + 1) * block_size, seq_len_actual)
                         mask[start_i:end_i, start_j:end_j] = False
 
             scores = scores.masked_fill(mask, float('-inf'))
@@ -327,17 +369,27 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return sparse_block_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(sparse_block_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            warnings.warn("torch.compile failed for sparse block attention, using uncompiled version", UserWarning)
+            return sparse_block_attention_kernel
 
     def _compile_ring_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
         """Compile ring attention kernel for distributed sequences"""
         ring_size = kwargs.get('ring_size', 4096)
 
-        @torch.compile(fullgraph=True, dynamic=False)
         def ring_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
             """Optimized ring attention for very long sequences"""
-            batch_size, num_heads, seq_len, head_dim = q.shape
-            scale = 1.0 / (head_dim ** 0.5)
+            batch_size, num_heads, seq_len_actual, head_dim_actual = q.shape
+            scale = 1.0 / (head_dim_actual ** 0.5)
 
             # For demonstration, we implement a simplified ring pattern
             # In production, this would involve actual distributed computation
@@ -345,8 +397,8 @@ class FlashLightKernelCompiler:
             output = torch.zeros_like(q)
 
             # Process in ring-sized chunks
-            for start in range(0, seq_len, ring_size):
-                end = min(start + ring_size, seq_len)
+            for start in range(0, seq_len_actual, ring_size):
+                end = min(start + ring_size, seq_len_actual)
 
                 # Extract chunk
                 q_chunk = q[:, :, start:end, :]
@@ -362,7 +414,18 @@ class FlashLightKernelCompiler:
 
             return output
 
-        return ring_attention_kernel
+        # Try to compile with torch.compile, but fallback gracefully if it fails
+        try:
+            compiled_kernel = torch.compile(ring_attention_kernel, fullgraph=False, dynamic=True)
+            # Test compilation with dummy data
+            dummy_q = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_k = torch.randn(1, 1, min(64, seq_len), head_dim)
+            dummy_v = torch.randn(1, 1, min(64, seq_len), head_dim)
+            _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
+            return compiled_kernel
+        except Exception:
+            warnings.warn("torch.compile failed for ring attention, using uncompiled version", UserWarning)
+            return ring_attention_kernel
 
     def _generate_cache_key(
         self,

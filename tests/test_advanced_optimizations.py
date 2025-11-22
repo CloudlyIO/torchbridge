@@ -316,6 +316,9 @@ class TestMixtureOfExperts:
         loss = F.mse_loss(output, dummy_target)
 
         for aux_loss in aux_losses.values():
+            # Ensure aux_loss is a scalar
+            if aux_loss.dim() > 0:
+                aux_loss = aux_loss.mean()
             loss = loss + aux_loss
 
         # Should be able to backpropagate

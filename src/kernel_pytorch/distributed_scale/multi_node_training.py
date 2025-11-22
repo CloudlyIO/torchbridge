@@ -110,11 +110,11 @@ class AdvancedFSDPManager:
         self.cluster_config = cluster_config
         self.training_config = training_config or {}
 
-        # Setup logging first
-        self.logger = self._setup_logging()
-
-        # Initialize distributed environment
+        # Initialize distributed environment first to set rank
         self._init_distributed()
+
+        # Setup logging after rank is set
+        self.logger = self._setup_logging()
 
         # Setup advanced FSDP configuration
         self.fsdp_config = self._create_fsdp_config()
@@ -134,7 +134,6 @@ class AdvancedFSDPManager:
                 self.local_rank = 0
                 self.world_size = 1
                 self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-                self.logger.info("Running in single-process mode")
                 return
 
             if not dist.is_initialized():
@@ -162,7 +161,6 @@ class AdvancedFSDPManager:
                 self.device = torch.device("cpu")
 
         except Exception as e:
-            self.logger.warning(f"Failed to initialize distributed environment: {e}")
             # Fallback to single process
             self.rank = 0
             self.local_rank = 0

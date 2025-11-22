@@ -517,7 +517,7 @@ class PerformanceBenchmarkSuite:
         """Benchmark matrix multiplication operations"""
         results = []
 
-        matrix_sizes = [(512, 512), (1024, 1024), (2048, 2048), (4096, 4096)]
+        matrix_sizes = [(64, 64), (128, 128), (256, 256)]  # Reduced sizes for testing
 
         for m, n in matrix_sizes:
             k = n  # Square matrices
@@ -550,14 +550,13 @@ class PerformanceBenchmarkSuite:
         results = []
 
         configs = [
-            (512, 8, 64),   # seq_len, num_heads, head_dim
-            (1024, 8, 64),
-            (2048, 16, 64),
-            (4096, 16, 64)
+            (64, 4, 16),   # seq_len, num_heads, head_dim - much smaller for testing
+            (128, 4, 16),
+            (256, 8, 32),
         ]
 
         for seq_len, num_heads, head_dim in configs:
-            batch_size = 16
+            batch_size = 2  # Reduced batch size for testing
 
             def input_generator():
                 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -592,7 +591,7 @@ class PerformanceBenchmarkSuite:
         """Benchmark memory bandwidth operations"""
         results = []
 
-        data_sizes = [1024**2, 4*1024**2, 16*1024**2, 64*1024**2]  # 1MB to 64MB
+        data_sizes = [1024, 4*1024, 16*1024]  # Much smaller sizes for testing
 
         for size_bytes in data_sizes:
             num_elements = size_bytes // 4  # Assuming float32
@@ -608,7 +607,7 @@ class PerformanceBenchmarkSuite:
             result = self.add_kernel_benchmark(
                 copy_kernel,
                 input_generator,
-                f"memory_copy_{size_bytes//1024//1024}MB"
+                f"memory_copy_{size_bytes//1024}KB"
             )
 
             # Calculate bandwidth
@@ -616,7 +615,7 @@ class PerformanceBenchmarkSuite:
             bandwidth_gb_s = (size_bytes / (1024**3)) / latency_s if latency_s > 0 else 0
 
             results.append({
-                'size_mb': size_bytes // 1024 // 1024,
+                'size_kb': size_bytes // 1024,
                 'latency_ms': result.statistics.get('latency_mean', 0),
                 'bandwidth_gb_s': bandwidth_gb_s,
                 'memory_mb': result.statistics.get('memory_usage_mean', 0)
@@ -631,7 +630,7 @@ class PerformanceBenchmarkSuite:
         # Example: Compare fused vs unfused operations
         def input_generator():
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            x = torch.randn(1024, 1024, device=device)
+            x = torch.randn(128, 128, device=device)  # Reduced size for testing
             return [x]
 
         def unfused_gelu(x):

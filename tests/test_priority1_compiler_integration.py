@@ -43,8 +43,32 @@ class TestFlashLightCompiler:
 
     @pytest.fixture
     def attention_inputs(self):
-        """Create test inputs for attention operations"""
-        batch_size, num_heads, seq_len, head_dim = 2, 8, 512, 64
+        """Create test inputs for basic functionality testing"""
+        batch_size, num_heads, seq_len, head_dim = 1, 4, 128, 32  # Moderate size for functionality
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+        k = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+        v = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+
+        return q, k, v
+
+    @pytest.fixture
+    def realistic_attention_inputs(self):
+        """Create realistic-scale inputs for comprehensive testing"""
+        batch_size, num_heads, seq_len, head_dim = 2, 8, 512, 64  # Production-like scale
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+        k = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+        v = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
+
+        return q, k, v
+
+    @pytest.fixture
+    def large_scale_attention_inputs(self):
+        """Create large-scale inputs for stress/performance testing"""
+        batch_size, num_heads, seq_len, head_dim = 4, 16, 1024, 64  # Large scale
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
@@ -94,24 +118,106 @@ class TestFlashLightCompiler:
         assert output.shape == q.shape
         assert not torch.isnan(output).any()
 
-    def test_multiple_pattern_compilation(self, compiler, attention_inputs):
-        """Test compilation of multiple attention patterns"""
+    def test_basic_pattern_compilation(self, compiler, attention_inputs):
+        """Test basic pattern compilation with functional verification"""
         q, k, v = attention_inputs
+        seq_len, head_dim = q.shape[2], q.shape[3]
+
+        # Test core functionality with causal pattern only
+        kernel = compiler.compile_attention_kernel("causal", seq_len, head_dim)
+
+        # Verify compilation succeeded
+        assert kernel.kernel_fn is not None
+        assert kernel.pattern == AttentionPattern.CAUSAL
+
+        # Verify functionality with actual execution
+        output = kernel.kernel_fn(q, k, v)
+        assert output.shape == q.shape
+        assert not torch.isnan(output).any()
+
+        # Test caching
+        assert len(compiler.kernel_cache.cache) == 1
+
+    @pytest.mark.integration
+    def test_comprehensive_pattern_compilation(self, compiler, realistic_attention_inputs):
+        """Test all attention patterns with realistic data sizes"""
+        q, k, v = realistic_attention_inputs
         seq_len, head_dim = q.shape[2], q.shape[3]
 
         patterns = ["causal", "sliding_window", "dilated"]
         compiled_kernels = []
+        pattern_outputs = {}
 
         for pattern in patterns:
             kernel = compiler.compile_attention_kernel(pattern, seq_len, head_dim)
             compiled_kernels.append(kernel)
 
+            # Test functional correctness for each pattern
+            output = kernel.kernel_fn(q, k, v)
+            pattern_outputs[pattern] = output
+
+            # Verify output properties
+            assert output.shape == q.shape
+            assert not torch.isnan(output).any()
+            assert torch.isfinite(output).all()
+
         # Verify all patterns were compiled
         assert len(compiled_kernels) == len(patterns)
         assert all(kernel.kernel_fn is not None for kernel in compiled_kernels)
 
+        # Verify pattern-specific behavior differences
+        causal_out = pattern_outputs["causal"]
+        sliding_out = pattern_outputs["sliding_window"]
+        dilated_out = pattern_outputs["dilated"]
+
+        # Different patterns should produce different outputs (functionality verification)
+        assert not torch.allclose(causal_out, sliding_out, rtol=1e-3)
+        assert not torch.allclose(causal_out, dilated_out, rtol=1e-3)
+
         # Test that cache is working
         assert len(compiler.kernel_cache.cache) == len(patterns)
+
+    @pytest.mark.stress
+    def test_large_scale_pattern_compilation(self, compiler, large_scale_attention_inputs):
+        """Test pattern compilation with large-scale data for performance validation"""
+        q, k, v = large_scale_attention_inputs
+        seq_len, head_dim = q.shape[2], q.shape[3]
+
+        patterns = ["causal", "sliding_window", "dilated"]
+        compilation_times = {}
+        execution_times = {}
+
+        for pattern in patterns:
+            # Measure compilation time
+            start_time = time.time()
+            kernel = compiler.compile_attention_kernel(pattern, seq_len, head_dim)
+            compilation_time = time.time() - start_time
+            compilation_times[pattern] = compilation_time
+
+            # Measure execution time
+            start_time = time.time()
+            output = kernel.kernel_fn(q, k, v)
+            execution_time = time.time() - start_time
+            execution_times[pattern] = execution_time
+
+            # Verify output integrity with large data
+            assert output.shape == q.shape
+            assert not torch.isnan(output).any()
+            assert torch.isfinite(output).all()
+
+        # Performance assertions
+        total_compilation_time = sum(compilation_times.values())
+        total_execution_time = sum(execution_times.values())
+
+        print(f"\\nPerformance Results:")
+        print(f"Total compilation time: {total_compilation_time:.3f}s")
+        print(f"Total execution time: {total_execution_time:.3f}s")
+        print(f"Patterns tested: {patterns}")
+        print(f"Data scale: {q.shape}")
+
+        # Ensure performance is within reasonable bounds
+        assert total_compilation_time < 60.0, f"Compilation too slow: {total_compilation_time}s"
+        assert total_execution_time < 10.0, f"Execution too slow: {total_execution_time}s"
 
     def test_kernel_caching(self, compiler, attention_inputs):
         """Test kernel caching functionality"""

@@ -673,7 +673,7 @@ class TestFrameworkIntegration:
 
         # Verify complete workflow
         assert report['simulation']['baseline_cycles'] > 0
-        assert 'latency' in report['benchmarking']['performance_improvements']
+        assert MetricType.LATENCY in report['benchmarking']['performance_improvements']
         assert report['validation']['numerical_accuracy']
 
         print("✅ End-to-end optimization testing workflow completed successfully")

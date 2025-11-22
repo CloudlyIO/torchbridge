@@ -90,7 +90,7 @@ This repository has been transformed into a comprehensive educational platform f
 ## 🛠️ **Practical Implementation Guide**
 
 ### **Quick Start Workflow**
-1. **Run Demo**: `python demo_compiler_optimization.py`
+1. **Run Demo**: `python3 demos/02_compiler_optimizations/demo_compiler_optimization.py`
 2. **Study Basic Components**: Start with `basic_optimized.py`
 3. **Learn Profiling**: Use `utils/profiling.py` for measurements
 4. **Apply to Your Code**: Use patterns in your own PyTorch models
@@ -153,7 +153,7 @@ After completing this educational journey, you will:
 
 ## 🚀 **Next Steps**
 
-1. **Start Learning**: Begin with `python demo_compiler_optimization.py`
+1. **Start Learning**: Begin with `python3 demos/02_compiler_optimizations/demo_compiler_optimization.py`
 2. **Deep Dive**: Study each component level progressively
 3. **Apply Knowledge**: Use techniques in your own projects
 4. **Measure Impact**: Validate optimizations with profiling tools

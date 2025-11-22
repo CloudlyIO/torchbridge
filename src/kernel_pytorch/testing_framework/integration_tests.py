@@ -829,6 +829,23 @@ class IntegrationTestRunner:
 
         return recommendations
 
+    def _convert_enum_keys_to_strings(self, obj):
+        """Recursively convert enum keys to strings for JSON serialization"""
+        if isinstance(obj, dict):
+            new_dict = {}
+            for key, value in obj.items():
+                # Convert enum keys to their string value
+                if hasattr(key, 'value'):  # Check if it's an enum
+                    new_key = key.value
+                else:
+                    new_key = key
+                new_dict[new_key] = self._convert_enum_keys_to_strings(value)
+            return new_dict
+        elif isinstance(obj, list):
+            return [self._convert_enum_keys_to_strings(item) for item in obj]
+        else:
+            return obj
+
     async def _export_results(self, report: Dict[str, Any]):
         """Export test results to files"""
         results_dir = Path(self.config.results_directory)
@@ -836,10 +853,13 @@ class IntegrationTestRunner:
 
         timestamp = int(time.time())
 
+        # Convert enum keys to strings before JSON serialization
+        serializable_report = self._convert_enum_keys_to_strings(report)
+
         # Export main report
         report_file = results_dir / f"integration_test_report_{timestamp}.json"
         with open(report_file, 'w') as f:
-            json.dump(report, f, indent=2, default=str)
+            json.dump(serializable_report, f, indent=2, default=str)
 
         # Export simulation traces if enabled
         if self.config.save_simulation_traces and self.hardware_simulator:

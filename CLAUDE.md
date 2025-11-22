@@ -35,31 +35,31 @@ pip install -r requirements.txt
 pip install -e .
 
 # Build CUDA extensions manually
-python setup.py build_ext --inplace
+python3 setup.py build_ext --inplace
 ```
 
 ### Testing & Validation
 ```bash
 # Verify installation
-python -c "import kernel_pytorch; print('✓ Installation successful')"
+python3 -c "import kernel_pytorch; print('✓ Installation successful')"
 
 # Run progressive optimization demo
-python src/kernel_pytorch/examples/progressive_optimization.py
+python3 src/kernel_pytorch/examples/progressive_optimization.py
 
 # Run progressive optimization demo
-python demo_progressive_optimization.py
+python3 demo_progressive_optimization.py
 
 # Quick profiling test
-python src/kernel_pytorch/utils/profiling.py
+python3 src/kernel_pytorch/utils/profiling.py
 ```
 
 ### Benchmarking & Profiling
 ```bash
 # Compare optimization levels
-python -c "from kernel_pytorch.examples.progressive_optimization import run_progressive_optimization_demo; run_progressive_optimization_demo()"
+python3 -c "from kernel_pytorch.examples.progressive_optimization import run_progressive_optimization_demo; run_progressive_optimization_demo()"
 
 # Memory usage analysis
-python -c "from kernel_pytorch.utils.profiling import profile_model_inference; # [use with your model]"
+python3 -c "from kernel_pytorch.utils.profiling import profile_model_inference; # [use with your model]"
 ```
 
 ## Code Patterns & Best Practices
@@ -150,7 +150,7 @@ The project now includes an advanced compiler optimization assistant that can au
 #### Usage Examples
 ```bash
 # Run optimization assistant demo
-python demo_compiler_optimization.py
+python3 demos/02_compiler_optimizations/demo_compiler_optimization.py
 
 # Interactive optimization analysis
 PYTHONPATH=src python3 -c "

@@ -62,7 +62,7 @@ git clone https://github.com/shahrahman-fb/shahmod.git
 cd shahmod
 
 # Create virtual environment (recommended)
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install basic dependencies
@@ -107,7 +107,7 @@ print('✅ Compiler-optimized components loaded successfully')
 pip install triton
 
 # For custom CUDA kernels (requires CUDA toolkit)
-python setup.py build_ext --inplace
+python3 setup.py build_ext --inplace
 
 # Verify advanced features
 PYTHONPATH=src python3 -c "
@@ -324,7 +324,7 @@ Our repository demonstrates progressive optimization complexity:
 
 ```bash
 # Run the comprehensive demo
-python demo_compiler_optimization.py
+python3 demos/02_compiler_optimizations/demo_compiler_optimization.py
 ```
 
 This will show performance comparisons across optimization levels.
@@ -404,7 +404,7 @@ Before moving to the next tutorial, ensure you have:
 ## 🎯 **Next Steps**
 
 1. **Continue Learning**: [Tutorial 2: Basic PyTorch Optimization](02_pytorch_optimization_basics.md)
-2. **Explore Examples**: Run `python demo_progressive_optimization.py` for comprehensive examples
+2. **Explore Examples**: Run `python3 demos/run_all_demos.py --quick` for comprehensive examples
 3. **Practice**: Try analyzing your own PyTorch models with the optimization patterns framework
 4. **Experiment**: Apply `@torch.compile` to your models and measure the performance impact
 
