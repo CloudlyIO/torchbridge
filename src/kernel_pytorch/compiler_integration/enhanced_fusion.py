@@ -361,8 +361,8 @@ class FusionBoundaryOptimizer:
     def _is_vertically_fusable(self, node: fx.Node) -> bool:
         """Check if node can be fused vertically"""
         fusable_ops = {
-            torch.add, torch.mul, torch.relu, torch.gelu,
-            torch.tanh, torch.sigmoid, torch.layer_norm
+            torch.add, torch.mul, torch.relu, torch.nn.functional.gelu,
+            torch.tanh, torch.sigmoid, torch.nn.functional.layer_norm
         }
         fusable_modules = {nn.ReLU, nn.GELU, nn.LayerNorm, nn.Dropout}
 
