@@ -20,60 +20,60 @@ Comprehensive test suite for validating PyTorch kernel and compiler optimization
 
 ```bash
 # Ensure Python 3.8+ and PyTorch are installed
-python --version
-pip install torch torchvision pytest
+python3 --version
+pip3 install torch torchvision pytest
 
 # Optional: Install additional dependencies for full functionality
-pip install numpy scipy matplotlib
+pip3 install numpy scipy matplotlib
 ```
 
 ### Running All Tests
 
 ```bash
 # From repository root - run complete test suite
-python -m pytest tests/ -v
+python3 -m pytest tests/ -v
 
 # Run with detailed output and timing
-python -m pytest tests/ -v --tb=short --durations=10
+python3 -m pytest tests/ -v --tb=short --durations=10
 
 # Run tests in parallel (if pytest-xdist installed)
-pip install pytest-xdist
-python -m pytest tests/ -v -n auto
+pip3 install pytest-xdist
+python3 -m pytest tests/ -v -n auto
 ```
 
 ### Running Individual Test Modules
 
 ```bash
 # Priority 1 compiler integration tests (recommended first)
-python -m pytest tests/test_priority1_compiler_integration.py -v
+python3 -m pytest tests/test_priority1_compiler_integration.py -v
 
 # Advanced optimization tests
-python -m pytest tests/test_advanced_optimizations.py -v
+python3 -m pytest tests/test_advanced_optimizations.py -v
 
 # Next-generation computing tests
-python -m pytest tests/test_next_gen_optimizations.py -v
+python3 -m pytest tests/test_next_gen_optimizations.py -v
 
 # Distributed scaling tests
-python -m pytest tests/test_distributed_scale.py -v
+python3 -m pytest tests/test_distributed_scale.py -v
 
 # Testing framework validation
-python -m pytest tests/test_testing_framework.py -v
+python3 -m pytest tests/test_testing_framework.py -v
 ```
 
 ### Running Specific Test Categories
 
 ```bash
 # Run only FlashLight compiler tests
-python -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler -v
+python3 -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler -v
 
 # Run attention pattern optimization tests
-python -m pytest tests/test_advanced_optimizations.py::TestAdvancedAttentionOptimizations -v
+python3 -m pytest tests/test_advanced_optimizations.py::TestAdvancedAttentionOptimizations -v
 
 # Run neuromorphic computing tests
-python -m pytest tests/test_next_gen_optimizations.py::TestNeuromorphicComputing -v
+python3 -m pytest tests/test_next_gen_optimizations.py::TestNeuromorphicComputing -v
 
 # Run GPU integration tests
-python -m pytest tests/test_distributed_scale.py::TestMultiGPUIntegration -v
+python3 -m pytest tests/test_distributed_scale.py::TestMultiGPUIntegration -v
 ```
 
 ## 📊 Test Categories
@@ -184,19 +184,19 @@ export TORCH_COMPILE_CACHE_DIR=/tmp/torch_compile_cache
 **Quick Testing (CPU-compatible):**
 ```bash
 # Run core tests without GPU requirements
-python -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler::test_attention_compilation -v
+python3 -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler::test_attention_compilation -v
 ```
 
 **GPU Testing (if CUDA available):**
 ```bash
 # Run GPU-specific optimizations
-python -m pytest tests/test_distributed_scale.py -v -k "gpu or cuda"
+python3 -m pytest tests/test_distributed_scale.py -v -k "gpu or cuda"
 ```
 
 **Comprehensive Testing:**
 ```bash
 # Run all tests with extensive validation
-python -m pytest tests/ -v --tb=long --capture=no
+python3 -m pytest tests/ -v --tb=long --capture=no
 ```
 
 ## 🔍 Test Output and Debugging
@@ -221,27 +221,27 @@ python -m pytest tests/ -v --tb=long --capture=no
 # Clear PyTorch compilation cache
 rm -rf ~/.cache/torch/
 export TORCH_COMPILE_DEBUG=1
-python -m pytest tests/test_priority1_compiler_integration.py -v
+python3 -m pytest tests/test_priority1_compiler_integration.py -v
 ```
 
 **Memory Errors:**
 ```bash
 # Reduce batch sizes for memory-constrained environments
 export PYTORCH_TEST_CUDA_MEM_FRAC=0.5
-python -m pytest tests/ -v
+python3 -m pytest tests/ -v
 ```
 
 **Import Errors:**
 ```bash
 # Ensure PYTHONPATH includes src directory
 export PYTHONPATH=src:$PYTHONPATH
-python -m pytest tests/ -v
+python3 -m pytest tests/ -v
 ```
 
 **Timeout Issues:**
 ```bash
 # Increase test timeout for slow hardware
-python -m pytest tests/ -v --timeout=300
+python3 -m pytest tests/ -v --timeout=300
 ```
 
 ## 📈 Continuous Integration
@@ -267,7 +267,7 @@ jobs:
     - name: Run tests
       run: |
         export PYTHONPATH=src:$PYTHONPATH
-        python -m pytest tests/ -v --tb=short
+        python3 -m pytest tests/ -v --tb=short
 ```
 
 ### Test Coverage and Quality
@@ -275,16 +275,16 @@ jobs:
 **Coverage Analysis:**
 ```bash
 # Install coverage tools
-pip install pytest-cov
+pip3 install pytest-cov
 
 # Run tests with coverage
-python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+python3 -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 ```
 
 **Performance Regression Testing:**
 ```bash
 # Run performance benchmarks
-python -m pytest tests/test_testing_framework.py::TestPerformanceBenchmarking -v
+python3 -m pytest tests/test_testing_framework.py::TestPerformanceBenchmarking -v
 ```
 
 ## 🎯 Best Practices
@@ -327,32 +327,32 @@ python -m pytest tests/test_testing_framework.py::TestPerformanceBenchmarking -v
 **Test-Specific Issues:**
 ```bash
 # Run specific failing test with maximum verbosity
-python -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler::test_specific_function -vvv --tb=long
+python3 -m pytest tests/test_priority1_compiler_integration.py::TestFlashLightCompiler::test_specific_function -vvv --tb=long
 ```
 
 **Environment Debugging:**
 ```bash
 # Check PyTorch installation
-python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
+python3 -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
 
 # Verify test environment
-python -m pytest --collect-only tests/
+python3 -m pytest --collect-only tests/
 ```
 
 ## 🎉 Quick Test Validation
 
 ```bash
 # Validate basic functionality (1-2 minutes)
-python -m pytest tests/test_priority1_compiler_integration.py::TestEnhancedFusion::test_fusion_pattern_detection -v
+python3 -m pytest tests/test_priority1_compiler_integration.py::TestEnhancedFusion::test_fusion_pattern_detection -v
 
 # Test hardware simulation (1 minute)
-python -m pytest tests/test_testing_framework.py::TestHardwareSimulator -v
+python3 -m pytest tests/test_testing_framework.py::TestHardwareSimulator -v
 
 # Test advanced optimizations (2-3 minutes, some may fail with compilation issues)
-python -m pytest tests/test_advanced_optimizations.py -v --tb=short
+python3 -m pytest tests/test_advanced_optimizations.py -v --tb=short
 
 # Full test suite (15-35 minutes, some tests may fail due to compilation/hardware limitations)
-python -m pytest tests/ -v --tb=short
+python3 -m pytest tests/ -v --tb=short
 ```
 
 ### Expected Test Results

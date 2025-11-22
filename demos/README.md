@@ -22,30 +22,30 @@ Welcome to the comprehensive demo suite for cutting-edge PyTorch kernel and comp
 
 ```bash
 # Python 3.8+ required
-python --version
+python3 --version
 
 # Install dependencies
-pip install torch torchvision numpy pytest
+pip3 install torch torchvision numpy pytest
 
 # Optional: CUDA for GPU demos (recommended)
 # Check CUDA availability
-python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
+python3 -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 ```
 
 ### Running All Demos
 
 ```bash
 # From repository root - quick validation (5 minutes)
-python demos/run_all_demos.py --quick
+python3 demos/run_all_demos.py --quick
 
 # Complete demo suite (2 hours)
-python demos/run_all_demos.py --full
+python3 demos/run_all_demos.py --full
 
 # Interactive mode with explanations
-python demos/run_all_demos.py --interactive
+python3 demos/run_all_demos.py --interactive
 
 # Comprehensive validation with testing
-python demos/run_all_demos.py --validate
+python3 demos/run_all_demos.py --validate
 ```
 
 ### Running Individual Demos
@@ -191,7 +191,7 @@ export TORCH_COMPILE_DEBUG=1
 # Ensure proper PYTHONPATH
 export PYTHONPATH=src:$PYTHONPATH
 # Or use the demo runner which handles paths
-python demos/run_all_demos.py --quick
+python3 demos/run_all_demos.py --quick
 ```
 
 **Performance Variations**
@@ -204,7 +204,7 @@ python demos/run_all_demos.py --quick
 **Demo-Specific Issues**
 ```bash
 # Run demo with verbose output
-python demos/01_getting_started/basic_optimizations_demo.py --verbose
+python3 demos/01_getting_started/basic_optimizations_demo.py --verbose
 
 # Check demo requirements
 cat demos/01_getting_started/requirements.txt
@@ -278,13 +278,13 @@ Planned additions based on roadmap development:
 
 ```bash
 # Quick 5-minute validation
-python demos/run_all_demos.py --quick
+python3 demos/run_all_demos.py --quick
 
 # Full learning experience
-python demos/run_all_demos.py --interactive
+python3 demos/run_all_demos.py --interactive
 
 # Specific area exploration
-cd demos/02_compiler_optimizations && python flashlight_demo.py
+cd demos/02_compiler_optimizations && python3 flashlight_demo.py
 ```
 
 **Happy Optimizing!** 🚀
