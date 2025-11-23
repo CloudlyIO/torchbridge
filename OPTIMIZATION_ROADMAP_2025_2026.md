@@ -1,5 +1,7 @@
 # 🚀 PyTorch Optimization Roadmap: 2025 State-of-the-Art to 2026+ Next-Generation Computing
 
+> **Related Resources**: [PyTorch Roadmap](https://github.com/pytorch/pytorch/wiki/PyTorch-Roadmap) | [NVIDIA AI Platform Roadmap](https://developer.nvidia.com/ai-platform) | [OpenAI Research](https://openai.com/research/)
+
 ## 📋 Executive Summary
 
 This comprehensive roadmap bridges the **current 2025 state-of-the-art PyTorch optimizations** with **emerging 2026+ computing paradigms**. We address immediate gaps in existing implementations while positioning for the revolutionary shift toward neuromorphic, quantum-classical hybrid, and post-transformer architectures.
@@ -15,11 +17,11 @@ This comprehensive roadmap bridges the **current 2025 state-of-the-art PyTorch o
 ## Current PyTorch Optimization Landscape (Late 2025)
 
 ### **✅ Already Available (Production Ready)**
-- **FlexAttention**: 90% of FlashAttention2 performance, available in PyTorch 2.5.0
-- **FlashAttention-3**: Optimized for H100/Hopper GPUs with CUDA 12.3+
-- **torch.compile**: JIT compilation with TorchInductor backend
-- **FP8 Training**: E4M3/E5M2 formats on Hopper/Ada/Blackwell GPUs
-- **Triton 3.3**: Blackwell architecture support with torch.compile
+- **[FlexAttention](https://pytorch.org/blog/flexattention/)**: 90% of FlashAttention2 performance, available in PyTorch 2.5.0
+- **[FlashAttention-3](https://github.com/Dao-AILab/flash-attention)**: Optimized for H100/Hopper GPUs with CUDA 12.3+
+- **[torch.compile](https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html)**: JIT compilation with TorchInductor backend
+- **[FP8 Training](https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/api/pytorch.html)**: E4M3/E5M2 formats on Hopper/Ada/Blackwell GPUs
+- **[Triton 3.3](https://triton-lang.org/)**: Blackwell architecture support with torch.compile
 
 ### **🔧 FlashLight Framework (November 2025)**
 - **Status**: Recently released as compiler optimization
@@ -367,6 +369,8 @@ output = flex_attention(q, k, v, score_mod=ring_mask)
 ### **3.2 Structured Sparsity 2.0** ✂️
 **Current Gap**: Basic sparsity implementation
 
+> **Reference**: [2:4 Structured Sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) | [PyTorch Sparsity](https://pytorch.org/docs/stable/sparse.html)
+
 ```python
 # Implementation: src/kernel_pytorch/sparsity/structured_sparsity_2025.py
 class StructuredSparsity2025:
@@ -435,6 +439,8 @@ speedup = sparsity.estimate_speedup(model, "2:4")  # 1.6x speedup
 ---
 
 ## **Priority 4: Neuromorphic-Classical Hybrid Framework**
+
+> **Learn More**: [Intel Neuromorphic Research](https://www.intel.com/content/www/us/en/research/neuromorphic-computing.html) | [Neuromorphic Computing Guide](https://arxiv.org/abs/2109.12894) | [Loihi 2 Documentation](https://neuromorphic.intel.com/)
 
 ### **4.1 Intel Loihi 2 Integration Pipeline** 🧠
 **Revolutionary Goal**: 100x energy efficiency, 50x speed for optimization problems
@@ -643,6 +649,8 @@ print(f"Efficiency gain: {energy_stats['efficiency_gain']:.1f}x")
 ---
 
 ## **Priority 5: Quantum-Classical Hybrid ML**
+
+> **Learn More**: [Qiskit Documentation](https://qiskit.org/documentation/) | [Quantum Machine Learning](https://arxiv.org/abs/2103.05238) | [QAOA Tutorial](https://qiskit.org/textbook/ch-applications/qaoa.html) | [VQE Guide](https://qiskit.org/textbook/ch-applications/vqe-molecules.html)
 
 ### **5.1 QAOA-Enhanced Training Pipeline** ⚛️
 **Revolutionary Goal**: Exponential speedup for optimization problems
@@ -1410,3 +1418,46 @@ print(f"Energy efficiency: {execution_plan['energy_efficiency']:.1f}x better")
 ---
 
 This roadmap positions the project at the absolute **cutting edge of 2026+ computing**, preparing for a revolutionary shift from GPU-centric optimization to hybrid multi-paradigm intelligence systems. The progression from closing current 2025 gaps to pioneering next-generation computing architectures ensures both immediate impact and long-term technological leadership.
+
+---
+
+## 📚 **Comprehensive External Resources & References**
+
+### **Core Technology Documentation**
+- **[PyTorch Official Roadmap](https://github.com/pytorch/pytorch/wiki/PyTorch-Roadmap)** - PyTorch's official development roadmap
+- **[NVIDIA AI Platform Roadmap](https://developer.nvidia.com/ai-platform)** - GPU and acceleration roadmap
+- **[Intel Neuromorphic Research](https://www.intel.com/content/www/us/en/research/neuromorphic-computing.html)** - Neuromorphic computing developments
+
+### **Optimization Technologies**
+- **[Flash Attention Paper](https://arxiv.org/abs/2205.14135)** - Original Flash Attention research
+- **[FlexAttention Documentation](https://pytorch.org/blog/flexattention/)** - PyTorch's flexible attention
+- **[torch.compile Guide](https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html)** - PyTorch compilation
+- **[Triton Language](https://triton-lang.org/)** - GPU kernel development
+
+### **Emerging Computing Paradigms**
+- **[Neuromorphic Computing Survey](https://arxiv.org/abs/2109.12894)** - Comprehensive neuromorphic overview
+- **[Intel Loihi Documentation](https://neuromorphic.intel.com/)** - Loihi neuromorphic processor
+- **[Quantum Machine Learning](https://arxiv.org/abs/2103.05238)** - QML survey and techniques
+- **[Qiskit Tutorials](https://qiskit.org/textbook/)** - Quantum computing with Python
+
+### **Advanced Hardware & Sparsity**
+- **[NVIDIA 2:4 Structured Sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/)** - Hardware-accelerated sparsity
+- **[FP8 Training Guide](https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/api/pytorch.html)** - Ultra-low precision training
+- **[GPU Architecture Guides](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)** - CUDA development
+
+### **Distributed & Scale Computing**
+- **[FSDP Documentation](https://pytorch.org/docs/stable/fsdp.html)** - Fully Sharded Data Parallel
+- **[NCCL Communication](https://docs.nvidia.com/deeplearning/nccl/)** - Multi-GPU communication
+- **[Kubernetes for ML](https://kubernetes.io/docs/concepts/workloads/controllers/job/)** - Container orchestration
+
+### **Research Papers & Surveys**
+- **[Attention Is All You Need](https://arxiv.org/abs/1706.03762)** - Original Transformer paper
+- **[Transformer Efficiency Survey](https://arxiv.org/abs/2002.04745)** - Comprehensive optimization survey
+- **[Efficient Transformers](https://arxiv.org/abs/2009.06732)** - Efficiency techniques overview
+- **[Post-Moore Computing](https://arxiv.org/abs/2203.04644)** - Beyond traditional computing
+
+### **Industry Roadmaps & Market Analysis**
+- **[Semiconductor Industry Roadmap](https://irds.ieee.org/)** - Hardware development trends
+- **[AI Computing Trends](https://www.top500.org/lists/green500/)** - Performance and efficiency metrics
+- **[Neuromorphic Market Analysis](https://www.marketsandmarkets.com/Market-Reports/neuromorphic-computing-market-4262.html)** - Market projections
+- **[Quantum Computing Market](https://www.ibm.com/quantum)** - Quantum technology timeline

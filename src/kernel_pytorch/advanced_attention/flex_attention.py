@@ -11,6 +11,12 @@ Features:
 - PrefixLM attention
 - Block-sparse attention patterns
 - Custom attention masks with automatic kernel fusion
+
+References:
+    - FlexAttention Blog: https://pytorch.org/blog/flexattention/
+    - FlexAttention Tutorial: https://pytorch.org/tutorials/intermediate/flex_attention_tutorial.html
+    - FlexAttention API Docs: https://pytorch.org/docs/main/generated/torch.nn.attention.flex_attention.html
+    - Attention Patterns Paper: https://arxiv.org/abs/1706.03762
 """
 
 import torch

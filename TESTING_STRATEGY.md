@@ -2,6 +2,8 @@
 
 This document outlines our multi-tiered testing approach that balances development speed with thorough validation.
 
+> **Learn more about testing methodologies**: [pytest Documentation](https://docs.pytest.org/) | [Testing Best Practices](https://docs.python-guide.org/writing/tests/) | [Performance Testing Guide](https://pytest-benchmark.readthedocs.io/)
+
 ## 🎯 **Problem Solved**
 
 **Original Issue**: `test_multiple_pattern_compilation` took 27 seconds, making development slow.
@@ -16,18 +18,21 @@ This document outlines our multi-tiered testing approach that balances developme
 - **Target**: < 1 second per test
 - **Data Scale**: Small but functionally representative
 - **Usage**: `python3 run_tests.py unit`
+- **Methodology**: [Unit Testing Best Practices](https://docs.pytest.org/en/stable/explanation/goodpractices.html)
 
 ### **🔗 Integration Tests** (Realistic Validation)
 - **Purpose**: Validate realistic scenarios
 - **Target**: 5-30 seconds per test
 - **Data Scale**: Production-representative
 - **Usage**: `python3 run_tests.py integration`
+- **Methodology**: [Integration Testing Guide](https://docs.pytest.org/en/stable/example/markers.html)
 
 ### **💪 Stress Tests** (Performance Validation)
 - **Purpose**: Test limits and performance
 - **Target**: 30 seconds - 5 minutes per test
 - **Data Scale**: Large-scale, memory-intensive
 - **Usage**: `python3 run_tests.py stress`
+- **Methodology**: [Performance Testing with pytest-benchmark](https://pytest-benchmark.readthedocs.io/)
 
 ## 🎚️ **Data Configuration Tiers**
 
@@ -191,3 +196,28 @@ This tiered testing strategy successfully solves the speed vs efficacy trade-off
 4. **Intelligent Execution**: Run appropriate tests for different scenarios
 
 **Result**: Developers get fast feedback while maintaining comprehensive validation coverage.
+
+## 📚 **Additional Testing Resources**
+
+### **Testing Frameworks & Tools**
+- **[pytest Documentation](https://docs.pytest.org/)** - Complete pytest reference and tutorials
+- **[pytest Markers](https://docs.pytest.org/en/stable/how.html#marks)** - Test categorization and filtering
+- **[pytest Fixtures](https://docs.pytest.org/en/stable/explanation/fixtures.html)** - Test setup and dependency injection
+- **[pytest-benchmark](https://pytest-benchmark.readthedocs.io/)** - Performance testing and benchmarking
+
+### **Performance Testing & Profiling**
+- **[PyTorch Profiler](https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html)** - ML model performance analysis
+- **[NVIDIA Nsight Systems](https://developer.nvidia.com/nsight-systems)** - GPU profiling and optimization
+- **[memory_profiler](https://pypi.org/project/memory-profiler/)** - Python memory usage profiling
+- **[py-spy](https://github.com/benfred/py-spy)** - Sampling profiler for Python
+
+### **Testing Best Practices**
+- **[Python Testing 101](https://docs.python-guide.org/writing/tests/)** - Comprehensive testing guide
+- **[Effective Python Testing](https://realpython.com/python-testing/)** - Advanced testing techniques
+- **[Test-Driven Development](https://testdriven.io/blog/modern-tdd/)** - TDD methodology and practices
+- **[Continuous Integration Testing](https://docs.github.com/en/actions/automating-builds-and-tests)** - CI/CD best practices
+
+### **ML/AI Specific Testing**
+- **[Testing Machine Learning Models](https://madewithml.com/courses/mlops/testing/)** - ML model validation strategies
+- **[PyTorch Testing Guidelines](https://github.com/pytorch/pytorch/wiki/Writing-tests)** - PyTorch-specific testing practices
+- **[Numerical Testing](https://docs.scipy.org/doc/numpy/reference/routines.testing.html)** - Testing numerical computations

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **External Resources**: [PyTorch Documentation](https://pytorch.org/docs/stable/index.html) | [CUDA Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/) | [torch.compile Tutorial](https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html)
+
 ## Project Overview
 
 **PyTorch GPU Compiler Optimization** - A practical guide for building PyTorch neural network components that achieve maximum GPU performance through compiler optimization. This repository provides production-ready optimized components and practical optimization techniques for real-world ML development.
@@ -103,15 +105,15 @@ def inefficient_attention(q, k, v):
 - matplotlib (visualization)
 - psutil (system profiling)
 
-## Key Educational Concepts
+## Key Technical Concepts
 
-### Computational Correctness Preserved Across All Levels
+### Computational Patterns Implemented
 - **Autoregressive Generation**: Causal attention patterns
-- **Spatial Reasoning**: Vision transformer patch attention
+- **Spatial Processing**: Vision transformer patch attention
 - **Message Passing**: Graph neural network aggregation
 - **Embedding Interactions**: Representation learning
 
-### Optimization Strategies Demonstrated
+### Optimization Strategies Implemented
 - Progressive kernel fusion (Level 1→5)
 - Memory hierarchy utilization
 - Parallel reduction algorithms
@@ -166,12 +168,12 @@ result = assistant.optimize_model(model, interactive=True)
 - **Automatic Model Analysis**: Identifies optimization opportunities in PyTorch models
 - **Intelligent Recommendations**: Provides prioritized optimization suggestions with implementation guidance
 - **Performance Prediction**: Estimates speedup potential for different optimizations
-- **Educational Tutorials**: Explains optimization techniques with step-by-step guidance
+- **Technical Documentation**: Explains optimization techniques with implementation details
 - **Validation Integration**: Automatically tests optimization correctness
 
 ## Project Goals
 
-This repository is designed to teach:
+This repository demonstrates:
 1. How PyTorch operations map to GPU computation graphs
 2. The relationship between neural network computation and kernel efficiency
 3. Progressive optimization from simple to advanced techniques

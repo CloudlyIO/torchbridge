@@ -8,6 +8,13 @@ Advanced implementation of FSDP2 with:
 - Memory-efficient gradient synchronization
 
 Based on latest PyTorch distributed training research.
+
+References:
+    - FSDP Documentation: https://pytorch.org/docs/stable/fsdp.html
+    - FSDP2 Announcement: https://pytorch.org/blog/pytorch-2_3/#beta-introducing-fsdp2
+    - DTensor Tutorial: https://pytorch.org/tutorials/intermediate/dtensor_tutorial.html
+    - ZeRO Paper: https://arxiv.org/abs/1910.02054
+    - NCCL Communication: https://docs.nvidia.com/deeplearning/nccl/
 """
 
 import torch

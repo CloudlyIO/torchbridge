@@ -6,6 +6,12 @@ Achieves FlashAttention-level performance with PyTorch flexibility.
 
 Based on latest 2025 research: FlashLight dismantles artificial fusion boundaries
 by modeling tensor contractions as generalized reductions within unified IR.
+
+References:
+    - Flash Attention Paper: https://arxiv.org/abs/2205.14135
+    - Flash Attention v2: https://arxiv.org/abs/2307.08691
+    - PyTorch torch.compile: https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
+    - CUDA Programming Guide: https://docs.nvidia.com/cuda/cuda-c-programming-guide/
 """
 
 import torch
