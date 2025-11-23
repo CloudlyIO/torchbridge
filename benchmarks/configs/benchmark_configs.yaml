@@ -1,0 +1,140 @@
+# PyTorch Optimization Benchmark Configurations
+# Standard configurations for reproducible benchmarking
+
+# Model Configurations
+models:
+  gpt2_small:
+    hidden_size: 768
+    num_layers: 12
+    num_heads: 12
+    vocab_size: 50257
+    max_position_embeddings: 2048
+    description: "GPT-2 Small (124M parameters)"
+
+  gpt2_medium:
+    hidden_size: 1024
+    num_layers: 24
+    num_heads: 16
+    vocab_size: 50257
+    max_position_embeddings: 2048
+    description: "GPT-2 Medium (355M parameters)"
+
+  bert_base:
+    hidden_size: 768
+    num_layers: 12
+    num_heads: 12
+    vocab_size: 30522
+    max_position_embeddings: 512
+    description: "BERT Base (110M parameters)"
+
+  llama_7b_config:
+    hidden_size: 4096
+    num_layers: 32
+    num_heads: 32
+    vocab_size: 32000
+    max_position_embeddings: 4096
+    description: "LLaMA-7B configuration"
+
+# Benchmark Test Suites
+test_suites:
+  quick_validation:
+    description: "Quick validation suite (5-10 minutes)"
+    models: ["gpt2_small"]
+    batch_sizes: [1, 4, 8]
+    sequence_lengths: [128, 512]
+    num_trials: 20
+    warmup_trials: 5
+
+  comprehensive:
+    description: "Comprehensive benchmark suite (1-2 hours)"
+    models: ["gpt2_small", "gpt2_medium", "bert_base"]
+    batch_sizes: [1, 2, 4, 8, 16, 32]
+    sequence_lengths: [128, 256, 512, 1024, 2048]
+    num_trials: 100
+    warmup_trials: 10
+
+  scaling_analysis:
+    description: "Scaling analysis across model sizes"
+    models: ["gpt2_small", "gpt2_medium", "llama_7b_config"]
+    batch_sizes: [1, 4, 8, 16]
+    sequence_lengths: [512, 1024]
+    num_trials: 50
+    warmup_trials: 10
+
+  memory_analysis:
+    description: "Memory efficiency analysis"
+    models: ["gpt2_small", "gpt2_medium"]
+    batch_sizes: [1, 2, 4, 8, 16, 32, 64]
+    sequence_lengths: [512]
+    num_trials: 10
+    warmup_trials: 3
+
+# Hardware Configurations
+hardware_configs:
+  cpu_only:
+    device: "cpu"
+    enable_compilation: true
+    mixed_precision: false
+
+  single_gpu:
+    device: "cuda:0"
+    enable_compilation: true
+    mixed_precision: true
+
+  multi_gpu:
+    device: "cuda"
+    num_gpus: 4
+    enable_compilation: true
+    mixed_precision: true
+
+# Baseline Implementations
+baselines:
+  pytorch_native:
+    name: "PyTorch Native"
+    description: "Standard PyTorch implementation"
+    enabled: true
+
+  pytorch_optimized:
+    name: "PyTorch Optimized"
+    description: "PyTorch with torch.compile and SDPA"
+    enabled: true
+
+  flash_attention:
+    name: "Flash Attention"
+    description: "Flash Attention v2 implementation"
+    enabled: true
+
+  huggingface:
+    name: "HuggingFace Transformers"
+    description: "HF Transformers with optimizations"
+    enabled: true
+
+  xformers:
+    name: "xFormers"
+    description: "Meta's xFormers library"
+    enabled: false  # Requires separate installation
+
+  deepspeed:
+    name: "DeepSpeed"
+    description: "Microsoft DeepSpeed optimizations"
+    enabled: false  # Requires separate installation
+
+# Performance Thresholds
+thresholds:
+  significant_speedup: 1.2  # 20% improvement
+  significant_memory_reduction: 0.1  # 10% reduction
+  statistical_confidence: 0.95  # 95% confidence interval
+
+# Output Configuration
+output:
+  save_raw_data: true
+  save_processed_results: true
+  generate_plots: true
+  generate_html_report: true
+
+# Analysis Configuration
+analysis:
+  enable_statistical_testing: true
+  enable_regression_analysis: true
+  enable_scaling_analysis: true
+  enable_memory_analysis: true
