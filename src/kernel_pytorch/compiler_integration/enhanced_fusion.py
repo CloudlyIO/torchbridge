@@ -312,7 +312,7 @@ class FusionBoundaryOptimizer:
         """Check if node can be fused horizontally"""
         fusable_ops = {
             torch.addmm, torch.bmm, torch.mm,
-            torch.conv2d, torch.linear
+            torch.conv2d, torch.nn.functional.linear
         }
         return (node.op == 'call_function' and node.target in fusable_ops) or \
                (node.op == 'call_module' and isinstance(getattr(node.target, '__class__', None), type) and

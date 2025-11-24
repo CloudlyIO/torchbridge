@@ -270,7 +270,10 @@ python3 benchmarks/next_gen/demo_cutting_edge_benchmark.py --quick
 python3 -c "from benchmarks.next_gen.enhanced_benchmark_runner import main; main()"
 ```
 
-**📋 For detailed instructions: [Benchmark Quick Start Guide](BENCHMARK_QUICKSTART.md)**
+**📋 Detailed guides:**
+- **[Benchmark Quick Start](BENCHMARK_QUICKSTART.md)** - Simple benchmark instructions
+- **[CUDA/GPU Setup](CUDA_SETUP_GUIDE.md)** - Hardware setup and validation
+- **[Repository Structure](REPOSITORY_STRUCTURE.md)** - Navigation and organization guide
 
 ### Benchmark Against State-of-the-Art
 - **PyTorch Native**: Standard PyTorch with torch.compile

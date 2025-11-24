@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "total_tests": 1,
+    "passed_tests": 1,
+    "failed_tests": 0,
+    "success_rate": 1.0,
+    "total_execution_time": 1.71661376953125e-05
+  },
+  "test_results": [
+    {
+      "name": "simple_test",
+      "status": "passed",
+      "execution_time": 1.1920928955078125e-05,
+      "test_type": "basic",
+      "tags": [],
+      "error_message": null,
+      "phase_results": {
+        "setup": {
+          "test_name": "simple_test",
+          "test_type": "basic",
+          "tags": [],
+          "requirements_met": true,
+          "setup_time": 1763849474.405432
+        },
+        "analysis": {
+          "overall_success": false,
+          "phase_success": {
+            "setup": true
+          },
+          "performance_analysis": {},
+          "validation_analysis": {}
+        },
+        "cleanup": {
+          "cleanup_time": 1763849474.405442,
+          "success": true
+        }
+      },
+      "analysis": {
+        "overall_success": false,
+        "phase_success": {
+          "setup": true
+        },
+        "performance_analysis": {},
+        "validation_analysis": {}
+      }
+    }
+  ],
+  "performance_insights": {
+    "no_data": true
+  },
+  "failure_analysis": {
+    "total_failures": 0,
+    "failure_by_type": {},
+    "failure_by_phase": {},
+    "common_errors": {}
+  },
+  "recommendations": [
+    "All tests passed successfully! Consider adding more challenging test cases."
+  ]
+}

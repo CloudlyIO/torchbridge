@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "kernel-optimized-pytorch"
 version = "0.1.0"
 description = "Kernel-optimized PyTorch components for understanding GPU optimization at the hardware level"
-authors = [{name = "Shah Rahman", email = "shah@example.com"}]
+authors = [{name = "Shah Rahman", email = "shah@cloudly.io"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
