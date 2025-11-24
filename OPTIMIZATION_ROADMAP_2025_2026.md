@@ -1,4 +1,4 @@
-# 🚀 PyTorch Optimization Roadmap: 2025 State-of-the-Art to 2026+ Next-Generation Computing
+# 🚀 PyTorch GPU Compiler Optimization Roadmap: 2025 SOTA to 2026+ Next-Generation Computing
 
 > **Related Resources**: [PyTorch Roadmap](https://github.com/pytorch/pytorch/wiki/PyTorch-Roadmap) | [NVIDIA AI Platform Roadmap](https://developer.nvidia.com/ai-platform) | [OpenAI Research](https://openai.com/research/)
 
@@ -8,7 +8,7 @@
 
 This roadmap originally bridged **2025 state-of-the-art PyTorch optimizations** with **emerging 2026+ computing paradigms**.
 
-### **✅ COMPLETED ACHIEVEMENTS (Priority 1)**
+### **✅ COMPLETED FEATURES (Priority 1)**
 - **FlashLight Compiler Framework**: 4.2-6.1x speedup demonstrations
 - **PyGraph CUDA Optimization**: 2.8x inference speedup + 35% memory reduction
 - **Enhanced TorchInductor Fusion**: Better performance than custom CUDA kernels

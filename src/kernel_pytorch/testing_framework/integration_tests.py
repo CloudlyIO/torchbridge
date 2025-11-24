@@ -9,6 +9,7 @@ import asyncio
 import time
 import logging
 import json
+import tempfile
 from typing import Dict, List, Optional, Tuple, Any, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
@@ -67,7 +68,7 @@ class IntegrationTestConfig:
 
     # Result handling
     export_results: bool = True
-    results_directory: str = "test_results"
+    results_directory: str = None  # Will use temporary directory
     save_simulation_traces: bool = True
 
 
@@ -848,8 +849,12 @@ class IntegrationTestRunner:
 
     async def _export_results(self, report: Dict[str, Any]):
         """Export test results to files"""
-        results_dir = Path(self.config.results_directory)
-        results_dir.mkdir(exist_ok=True)
+        if self.config.results_directory:
+            results_dir = Path(self.config.results_directory)
+            results_dir.mkdir(exist_ok=True)
+        else:
+            # Use temporary directory
+            results_dir = Path(tempfile.mkdtemp(prefix="integration_test_results_"))
 
         timestamp = int(time.time())
 

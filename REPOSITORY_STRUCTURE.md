@@ -243,10 +243,10 @@ python3 demos/05_next_generation/neuromorphic_simulation_demo.py
 
 **Automatic Cleanup:**
 ```bash
-# Clean test results (keeps latest 5)
-find test_results/ -name "*.json" | sort | head -n -5 | xargs rm -f
+# Clean temporary files and cache
+./scripts/cleanup_repo.py
 
-# Remove Python cache
+# Remove Python cache manually if needed
 find . -type d -name "__pycache__" -exec rm -rf {} +
 ```
 

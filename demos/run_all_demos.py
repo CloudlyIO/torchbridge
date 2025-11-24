@@ -74,7 +74,7 @@ class DemoRunner:
             # 01_getting_started
             DemoInfo(
                 "Basic Optimizations",
-                "01_getting_started/basic_optimizations_demo.py",
+                "01_getting_started/optimized_basic_demo.py",
                 "Getting Started",
                 "🟢 Beginner",
                 "5-8 min",
@@ -84,7 +84,7 @@ class DemoRunner:
             # 02_compiler_optimizations
             DemoInfo(
                 "FlashLight Compiler",
-                "02_compiler_optimizations/flashlight_demo.py",
+                "02_compiler_optimizations/optimized_flashlight_demo.py",
                 "Compiler Optimizations",
                 "🟡 Intermediate",
                 "8-12 min",
@@ -93,7 +93,7 @@ class DemoRunner:
             ),
             DemoInfo(
                 "Integrated Compiler Demo",
-                "02_compiler_optimizations/integrated_compiler_demo.py",
+                "02_compiler_optimizations/optimized_compiler_demo.py",
                 "Compiler Optimizations",
                 "🟠 Advanced",
                 "10-15 min",
@@ -142,7 +142,7 @@ class DemoRunner:
             # 06_testing_framework
             DemoInfo(
                 "Optimization Validation",
-                "06_testing_framework/optimization_validation_demo.py",
+                "06_testing_framework/optimized_validation_demo.py",
                 "Testing Framework",
                 "🟡 Intermediate",
                 "8-12 min",
@@ -213,10 +213,10 @@ class DemoRunner:
 
         # Select representative demos from each category
         quick_demos = [
-            "01_getting_started/basic_optimizations_demo.py",
-            "02_compiler_optimizations/flashlight_demo.py",
+            "01_getting_started/optimized_basic_demo.py",
+            "02_compiler_optimizations/optimized_flashlight_demo.py",
             "03_advanced_attention/ring_attention_demo.py",
-            "06_testing_framework/optimization_validation_demo.py"
+            "06_testing_framework/optimized_validation_demo.py"
         ]
 
         selected_demos = [demo for demo in self.demos if demo.path in quick_demos]

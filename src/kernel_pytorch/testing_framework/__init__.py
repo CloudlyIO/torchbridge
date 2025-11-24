@@ -26,6 +26,18 @@ from .performance_benchmarks import (
     create_benchmark_suite
 )
 
+# Unified validation system (recommended)
+from .unified_validator import (
+    UnifiedValidator,
+    ValidationConfig,
+    ValidationResult,
+    ValidationType,
+    ValidationLevel,
+    create_validator,
+    validate_component_quick
+)
+
+# Legacy validation tools (deprecated - use UnifiedValidator)
 from .validation_tools import (
     OptimizationValidator,
     MemoryValidator,
@@ -60,7 +72,16 @@ __all__ = [
     'CompilerBenchmark',
     'create_benchmark_suite',
 
-    # Validation tools
+    # Unified validation system (recommended)
+    'UnifiedValidator',
+    'ValidationConfig',
+    'ValidationResult',
+    'ValidationType',
+    'ValidationLevel',
+    'create_validator',
+    'validate_component_quick',
+
+    # Legacy validation tools (deprecated)
     'OptimizationValidator',
     'MemoryValidator',
     'PerformanceProfiler',

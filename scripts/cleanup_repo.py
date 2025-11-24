@@ -34,41 +34,24 @@ def cleanup_python_cache():
     print(f"   ✅ Python cache cleanup complete")
 
 
-def cleanup_test_results(keep_count: int = 5):
-    """Clean up old test results, keeping the most recent ones"""
-    print(f"🧪 Cleaning test results (keeping {keep_count} most recent)...")
+def cleanup_temp_reports():
+    """Clean up temporary report files that may be left in root directory"""
+    print(f"🧪 Cleaning temporary report files...")
 
-    test_results_dir = 'test_results'
-    if not os.path.exists(test_results_dir):
-        print(f"   No test_results directory found")
-        return
+    temp_patterns = [
+        'integration_test_report_*.json',
+        'pipeline_report_*.json',
+    ]
 
-    # Clean integration test reports
-    reports = glob.glob(f'{test_results_dir}/integration_test_report_*.json')
-    if reports:
-        # Sort by modification time, newest first
-        reports.sort(key=os.path.getmtime, reverse=True)
+    removed_count = 0
+    for pattern in temp_patterns:
+        matches = glob.glob(pattern)
+        for match in matches:
+            os.remove(match)
+            print(f"   Removed: {match}")
+            removed_count += 1
 
-        to_remove = reports[keep_count:]
-        for report in to_remove:
-            os.remove(report)
-            print(f"   Removed: {report}")
-
-        print(f"   Kept {min(len(reports), keep_count)} recent integration reports")
-
-    # Clean pipeline reports
-    pipeline_reports = glob.glob(f'{test_results_dir}/pipeline_report_*.json')
-    if pipeline_reports:
-        pipeline_reports.sort(key=os.path.getmtime, reverse=True)
-
-        to_remove = pipeline_reports[keep_count:]
-        for report in to_remove:
-            os.remove(report)
-            print(f"   Removed: {report}")
-
-        print(f"   Kept {min(len(pipeline_reports), keep_count)} recent pipeline reports")
-
-    print(f"   ✅ Test results cleanup complete")
+    print(f"   ✅ Temporary reports cleanup complete ({removed_count} items)")
 
 
 def cleanup_build_artifacts():
@@ -106,8 +89,6 @@ def cleanup_root_temp_files():
     print("📁 Cleaning root temporary files...")
 
     temp_patterns = [
-        'integration_test_report_*.json',
-        'pipeline_report_run_*.json',
         '*.benchmark',
         '*.profiling',
         'temp_*',
@@ -117,15 +98,8 @@ def cleanup_root_temp_files():
     for pattern in temp_patterns:
         matches = glob.glob(pattern)
         for match in matches:
-            # Move to test_results if it's a report, otherwise delete
-            if 'report' in match:
-                os.makedirs('test_results', exist_ok=True)
-                dest = os.path.join('test_results', os.path.basename(match))
-                shutil.move(match, dest)
-                print(f"   Moved to test_results: {match}")
-            else:
-                os.remove(match)
-                print(f"   Removed: {match}")
+            os.remove(match)
+            print(f"   Removed: {match}")
             removed_count += 1
 
     print(f"   ✅ Root cleanup complete ({removed_count} items)")
@@ -155,8 +129,6 @@ def cleanup_gpu_cache():
 def main():
     """Main cleanup function"""
     parser = argparse.ArgumentParser(description='Clean up repository artifacts and temporary files')
-    parser.add_argument('--keep-reports', type=int, default=5,
-                       help='Number of recent test reports to keep (default: 5)')
     parser.add_argument('--skip-gpu-cache', action='store_true',
                        help='Skip GPU cache cleanup')
     parser.add_argument('--dry-run', action='store_true',
@@ -182,7 +154,7 @@ def main():
     if not args.dry_run:
         # Run cleanup functions
         cleanup_python_cache()
-        cleanup_test_results(args.keep_reports)
+        cleanup_temp_reports()
         cleanup_build_artifacts()
         cleanup_root_temp_files()
 
@@ -192,7 +164,7 @@ def main():
         # Dry run - just list what would be cleaned
         print("Would clean:")
         print("  - Python cache files (__pycache__, *.pyc)")
-        print(f"  - Old test results (keeping {args.keep_reports} recent)")
+        print("  - Temporary report files")
         print("  - Build artifacts (build/, dist/, *.egg-info/)")
         print("  - Root temporary files")
         if not args.skip_gpu_cache:

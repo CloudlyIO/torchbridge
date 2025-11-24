@@ -233,9 +233,9 @@ kernel_pytorch_cuda.cpython-*
 
 # Project-specific temporary files
 pipeline_report_*.json
+integration_test_report_*.json
 profile_results/
 benchmarks_output/
-test_results/temp/
 
 # Demo outputs and generated files
 demo_outputs/

@@ -110,7 +110,8 @@ def test_testing_framework():
     from kernel_pytorch.testing_framework import (
         create_hardware_simulator,
         create_benchmark_suite,
-        OptimizationValidator
+        create_validator,
+        UnifiedValidator
     )
 
     # Test hardware simulator
@@ -122,9 +123,9 @@ def test_testing_framework():
     benchmark = create_benchmark_suite(warmup_iterations=3, measurement_iterations=5)
     assert benchmark is not None
 
-    # Test optimization validator
-    validator = OptimizationValidator()
-    assert validator is not None
+    # Test unified validator
+    validator = create_validator()
+    assert isinstance(validator, UnifiedValidator)
 
     print("   Testing framework components working")
 
