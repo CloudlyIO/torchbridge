@@ -435,7 +435,7 @@ class TestHardwareAdaptation:
 
             # Mock optimal device placement to return device IDs
             with patch.object(topology_manager, 'get_optimal_device_placement', return_value=list(range(8))), \
-                 patch('kernel_pytorch.distributed_scale.hardware_adaptation.DeviceMesh') as mock_mesh:
+                 patch('kernel_pytorch.distributed_scale.hardware_adapter.DeviceMesh') as mock_mesh:
 
                 mock_mesh.return_value = Mock()
 
