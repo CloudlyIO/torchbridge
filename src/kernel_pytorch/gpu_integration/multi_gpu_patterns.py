@@ -576,7 +576,6 @@ def demonstrate_multi_gpu_patterns():
 
     # Check if multiple GPUs are available
     num_gpus = torch.cuda.device_count()
-    print(f"Available GPUs: {num_gpus}")
 
     if num_gpus < 2:
         print("⚠️  Multi-GPU demonstration requires at least 2 GPUs")

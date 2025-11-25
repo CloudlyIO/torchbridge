@@ -447,6 +447,5 @@ if __name__ == "__main__":
         attention = attention.cuda()
 
     output = attention(x)
-    print(f"Input shape: {x.shape}")
     print(f"Output shape: {output.shape}")
     print(f"Optimization info: {attention.get_optimization_info()}")

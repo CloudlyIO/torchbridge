@@ -145,7 +145,6 @@ class ProgressiveOptimizationDemo:
 
     def print_results(self):
         """Print benchmark results in a nice format"""
-        print("\nBenchmark Results:")
         print("="*80)
         print(f"{'Model':<15} {'Mean Time (ms)':<15} {'Min Time (ms)':<15} {'Throughput (tok/s)':<20} {'Speedup':<10}")
         print("-"*80)

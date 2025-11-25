@@ -488,13 +488,10 @@ if __name__ == "__main__":
         x = x.cuda()
         multi_attn = multi_attn.cuda()
 
-    print(f"FlexAttention available: {FLEX_ATTENTION_AVAILABLE}")
-    print(f"Input shape: {x.shape}")
 
     # Test each pattern
     for pattern_name in patterns_to_test.keys():
         output = multi_attn(x, pattern_name)
-        print(f"{pattern_name} output shape: {output.shape}")
 
     # Benchmark patterns
     single_attn = FlexAttentionAPI(embed_dim, num_heads)
@@ -502,6 +499,5 @@ if __name__ == "__main__":
         single_attn = single_attn.cuda()
 
     benchmark_results = single_attn.benchmark_patterns(x, num_iterations=50)
-    print("\nBenchmark Results (ms per forward pass):")
     for pattern, time_ms in benchmark_results.items():
-        print(f"  {pattern}: {time_ms:.2f}ms")
+        pass  # Results are returned for analysis

@@ -274,7 +274,6 @@ if hasattr(F, 'scaled_dot_product_attention'):
 
     def _interactive_recommendation_selection(self, recommendations: List[OptimizationRecommendation]) -> List[OptimizationRecommendation]:
         """Interactive selection of recommendations."""
-        print("\nAvailable optimizations:")
         for i, rec in enumerate(recommendations):
             print(f"  {i+1}. [{rec.priority}] {rec.description}")
 

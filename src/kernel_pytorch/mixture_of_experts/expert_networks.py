@@ -608,14 +608,12 @@ if __name__ == "__main__":
 
         # Test forward pass
         output = expert(x_test)
-        print(f"  Input shape: {x_test.shape}")
         print(f"  Output shape: {output.shape}")
 
         # Test with flattened input (common in MoE)
         x_flat = x_test.view(-1, input_size)
         output_flat = expert(x_flat)
         print(f"  Flattened input shape: {x_flat.shape}")
-        print(f"  Flattened output shape: {output_flat.shape}")
 
         # Parameter count for parameter-efficient expert
         if name == "ParameterEfficient":

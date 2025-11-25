@@ -15,7 +15,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Dict, Any, Callable, Tuple, List
 import math
-import warnings
 
 try:
     from torch.nn.attention.flex_attention import flex_attention
@@ -512,7 +511,6 @@ def create_advanced_flex_attention(
 
 if __name__ == "__main__":
     # Example usage
-    print("Testing Advanced FlexAttention (2025)")
 
     # Standard advanced attention
     attention = create_advanced_flex_attention(
@@ -538,7 +536,6 @@ if __name__ == "__main__":
     )
 
     output_gqa = gqa_attention(x)
-    print(f"GQA output shape: {output_gqa.shape}")
 
     # Paged attention decoder
     paged_decoder = create_advanced_flex_attention(

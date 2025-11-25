@@ -7,7 +7,6 @@ comprehensive type coverage for public APIs.
 
 import inspect
 import ast
-import sys
 from typing import (
     Dict, List, Set, Tuple, Optional, Union, Any, Callable,
     get_type_hints, get_origin, get_args

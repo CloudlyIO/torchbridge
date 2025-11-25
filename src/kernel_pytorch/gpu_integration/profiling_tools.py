@@ -22,7 +22,6 @@ import torch.profiler
 import torch.utils.benchmark as benchmark
 from typing import Dict, List, Tuple, Optional, Any, Union, Callable
 import time
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 from dataclasses import dataclass, asdict
@@ -30,7 +29,6 @@ from contextlib import contextmanager
 import psutil
 import gc
 from collections import defaultdict, OrderedDict
-import warnings
 
 
 @dataclass
@@ -624,7 +622,6 @@ def demonstrate_profiling_tools():
     print(f"\n🏗️ Model Architecture:")
     print(f"  Embed dimension: 512")
     print(f"  Number of heads: 8")
-    print(f"  Input shape: {sample_input.shape}")
     print(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Model profiling

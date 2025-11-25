@@ -771,7 +771,6 @@ if __name__ == "__main__":
 
     # Sparse linear operation
     output = sparse_ops.sparse_linear(input_data, sparse_tensor, sparsity_mask=mask)
-    print(f"Sparse linear output shape: {output.shape}")
 
     # Performance stats
     stats = sparse_ops.get_performance_statistics()
