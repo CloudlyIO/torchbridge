@@ -226,7 +226,7 @@ class GPUSetupValidator:
             print("   2. python3 benchmarks/next_gen/demo_cutting_edge_benchmark.py --quick")
             print("   3. Explore demos/ directory for examples")
         else:
-            print("   1. Review docs/guides/cuda_setup.md for detailed instructions")
+            print("   1. Review docs/user-guides/cuda_setup.md for detailed instructions")
             print("   2. Check pip3 install -r requirements.txt")
             print("   3. Ensure CUDA drivers are properly installed")
 
@@ -235,7 +235,7 @@ def main():
     """Main validation function"""
     print("🚀 GPU Setup Validation Script")
     print("This script validates CUDA, Triton, and framework setup.")
-    print("For detailed setup instructions, see docs/guides/cuda_setup.md")
+    print("For detailed setup instructions, see docs/user-guides/cuda_setup.md")
 
     validator = GPUSetupValidator()
 

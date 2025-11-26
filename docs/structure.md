@@ -20,7 +20,7 @@ shahmod/
 ├── 🚀 Quick Start Files
 │   ├── README.md                    # Main project overview
 │   ├── benchmarks/README.md         # Simple benchmark instructions
-│   ├── docs/guides/cuda_setup.md   # GPU/CUDA setup instructions
+│   ├── docs/user-guides/cuda_setup.md   # GPU/CUDA setup instructions
 │   └── requirements.txt            # Python dependencies
 │
 ├── 🔧 Core Framework

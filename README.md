@@ -296,7 +296,7 @@ python3 -c "from benchmarks.next_gen.enhanced_benchmark_runner import main; main
 
 **📋 Detailed guides:**
 - **[Benchmark Quick Start](benchmarks/README.md)** - Simple benchmark instructions
-- **[CUDA/GPU Setup](docs/guides/cuda_setup.md)** - Hardware setup and validation
+- **[CUDA/GPU Setup](docs/user-guides/cuda_setup.md)** - Hardware setup and validation
 - **[Repository Structure](docs/structure.md)** - Navigation and organization guide
 
 ### Benchmark Against State-of-the-Art
