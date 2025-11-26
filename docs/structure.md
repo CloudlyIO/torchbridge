@@ -56,7 +56,19 @@ shahmod/
 │       ├── overview.md              # Framework implementation details
 │       ├── roadmap.md               # Technology roadmap and future development
 │       ├── references.md            # Research papers and resources
-│       └── structure.md             # Repository structure and navigation
+│       ├── structure.md             # Repository structure and navigation
+│       ├── technical/               # Technical architecture documentation
+│       │   ├── hardware_abstraction.md     # Multi-vendor HAL architecture
+│       │   ├── implementation_roadmap.md   # Implementation strategy
+│       │   └── phase4_validation.md        # Validation reports
+│       └── user-guides/             # User guides and tutorials
+│           ├── hardware_abstraction_guide.md  # HAL user guide
+│           ├── cuda_setup.md        # CUDA/GPU setup instructions
+│           ├── cloud_testing_guide.md # Cloud platform testing guide
+│           ├── dead_code_cleanup.md # Code maintenance history
+│           ├── benchmarks.md        # Benchmark documentation
+│           ├── testing.md           # Testing framework guide
+│           └── claude_notes.md      # Development notes
 │
 ├── 🛠️ Development Tools
 │   ├── scripts/                     # **Development and validation scripts**
@@ -71,9 +83,6 @@ shahmod/
 │       └── setup.py                # Package installation setup
 │
 └── 📋 Project Management
-    ├── PROPRIETARY_GPU_INTEGRATION_ARCHITECTURE.md # Hardware abstraction architecture
-    ├── IMPLEMENTATION_ROADMAP.md                   # Implementation strategy
-    ├── DEAD_CODE_CLEANUP_PLAN.md                   # Code maintenance notes
     └── LICENSE                                      # MIT license
 ```
 

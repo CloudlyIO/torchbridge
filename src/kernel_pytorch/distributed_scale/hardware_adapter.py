@@ -21,6 +21,14 @@ from .hardware_discovery import (
 from .thermal_power_management import ThermalAwareScheduler, PowerEfficiencyOptimizer
 from .fault_tolerance import HardwareHealthMonitor
 
+# Import new Hardware Abstraction Layer (HAL) - optional for backward compatibility
+try:
+    from ..hardware_abstraction.hal_core import HardwareAbstractionLayer
+    from ..hardware_abstraction.vendor_adapters import auto_detect_best_adapter, get_available_vendors
+    HAL_AVAILABLE = True
+except ImportError:
+    HAL_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,9 +44,10 @@ class HardwareAdapter:
         self,
         enable_monitoring: bool = True,
         thermal_threshold: float = 85.0,
-        power_budget_w: Optional[float] = None
+        power_budget_w: Optional[float] = None,
+        enable_hal: bool = True
     ):
-        # Core components
+        # Core components (maintain backward compatibility)
         self.topology_manager = HardwareTopologyManager()
         self.thermal_scheduler = ThermalAwareScheduler(
             self.topology_manager, thermal_threshold, power_budget_w
@@ -53,7 +62,37 @@ class HardwareAdapter:
         # Device mesh optimizer
         self.mesh_optimizer = DeviceMeshOptimizer(self.topology_manager)
 
-        logger.info("Hardware adapter initialized")
+        # New Hardware Abstraction Layer (HAL) - optional enhancement
+        self.hal = None
+        self.hal_enabled = enable_hal and HAL_AVAILABLE
+
+        if self.hal_enabled:
+            try:
+                self.hal = HardwareAbstractionLayer()
+
+                # Register available vendor adapters
+                available_vendors = get_available_vendors()
+                for vendor in available_vendors:
+                    if vendor == HardwareVendor.NVIDIA and torch.cuda.is_available():
+                        from ..hardware_abstraction.vendor_adapters import NVIDIAAdapter
+                        adapter = NVIDIAAdapter()
+                        self.hal.register_vendor_adapter(adapter)
+                    elif vendor == HardwareVendor.INTEL:
+                        from ..hardware_abstraction.vendor_adapters import IntelAdapter
+                        adapter = IntelAdapter()
+                        self.hal.register_vendor_adapter(adapter)
+                    elif vendor == HardwareVendor.UNKNOWN:  # CPU
+                        from ..hardware_abstraction.vendor_adapters import CPUAdapter
+                        adapter = CPUAdapter()
+                        self.hal.register_vendor_adapter(adapter)
+
+                logger.info("Hardware Abstraction Layer (HAL) initialized")
+            except Exception as e:
+                logger.warning(f"HAL initialization failed, falling back to legacy mode: {e}")
+                self.hal = None
+                self.hal_enabled = False
+
+        logger.info(f"Hardware adapter initialized (HAL: {'enabled' if self.hal_enabled else 'disabled'})")
 
     @contextmanager
     def optimal_device_context(
@@ -279,6 +318,149 @@ class HardwareAdapter:
     def get_health_report(self, hours: int = 1) -> Dict[str, Any]:
         """Get comprehensive health report"""
         return self.health_monitor.get_performance_report(hours=hours)
+
+    def get_hal(self) -> Optional[Any]:
+        """
+        Get Hardware Abstraction Layer instance
+
+        Returns:
+            HAL instance if available, None otherwise
+        """
+        return self.hal if self.hal_enabled else None
+
+    def is_hal_enabled(self) -> bool:
+        """Check if Hardware Abstraction Layer is enabled and available"""
+        return self.hal_enabled
+
+    def get_optimal_device_hal(self,
+                              memory_requirement_gb: float,
+                              compute_requirement_tflops: float,
+                              preferred_vendors: Optional[List[HardwareVendor]] = None) -> Optional[Any]:
+        """
+        Get optimal device using HAL (enhanced version)
+
+        Args:
+            memory_requirement_gb: Required memory in GB
+            compute_requirement_tflops: Required compute in TFLOPS
+            preferred_vendors: List of preferred hardware vendors
+
+        Returns:
+            Optimal device specification if available
+        """
+        if not self.hal_enabled:
+            logger.warning("HAL not available, falling back to legacy method")
+            return self.get_optimal_device_placement(
+                memory_requirement_gb, compute_requirement_tflops,
+                preferred_vendors[0] if preferred_vendors else None
+            )
+
+        try:
+            # Convert to HAL precision requirements
+            precision_reqs = None
+            if preferred_vendors:
+                # Map vendor preferences to precision requirements (example logic)
+                precision_reqs = ['fp16', 'fp32']  # Default precision requirements
+
+            optimal_device = self.hal.get_optimal_device(
+                memory_requirement_gb=memory_requirement_gb,
+                compute_requirement_tflops=compute_requirement_tflops,
+                preferred_vendors=preferred_vendors,
+                precision_requirements=precision_reqs
+            )
+
+            return optimal_device
+
+        except Exception as e:
+            logger.error(f"HAL device selection failed: {e}")
+            # Fallback to legacy method
+            return self.get_optimal_device_placement(
+                memory_requirement_gb, compute_requirement_tflops,
+                preferred_vendors[0] if preferred_vendors else None
+            )
+
+    def get_cross_vendor_capabilities(self) -> Dict[str, Any]:
+        """
+        Get capabilities across all vendors (HAL-enhanced feature)
+
+        Returns:
+            Dictionary of vendor capabilities and cluster status
+        """
+        if not self.hal_enabled:
+            # Fallback to existing cluster statistics
+            return self.get_cluster_statistics()
+
+        try:
+            # Get HAL cluster status
+            hal_status = self.hal.get_cluster_status()
+
+            # Merge with existing statistics for backward compatibility
+            legacy_stats = self.get_cluster_statistics()
+
+            return {
+                'hal_enabled': True,
+                'cross_vendor_devices': hal_status.get('total_devices', 0),
+                'vendor_distribution': hal_status.get('vendor_distribution', {}),
+                'available_memory_gb': hal_status.get('available_memory_gb', 0),
+                'average_utilization': hal_status.get('avg_utilization', 0),
+                # Include legacy stats for compatibility
+                'legacy_stats': legacy_stats,
+                # New HAL-specific information
+                'device_details': hal_status.get('device_details', [])
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting cross-vendor capabilities: {e}")
+            return self.get_cluster_statistics()
+
+    def create_cross_vendor_mesh(self,
+                                world_size: int,
+                                preferred_vendors: Optional[List[HardwareVendor]] = None,
+                                **kwargs) -> DeviceMesh:
+        """
+        Create device mesh across multiple vendors (HAL-enhanced feature)
+
+        Args:
+            world_size: Total number of devices needed
+            preferred_vendors: Preferred vendors for the mesh
+            **kwargs: Additional parameters for mesh creation
+
+        Returns:
+            Optimized cross-vendor device mesh
+        """
+        if not self.hal_enabled:
+            # Fallback to existing mesh creation
+            return self.create_optimal_device_mesh(world_size, **kwargs)
+
+        try:
+            # Select optimal devices across vendors
+            devices = []
+
+            # Use HAL to get optimal device selection
+            for i in range(world_size):
+                optimal_device = self.hal.get_optimal_device(
+                    memory_requirement_gb=kwargs.get('memory_per_device', 8),
+                    compute_requirement_tflops=kwargs.get('compute_per_device', 10),
+                    preferred_vendors=preferred_vendors
+                )
+
+                if optimal_device:
+                    devices.append(optimal_device)
+                else:
+                    logger.warning(f"Could not find optimal device {i}/{world_size}")
+
+            if len(devices) < world_size:
+                logger.warning(f"Only found {len(devices)}/{world_size} optimal devices")
+
+            # Create mesh using HAL
+            return self.hal.create_device_mesh(
+                devices=devices[:world_size],
+                **kwargs
+            )
+
+        except Exception as e:
+            logger.error(f"Cross-vendor mesh creation failed: {e}")
+            # Fallback to existing method
+            return self.create_optimal_device_mesh(world_size, **kwargs)
 
     def shutdown(self):
         """Shutdown hardware adapter and stop monitoring"""
