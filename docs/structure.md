@@ -19,8 +19,8 @@ This repository is organized for **ease of use**, **development efficiency**, an
 shahmod/
 ├── 🚀 Quick Start Files
 │   ├── README.md                    # Main project overview
-│   ├── BENCHMARK_QUICKSTART.md     # Simple benchmark instructions
-│   ├── CUDA_SETUP_GUIDE.md         # GPU/CUDA setup instructions
+│   ├── benchmarks/README.md         # Simple benchmark instructions
+│   ├── docs/guides/cuda_setup.md   # GPU/CUDA setup instructions
 │   └── requirements.txt            # Python dependencies
 │
 ├── 🔧 Core Framework
@@ -53,17 +53,17 @@ shahmod/
 │
 ├── 📚 Documentation
 │   └── docs/                        # **Technical documentation**
-│       ├── implementation_guide.md  # Framework implementation details
-│       ├── advanced_optimizations_guide.md # Advanced usage patterns
-│       ├── EXTERNAL_REFERENCES.md  # Research papers and resources
-│       └── TECHNICAL_OVERVIEW.md   # Architecture overview
+│       ├── overview.md              # Framework implementation details
+│       ├── roadmap.md               # Technology roadmap and future development
+│       ├── references.md            # Research papers and resources
+│       └── structure.md             # Repository structure and navigation
 │
 ├── 🛠️ Development Tools
 │   ├── scripts/                     # **Development and validation scripts**
 │   │   ├── validate_gpu_setup.py   # GPU/CUDA validation tool
 │   │   ├── cleanup_repo.py         # Repository maintenance and cleanup
 │   │   ├── profile_tests.py        # Performance profiling utility
-│   │   └── test_all_changes.py     # Comprehensive validation testing
+│   │   └── run_tests.py            # Comprehensive validation testing
 │   │
 │   └── 🔧 Configuration Files
 │       ├── pytest.ini              # Test configuration
@@ -71,10 +71,10 @@ shahmod/
 │       └── setup.py                # Package installation setup
 │
 └── 📋 Project Management
-    ├── OPTIMIZATION_ROADMAP_2025_2026.md # Technology roadmap
-    ├── TESTING_STRATEGY.md              # Testing methodology
-    ├── CLAUDE.md                        # AI development notes
-    └── LICENSE                          # MIT license
+    ├── PROPRIETARY_GPU_INTEGRATION_ARCHITECTURE.md # Hardware abstraction architecture
+    ├── IMPLEMENTATION_ROADMAP.md                   # Implementation strategy
+    ├── DEAD_CODE_CLEANUP_PLAN.md                   # Code maintenance notes
+    └── LICENSE                                      # MIT license
 ```
 
 ## 🚀 Getting Started Navigation
@@ -100,7 +100,7 @@ python3 demos/01_getting_started/optimized_basic_demo.py --quick
 ls src/kernel_pytorch/
 
 # Review architecture
-cat docs/TECHNICAL_OVERVIEW.md
+cat docs/overview.md
 
 # Run comprehensive tests
 python3 run_tests.py integration
@@ -115,7 +115,7 @@ ls src/kernel_pytorch/next_gen_optimizations/
 python3 benchmarks/next_gen/demo_cutting_edge_benchmark.py --quick
 
 # Research roadmap
-cat OPTIMIZATION_ROADMAP_2025_2026.md
+cat docs/roadmap.md
 ```
 
 ## 📁 Directory Purposes
@@ -153,7 +153,7 @@ cat OPTIMIZATION_ROADMAP_2025_2026.md
   - `scripts/validate_gpu_setup.py` - Setup validation
   - `scripts/cleanup_repo.py` - Repository maintenance
   - `scripts/profile_tests.py` - Performance profiling
-  - `scripts/test_all_changes.py` - Comprehensive validation
+  - `scripts/run_tests.py` - Comprehensive validation
 - **Usage**: Development workflow automation and maintenance
 
 ## 🧭 Navigation Tips
@@ -162,7 +162,7 @@ cat OPTIMIZATION_ROADMAP_2025_2026.md
 
 **🟢 Beginner**
 ```
-README.md → BENCHMARK_QUICKSTART.md → demos/01_getting_started/
+README.md → benchmarks/README.md → demos/01_getting_started/
 ```
 
 **🟡 Intermediate**
@@ -177,7 +177,7 @@ src/kernel_pytorch/ → docs/advanced_optimizations_guide.md → tests/
 
 **🔴 Research/Cutting-Edge**
 ```
-benchmarks/next_gen/ → src/kernel_pytorch/next_gen_optimizations/ → OPTIMIZATION_ROADMAP_2025_2026.md
+benchmarks/next_gen/ → src/kernel_pytorch/next_gen_optimizations/ → docs/roadmap.md
 ```
 
 ### **By Use Case:**

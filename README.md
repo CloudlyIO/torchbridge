@@ -87,8 +87,8 @@ shahmod/
 │   ├── test_configs.py           # Tiered test configuration
 │   └── test_*.py                 # Categorized test modules
 ├── docs/                         # Documentation and guides
-├── tools/                        # Development and profiling tools
-└── examples/                     # Additional examples and tutorials
+├── scripts/                      # Development and profiling tools
+└── scripts/                      # Development and profiling tools
 ```
 
 ## 🧪 Advanced Testing Framework
@@ -150,12 +150,12 @@ distributed_model = manager.setup_model(model)
 
 ### Basic Compiler Optimization
 ```bash
-python3 demos/02_compiler_optimizations/demo_compiler_optimization.py
+python3 demos/02_compiler_optimizations/optimized_compiler_demo.py
 ```
 
 ### Advanced FlashLight Integration
 ```bash
-python3 demos/02_compiler_optimizations/demo_priority1_compiler_integration.py
+python3 demos/02_compiler_optimizations/optimized_flashlight_demo.py
 ```
 
 ### Testing Framework Demo
@@ -227,10 +227,10 @@ pytest -m stress tests/                         # Stress tests
 ### Profiling and Analysis
 ```bash
 # Test performance profiling
-python3 tools/profile_tests.py
+python3 scripts/profile_tests.py
 
 # Comprehensive repository validation
-python3 tools/test_all_changes.py
+python3 scripts/run_tests.py integration
 ```
 
 ## 📈 Validated Performance Benchmarks
@@ -271,9 +271,9 @@ python3 -c "from benchmarks.next_gen.enhanced_benchmark_runner import main; main
 ```
 
 **📋 Detailed guides:**
-- **[Benchmark Quick Start](BENCHMARK_QUICKSTART.md)** - Simple benchmark instructions
-- **[CUDA/GPU Setup](CUDA_SETUP_GUIDE.md)** - Hardware setup and validation
-- **[Repository Structure](REPOSITORY_STRUCTURE.md)** - Navigation and organization guide
+- **[Benchmark Quick Start](benchmarks/README.md)** - Simple benchmark instructions
+- **[CUDA/GPU Setup](docs/guides/cuda_setup.md)** - Hardware setup and validation
+- **[Repository Structure](docs/structure.md)** - Navigation and organization guide
 
 ### Benchmark Against State-of-the-Art
 - **PyTorch Native**: Standard PyTorch with torch.compile
@@ -387,11 +387,10 @@ This is a cutting-edge research and implementation project. Contributions welcom
 
 ## 📚 Documentation
 
-- **[Implementation Guide](docs/implementation_guide.md)**: Complete framework overview and setup
-- **[Advanced Optimizations](docs/advanced_optimizations_guide.md)**: Deep-dive into 2025 techniques
-- **[Testing Strategy](TESTING_STRATEGY.md)**: Comprehensive testing and validation framework
-- **[Optimization Roadmap](OPTIMIZATION_ROADMAP_2025_2026.md)**: Technology roadmap and future development
-- **[External References](docs/EXTERNAL_REFERENCES.md)**: Curated list of technical resources and research
+- **[Implementation Overview](docs/overview.md)**: Complete framework overview and setup
+- **[Testing Strategy](tests/README.md)**: Comprehensive testing and validation framework
+- **[Technology Roadmap](docs/roadmap.md)**: Technology roadmap and future development
+- **[External References](docs/references.md)**: Curated list of technical resources and research
 
 ## 🔗 Technical References & Resources
 

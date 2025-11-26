@@ -14,16 +14,16 @@ The project demonstrates how to write PyTorch code that **compiles efficiently**
 ## Architecture & Code Organization
 
 ### Progressive Optimization Levels (5 levels)
-1. **Level 1**: `src/kernel_pytorch/components/basic_optimized.py` - PyTorch native optimizations
-2. **Level 2**: `src/kernel_pytorch/components/jit_optimized.py` - TorchScript JIT compilation
-3. **Level 3**: torch.compile integration (PyTorch 2.0+)
-4. **Level 4**: `src/kernel_pytorch/triton_kernels/` - Triton kernels (Python-based GPU programming)
-5. **Level 5**: `src/kernel_pytorch/cuda_kernels/` - Custom CUDA kernels (C++/CUDA)
+1. **Level 1**: Basic PyTorch optimizations in `src/kernel_pytorch/components/`
+2. **Level 2**: Compiler integration with `src/kernel_pytorch/compiler_integration/`
+3. **Level 3**: Advanced attention patterns in `src/kernel_pytorch/advanced_attention/`
+4. **Level 4**: Next-gen optimizations in `src/kernel_pytorch/next_gen_optimizations/`
+5. **Level 5**: Distributed scaling in `src/kernel_pytorch/distributed_scale/`
 
 ### Key Components
-- **Transformer Models**: Language models with autoregressive generation
-- **Vision Transformers**: Spatial attention and patch processing
-- **Graph Neural Networks**: Message passing and aggregation
+- **Advanced Attention**: FlexAttention, Flash Attention patterns, and sparse attention
+- **MoE Layers**: Mixture of Experts with routing optimization
+- **Distributed Training**: Multi-GPU and cluster-scale optimization
 - **Profiling Tools**: `src/kernel_pytorch/utils/profiling.py` - Comprehensive benchmarking
 
 ## Development Commands
@@ -45,8 +45,8 @@ python3 setup.py build_ext --inplace
 # Verify installation
 python3 -c "import kernel_pytorch; print('✓ Installation successful')"
 
-# Run progressive optimization demo
-python3 src/kernel_pytorch/examples/progressive_optimization.py
+# Run basic optimization demo
+python3 demos/01_getting_started/optimized_basic_demo.py --quick
 
 # Run progressive optimization demo
 python3 demo_progressive_optimization.py
@@ -152,7 +152,7 @@ The project now includes an advanced compiler optimization assistant that can au
 #### Usage Examples
 ```bash
 # Run optimization assistant demo
-python3 demos/02_compiler_optimizations/demo_compiler_optimization.py
+python3 demos/02_compiler_optimizations/optimized_compiler_demo.py
 
 # Interactive optimization analysis
 PYTHONPATH=src python3 -c "

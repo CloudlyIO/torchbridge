@@ -14,7 +14,7 @@ Phase 4 focused on high-value code quality improvements building on the successf
 - **Results**:
   - Enhanced deprecation warnings with specific migration paths
   - Clear removal timeline (v2.0.0, June 2026)
-  - Complete documentation references (REFACTORING_GUIDE.md)
+  - Complete documentation references (demos/docs/guides/refactoring.md)
   - 4 deprecated modules updated with enhanced warnings
 
 ### ✅ **Priority 2: Import Performance Optimization with Lazy Loading**
