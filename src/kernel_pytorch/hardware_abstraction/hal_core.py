@@ -13,20 +13,45 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
+# Import HardwareVendor from the original location for compatibility
+from ..distributed_scale.hardware_discovery import HardwareVendor
+
 logger = logging.getLogger(__name__)
 
 
-class HardwareVendor(Enum):
-    """Supported hardware vendors"""
-    NVIDIA = "nvidia"
-    AMD = "amd"
-    INTEL = "intel"
-    CUSTOM_ASIC = "custom_asic"
-    FPGA = "fpga"
-    TPU = "tpu"
-    CEREBRAS = "cerebras"
-    GRAPHCORE = "graphcore"
-    UNKNOWN = "unknown"
+@dataclass
+class DeviceMesh:
+    """Cross-vendor device mesh for distributed computation"""
+    mesh_id: str
+    devices: List['DeviceSpec']
+    topology: str = "ring"  # ring, tree, mesh, custom
+    communication_backend: Optional[str] = None
+    bandwidth_matrix: Optional[List[List[float]]] = None
+    latency_matrix: Optional[List[List[float]]] = None
+
+    def __post_init__(self):
+        if self.bandwidth_matrix is None:
+            # Initialize with default bandwidth estimates
+            n = len(self.devices)
+            self.bandwidth_matrix = [[0.0] * n for _ in range(n)]
+
+        if self.latency_matrix is None:
+            # Initialize with default latency estimates
+            n = len(self.devices)
+            self.latency_matrix = [[0.0] * n for _ in range(n)]
+
+
+@dataclass
+class CrossVendorCapabilities:
+    """Aggregated capabilities across multiple vendors"""
+    total_devices: int
+    vendor_distribution: Dict[HardwareVendor, int]
+    total_memory_gb: float
+    peak_compute_tflops: float
+    mixed_precision_support: bool
+    cross_vendor_communication: bool
+    mesh_topologies: List[str]
+
 
 
 class ComputeCapability(Enum):
@@ -154,6 +179,13 @@ class HardwareAbstractionLayer:
             self._device_counter += 1
 
         logger.info(f"Registered {adapter.vendor} adapter with {len(vendor_devices)} devices")
+
+    def register_device(self, device: DeviceSpec) -> None:
+        """Register a single device with the HAL"""
+        device.device_id = self._device_counter
+        self.devices[self._device_counter] = device
+        self._device_counter += 1
+        logger.debug(f"Registered device {device.device_id}: {device.vendor.value} - {device.capabilities.device_name}")
 
     def discover_all_hardware(self) -> Dict[HardwareVendor, List[DeviceSpec]]:
         """Discover all available hardware across vendors"""
@@ -400,3 +432,152 @@ class HardwareAbstractionLayer:
                 optimal_device.current_utilization += workload.get('utilization_estimate', 0.1)
 
         return placement
+
+    def create_cross_vendor_mesh(self,
+                                 devices: List[DeviceSpec],
+                                 mesh_id: str,
+                                 topology: str = "ring") -> DeviceMesh:
+        """
+        Create cross-vendor device mesh for heterogeneous training
+
+        Args:
+            devices: List of devices from potentially different vendors
+            mesh_id: Unique identifier for the mesh
+            topology: Communication topology (ring, tree, mesh, custom)
+
+        Returns:
+            DeviceMesh object with optimized communication paths
+        """
+        if not devices:
+            raise ValueError("Cannot create mesh with empty device list")
+
+        # Validate devices are available
+        available_devices = [d for d in devices if d.is_available]
+        if len(available_devices) != len(devices):
+            logger.warning(f"Some devices unavailable: {len(devices) - len(available_devices)} filtered out")
+            devices = available_devices
+
+        # Analyze vendor distribution for optimal topology
+        vendor_groups = {}
+        for device in devices:
+            if device.vendor not in vendor_groups:
+                vendor_groups[device.vendor] = []
+            vendor_groups[device.vendor].append(device)
+
+        # Select optimal communication backend
+        communication_backend = self._select_communication_backend(vendor_groups)
+
+        # Create device mesh with optimized layout
+        mesh = DeviceMesh(
+            mesh_id=mesh_id,
+            devices=devices,
+            topology=topology,
+            communication_backend=communication_backend
+        )
+
+        # Calculate bandwidth and latency matrices
+        self._populate_mesh_matrices(mesh)
+
+        logger.info(f"Created cross-vendor mesh {mesh_id} with {len(devices)} devices "
+                   f"from {len(vendor_groups)} vendors using {communication_backend}")
+
+        return mesh
+
+    def _select_communication_backend(self, vendor_groups: Dict[HardwareVendor, List[DeviceSpec]]) -> str:
+        """Select optimal communication backend for vendor mix"""
+        # If all NVIDIA, use NCCL
+        if len(vendor_groups) == 1 and HardwareVendor.NVIDIA in vendor_groups:
+            return "nccl"
+
+        # If all AMD, use RCCL
+        if len(vendor_groups) == 1 and HardwareVendor.AMD in vendor_groups:
+            return "rccl"
+
+        # If mixed vendors, use Gloo or MPI
+        nvidia_count = len(vendor_groups.get(HardwareVendor.NVIDIA, []))
+        total_count = sum(len(devices) for devices in vendor_groups.values())
+
+        if total_count == 0:
+            return "gloo"  # Default backend for no devices
+
+        if nvidia_count / total_count > 0.7:
+            return "mixed_nccl_gloo"  # Mostly NVIDIA with fallback
+        else:
+            return "gloo"  # Generic cross-vendor backend
+
+    def _populate_mesh_matrices(self, mesh: DeviceMesh) -> None:
+        """Populate bandwidth and latency matrices for device mesh"""
+        n = len(mesh.devices)
+
+        for i, device_a in enumerate(mesh.devices):
+            for j, device_b in enumerate(mesh.devices):
+                if i == j:
+                    mesh.bandwidth_matrix[i][j] = float('inf')  # Self-connection
+                    mesh.latency_matrix[i][j] = 0.0
+                    continue
+
+                # Estimate inter-device bandwidth and latency
+                bandwidth_gbps, latency_ms = self._estimate_device_connection(device_a, device_b)
+                mesh.bandwidth_matrix[i][j] = bandwidth_gbps
+                mesh.latency_matrix[i][j] = latency_ms
+
+    def _estimate_device_connection(self, device_a: DeviceSpec, device_b: DeviceSpec) -> Tuple[float, float]:
+        """Estimate bandwidth and latency between two devices"""
+        # Same vendor, likely better interconnects
+        if device_a.vendor == device_b.vendor:
+            if device_a.vendor == HardwareVendor.NVIDIA:
+                # Check for NVLink
+                if device_a.capabilities.interconnect_type == "NVLink":
+                    return 600.0, 1.0  # NVLink bandwidth ~600 GB/s, latency ~1ms
+                else:
+                    return 32.0, 5.0   # PCIe bandwidth ~32 GB/s, latency ~5ms
+            elif device_a.vendor == HardwareVendor.AMD:
+                return 50.0, 3.0       # Infinity Fabric estimates
+            else:
+                return 16.0, 10.0      # Generic same-vendor estimate
+        else:
+            # Cross-vendor likely through PCIe/network
+            return 12.8, 20.0          # PCIe 4.0 x16 bandwidth, higher latency
+
+    def get_cross_vendor_capabilities(self) -> CrossVendorCapabilities:
+        """Get aggregated capabilities across all vendors"""
+        vendor_counts = {}
+        total_memory = 0.0
+        total_compute = 0.0
+        mixed_precision_devices = 0
+        cross_vendor_comm = len(set(d.vendor for d in self.devices.values())) > 1
+
+        for device in self.devices.values():
+            # Count by vendor
+            if device.vendor not in vendor_counts:
+                vendor_counts[device.vendor] = 0
+            vendor_counts[device.vendor] += 1
+
+            # Aggregate resources
+            total_memory += device.capabilities.memory_gb
+            total_compute += device.capabilities.peak_flops_fp32 / 1e12  # Convert to TFLOPS
+
+            # Check mixed precision support
+            if ComputeCapability.MIXED_PRECISION in device.capabilities.supported_precisions:
+                mixed_precision_devices += 1
+
+        # Determine supported mesh topologies
+        device_count = len(self.devices)
+        mesh_topologies = ["ring"]  # Always supported
+
+        if device_count >= 4:
+            mesh_topologies.append("tree")
+        if device_count >= 8:
+            mesh_topologies.append("mesh")
+        if cross_vendor_comm:
+            mesh_topologies.append("hybrid")
+
+        return CrossVendorCapabilities(
+            total_devices=device_count,
+            vendor_distribution=vendor_counts,
+            total_memory_gb=total_memory,
+            peak_compute_tflops=total_compute,
+            mixed_precision_support=mixed_precision_devices > 0,
+            cross_vendor_communication=cross_vendor_comm,
+            mesh_topologies=mesh_topologies
+        )

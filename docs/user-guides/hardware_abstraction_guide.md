@@ -68,13 +68,41 @@ devices = adapter.get_optimal_device_placement(memory_gb=8, compute_tflops=10)
 ### PyTorch PrivateUse1 Integration
 
 ```python
-from kernel_pytorch.hardware_abstraction.privateuse1_integration import register_custom_device
-from kernel_pytorch.hardware_abstraction.hal_core import CustomDeviceBackend
+from kernel_pytorch.hardware_abstraction.privateuse1_integration import (
+    register_custom_device, CustomDeviceBackend, PrivateUse1Config
+)
+from kernel_pytorch.hardware_abstraction.hal_core import HardwareVendor
+
+class MyCustomBackend(CustomDeviceBackend):
+    def initialize_device(self, device_id: int) -> bool:
+        # Custom device initialization logic
+        return True
+
+    def get_device_count(self) -> int:
+        return 4  # Number of custom devices
+
+    def get_device_properties(self, device_id: int):
+        return {"name": f"MyASIC-{device_id}", "memory": 32768}
+
+    def allocate_memory(self, size: int, device_id: int):
+        # Custom memory allocation
+        pass
+
+    def copy_to_device(self, tensor, device_id: int):
+        # Custom tensor transfer
+        return tensor
 
 # Register custom hardware
 backend = MyCustomBackend("my_asic", HardwareVendor.CUSTOM_ASIC)
-config = PrivateUse1Config(device_name="my_asic", vendor=HardwareVendor.CUSTOM_ASIC)
-register_custom_device(backend, config)
+config = PrivateUse1Config(
+    device_name="my_asic",
+    vendor=HardwareVendor.CUSTOM_ASIC,
+    backend_library="libmyasic.so",
+    enable_autograd=True,
+    enable_compilation=True
+)
+success = register_custom_device(backend, config)
+print(f"Custom device registered: {success}")
 ```
 
 ### Vendor Adapters
@@ -87,17 +115,31 @@ best_adapter = auto_detect_best_adapter()
 devices = best_adapter.discover_devices()
 ```
 
-## Demo
+## Demos and Benchmarks
 
-Run the comprehensive multi-vendor demonstration:
+Run the comprehensive multi-vendor demonstrations:
 
 ```bash
-# Quick demo
+# Enhanced multi-vendor demo with full capabilities
+python3 demos/hardware_abstraction/enhanced_multi_vendor_demo.py --quick
+
+# Original multi-vendor demo
 python3 demos/hardware_abstraction/multi_vendor_demo.py --quick
 
-# Full demonstration
-python3 demos/hardware_abstraction/multi_vendor_demo.py
+# Performance benchmarking
+python3 benchmarks/hardware_abstraction_benchmark.py --quick
+
+# Complete performance analysis
+python3 benchmarks/hardware_abstraction_benchmark.py --output hal_results.json
 ```
+
+### Advanced Demo Features
+
+The enhanced demo includes:
+- **Cross-vendor device mesh creation** - Demonstrates heterogeneous training setups
+- **Intelligent workload placement** - Shows optimal resource allocation across vendors
+- **Performance comparison** - Benchmarks across different hardware types
+- **Real-time capability analysis** - Live hardware capability assessment
 
 ## Architecture Benefits
 

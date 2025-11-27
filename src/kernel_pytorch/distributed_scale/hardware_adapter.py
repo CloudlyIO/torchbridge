@@ -216,6 +216,37 @@ class HardwareAdapter:
 
         return stats
 
+    def get_available_devices(self) -> List[Dict[str, Any]]:
+        """Get list of available devices for backward compatibility"""
+        if self.hal and self.hal.devices:
+            # Return HAL devices if available
+            return [
+                {
+                    'device_id': device_id,
+                    'vendor': device.vendor.value,
+                    'capabilities': device.capabilities,
+                    'memory_gb': getattr(device.capabilities, 'memory_gb', 0.0),
+                    'is_available': device.is_available
+                }
+                for device_id, device in self.hal.devices.items()
+            ]
+        elif hasattr(self.topology_manager, 'available_devices'):
+            # Fallback to topology manager if available
+            return getattr(self.topology_manager, 'available_devices', [])
+        else:
+            # Return empty list if no devices available
+            return []
+
+    def get_cluster_status(self) -> Dict[str, Any]:
+        """Get cluster status for backward compatibility"""
+        devices = self.get_available_devices()
+        return {
+            'total_devices': len(devices),
+            'device_details': devices,
+            'cluster_health': 'healthy' if devices else 'no_devices',
+            'hal_enabled': hasattr(self, 'hal') and self.hal is not None
+        }
+
     def _get_topology_stats(self) -> Dict[str, Any]:
         """Get topology statistics"""
         if not self.topology_manager.cluster_topology:
@@ -461,6 +492,98 @@ class HardwareAdapter:
             logger.error(f"Cross-vendor mesh creation failed: {e}")
             # Fallback to existing method
             return self.create_optimal_device_mesh(world_size, **kwargs)
+
+    def create_cross_vendor_mesh_hal(self,
+                                    devices: List[Any],
+                                    mesh_id: str,
+                                    topology: str = "ring") -> Optional[Any]:
+        """
+        Create cross-vendor device mesh using HAL (new enhanced feature)
+
+        Args:
+            devices: List of device specifications
+            mesh_id: Unique identifier for the mesh
+            topology: Communication topology
+
+        Returns:
+            DeviceMesh object or None if HAL not available
+        """
+        if not self.hal_enabled:
+            logger.warning("HAL not available for cross-vendor mesh creation")
+            return None
+
+        try:
+            mesh = self.hal.create_cross_vendor_mesh(devices, mesh_id, topology)
+            logger.info(f"Created cross-vendor mesh: {mesh_id}")
+            return mesh
+
+        except Exception as e:
+            logger.error(f"Cross-vendor mesh creation failed: {e}")
+            return None
+
+    def get_vendor_capabilities_hal(self) -> Optional[Dict[str, Any]]:
+        """
+        Get aggregated vendor capabilities using HAL
+
+        Returns:
+            Dictionary with cross-vendor capabilities or None if HAL not available
+        """
+        if not self.hal_enabled:
+            return None
+
+        try:
+            capabilities = self.hal.get_cross_vendor_capabilities()
+            return {
+                'total_devices': capabilities.total_devices,
+                'vendor_distribution': {v.value: count for v, count in capabilities.vendor_distribution.items()},
+                'total_memory_gb': capabilities.total_memory_gb,
+                'peak_compute_tflops': capabilities.peak_compute_tflops,
+                'mixed_precision_support': capabilities.mixed_precision_support,
+                'cross_vendor_communication': capabilities.cross_vendor_communication,
+                'supported_mesh_topologies': capabilities.mesh_topologies
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to get vendor capabilities: {e}")
+            return None
+
+    def auto_detect_hardware_hal(self) -> Dict[str, List[Any]]:
+        """
+        Auto-detect all available hardware using HAL
+
+        Returns:
+            Dictionary mapping vendor names to device lists
+        """
+        if not self.hal_enabled:
+            logger.warning("HAL not available for hardware auto-detection")
+            return {}
+
+        try:
+            # Use HAL to discover all hardware
+            inventory = self.hal.discover_all_hardware()
+
+            # Convert to simple format for compatibility
+            result = {}
+            for vendor, devices in inventory.items():
+                result[vendor.value] = [
+                    {
+                        'device_id': device.device_id,
+                        'vendor': device.vendor.value,
+                        'name': device.capabilities.device_name,
+                        'memory_gb': device.capabilities.memory_gb,
+                        'compute_capability': device.capabilities.compute_capability,
+                        'available': device.is_available
+                    }
+                    for device in devices
+                ]
+
+            logger.info(f"Auto-detected hardware: {len(result)} vendors, "
+                       f"{sum(len(devices) for devices in result.values())} total devices")
+            return result
+
+        except Exception as e:
+            logger.error(f"Hardware auto-detection failed: {e}")
+            return {}
 
     def shutdown(self):
         """Shutdown hardware adapter and stop monitoring"""

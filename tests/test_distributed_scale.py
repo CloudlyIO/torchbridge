@@ -65,8 +65,9 @@ from kernel_pytorch.distributed_scale.communication_optimization import (
     CommunicationPattern, CompressionMethod, NetworkTopology, CollectiveOpConfig
 )
 from kernel_pytorch.distributed_scale.hardware_adaptation import (
-    HardwareVendor, DeviceCapability, ThermalState, NodeTopology, ClusterTopology
+    DeviceCapability, ThermalState, NodeTopology, ClusterTopology
 )
+from kernel_pytorch.distributed_scale.hardware_discovery import HardwareVendor
 from kernel_pytorch.distributed_scale.orchestration import (
     JobState, TrainingJobSpec, ResourceRequirement, JobStatus, FailureType
 )

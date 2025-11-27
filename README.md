@@ -117,21 +117,76 @@ python3 run_tests.py stress
 - **Hardware simulation**: Test without physical GPUs
 - **CI/CD integration**: Automated testing pipeline
 
+### 🖥️ Multi-Hardware Testing Setup
+
+**GPU Environment Testing:**
+```bash
+# Check available hardware
+python3 -c "
+import torch
+from kernel_pytorch.hardware_abstraction import HardwareAbstractionLayer
+print(f'CUDA Available: {torch.cuda.is_available()}')
+print(f'GPU Count: {torch.cuda.device_count()}')
+
+# Test HAL hardware detection
+hal = HardwareAbstractionLayer()
+devices = hal.auto_detect_hardware()
+print(f'HAL detected {len(devices)} devices')
+"
+
+# Run hardware-specific tests
+PYTHONPATH=src python3 -m pytest tests/test_hardware_abstraction.py::TestRealHardwareIntegration -v
+```
+
+**Cloud Testing Commands:**
+```bash
+# AWS GPU instances (p3.8xlarge, p4d.24xlarge)
+python3 demos/hardware_abstraction/enhanced_multi_vendor_demo.py --cloud=aws
+
+# Google Cloud TPU/GPU (a2-highgpu-8g, cloud-tpu-v4)
+python3 demos/hardware_abstraction/enhanced_multi_vendor_demo.py --cloud=gcp --use-tpu
+
+# Azure Mixed Hardware (Standard_ND96asr_v4)
+python3 demos/hardware_abstraction/multi_vendor_demo.py --cloud=azure --mixed-vendors
+```
+
+**On-Premise Multi-Vendor Testing:**
+```bash
+# Test NVIDIA + Intel + AMD combination
+export MULTI_VENDOR_TEST=true
+python3 demos/hardware_abstraction/multi_vendor_demo.py --all-vendors
+
+# Kubernetes distributed testing
+kubectl apply -f docs/k8s/hardware-abstraction-test.yaml
+```
+
 ## 📊 2025 Optimization Techniques
 
-### 🔥 **NEW: Multi-Vendor Hardware Abstraction**
+### 🔥 **NEW: Advanced Multi-Vendor Hardware Abstraction**
 ```python
 from kernel_pytorch.distributed_scale import HardwareAdapter
-from kernel_pytorch.hardware_abstraction import HardwareAbstractionLayer
+from kernel_pytorch.hardware_abstraction.hal_core import HardwareAbstractionLayer
 
-# Automatic optimal hardware selection across vendors
-adapter = HardwareAdapter(enable_hal=True)  # Enables multi-vendor support
-optimal_device = adapter.get_optimal_device_hal(
-    memory_requirement_gb=8,
-    compute_requirement_tflops=20,
-    preferred_vendors=['nvidia', 'amd', 'intel']
+# Enhanced multi-vendor support with cross-vendor mesh creation
+adapter = HardwareAdapter(enable_hal=True)  # Enables advanced HAL features
+hal = adapter.get_hal()
+
+# Auto-detect all available hardware across vendors
+hardware_inventory = adapter.auto_detect_hardware_hal()
+print(f"Detected: {hardware_inventory}")
+
+# Create cross-vendor device mesh for heterogeneous training
+devices = list(hal.devices.values())[:4]  # Get up to 4 devices
+mesh = adapter.create_cross_vendor_mesh_hal(
+    devices=devices,
+    mesh_id="production_mesh",
+    topology="ring"
 )
-# Automatically selects best hardware: NVIDIA GPU, Intel CPU, or custom ASIC
+
+# Get comprehensive vendor capabilities
+capabilities = adapter.get_vendor_capabilities_hal()
+print(f"Total compute: {capabilities['peak_compute_tflops']} TFLOPS")
+print(f"Cross-vendor communication: {capabilities['cross_vendor_communication']}")
 ```
 
 ### FlashLight Attention Patterns
@@ -182,9 +237,16 @@ python3 demos/02_compiler_optimizations/optimized_flashlight_demo.py
 python3 demos/06_testing_framework/demo_gpu_optimization_testing.py
 ```
 
-### Multi-Vendor Hardware Abstraction Demo
+### Multi-Vendor Hardware Abstraction Demos
 ```bash
+# Enhanced multi-vendor demo with advanced capabilities
+python3 demos/hardware_abstraction/enhanced_multi_vendor_demo.py --quick
+
+# Original multi-vendor demo
 python3 demos/hardware_abstraction/multi_vendor_demo.py --quick
+
+# Hardware abstraction performance benchmarks
+python3 benchmarks/hardware_abstraction_benchmark.py --quick
 ```
 
 ### Run All Demos

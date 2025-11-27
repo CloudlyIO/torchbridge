@@ -17,28 +17,15 @@ from .hal_core import (
 )
 
 from .privateuse1_integration import (
-    ProprietaryDeviceBackend,
+    CustomDeviceBackend,
     PrivateUse1Manager,
     register_custom_device
 )
 
-from .triton_backends import (
-    ProprietaryTritonBackend,
-    TritonCompilerManager,
-    KernelOptimizationPipeline
-)
-
-from .plugin_system import (
-    HardwarePluginManager,
-    BaseHardwarePlugin,
-    CapabilityMatrix
-)
-
 from .vendor_adapters import (
     NVIDIAAdapter,
-    AMDAdapter,
     IntelAdapter,
-    CustomASICAdapter
+    CPUAdapter
 )
 
 __all__ = [
@@ -49,23 +36,12 @@ __all__ = [
     'DeviceSpec',
 
     # PrivateUse1 Integration
-    'ProprietaryDeviceBackend',
+    'CustomDeviceBackend',
     'PrivateUse1Manager',
     'register_custom_device',
 
-    # Triton Backends
-    'ProprietaryTritonBackend',
-    'TritonCompilerManager',
-    'KernelOptimizationPipeline',
-
-    # Plugin System
-    'HardwarePluginManager',
-    'BaseHardwarePlugin',
-    'CapabilityMatrix',
-
     # Vendor Adapters
     'NVIDIAAdapter',
-    'AMDAdapter',
     'IntelAdapter',
-    'CustomASICAdapter'
+    'CPUAdapter'
 ]

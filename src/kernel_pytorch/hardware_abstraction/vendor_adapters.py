@@ -12,7 +12,8 @@ import psutil
 from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
 
-from .hal_core import VendorAdapter, DeviceSpec, HardwareVendor, HardwareCapabilities, ComputeCapability
+from .hal_core import VendorAdapter, DeviceSpec, HardwareCapabilities, ComputeCapability
+from ..distributed_scale.hardware_discovery import HardwareVendor
 from .privateuse1_integration import CustomDeviceBackend, PrivateUse1Config
 
 # Import existing hardware discovery for compatibility
@@ -531,7 +532,7 @@ class CPUAdapter(VendorAdapter):
     """
 
     def __init__(self):
-        super().__init__(HardwareVendor.UNKNOWN)  # Generic CPU
+        super().__init__(HardwareVendor.INTEL)  # Map CPU to Intel vendor
 
     def initialize_device(self, device_id: int) -> DeviceSpec:
         """Initialize CPU device"""
@@ -539,7 +540,7 @@ class CPUAdapter(VendorAdapter):
             raise RuntimeError("CPU adapter only supports device ID 0")
 
         capabilities = HardwareCapabilities(
-            vendor=HardwareVendor.UNKNOWN,
+            vendor=HardwareVendor.INTEL,
             device_name=self._get_cpu_name(),
             compute_capability="cpu",
             memory_gb=psutil.virtual_memory().total / (1024**3),
@@ -552,7 +553,7 @@ class CPUAdapter(VendorAdapter):
 
         device_spec = DeviceSpec(
             device_id=0,
-            vendor=HardwareVendor.UNKNOWN,
+            vendor=HardwareVendor.INTEL,
             capabilities=capabilities
         )
 

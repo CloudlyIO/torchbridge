@@ -15,6 +15,12 @@ The previous large monolithic files have been split into focused, single-respons
 - **`hardware_adapter.py`** - Main orchestration and unified interface
 - **`hardware_adaptation.py`** - ⚠️ Backward compatibility layer (deprecated)
 
+### Hardware Abstraction Layer (HAL)
+- **`../hardware_abstraction/hal_core.py`** - Core HAL implementation with cross-vendor mesh creation
+- **`../hardware_abstraction/vendor_adapters.py`** - Vendor-specific adapters (NVIDIA, Intel, AMD, Custom)
+- **`../hardware_abstraction/privateuse1_integration.py`** - PyTorch PrivateUse1 integration for custom devices
+- **Integration**: Seamless integration with existing `hardware_adapter.py` for backward compatibility
+
 ### Communication Optimization
 - **`communication_primitives.py`** - Core communication patterns and collective operations
 - **`network_optimization.py`** - Bandwidth scheduling and topology optimization
@@ -88,6 +94,52 @@ from kernel_pytorch.distributed_scale.orchestration import (
     create_kubernetes_orchestrator,
     create_slurm_manager
 )
+```
+
+## 🖥️ Hardware Testing Configuration
+
+### Multi-Vendor Testing Setup
+```python
+from kernel_pytorch.hardware_abstraction import HardwareAbstractionLayer
+from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
+
+# Initialize HAL for cross-vendor testing
+hal = HardwareAbstractionLayer()
+adapter = HardwareAdapter(enable_hal=True)
+
+# Test configuration for different environments
+test_configs = {
+    'single_gpu': {'devices': 1, 'vendors': ['nvidia']},
+    'multi_gpu': {'devices': 4, 'vendors': ['nvidia']},
+    'cross_vendor': {'devices': 6, 'vendors': ['nvidia', 'intel', 'amd']},
+    'cloud_mixed': {'devices': 8, 'vendors': ['nvidia', 'custom_asic']}
+}
+```
+
+### Cloud Platform Testing
+```bash
+# AWS EC2 with multiple GPU types
+export AWS_REGION=us-east-1
+export GPU_INSTANCE_TYPES="p3.8xlarge,p4d.24xlarge,g4dn.12xlarge"
+
+# Google Cloud with TPU integration
+export GCP_PROJECT=your-project-id
+export TPU_ZONE=us-central1-a
+export TPU_VERSION=v4
+
+# Azure with mixed NVIDIA/AMD hardware
+export AZURE_RESOURCE_GROUP=pytorch-test
+export VM_SIZES="Standard_ND96asr_v4,Standard_NC24rs_v3"
+```
+
+### On-Premise Cluster Testing
+```bash
+# SLURM cluster testing
+srun --gres=gpu:4 --nodes=2 python3 test_distributed_hal.py
+
+# Kubernetes deployment
+kubectl create namespace pytorch-hal-test
+kubectl apply -f k8s/multi-vendor-test.yaml
 ```
 
 ## 📚 Migration Guide

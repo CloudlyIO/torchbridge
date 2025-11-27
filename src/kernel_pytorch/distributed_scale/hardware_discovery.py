@@ -26,6 +26,7 @@ class HardwareVendor(Enum):
     NVIDIA = "nvidia"
     AMD = "amd"
     INTEL = "intel"
+    CUSTOM_ASIC = "custom_asic"
     UNKNOWN = "unknown"
 
 
