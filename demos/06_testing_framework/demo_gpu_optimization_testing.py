@@ -12,7 +12,7 @@ import sys
 import os
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 import torch
 import torch.nn as nn
@@ -307,9 +307,9 @@ async def demo_integration_testing():
 
     print("\nIntegration Test Results:")
     print(f"  Total tests: {results['summary']['total_tests']}")
-    print(f"  Successful: {results['summary']['successful_benchmarks']}")
-    print(f"  Failed: {results['summary']['total_tests'] - results['summary']['successful_benchmarks']}")
-    print(f"  Regressions: {results['summary']['regressions_detected']}")
+    print(f"  Successful: {results['summary']['passed_tests']}")
+    print(f"  Failed: {results['summary']['failed_tests']}")
+    print(f"  Success rate: {results['summary']['success_rate']:.1%}")
 
     # Show performance insights
     if 'performance_insights' in results:
@@ -345,7 +345,13 @@ async def demo_ci_pipeline():
     print(f"\nPipeline Results:")
     print(f"  Run ID: {pipeline_run.run_id}")
     print(f"  Status: {pipeline_run.overall_status}")
-    print(f"  Duration: {pipeline_run.execution_time:.1f}s")
+
+    # Calculate execution time from start and end times
+    if pipeline_run.end_time and pipeline_run.start_time:
+        duration = (pipeline_run.end_time - pipeline_run.start_time).total_seconds()
+        print(f"  Duration: {duration:.1f}s")
+    else:
+        print(f"  Duration: Running...")
 
     print(f"\nStage Results:")
     for stage, result in pipeline_run.stage_results.items():

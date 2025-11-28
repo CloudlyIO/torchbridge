@@ -10,6 +10,7 @@ import time
 import logging
 import json
 import tempfile
+import numpy as np
 from typing import Dict, List, Optional, Tuple, Any, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum

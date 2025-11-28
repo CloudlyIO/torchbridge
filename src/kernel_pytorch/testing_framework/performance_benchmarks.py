@@ -395,13 +395,13 @@ class CompilerBenchmark:
                 # Calculate improvement (positive = better)
                 if metric_type == MetricType.LATENCY:
                     # For latency, lower is better
-                    improvement = ((baseline_mean - optimized_mean) / baseline_mean) * 100
+                    improvement = ((baseline_mean - optimized_mean) / baseline_mean) * 100 if baseline_mean != 0 else 0.0
                 elif metric_type == MetricType.MEMORY_USAGE:
                     # For memory, lower is better
-                    improvement = ((baseline_mean - optimized_mean) / baseline_mean) * 100
+                    improvement = ((baseline_mean - optimized_mean) / baseline_mean) * 100 if baseline_mean != 0 else 0.0
                 else:
                     # For throughput, utilization, etc., higher is better
-                    improvement = ((optimized_mean - baseline_mean) / baseline_mean) * 100
+                    improvement = ((optimized_mean - baseline_mean) / baseline_mean) * 100 if baseline_mean != 0 else 0.0
 
                 improvements[metric_type] = improvement
 
@@ -438,8 +438,10 @@ class CompilerBenchmark:
             return p_value < (1.0 - self.config.statistical_significance)
         except ImportError:
             # Fallback: simple variance comparison
-            baseline_cv = np.std(baseline_values) / np.mean(baseline_values)
-            optimized_cv = np.std(optimized_values) / np.mean(optimized_values)
+            baseline_mean = np.mean(baseline_values)
+            optimized_mean = np.mean(optimized_values)
+            baseline_cv = np.std(baseline_values) / baseline_mean if baseline_mean != 0 else 0.0
+            optimized_cv = np.std(optimized_values) / optimized_mean if optimized_mean != 0 else 0.0
             return baseline_cv < 0.1 and optimized_cv < 0.1  # Low variance indicates reliable results
 
 

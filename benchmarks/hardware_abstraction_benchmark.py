@@ -39,7 +39,7 @@ try:
     from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
 
     # Import optimization components
-    from kernel_pytorch.components import AttentionLayer
+    from kernel_pytorch.components import OptimizedMultiHeadAttention as AttentionLayer
     from kernel_pytorch.compiler_optimized import FusedGELU
 
 except ImportError as e:
@@ -114,17 +114,19 @@ class HALBenchmarkSuite:
             )
         )
         self.hal.register_device(test_device)
+        # Note: register_device reassigns the device_id, so use the new ID
+        registered_device_id = test_device.device_id
 
         # Warmup
         for _ in range(self.warmup_runs):
-            _ = test_device.device_id in self.hal.devices
+            _ = registered_device_id in self.hal.devices
             _ = test_device.capabilities.memory_gb
 
         # Benchmark HAL device lookup
         print("  Testing device lookup...")
         for _ in range(self.benchmark_runs):
             _, hal_time = self.measure_execution_time(
-                lambda: test_device.device_id in self.hal.devices
+                lambda: registered_device_id in self.hal.devices
             )
             results['hal_device_lookup'].append(hal_time)
 
@@ -140,7 +142,7 @@ class HALBenchmarkSuite:
         print("  Testing capability queries...")
         for _ in range(self.benchmark_runs):
             _, hal_time = self.measure_execution_time(
-                lambda: self.hal.devices[999].capabilities.memory_gb
+                lambda: self.hal.devices[registered_device_id].capabilities.memory_gb
             )
             results['hal_capability_query'].append(hal_time)
 
