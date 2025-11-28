@@ -25,21 +25,31 @@ shahmod/
 │
 ├── 🔧 Core Framework
 │   └── src/kernel_pytorch/          # Main optimization framework
-│       ├── compiler_integration/    # FlashLight, PyGraph, TorchInductor
-│       ├── next_gen_optimizations/  # 2024-2025 cutting-edge techniques
-│       ├── distributed_scale/       # Multi-GPU and cluster optimization
-│       ├── testing_framework/       # Hardware simulation and validation
-│       └── utils/                   # Utilities and helper functions
+│       ├── compiler_integration/    # ✅ FlashLight, PyGraph, TorchInductor
+│       ├── compiler_optimized/      # ✅ FusedGELU and core optimizations
+│       ├── components/              # ✅ AttentionLayer and core components
+│       ├── hardware_abstraction/    # ✅ Multi-vendor GPU HAL (NVIDIA/Intel/AMD)
+│       ├── semantic_agent/          # ✅ Concept mapping and AI understanding
+│       ├── testing_framework/       # ✅ Validation and performance testing
+│       ├── utils/                   # ✅ Profiling and optimization assistants
+│       ├── advanced_attention/      # ⚠️ Advanced attention patterns (partial)
+│       ├── next_gen_optimizations/  # ⚠️ 2024-2025 techniques (planned)
+│       ├── distributed_scale/       # ⚠️ Multi-GPU optimization (planned)
+│       ├── gpu_integration/         # ⚠️ Advanced CUDA features (planned)
+│       ├── cuda_kernels/            # ⚠️ Custom CUDA kernels (basic)
+│       └── triton_kernels/          # ⚠️ Triton GPU kernels (basic)
 │
 ├── 🎓 Examples & Tutorials
 │   └── demos/                       # **START HERE for learning**
-│       ├── 01_getting_started/      # Basic optimization fundamentals
-│       ├── 02_compiler_optimizations/ # FlashLight and PyGraph demos
-│       ├── 03_advanced_attention/   # Advanced attention patterns
-│       ├── 04_gpu_integration/      # GPU kernel optimization
-│       ├── 05_next_generation/      # 2025+ cutting-edge techniques
-│       ├── 06_testing_framework/    # Testing and validation examples
-│       └── 07_production_ready/     # Production deployment patterns
+│       ├── 01_getting_started/      # ✅ Basic optimization fundamentals
+│       ├── 02_compiler_optimizations/ # ✅ FlashLight and PyGraph demos
+│       ├── 03_advanced_attention/   # ✅ Advanced attention patterns
+│       ├── 04_gpu_integration/      # ⚠️ GPU kernel optimization (basic)
+│       ├── 05_next_generation/      # ⚠️ Neuromorphic and advanced demos (basic)
+│       ├── 06_testing_framework/    # ✅ Testing and validation examples
+│       ├── 07_production_ready/     # ✅ Production deployment patterns
+│       ├── hardware_abstraction/    # ✅ Multi-vendor HAL demonstrations
+│       └── docs/                    # ✅ Demo-specific documentation
 │
 ├── 🏁 Performance & Validation
 │   ├── benchmarks/                  # **Performance comparison framework**

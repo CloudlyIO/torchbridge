@@ -72,9 +72,20 @@ This document maintains a comprehensive list of external resources, documentatio
 
 ## Hardware and Architecture
 
+### Multi-Vendor GPU Support (Hardware Abstraction Layer)
+- **NVIDIA CUDA**: https://developer.nvidia.com/cuda-toolkit
+- **Intel oneAPI**: https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html
+- **Intel GPU Programming**: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-gpu-programming.html
+- **AMD ROCm**: https://rocm.docs.amd.com/en/latest/
+- **AMD HIP**: https://rocm.docs.amd.com/projects/HIP/en/latest/
+- **PyTorch PrivateUse1**: https://pytorch.org/tutorials/advanced/privateuseone.html
+- **Custom ASIC Integration**: https://pytorch.org/docs/stable/notes/extending.html
+
 ### GPU Architecture
 - **NVIDIA Ampere Architecture**: https://www.nvidia.com/en-us/data-center/ampere-architecture/
 - **NVIDIA Hopper Architecture**: https://www.nvidia.com/en-us/data-center/hopper-architecture/
+- **Intel Xe Architecture**: https://www.intel.com/content/www/us/en/architecture/xe.html
+- **AMD RDNA Architecture**: https://www.amd.com/en/technologies/rdna-architecture
 - **Tensor Cores**: https://developer.nvidia.com/tensor-cores
 - **GPU Memory Hierarchy**: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#memory-hierarchy
 

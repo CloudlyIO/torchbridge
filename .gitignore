@@ -236,6 +236,7 @@ pipeline_report_*.json
 integration_test_report_*.json
 profile_results/
 benchmarks_output/
+benchmarks/results/
 
 # Demo outputs and generated files
 demo_outputs/
