@@ -65,11 +65,15 @@ class PyTorchOptimizedBaseline(BaseImplementation):
         """Create optimized PyTorch model"""
         model = OptimizedTransformerModel(model_config).to(self.device)
 
-        if self.enable_compile:
+        # Disable compilation on CPU to avoid C++ compilation errors
+        if self.enable_compile and self.device.type == 'cuda':
             try:
                 model = torch.compile(model, mode='default')
             except Exception as e:
                 warnings.warn(f"torch.compile failed: {e}")
+        elif self.enable_compile and self.device.type == 'cpu':
+            # Skip compilation on CPU to avoid precompiled header issues
+            warnings.warn("Skipping torch.compile on CPU to avoid C++ compilation issues")
 
         return model
 
@@ -430,13 +434,12 @@ class OptimizedMLP(nn.Module):
         return x
 
 
-class FlashAttentionModel(nn.Module):
+class FlashAttentionModel(OptimizedTransformerModel):
     """Model using Flash Attention when available"""
 
     def __init__(self, config: Dict[str, Any]):
-        super().__init__()
-        # Use the optimized model as base
-        self.__dict__.update(OptimizedTransformerModel(config).__dict__)
+        super().__init__(config)
+        # Use the optimized model as base with Flash Attention optimizations
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Same as optimized model - SDPA includes Flash Attention optimizations
