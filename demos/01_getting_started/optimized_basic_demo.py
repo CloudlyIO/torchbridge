@@ -137,21 +137,35 @@ class BaselineModel(nn.Module):
 class ExtremeOptimizedModel(nn.Module):
     """Extreme optimization with torch.compile and all advanced techniques"""
 
-    def __init__(self, input_size: int = 768, hidden_size: int = 3072, num_layers: int = 3):
+    def __init__(self, input_size: int = 768, hidden_size: int = 3072, num_layers: int = 3, enable_compile: bool = True):
         super().__init__()
         self.core_model = ProductionOptimizedModel(input_size, hidden_size, num_layers)
 
-        # Compile with aggressive optimization
-        try:
-            self.compiled_model = torch.compile(
-                self.core_model,
-                mode='max-autotune',
-                fullgraph=True,
-                backend='inductor'
-            )
-            self.has_compilation = True
-        except Exception as e:
-            print(f"⚠️  torch.compile failed: {e}")
+        # Compile with safer optimization settings for demo stability
+        # Disable compilation on CPU to avoid C++ compilation issues
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if enable_compile and device.type == 'cuda':
+            try:
+                # Try compilation but fall back if compilation backend has issues
+                if hasattr(torch, '_dynamo') and torch._dynamo.is_compiling():
+                    # Avoid nested compilation
+                    self.compiled_model = self.core_model
+                    self.has_compilation = False
+                else:
+                    # Use more conservative compilation settings to avoid timeout issues
+                    self.compiled_model = torch.compile(
+                        self.core_model,
+                        mode='default',  # Use default instead of max-autotune for stability
+                        fullgraph=False,  # Allow graph breaks to prevent infinite compilation
+                        backend='inductor'
+                    )
+                    self.has_compilation = True
+            except Exception as e:
+                print(f"⚠️  torch.compile failed: {e}")
+                self.compiled_model = self.core_model
+                self.has_compilation = False
+        else:
+            # Skip compilation on CPU or when disabled
             self.compiled_model = self.core_model
             self.has_compilation = False
 
@@ -159,7 +173,7 @@ class ExtremeOptimizedModel(nn.Module):
         return self.compiled_model(x)
 
 
-def comprehensive_performance_benchmark():
+def comprehensive_performance_benchmark(quick_mode: bool = False):
     """Comprehensive benchmark across multiple scales and optimization levels"""
 
     print("🚀 PyTorch Optimization Fundamentals Performance Benchmark")
@@ -176,11 +190,15 @@ def comprehensive_performance_benchmark():
     print()
 
     # Test configurations for different scales
-    test_configs = [
-        {"name": "Small Batch", "batch": 8, "seq_len": 256, "embed": 512, "hidden": 2048, "runs": 200},
-        {"name": "Standard Batch", "batch": 16, "seq_len": 512, "embed": 768, "hidden": 3072, "runs": 100},
-        {"name": "Large Batch", "batch": 32, "seq_len": 1024, "embed": 1024, "hidden": 4096, "runs": 50},
-    ]
+    if quick_mode:
+        test_configs = [
+            {"name": "Quick Test", "batch": 4, "seq_len": 128, "embed": 256, "hidden": 1024, "runs": 20},
+        ]
+    else:
+        test_configs = [
+            {"name": "Small Batch", "batch": 8, "seq_len": 256, "embed": 512, "hidden": 2048, "runs": 30},  # Reduced from 200
+            {"name": "Standard Batch", "batch": 16, "seq_len": 512, "embed": 768, "hidden": 3072, "runs": 20},  # Reduced from 100
+        ]  # Removed large batch to prevent timeout
 
     overall_results = {}
 
@@ -197,18 +215,20 @@ def comprehensive_performance_benchmark():
         models = {
             'Baseline (Unoptimized)': BaselineModel(config['embed'], config['hidden']).to(device),
             'Production Optimized': ProductionOptimizedModel(config['embed'], config['hidden']).to(device),
-            'Extreme Optimized': ExtremeOptimizedModel(config['embed'], config['hidden']).to(device),
+            'Extreme Optimized': ExtremeOptimizedModel(config['embed'], config['hidden'], enable_compile=not quick_mode).to(device),
         }
 
-        # Add manually compiled versions for comparison
-        try:
-            manual_compiled = torch.compile(
-                BaselineModel(config['embed'], config['hidden']).to(device),
-                mode='default'
-            )
-            models['Baseline + torch.compile'] = manual_compiled
-        except:
-            print("   ⚠️  Manual compilation failed")
+        # Add manually compiled versions for comparison (skip in quick mode and on CPU)
+        if not quick_mode and device.type == 'cuda':
+            try:
+                manual_compiled = torch.compile(
+                    BaselineModel(config['embed'], config['hidden']).to(device),
+                    mode='default',
+                    fullgraph=False  # Allow graph breaks to prevent timeout
+                )
+                models['Baseline + torch.compile'] = manual_compiled
+            except:
+                print("   ⚠️  Manual compilation failed")
 
         # Correctness validation
         print("   🧪 Validating correctness...")
@@ -242,8 +262,8 @@ def comprehensive_performance_benchmark():
             try:
                 model.eval()
 
-                # Extended warmup for compiled models
-                warmup_runs = 10 if 'Extreme' in name or 'compile' in name else 3
+                # Reduced warmup for compiled models to prevent timeout
+                warmup_runs = 3 if 'Extreme' in name or 'compile' in name else 2
                 for _ in range(warmup_runs):
                     with torch.no_grad():
                         _ = model(x)
@@ -445,7 +465,7 @@ def demonstrate_memory_profiling():
 
             # Run model
             with torch.no_grad():
-                for _ in range(10):  # Multiple runs for stability
+                for _ in range(3):  # Fewer runs for quick mode compatibility
                     output = model(x)
 
             peak_memory = torch.cuda.max_memory_allocated()
@@ -497,7 +517,7 @@ def main():
 
     try:
         # Main performance benchmark
-        benchmark_results = comprehensive_performance_benchmark()
+        benchmark_results = comprehensive_performance_benchmark(quick_mode=args.quick)
 
         if not args.quick:
             # Fusion analysis
