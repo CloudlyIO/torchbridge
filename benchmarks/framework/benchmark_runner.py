@@ -364,9 +364,16 @@ class BenchmarkRunner:
             if name == baseline_name:
                 continue
 
-            speedup = baseline_metrics.latency_ms / metrics.latency_ms
-            throughput_improvement = (metrics.throughput_samples_per_sec / baseline_metrics.throughput_samples_per_sec - 1) * 100
-            memory_reduction = (baseline_metrics.peak_memory_mb - metrics.peak_memory_mb) / baseline_metrics.peak_memory_mb * 100
+            # Calculate speedup with division by zero protection
+            speedup = baseline_metrics.latency_ms / metrics.latency_ms if metrics.latency_ms > 0 else 0.0
+
+            # Calculate throughput improvement with division by zero protection
+            throughput_improvement = ((metrics.throughput_samples_per_sec / baseline_metrics.throughput_samples_per_sec - 1) * 100
+                                     if baseline_metrics.throughput_samples_per_sec > 0 else 0.0)
+
+            # Calculate memory reduction with division by zero protection
+            memory_reduction = ((baseline_metrics.peak_memory_mb - metrics.peak_memory_mb) / baseline_metrics.peak_memory_mb * 100
+                               if baseline_metrics.peak_memory_mb > 0 else 0.0)
 
             analysis["comparisons"][name] = {
                 "speedup": speedup,
@@ -424,7 +431,12 @@ class BenchmarkRunner:
         }
 
         with open(filepath, 'w') as f:
-            json.dump(report_data, f, indent=2)
+            try:
+                json.dump(report_data, f, indent=2)
+            except TypeError as e:
+                # Handle non-JSON-serializable objects by converting to string
+                print(f"   ⚠️  JSON serialization warning: {e}")
+                json.dump(report_data, f, indent=2, default=str)
 
         print(f"   💾 Results saved: {filepath}")
 

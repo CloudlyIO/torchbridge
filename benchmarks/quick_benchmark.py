@@ -146,7 +146,11 @@ def quick_framework_test():
                 if our_latency > 0 and baseline_latency > 0:
                     speedup = baseline_latency / our_latency
                     print(f"   Speedup achieved: {speedup:.2f}x")
-                    return True
+                elif our_latency == 0:
+                    print(f"   ⚠️  Our optimization latency is zero - potential measurement issue")
+                elif baseline_latency == 0:
+                    print(f"   ⚠️  Baseline latency is zero - potential measurement issue")
+                return True
 
             return True
         else:

@@ -139,6 +139,13 @@ def inefficient_attention(q, k, v):
 - Profile memory usage with `torch.cuda.memory_allocated()`
 - Compare outputs across optimization levels for correctness
 
+## User Preferences & Workflow
+
+### Git Workflow
+- **IMPORTANT**: Always prompt before running `git commit` or `git push` commands
+- Never automatically commit or push changes without explicit user confirmation
+- This preference is configured in `.claude/settings.local.json` with git commands in the "ask" list
+
 ## AI-Powered Optimization Assistant
 
 ### New Feature: Intelligent GPU Optimization
