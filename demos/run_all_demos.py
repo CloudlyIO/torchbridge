@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Automated Demo Runner for PyTorch Optimization Showcase
+🚀 Streamlined Demo Runner for PyTorch Optimization Showcase
 
 Orchestrates execution of all demos with multiple modes:
-- Quick: Fast validation (5-10 minutes)
-- Full: Complete demonstration (1.5-2 hours)
+- Quick: Fast validation (3-5 minutes)
+- Full: Complete demonstration (15-20 minutes)
 - Interactive: Step-by-step learning experience
 - Validate: Comprehensive correctness testing
 
@@ -23,7 +23,6 @@ import argparse
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
-import importlib.util
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -43,460 +42,354 @@ class DemoInfo:
     estimated_time: str
     description: str
     requires_gpu: bool = False
-    requires_cuda: bool = False
 
 @dataclass
 class DemoResult:
     demo: DemoInfo
     success: bool
-    execution_time: float
+    duration: float
     output: str
     error_message: Optional[str] = None
-    performance_metrics: Optional[Dict] = None
 
-class DemoRunner:
-    """Orchestrates execution of all optimization demos"""
 
-    def __init__(self, mode: DemoMode):
-        self.mode = mode
-        self.results: List[DemoResult] = []
-        self.start_time = time.time()
+class StreamlinedDemoRunner:
+    """Simplified demo runner for the new consolidated demo structure."""
 
-        # Demo catalog
-        self.demos = self._build_demo_catalog()
-
-        # Environment info
-        self.env_info = self._get_environment_info()
-
-    def _build_demo_catalog(self) -> List[DemoInfo]:
-        """Build comprehensive demo catalog"""
-        demos = [
-            # 01_getting_started
+    def __init__(self):
+        # Define the 5 consolidated demos
+        self.demos = [
             DemoInfo(
-                "Basic Optimizations",
-                "01_getting_started/optimized_basic_demo.py",
-                "Getting Started",
-                "🟢 Beginner",
-                "5-8 min",
-                "Fundamental PyTorch optimization patterns"
+                name="Basic Optimizations",
+                path="01_basic_optimizations.py",
+                category="Fundamentals",
+                difficulty="Beginner",
+                estimated_time="2-3 minutes",
+                description="Core PyTorch optimization techniques (fusion, compilation)",
+                requires_gpu=False
             ),
-
-            # 02_compiler_optimizations
             DemoInfo(
-                "FlashLight Compiler",
-                "02_compiler_optimizations/optimized_flashlight_demo.py",
-                "Compiler Optimizations",
-                "🟡 Intermediate",
-                "8-12 min",
-                "Automatic attention kernel generation",
+                name="Advanced Attention",
+                path="02_advanced_attention.py",
+                category="Advanced",
+                difficulty="Intermediate",
+                estimated_time="3-5 minutes",
+                description="Ring, Sparse, and Context Parallel attention mechanisms",
                 requires_gpu=True
             ),
             DemoInfo(
-                "Integrated Compiler Demo",
-                "02_compiler_optimizations/optimized_compiler_demo.py",
-                "Compiler Optimizations",
-                "🟠 Advanced",
-                "10-15 min",
-                "All compiler optimizations working together"
-            ),
-
-            # 03_advanced_attention
-            DemoInfo(
-                "Ring Attention",
-                "03_advanced_attention/ring_attention_demo.py",
-                "Advanced Attention",
-                "🟡 Intermediate",
-                "10-15 min",
-                "Ring attention for extremely long sequences"
-            ),
-            DemoInfo(
-                "Sparse Attention",
-                "03_advanced_attention/sparse_attention_demo.py",
-                "Advanced Attention",
-                "🟡 Intermediate",
-                "8-12 min",
-                "Sparse attention patterns and optimization"
-            ),
-
-            # 04_gpu_integration
-            DemoInfo(
-                "CUDA Graphs",
-                "04_gpu_integration/cuda_graphs_demo.py",
-                "GPU Integration",
-                "🟠 Advanced",
-                "12-18 min",
-                "CUDA graphs and advanced GPU optimization",
+                name="FP8 Training",
+                path="03_fp8_training.py",
+                category="Precision",
+                difficulty="Advanced",
+                estimated_time="2-4 minutes",
+                description="Production FP8 training for 2x H100 speedup",
                 requires_gpu=True
             ),
-
-            # 05_next_generation
             DemoInfo(
-                "Neuromorphic Simulation",
-                "05_next_generation/neuromorphic_simulation_demo.py",
-                "Next Generation",
-                "🔴 Expert",
-                "15-20 min",
-                "Neuromorphic computing and next-gen paradigms"
+                name="Hardware Abstraction",
+                path="04_hardware_abstraction.py",
+                category="Infrastructure",
+                difficulty="Intermediate",
+                estimated_time="2-3 minutes",
+                description="Multi-vendor GPU support and automatic optimization",
+                requires_gpu=False
             ),
-
-            # 06_testing_framework
             DemoInfo(
-                "Optimization Validation",
-                "06_testing_framework/optimized_validation_demo.py",
-                "Testing Framework",
-                "🟡 Intermediate",
-                "8-12 min",
-                "Validating optimization correctness"
-            ),
-
-            # 07_production_ready
-            DemoInfo(
-                "Deployment Optimization",
-                "07_production_ready/deployment_optimization_demo.py",
-                "Production Ready",
-                "🟠 Advanced",
-                "15-20 min",
-                "Production deployment and monitoring"
+                name="Production Deployment",
+                path="05_production_deployment.py",
+                category="Production",
+                difficulty="Advanced",
+                estimated_time="3-5 minutes",
+                description="End-to-end optimization pipeline and deployment strategies",
+                requires_gpu=False
             )
         ]
 
-        return demos
+        self.demo_dir = os.path.dirname(__file__)
 
-    def _get_environment_info(self) -> Dict:
-        """Get environment information for demo compatibility"""
-        try:
-            import torch
-            cuda_available = torch.cuda.is_available()
-            cuda_device_count = torch.cuda.device_count() if cuda_available else 0
-            cuda_device_name = torch.cuda.get_device_name(0) if cuda_available else "None"
-        except ImportError:
-            cuda_available = False
-            cuda_device_count = 0
-            cuda_device_name = "PyTorch not available"
+    def get_system_info(self) -> Dict:
+        """Get system and hardware information."""
+        import torch
+        import platform
 
-        return {
-            "python_version": sys.version,
-            "cuda_available": cuda_available,
-            "cuda_device_count": cuda_device_count,
-            "cuda_device_name": cuda_device_name,
-            "platform": sys.platform
+        info = {
+            "platform": platform.system(),
+            "python_version": platform.python_version(),
+            "pytorch_version": torch.__version__,
+            "cuda_available": torch.cuda.is_available(),
+            "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+            "gpu_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
+            "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
         }
 
-    def run_all_demos(self) -> List[DemoResult]:
-        """Run all demos according to selected mode"""
-        self._print_header()
+        return info
 
-        if self.mode == DemoMode.INTERACTIVE:
-            return self._run_interactive_mode()
-        elif self.mode == DemoMode.QUICK:
-            return self._run_quick_mode()
-        elif self.mode == DemoMode.VALIDATE:
-            return self._run_validation_mode()
-        else:  # FULL mode
-            return self._run_full_mode()
+    def print_banner(self):
+        """Print demo runner banner."""
+        print("=" * 80)
+        print("🚀 STREAMLINED PYTORCH OPTIMIZATION DEMO SHOWCASE")
+        print("=" * 80)
+        print("Consolidated 5-demo structure showcasing key optimization capabilities:")
+        print("• Basic Optimizations → Advanced Attention → FP8 Training")
+        print("• Hardware Abstraction → Production Deployment")
+        print()
 
-    def _print_header(self):
-        """Print demo session header"""
-        print("🚀 PyTorch Optimization Demos")
-        print("=" * 60)
-        print(f"Mode: {self.mode.value.upper()}")
-        print(f"Total Demos: {len(self.demos)}")
-        print(f"CUDA Available: {'✅' if self.env_info['cuda_available'] else '❌'}")
-        if self.env_info['cuda_available']:
-            print(f"GPU: {self.env_info['cuda_device_name']}")
-        print("=" * 60)
+        # System info
+        info = self.get_system_info()
+        print(f"🖥️  System: {info['platform']}, Python {info['python_version']}")
+        print(f"⚡ PyTorch: {info['pytorch_version']}")
+        if info['cuda_available']:
+            print(f"🎮 GPU: {info['gpu_name']} (CUDA {info['cuda_version']})")
+        else:
+            print(f"💻 Running on CPU (GPU not available)")
+        print()
 
-    def _run_quick_mode(self) -> List[DemoResult]:
-        """Run quick validation mode (5-10 minutes)"""
-        print("\n🚀 Quick Validation Mode")
-        print("Running essential demos for functionality validation...\n")
+    def should_run_demo(self, demo: DemoInfo, mode: DemoMode, has_gpu: bool) -> Tuple[bool, str]:
+        """Determine if demo should run based on mode and system capabilities."""
 
-        # Select representative demos from each category
-        quick_demos = [
-            "01_getting_started/optimized_basic_demo.py",
-            "02_compiler_optimizations/optimized_flashlight_demo.py",
-            "03_advanced_attention/ring_attention_demo.py",
-            "06_testing_framework/optimized_validation_demo.py"
-        ]
+        if demo.requires_gpu and not has_gpu:
+            return False, "Requires GPU (will run with fallback)"
 
-        selected_demos = [demo for demo in self.demos if demo.path in quick_demos]
-        return self._execute_demos(selected_demos, quick_mode=True)
+        if mode == DemoMode.QUICK:
+            # In quick mode, run all demos but with --quick flag
+            return True, "Quick mode"
+        elif mode == DemoMode.VALIDATE:
+            # In validate mode, run all demos for validation
+            return True, "Validation mode"
+        else:
+            # Full and interactive modes run everything
+            return True, "Full demonstration"
 
-    def _run_full_mode(self) -> List[DemoResult]:
-        """Run full demo suite (1.5-2 hours)"""
-        print("\n🔍 Full Demo Mode")
-        print("Running complete demonstration suite...\n")
+    def run_demo(self, demo: DemoInfo, mode: DemoMode) -> DemoResult:
+        """Execute a single demo and capture results."""
 
-        # Filter demos based on hardware availability
-        available_demos = self._filter_demos_by_hardware(self.demos)
-        return self._execute_demos(available_demos, quick_mode=False)
+        print(f"🎯 Running: {demo.name}")
+        print(f"   Category: {demo.category} | Difficulty: {demo.difficulty}")
+        print(f"   Description: {demo.description}")
 
-    def _run_interactive_mode(self) -> List[DemoResult]:
-        """Run interactive learning mode"""
-        print("\n🎓 Interactive Learning Mode")
-        print("Step-by-step demonstration with explanations...\n")
+        start_time = time.time()
 
-        results = []
-        categories = self._group_demos_by_category()
+        # Construct command
+        demo_path = os.path.join(self.demo_dir, demo.path)
+        cmd = [sys.executable, demo_path]
 
-        for category, demos in categories.items():
-            print(f"\n📂 Category: {category}")
-            print("-" * 40)
-
-            for demo in demos:
-                if not self._is_demo_compatible(demo):
-                    print(f"⏭️  Skipping {demo.name} (hardware incompatible)")
-                    continue
-
-                print(f"\n🎯 {demo.name}")
-                print(f"   Description: {demo.description}")
-                print(f"   Difficulty: {demo.difficulty}")
-                print(f"   Estimated Time: {demo.estimated_time}")
-
-                response = input("\n   Run this demo? [y/n/q]: ").lower()
-
-                if response == 'q':
-                    break
-                elif response == 'y':
-                    result = self._execute_single_demo(demo, interactive=True)
-                    results.append(result)
-                    input("\n   Press Enter to continue...")
-
-        return results
-
-    def _run_validation_mode(self) -> List[DemoResult]:
-        """Run comprehensive validation mode"""
-        print("\n🧪 Validation Mode")
-        print("Comprehensive correctness and performance testing...\n")
-
-        # Run all demos with validation checks
-        available_demos = self._filter_demos_by_hardware(self.demos)
-        return self._execute_demos(available_demos, validate=True)
-
-    def _filter_demos_by_hardware(self, demos: List[DemoInfo]) -> List[DemoInfo]:
-        """Filter demos based on available hardware"""
-        available_demos = []
-
-        for demo in demos:
-            if demo.requires_cuda and not self.env_info['cuda_available']:
-                print(f"⏭️  Skipping {demo.name} (CUDA required)")
-                continue
-            elif demo.requires_gpu and not self.env_info['cuda_available']:
-                print(f"⏭️  Skipping {demo.name} (GPU recommended)")
-                # Still include but note performance may be limited
-
-            available_demos.append(demo)
-
-        return available_demos
-
-    def _is_demo_compatible(self, demo: DemoInfo) -> bool:
-        """Check if demo is compatible with current hardware"""
-        if demo.requires_cuda and not self.env_info['cuda_available']:
-            return False
-        return True
-
-    def _group_demos_by_category(self) -> Dict[str, List[DemoInfo]]:
-        """Group demos by category for organized execution"""
-        categories = {}
-        for demo in self.demos:
-            if demo.category not in categories:
-                categories[demo.category] = []
-            categories[demo.category].append(demo)
-        return categories
-
-    def _execute_demos(self, demos: List[DemoInfo], quick_mode: bool = False,
-                      validate: bool = False) -> List[DemoResult]:
-        """Execute a list of demos"""
-        results = []
-
-        for i, demo in enumerate(demos, 1):
-            print(f"\n[{i}/{len(demos)}] Running {demo.name}...")
-
-            if not self._is_demo_compatible(demo):
-                print(f"   ⏭️  Skipped (hardware incompatible)")
-                continue
-
-            result = self._execute_single_demo(demo, quick_mode, validate)
-            results.append(result)
-
-            # Print immediate feedback
-            status = "✅ PASSED" if result.success else "❌ FAILED"
-            print(f"   {status} ({result.execution_time:.1f}s)")
-
-            if not result.success and result.error_message:
-                print(f"   Error: {result.error_message}")
-
-        return results
-
-    def _execute_single_demo(self, demo: DemoInfo, quick_mode: bool = False,
-                            validate: bool = False, interactive: bool = False) -> DemoResult:
-        """Execute a single demo and capture results"""
-        demo_path = os.path.join(os.path.dirname(__file__), demo.path)
-
-        if not os.path.exists(demo_path):
-            return DemoResult(
-                demo=demo,
-                success=False,
-                execution_time=0,
-                output="",
-                error_message=f"Demo file not found: {demo_path}"
-            )
+        # Add mode-specific flags
+        if mode == DemoMode.QUICK:
+            cmd.append("--quick")
+        elif mode == DemoMode.VALIDATE:
+            cmd.append("--quick")  # Use quick mode for validation too
 
         try:
-            start_time = time.time()
-
-            # Build command
-            cmd = [sys.executable, demo_path]
-            if quick_mode:
-                cmd.append("--quick")
-            if validate:
-                cmd.append("--validate")
-            if interactive:
-                cmd.append("--interactive")
-
-            # Execute demo
-            env = os.environ.copy()
-            env['PYTHONPATH'] = os.path.join(os.path.dirname(__file__), '..', 'src')
+            # Run demo with timeout
+            timeout = 300 if mode == DemoMode.FULL else 120  # 5 min full, 2 min quick
 
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout
-                env=env
+                timeout=timeout,
+                cwd=self.demo_dir
             )
 
-            execution_time = time.time() - start_time
+            duration = time.time() - start_time
 
-            return DemoResult(
-                demo=demo,
-                success=result.returncode == 0,
-                execution_time=execution_time,
-                output=result.stdout,
-                error_message=result.stderr if result.returncode != 0 else None
-            )
+            if result.returncode == 0:
+                print(f"   ✅ Success ({duration:.1f}s)")
+                return DemoResult(
+                    demo=demo,
+                    success=True,
+                    duration=duration,
+                    output=result.stdout
+                )
+            else:
+                print(f"   ❌ Failed ({duration:.1f}s)")
+                print(f"   Error: {result.stderr[:200]}...")
+                return DemoResult(
+                    demo=demo,
+                    success=False,
+                    duration=duration,
+                    output=result.stdout,
+                    error_message=result.stderr
+                )
 
         except subprocess.TimeoutExpired:
+            duration = time.time() - start_time
+            print(f"   ⏰ Timeout after {duration:.1f}s")
             return DemoResult(
                 demo=demo,
                 success=False,
-                execution_time=300,
+                duration=duration,
                 output="",
-                error_message="Demo timed out after 5 minutes"
+                error_message=f"Demo timed out after {timeout}s"
             )
         except Exception as e:
+            duration = time.time() - start_time
+            print(f"   💥 Exception: {str(e)}")
             return DemoResult(
                 demo=demo,
                 success=False,
-                execution_time=0,
+                duration=duration,
                 output="",
                 error_message=str(e)
             )
 
-    def print_summary(self, results: List[DemoResult]):
-        """Print comprehensive summary of demo results"""
-        print("\n" + "=" * 60)
-        print("📊 Demo Results Summary")
-        print("=" * 60)
+    def run_all_demos(self, mode: DemoMode) -> List[DemoResult]:
+        """Run all demos in the specified mode."""
 
-        # Overall statistics
-        total_demos = len(results)
-        passed_demos = sum(1 for r in results if r.success)
-        total_time = sum(r.execution_time for r in results)
+        self.print_banner()
 
-        print(f"Total Demos Run: {total_demos}")
-        print(f"Passed: {passed_demos} ✅")
-        print(f"Failed: {total_demos - passed_demos} ❌")
-        print(f"Success Rate: {passed_demos/total_demos*100:.1f}%")
-        print(f"Total Execution Time: {total_time:.1f}s ({total_time/60:.1f} min)")
+        print(f"🎮 Running demos in {mode.value.upper()} mode")
+        print(f"📊 Total demos: {len(self.demos)}")
+        print()
 
-        # Category breakdown
-        print(f"\n📂 Results by Category:")
-        categories = {}
-        for result in results:
-            cat = result.demo.category
-            if cat not in categories:
-                categories[cat] = {"passed": 0, "total": 0}
-            categories[cat]["total"] += 1
-            if result.success:
-                categories[cat]["passed"] += 1
+        # Check system capabilities
+        import torch
+        has_gpu = torch.cuda.is_available()
 
-        for category, stats in categories.items():
-            rate = stats["passed"] / stats["total"] * 100
-            print(f"   {category}: {stats['passed']}/{stats['total']} ({rate:.1f}%)")
+        results = []
+        total_start_time = time.time()
 
-        # Failed demos details
-        failed_demos = [r for r in results if not r.success]
-        if failed_demos:
-            print(f"\n❌ Failed Demos:")
-            for result in failed_demos:
+        # Run demos in sequence
+        for i, demo in enumerate(self.demos, 1):
+            print(f"\\n{'='*60}")
+            print(f"[{i}/{len(self.demos)}] {demo.name}")
+            print(f"{'='*60}")
+
+            should_run, reason = self.should_run_demo(demo, mode, has_gpu)
+
+            if should_run:
+                result = self.run_demo(demo, mode)
+                results.append(result)
+
+                # Interactive mode pause
+                if mode == DemoMode.INTERACTIVE and i < len(self.demos):
+                    input("\\n⏸️  Press Enter to continue to next demo...")
+            else:
+                print(f"⏭️  Skipping: {reason}")
+
+        # Summary
+        total_duration = time.time() - total_start_time
+        self.print_summary(results, total_duration, mode)
+
+        return results
+
+    def print_summary(self, results: List[DemoResult], total_duration: float, mode: DemoMode):
+        """Print execution summary."""
+
+        print(f"\\n{'='*80}")
+        print("📊 DEMO EXECUTION SUMMARY")
+        print(f"{'='*80}")
+
+        successful = [r for r in results if r.success]
+        failed = [r for r in results if not r.success]
+
+        print(f"✅ Successful: {len(successful)}/{len(results)}")
+        print(f"❌ Failed: {len(failed)}/{len(results)}")
+        print(f"⏱️  Total time: {total_duration:.1f}s")
+        print(f"🎯 Mode: {mode.value.upper()}")
+
+        if successful:
+            print(f"\\n🎉 Successful demos:")
+            for result in successful:
+                print(f"   • {result.demo.name} ({result.duration:.1f}s)")
+
+        if failed:
+            print(f"\\n💥 Failed demos:")
+            for result in failed:
                 print(f"   • {result.demo.name}: {result.error_message}")
 
-        # Performance highlights
-        successful_demos = [r for r in results if r.success]
-        if successful_demos:
-            fastest = min(successful_demos, key=lambda r: r.execution_time)
-            slowest = max(successful_demos, key=lambda r: r.execution_time)
+        # Overall status
+        success_rate = len(successful) / len(results) * 100 if results else 0
 
-            print(f"\n⚡ Performance Highlights:")
-            print(f"   Fastest: {fastest.demo.name} ({fastest.execution_time:.1f}s)")
-            print(f"   Slowest: {slowest.demo.name} ({slowest.execution_time:.1f}s)")
-
-        print(f"\n🎉 Demo session completed!")
-
-        if passed_demos == total_demos:
-            print("All demos passed successfully! 🚀")
-        elif passed_demos >= total_demos * 0.8:
-            print("Most demos passed - excellent results! ✨")
-        elif passed_demos >= total_demos * 0.6:
-            print("Good results - some demos need attention. 👍")
+        if success_rate == 100:
+            print(f"\\n🚀 ALL DEMOS SUCCESSFUL! Framework is production-ready.")
+        elif success_rate >= 80:
+            print(f"\\n✅ Mostly successful ({success_rate:.0f}%). Minor issues detected.")
         else:
-            print("Several demos failed - check setup and requirements. ⚠️")
+            print(f"\\n⚠️  Multiple failures detected ({success_rate:.0f}%). Please investigate.")
+
+        # Performance insights
+        if successful:
+            avg_time = sum(r.duration for r in successful) / len(successful)
+            print(f"\\n📈 Performance insights:")
+            print(f"   Average demo time: {avg_time:.1f}s")
+            print(f"   {mode.value.capitalize()} mode duration: {total_duration:.1f}s")
+
+    def run_interactive_mode(self) -> List[DemoResult]:
+        """Run demos in interactive learning mode."""
+
+        self.print_banner()
+
+        print("🎓 INTERACTIVE LEARNING MODE")
+        print("This mode guides you through each optimization technique step-by-step.")
+        print("You can examine outputs and ask questions between demos.\\n")
+
+        # Let user choose demos
+        print("Available demos:")
+        for i, demo in enumerate(self.demos, 1):
+            gpu_req = " (GPU recommended)" if demo.requires_gpu else ""
+            print(f"  {i}. {demo.name}{gpu_req}")
+            print(f"     {demo.description}")
+
+        choice = input("\\nRun all demos? [y/N]: ").strip().lower()
+
+        if choice not in ['y', 'yes']:
+            print("Interactive mode cancelled.")
+            return []
+
+        return self.run_all_demos(DemoMode.INTERACTIVE)
+
 
 def main():
-    """Main demo runner entry point"""
-    parser = argparse.ArgumentParser(description="PyTorch Optimization Demo Runner")
-    parser.add_argument(
-        "--quick",
-        action="store_true",
-        help="Run quick validation mode (5-10 minutes)"
-    )
-    parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Run full demo suite (1.5-2 hours)"
-    )
-    parser.add_argument(
-        "--interactive",
-        action="store_true",
-        help="Run interactive learning mode"
-    )
-    parser.add_argument(
-        "--validate",
-        action="store_true",
-        help="Run comprehensive validation mode"
-    )
+    parser = argparse.ArgumentParser(description="Streamlined PyTorch Optimization Demo Runner")
+    parser.add_argument("--quick", action="store_true", help="Quick validation mode (3-5 minutes)")
+    parser.add_argument("--full", action="store_true", help="Full demonstration mode (15-20 minutes)")
+    parser.add_argument("--interactive", action="store_true", help="Interactive learning mode")
+    parser.add_argument("--validate", action="store_true", help="Validation mode for testing")
 
     args = parser.parse_args()
 
     # Determine mode
-    if args.interactive:
+    if args.quick:
+        mode = DemoMode.QUICK
+    elif args.full:
+        mode = DemoMode.FULL
+    elif args.interactive:
         mode = DemoMode.INTERACTIVE
     elif args.validate:
         mode = DemoMode.VALIDATE
-    elif args.quick:
-        mode = DemoMode.QUICK
     else:
-        mode = DemoMode.FULL
+        # Default mode
+        mode = DemoMode.QUICK
+        print("No mode specified, using --quick mode")
+
+    # Initialize runner
+    runner = StreamlinedDemoRunner()
 
     # Run demos
-    runner = DemoRunner(mode)
-    results = runner.run_all_demos()
-    runner.print_summary(results)
+    try:
+        if mode == DemoMode.INTERACTIVE:
+            results = runner.run_interactive_mode()
+        else:
+            results = runner.run_all_demos(mode)
 
-    # Exit with appropriate code
-    success_rate = sum(1 for r in results if r.success) / len(results) if results else 0
-    sys.exit(0 if success_rate >= 0.8 else 1)
+        # Exit with appropriate code
+        successful_demos = sum(1 for r in results if r.success)
+
+        if successful_demos == len(results):
+            sys.exit(0)  # All successful
+        elif successful_demos > 0:
+            sys.exit(1)  # Partial success
+        else:
+            sys.exit(2)  # All failed
+
+    except KeyboardInterrupt:
+        print("\\n\\n⏹️  Demo execution interrupted by user")
+        sys.exit(130)
+    except Exception as e:
+        print(f"\\n\\n💥 Demo runner error: {e}")
+        sys.exit(3)
+
 
 if __name__ == "__main__":
     main()
