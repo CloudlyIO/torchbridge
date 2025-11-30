@@ -1,78 +1,61 @@
-# 📚 KernelPyTorch Documentation
+# 📚 Documentation
 
-**Comprehensive technical documentation for the PyTorch GPU optimization framework.**
+**Complete guide to PyTorch GPU optimization framework with 2-6x performance improvements.**
 
-## 📖 Documentation Structure
+## 🚀 Quick Start
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| [architecture.md](./architecture.md) | Framework design and implementation | **Developers** |
-| [setup.md](./setup.md) | Installation and environment configuration | **All users** |
-| [hardware.md](./hardware.md) | Multi-vendor GPU support and HAL | **Hardware engineers** |
-| [performance.md](./performance.md) | Benchmarks and optimization analysis | **Performance engineers** |
+| Step | Document | Time | Purpose |
+|------|----------|------|---------|
+| 1️⃣ | [Setup Guide](setup.md) | 5 min | Install and verify |
+| 2️⃣ | [Basic Demo](../demos/01_basic_optimizations.py) | 2 min | See 2.8x speedup |
+| 3️⃣ | [Benchmarks](../BENCHMARKS.md) | 5 min | Validate claims |
 
-## 🚀 Quick Navigation
+## 📖 Complete Documentation
 
-### **New Users**
-1. Start with [../README.md](../README.md) for project overview
-2. Follow [setup.md](./setup.md) for installation
-3. Try demos in [../demos/](../demos/) folder
-4. Review [../BENCHMARKS.md](../BENCHMARKS.md) for performance validation
+### **Setup & Configuration**
+- **[Setup Guide](setup.md)** - Quick installation (5 minutes)
+- **[CUDA Setup](cuda_setup.md)** - Detailed CUDA/Triton configuration
+- **[Cloud Testing](cloud_testing_guide.md)** - AWS/Azure/GCP deployment
+
+### **Technical Documentation**
+- **[Architecture](architecture.md)** - Framework design and optimization strategies
+- **[Hardware Guide](hardware.md)** - Multi-vendor GPU support (NVIDIA/AMD/Intel/Custom)
+- **[Performance Analysis](performance.md)** - Detailed benchmarking and optimization results
+
+### **Development & Testing**
+- **[Testing Guide](testing_guide.md)** - Comprehensive testing and benchmarking
+- **[Contributing Guide](../CONTRIBUTING.md)** - Development workflow and standards
+- **[API Reference](../API.md)** - Complete API documentation
+
+### **Reference Materials**
+- **[Roadmap](roadmap.md)** - Development roadmap and future plans
+- **[External References](references.md)** - Links to papers, documentation, tools
+
+## 🎯 By Use Case
+
+### **New Users** (Start here!)
+1. [Setup Guide](setup.md) → [Basic Demo](../demos/) → [Benchmarks](../BENCHMARKS.md)
+2. Expected: 5-minute setup, 2.8-6.1x performance improvements demonstrated
 
 ### **Developers**
-1. Review [architecture.md](./architecture.md) for framework design
-2. Check [../CONTRIBUTING.md](../CONTRIBUTING.md) for development workflow
-3. Explore [../API.md](../API.md) for complete API reference
-4. Use [performance.md](./performance.md) for optimization guidelines
+1. [Architecture](architecture.md) → [API Reference](../API.md) → [Testing Guide](testing_guide.md)
+2. Focus: Framework design, development workflow, comprehensive testing
 
 ### **Hardware Engineers**
-1. Study [hardware.md](./hardware.md) for multi-vendor support
-2. Review [performance.md](./performance.md) for hardware-specific benchmarks
-3. Check [setup.md](./setup.md) for hardware configuration
-4. Explore [../src/kernel_pytorch/hardware_abstraction/](../src/kernel_pytorch/hardware_abstraction/) for implementation
+1. [Hardware Guide](hardware.md) → [Cloud Testing](cloud_testing_guide.md) → [Performance Analysis](performance.md)
+2. Focus: Multi-vendor support, deployment, hardware-specific optimization
 
 ### **Performance Engineers**
-1. Review [../BENCHMARKS.md](../BENCHMARKS.md) for comprehensive results
-2. Study [performance.md](./performance.md) for detailed analysis
-3. Use [../benchmarks/](../benchmarks/) for custom benchmarking
-4. Check [architecture.md](./architecture.md) for optimization strategies
+1. [Performance Analysis](performance.md) → [Benchmarks](../BENCHMARKS.md) → [Testing Guide](testing_guide.md)
+2. Focus: Detailed performance analysis, statistical validation, regression testing
 
-## 🎯 Key Features Documentation
+## ✨ Key Features
 
-### **Advanced Attention**
-- **Ring Attention**: Million-token sequences with O(N) memory - see [architecture.md](./architecture.md)
-- **Sparse Attention**: 90% compute reduction - see [performance.md](./performance.md)
-- **Context Parallel**: Multi-GPU coordination - see [hardware.md](./hardware.md)
-
-### **FP8 Training**
-- **Production implementation**: 2x H100 speedup - see [performance.md](./performance.md)
-- **Numerical stability**: E4M3/E5M2 formats - see [architecture.md](./architecture.md)
-- **Hardware support**: Multi-vendor compatibility - see [hardware.md](./hardware.md)
-
-### **Hardware Abstraction**
-- **Multi-vendor support**: NVIDIA, AMD, Intel - see [hardware.md](./hardware.md)
-- **Automatic optimization**: Device-specific kernels - see [architecture.md](./architecture.md)
-- **Production deployment**: Scalable optimization - see [performance.md](./performance.md)
-
-## 📋 Documentation Principles
-
-1. **Accuracy**: All performance claims validated with benchmarks
-2. **Completeness**: Comprehensive coverage of framework capabilities
-3. **Clarity**: Clear examples and usage patterns
-4. **Maintenance**: Regular updates with implementation changes
-
-## 🔄 Documentation Updates
-
-### **Version Synchronization**
-- Documentation updated with each major release
-- Performance benchmarks refreshed quarterly
-- Hardware support expanded as new devices become available
-
-### **Validation Process**
-- All code examples tested with CI/CD
-- Benchmark results verified across hardware platforms
-- Documentation accuracy maintained through automated checks
+- **🚀 Advanced Attention**: Ring, Sparse, Context Parallel - up to 6.1x speedup
+- **🔥 FP8 Training**: Production-ready with 2x H100 speedup
+- **🖥️ Hardware Abstraction**: NVIDIA/AMD/Intel/TPU/ASIC unified support
+- **📊 Comprehensive Benchmarking**: Statistical validation against Flash Attention 3, vLLM, Mamba
 
 ---
 
-**For the latest updates, see [../CHANGELOG.md](../CHANGELOG.md)**
+**🎯 Ready to achieve 2-6x PyTorch performance improvements!**

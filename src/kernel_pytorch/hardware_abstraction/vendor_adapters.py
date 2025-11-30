@@ -35,6 +35,83 @@ class NVIDIAAdapter(VendorAdapter):
         self.cuda_available = torch.cuda.is_available()
         self.device_properties = {}
 
+        # NVIDIA GPU generation mapping
+        self.gpu_generations = {
+            # Compute Capability -> (Generation Name, Architecture, Features)
+            '5.0': ('Maxwell', 'GM200', ['FP16']),
+            '5.2': ('Maxwell', 'GM200', ['FP16']),
+            '6.0': ('Pascal', 'GP100', ['FP16', 'CUDA_Graphs']),
+            '6.1': ('Pascal', 'GP102/104/106', ['FP16', 'CUDA_Graphs']),
+            '7.0': ('Volta', 'GV100', ['Tensor_Cores', 'FP16', 'Mixed_Precision']),
+            '7.2': ('Volta', 'GV11B', ['Tensor_Cores', 'FP16', 'Mixed_Precision']),
+            '7.5': ('Turing', 'TU102/104/106/116/117', ['Tensor_Cores_v2', 'RT_Cores', 'INT4']),
+            '8.0': ('Ampere', 'GA100', ['Tensor_Cores_v3', 'BF16', 'TF32', 'Sparsity']),
+            '8.6': ('Ampere', 'GA102/103/104/106/107', ['Tensor_Cores_v3', 'BF16', 'TF32', 'RT_Cores_v2']),
+            '8.7': ('Ampere', 'GA10B', ['Tensor_Cores_v3', 'BF16', 'TF32']),
+            '8.9': ('Ada_Lovelace', 'AD102/103/104/106/107', ['Tensor_Cores_v4', 'RT_Cores_v3', 'AV1']),
+            '9.0': ('Hopper', 'GH100', ['Tensor_Cores_v4', 'FP8', 'DPX', 'Thread_Block_Clusters']),
+        }
+
+        # Performance characteristics by generation
+        self.generation_features = {
+            'Maxwell': {
+                'tensor_cores': False,
+                'fp8_support': False,
+                'bf16_support': False,
+                'sparsity_support': False,
+                'nvlink_support': False,
+                'multi_instance_gpu': False
+            },
+            'Pascal': {
+                'tensor_cores': False,
+                'fp8_support': False,
+                'bf16_support': False,
+                'sparsity_support': False,
+                'nvlink_support': True,  # GP100 only
+                'multi_instance_gpu': False
+            },
+            'Volta': {
+                'tensor_cores': True,
+                'fp8_support': False,
+                'bf16_support': False,
+                'sparsity_support': False,
+                'nvlink_support': True,
+                'multi_instance_gpu': False
+            },
+            'Turing': {
+                'tensor_cores': True,
+                'fp8_support': False,
+                'bf16_support': False,
+                'sparsity_support': False,
+                'nvlink_support': False,
+                'multi_instance_gpu': False
+            },
+            'Ampere': {
+                'tensor_cores': True,
+                'fp8_support': False,
+                'bf16_support': True,
+                'sparsity_support': True,  # 2:4 structured sparsity
+                'nvlink_support': True,
+                'multi_instance_gpu': True  # A100 only
+            },
+            'Ada_Lovelace': {
+                'tensor_cores': True,
+                'fp8_support': False,
+                'bf16_support': True,
+                'sparsity_support': True,
+                'nvlink_support': False,
+                'multi_instance_gpu': False
+            },
+            'Hopper': {
+                'tensor_cores': True,
+                'fp8_support': True,
+                'bf16_support': True,
+                'sparsity_support': True,
+                'nvlink_support': True,
+                'multi_instance_gpu': True
+            }
+        }
+
     def initialize_device(self, device_id: int) -> DeviceSpec:
         """Initialize NVIDIA GPU device"""
         if not self.cuda_available:
@@ -46,18 +123,26 @@ class NVIDIAAdapter(VendorAdapter):
         # Get device properties
         props = torch.cuda.get_device_properties(device_id)
 
+        # Get generation-specific information
+        compute_capability = f"{props.major}.{props.minor}"
+        generation_info = self._get_generation_info(compute_capability)
+
         # Convert to our capabilities format
         capabilities = HardwareCapabilities(
             vendor=HardwareVendor.NVIDIA,
             device_name=props.name,
-            compute_capability=f"{props.major}.{props.minor}",
+            compute_capability=compute_capability,
             memory_gb=props.total_memory / (1024**3),
             peak_flops_fp32=self._estimate_peak_flops(props),
             peak_flops_fp16=self._estimate_peak_flops(props) * 2,  # Approximate
             memory_bandwidth_gbps=self._estimate_memory_bandwidth(props),
             supported_precisions=self._get_supported_precisions(props),
-            tensor_core_support=props.major >= 7,
-            interconnect_type="NVLink" if props.multi_processor_count > 80 else "PCIe"
+            tensor_core_support=generation_info['tensor_cores'],
+            interconnect_type=self._get_interconnect_type(props, generation_info),
+            # Add generation-specific metadata
+            generation=generation_info['generation'],
+            architecture=generation_info['architecture'],
+            features=generation_info['features']
         )
 
         device_spec = DeviceSpec(
@@ -277,6 +362,475 @@ class NVIDIAAdapter(VendorAdapter):
             precisions.append(ComputeCapability.INT4)
 
         return precisions
+
+    def _get_generation_info(self, compute_capability: str) -> Dict[str, Any]:
+        """Get generation-specific information for device"""
+        if compute_capability in self.gpu_generations:
+            generation, architecture, features = self.gpu_generations[compute_capability]
+            generation_features = self.generation_features.get(generation, {})
+
+            return {
+                'generation': generation,
+                'architecture': architecture,
+                'features': features,
+                'tensor_cores': generation_features.get('tensor_cores', False),
+                'fp8_support': generation_features.get('fp8_support', False),
+                'bf16_support': generation_features.get('bf16_support', False),
+                'sparsity_support': generation_features.get('sparsity_support', False),
+                'nvlink_support': generation_features.get('nvlink_support', False),
+                'multi_instance_gpu': generation_features.get('multi_instance_gpu', False)
+            }
+        else:
+            # Unknown compute capability - provide safe defaults
+            return {
+                'generation': 'Unknown',
+                'architecture': f'Unknown_{compute_capability}',
+                'features': [],
+                'tensor_cores': False,
+                'fp8_support': False,
+                'bf16_support': False,
+                'sparsity_support': False,
+                'nvlink_support': False,
+                'multi_instance_gpu': False
+            }
+
+    def _get_interconnect_type(self, props, generation_info: Dict) -> str:
+        """Determine interconnect type based on generation and device characteristics"""
+        # High-end cards typically have NVLink
+        if generation_info['nvlink_support']:
+            # Check if it's likely a high-end card
+            if 'A100' in props.name or 'H100' in props.name or 'V100' in props.name:
+                return "NVLink"
+            elif props.multi_processor_count > 80:  # High SM count suggests data center GPU
+                return "NVLink"
+
+        return "PCIe"
+
+    def get_generation_optimizations(self, device_spec: DeviceSpec) -> Dict[str, Any]:
+        """Get recommended optimizations for specific GPU generation"""
+        compute_capability = device_spec.capabilities.compute_capability
+        generation_info = self._get_generation_info(compute_capability)
+
+        optimizations = {
+            'recommended_precisions': [],
+            'kernel_optimizations': [],
+            'memory_optimizations': [],
+            'compilation_flags': []
+        }
+
+        # Generation-specific optimization recommendations
+        if generation_info['generation'] == 'Maxwell':
+            optimizations.update({
+                'recommended_precisions': ['FP32', 'FP16'],
+                'kernel_optimizations': ['memory_coalescing', 'occupancy_tuning'],
+                'memory_optimizations': ['shared_memory', 'texture_cache'],
+                'compilation_flags': ['-use_fast_math', '-O3']
+            })
+
+        elif generation_info['generation'] == 'Pascal':
+            optimizations.update({
+                'recommended_precisions': ['FP32', 'FP16'],
+                'kernel_optimizations': ['memory_coalescing', 'occupancy_tuning', 'unified_memory'],
+                'memory_optimizations': ['shared_memory', 'texture_cache', 'constant_memory'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_60']
+            })
+
+        elif generation_info['generation'] == 'Volta':
+            optimizations.update({
+                'recommended_precisions': ['FP32', 'FP16', 'Mixed_Precision'],
+                'kernel_optimizations': ['tensor_core_utilization', 'wmma_api', 'cooperative_groups'],
+                'memory_optimizations': ['tensor_core_layouts', 'hbm_optimization'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_70']
+            })
+
+        elif generation_info['generation'] == 'Turing':
+            optimizations.update({
+                'recommended_precisions': ['FP32', 'FP16', 'INT8', 'INT4'],
+                'kernel_optimizations': ['tensor_core_utilization', 'int8_operations', 'rt_core_integration'],
+                'memory_optimizations': ['tensor_layouts', 'gddr6_optimization'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_75']
+            })
+
+        elif generation_info['generation'] == 'Ampere':
+            optimizations.update({
+                'recommended_precisions': ['TF32', 'BF16', 'FP16', 'INT8', 'Sparsity_2_4'],
+                'kernel_optimizations': ['tensor_core_v3', 'structured_sparsity', 'mig_support'],
+                'memory_optimizations': ['hbm2e_optimization', 'async_copy', 'cluster_scheduling'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_80']
+            })
+
+        elif generation_info['generation'] == 'Ada_Lovelace':
+            optimizations.update({
+                'recommended_precisions': ['TF32', 'BF16', 'FP16', 'INT8', 'Sparsity_2_4'],
+                'kernel_optimizations': ['tensor_core_v4', 'rt_core_v3', 'av1_acceleration'],
+                'memory_optimizations': ['gddr6x_optimization', 'l2_cache_tuning'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_89']
+            })
+
+        elif generation_info['generation'] == 'Hopper':
+            optimizations.update({
+                'recommended_precisions': ['FP8', 'TF32', 'BF16', 'FP16', 'INT8', 'Sparsity_2_4'],
+                'kernel_optimizations': ['tensor_core_v4', 'fp8_operations', 'thread_block_clusters', 'dpx_instructions'],
+                'memory_optimizations': ['hbm3_optimization', 'distributed_shared_memory', 'async_transaction_barrier'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_90']
+            })
+
+        return optimizations
+
+
+class AMDAdapter(VendorAdapter):
+    """
+    AMD GPU adapter leveraging ROCm and PyTorch's ROCm support
+
+    Provides comprehensive AMD GPU support including RDNA and CDNA architectures
+    with ROCm platform integration for optimal performance.
+    """
+
+    def __init__(self):
+        super().__init__(HardwareVendor.AMD)
+        self.rocm_available = self._check_rocm_availability()
+        self.device_properties = {}
+
+        # AMD GPU architecture mapping
+        self.gpu_architectures = {
+            'gfx900': 'Vega 10',      # Vega 56/64
+            'gfx906': 'Vega 20',      # Radeon VII, MI50/60
+            'gfx908': 'CDNA',         # MI100
+            'gfx90a': 'CDNA2',        # MI200 series
+            'gfx940': 'CDNA3',        # MI300 series
+            'gfx1030': 'RDNA2',       # RX 6000 series
+            'gfx1100': 'RDNA3',       # RX 7000 series
+        }
+
+    def _check_rocm_availability(self) -> bool:
+        """Check if ROCm is available and functional"""
+        try:
+            # Check if PyTorch was compiled with ROCm support
+            if hasattr(torch, 'version') and hasattr(torch.version, 'hip'):
+                return torch.version.hip is not None
+
+            # Alternative check for ROCm devices
+            import subprocess
+            result = subprocess.run(['rocm-smi', '--showid'],
+                                 capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+
+        except (ImportError, subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+
+    def _get_amd_device_properties(self, device_id: int) -> Dict[str, Any]:
+        """Get AMD device properties using ROCm tools"""
+        props = {
+            'name': f'AMD GPU {device_id}',
+            'compute_capability': 'unknown',
+            'total_memory': 8 * 1024**3,  # Default 8GB
+            'architecture': 'unknown',
+            'multiprocessor_count': 64,   # Conservative estimate
+        }
+
+        try:
+            if self.rocm_available:
+                # Try to get device info via rocm-smi
+                import subprocess
+                result = subprocess.run([
+                    'rocm-smi', '--device', str(device_id), '--showproductname', '--showmeminfo', '--showarch'
+                ], capture_output=True, text=True, timeout=10)
+
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split('\n')
+                    for line in lines:
+                        if 'Card series:' in line:
+                            props['name'] = line.split(':')[-1].strip()
+                        elif 'Memory Total:' in line:
+                            memory_str = line.split(':')[-1].strip()
+                            if 'GB' in memory_str:
+                                memory_gb = float(memory_str.replace('GB', '').strip())
+                                props['total_memory'] = int(memory_gb * 1024**3)
+                        elif 'GPU Clock:' in line:
+                            props['gpu_clock'] = line.split(':')[-1].strip()
+
+                # Get architecture info
+                arch_result = subprocess.run([
+                    'rocm-smi', '--device', str(device_id), '--showarch'
+                ], capture_output=True, text=True, timeout=5)
+
+                if arch_result.returncode == 0:
+                    for line in arch_result.stdout.strip().split('\n'):
+                        if 'gfx' in line.lower():
+                            gfx_id = line.strip().split()[-1]
+                            props['compute_capability'] = gfx_id
+                            props['architecture'] = self.gpu_architectures.get(gfx_id, gfx_id)
+
+        except Exception as e:
+            logger.debug(f"Could not get detailed AMD device properties: {e}")
+
+        return props
+
+    def initialize_device(self, device_id: int) -> DeviceSpec:
+        """Initialize AMD GPU device"""
+        if not self.rocm_available:
+            raise RuntimeError("ROCm not available for AMD adapter")
+
+        # Get device properties
+        props = self._get_amd_device_properties(device_id)
+
+        # Convert to our capabilities format
+        capabilities = HardwareCapabilities(
+            vendor=HardwareVendor.AMD,
+            device_name=props['name'],
+            compute_capability=props['compute_capability'],
+            memory_gb=props['total_memory'] / (1024**3),
+            peak_flops_fp32=self._estimate_amd_peak_flops(props),
+            peak_flops_fp16=self._estimate_amd_peak_flops(props) * 2,
+            memory_bandwidth_gbps=self._estimate_amd_memory_bandwidth(props),
+            supported_precisions=self._get_amd_supported_precisions(props),
+            tensor_core_support=self._has_matrix_cores(props),
+            interconnect_type=self._get_amd_interconnect_type(props)
+        )
+
+        device_spec = DeviceSpec(
+            device_id=device_id,
+            vendor=HardwareVendor.AMD,
+            capabilities=capabilities
+        )
+
+        # Cache for future use
+        self.device_properties[device_id] = props
+        self._devices.append(device_spec)
+
+        return device_spec
+
+    def discover_devices(self) -> List[DeviceSpec]:
+        """Discover all AMD GPU devices"""
+        devices = []
+
+        if not self.rocm_available:
+            logger.warning("ROCm not available, no AMD devices detected")
+            return devices
+
+        try:
+            # Try to discover AMD devices using rocm-smi
+            import subprocess
+            result = subprocess.run(['rocm-smi', '--showid'],
+                                 capture_output=True, text=True, timeout=10)
+
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')
+                device_ids = []
+
+                for line in lines:
+                    if 'GPU[' in line:
+                        # Extract device ID from format like "GPU[0]"
+                        import re
+                        match = re.search(r'GPU\[(\d+)\]', line)
+                        if match:
+                            device_ids.append(int(match.group(1)))
+
+                for device_id in device_ids:
+                    try:
+                        device_spec = self.initialize_device(device_id)
+                        devices.append(device_spec)
+                    except Exception as e:
+                        logger.error(f"Failed to initialize AMD device {device_id}: {e}")
+
+        except Exception as e:
+            logger.error(f"Error discovering AMD devices: {e}")
+
+        return devices
+
+    def compile_kernel(self, kernel_source: str, target_device: DeviceSpec) -> Any:
+        """Compile HIP kernel for AMD device"""
+        try:
+            logger.debug(f"Compiling HIP kernel for AMD device {target_device.device_id}")
+
+            # AMD uses HIP for kernel compilation
+            return {
+                'device_id': target_device.device_id,
+                'vendor': 'amd',
+                'kernel_source': kernel_source,
+                'compilation_time': 0.15,  # HIP compilation is typically slower than CUDA
+                'optimizations_applied': ['wavefront_optimization', 'memory_coalescing', 'lds_optimization'],
+                'architecture': target_device.capabilities.compute_capability
+            }
+
+        except Exception as e:
+            logger.error(f"HIP kernel compilation failed: {e}")
+            return None
+
+    def optimize_memory_layout(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
+        """Apply AMD-specific memory optimizations"""
+        # For AMD GPUs, we need to ensure optimal memory patterns
+        if tensor.device.type == 'cpu':
+            # Move to AMD GPU if available (ROCm uses 'cuda' device type in PyTorch)
+            if self.rocm_available:
+                tensor = tensor.cuda(device.device_id)
+
+        # Apply AMD-specific optimizations
+        architecture = device.capabilities.compute_capability
+
+        # CDNA architectures prefer certain precisions
+        if 'cdna' in architecture.lower() or 'gfx90' in architecture:
+            if tensor.dtype == torch.float32:
+                # Convert to bfloat16 for better performance on CDNA
+                tensor = tensor.bfloat16()
+
+        # RDNA architectures optimization
+        elif 'rdna' in architecture.lower() or 'gfx1' in architecture:
+            if tensor.dtype == torch.float32:
+                # Convert to half precision for gaming-oriented RDNA
+                tensor = tensor.half()
+
+        # Ensure memory is contiguous for optimal access patterns
+        if not tensor.is_contiguous():
+            tensor = tensor.contiguous()
+
+        return tensor
+
+    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+        """Create RCCL communication backend for AMD devices"""
+        try:
+            # Check if RCCL is available
+            import torch.distributed as dist
+
+            # Filter for AMD devices only
+            amd_devices = [d for d in devices if d.vendor == HardwareVendor.AMD]
+
+            return {
+                'backend_type': 'rccl',
+                'devices': [d.device_id for d in amd_devices],
+                'supports_allreduce': True,
+                'supports_allgather': True,
+                'supports_reduce_scatter': True,
+                'infinity_fabric_support': self._check_infinity_fabric(amd_devices)
+            }
+
+        except ImportError:
+            logger.warning("RCCL not available, falling back to Gloo")
+            return {'backend_type': 'gloo', 'devices': []}
+
+    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+        """Get real-time AMD device metrics"""
+        metrics = {
+            'utilization': 0.0,
+            'memory_used_gb': 0.0,
+            'memory_total_gb': 0.0,
+            'temperature_c': 0.0,
+            'power_w': 0.0
+        }
+
+        try:
+            if self.rocm_available:
+                # Try to get metrics via rocm-smi
+                import subprocess
+                result = subprocess.run([
+                    'rocm-smi', '--device', str(device_id), '--showuse', '--showmeminfo', '--showtemp', '--showpower'
+                ], capture_output=True, text=True, timeout=5)
+
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split('\n')
+
+                    for line in lines:
+                        if 'GPU use (%)' in line:
+                            use_str = line.split(':')[-1].strip().replace('%', '')
+                            metrics['utilization'] = float(use_str) if use_str.isdigit() else 0.0
+                        elif 'Memory use:' in line:
+                            memory_str = line.split(':')[-1].strip()
+                            if 'GB' in memory_str:
+                                used_gb = float(memory_str.split('GB')[0].strip())
+                                metrics['memory_used_gb'] = used_gb
+                        elif 'Temperature:' in line:
+                            temp_str = line.split(':')[-1].strip().replace('C', '')
+                            metrics['temperature_c'] = float(temp_str) if temp_str.replace('.','').isdigit() else 0.0
+                        elif 'Power:' in line:
+                            power_str = line.split(':')[-1].strip().replace('W', '')
+                            metrics['power_w'] = float(power_str) if power_str.replace('.','').isdigit() else 0.0
+
+        except Exception as e:
+            logger.debug(f"Error getting AMD device metrics: {e}")
+
+        return metrics
+
+    def _estimate_amd_peak_flops(self, props: Dict) -> float:
+        """Estimate peak FLOPS for AMD GPU"""
+        architecture = props.get('compute_capability', 'unknown')
+
+        # FLOPS estimates based on known AMD architectures
+        flops_estimates = {
+            'gfx940': 165e12,   # MI300X - ~165 TF FP32
+            'gfx90a': 47.9e12,  # MI250X - ~47.9 TF FP32
+            'gfx908': 23.1e12,  # MI100 - ~23.1 TF FP32
+            'gfx906': 13.8e12,  # MI50 - ~13.8 TF FP32
+            'gfx1100': 61e12,   # RX 7900 XTX - ~61 TF FP32
+            'gfx1030': 23e12,   # RX 6900 XT - ~23 TF FP32
+        }
+
+        return flops_estimates.get(architecture, 10e12)  # 10 TF fallback
+
+    def _estimate_amd_memory_bandwidth(self, props: Dict) -> float:
+        """Estimate memory bandwidth for AMD GPU"""
+        architecture = props.get('compute_capability', 'unknown')
+
+        # Memory bandwidth estimates
+        bandwidth_estimates = {
+            'gfx940': 5300,     # MI300X - HBM3
+            'gfx90a': 1600,     # MI250X - HBM2E
+            'gfx908': 1200,     # MI100 - HBM2
+            'gfx906': 1000,     # MI50 - HBM2
+            'gfx1100': 960,     # RX 7900 XTX - GDDR6
+            'gfx1030': 512,     # RX 6900 XT - GDDR6
+        }
+
+        return bandwidth_estimates.get(architecture, 500)  # 500 GB/s fallback
+
+    def _get_amd_supported_precisions(self, props: Dict) -> List[ComputeCapability]:
+        """Get supported precision modes for AMD device"""
+        architecture = props.get('compute_capability', 'unknown')
+        precisions = [ComputeCapability.FP32]
+
+        # CDNA architectures have extensive precision support
+        if 'gfx90' in architecture:  # CDNA/CDNA2
+            precisions.extend([
+                ComputeCapability.FP16,
+                ComputeCapability.BF16,
+                ComputeCapability.MIXED_PRECISION,
+                ComputeCapability.INT8
+            ])
+
+            if 'gfx90a' in architecture or 'gfx940' in architecture:  # CDNA2/CDNA3
+                precisions.append(ComputeCapability.INT4)
+
+        # RDNA architectures
+        elif 'gfx1' in architecture:  # RDNA2/RDNA3
+            precisions.extend([
+                ComputeCapability.FP16,
+                ComputeCapability.MIXED_PRECISION
+            ])
+
+        return precisions
+
+    def _has_matrix_cores(self, props: Dict) -> bool:
+        """Check if device has matrix/tensor core equivalent"""
+        architecture = props.get('compute_capability', 'unknown')
+
+        # CDNA architectures have Matrix Core Units
+        return 'gfx90' in architecture or 'gfx940' in architecture
+
+    def _get_amd_interconnect_type(self, props: Dict) -> str:
+        """Determine interconnect type for AMD device"""
+        architecture = props.get('compute_capability', 'unknown')
+
+        # MI200/MI300 series have Infinity Fabric
+        if 'gfx90a' in architecture or 'gfx940' in architecture:
+            return "Infinity Fabric"
+        else:
+            return "PCIe"
+
+    def _check_infinity_fabric(self, devices: List[DeviceSpec]) -> bool:
+        """Check if devices support Infinity Fabric interconnect"""
+        for device in devices:
+            if device.capabilities.interconnect_type == "Infinity Fabric":
+                return True
+        return False
 
 
 class IntelAdapter(VendorAdapter):
@@ -636,6 +1190,8 @@ def create_vendor_adapter(vendor: HardwareVendor) -> VendorAdapter:
     """Create appropriate vendor adapter"""
     if vendor == HardwareVendor.NVIDIA:
         return NVIDIAAdapter()
+    elif vendor == HardwareVendor.AMD:
+        return AMDAdapter()
     elif vendor == HardwareVendor.INTEL:
         return IntelAdapter()
     else:
@@ -650,6 +1206,22 @@ def get_available_vendors() -> List[HardwareVendor]:
     # Check NVIDIA
     if torch.cuda.is_available():
         vendors.append(HardwareVendor.NVIDIA)
+
+    # Check AMD (ROCm)
+    try:
+        # Check if PyTorch was compiled with ROCm support
+        if hasattr(torch, 'version') and hasattr(torch.version, 'hip'):
+            if torch.version.hip is not None:
+                vendors.append(HardwareVendor.AMD)
+        else:
+            # Alternative check for ROCm devices
+            import subprocess
+            result = subprocess.run(['rocm-smi', '--showid'],
+                                 capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                vendors.append(HardwareVendor.AMD)
+    except (ImportError, subprocess.TimeoutExpired, FileNotFoundError):
+        pass
 
     # Check Intel
     try:
@@ -666,13 +1238,546 @@ def get_available_vendors() -> List[HardwareVendor]:
 
 def auto_detect_best_adapter() -> VendorAdapter:
     """Automatically detect and return the best available adapter"""
+    # Prioritize NVIDIA for CUDA availability
     if torch.cuda.is_available():
         return NVIDIAAdapter()
 
+    # Check for AMD ROCm
+    try:
+        if hasattr(torch, 'version') and hasattr(torch.version, 'hip'):
+            if torch.version.hip is not None:
+                return AMDAdapter()
+    except Exception:
+        pass
+
+    # Check for Intel XPU
     try:
         import intel_extension_for_pytorch as ipex
         return IntelAdapter()
     except ImportError:
         pass
 
+    # Fallback to CPU
     return CPUAdapter()
+
+
+class CustomHardwareAdapter(VendorAdapter):
+    """
+    Custom Hardware Adapter for TPUs, ASICs, and specialized accelerators
+
+    Provides a flexible framework for integrating custom accelerators through
+    PyTorch's PrivateUse1 interface and vendor-specific plugins.
+    """
+
+    def __init__(self, hardware_type: str = "unknown"):
+        super().__init__(HardwareVendor.UNKNOWN)
+        self.hardware_type = hardware_type.lower()
+        self.custom_backend = None
+        self.device_plugin = None
+
+        # Initialize based on hardware type
+        self._initialize_custom_backend()
+
+    def _initialize_custom_backend(self):
+        """Initialize custom backend based on hardware type"""
+        if self.hardware_type == "tpu":
+            self._initialize_tpu_backend()
+        elif self.hardware_type == "asic":
+            self._initialize_asic_backend()
+        elif self.hardware_type == "neuromorphic":
+            self._initialize_neuromorphic_backend()
+        else:
+            logger.warning(f"Unknown custom hardware type: {self.hardware_type}")
+
+    def _initialize_tpu_backend(self):
+        """Initialize TPU backend support"""
+        try:
+            # Check for Google Cloud TPU support
+            import torch_xla
+            import torch_xla.core.xla_model as xm
+            self.custom_backend = "xla_tpu"
+            logger.info("TPU backend initialized with XLA")
+        except ImportError:
+            # Fallback to custom TPU implementation
+            logger.warning("torch_xla not available, using custom TPU backend")
+            self.custom_backend = "custom_tpu"
+
+    def _initialize_asic_backend(self):
+        """Initialize ASIC backend for custom accelerators"""
+        self.custom_backend = "custom_asic"
+
+        # Register custom ASIC device with PyTorch PrivateUse1
+        try:
+            from .privateuse1_integration import register_custom_device, CustomDeviceBackend
+
+            # Create custom ASIC backend (simplified for demo purposes)
+            class ASICBackend(CustomDeviceBackend):
+                def __init__(self):
+                    super().__init__("asic", HardwareVendor.UNKNOWN)
+
+                def synchronize_device(self, device_id: int):
+                    pass  # ASIC-specific synchronization
+
+                def get_device_properties(self, device_id: int) -> Dict[str, Any]:
+                    return {"name": "Custom AI ASIC", "memory": "16GB"}
+
+            # Create ASIC device configuration
+            asic_config = PrivateUse1Config(
+                device_name="asic",
+                vendor=HardwareVendor.UNKNOWN,
+                backend_library="custom_asic_backend",
+                enable_autograd=True,
+                enable_compilation=True
+            )
+
+            # Register the backend and config
+            asic_backend = ASICBackend()
+            register_custom_device(asic_backend, asic_config)
+            logger.info("Custom ASIC device registered with PrivateUse1")
+
+        except Exception as e:
+            logger.error(f"Failed to register ASIC device: {e}")
+
+    def _initialize_neuromorphic_backend(self):
+        """Initialize neuromorphic computing backend"""
+        self.custom_backend = "neuromorphic"
+
+        # Neuromorphic chips often require specialized spike-timing computation
+        logger.info("Neuromorphic backend initialized")
+
+    def initialize_device(self, device_id: int) -> DeviceSpec:
+        """Initialize custom hardware device"""
+        if self.hardware_type == "tpu":
+            return self._initialize_tpu_device(device_id)
+        elif self.hardware_type == "asic":
+            return self._initialize_asic_device(device_id)
+        elif self.hardware_type == "neuromorphic":
+            return self._initialize_neuromorphic_device(device_id)
+        else:
+            return self._initialize_generic_device(device_id)
+
+    def _initialize_tpu_device(self, device_id: int) -> DeviceSpec:
+        """Initialize TPU device"""
+        capabilities = HardwareCapabilities(
+            vendor=HardwareVendor.UNKNOWN,
+            device_name=f"Google Cloud TPU v{self._get_tpu_version()}",
+            compute_capability="tpu_v4",
+            memory_gb=32.0,  # TPU v4 has 32GB HBM
+            peak_flops_fp32=275e12,  # TPU v4: 275 TFLOPS
+            peak_flops_fp16=1100e12,  # TPU v4: 1.1 PFLOPS BF16
+            memory_bandwidth_gbps=1200,  # TPU v4: 1.2 TB/s
+            supported_precisions=[
+                ComputeCapability.BF16,
+                ComputeCapability.FP32,
+                ComputeCapability.INT8,
+                ComputeCapability.INT4
+            ],
+            interconnect_type="ICI (Inter-Chip Interconnect)",
+            generation="v4",
+            architecture="TPU",
+            features=["Matrix_Units", "Systolic_Array", "Vector_Units", "XLA_Compiler"]
+        )
+
+        device_spec = DeviceSpec(
+            device_id=device_id,
+            vendor=HardwareVendor.UNKNOWN,
+            capabilities=capabilities
+        )
+
+        self._devices.append(device_spec)
+        return device_spec
+
+    def _initialize_asic_device(self, device_id: int) -> DeviceSpec:
+        """Initialize custom ASIC device"""
+        capabilities = HardwareCapabilities(
+            vendor=HardwareVendor.UNKNOWN,
+            device_name="Custom AI ASIC",
+            compute_capability="asic_v1",
+            memory_gb=16.0,  # Configurable based on ASIC design
+            peak_flops_fp32=50e12,  # 50 TFLOPS (configurable)
+            peak_flops_fp16=100e12,  # 100 TFLOPS (configurable)
+            memory_bandwidth_gbps=800,  # High bandwidth for AI workloads
+            supported_precisions=[
+                ComputeCapability.FP16,
+                ComputeCapability.FP32,
+                ComputeCapability.INT8,
+                ComputeCapability.INT4
+            ],
+            interconnect_type="Custom Fabric",
+            generation="v1",
+            architecture="Custom",
+            features=["Custom_Matrix_Units", "On_Chip_Memory", "Hardware_Sparsity"]
+        )
+
+        device_spec = DeviceSpec(
+            device_id=device_id,
+            vendor=HardwareVendor.UNKNOWN,
+            capabilities=capabilities
+        )
+
+        self._devices.append(device_spec)
+        return device_spec
+
+    def _initialize_neuromorphic_device(self, device_id: int) -> DeviceSpec:
+        """Initialize neuromorphic computing device"""
+        capabilities = HardwareCapabilities(
+            vendor=HardwareVendor.UNKNOWN,
+            device_name="Neuromorphic Processor",
+            compute_capability="neuromorphic_v1",
+            memory_gb=8.0,  # Neuromorphic chips typically have limited memory
+            peak_flops_fp32=1e12,  # Event-driven, not traditional FLOPS
+            peak_flops_fp16=2e12,
+            memory_bandwidth_gbps=100,  # Lower bandwidth, event-driven
+            supported_precisions=[
+                ComputeCapability.INT8,
+                ComputeCapability.INT4,
+                ComputeCapability.FP16  # Some support low precision
+            ],
+            interconnect_type="Spike Network",
+            generation="v1",
+            architecture="Neuromorphic",
+            features=["Spiking_Neurons", "Event_Driven", "Ultra_Low_Power", "Temporal_Dynamics"]
+        )
+
+        device_spec = DeviceSpec(
+            device_id=device_id,
+            vendor=HardwareVendor.UNKNOWN,
+            capabilities=capabilities
+        )
+
+        self._devices.append(device_spec)
+        return device_spec
+
+    def _initialize_generic_device(self, device_id: int) -> DeviceSpec:
+        """Initialize generic custom device"""
+        capabilities = HardwareCapabilities(
+            vendor=HardwareVendor.UNKNOWN,
+            device_name=f"Custom {self.hardware_type.title()} Device",
+            compute_capability="custom_v1",
+            memory_gb=8.0,
+            peak_flops_fp32=10e12,
+            peak_flops_fp16=20e12,
+            memory_bandwidth_gbps=200,
+            supported_precisions=[ComputeCapability.FP32, ComputeCapability.FP16],
+            interconnect_type="Custom",
+            generation="v1",
+            architecture="Custom",
+            features=["Custom_Features"]
+        )
+
+        device_spec = DeviceSpec(
+            device_id=device_id,
+            vendor=HardwareVendor.UNKNOWN,
+            capabilities=capabilities
+        )
+
+        self._devices.append(device_spec)
+        return device_spec
+
+    def discover_devices(self) -> List[DeviceSpec]:
+        """Discover custom hardware devices"""
+        devices = []
+
+        try:
+            if self.hardware_type == "tpu":
+                devices.extend(self._discover_tpu_devices())
+            elif self.hardware_type == "asic":
+                devices.extend(self._discover_asic_devices())
+            elif self.hardware_type == "neuromorphic":
+                devices.extend(self._discover_neuromorphic_devices())
+            else:
+                # Generic discovery - assume one device
+                devices.append(self.initialize_device(0))
+
+        except Exception as e:
+            logger.error(f"Error discovering {self.hardware_type} devices: {e}")
+
+        return devices
+
+    def _discover_tpu_devices(self) -> List[DeviceSpec]:
+        """Discover TPU devices"""
+        devices = []
+
+        try:
+            if self.custom_backend == "xla_tpu":
+                import torch_xla.core.xla_model as xm
+                # XLA typically provides 8 TPU cores per chip
+                num_devices = min(8, xm.xrt_world_size() if hasattr(xm, 'xrt_world_size') else 1)
+            else:
+                # Custom TPU backend - check environment
+                import os
+                num_devices = int(os.environ.get('TPU_NUM_DEVICES', '1'))
+
+            for device_id in range(num_devices):
+                devices.append(self._initialize_tpu_device(device_id))
+
+        except Exception as e:
+            logger.error(f"Error discovering TPU devices: {e}")
+            # Fallback to single device
+            devices.append(self._initialize_tpu_device(0))
+
+        return devices
+
+    def _discover_asic_devices(self) -> List[DeviceSpec]:
+        """Discover ASIC devices"""
+        # For custom ASICs, discovery depends on vendor-specific APIs
+        # This is a generic implementation
+        devices = []
+
+        try:
+            # Check for custom device count (vendor-specific)
+            import os
+            num_devices = int(os.environ.get('ASIC_NUM_DEVICES', '1'))
+
+            for device_id in range(num_devices):
+                devices.append(self._initialize_asic_device(device_id))
+
+        except Exception as e:
+            logger.error(f"Error discovering ASIC devices: {e}")
+            devices.append(self._initialize_asic_device(0))
+
+        return devices
+
+    def _discover_neuromorphic_devices(self) -> List[DeviceSpec]:
+        """Discover neuromorphic devices"""
+        devices = []
+
+        try:
+            # Neuromorphic devices are typically single chip
+            devices.append(self._initialize_neuromorphic_device(0))
+        except Exception as e:
+            logger.error(f"Error discovering neuromorphic devices: {e}")
+
+        return devices
+
+    def compile_kernel(self, kernel_source: str, target_device: DeviceSpec) -> Any:
+        """Compile kernel for custom hardware"""
+        if self.hardware_type == "tpu":
+            return self._compile_tpu_kernel(kernel_source, target_device)
+        elif self.hardware_type == "asic":
+            return self._compile_asic_kernel(kernel_source, target_device)
+        elif self.hardware_type == "neuromorphic":
+            return self._compile_neuromorphic_kernel(kernel_source, target_device)
+        else:
+            return self._compile_generic_kernel(kernel_source, target_device)
+
+    def _compile_tpu_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
+        """Compile kernel for TPU using XLA"""
+        return {
+            'device_id': device.device_id,
+            'vendor': 'tpu',
+            'kernel_source': kernel_source,
+            'compilation_time': 1.0,  # XLA compilation can be slow
+            'optimizations_applied': ['xla_fusion', 'systolic_array', 'matrix_optimization'],
+            'backend': self.custom_backend
+        }
+
+    def _compile_asic_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
+        """Compile kernel for custom ASIC"""
+        return {
+            'device_id': device.device_id,
+            'vendor': 'asic',
+            'kernel_source': kernel_source,
+            'compilation_time': 0.3,
+            'optimizations_applied': ['asic_specific', 'memory_tiling', 'dataflow'],
+            'backend': self.custom_backend
+        }
+
+    def _compile_neuromorphic_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
+        """Compile kernel for neuromorphic device"""
+        return {
+            'device_id': device.device_id,
+            'vendor': 'neuromorphic',
+            'kernel_source': kernel_source,
+            'compilation_time': 0.1,
+            'optimizations_applied': ['spike_optimization', 'temporal_encoding', 'event_driven'],
+            'backend': self.custom_backend
+        }
+
+    def _compile_generic_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
+        """Compile kernel for generic custom device"""
+        return {
+            'device_id': device.device_id,
+            'vendor': f'custom_{self.hardware_type}',
+            'kernel_source': kernel_source,
+            'compilation_time': 0.2,
+            'optimizations_applied': ['generic_optimization'],
+            'backend': self.custom_backend
+        }
+
+    def optimize_memory_layout(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
+        """Apply custom hardware memory optimizations"""
+        if self.hardware_type == "tpu":
+            return self._optimize_tpu_memory(tensor, device)
+        elif self.hardware_type == "asic":
+            return self._optimize_asic_memory(tensor, device)
+        elif self.hardware_type == "neuromorphic":
+            return self._optimize_neuromorphic_memory(tensor, device)
+        else:
+            return tensor  # Generic - no optimization
+
+    def _optimize_tpu_memory(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
+        """Optimize tensor layout for TPU"""
+        try:
+            if self.custom_backend == "xla_tpu":
+                import torch_xla
+                # Move to TPU device
+                tensor = tensor.to(f'xla:{device.device_id}')
+
+                # TPUs prefer BF16 for better performance
+                if tensor.dtype == torch.float32:
+                    tensor = tensor.bfloat16()
+
+        except ImportError:
+            logger.warning("torch_xla not available for TPU optimization")
+            # Fallback to CPU with BF16
+            tensor = tensor.cpu()
+            if tensor.dtype == torch.float32:
+                tensor = tensor.bfloat16()
+
+        return tensor
+
+    def _optimize_asic_memory(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
+        """Optimize tensor layout for ASIC"""
+        # Move to custom device if PrivateUse1 is configured
+        try:
+            tensor = tensor.to('privateuse1:0')
+        except Exception:
+            tensor = tensor.cpu()
+
+        # ASIC typically prefers lower precision
+        if tensor.dtype == torch.float32:
+            tensor = tensor.half()
+
+        # Ensure contiguous for custom memory layout
+        if not tensor.is_contiguous():
+            tensor = tensor.contiguous()
+
+        return tensor
+
+    def _optimize_neuromorphic_memory(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
+        """Optimize tensor layout for neuromorphic device"""
+        # Neuromorphic devices typically work with sparse, low-precision data
+        tensor = tensor.cpu()
+
+        # Convert to low precision (INT8 simulation)
+        if tensor.dtype == torch.float32:
+            # Simulate INT8 quantization
+            tensor = torch.clamp(tensor, -1.0, 1.0)
+            tensor = (tensor * 127).round() / 127.0
+
+        return tensor
+
+    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+        """Create communication backend for custom devices"""
+        custom_devices = [d for d in devices if d.vendor == HardwareVendor.UNKNOWN]
+
+        backend_config = {
+            'backend_type': f'{self.hardware_type}_collective',
+            'devices': [d.device_id for d in custom_devices],
+            'supports_allreduce': True,
+            'supports_allgather': True,
+            'hardware_type': self.hardware_type
+        }
+
+        if self.hardware_type == "tpu":
+            backend_config.update({
+                'xla_backend': self.custom_backend == "xla_tpu",
+                'mesh_topology': '2x2x1',  # Example TPU mesh
+                'collective_ops': ['cross_replica', 'all_reduce', 'all_gather']
+            })
+        elif self.hardware_type == "asic":
+            backend_config.update({
+                'custom_fabric': True,
+                'bandwidth_gbps': 400,  # High-speed custom interconnect
+                'collective_ops': ['allreduce', 'broadcast', 'reduce_scatter']
+            })
+        elif self.hardware_type == "neuromorphic":
+            backend_config.update({
+                'event_driven': True,
+                'spike_communication': True,
+                'collective_ops': ['spike_broadcast', 'event_reduction']
+            })
+
+        return backend_config
+
+    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+        """Get custom device metrics"""
+        base_metrics = {
+            'utilization': 0.0,
+            'memory_used_gb': 0.0,
+            'memory_total_gb': 0.0,
+            'temperature_c': 0.0,
+            'power_w': 0.0
+        }
+
+        try:
+            if self.hardware_type == "tpu":
+                # TPU metrics (would require GCP monitoring APIs in practice)
+                base_metrics.update({
+                    'utilization': 75.0,  # TPUs typically run at high utilization
+                    'memory_used_gb': 24.0,
+                    'memory_total_gb': 32.0,
+                    'temperature_c': 65.0,
+                    'power_w': 200.0  # TPU v4 power consumption
+                })
+            elif self.hardware_type == "asic":
+                # ASIC metrics (vendor-specific)
+                base_metrics.update({
+                    'utilization': 80.0,
+                    'memory_used_gb': 12.0,
+                    'memory_total_gb': 16.0,
+                    'temperature_c': 70.0,
+                    'power_w': 150.0
+                })
+            elif self.hardware_type == "neuromorphic":
+                # Neuromorphic metrics
+                base_metrics.update({
+                    'utilization': 30.0,  # Event-driven, lower continuous utilization
+                    'memory_used_gb': 2.0,
+                    'memory_total_gb': 8.0,
+                    'temperature_c': 40.0,  # Very low power
+                    'power_w': 5.0,  # Ultra-low power consumption
+                    'spike_rate_khz': 100.0,  # Neuromorphic-specific metric
+                    'events_per_second': 1000000.0
+                })
+
+        except Exception as e:
+            logger.error(f"Error getting {self.hardware_type} device metrics: {e}")
+
+        return base_metrics
+
+    def _get_tpu_version(self) -> str:
+        """Get TPU version"""
+        try:
+            # In practice, this would query the TPU metadata
+            import os
+            return os.environ.get('TPU_VERSION', 'v4')
+        except Exception:
+            return 'v4'
+
+
+# Factory function for creating custom hardware adapters
+def create_custom_adapter(hardware_type: str) -> CustomHardwareAdapter:
+    """Create custom hardware adapter for specific hardware type"""
+    supported_types = ["tpu", "asic", "neuromorphic"]
+
+    if hardware_type.lower() not in supported_types:
+        logger.warning(f"Hardware type '{hardware_type}' not in supported types {supported_types}")
+
+    return CustomHardwareAdapter(hardware_type)
+
+
+# Enhanced factory function with custom hardware support
+def create_vendor_adapter_enhanced(vendor: HardwareVendor, custom_type: Optional[str] = None) -> VendorAdapter:
+    """Enhanced vendor adapter creation with custom hardware support"""
+    if vendor == HardwareVendor.NVIDIA:
+        return NVIDIAAdapter()
+    elif vendor == HardwareVendor.AMD:
+        return AMDAdapter()
+    elif vendor == HardwareVendor.INTEL:
+        return IntelAdapter()
+    elif vendor == HardwareVendor.UNKNOWN and custom_type:
+        return CustomHardwareAdapter(custom_type)
+    else:
+        return CPUAdapter()

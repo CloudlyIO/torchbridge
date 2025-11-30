@@ -82,6 +82,10 @@ class HardwareCapabilities:
     custom_instruction_sets: List[str] = field(default_factory=list)
     interconnect_type: str = "PCIe"
     max_power_w: float = 300.0
+    # Extended vendor-specific information
+    generation: Optional[str] = None          # GPU generation (e.g., Ampere, CDNA2)
+    architecture: Optional[str] = None        # Architecture code (e.g., GA100, gfx90a)
+    features: List[str] = field(default_factory=list)  # Vendor-specific features
 
 
 @dataclass

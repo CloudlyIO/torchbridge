@@ -24,8 +24,14 @@ from .privateuse1_integration import (
 
 from .vendor_adapters import (
     NVIDIAAdapter,
+    AMDAdapter,
     IntelAdapter,
-    CPUAdapter
+    CPUAdapter,
+    CustomHardwareAdapter,
+    create_custom_adapter,
+    create_vendor_adapter_enhanced,
+    get_available_vendors,
+    auto_detect_best_adapter
 )
 
 __all__ = [
@@ -42,6 +48,16 @@ __all__ = [
 
     # Vendor Adapters
     'NVIDIAAdapter',
+    'AMDAdapter',
     'IntelAdapter',
-    'CPUAdapter'
+    'CPUAdapter',
+
+    # Custom Hardware Support
+    'CustomHardwareAdapter',
+    'create_custom_adapter',
+    'create_vendor_adapter_enhanced',
+
+    # Utility Functions
+    'get_available_vendors',
+    'auto_detect_best_adapter'
 ]
