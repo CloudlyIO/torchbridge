@@ -62,6 +62,18 @@ from .compiler_friendly import (
     OptimizedTransformerBlock
 )
 
+from .dynamic_shapes import (
+    DynamicShapeBucketing,
+    ShapeBucket,
+    DynamicShapeProfile,
+    BucketingStrategy,
+    PaddingStrategy,
+    DynamicShapeModule,
+    create_optimal_bucketing_system,
+    benchmark_dynamic_shapes,
+    print_bucketing_analysis
+)
+
 __all__ = [
     # Fusion strategies
     "identify_fusion_opportunities",
@@ -96,4 +108,15 @@ __all__ = [
     "CompilerOptimizedModule",
     "OptimizedLinearGELU",
     "OptimizedTransformerBlock",
+
+    # Dynamic shape optimization
+    "DynamicShapeBucketing",
+    "ShapeBucket",
+    "DynamicShapeProfile",
+    "BucketingStrategy",
+    "PaddingStrategy",
+    "DynamicShapeModule",
+    "create_optimal_bucketing_system",
+    "benchmark_dynamic_shapes",
+    "print_bucketing_analysis",
 ]
