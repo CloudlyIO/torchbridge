@@ -1,7 +1,7 @@
 """
 Mixture of Experts Layer Implementations
 
-Advanced MoE layer implementations based on 2024-2025 research:
+Advanced MoE layer implementations based on 2025-2026 research:
 - Sparse MoE with configurable expert routing
 - Switch Transformer style routing
 - GLaM-style expert parallelism

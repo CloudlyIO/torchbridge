@@ -13,7 +13,7 @@ src/kernel_pytorch/
 ├── compiler_integration/       # FlashLight, PyGraph integration
 ├── testing_framework/          # Validation and benchmarking
 ├── utils/                      # Profiling and optimization assistants
-├── next_gen_optimizations/     # 2024-2025 techniques (planned)
+├── next_gen_optimizations/     # 2025-2026 techniques (implemented)
 ├── distributed_scale/          # Multi-GPU optimization (planned)
 └── gpu_integration/            # Advanced CUDA features (planned)
 ```

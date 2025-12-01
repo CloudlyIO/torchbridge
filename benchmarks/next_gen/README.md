@@ -4,7 +4,7 @@
 
 ## 🔥 Latest Technology Integration
 
-### State-of-the-Art Baselines (2024-2025)
+### State-of-the-Art Baselines (2025-2026)
 | Technology | Focus Area | Industry Adoption | Benchmark Status |
 |------------|------------|-------------------|------------------|
 | **Flash Attention 3** | Memory efficiency | Production ready | ✅ Implemented |

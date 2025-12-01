@@ -3,7 +3,7 @@
 Enhanced Benchmark Runner for Cutting-Edge Optimization Comparison
 
 Comprehensive benchmarking suite that compares our optimizations against
-the absolute latest industry developments (2024-2025).
+the absolute latest industry developments (2025-2026).
 """
 
 import sys

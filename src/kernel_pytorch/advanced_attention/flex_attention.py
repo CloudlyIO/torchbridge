@@ -1,5 +1,5 @@
 """
-FlexAttention API Integration (2024)
+FlexAttention API Integration (2025)
 
 Implementation of PyTorch's FlexAttention API for flexible attention mechanisms.
 Based on PyTorch 2.5+ FlexAttention that leverages torch.compile to generate

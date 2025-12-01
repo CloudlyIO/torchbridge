@@ -1,5 +1,5 @@
 """
-Mixture of Experts (MoE) Implementation (2024-2025)
+Mixture of Experts (MoE) Implementation (2025-2026)
 
 State-of-the-art MoE implementations based on latest research:
 - Sparse expert routing with top-k gating

@@ -1,5 +1,5 @@
 """
-Advanced Attention Mechanisms (2024-2025)
+Advanced Attention Mechanisms (2025-2026)
 
 This module implements cutting-edge attention optimizations based on the latest research:
 - FlashAttention-3 with FP8 support and asynchronous operations

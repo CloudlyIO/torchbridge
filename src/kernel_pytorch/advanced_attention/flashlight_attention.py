@@ -1,5 +1,5 @@
 """
-FlashLight Attention Implementation (2024)
+FlashLight Attention Implementation (2025)
 
 FlashLight extends TorchInductor within the torch.compile stack for complex
 attention patterns not expressible in FlexAttention, such as differential attention.

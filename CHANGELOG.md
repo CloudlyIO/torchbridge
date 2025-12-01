@@ -2,7 +2,7 @@
 
 **Version history and release notes for the PyTorch GPU optimization framework.**
 
-## [1.1.0] - 2024-11-28 - Benchmark Fixes & Documentation Consolidation
+## [1.1.0] - 2025-11-28 - Benchmark Fixes & Documentation Consolidation
 
 ### 🛠️ Fixed
 - **Benchmark Failures**: Fixed PyTorch Optimized CppCompileError and Flash Attention missing forward function

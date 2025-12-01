@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cutting-Edge Baseline Implementations (2024-2025)
+Cutting-Edge Baseline Implementations (2025-2026)
 
 Implementation of the absolute latest optimization techniques and frameworks
 for comprehensive state-of-the-art comparison.

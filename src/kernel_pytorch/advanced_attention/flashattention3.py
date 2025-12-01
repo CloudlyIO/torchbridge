@@ -1,5 +1,5 @@
 """
-FlashAttention-3 Implementation (2024)
+FlashAttention-3 Implementation (2025)
 
 Based on "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision"
 - Achieves 1.6-2.0x speedup over FlashAttention-2
@@ -47,7 +47,7 @@ class FP8AttentionConfig:
 
 class FlashAttention3(nn.Module):
     """
-    FlashAttention-3 with advanced optimizations for 2024-2025
+    FlashAttention-3 with advanced optimizations for 2025-2026
 
     Key improvements:
     - FP8 precision support with error reduction

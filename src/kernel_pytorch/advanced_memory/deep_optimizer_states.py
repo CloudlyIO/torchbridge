@@ -1,5 +1,5 @@
 """
-Deep Optimizer States Implementation (2024)
+Deep Optimizer States Implementation (2025)
 
 Based on "Deep Optimizer States: Towards Scalable Training of Transformer Models
 Using Interleaved Offloading" - demonstrates 2.5x faster iterations over
