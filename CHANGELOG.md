@@ -2,6 +2,29 @@
 
 **Version history and release notes for the PyTorch GPU optimization framework.**
 
+## [0.1.51] - 2025-12-01 - Directory Structure Optimization (Phase 1)
+
+### 🧹 Code Organization
+- **Consolidated 4 small directories**: Merged `examples/`, `triton_kernels/`, `evaluation_framework/`, `inference_engine/` into `utils/`
+- **Reduced directory count**: From 22 to 18 directories (18% reduction)
+- **Improved structure**: Progressive optimization example, Triton kernels, A/B testing, and inference engine now in unified utils module
+- **Graceful imports**: Added optional dependency handling for advanced features (scipy-dependent modules)
+
+### 🔧 Infrastructure Improvements
+- **Setup.py updates**: Corrected package list to match actual directory structure
+- **Import consolidation**: All moved modules accessible via `kernel_pytorch.utils` with backwards compatibility
+- **Zero breaking changes**: All existing imports continue to work, all tests pass (260 passed, 39 skipped)
+
+### 📁 New Structure
+- **`utils/`**: Now includes progressive optimization, Triton kernels, A/B testing framework, and universal inference engine
+- **Simplified navigation**: Fewer top-level directories for better developer experience
+- **Logical grouping**: Infrastructure utilities consolidated in single location
+
+### 🎯 Phase 1 Complete
+- **Quick wins achieved**: Low-risk consolidation completed successfully
+- **Validation**: All tests pass, demos work perfectly
+- **Preparation**: Foundation laid for Phase 2 (attention mechanism consolidation) and Phase 3 (compiler optimization unification)
+
 ## [0.1.50] - 2025-12-01 - Test Suite Validation & Hardware Guidance
 
 ### 🧪 Testing Excellence

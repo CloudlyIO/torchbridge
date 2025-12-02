@@ -19,12 +19,11 @@ from ..components.basic_optimized import (
     OptimizedMLP
 )
 from ..components.jit_optimized import (
-    JITOptimizedTransformerBlock as JITTransformerBlock,
-    FullyJITTransformerBlock
+    JITOptimizedTransformer as JITOptimizedTransformerBlock
 )
 
 try:
-    from ..triton_kernels.fused_ops import (
+    from .triton_fused_ops import (
         TritonOptimizedTransformerBlock,
         TritonLayerNorm,
         TritonSwiGLU
