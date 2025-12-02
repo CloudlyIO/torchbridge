@@ -50,6 +50,19 @@ from .context_parallel import (
     estimate_context_parallel_efficiency
 )
 
+# Phase 2.2 implementations
+from .unified_attention_fusion import (
+    UnifiedAttentionFusion,
+    FusionConfig,
+    FusionStrategy,
+    OptimizationLevel,
+    FusionPerformanceStats,
+    create_unified_attention_fusion,
+    benchmark_fusion_performance,
+    print_fusion_analysis,
+    print_benchmark_results
+)
+
 __all__ = [
     # Existing implementations
     'FlashAttention3',
@@ -82,5 +95,16 @@ __all__ = [
     'ContextParallelBlock',
     'ContextParallelConfig',
     'create_context_parallel_attention',
-    'estimate_context_parallel_efficiency'
+    'estimate_context_parallel_efficiency',
+
+    # Phase 2.2 implementations - Neural Operator Fusion
+    'UnifiedAttentionFusion',
+    'FusionConfig',
+    'FusionStrategy',
+    'OptimizationLevel',
+    'FusionPerformanceStats',
+    'create_unified_attention_fusion',
+    'benchmark_fusion_performance',
+    'print_fusion_analysis',
+    'print_benchmark_results'
 ]

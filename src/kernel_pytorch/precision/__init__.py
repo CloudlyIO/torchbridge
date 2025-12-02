@@ -27,6 +27,19 @@ from .fp8_optimizations import (
     FP8LossScaler,
     convert_model_to_fp8
 )
+from .ultra_precision import (
+    UltraPrecisionModule,
+    PrecisionConfig,
+    PrecisionFormat,
+    AllocationStrategy,
+    QuantizationMode,
+    PrecisionStats,
+    InformationEntropyAnalyzer,
+    AdaptivePrecisionAllocator,
+    create_ultra_precision_module,
+    analyze_precision_opportunities,
+    benchmark_precision_allocation
+)
 
 __all__ = [
     'FP8TrainingEngine',
@@ -36,5 +49,18 @@ __all__ = [
     'FP8LinearLayer',
     'FP8Optimizer',
     'FP8LossScaler',
-    'convert_model_to_fp8'
+    'convert_model_to_fp8',
+
+    # Ultra Precision components
+    'UltraPrecisionModule',
+    'PrecisionConfig',
+    'PrecisionFormat',
+    'AllocationStrategy',
+    'QuantizationMode',
+    'PrecisionStats',
+    'InformationEntropyAnalyzer',
+    'AdaptivePrecisionAllocator',
+    'create_ultra_precision_module',
+    'analyze_precision_opportunities',
+    'benchmark_precision_allocation'
 ]
