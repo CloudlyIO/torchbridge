@@ -18,7 +18,7 @@ import torch
 import threading
 from contextlib import asynccontextmanager
 
-from ..hardware_abstraction.hal_core import DeviceSpec, HardwareVendor
+from ..hardware.abstraction.hal_core import DeviceSpec, HardwareVendor
 
 logger = logging.getLogger(__name__)
 

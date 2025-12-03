@@ -14,7 +14,7 @@ from enum import Enum
 import logging
 
 # Import HardwareVendor from the original location for compatibility
-from ..distributed_scale.hardware_discovery import HardwareVendor
+from ...distributed_scale.hardware_discovery import HardwareVendor
 
 logger = logging.getLogger(__name__)
 

@@ -244,4 +244,4 @@ demo_outputs/
 *.profiling
 
 # Temporary planning files
-IMMEDIATE_TASK_LIST.md
+IMMEDIATE_TASK_LIST.md.archive/

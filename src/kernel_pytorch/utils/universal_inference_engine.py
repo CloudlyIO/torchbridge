@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 import threading
 from collections import deque
 
-from ..hardware_abstraction.hal_core import DeviceSpec, HardwareVendor, HardwareAbstractionLayer
+from ..hardware.abstraction.hal_core import DeviceSpec, HardwareVendor, HardwareAbstractionLayer
 
 logger = logging.getLogger(__name__)
 

@@ -34,7 +34,7 @@ except ImportError:
     warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations")
 
 try:
-    from ..hardware_abstraction.device_coordinator import HardwareAbstractionLayer
+    from ..hardware.abstraction.hal_core import HardwareAbstractionLayer
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False

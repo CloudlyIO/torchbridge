@@ -23,8 +23,8 @@ from .fault_tolerance import HardwareHealthMonitor
 
 # Import new Hardware Abstraction Layer (HAL) - optional for backward compatibility
 try:
-    from ..hardware_abstraction.hal_core import HardwareAbstractionLayer
-    from ..hardware_abstraction.vendor_adapters import auto_detect_best_adapter, get_available_vendors
+    from ..hardware.abstraction.hal_core import HardwareAbstractionLayer
+    from ..hardware.abstraction.vendor_adapters import auto_detect_best_adapter, get_available_vendors
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False
@@ -74,15 +74,15 @@ class HardwareAdapter:
                 available_vendors = get_available_vendors()
                 for vendor in available_vendors:
                     if vendor == HardwareVendor.NVIDIA and torch.cuda.is_available():
-                        from ..hardware_abstraction.vendor_adapters import NVIDIAAdapter
+                        from ..hardware.abstraction.vendor_adapters import NVIDIAAdapter
                         adapter = NVIDIAAdapter()
                         self.hal.register_vendor_adapter(adapter)
                     elif vendor == HardwareVendor.INTEL:
-                        from ..hardware_abstraction.vendor_adapters import IntelAdapter
+                        from ..hardware.abstraction.vendor_adapters import IntelAdapter
                         adapter = IntelAdapter()
                         self.hal.register_vendor_adapter(adapter)
                     elif vendor == HardwareVendor.UNKNOWN:  # CPU
-                        from ..hardware_abstraction.vendor_adapters import CPUAdapter
+                        from ..hardware.abstraction.vendor_adapters import CPUAdapter
                         adapter = CPUAdapter()
                         self.hal.register_vendor_adapter(adapter)
 

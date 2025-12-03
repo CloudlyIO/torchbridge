@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import threading
 
 # Import existing hardware discovery types for compatibility
-from ..distributed_scale.hardware_discovery import (
+from ...distributed_scale.hardware_discovery import (
     HardwareVendor, DeviceInfo, DeviceCapability, ThermalState
 )
 

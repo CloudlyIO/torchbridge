@@ -20,7 +20,7 @@ from collections import defaultdict
 import numpy as np
 
 # Import our next-gen optimizations
-from ..next_gen_optimizations import (
+from ..optimizations.next_gen import (
     FSDP2Manager, FSDP2Config, create_fsdp2_manager,
     create_pygraph_optimizer, PyGraphOptimizer,
     create_structured_sparsity_optimizer
