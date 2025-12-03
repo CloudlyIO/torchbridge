@@ -458,7 +458,9 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
             try:
                 # Import our optimized components
                 from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
-                from kernel_pytorch.advanced_attention.flex_attention import FlexAttention
+                # FlexAttention will be available in future version of unified attention framework
+                # from kernel_pytorch.attention.implementations.flex_attention import FlexAttention
+                warnings.warn("FlexAttention temporarily unavailable in benchmarks")
 
                 # Create model with our optimizations
                 model = OurOptimizedModel(model_config).to(self.device)
@@ -545,11 +547,9 @@ class OurOptimizedBlock(nn.Module):
     def __init__(self, hidden_size: int, num_heads: int):
         super().__init__()
 
-        try:
-            from kernel_pytorch.advanced_attention.flex_attention import FlexAttention
-            self.attention = FlexAttention(hidden_size, num_heads)
-        except ImportError:
-            self.attention = OptimizedAttention(hidden_size, num_heads)
+        # FlexAttention will be available in future version of unified attention framework
+        # For now, use basic optimized attention
+        self.attention = OptimizedAttention(hidden_size, num_heads)
 
         self.mlp = OurOptimizedMLP(hidden_size)
 

@@ -34,7 +34,7 @@ import numpy as np
 from contextlib import contextmanager
 
 # Import Phase 2.2 Neural Operator Fusion components
-from kernel_pytorch.advanced_attention.unified_attention_fusion import (
+from kernel_pytorch.attention.fusion.neural_operator import (
     UnifiedAttentionFusion,
     FusionConfig,
     FusionStrategy,

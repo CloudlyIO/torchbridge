@@ -6,7 +6,7 @@
 
 ```
 src/kernel_pytorch/
-├── advanced_attention/         # Ring, Sparse, Context Parallel attention
+├── attention/                  # Unified attention framework (Ring, Sparse, Context Parallel)
 ├── precision/                  # FP8 training and quantization
 ├── hardware_abstraction/       # Multi-vendor GPU support (HAL)
 ├── components/                 # Core optimized layers

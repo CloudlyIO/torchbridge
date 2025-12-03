@@ -5,11 +5,16 @@
 ## 🚀 Quick Import Guide
 
 ```python
-# Advanced Attention
-from kernel_pytorch.advanced_attention import (
-    create_ring_attention,
-    create_sparse_attention,
-    create_context_parallel_attention,
+# Unified Attention Framework (Phase 2 Consolidated)
+from kernel_pytorch.attention import (
+    AttentionConfig,
+    AttentionPatterns,
+    FP8AttentionConfig,
+    create_attention,
+    FlashAttention3,
+    RingAttentionLayer,
+    DynamicSparseAttention,
+    ContextParallelAttention,
     create_unified_attention_fusion  # Phase 2.2
 )
 
@@ -357,7 +362,7 @@ def create_unified_attention_fusion(
 
 **Example:**
 ```python
-from kernel_pytorch.advanced_attention import (
+from kernel_pytorch.attention.fusion import (
     create_unified_attention_fusion,
     FusionStrategy,
     OptimizationLevel

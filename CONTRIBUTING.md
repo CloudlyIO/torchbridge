@@ -29,7 +29,7 @@ PYTHONPATH=src python -m pytest tests/ -v
 ### **Core Components**
 ```
 src/kernel_pytorch/
-├── advanced_attention/     # Ring, Sparse, Context Parallel attention
+├── attention/              # Unified attention framework (Ring, Sparse, Context Parallel)
 ├── precision/              # FP8 training and quantization
 ├── hardware_abstraction/   # Multi-vendor GPU/CPU support
 ├── compiler_integration/   # FlashLight, PyGraph, TorchInductor
@@ -67,7 +67,7 @@ git checkout -b feature/your-feature-name
 PYTHONPATH=src python -m pytest tests/ --tb=short
 
 # Run specific test categories
-PYTHONPATH=src python -m pytest tests/test_advanced_attention.py -v
+PYTHONPATH=src python -m pytest tests/test_attention_compatibility.py -v
 PYTHONPATH=src python -m pytest tests/test_fp8_training.py -v
 
 # Run demos to validate integration
@@ -176,7 +176,7 @@ class TestRingAttention:
 PYTHONPATH=src python -c "from kernel_pytorch.utils.import_profiler import benchmark_lazy_loading_improvements; benchmark_lazy_loading_improvements()"
 
 # Validate attention implementations
-PYTHONPATH=src python -c "from kernel_pytorch.advanced_attention import create_ring_attention; print('✅ Ring Attention available')"
+PYTHONPATH=src python -c "from kernel_pytorch.attention import create_ring_attention; print('✅ Ring Attention available')"
 
 # Check FP8 training setup
 PYTHONPATH=src python -c "from kernel_pytorch.precision import create_fp8_trainer; print('✅ FP8 Training available')"

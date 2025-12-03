@@ -1,85 +1,64 @@
 """
-Unified Attention Module System
+Unified Attention Framework
 
-Consolidates all attention implementations into a well-organized hierarchy:
-- Core attention utilities and base classes
-- FlashAttention variants (v2, v3, FP8 support)
-- Memory-efficient attention implementations
-- Specialized attention patterns (Ring, Sparse, Differential)
-
-This replaces the scattered attention implementations across multiple modules
-with a clean, maintainable architecture.
+Consolidates all attention implementations from attention/ and advanced_attention/
+into a single, unified framework with consistent interfaces and enhanced capabilities.
 """
 
-# Core attention utilities
+# Core framework
 from .core import (
     BaseAttention,
     AttentionConfig,
     AttentionPatterns,
-    create_attention,
-    get_attention_registry
-)
-
-# FlashAttention implementations
-from .flash_attention import (
-    FlashAttention2,
-    FlashAttention3,
     FP8AttentionConfig,
-    MultiHeadFlashAttention
+    DynamicSparseConfig,
+    register_attention,
+    create_attention
 )
 
-# Memory-efficient attention
-from .efficient_attention import (
-    MemoryEfficientAttention,
-    LongSequenceAttention,
-    RingAttention,
-    ChunkedAttention
-)
+# Main implementations
+from .implementations.flash_attention import FlashAttention3, FlashAttention2
 
-# Specialized attention patterns
-from .specialized import (
-    SparseAttentionPattern,
-    DifferentialAttention,
-    FlexAttentionAPI,
-    LocalAttention,
-    SlidingWindowAttention
-)
+# Distributed attention - import what exists
+try:
+    from .distributed.ring_attention import RingAttentionLayer
+except ImportError:
+    RingAttentionLayer = None
 
-# Backward compatibility imports (deprecated)
-from .legacy import (
-    # Re-exports from old modules for compatibility
-    CompilerOptimizedMultiHeadAttention,
-    FlashAttentionWrapper
-)
+try:
+    from .distributed.context_parallel import ContextParallelAttention
+except ImportError:
+    ContextParallelAttention = None
 
+# Advanced fusion - import what exists
+try:
+    from .fusion.neural_operator import create_unified_attention_fusion
+except ImportError:
+    create_unified_attention_fusion = None
+
+# Build dynamic exports
 __all__ = [
-    # Core utilities
+    # Core framework
     'BaseAttention',
     'AttentionConfig',
     'AttentionPatterns',
-    'create_attention',
-    'get_attention_registry',
-
-    # FlashAttention family
-    'FlashAttention2',
-    'FlashAttention3',
     'FP8AttentionConfig',
-    'MultiHeadFlashAttention',
+    'DynamicSparseConfig',
+    'register_attention',
+    'create_attention',
 
-    # Efficient attention
-    'MemoryEfficientAttention',
-    'LongSequenceAttention',
-    'RingAttention',
-    'ChunkedAttention',
-
-    # Specialized patterns
-    'SparseAttentionPattern',
-    'DifferentialAttention',
-    'FlexAttentionAPI',
-    'LocalAttention',
-    'SlidingWindowAttention',
-
-    # Legacy (deprecated - use unified variants above)
-    'CompilerOptimizedMultiHeadAttention',
-    'FlashAttentionWrapper',
+    # Implementations
+    'FlashAttention3',
+    'FlashAttention2'
 ]
+
+# Add available distributed components
+if RingAttentionLayer is not None:
+    __all__.append('RingAttentionLayer')
+
+if ContextParallelAttention is not None:
+    __all__.append('ContextParallelAttention')
+
+# Add available fusion components
+if create_unified_attention_fusion is not None:
+    __all__.append('create_unified_attention_fusion')

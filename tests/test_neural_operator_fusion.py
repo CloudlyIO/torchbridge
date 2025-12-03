@@ -23,7 +23,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Any
 from unittest.mock import patch, MagicMock
 
-from kernel_pytorch.advanced_attention.unified_attention_fusion import (
+from kernel_pytorch.attention.fusion.neural_operator import (
     UnifiedAttentionFusion,
     FusionConfig,
     FusionStrategy,

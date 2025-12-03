@@ -31,7 +31,7 @@ python -c "import kernel_pytorch; print('✅ KernelPyTorch ready!')"
 ### **Basic Usage**
 ```python
 import torch
-from kernel_pytorch.advanced_attention import create_ring_attention
+from kernel_pytorch.attention import create_ring_attention
 from kernel_pytorch.precision import create_fp8_trainer
 
 # Million-token sequences with linear memory
@@ -49,7 +49,7 @@ with trainer:
     loss = trainer.training_step(inputs, targets)  # 2x speedup
 
 # 40-60% kernel overhead reduction with Neural Operator Fusion
-from kernel_pytorch.advanced_attention import create_unified_attention_fusion
+from kernel_pytorch.attention import create_unified_attention_fusion
 fused_model = create_unified_attention_fusion(transformer_model)  # Single-kernel execution
 
 # 30% quality improvement with Adaptive Precision Allocation
@@ -221,7 +221,7 @@ devices = detect_available_devices()               # NVIDIA, AMD, Intel support
 ### **Project Structure**
 ```
 src/kernel_pytorch/
-├── advanced_attention/     # Ring, Sparse, Context Parallel attention
+├── attention/             # Unified attention framework (Ring, Sparse, Context Parallel)
 ├── precision/              # FP8 training and quantization
 ├── hardware_abstraction/   # Multi-vendor GPU support
 ├── components/             # Core optimized layers
