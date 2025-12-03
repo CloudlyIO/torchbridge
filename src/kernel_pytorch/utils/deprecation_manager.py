@@ -60,7 +60,7 @@ class DeprecationManager:
             "new_imports": {
                 "CompilerOptimizationAssistant": "kernel_pytorch.utils.compiler_assistant",
                 "ModelArchitectureAnalyzer": "kernel_pytorch.utils.model_analyzer",
-                "OptimizationRecommendationEngine": "kernel_pytorch.utils.optimization_engine"
+                "OptimizationRecommendationEngine": "kernel_pytorch.utils.optimization_recommendations"
             }
         }
     }

@@ -247,7 +247,7 @@ self.norm = OptimizedRMSNorm(hidden_size)
             difficulty='medium',
             code_example='''
 # Tensor Core optimization
-from kernel_pytorch.gpu_integration.tensor_cores import TensorCoreOptimizer
+from kernel_pytorch.hardware.gpu.tensor_cores import TensorCoreOptimizer
 
 optimizer = TensorCoreOptimizer()
 optimized_model, info = optimizer.optimize_model_for_tensor_cores(model, sample_input)
@@ -289,7 +289,7 @@ scaler.update()
             difficulty='medium',
             code_example='''
 # Memory optimization techniques
-from kernel_pytorch.gpu_integration.memory_optimization import MemoryOptimizer
+from kernel_pytorch.hardware.gpu.memory_optimization import MemoryOptimizer
 
 memory_optimizer = MemoryOptimizer()
 optimized_model = memory_optimizer.optimize_memory_layout(
@@ -447,7 +447,7 @@ from kernel_pytorch.compiler_optimized import OptimizedLayerNorm
 
         code = '''
 # Applied Tensor Core optimization
-from kernel_pytorch.gpu_integration.tensor_cores import TensorCoreOptimizer
+from kernel_pytorch.hardware.gpu.tensor_cores import TensorCoreOptimizer
 
 tensor_optimizer = TensorCoreOptimizer()
 optimized_model, optimization_info = tensor_optimizer.optimize_model_for_tensor_cores(
@@ -463,7 +463,7 @@ optimized_model, optimization_info = tensor_optimizer.optimize_model_for_tensor_
 
         code = '''
 # Applied memory optimization
-from kernel_pytorch.gpu_integration.memory_optimization import MemoryOptimizer
+from kernel_pytorch.hardware.gpu.memory_optimization import MemoryOptimizer
 
 memory_optimizer = MemoryOptimizer()
 optimized_model = memory_optimizer.optimize_memory_layout(
