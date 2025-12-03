@@ -52,7 +52,7 @@ from kernel_pytorch.precision.ultra_precision import (
 )
 
 # Import supporting components
-from kernel_pytorch.components import OptimizedMultiHeadAttention
+from kernel_pytorch.core.components import OptimizedMultiHeadAttention
 
 
 @dataclass

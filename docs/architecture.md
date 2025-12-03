@@ -6,16 +6,24 @@
 
 ```
 src/kernel_pytorch/
-├── attention/                  # Unified attention framework (Ring, Sparse, Context Parallel)
+├── core/                       # Unified core optimization components (Phase 3)
+│   ├── compilers/             # Compiler integrations (FlashLight, PyGraph)
+│   ├── optimized_layers/      # Optimized layer implementations
+│   └── components/            # Basic optimized components
+├── optimizations/              # Unified optimization strategies (Phase 3)
+│   ├── patterns/             # Common optimization patterns
+│   └── next_gen/             # Cutting-edge 2025+ techniques
+├── hardware/                   # Unified hardware optimization (Phase 3)
+│   ├── gpu/                  # GPU-specific optimizations
+│   ├── abstraction/          # Hardware abstraction layer
+│   └── kernels/              # CUDA kernels and interfaces
+├── attention/                  # Unified attention framework (Phase 2)
 ├── precision/                  # FP8 training and quantization
-├── hardware_abstraction/       # Multi-vendor GPU support (HAL)
-├── components/                 # Core optimized layers
-├── compiler_integration/       # FlashLight, PyGraph integration
+├── mixture_of_experts/         # MoE implementations
+├── advanced_memory/            # Memory optimizations
+├── distributed_scale/          # Distributed computing
 ├── testing_framework/          # Validation and benchmarking
-├── utils/                      # Profiling and optimization assistants
-├── next_gen_optimizations/     # 2025-2026 techniques (implemented)
-├── distributed_scale/          # Multi-GPU optimization (planned)
-└── gpu_integration/            # Advanced CUDA features (planned)
+└── utils/                      # Utility functions
 ```
 
 ## ⚡ Performance Architecture

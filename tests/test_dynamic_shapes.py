@@ -23,7 +23,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Any
 from unittest.mock import patch, MagicMock
 
-from kernel_pytorch.optimization_patterns.dynamic_shapes import (
+from kernel_pytorch.optimizations.patterns.dynamic_shapes import (
     DynamicShapeBucketing,
     ShapeBucket,
     DynamicShapeProfile,

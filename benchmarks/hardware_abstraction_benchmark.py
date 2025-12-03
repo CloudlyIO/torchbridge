@@ -29,18 +29,18 @@ try:
     import numpy as np
 
     # Hardware abstraction imports
-    from kernel_pytorch.hardware_abstraction.hal_core import (
+    from kernel_pytorch.hardware.abstraction.hal_core import (
         HardwareAbstractionLayer, DeviceSpec, HardwareCapabilities,
         HardwareVendor, ComputeCapability
     )
-    from kernel_pytorch.hardware_abstraction.vendor_adapters import (
+    from kernel_pytorch.hardware.abstraction.vendor_adapters import (
         NVIDIAAdapter, IntelAdapter, CPUAdapter
     )
     from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
 
     # Import optimization components
-    from kernel_pytorch.components import OptimizedMultiHeadAttention as AttentionLayer
-    from kernel_pytorch.compiler_optimized import FusedGELU
+    from kernel_pytorch.core.components import OptimizedMultiHeadAttention as AttentionLayer
+    from kernel_pytorch.core.optimized_layers import FusedGELU
 
 except ImportError as e:
     print(f"❌ Import error: {e}")

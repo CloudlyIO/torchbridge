@@ -17,17 +17,17 @@ from typing import Dict, List, Any
 
 # Import hardware abstraction components
 try:
-    from kernel_pytorch.hardware_abstraction.hal_core import (
+    from kernel_pytorch.hardware.abstraction.hal_core import (
         HardwareAbstractionLayer, DeviceSpec, HardwareCapabilities,
         ComputeCapability, DeviceMesh, CrossVendorCapabilities
     )
     # Use the original HardwareVendor for compatibility
     from kernel_pytorch.distributed_scale.hardware_discovery import HardwareVendor
-    from kernel_pytorch.hardware_abstraction.privateuse1_integration import (
+    from kernel_pytorch.hardware.abstraction.privateuse1_integration import (
         PrivateUse1Manager, CustomDeviceBackend, PrivateUse1Config,
         register_custom_device, validate_privateuse1_setup
     )
-    from kernel_pytorch.hardware_abstraction.vendor_adapters import (
+    from kernel_pytorch.hardware.abstraction.vendor_adapters import (
         NVIDIAAdapter, IntelAdapter, CPUAdapter
     )
     from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter

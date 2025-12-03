@@ -22,7 +22,7 @@ import os
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from kernel_pytorch.next_gen_optimizations import (
+from kernel_pytorch.optimizations.next_gen import (
     # Advanced FlexAttention
     FlashLightCompiler,
     AdvancedFlexAttention,

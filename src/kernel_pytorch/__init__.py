@@ -14,5 +14,25 @@ Optimization Levels:
 
 __version__ = "0.1.0"
 
-from .components import *
+# Core optimization components (Phase 3 unified)
+from .core import *
+
+# Attention mechanisms (Phase 2 unified)
+from .attention import *
+
+# Specialized modules
+from .precision import *
+from .mixture_of_experts import *
+from .advanced_memory import *
+from .distributed_scale import *
+from .testing_framework import *
 from .utils import *
+
+# Hardware optimization (Phase 3 unified)
+from .hardware import *
+
+# Optimization patterns (Phase 3 unified)
+from .optimizations import *
+
+# Backward compatibility is handled by individual modules through deprecation warnings
+# No need to import non-existent modules here

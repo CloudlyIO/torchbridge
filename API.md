@@ -27,15 +27,14 @@ from kernel_pytorch.precision import (
     analyze_precision_opportunities  # Phase 2.2
 )
 
-# Hardware Abstraction
-from kernel_pytorch.hardware_abstraction import (
+# Hardware Abstraction (Phase 3 unified)
+from kernel_pytorch.hardware import (
     HardwareAbstractionLayer,
     detect_available_devices
 )
 
-# Core Components
-from kernel_pytorch.components import AttentionLayer, OptimizedLinear
-from kernel_pytorch.compiler_optimized import FusedGELU
+# Core Components (Phase 3 unified)
+from kernel_pytorch.core import AttentionLayer, OptimizedLinear, FusedGELU
 ```
 
 ## 🎯 Advanced Attention APIs

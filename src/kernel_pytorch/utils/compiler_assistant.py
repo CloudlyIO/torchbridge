@@ -218,7 +218,7 @@ def forward(self, x):
     return self.activation(self.linear(x))
 
 # After: Fused operation
-from kernel_pytorch.compiler_optimized import FusedLinearGELU
+from kernel_pytorch.core.optimized_layers import FusedLinearGELU
 
 self.fused_layer = FusedLinearGELU(512, 1024)
 
@@ -246,7 +246,7 @@ Memory Benefits:
 Implementation:
 ```python
 # Use optimized attention
-from kernel_pytorch.compiler_optimized import CompilerOptimizedMultiHeadAttention
+from kernel_pytorch.core.optimized_layers import CompilerOptimizedMultiHeadAttention
 
 self.attention = CompilerOptimizedMultiHeadAttention(embed_dim, num_heads)
 
