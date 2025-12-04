@@ -13,7 +13,7 @@ This module provides:
 5. Communication optimization techniques
 6. Educational multi-GPU examples
 
-Author: Advanced GPU Optimization Framework
+Author: KernelPyTorch Team
 """
 
 import torch

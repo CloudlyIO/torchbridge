@@ -13,7 +13,7 @@ This module provides:
 5. Educational validation examples
 6. Continuous integration utilities
 
-Author: Advanced GPU Optimization Framework
+Author: KernelPyTorch Team
 """
 
 import torch

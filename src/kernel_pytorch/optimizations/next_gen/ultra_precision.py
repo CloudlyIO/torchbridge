@@ -1,5 +1,5 @@
 """
-Ultra-Precision Optimization Techniques (2025)
+Ultra-Precision Optimization Techniques
 
 Implementation of the latest ultra-low precision techniques:
 - FP4 quantization with NVFP4 support
@@ -7,7 +7,7 @@ Implementation of the latest ultra-low precision techniques:
 - Information entropy-based precision allocation
 - Adaptive precision allocation with 4x performance gains
 
-Based on latest 2025 research in ultra-precision optimization.
+Based on latest research in ultra-precision optimization.
 """
 
 import torch

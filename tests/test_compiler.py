@@ -6,7 +6,7 @@ Tests for:
 2. PyGraph CUDA Graphs Support
 3. Enhanced TorchInductor Fusion
 
-These tests validate the 2025 state-of-the-art optimizations.
+These tests validate state-of-the-art optimizations.
 """
 
 import pytest

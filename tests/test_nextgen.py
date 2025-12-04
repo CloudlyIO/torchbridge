@@ -1,5 +1,5 @@
 """
-Comprehensive Test Suite for Next-Generation Optimizations (2025)
+Comprehensive Test Suite for Next-Generation Optimizations
 
 Tests for all the latest optimization techniques:
 - Advanced FlexAttention with FlashLight compiler

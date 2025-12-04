@@ -5,24 +5,10 @@ This module provides comprehensive tools for integrating and optimizing custom
 CUDA kernels within PyTorch workflows, including Triton kernel optimization
 and CUDA kernel building utilities.
 
-🎓 EDUCATIONAL FOCUS:
-Custom kernels represent the ultimate optimization technique for GPU computing:
-- CUDA programming model: Understanding GPU threads, blocks, and memory hierarchy
-- Triton: Python-like GPU kernel programming with automatic optimization
-- Kernel fusion: Combining operations at the lowest level for maximum efficiency
-- Memory access optimization: Coalesced access patterns and shared memory usage
-- Performance measurement: Accurate kernel benchmarking and optimization validation
-
-🔧 OPTIMIZATION TECHNIQUES:
-- Triton kernel development for high-level GPU programming
-- CUDA kernel integration for maximum control and performance
-- Kernel fusion strategies for eliminating memory bandwidth bottlenecks
-- Memory access pattern optimization for cache-friendly computations
-- Occupancy optimization for maximum GPU utilization
-
-💡 PRACTICAL APPLICATION:
-Custom kernels enable performance levels beyond standard PyTorch operations,
-achieving 10-100x speedups for specialized computational patterns.
+💡 Key Concept: Custom kernels achieve 10-100x speedups through direct GPU programming
+- Triton: Python-like kernel development with automatic optimization
+- CUDA: Maximum control over GPU threads, blocks, and memory hierarchy
+- Kernel fusion: Eliminate memory bandwidth bottlenecks
 """
 
 import torch
@@ -45,7 +31,7 @@ class CustomKernelWrapper(nn.Module):
     """
     Wrapper for custom GPU kernels with PyTorch integration.
 
-    🎓 EDUCATIONAL: Custom kernel integration patterns
+    💡 Tip: Custom kernel integration patterns
     This class demonstrates how to properly integrate custom GPU kernels
     into PyTorch computational graphs while maintaining autograd compatibility
     and ensuring correct memory management.
@@ -118,7 +104,7 @@ if TRITON_AVAILABLE:
         """
         Triton kernel for fused Linear + GELU operation.
 
-        🎓 EDUCATIONAL: Triton kernel development
+        💡 Note: Triton kernel development
         This demonstrates how to write efficient GPU kernels using Triton's
         Python-like syntax while achieving performance comparable to hand-tuned CUDA.
 
@@ -186,7 +172,7 @@ class TritonKernelOptimizer:
     """
     Optimizer for Triton kernels with automatic tuning and validation.
 
-    🎓 EDUCATIONAL: Automatic kernel optimization
+    💡 Feature: Automatic kernel optimization
     This class demonstrates how to systematically optimize GPU kernels
     by exploring different parameter configurations and measuring performance.
 
@@ -330,7 +316,7 @@ class CUDAKernelBuilder:
     """
     Builder for CUDA kernels with automatic compilation and integration.
 
-    🎓 EDUCATIONAL: CUDA kernel integration
+    💡 Advanced: CUDA kernel integration
     This class demonstrates how to integrate hand-written CUDA kernels
     into PyTorch workflows with proper compilation and memory management.
 

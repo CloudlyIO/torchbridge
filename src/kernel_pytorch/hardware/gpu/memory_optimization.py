@@ -12,7 +12,7 @@ This module provides:
 4. Memory leak detection and prevention
 5. Educational memory optimization examples
 
-Author: Advanced GPU Optimization Framework
+Author: KernelPyTorch Team
 """
 
 import torch

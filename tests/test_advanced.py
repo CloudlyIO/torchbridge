@@ -1,7 +1,7 @@
 """
 Comprehensive Test Suite for Advanced Optimizations
 
-Tests for all 2025-2026 cutting-edge optimization implementations:
+Tests for cutting-edge optimization implementations:
 - FlashAttention-3 with FP8 precision
 - Mixture of Experts systems
 - Advanced memory optimization

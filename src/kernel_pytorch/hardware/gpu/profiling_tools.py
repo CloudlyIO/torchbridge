@@ -13,7 +13,7 @@ This module provides:
 5. Optimization recommendation system
 6. Educational profiling examples
 
-Author: Advanced GPU Optimization Framework
+Author: KernelPyTorch Team
 """
 
 import torch
