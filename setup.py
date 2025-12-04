@@ -92,7 +92,7 @@ else:
 
 setup(
     name='kernel-pytorch',
-    version='1.0.0',
+    version='0.1.55',
     author='KernelPyTorch Team',
     description='Kernel-optimized PyTorch components for ML education',
     long_description=open('README.md').read() if os.path.exists('README.md') else '',
