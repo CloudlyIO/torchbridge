@@ -1,0 +1,87 @@
+# Development Docker image for KernelPyTorch
+# Includes all development tools and optional dependencies
+
+FROM nvidia/cuda:11.8-devel-ubuntu22.04
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    build-essential \
+    cmake \
+    ninja-build \
+    vim \
+    htop \
+    tree \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3.10 /usr/bin/python
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install PyTorch with CUDA support
+RUN pip install --no-cache-dir \
+    torch==2.1.0+cu118 \
+    torchvision==0.16.0+cu118 \
+    --index-url https://download.pytorch.org/whl/cu118
+
+# Install Triton for GPU kernel development
+RUN pip install --no-cache-dir triton==2.1.0
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy source code
+COPY . .
+
+# Install KernelPyTorch in development mode with all dependencies
+RUN pip install -e .[all,dev,cloud,serving,monitoring,benchmark]
+
+# Install additional development tools
+RUN pip install --no-cache-dir \
+    jupyter \
+    jupyterlab \
+    ipython \
+    notebook \
+    tensorboard \
+    wandb \
+    matplotlib \
+    seaborn \
+    plotly \
+    streamlit \
+    gradio
+
+# Create jupyter config
+RUN jupyter notebook --generate-config \
+    && echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py \
+    && echo "c.NotebookApp.open_browser = False" >> ~/.jupyter/jupyter_notebook_config.py \
+    && echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py \
+    && echo "c.NotebookApp.password = ''" >> ~/.jupyter/jupyter_notebook_config.py
+
+# Expose ports for development services
+EXPOSE 8888 6006 8080 7860
+
+# Set default command to bash for development
+CMD ["/bin/bash"]
+
+# Add helpful development aliases
+RUN echo 'alias ll="ls -la"' >> ~/.bashrc \
+    && echo 'alias kpt="kernelpytorch"' >> ~/.bashrc \
+    && echo 'alias pytest="python -m pytest"' >> ~/.bashrc \
+    && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> ~/.bashrc
+
+# Metadata
+LABEL maintainer="KernelPyTorch Team" \
+      version="0.1.55-dev" \
+      description="Development environment for KernelPyTorch GPU optimization framework" \
+      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch"

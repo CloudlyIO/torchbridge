@@ -1,0 +1,99 @@
+# Production Docker image for KernelPyTorch
+# Multi-stage build for optimized production deployment
+
+# Build stage
+FROM python:3.10-slim as builder
+
+# Set build arguments
+ARG CUDA_VERSION=11.8
+ARG PYTORCH_VERSION=2.1.0
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create build environment
+WORKDIR /build
+
+# Copy requirements and setup files
+COPY pyproject.toml setup.py README.md ./
+COPY src/ src/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Build the wheel
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels .
+
+# Production stage
+FROM nvidia/cuda:11.8-runtime-ubuntu22.04
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install Python and essential packages
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-distutils \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3.10 /usr/bin/python
+
+# Create application user
+RUN groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
+# Set working directory
+WORKDIR /app
+
+# Install PyTorch with CUDA support
+RUN pip install --no-cache-dir \
+    torch==2.1.0+cu118 \
+    torchvision==0.16.0+cu118 \
+    --index-url https://download.pytorch.org/whl/cu118
+
+# Copy wheels from build stage
+COPY --from=builder /build/wheels/*.whl /tmp/wheels/
+
+# Install KernelPyTorch
+RUN pip install --no-cache-dir /tmp/wheels/*.whl \
+    && rm -rf /tmp/wheels
+
+# Install additional production dependencies
+RUN pip install --no-cache-dir \
+    gunicorn==21.2.0 \
+    uvicorn[standard]==0.23.0 \
+    fastapi==0.103.0
+
+# Copy application code (if any additional files needed)
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Create directories for models and data
+RUN mkdir -p /app/models /app/data /app/logs \
+    && chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Set default command
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["kernelpytorch", "doctor", "--verbose"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import kernel_pytorch; print('✓ Healthy')" || exit 1
+
+# Metadata
+LABEL maintainer="KernelPyTorch Team" \
+      version="0.1.55" \
+      description="Production-ready KernelPyTorch GPU optimization framework" \
+      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch" \
+      org.opencontainers.image.documentation="https://kernel-pytorch.readthedocs.io" \
+      org.opencontainers.image.licenses="MIT"

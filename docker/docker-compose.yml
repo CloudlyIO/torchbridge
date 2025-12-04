@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Production KernelPyTorch service
+  kernelpytorch:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.production
+    image: kernelpytorch:latest
+    container_name: kernelpytorch-prod
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - CUDA_VISIBLE_DEVICES=0
+      - PORT=8000
+      - WORKERS=2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import kernel_pytorch; print('Healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development environment
+  kernelpytorch-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.development
+    image: kernelpytorch:dev
+    container_name: kernelpytorch-dev
+    ports:
+      - "8888:8888"  # Jupyter
+      - "6006:6006"  # TensorBoard
+      - "8080:8080"  # Streamlit
+      - "7860:7860"  # Gradio
+    volumes:
+      - ..:/workspace
+      - ./data:/workspace/data
+      - ./models:/workspace/models
+      - jupyter-data:/root/.jupyter
+    environment:
+      - PYTHONPATH=/workspace/src
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        echo 'Starting development environment...' &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
+        tensorboard --logdir=/workspace/logs --host=0.0.0.0 --port=6006 &
+        echo 'Services started. Connect to:' &&
+        echo '  Jupyter Lab: http://localhost:8888' &&
+        echo '  TensorBoard: http://localhost:6006' &&
+        echo '  Container shell: docker exec -it kernelpytorch-dev bash' &&
+        tail -f /dev/null
+      "
+
+  # Benchmarking service
+  benchmarker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.production
+    image: kernelpytorch:latest
+    container_name: kernelpytorch-benchmark
+    volumes:
+      - ./benchmark-results:/app/results
+      - ./models:/app/models
+    environment:
+      - PYTHONPATH=/app
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: >
+      bash -c "
+        echo 'Running comprehensive benchmarks...' &&
+        kernelpytorch benchmark --predefined optimization --output /app/results/optimization_$(date +%Y%m%d_%H%M%S).json &&
+        kernelpytorch benchmark --predefined transformers --output /app/results/transformers_$(date +%Y%m%d_%H%M%S).json &&
+        echo 'Benchmarks completed. Results saved to ./benchmark-results/'
+      "
+    profiles:
+      - benchmark
+
+  # Monitoring and metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kernelpytorch-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kernelpytorch-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=kernelpytorch
+    profiles:
+      - monitoring
+
+volumes:
+  jupyter-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  default:
+    driver: bridge
