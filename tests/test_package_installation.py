@@ -18,7 +18,7 @@ class TestPackageInstallation:
         """Test that kernel_pytorch can be imported."""
         import kernel_pytorch
         assert hasattr(kernel_pytorch, '__version__')
-        assert kernel_pytorch.__version__ == "0.1.56"
+        assert kernel_pytorch.__version__ == "0.1.57"
 
     def test_import_cli_modules(self):
         """Test that CLI modules can be imported."""
