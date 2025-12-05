@@ -465,8 +465,11 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
                 # Create model with our optimizations
                 model = OurOptimizedModel(model_config).to(self.device)
 
-                # Compile with our optimizations
-                model = torch.compile(model, mode='max-autotune')
+                # Compile with our optimizations (skip on CPU to avoid C++ issues)
+                if self.device.type != 'cpu':
+                    model = torch.compile(model, mode='max-autotune')
+                else:
+                    warnings.warn("Skipping torch.compile on CPU to avoid C++ compilation issues")
 
                 return model
 

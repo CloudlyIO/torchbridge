@@ -43,7 +43,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.profiler import profile, record_function, ProfilerActivity
 
-from kernel_pytorch.optimization_patterns.dynamic_shapes import (
+from kernel_pytorch.optimizations.patterns.dynamic_shapes import (
     DynamicShapeBucketing,
     BucketingStrategy,
     PaddingStrategy,

@@ -6,14 +6,14 @@
 
 | Step | Document | Time | Purpose |
 |------|----------|------|---------|
-| 1️⃣ | [Setup Guide](setup.md) | 5 min | Install and verify |
+| 1️⃣ | [Installation Guide](installation.md) | 5 min | Install and verify |
 | 2️⃣ | [Basic Demo](../demos/01_basic_optimizations.py) | 2 min | See 2.8x speedup |
 | 3️⃣ | [Benchmarks](../BENCHMARKS.md) | 5 min | Validate claims |
 
 ## 📖 Complete Documentation
 
 ### **Setup & Configuration**
-- **[Setup Guide](setup.md)** - Quick installation (5 minutes)
+- **[Installation Guide](installation.md)** - Complete installation instructions
 - **[CUDA Setup](cuda_setup.md)** - Detailed CUDA/Triton configuration
 - **[Cloud Testing](cloud_testing_guide.md)** - AWS/Azure/GCP deployment
 
@@ -34,7 +34,7 @@
 ## 🎯 By Use Case
 
 ### **New Users** (Start here!)
-1. [Setup Guide](setup.md) → [Basic Demo](../demos/) → [Benchmarks](../BENCHMARKS.md)
+1. [Installation Guide](installation.md) → [Quick Start](quickstart.md) → [Basic Demo](../demos/) → [Benchmarks](../BENCHMARKS.md)
 2. Expected: 5-minute setup, 2.8-6.1x performance improvements demonstrated
 
 ### **Developers**

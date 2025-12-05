@@ -18,16 +18,15 @@ class TestCLIMain:
 
     def test_cli_version(self):
         """Test --version flag."""
-        # Test with argument list
-        with pytest.raises(SystemExit) as exc_info:
-            main(['--version'])
-        assert exc_info.value.code == 0
+        # Test with argument list - now returns exit code instead of raising
+        result = main(['--version'])
+        assert result == 0
 
     def test_cli_help(self):
         """Test help output."""
-        with pytest.raises(SystemExit) as exc_info:
-            main(['--help'])
-        assert exc_info.value.code == 0
+        # Test help output - now returns exit code instead of raising
+        result = main(['--help'])
+        assert result == 0
 
     def test_cli_no_command(self):
         """Test CLI with no command shows help."""

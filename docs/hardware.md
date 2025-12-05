@@ -171,4 +171,4 @@ def test_attention_layer(device):
 
 ---
 
-**For specific hardware setup instructions, see `setup.md`.**
+**For specific hardware setup instructions, see [Installation Guide](installation.md).**

@@ -199,19 +199,26 @@ Examples:
 
         if args.predefined == 'optimization':
             # Use existing performance benchmarking framework
-            benchmark = PerformanceBenchmarkSuite(device=device)
-            predefined_results = benchmark.run_all_benchmarks()
+            benchmark = PerformanceBenchmarkSuite()
+            predefined_results = benchmark.run_predefined_benchmarks()
 
-            for benchmark_name, result in predefined_results.items():
-                if isinstance(result, dict) and 'mean_time' in result:
-                    results.append(BenchmarkResult(
-                        name=benchmark_name,
-                        mean_time_ms=result['mean_time'] * 1000,  # Convert to ms
-                        std_time_ms=result.get('std_time', 0) * 1000,
-                        throughput_ops_per_sec=1000 / result['mean_time'] if result['mean_time'] > 0 else 0,
-                        memory_usage_mb=result.get('peak_memory', 0) / 1e6,
-                        gpu_utilization_percent=result.get('gpu_utilization', 0)
-                    ))
+            # Handle the actual nested structure from PerformanceBenchmarkSuite
+            for category_name, category_data in predefined_results.items():
+                if isinstance(category_data, dict):
+                    for sub_name, sub_data_list in category_data.items():
+                        if isinstance(sub_data_list, list) and sub_data_list:
+                            # Take the first result as representative
+                            result_data = sub_data_list[0]
+                            if 'latency_ms' in result_data:
+                                latency_ms = float(result_data['latency_ms'])
+                                results.append(BenchmarkResult(
+                                    name=f"{category_name}_{sub_name}",
+                                    mean_time_ms=latency_ms,
+                                    std_time_ms=0,  # Not available in this format
+                                    throughput_ops_per_sec=float(result_data.get('throughput_ops', 0)),
+                                    memory_usage_mb=float(result_data.get('memory_mb', 0)),
+                                    gpu_utilization_percent=0  # Not available
+                                ))
 
         elif args.predefined == 'transformers':
             # Transformer-specific benchmarks
@@ -375,6 +382,8 @@ Examples:
             return (1, 3, 224, 224)
         elif 'transformer' in model_name.lower() or 'bert' in model_name.lower():
             return (1, 512, 768)
+        elif model_name == 'linear_stress_test':
+            return (16, 1024)  # Match the input size of Linear(1024, 1024)
         else:
             return (16, 512)  # Default for linear models
 
@@ -498,8 +507,74 @@ Examples:
 
 def main():
     """Standalone entry point for kpt-benchmark."""
-    parser = argparse.ArgumentParser(prog='kpt-benchmark')
-    BenchmarkCommand.register(parser)
+    parser = argparse.ArgumentParser(
+        prog='kpt-benchmark',
+        description='Run comprehensive performance benchmarks',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    # Add benchmark command arguments directly
+    parser.add_argument(
+        '--model',
+        type=str,
+        help='Model to benchmark (file path or predefined name)'
+    )
+    parser.add_argument(
+        '--type',
+        choices=['model', 'compare', 'regression', 'stress'],
+        default='model',
+        help='Benchmark type (default: model)'
+    )
+    parser.add_argument(
+        '--levels',
+        type=str,
+        default='basic,compile',
+        help='Optimization levels to compare (comma-separated)'
+    )
+    parser.add_argument(
+        '--batch-sizes',
+        type=str,
+        default='1,8,16',
+        help='Batch sizes for stress testing (comma-separated)'
+    )
+    parser.add_argument(
+        '--input-shape',
+        type=str,
+        help='Input tensor shape (e.g., "1,3,224,224")'
+    )
+    parser.add_argument(
+        '--predefined',
+        choices=['transformers', 'vision', 'optimization'],
+        help='Run predefined benchmark suite'
+    )
+    parser.add_argument(
+        '--quick',
+        action='store_true',
+        help='Quick benchmark (fewer runs for faster results)'
+    )
+    parser.add_argument(
+        '--warmup',
+        type=int,
+        default=10,
+        help='Number of warmup runs (default: 10)'
+    )
+    parser.add_argument(
+        '--runs',
+        type=int,
+        default=100,
+        help='Number of benchmark runs (default: 100, 20 if --quick)'
+    )
+    parser.add_argument(
+        '--output', '-o',
+        type=str,
+        help='Output file for results (JSON format)'
+    )
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+
     args = parser.parse_args()
     return BenchmarkCommand.execute(args)
 

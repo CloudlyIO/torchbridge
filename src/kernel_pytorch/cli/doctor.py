@@ -100,6 +100,8 @@ Examples:
                     results.extend(DoctorCommand._check_optimization_frameworks(args.verbose))
                 elif args.category == 'advanced':
                     results.extend(DoctorCommand._check_advanced_features(args.verbose))
+                else:
+                    raise ValueError(f"Invalid category: {args.category}")
             elif args.full_report:
                 results.extend(DoctorCommand._check_basic_requirements(args.verbose))
                 results.extend(DoctorCommand._check_hardware(args.verbose))

@@ -127,7 +127,7 @@ class TestDoctorCommand:
 
     @patch('torch.cuda.is_available', return_value=True)
     @patch('torch.cuda.get_device_properties')
-    def test_check_hardware_compute_capability(self, mock_props):
+    def test_check_hardware_compute_capability(self, mock_props, mock_cuda_available):
         """Test GPU compute capability checking."""
         # Test modern GPU
         mock_props.return_value.major = 8

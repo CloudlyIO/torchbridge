@@ -18,7 +18,7 @@ class TestPackageInstallation:
         """Test that kernel_pytorch can be imported."""
         import kernel_pytorch
         assert hasattr(kernel_pytorch, '__version__')
-        assert kernel_pytorch.__version__ == "0.1.55"
+        assert kernel_pytorch.__version__ == "0.1.56"
 
     def test_import_cli_modules(self):
         """Test that CLI modules can be imported."""
@@ -58,8 +58,8 @@ class TestPackageInstallation:
         assert hasattr(kernel_pytorch.attention, 'FlashAttention2')
 
         # Test utilities
-        import kernel_pytorch.utils
-        assert hasattr(kernel_pytorch.utils, 'ValidationFramework')
+        import kernel_pytorch.testing_framework
+        assert hasattr(kernel_pytorch.testing_framework, 'UnifiedValidator')
 
     def test_package_metadata(self):
         """Test package metadata is correct."""

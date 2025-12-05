@@ -58,7 +58,11 @@ For command-specific help:
     if args is None:
         args = sys.argv[1:]
 
-    parsed_args = parser.parse_args(args)
+    try:
+        parsed_args = parser.parse_args(args)
+    except SystemExit as e:
+        # Convert argparse SystemExit to our return code convention
+        return 1 if e.code == 2 else e.code
 
     # Execute command
     if not parsed_args.command:

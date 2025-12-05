@@ -57,17 +57,23 @@ class _LegacyOptimizationImportHelper:
     """Helper for backward compatibility with old import paths"""
     def __getattr__(self, name):
         _deprecation_warning(f'kernel_pytorch.optimization_patterns')
-        if hasattr(self, f'patterns_{name}'):
-            return getattr(self, f'patterns_{name}')
-        return getattr(self, name)
+        # Import the actual module to avoid recursion
+        try:
+            from . import optimization_patterns
+            return getattr(optimization_patterns, name)
+        except (ImportError, AttributeError):
+            raise AttributeError(f"module 'kernel_pytorch.optimization_patterns' has no attribute '{name}'")
 
 class _LegacyNextGenImportHelper:
     """Helper for backward compatibility with old import paths"""
     def __getattr__(self, name):
         _deprecation_warning(f'kernel_pytorch.next_gen_optimizations')
-        if hasattr(self, f'next_gen_{name}'):
-            return getattr(self, f'next_gen_{name}')
-        return getattr(self, name)
+        # Import the actual module to avoid recursion
+        try:
+            from . import next_gen
+            return getattr(next_gen, name)
+        except (ImportError, AttributeError):
+            raise AttributeError(f"module 'kernel_pytorch.next_gen_optimizations' has no attribute '{name}'")
 
 # Legacy import support
 sys.modules['kernel_pytorch.optimization_patterns'] = _LegacyOptimizationImportHelper()
