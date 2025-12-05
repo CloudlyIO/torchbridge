@@ -32,7 +32,7 @@ class ThresholdConfig:
     environment: str = "default"
     auto_tuned: bool = False
     last_updated: datetime = None
-    version: str = "0.1.58"
+    version: str = "0.1.59"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
@@ -90,7 +90,7 @@ class ThresholdManager:
         """Save threshold configurations to disk"""
         try:
             config_data = {
-                "version": "0.1.58",
+                "version": "0.1.59",
                 "last_updated": datetime.now().isoformat(),
                 "models": {
                     model_name: config.to_dict()
@@ -361,7 +361,7 @@ class ThresholdManager:
             Dictionary with all threshold configurations
         """
         return {
-            "version": "0.1.58",
+            "version": "0.1.59",
             "exported_at": datetime.now().isoformat(),
             "total_configurations": len(self.model_configs),
             "configurations": {

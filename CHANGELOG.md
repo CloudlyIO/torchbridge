@@ -2,6 +2,25 @@
 
 **Version history and release notes for the PyTorch GPU optimization framework.**
 
+## [0.1.59] - 2025-12-05 - Demo & Test Improvements
+
+### 🔧 **Demo API Fixes & Error Handling**
+- **Neural Operator Fusion Demo**: Fixed parameter mismatches and API inconsistencies
+- **Adaptive Precision Demo**: Resolved device attribute access and parameter naming issues
+- **Error Handling**: Enhanced error messages with specific troubleshooting guidance
+- **API Standardization**: Consistent parameter usage across all demos
+
+### 🧪 **Comprehensive Testing & Validation**
+- **421/421 Tests Passing**: 100% test suite success rate after version fixes
+- **Demo Functionality**: All core demos operational with graceful error handling
+- **Benchmark Stability**: Comprehensive benchmarks confirmed stable and operational
+- **Documentation Updates**: Accurate test counts and demo status in README
+
+### 📊 **Performance & Quality Improvements**
+- **Enhanced User Experience**: Better error messages guide users to solutions
+- **Production Readiness**: All critical components validated and operational
+- **Framework Stability**: Comprehensive testing ensures reliable operation
+
 ## [0.1.58] - 2025-12-04 - Performance Regression Testing Framework (Phase 1)
 
 ### 🎯 **Performance Regression Testing - Core Infrastructure**

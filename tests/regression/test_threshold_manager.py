@@ -267,7 +267,7 @@ class TestThresholdManager:
         # Export configurations
         exported = self.manager.export_threshold_config()
 
-        assert exported["version"] == "0.1.57"
+        assert exported["version"] == "0.1.59"
         assert exported["total_configurations"] == 2
         assert "model1_default" in exported["configurations"]
         assert "model2_default" in exported["configurations"]

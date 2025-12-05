@@ -37,7 +37,7 @@ class BaselineMetrics:
     established_date: datetime
     last_validated_date: datetime
     environment: Dict[str, str] = field(default_factory=dict)
-    version: str = "0.1.58"
+    version: str = "0.1.59"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
@@ -81,7 +81,7 @@ class BaselineManager:
                 self.registry = json.load(f)
         else:
             self.registry = {
-                "version": "0.1.58",
+                "version": "0.1.59",
                 "created": datetime.now().isoformat(),
                 "models": {},
                 "last_updated": datetime.now().isoformat()

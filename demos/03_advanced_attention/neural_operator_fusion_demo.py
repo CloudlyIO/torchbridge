@@ -108,13 +108,15 @@ class FusedTransformerBlock(nn.Module):
             strategy=fusion_strategy,
             optimization_level=OptimizationLevel.AGGRESSIVE,
             enable_mixed_precision=True,
-            enable_memory_optimization=True,
-            target_sequence_length=512
+            max_sequence_length=512
         )
 
         self.fused_block = UnifiedAttentionFusion(
-            self.base_block,
-            fusion_config
+            d_model=d_model,
+            n_heads=nhead,
+            d_ff=dim_feedforward,
+            dropout=dropout,
+            config=fusion_config
         )
 
     def forward(self, x):
@@ -362,12 +364,11 @@ class NOFDemoRunner:
             )),
             ('Balanced', FusionConfig(
                 strategy=FusionStrategy.ATTENTION_FFN,
-                optimization_level=OptimizationLevel.BALANCED
+                optimization_level=OptimizationLevel.ADAPTIVE
             )),
             ('Aggressive', FusionConfig(
                 strategy=FusionStrategy.FULL_BLOCK,
-                optimization_level=OptimizationLevel.AGGRESSIVE,
-                enable_memory_optimization=True
+                optimization_level=OptimizationLevel.AGGRESSIVE
             ))
         ]
 
@@ -384,32 +385,38 @@ class NOFDemoRunner:
             print(f"   Analyzing {config_name} fusion...")
 
             fused_model = UnifiedAttentionFusion(
-                baseline_model,
-                fusion_config
+                d_model=self.config.model_dim,
+                n_heads=self.config.num_heads,
+                d_ff=self.config.model_dim * 4,
+                dropout=0.0,
+                config=fusion_config
             ).to(self.config.device)
 
             # Detailed performance analysis
-            performance_stats = benchmark_fusion_performance(
-                baseline_model,
-                fused_model,
-                input_data,
-                num_warmup=10 if not self.config.quick_mode else 3,
-                num_runs=30 if not self.config.quick_mode else 5
+            performance_results = benchmark_fusion_performance(
+                d_model=self.config.model_dim,
+                n_heads=self.config.num_heads,
+                seq_len=self.config.sequence_length,
+                batch_size=self.config.batch_size,
+                num_iterations=30 if not self.config.quick_mode else 5,
+                strategies=[fusion_config.strategy]
             )
 
-            overhead_reduction = performance_stats.kernel_launch_overhead_reduction * 100
-            memory_efficiency = performance_stats.memory_efficiency_improvement * 100
+            # Extract performance stats for this strategy
+            performance_stats = performance_results[fusion_config.strategy]
+            overhead_reduction = performance_stats.kernel_reduction_ratio * 100
+            memory_efficiency = performance_stats.fusion_efficiency * 100
 
             overhead_results[config_name] = {
                 'overhead_reduction': overhead_reduction,
                 'memory_efficiency': memory_efficiency,
-                'throughput_improvement': performance_stats.throughput_improvement,
-                'accuracy_preservation': performance_stats.accuracy_preservation_score
+                'throughput_improvement': performance_stats.speedup,
+                'accuracy_preservation': performance_stats.numerical_accuracy
             }
 
             print(f"     Kernel overhead reduction: {overhead_reduction:.1f}%")
             print(f"     Memory efficiency gain: {memory_efficiency:.1f}%")
-            print(f"     Throughput improvement: {performance_stats.throughput_improvement:.2f}x")
+            print(f"     Throughput improvement: {performance_stats.speedup:.2f}x")
 
         # Find configuration meeting target (40-60% overhead reduction)
         target_met_configs = [
@@ -524,12 +531,15 @@ class NOFDemoRunner:
             fusion_config = FusionConfig(
                 strategy=FusionStrategy.FULL_BLOCK,
                 enable_mixed_precision=use_mixed_precision,
-                optimization_level=OptimizationLevel.BALANCED
+                optimization_level=OptimizationLevel.ADAPTIVE
             )
 
             fused_model = UnifiedAttentionFusion(
-                baseline_model,
-                fusion_config
+                d_model=self.config.model_dim,
+                n_heads=self.config.num_heads,
+                d_ff=self.config.model_dim * 4,
+                dropout=0.0,
+                config=fusion_config
             ).to(self.config.device)
 
             # Test multiple inputs
@@ -679,15 +689,13 @@ class NOFDemoRunner:
             ),
             'Balanced NOF': FusionConfig(
                 strategy=FusionStrategy.ATTENTION_FFN,
-                optimization_level=OptimizationLevel.BALANCED,
-                enable_memory_optimization=True
-            ),
+                optimization_level=OptimizationLevel.ADAPTIVE,
+                            ),
             'Aggressive NOF': FusionConfig(
                 strategy=FusionStrategy.FULL_BLOCK,
                 optimization_level=OptimizationLevel.AGGRESSIVE,
                 enable_mixed_precision=True,
-                enable_memory_optimization=True
-            )
+                            )
         }
 
         input_data = torch.randn(
@@ -709,8 +717,11 @@ class NOFDemoRunner:
             print(f"   Benchmarking {config_name}...")
 
             fused_model = UnifiedAttentionFusion(
-                baseline_transformer,
-                fusion_config
+                d_model=self.config.model_dim,
+                n_heads=self.config.num_heads,
+                d_ff=self.config.model_dim * 4,
+                dropout=0.0,
+                config=fusion_config
             ).to(self.config.device)
 
             fused_stats = self._benchmark_model(fused_model, input_data, config_name)
@@ -954,10 +965,31 @@ Examples:
 
     except KeyboardInterrupt:
         print(f"\n⚠️  Demo interrupted by user.")
+    except ImportError as e:
+        print(f"\n❌ Demo failed due to missing dependencies: {e}")
+        print("   💡 Try: pip install -r requirements.txt")
+        return 1
+    except torch.cuda.OutOfMemoryError as e:
+        print(f"\n❌ Demo failed due to insufficient GPU memory")
+        print("   💡 Try: Use --device cpu or reduce batch size")
+        return 1
+    except AttributeError as e:
+        if 'device' in str(e):
+            print(f"\n❌ Demo failed due to device configuration issue: {e}")
+            print("   💡 This may indicate an API mismatch. Please report this issue.")
+        else:
+            print(f"\n❌ Demo failed due to API incompatibility: {e}")
+            print("   💡 This may indicate an outdated demo. Please report this issue.")
+        return 1
     except Exception as e:
-        print(f"\n❌ Demo failed with error: {e}")
-        import traceback
-        traceback.print_exc()
+        error_type = type(e).__name__
+        print(f"\n❌ Demo failed with {error_type}: {e}")
+        if config.verbose:
+            import traceback
+            print("\n🔍 Full traceback:")
+            traceback.print_exc()
+        else:
+            print("   💡 Use --verbose for full traceback")
         return 1
 
     return 0

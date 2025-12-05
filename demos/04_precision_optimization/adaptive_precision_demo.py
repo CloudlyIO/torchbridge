@@ -120,7 +120,8 @@ class ReferenceModels:
     def create_uniform_fp16_model(base_model):
         """Create uniform FP16 quantized model."""
         model = base_model
-        return model.half() if model.device.type == 'cuda' else model
+        device = next(model.parameters()).device if hasattr(model, 'parameters') and list(model.parameters()) else torch.device('cpu')
+        return model.half() if device.type == 'cuda' else model
 
     @staticmethod
     def create_uniform_int8_model(base_model):
@@ -298,10 +299,10 @@ class AdaptivePrecisionDemoRunner:
 
             # Uniform FP16 quantization
             uniform_fp16_model = ReferenceModels.create_uniform_fp16_model(
-                test_model.half() if test_model.device.type == 'cuda' else test_model
+                test_model.half() if self.config.device.type == 'cuda' else test_model
             )
             with torch.no_grad():
-                if test_model.device.type == 'cuda':
+                if self.config.device.type == 'cuda':
                     uniform_output = uniform_fp16_model(input_data.half()).float()
                 else:
                     uniform_output = uniform_fp16_model(input_data)
@@ -310,8 +311,8 @@ class AdaptivePrecisionDemoRunner:
             adaptive_config = PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
                 entropy_threshold=0.7,
-                memory_budget_ratio=0.7,
-                accuracy_weight=0.8
+                target_memory_reduction=0.7,
+                gradient_weight=0.8
             )
 
             adaptive_model = UltraPrecisionModule(test_model.float(), adaptive_config, self.config.device)
@@ -388,9 +389,9 @@ class AdaptivePrecisionDemoRunner:
             config = PrecisionConfig(
                 allocation_strategy=strategy,
                 entropy_threshold=0.8,
-                memory_budget_ratio=0.6,
-                accuracy_weight=0.7,
-                performance_weight=0.3
+                target_memory_reduction=0.6,
+                gradient_weight=0.7,
+                activation_weight=0.3
             )
 
             adaptive_model = UltraPrecisionModule(test_model, config, self.config.device)
@@ -459,7 +460,7 @@ class AdaptivePrecisionDemoRunner:
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.ACTIVATION_AWARE,
                     entropy_threshold=0.75,
-                    accuracy_weight=0.9  # High accuracy for vision
+                    gradient_weight=0.9  # High accuracy for vision
                 )
             },
             'Language Modeling': {
@@ -468,7 +469,7 @@ class AdaptivePrecisionDemoRunner:
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.ENTROPY_BASED,
                     entropy_threshold=0.8,
-                    accuracy_weight=0.8  # Balanced for language
+                    gradient_weight=0.8  # Balanced for language
                 )
             },
             'Attention Processing': {
@@ -481,7 +482,7 @@ class AdaptivePrecisionDemoRunner:
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.GRADIENT_WEIGHTED,
                     entropy_threshold=0.7,
-                    accuracy_weight=0.85  # High accuracy for attention
+                    gradient_weight=0.85  # High accuracy for attention
                 )
             }
         }
@@ -501,7 +502,8 @@ class AdaptivePrecisionDemoRunner:
             # Uniform quantization (FP16 simulation)
             uniform_model = ReferenceModels.create_uniform_fp16_model(model)
             with torch.no_grad():
-                if model.device.type == 'cuda':
+                device = next(model.parameters()).device if hasattr(model, 'parameters') and list(model.parameters()) else torch.device('cpu')
+                if device.type == 'cuda':
                     uniform_output = uniform_model(input_data.half()).float()
                 else:
                     uniform_output = uniform_model(input_data)
@@ -570,10 +572,10 @@ class AdaptivePrecisionDemoRunner:
 
             config = PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                memory_budget_ratio=budget,
+                target_memory_reduction=budget,
                 entropy_threshold=0.8,
-                accuracy_weight=0.7,
-                performance_weight=0.3
+                gradient_weight=0.7,
+                activation_weight=0.3
             )
 
             adaptive_model = UltraPrecisionModule(test_model, config, self.config.device)
@@ -645,7 +647,7 @@ class AdaptivePrecisionDemoRunner:
             allocation_strategy=AllocationStrategy.ENTROPY_BASED,
             quantization_mode=QuantizationMode.DYNAMIC,
             entropy_threshold=0.7,
-            memory_budget_ratio=0.6
+            target_memory_reduction=0.6
         )
 
         adaptive_model = UltraPrecisionModule(test_model, config, self.config.device)
@@ -767,27 +769,27 @@ class AdaptivePrecisionDemoRunner:
                 'batch_size': 1,
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                    memory_budget_ratio=0.5,
-                    performance_weight=0.7,  # Prioritize speed
-                    accuracy_weight=0.3
+                    target_memory_reduction=0.5,
+                    activation_weight=0.7,  # Prioritize speed
+                    gradient_weight=0.3
                 )
             },
             'Batch Processing': {
                 'batch_size': 32,
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.ACTIVATION_AWARE,
-                    memory_budget_ratio=0.8,
-                    performance_weight=0.3,
-                    accuracy_weight=0.7  # Prioritize accuracy
+                    target_memory_reduction=0.8,
+                    activation_weight=0.3,
+                    gradient_weight=0.7  # Prioritize accuracy
                 )
             },
             'Memory-Constrained': {
                 'batch_size': 8,
                 'config': PrecisionConfig(
                     allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                    memory_budget_ratio=0.3,  # Very limited memory
-                    performance_weight=0.5,
-                    accuracy_weight=0.5
+                    target_memory_reduction=0.3,  # Very limited memory
+                    activation_weight=0.5,
+                    gradient_weight=0.5
                 )
             }
         }
@@ -907,20 +909,20 @@ class AdaptivePrecisionDemoRunner:
             'Conservative Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
                 optimization_level=OptimizationLevel.CONSERVATIVE,
-                memory_budget_ratio=0.8,
-                accuracy_weight=0.8
+                target_memory_reduction=0.8,
+                gradient_weight=0.8
             ),
             'Balanced Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
                 optimization_level=OptimizationLevel.BALANCED,
-                memory_budget_ratio=0.6,
-                accuracy_weight=0.7
+                target_memory_reduction=0.6,
+                gradient_weight=0.7
             ),
             'Aggressive Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
                 optimization_level=OptimizationLevel.AGGRESSIVE,
-                memory_budget_ratio=0.4,
-                accuracy_weight=0.6
+                target_memory_reduction=0.4,
+                gradient_weight=0.6
             )
         }
 
@@ -944,7 +946,8 @@ class AdaptivePrecisionDemoRunner:
                 # Uniform FP16
                 model = ReferenceModels.create_uniform_fp16_model(comprehensive_model)
                 with torch.no_grad():
-                    if model.device.type == 'cuda':
+                    device = next(model.parameters()).device if hasattr(model, 'parameters') and list(model.parameters()) else torch.device('cpu')
+                    if device.type == 'cuda':
                         output = model(input_data.half()).float()
                     else:
                         output = model(input_data)
@@ -1245,10 +1248,38 @@ Examples:
 
     except KeyboardInterrupt:
         print(f"\n⚠️  Demo interrupted by user.")
+    except ImportError as e:
+        print(f"\n❌ Demo failed due to missing dependencies: {e}")
+        print("   💡 Try: pip install -r requirements.txt")
+        return 1
+    except torch.cuda.OutOfMemoryError as e:
+        print(f"\n❌ Demo failed due to insufficient GPU memory")
+        print("   💡 Try: Use --device cpu or reduce batch size")
+        return 1
+    except AttributeError as e:
+        if 'device' in str(e):
+            print(f"\n❌ Demo failed due to device configuration issue: {e}")
+            print("   💡 Device attribute access was fixed - this shouldn't occur")
+        else:
+            print(f"\n❌ Demo failed due to API incompatibility: {e}")
+            print("   💡 This may indicate parameter mismatches. Please report this issue.")
+        return 1
+    except TypeError as e:
+        if '__init__' in str(e):
+            print(f"\n❌ Demo failed due to incorrect parameters: {e}")
+            print("   💡 This indicates API parameter mismatches were not fully resolved.")
+        else:
+            print(f"\n❌ Demo failed due to type error: {e}")
+        return 1
     except Exception as e:
-        print(f"\n❌ Demo failed with error: {e}")
-        import traceback
-        traceback.print_exc()
+        error_type = type(e).__name__
+        print(f"\n❌ Demo failed with {error_type}: {e}")
+        if config.verbose:
+            import traceback
+            print("\n🔍 Full traceback:")
+            traceback.print_exc()
+        else:
+            print("   💡 Use --verbose for full traceback")
         return 1
 
     return 0

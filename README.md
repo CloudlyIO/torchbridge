@@ -2,7 +2,7 @@
 
 **Production-grade PyTorch GPU optimization framework for 2-5x performance improvements.**
 
-[![Tests](https://img.shields.io/badge/tests-152%20passing-brightgreen)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-9%20working-blue)](./demos/) [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Tests](https://img.shields.io/badge/tests-421%20passing-brightgreen)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-11%20working-blue)](./demos/) [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## 🚀 What is KernelPyTorch?
 
@@ -14,7 +14,7 @@ KernelPyTorch is a **high-performance optimization framework** that accelerates 
 - **🔧 Hardware Abstraction**: Unified optimization for NVIDIA, AMD, Intel GPUs
 - **🚀 Neural Operator Fusion**: 40-60% kernel overhead reduction with single-kernel attention+FFN fusion
 - **🎨 Adaptive Precision**: 30% quality improvement through entropy-based precision allocation
-- **🧪 Production Ready**: 200+ tests, 12 demos, comprehensive benchmarks
+- **🧪 Production Ready**: 421+ tests, 11 demos, comprehensive benchmarks
 
 ## ⏱️ Quick Start (2 minutes)
 
