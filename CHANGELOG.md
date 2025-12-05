@@ -2,6 +2,46 @@
 
 **Version history and release notes for the PyTorch GPU optimization framework.**
 
+## [0.1.58] - 2025-12-04 - Performance Regression Testing Framework (Phase 1)
+
+### 🎯 **Performance Regression Testing - Core Infrastructure**
+- **BaselineManager**: Automatic baseline establishment from historical benchmark data (46+ files)
+- **RegressionDetector**: Statistical detection with severity classification (NONE, MINOR, MAJOR, CRITICAL)
+- **ThresholdManager**: Adaptive threshold management with environment-specific adjustments
+- **Statistical Analysis**: 95% confidence intervals, z-score significance testing
+- **Historical Mining**: Processes existing benchmark results automatically
+
+### 🧪 **Comprehensive Testing Suite (49 New Tests)**
+- **BaselineManager Tests**: 14 test cases covering establishment, validation, historical analysis
+- **RegressionDetector Tests**: 18 test cases for detection accuracy, trend analysis, batch processing
+- **ThresholdManager Tests**: 17 test cases for adaptive thresholds, environment adjustments
+- **Edge Case Coverage**: Invalid data handling, insufficient samples, corrupted configurations
+- **100% Pass Rate**: All 49 regression tests + 418 existing tests passing
+
+### 📊 **Interactive Demo & Benchmarks**
+- **Regression Demo**: `demos/05_next_generation/regression_testing_demo.py` with real benchmark integration
+- **Performance Suite**: `benchmarks/regression_benchmark.py` for framework validation
+- **Scenario Testing**: NONE/MINOR/MAJOR/CRITICAL regression detection demonstrations
+- **Framework Performance**: >1,000 models/sec processing capability, sub-millisecond detection
+
+### ⚙️ **Production-Ready Features**
+- **Environment Awareness**: CPU/GPU/Cloud/CI specific threshold multipliers
+- **Auto-tuning**: Thresholds adapt based on historical performance variance
+- **Quality Validation**: Baseline statistical significance and quality assessment
+- **Export/Import**: Configuration management and persistence
+- **Comprehensive Logging**: Detailed analysis and recommendation generation
+
+### 🔧 **Technical Implementation**
+- **Data Models**: BaselineMetrics, RegressionResult, ThresholdConfig with JSON serialization
+- **Statistical Methods**: Coefficient of variation, confidence intervals, trend analysis
+- **Integration Ready**: Compatible with existing benchmark infrastructure
+- **Error Handling**: Graceful degradation and comprehensive validation
+
+### 📚 **Documentation & Troubleshooting**
+- **Implementation Plan**: Updated with Phase 1 completion status and Phase 2/3 roadmap
+- **Usage Guide**: Complete command examples and troubleshooting in documentation
+- **API Documentation**: Comprehensive docstrings and usage examples
+
 ## [0.1.57] - 2025-12-04 - Test & Benchmark Infrastructure Fixes
 
 ### 🧪 **Comprehensive Test Suite Fixes**

@@ -39,7 +39,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.1.57'
+        version='%(prog)s 0.1.58'
     )
 
     # Add subcommands

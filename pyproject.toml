@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kernel-pytorch"
-version = "0.1.57"
+version = "0.1.58"
 description = "Production-grade PyTorch GPU optimization framework with 2-5x performance improvements"
 authors = [{name = "KernelPyTorch Team"}]
 readme = "README.md"

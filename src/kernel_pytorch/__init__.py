@@ -12,7 +12,7 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.1.57"
+__version__ = "0.1.58"
 
 # Core optimization components (Phase 3 unified)
 from .core import *
