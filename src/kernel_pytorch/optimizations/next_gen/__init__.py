@@ -32,7 +32,8 @@ from .ultra_precision import (
     FP4Quantizer,
     MXFPOptimizer,
     InformationEntropyPrecision,
-    AdaptivePrecisionAllocator
+    AdaptivePrecisionAllocator,
+    PrecisionFormat
 )
 
 from .fsdp2_integration import (

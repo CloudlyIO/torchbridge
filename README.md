@@ -14,7 +14,8 @@ KernelPyTorch is a **high-performance optimization framework** that accelerates 
 - **🔧 Hardware Abstraction**: Unified optimization for NVIDIA, AMD, Intel GPUs
 - **🚀 Neural Operator Fusion**: 40-60% kernel overhead reduction with single-kernel attention+FFN fusion
 - **🎨 Adaptive Precision**: 30% quality improvement through entropy-based precision allocation
-- **🧪 Production Ready**: 477+ tests, 11 demos, comprehensive benchmarks
+- **✨ Next-Gen Optimizations**: FlashLight compiler, 2:4 sparsity, FP4 quantization with 1.4x speedup
+- **🧪 Production Ready**: 500+ tests, 15+ demos, comprehensive benchmarks
 
 ## ⏱️ Quick Start (2 minutes)
 
@@ -55,17 +56,36 @@ fused_model = create_unified_attention_fusion(transformer_model)  # Single-kerne
 # 30% quality improvement with Adaptive Precision Allocation
 from kernel_pytorch.precision import create_ultra_precision_module
 adaptive_model = create_ultra_precision_module(model)  # Entropy-based precision
+
+# 🆕 Next-Gen Optimizations (2025)
+from kernel_pytorch.optimizations.next_gen import (
+    create_advanced_flex_attention, FP4Quantizer, StructuredSparsity24
+)
+
+# FlashLight compiler with GQA optimization
+attention = create_advanced_flex_attention(embed_dim=512, num_heads=8, pattern="causal")
+
+# FP4 quantization for 4x memory reduction
+quantizer = FP4Quantizer(format_type="fp4")
+quantized_model = quantizer.quantize_module(model)
+
+# 2:4 structured sparsity for 2x acceleration
+sparsity = StructuredSparsity24(sparsity_ratio=0.5)
+sparse_model = sparsity.apply_to_model(model)
 ```
 
 ### **Quick Validation**
 ```bash
-# Run demos (2-3 minutes)
+# Run all demos (2-3 minutes)
 PYTHONPATH=../src python demos/run_all_demos.py --quick
 
-# Run benchmarks (5-10 minutes)
-PYTHONPATH=src python benchmarks/run_comprehensive_benchmark.py --quick
+# Run next-gen optimization demos (1-2 minutes)
+cd demos/05_next_generation && PYTHONPATH=../../src python run_next_gen_demos.py --device cpu --quick
 
-# Run tests (1-2 minutes)
+# Run comprehensive tests (3-5 minutes)
+PYTHONPATH=src python -m pytest tests/test_next_gen.py tests/test_ultra_precision.py tests/test_next_gen_benchmarks.py -v
+
+# Run all tests (5-10 minutes)
 PYTHONPATH=src python -m pytest tests/ --tb=short
 ```
 
