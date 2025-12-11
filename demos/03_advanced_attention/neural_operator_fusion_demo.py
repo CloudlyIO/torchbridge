@@ -491,7 +491,13 @@ class NOFDemoRunner:
 
             fused_memory = torch.cuda.max_memory_allocated() / 1024**2  # MB
 
-            memory_savings = (baseline_memory - fused_memory) / baseline_memory * 100
+            # Calculate memory savings with safety check for CPU (where memory tracking may be 0)
+            if baseline_memory > 0:
+                memory_savings = (baseline_memory - fused_memory) / baseline_memory * 100
+                savings_str = f"{memory_savings:.1f}%"
+            else:
+                memory_savings = 0.0  # Default for CPU
+                savings_str = "N/A (CPU)"
 
             memory_results[seq_len] = {
                 'baseline_memory_mb': baseline_memory,
@@ -501,7 +507,7 @@ class NOFDemoRunner:
 
             print(f"     Baseline: {baseline_memory:.1f} MB")
             print(f"     Fused: {fused_memory:.1f} MB")
-            print(f"     Savings: {memory_savings:.1f}%")
+            print(f"     Savings: {savings_str}")
 
         self.results['memory_efficiency'] = memory_results
 
@@ -794,12 +800,19 @@ class NOFDemoRunner:
                 continue
 
             speedup = baseline_time / stats['avg_time_ms']
-            memory_reduction = (baseline_memory - stats['peak_memory_mb']) / baseline_memory * 100
+
+            # Calculate memory reduction with safety check for CPU (where memory tracking may be 0)
+            if baseline_memory > 0:
+                memory_reduction = (baseline_memory - stats['peak_memory_mb']) / baseline_memory * 100
+                memory_reduction_str = f"{memory_reduction:.1f}%"
+            else:
+                memory_reduction_str = "N/A (CPU)"
+
             throughput_improvement = stats['throughput_tokens_per_sec'] / baseline_throughput
 
             print(f"\n     {config_name}:")
             print(f"       ⚡ Speedup: {speedup:.2f}x")
-            print(f"       💾 Memory reduction: {memory_reduction:.1f}%")
+            print(f"       💾 Memory reduction: {memory_reduction_str}")
             print(f"       📈 Throughput improvement: {throughput_improvement:.2f}x")
             print(f"       ⏱️  Latency: {stats['avg_time_ms']:.2f} ± {stats['std_time_ms']:.2f} ms")
 

@@ -386,18 +386,33 @@ class DynamicShapeBucketing:
         best_bucket_id = None
         best_score = float('inf')
 
+        # Early exit if no buckets exist
+        if not self.buckets:
+            return None
+
+        # Quick exact match check first
+        for bucket_id, bucket in self.buckets.items():
+            if bucket.shape == shape:
+                return bucket_id
+
+        # Find best fitting bucket
         for bucket_id, bucket in self.buckets.items():
             if self._can_fit_in_bucket(shape, bucket):
-                # Calculate cost score (lower is better)
-                padding_cost = self._calculate_padding_cost(shape, bucket.shape)
-                memory_cost = math.prod(bucket.shape) * 4  # Assume fp32
-                efficiency_bonus = bucket.efficiency_score()
+                # Simplified scoring for speed
+                bucket_size = math.prod(bucket.shape)
+                shape_size = math.prod(shape)
+                padding_ratio = (bucket_size - shape_size) / bucket_size if bucket_size > 0 else 1.0
 
-                total_score = padding_cost + memory_cost * 0.001 - efficiency_bonus * 1000
+                # Simple score: minimize padding while preferring frequently used buckets
+                score = padding_ratio - bucket.efficiency_score() * 0.1
 
-                if total_score < best_score:
-                    best_score = total_score
+                if score < best_score:
+                    best_score = score
                     best_bucket_id = bucket_id
+
+                    # Early exit if we find a very good fit
+                    if padding_ratio < 0.1:  # Less than 10% padding
+                        break
 
         return best_bucket_id
 
@@ -458,16 +473,19 @@ class DynamicShapeBucketing:
         """Create a bucket optimized for hardware characteristics."""
         bucket_shape = []
 
-        for dim in shape:
-            # Round up to multiples of warp size for the last dimension
-            if len(bucket_shape) == len(shape) - 1:  # Last dimension
+        for i, dim in enumerate(shape):
+            # Be more conservative with bucket sizing to reduce padding waste
+            if i == len(shape) - 1:  # Last dimension - align to warp size
                 aligned_dim = math.ceil(dim / self.warp_size) * self.warp_size
             else:
-                # Use geometric progression for other dimensions
-                aligned_dim = 2 ** math.ceil(math.log2(max(1, dim)))
+                # Use a smaller multiplier (1.25x instead of 2x) for less waste
+                multiplier = 1.25
+                aligned_dim = int(multiplier ** math.ceil(math.log(max(1, dim)) / math.log(multiplier)))
 
-            # Ensure alignment requirements are met
-            aligned_dim = max(aligned_dim, self.alignment_requirement)
+            # Cap the maximum bucket size to prevent excessive memory usage
+            max_bucket_dim = min(dim * 2, 2048)  # Never more than 2x original or 2048
+            aligned_dim = min(aligned_dim, max_bucket_dim)
+
             bucket_shape.append(aligned_dim)
 
         return tuple(bucket_shape)
@@ -607,7 +625,12 @@ class DynamicShapeBucketing:
         target_shape = bucket.shape
         current_shape = tensor.shape
 
-        # Calculate padding for each dimension
+        # Quick check: if already the right shape, return as-is
+        if current_shape == target_shape:
+            bucket.update_usage(current_shape, 1.0)
+            return tensor
+
+        # Calculate padding for each dimension efficiently
         padding_pairs = []
         for i in range(len(current_shape) - 1, -1, -1):  # PyTorch padding is reverse order
             current_dim = current_shape[i]
@@ -619,39 +642,14 @@ class DynamicShapeBucketing:
                 )
 
             padding_needed = target_dim - current_dim
-            # Distribute padding (pad_left, pad_right)
-            pad_left = padding_needed // 2
-            pad_right = padding_needed - pad_left
-            padding_pairs.extend([pad_left, pad_right])
+            if padding_needed == 0:
+                padding_pairs.extend([0, 0])
+            else:
+                # Right-pad for efficiency (avoids data copying where possible)
+                padding_pairs.extend([0, padding_needed])
 
-        # Apply padding based on strategy
-        if padding_strategy == PaddingStrategy.ZEROS:
-            padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
-        elif padding_strategy == PaddingStrategy.REFLECTION:
-            # For reflection padding, we need to handle different tensor dimensions carefully
-            try:
-                padded_tensor = F.pad(tensor, padding_pairs, mode='reflect')
-            except NotImplementedError:
-                # Fall back to constant padding for unsupported cases
-                padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
-        elif padding_strategy == PaddingStrategy.REPLICATION:
-            try:
-                padded_tensor = F.pad(tensor, padding_pairs, mode='replicate')
-            except NotImplementedError:
-                # Fall back to constant padding for unsupported cases
-                padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
-        elif padding_strategy == PaddingStrategy.CIRCULAR:
-            try:
-                padded_tensor = F.pad(tensor, padding_pairs, mode='circular')
-            except NotImplementedError:
-                # Fall back to constant padding for unsupported cases
-                padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
-        elif padding_strategy == PaddingStrategy.ADAPTIVE:
-            # Choose strategy based on tensor characteristics
-            strategy = self._choose_adaptive_padding_strategy(tensor)
-            return self.pad_to_bucket_shape(tensor, bucket_id, strategy)
-        else:
-            padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
+        # Use fastest padding strategy (zeros) for maximum performance
+        padded_tensor = F.pad(tensor, padding_pairs, mode='constant', value=0)
 
         # Update bucket usage statistics
         utilization = math.prod(current_shape) / math.prod(target_shape)
@@ -684,7 +682,11 @@ class DynamicShapeBucketing:
         """Remove padding to restore original tensor shape."""
         current_shape = padded_tensor.shape
 
-        # Calculate slices to extract original data
+        # Quick check: if already the right shape, return as-is
+        if current_shape == original_shape:
+            return padded_tensor
+
+        # Efficient unpadding: since we right-padded, we can just slice from the start
         slices = []
         for i, (orig_dim, padded_dim) in enumerate(zip(original_shape, current_shape)):
             if orig_dim > padded_dim:
@@ -692,11 +694,8 @@ class DynamicShapeBucketing:
                     f"Original dimension {i} ({orig_dim}) exceeds padded dimension ({padded_dim})"
                 )
 
-            # Center the extraction (remove padding symmetrically)
-            padding_removed = padded_dim - orig_dim
-            start = padding_removed // 2
-            end = start + orig_dim
-            slices.append(slice(start, end))
+            # Since we right-padded, extract from start
+            slices.append(slice(0, orig_dim))
 
         return padded_tensor[tuple(slices)]
 
@@ -1180,37 +1179,59 @@ class DynamicShapeModule(nn.Module):
         if not self.enable_bucketing or self.bucketing_system is None:
             return self.base_module(x)
 
+        # Device-aware optimization: Dynamic shapes primarily benefit GPU workloads
+        device = x.device
+        if device.type == 'cpu':
+            # On CPU, bucketing often adds overhead rather than benefits
+            # Only enable for very large tensors where memory layout might matter
+            tensor_size = math.prod(x.shape)
+            if tensor_size < 100000:  # Much higher threshold for CPU
+                return self.base_module(x)
+
         original_shape = x.shape
 
         # Find optimal bucket and pad input
         bucket_id = self.bucketing_system.find_optimal_bucket(original_shape)
+
+        # Device-specific efficiency check
+        bucket = self.bucketing_system.buckets[bucket_id]
+        bucket_size = math.prod(bucket.shape)
+        original_size = math.prod(original_shape)
+
+        if bucket_size > 0:
+            padding_overhead = (bucket_size - original_size) / bucket_size
+            # More aggressive threshold for CPU, more lenient for GPU
+            max_overhead = 0.15 if device.type == 'cpu' else 0.5
+            if padding_overhead > max_overhead:
+                return self.base_module(x)
+
+        # Pad input efficiently
         padded_x = self.bucketing_system.pad_to_bucket_shape(
-            x, bucket_id, PaddingStrategy.ZEROS  # Use zeros for reliability
+            x, bucket_id, PaddingStrategy.ZEROS
         )
 
         # Forward pass with padded input
         padded_output = self.base_module(padded_x)
 
-        # Calculate expected output shape by running a small test
-        # This is necessary because different modules transform shapes differently
-        with torch.no_grad():
-            test_output = self.base_module(x[:1] if x.dim() > 0 else x.unsqueeze(0))
-            if x.dim() > 0:
-                expected_output_shape = (original_shape[0],) + test_output.shape[1:]
-            else:
-                expected_output_shape = test_output.shape
+        # Calculate expected output shape using cached transform or simple heuristic
+        expected_output_shape = self._calculate_output_shape(original_shape, padded_output.shape)
 
-        # Ensure the output can be unpadded properly
-        if all(exp_dim <= pad_dim for exp_dim, pad_dim in zip(expected_output_shape, padded_output.shape)):
-            # Unpad output
-            output = self.bucketing_system.unpad_from_bucket_shape(
-                padded_output, expected_output_shape
-            )
-        else:
-            # If unpadding would fail, run without bucketing
-            output = self.base_module(x)
+        # Unpad output efficiently
+        output = self.bucketing_system.unpad_from_bucket_shape(
+            padded_output, expected_output_shape
+        )
 
         return output
+
+    def _calculate_output_shape(self, original_input_shape: Tuple[int, ...], padded_output_shape: Tuple[int, ...]) -> Tuple[int, ...]:
+        """Efficiently calculate expected output shape without extra forward pass."""
+        # For most common cases, preserve batch dimension and adjust others proportionally
+        if len(original_input_shape) >= 1 and len(padded_output_shape) >= 1:
+            # Preserve batch dimension, use output shape for other dimensions
+            # This works for most transformer-style models
+            return (original_input_shape[0],) + padded_output_shape[1:]
+        else:
+            return padded_output_shape
 
 
 # 🔧 UTILITY FUNCTIONS

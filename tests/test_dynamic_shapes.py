@@ -296,18 +296,13 @@ class TestDynamicShapeBucketing:
 
         assert unpadded_tensor.shape == original_tensor.shape
 
-        # Check that original data is preserved (center portion)
-        # Calculate where original data should be in the padded tensor
-        start_indices = []
-        for padded_dim, orig_dim in zip(padded_tensor.shape, original_tensor.shape):
-            start = (padded_dim - orig_dim) // 2
-            start_indices.append(start)
-
-        # Extract the original data region
-        slices = tuple(slice(start, start + orig) for start, orig in zip(start_indices, original_tensor.shape))
+        # Check that original data is preserved (right-padding implementation)
+        # With right-padding, original data starts at beginning of tensor
+        slices = tuple(slice(0, orig) for orig in original_tensor.shape)
         extracted_data = padded_tensor[slices]
 
-        # Should match the unpadded result
+        # Should match the original and unpadded result
+        assert torch.allclose(extracted_data, original_tensor, atol=1e-6)
         assert torch.allclose(extracted_data, unpadded_tensor, atol=1e-6)
 
     def test_different_padding_strategies(self):
