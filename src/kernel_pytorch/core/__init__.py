@@ -6,7 +6,7 @@ This module consolidates all core PyTorch optimization functionality:
 - Optimized layer implementations
 - Basic optimized components
 
-Phase 3 Consolidation: Merged compiler_integration/ + compiler_optimized/ + components/
+Note: This module unifies previously separate compiler and component modules
 """
 
 # Compiler integrations
@@ -38,7 +38,7 @@ from .optimized_layers.linear_transformations import (
     FusedLinearSequence,
     compiled_linear_gelu
 )
-# Import what's available - will be fixed with actual implementations
+# TODO: Complete implementation of all optimized layer components
 
 # Basic components - using actual available exports
 try:

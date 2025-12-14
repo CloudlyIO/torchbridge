@@ -2,7 +2,7 @@
 Documentation Auto-Generation System (2025)
 
 Automatically generates comprehensive API documentation from the clean package
-structure created in Phase 2 refactoring, leveraging type hints and docstrings.
+structure, leveraging type hints and docstrings.
 """
 
 import inspect

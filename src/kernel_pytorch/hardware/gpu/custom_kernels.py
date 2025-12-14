@@ -343,7 +343,9 @@ class CUDAKernelBuilder:
         Returns:
             Compiled CUDA kernel function or None if compilation fails
         """
-        # Educational placeholder - would implement actual CUDA kernel compilation
+        # TODO: Implement actual CUDA kernel compilation
+        # This would include NVCC compilation, CUDA driver API integration,
+        # and proper error handling for different GPU architectures
         warnings.warn("CUDA kernel compilation not implemented in educational version")
         return None
 
@@ -424,8 +426,8 @@ def _replace_linear_gelu_with_custom(model: nn.Module, validation_mode: bool) ->
                         lambda x: F.gelu(linear_layer(x)) if validation_mode else None
                     )
 
-                    # Replace in model (educational - would need proper module replacement)
-                    # This is simplified for educational purposes
+                    # TODO: Implement proper module replacement for custom attention kernels
+                    # This is simplified for educational purposes - needs module registry pattern
                     pass
 
     return model

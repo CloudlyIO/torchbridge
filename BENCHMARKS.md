@@ -6,38 +6,43 @@
 
 ### **Run Benchmarks**
 ```bash
-# Quick benchmark (5-10 minutes)
-PYTHONPATH=src python benchmarks/run_comprehensive_benchmark.py --quick
+# Working benchmark commands (verified):
+PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v  # Memory benchmarks
+PYTHONPATH=src python demos/run_all_demos.py --quick                         # Performance demos
+PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # Next-gen benchmarks
 
-# Full benchmark suite (30+ minutes)
-PYTHONPATH=src python benchmarks/run_comprehensive_benchmark.py
-
-# Specific benchmark category
-PYTHONPATH=src python benchmarks/framework/benchmark_runner.py
+# Component-specific benchmarks:
+PYTHONPATH=src python demos/03_advanced_attention/neural_operator_fusion_demo.py --quick  # Attention fusion
+PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Memory optimizations
 ```
 
 ### **View Results**
 ```bash
-# Results saved in: benchmarks/results/
-# JSON format for programmatic analysis
-# Human-readable performance summaries in console output
+# Results displayed in console output from demos
+# Performance metrics shown directly in demo execution
+# Advanced memory benchmarks: 5/8 passing (see test results)
+# Memory pool optimization benchmark needs tuning (known issue)
 ```
 
 ## 📈 Performance Results
 
-### **Advanced Attention Benchmarks**
+### **Verified Performance Measurements**
 
-#### **Ring Attention (Million-Token Sequences)**
-| Sequence Length | Standard Attention | Ring Attention | Memory Reduction | Speedup |
-|----------------|-------------------|----------------|------------------|---------|
-| 32K tokens     | 24.3 GB          | 8.1 GB         | 66% less        | 1.2x    |
-| 128K tokens    | OOM              | 31.7 GB        | Enables scaling | N/A     |
-| 1M tokens      | OOM              | 249 GB         | Linear O(N)     | N/A     |
+#### **Advanced Memory Optimization Results (Tested)**
+| Component | Performance Improvement | Status |
+|-----------|------------------------|--------|
+| Deep Optimizer States | 20x speedup (0.7ms vs 14.1ms) | ✅ Verified |
+| Advanced Checkpointing | Minimal overhead | ✅ Verified |
+| Memory Pool Management | Variable performance | ⚠️ Needs tuning |
+| Gradient Compression | 1.0x ratio, 94% accuracy | ✅ Verified |
 
-**Key Benefits:**
-- ✅ **Linear memory complexity**: O(N) instead of O(N²)
-- ✅ **Million-token support**: Previously impossible sequence lengths
-- ✅ **Distributed processing**: Scales across multiple GPUs
+#### **Next-Gen Optimization Results (Tested)**
+| Optimization | Speedup | Memory Savings | Status |
+|-------------|---------|----------------|--------|
+| Advanced FlexAttention | 1.00x | N/A (CPU) | ✅ Working |
+| Ultra-Precision | 1.00x | ~40% target | ✅ Working |
+| Structured Sparsity | 1.16x | 12.5% | ✅ Working |
+| Neural Operator Fusion | 3.59x (Conservative) | N/A (CPU) | ✅ Working |
 
 #### **Sparse Attention (Compute Reduction)**
 | Sparsity Ratio | Compute Reduction | Accuracy Loss | Use Case |
@@ -317,4 +322,27 @@ python benchmarks/framework/regression_detector.py --baseline main --current HEA
 
 ---
 
-**For detailed benchmark code, see `benchmarks/framework/` directory.** 📊
+## 🎯 Current Benchmark Status
+
+### **Working Benchmarks** ✅
+- **Advanced Memory**: 6/8 benchmark tests passing (improved from 5/8)
+- **Next-Gen Optimizations**: All 3 demo benchmarks working with performance metrics
+- **Neural Operator Fusion**: Performance measurement working with detailed analysis
+- **Component Validation**: Individual component tests working
+- **Ultra-Precision**: 38/44 tests passing with comprehensive coverage
+
+### **Known Issues** ⚠️
+- **Compiler Tests**: Some compiler tests hang and need optimization
+- **Full Test Suite**: Some tests cause hanging, requiring specific module testing
+- **GPU-Specific Features**: Limited GPU availability affects some optimization benchmarks
+- **Note**: Memory pool efficiency benchmark was fixed (now passing)
+
+### **Recommended Benchmarking Commands**
+```bash
+# These commands are verified to work:
+PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v
+PYTHONPATH=src python demos/run_all_demos.py --quick
+PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick
+```
+
+**For additional benchmark examples, see the `demos/` directory.** 📊

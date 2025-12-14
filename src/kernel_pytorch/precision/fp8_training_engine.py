@@ -565,7 +565,7 @@ class FP8TrainingEngine:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
-        # Cleanup if needed
+        # TODO: Implement cleanup for FP8 training context (restore precision, clear caches)
         pass
 
 

@@ -387,17 +387,17 @@ class DeepOptimizerStates:
 
     def _transfer_results_to_gpu(self, group: OptimizerStateGroup):
         """Transfer computation results back to GPU"""
-        # Transfer updated parameters back to GPU
+        # TODO: Implement GPU transfer logic for parameter updates
         pass
 
     def _update_group_parameters(self, group: OptimizerStateGroup):
         """Update parameters for a group (GPU processing)"""
-        # Actual parameter updates would happen here
+        # TODO: Implement GPU-based parameter update logic
         pass
 
     def _update_group_parameters_cpu(self, group: OptimizerStateGroup):
         """Update parameters for a group (CPU processing)"""
-        # CPU-based parameter updates
+        # TODO: Implement CPU-based parameter update logic
         pass
 
     def _load_group_from_disk(self, group: OptimizerStateGroup):

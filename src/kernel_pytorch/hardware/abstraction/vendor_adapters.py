@@ -1016,7 +1016,8 @@ class IntelAdapter(VendorAdapter):
                     pass
 
             elif self.xpu_available:
-                # XPU metrics (would need Intel GPU monitoring APIs)
+                # TODO: Implement Intel XPU metrics using Intel Level Zero APIs
+                # This would require Intel GPU monitoring APIs for arc GPU metrics
                 metrics.update({
                     'utilization': 50.0,  # Placeholder
                     'memory_used_gb': 2.0,  # Placeholder
@@ -1316,7 +1317,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     super().__init__("asic", HardwareVendor.UNKNOWN)
 
                 def synchronize_device(self, device_id: int):
-                    pass  # ASIC-specific synchronization
+                    # TODO: Implement ASIC-specific device synchronization
+                    pass
 
                 def get_device_properties(self, device_id: int) -> Dict[str, Any]:
                     return {"name": "Custom AI ASIC", "memory": "16GB"}
@@ -1520,8 +1522,8 @@ class CustomHardwareAdapter(VendorAdapter):
 
     def _discover_asic_devices(self) -> List[DeviceSpec]:
         """Discover ASIC devices"""
-        # For custom ASICs, discovery depends on vendor-specific APIs
-        # This is a generic implementation
+        # TODO: Implement ASIC device discovery using vendor-specific APIs
+        # This would require custom ASIC vendor drivers and device management APIs
         devices = []
 
         try:
@@ -1543,6 +1545,8 @@ class CustomHardwareAdapter(VendorAdapter):
         devices = []
 
         try:
+            # TODO: Implement neuromorphic device discovery using vendor-specific APIs
+            # This would integrate with Intel Loihi, BrainChip Akida, or other neuromorphic platforms
             # Neuromorphic devices are typically single chip
             devices.append(self._initialize_neuromorphic_device(0))
         except Exception as e:
@@ -1713,7 +1717,8 @@ class CustomHardwareAdapter(VendorAdapter):
 
         try:
             if self.hardware_type == "tpu":
-                # TPU metrics (would require GCP monitoring APIs in practice)
+                # TODO: Implement TPU metrics collection using GCP monitoring APIs
+                # This would require Google Cloud Monitoring API integration for production TPUs
                 base_metrics.update({
                     'utilization': 75.0,  # TPUs typically run at high utilization
                     'memory_used_gb': 24.0,
@@ -1722,7 +1727,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     'power_w': 200.0  # TPU v4 power consumption
                 })
             elif self.hardware_type == "asic":
-                # ASIC metrics (vendor-specific)
+                # TODO: Implement ASIC metrics collection using vendor-specific monitoring APIs
+                # This would require custom ASIC vendor monitoring libraries
                 base_metrics.update({
                     'utilization': 80.0,
                     'memory_used_gb': 12.0,
@@ -1731,7 +1737,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     'power_w': 150.0
                 })
             elif self.hardware_type == "neuromorphic":
-                # Neuromorphic metrics
+                # TODO: Implement neuromorphic device metrics using spike-based monitoring APIs
+                # This would require vendor-specific neuromorphic chip monitoring interfaces
                 base_metrics.update({
                     'utilization': 30.0,  # Event-driven, lower continuous utilization
                     'memory_used_gb': 2.0,

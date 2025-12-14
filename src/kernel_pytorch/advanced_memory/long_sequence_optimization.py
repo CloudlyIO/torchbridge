@@ -31,7 +31,7 @@ class LongSequenceOptimizer:
         return segments
 
 
-class SegmentedAttentionMemory:
+class SegmentedAttentionMemory(nn.Module):
     """Segmented attention with memory for long sequences"""
 
     def __init__(
@@ -41,6 +41,7 @@ class SegmentedAttentionMemory:
         segment_length: int = 1024,
         memory_length: int = 512
     ):
+        super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.segment_length = segment_length

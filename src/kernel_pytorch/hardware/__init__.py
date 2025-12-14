@@ -7,7 +7,9 @@ This module consolidates all hardware-specific optimizations:
 - Custom CUDA kernels and kernel interfaces
 - Performance profiling and optimization tools
 
-Phase 3 Consolidation: Merged gpu_integration/ + hardware_abstraction/ + cuda_kernels/
+Note: This module unifies hardware-specific optimization components
+TODO: Complete CUDA kernel implementations for all GPU vendors
+TODO: Implement comprehensive vendor adapter support (currently partial)
 """
 
 # GPU integration and optimization - import what's available

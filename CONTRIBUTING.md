@@ -63,18 +63,17 @@ git checkout -b feature/your-feature-name
 
 ### **2. Testing Requirements**
 ```bash
-# Run full test suite (required)
-PYTHONPATH=src python -m pytest tests/ --tb=short
+# WORKING: Run specific test modules (recommended)
+PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v          # 22/22 pass ✅
+PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v  # 5/8 pass ⚠️
 
-# Run specific test categories
-PYTHONPATH=src python -m pytest tests/test_attention_compatibility.py -v
-PYTHONPATH=src python -m pytest tests/test_fp8_training.py -v
+# WORKING: Run demos to validate integration
+PYTHONPATH=src python demos/run_all_demos.py --quick                     # 3/5 working ✅
+PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # All working ✅
+PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Working ✅
 
-# Run demos to validate integration
-PYTHONPATH=../src python demos/run_all_demos.py --quick
-
-# Run benchmarks to check performance
-PYTHONPATH=src python benchmarks/run_comprehensive_benchmark.py --quick
+# NOTE: Full test suite (PYTHONPATH=src python -m pytest tests/) has hanging tests
+# Use specific modules instead for reliable testing
 ```
 
 ### **3. Code Quality Standards**
@@ -135,12 +134,13 @@ class TestRingAttention:
 ## 📋 Submission Process
 
 ### **Before Submitting PR**
-- [ ] All tests passing: `PYTHONPATH=src python -m pytest tests/`
-- [ ] All demos working: `python demos/run_all_demos.py --quick`
-- [ ] Benchmarks operational: `python benchmarks/run_comprehensive_benchmark.py --quick`
+- [ ] Specific tests passing: `PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v`
+- [ ] All demos working: `PYTHONPATH=src python demos/run_all_demos.py --quick`
+- [ ] Core benchmarks operational: Check `demos/` performance output
 - [ ] Code follows naming conventions
 - [ ] Documentation updated for new features
 - [ ] No hardcoded device assumptions (support both CPU/GPU)
+- [ ] Verify imports work: Test your API imports before submission
 
 ### **PR Requirements**
 1. **Clear description** of what the PR accomplishes
@@ -172,17 +172,22 @@ class TestRingAttention:
 
 ### **Useful Commands**
 ```bash
-# Profile import performance
-PYTHONPATH=src python -c "from kernel_pytorch.utils.import_profiler import benchmark_lazy_loading_improvements; benchmark_lazy_loading_improvements()"
-
-# Validate attention implementations
-PYTHONPATH=src python -c "from kernel_pytorch.attention import create_ring_attention; print('✅ Ring Attention available')"
-
-# Check FP8 training setup
+# Test verified working imports
+PYTHONPATH=src python -c "from kernel_pytorch.advanced_memory import DeepOptimizerStates; print('✅ Advanced Memory available')"
+PYTHONPATH=src python -c "from kernel_pytorch.optimizations.next_gen import create_advanced_flex_attention; print('✅ Next-gen optimizations available')"
 PYTHONPATH=src python -c "from kernel_pytorch.precision import create_fp8_trainer; print('✅ FP8 Training available')"
 
-# Run specific benchmark category
-PYTHONPATH=src python benchmarks/framework/benchmark_runner.py
+# Test import that may have issues
+PYTHONPATH=src python -c "
+try:
+    from kernel_pytorch.attention import create_attention
+    print('✅ Attention framework available')
+except ImportError as e:
+    print(f'⚠️ Attention import issue: {e}')
+"
+
+# Run working performance tests
+PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick
 ```
 
 ### **IDE Setup Recommendations**

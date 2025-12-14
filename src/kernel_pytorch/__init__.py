@@ -12,15 +12,15 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.1.61"
+__version__ = "0.1.63"
 
-# Core optimization components (Phase 3 unified)
+# Core optimization components
 from .core import *
 
-# Attention mechanisms (Phase 2 unified)
+# Attention mechanisms
 from .attention import *
 
-# Specialized modules
+# Specialized optimization modules
 from .precision import *
 from .mixture_of_experts import *
 from .advanced_memory import *
@@ -28,10 +28,10 @@ from .distributed_scale import *
 from .testing_framework import *
 from .utils import *
 
-# Hardware optimization (Phase 3 unified)
+# Hardware abstraction layer
 from .hardware import *
 
-# Optimization patterns (Phase 3 unified)
+# Advanced optimization patterns
 from .optimizations import *
 
 # Backward compatibility is handled by individual modules through deprecation warnings

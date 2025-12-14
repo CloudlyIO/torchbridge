@@ -2,7 +2,7 @@
 Import Performance Profiler (2025)
 
 Measures and benchmarks import performance improvements from lazy loading
-and other optimization techniques implemented in Phase 4.
+and other optimization techniques.
 """
 
 import time
@@ -186,7 +186,7 @@ class ImportProfiler:
 
 def benchmark_lazy_loading_improvements() -> Dict[str, any]:
     """
-    Benchmark the lazy loading improvements in Phase 4.
+    Benchmark the lazy loading improvements.
 
     Returns comprehensive before/after performance comparison.
     """

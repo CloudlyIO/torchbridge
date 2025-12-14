@@ -306,6 +306,8 @@ class UnifiedValidator:
                 # CPU memory tracking is more complex, just run the function
                 with torch.no_grad():
                     _ = func(*device_inputs)
+                # TODO: Implement CPU memory tracking using psutil or tracemalloc
+                # This would track process memory usage, peak allocations, and memory leaks
                 memory_metrics = {'note': 'CPU memory tracking not implemented'}
                 passed = True
 

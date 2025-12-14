@@ -438,7 +438,8 @@ def _apply_fusion_optimization(model: nn.Module, target_intensity: float) -> nn.
     for name, module in model.named_modules():
         if isinstance(module, nn.Linear):
             # Check if followed by activation
-            # In practice, would implement actual fusion
+            # TODO: Implement actual fusion of linear layers with activations
+            # This would analyze the forward graph to identify fusable patterns
             pass
 
     return optimized_model
@@ -446,7 +447,8 @@ def _apply_fusion_optimization(model: nn.Module, target_intensity: float) -> nn.
 
 def _apply_blocking_optimization(model: nn.Module, target_intensity: float) -> nn.Module:
     """Apply blocking/tiling optimization for better cache utilization."""
-    # Educational placeholder - would implement blocking strategies
+    # TODO: Implement blocking/tiling strategies for improved cache utilization
+    # This would include matrix blocking, loop tiling, and cache-aware algorithms
     return model
 
 
