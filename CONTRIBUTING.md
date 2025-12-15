@@ -18,10 +18,10 @@ cd shahmod
 pip install -r requirements.txt
 
 # Validate setup
-python -c "import kernel_pytorch; print('✅ Setup successful')"
+python3 -c "import kernel_pytorch; print('✅ Setup successful')"
 
 # Run tests
-PYTHONPATH=src python -m pytest tests/ -v
+PYTHONPATH=src python3 -m pytest tests/ -v
 ```
 
 ## 🎯 Project Architecture
@@ -64,15 +64,15 @@ git checkout -b feature/your-feature-name
 ### **2. Testing Requirements**
 ```bash
 # WORKING: Run specific test modules (recommended)
-PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v          # 22/22 pass ✅
-PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v  # 5/8 pass ⚠️
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v          # 22/22 pass ✅
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v  # 5/8 pass ⚠️
 
 # WORKING: Run demos to validate integration
-PYTHONPATH=src python demos/run_all_demos.py --quick                     # 3/5 working ✅
-PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # All working ✅
-PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Working ✅
+PYTHONPATH=src python3 demos/run_all_demos.py --quick                     # 3/5 working ✅
+PYTHONPATH=src python3 demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # All working ✅
+PYTHONPATH=src python3 demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Working ✅
 
-# NOTE: Full test suite (PYTHONPATH=src python -m pytest tests/) has hanging tests
+# NOTE: Full test suite (PYTHONPATH=src python3 -m pytest tests/) has hanging tests
 # Use specific modules instead for reliable testing
 ```
 

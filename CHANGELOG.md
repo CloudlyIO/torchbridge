@@ -4,6 +4,27 @@
 
 > **Note**: This changelog reflects actual implemented and tested functionality. Performance claims are based on measured results from working demos and tests.
 
+## [0.1.66] - 2025-12-15 - Documentation Consistency & Python3 Standardization Release
+
+### 📝 **Documentation Consistency Updates**
+- **Python Command Standardization**: Updated all documentation references from `python` to `python3` for consistency and reliability
+- **Cross-Platform Compatibility**: Ensured all examples work consistently across different Python installations
+- **Versioning Documentation**: Enhanced versioning guides and automation scripts with correct python3 commands
+
+### 🔧 **Files Updated**
+- **README.md**: All command examples now use `python3` (installation, testing, demos, benchmarking)
+- **CONTRIBUTING.md**: Development setup and testing instructions standardized to `python3`
+- **CHANGELOG.md**: Demo runner examples updated for consistency
+- **demos/README.md**: Quick start examples use `python3`
+- **local/VERSIONING_GUIDE.md**: All automation scripts reference correct python command
+- **Git Hooks**: Pre-commit scripts updated to use `python3`
+
+### 🎯 **Benefits**
+- **Consistent Experience**: All users get the same command experience regardless of Python setup
+- **Reduced Errors**: Eliminates "python command not found" issues on systems with only python3
+- **Documentation Reliability**: All examples guaranteed to work as documented
+- **Professional Standards**: Follows modern Python best practices for documentation
+
 ## [0.1.65] - 2025-12-15 - Repository Organization & Maintenance Release
 
 ### 🧹 **Repository Organization & Cleanup**
@@ -39,7 +60,7 @@
 - **Error Handling**: Enhanced error reporting and graceful fallback mechanisms
 
 ### 📊 **Performance & Validation**
-- **Main Demo Runner**: `python run_all_demos.py --quick` achieves 100% success rate (5/5 key demos) in ~55 seconds
+- **Main Demo Runner**: `python3 run_all_demos.py --quick` achieves 100% success rate (5/5 key demos) in ~55 seconds
 - **Individual Testing**: All 15 demos tested individually with verified performance improvements:
   - 30% precision quality gains (precision/adaptive.py)
   - 2.5x memory reduction (memory/deep_states.py)
@@ -58,7 +79,7 @@ production/    🏭 1 demo   (deployment.py)
 ```
 
 ### 🎯 **User Experience Improvements**
-- **Quick Start**: Simple `python run_all_demos.py --quick` command for immediate demonstration
+- **Quick Start**: Simple `python3 run_all_demos.py --quick` command for immediate demonstration
 - **Clear Navigation**: Logical directory structure with descriptive names and performance indicators
 - **Verified Claims**: All performance improvements documented and tested with actual working examples
 

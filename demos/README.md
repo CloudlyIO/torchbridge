@@ -66,4 +66,4 @@ production/    🏭 Deployment patterns (1 demo)
 
 ---
 
-**Start here:** `python run_all_demos.py --quick`
+**Start here:** `python3 run_all_demos.py --quick`

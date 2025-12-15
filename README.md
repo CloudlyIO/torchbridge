@@ -27,7 +27,7 @@ cd shahmod
 pip install -r requirements.txt
 
 # Verify installation
-python -c "import kernel_pytorch; print('✅ KernelPyTorch ready!')"
+python3 -c "import kernel_pytorch; print('✅ KernelPyTorch ready!')"
 ```
 
 ### **Basic Usage**
@@ -78,18 +78,18 @@ sparse_model = sparsity.apply_to_model(model)
 ### **Quick Validation**
 ```bash
 # Run all demos (2-3 minutes) - VERIFIED WORKING
-PYTHONPATH=src python demos/run_all_demos.py --quick                    # 3/5 success ✅
+PYTHONPATH=src python3 demos/run_all_demos.py --quick                    # 3/5 success ✅
 
 # Run next-gen optimization demos (1-2 minutes) - VERIFIED WORKING
-PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # 3/3 success ✅
+PYTHONPATH=src python3 demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # 3/3 success ✅
 
 # Run advanced memory optimization demos (1-2 minutes) - VERIFIED WORKING
-PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # All components ✅
+PYTHONPATH=src python3 demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # All components ✅
 
 # Run specific test modules (verified working)
-PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v                # 22/22 pass ✅
-PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v     # 6/8 pass ✅
-PYTHONPATH=src python -m pytest tests/test_ultra_precision.py -v                # 38/44 pass ✅
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v                # 22/22 pass ✅
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v     # 6/8 pass ✅
+PYTHONPATH=src python3 -m pytest tests/test_ultra_precision.py -v                # 38/44 pass ✅
 
 # Note: Some tests (like compiler tests) may hang - use specific modules for validation
 ```
@@ -176,10 +176,10 @@ output = optimized_model(variable_input)  # 3x speedup, <10% memory overhead
 #### **Benchmarking & Analysis**
 ```python
 # Run comprehensive benchmark comparing strategies
-python demos/02_compiler_optimizations/dynamic_shapes_demo.py --compare-strategies
+python3 demos/02_compiler_optimizations/dynamic_shapes_demo.py --compare-strategies
 
 # Production benchmark suite
-python benchmarks/dynamic_shapes_benchmark.py
+python3 benchmarks/dynamic_shapes_benchmark.py
 ```
 
 ### **🔧 Hardware Abstraction Layer**
@@ -357,8 +357,8 @@ src/kernel_pytorch/
 
 ### **Contributing**
 1. **Setup**: `pip install -r requirements.txt`
-2. **Test**: `PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v`  # Start with working tests
-3. **Validate**: `PYTHONPATH=src python demos/run_all_demos.py --quick`  # Verify demos
+2. **Test**: `PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v`  # Start with working tests
+3. **Validate**: `PYTHONPATH=src python3 demos/run_all_demos.py --quick`  # Verify demos
 4. **Submit**: See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed workflow
 
 ### **Code Quality**
