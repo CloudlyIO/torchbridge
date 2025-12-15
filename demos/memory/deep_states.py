@@ -23,7 +23,9 @@ import sys
 import os
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+src_path = os.path.join(repo_root, 'src')
+sys.path.insert(0, src_path)
 
 from kernel_pytorch.advanced_memory import (
     DeepOptimizerStates,
@@ -61,53 +63,66 @@ class LargeTransformerModel(nn.Module):
 
 def create_training_data(device, batch_size=4, seq_len=512, vocab_size=10000):
     """Create synthetic training data"""
-    inputs = torch.randint(0, vocab_size, (batch_size, seq_len), device=device)
-    targets = torch.randint(0, vocab_size, (batch_size, seq_len), device=device)
+    # Make sure random indices are within vocab_size (exclusive upper bound)
+    inputs = torch.randint(0, vocab_size - 1, (batch_size, seq_len), device=device)
+    targets = torch.randint(0, vocab_size - 1, (batch_size, seq_len), device=device)
     return inputs, targets
 
 
-def benchmark_standard_optimizer(model, device, num_steps=10):
+def benchmark_standard_optimizer(model, device, num_steps=10, vocab_size=10000):
     """Benchmark standard PyTorch optimizer"""
     print("🔄 Benchmarking Standard Optimizer...")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    try:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 
-    memory_usage = []
-    step_times = []
+        memory_usage = []
+        step_times = []
 
-    for step in range(num_steps):
-        start_time = time.time()
+        for step in range(num_steps):
+            start_time = time.time()
 
-        # Record memory before step
-        if device.type == 'cuda':
-            torch.cuda.reset_peak_memory_stats()
+            # Record memory before step
+            if device.type == 'cuda':
+                torch.cuda.reset_peak_memory_stats()
 
-        inputs, targets = create_training_data(device)
+            inputs, targets = create_training_data(device, vocab_size=vocab_size)
 
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = F.cross_entropy(outputs.view(-1, outputs.size(-1)), targets.view(-1))
-        loss.backward()
-        optimizer.step()
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = F.cross_entropy(outputs.view(-1, outputs.size(-1)), targets.view(-1))
+            loss.backward()
+            optimizer.step()
 
-        step_time = time.time() - start_time
-        step_times.append(step_time)
+            step_time = time.time() - start_time
+            step_times.append(step_time)
 
-        # Record memory after step
-        if device.type == 'cuda':
-            memory_usage.append(torch.cuda.max_memory_allocated() / 1024**3)  # GB
-        else:
-            memory_usage.append(0.5)  # Estimate for CPU
+            # Record memory after step
+            if device.type == 'cuda':
+                memory_usage.append(torch.cuda.max_memory_allocated() / 1024**3)  # GB
+            else:
+                memory_usage.append(0.5)  # Estimate for CPU
 
-    return {
-        'avg_step_time': sum(step_times) / len(step_times),
-        'total_time': sum(step_times),
-        'peak_memory_gb': max(memory_usage) if memory_usage else 0,
-        'avg_memory_gb': sum(memory_usage) / len(memory_usage) if memory_usage else 0
-    }
+        return {
+            'avg_step_time': sum(step_times) / len(step_times),
+            'total_time': sum(step_times),
+            'peak_memory_gb': max(memory_usage) if memory_usage else 0,
+            'avg_memory_gb': sum(memory_usage) / len(memory_usage) if memory_usage else 0
+        }
+
+    except Exception as e:
+        print(f"❌ Error in benchmark_standard_optimizer: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'avg_step_time': 0,
+            'total_time': 0,
+            'peak_memory_gb': 0,
+            'avg_memory_gb': 0
+        }
 
 
-def benchmark_deep_optimizer_states(model, device, num_steps=10):
+def benchmark_deep_optimizer_states(model, device, num_steps=10, vocab_size=10000):
     """Benchmark Deep Optimizer States"""
     print("🚀 Benchmarking Deep Optimizer States...")
 
@@ -138,7 +153,7 @@ def benchmark_deep_optimizer_states(model, device, num_steps=10):
         if device.type == 'cuda':
             torch.cuda.reset_peak_memory_stats()
 
-        inputs, targets = create_training_data(device)
+        inputs, targets = create_training_data(device, vocab_size=vocab_size)
 
         def closure():
             base_optimizer.zero_grad()
@@ -172,7 +187,7 @@ def benchmark_deep_optimizer_states(model, device, num_steps=10):
     }
 
 
-def benchmark_interleave_offloading(model, device, num_steps=10):
+def benchmark_interleave_offloading(model, device, num_steps=10, vocab_size=10000):
     """Benchmark Interleave Offloading Optimizer"""
     print("⚡ Benchmarking Interleave Offloading Optimizer...")
 
@@ -196,7 +211,7 @@ def benchmark_interleave_offloading(model, device, num_steps=10):
         if device.type == 'cuda':
             torch.cuda.reset_peak_memory_stats()
 
-        inputs, targets = create_training_data(device)
+        inputs, targets = create_training_data(device, vocab_size=vocab_size)
 
         interleave_optimizer.zero_grad()
         outputs = model(inputs)
@@ -237,11 +252,11 @@ def demonstrate_cpu_gpu_hybrid(device):
         nn.Linear(1024, 512)
     ).to(device)
 
-    base_optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
     hybrid_optimizer = CPUGPUHybridOptimizer(
-        optimizer=base_optimizer,
-        cpu_offload_ratio=0.5
+        optimizer_class=torch.optim.Adam,
+        model=model,
+        lr=1e-3,
+        cpu_ratio=0.5
     )
 
     # Test a few optimization steps
@@ -284,13 +299,13 @@ def run_comprehensive_demo(device, quick_mode=False):
     results = {}
 
     # 1. Standard optimizer baseline
-    results['standard'] = benchmark_standard_optimizer(model, device, num_steps)
+    results['standard'] = benchmark_standard_optimizer(model, device, num_steps, model_config['vocab_size'])
 
     # 2. Deep Optimizer States
-    results['deep_optimizer'] = benchmark_deep_optimizer_states(model, device, num_steps)
+    results['deep_optimizer'] = benchmark_deep_optimizer_states(model, device, num_steps, model_config['vocab_size'])
 
     # 3. Interleave Offloading
-    results['interleave_offloading'] = benchmark_interleave_offloading(model, device, num_steps)
+    results['interleave_offloading'] = benchmark_interleave_offloading(model, device, num_steps, model_config['vocab_size'])
 
     # 4. CPU-GPU Hybrid demo
     demonstrate_cpu_gpu_hybrid(device)

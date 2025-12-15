@@ -15,6 +15,10 @@ Key Demonstrations:
 6. Hardware-Aware Optimization
 
 Usage:
+    # From project root:
+    PYTHONPATH=src python3 demos/04_precision_optimization/adaptive_precision_demo.py [--quick] [--validate] [--benchmark]
+
+    # From demo directory:
     python adaptive_precision_demo.py [--quick] [--validate] [--benchmark]
 
 Requirements:
@@ -22,6 +26,33 @@ Requirements:
     - CUDA-capable GPU (optional but recommended for FP8 support)
     - Memory: 4GB+ GPU memory for full demos
 """
+
+# Setup path for module imports
+import sys
+import os
+from pathlib import Path
+
+# Add src directory to Python path if not already there
+current_dir = Path(__file__).resolve().parent
+project_root = current_dir.parent.parent
+src_dir = project_root / "src"
+
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+# Verify that kernel_pytorch is importable
+try:
+    import kernel_pytorch
+except ImportError as e:
+    print(f"Error: Unable to import kernel_pytorch module.")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Project root should be: {project_root}")
+    print(f"Source directory should be: {src_dir}")
+    print(f"Python path: {sys.path[:3]}...")
+    print("\nTo fix this issue:")
+    print("1. Run from project root with: PYTHONPATH=src python3 demos/04_precision_optimization/adaptive_precision_demo.py")
+    print("2. Or ensure you're in the correct directory structure")
+    sys.exit(1)
 
 import argparse
 import time
@@ -53,6 +84,7 @@ from kernel_pytorch.precision.ultra_precision import (
 
 # Import supporting components
 from kernel_pytorch.core.components import OptimizedMultiHeadAttention
+from kernel_pytorch.attention.fusion.neural_operator import OptimizationLevel
 
 
 @dataclass
@@ -525,21 +557,21 @@ class AdaptivePrecisionDemoRunner:
 
             # Analyze precision opportunities
             opportunities = analyze_precision_opportunities(
-                model, input_data, device=self.config.device
+                model, [input_data]
             )
 
             task_results[task_name] = {
                 'uniform_quality': uniform_quality,
                 'adaptive_quality': adaptive_quality,
                 'quality_improvement_percent': quality_improvement,
-                'precision_opportunities': len(opportunities['recommendations']),
-                'potential_savings': opportunities['potential_savings']
+                'precision_opportunities': len(opportunities['optimization_opportunities']),
+                'potential_savings': opportunities['precision_analysis']['projected_memory_reduction']
             }
 
             print(f"     Uniform Quality: {uniform_quality:.4f}")
             print(f"     Adaptive Quality: {adaptive_quality:.4f}")
             print(f"     Improvement: {quality_improvement:+.1f}%")
-            print(f"     Precision Opportunities: {len(opportunities['recommendations'])}")
+            print(f"     Precision Opportunities: {len(opportunities['optimization_opportunities'])}")
 
         # Summary across tasks
         avg_improvement = np.mean([r['quality_improvement_percent'] for r in task_results.values()])
@@ -677,8 +709,9 @@ class AdaptivePrecisionDemoRunner:
             precision_stats = adaptive_model.get_precision_stats()
 
             # Calculate input entropy for context
-            analyzer = InformationEntropyAnalyzer(self.config.device)
-            input_entropy = analyzer.compute_tensor_entropy(input_data.float())
+            analyzer = InformationEntropyAnalyzer()
+            input_entropy_tensor = analyzer.compute_tensor_entropy(input_data.float())
+            input_entropy = input_entropy_tensor.mean().item()  # Get scalar value
 
             adaptation_results[scenario_name] = {
                 'input_entropy': input_entropy,
@@ -908,19 +941,16 @@ class AdaptivePrecisionDemoRunner:
             'Uniform FP16': 'uniform_fp16',
             'Conservative Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                optimization_level=OptimizationLevel.CONSERVATIVE,
                 target_memory_reduction=0.8,
                 gradient_weight=0.8
             ),
             'Balanced Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                optimization_level=OptimizationLevel.BALANCED,
                 target_memory_reduction=0.6,
                 gradient_weight=0.7
             ),
             'Aggressive Adaptive': PrecisionConfig(
                 allocation_strategy=AllocationStrategy.ENTROPY_BASED,
-                optimization_level=OptimizationLevel.AGGRESSIVE,
                 target_memory_reduction=0.4,
                 gradient_weight=0.6
             )

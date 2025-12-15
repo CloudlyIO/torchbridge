@@ -168,9 +168,18 @@ def benchmark_selective_checkpointing(model, device, num_steps=5):
     for name, module in model.named_modules():
         if 'blocks' in name or 'transformer' in name:
             # Higher numbers get checkpointed less (they're more important)
-            layer_num = int(name.split('.')[1]) if 'blocks.' in name or 'transformer.' in name else 0
-            importance = layer_num / 20.0  # Importance increases with depth
-            selective_checkpoint.update_importance(name, importance)
+            try:
+                if 'blocks.' in name:
+                    layer_num = int(name.split('.')[1])
+                elif 'transformer.layers.' in name:
+                    layer_num = int(name.split('.')[2])
+                else:
+                    layer_num = 0
+                importance = layer_num / 20.0  # Importance increases with depth
+                selective_checkpoint.update_importance(name, importance)
+            except (ValueError, IndexError):
+                # Skip modules where we can't parse layer numbers
+                continue
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 

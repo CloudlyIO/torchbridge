@@ -14,6 +14,10 @@ Key Demonstrations:
 5. Production-Ready Integration Examples
 
 Usage:
+    # From project root:
+    PYTHONPATH=src python3 demos/03_advanced_attention/neural_operator_fusion_demo.py [--quick] [--validate] [--benchmark]
+
+    # From demo directory:
     python neural_operator_fusion_demo.py [--quick] [--validate] [--benchmark]
 
 Requirements:
@@ -21,6 +25,33 @@ Requirements:
     - CUDA-capable GPU (optional but recommended)
     - Memory: 4GB+ GPU memory for full demos
 """
+
+# Setup path for module imports
+import sys
+import os
+from pathlib import Path
+
+# Add src directory to Python path if not already there
+current_dir = Path(__file__).resolve().parent
+project_root = current_dir.parent.parent
+src_dir = project_root / "src"
+
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+# Verify that kernel_pytorch is importable
+try:
+    import kernel_pytorch
+except ImportError as e:
+    print(f"Error: Unable to import kernel_pytorch module.")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Project root should be: {project_root}")
+    print(f"Source directory should be: {src_dir}")
+    print(f"Python path: {sys.path[:3]}...")
+    print("\nTo fix this issue:")
+    print("1. Run from project root with: PYTHONPATH=src python3 demos/03_advanced_attention/neural_operator_fusion_demo.py")
+    print("2. Or ensure you're in the correct directory structure")
+    sys.exit(1)
 
 import argparse
 import time

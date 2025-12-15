@@ -148,6 +148,21 @@ class PrecisionStats:
 
         return entropy
 
+    @property
+    def memory_savings_ratio(self) -> float:
+        """Alias for memory_reduction_ratio (API compatibility)."""
+        return self.memory_reduction_ratio
+
+    @property
+    def format_usage_distribution(self) -> Dict[str, float]:
+        """Format usage distribution as strings (API compatibility)."""
+        return {fmt.value: usage for fmt, usage in self.precision_distribution.items()}
+
+    @property
+    def total_allocations(self) -> int:
+        """Total number of precision allocations made."""
+        return sum(1 for usage in self.precision_distribution.values() if usage > 0)
+
 
 class InformationEntropyAnalyzer:
     """
@@ -837,6 +852,20 @@ class UltraPrecisionModule(nn.Module):
         """Get comprehensive precision allocation statistics."""
 
         return self.allocator.stats
+
+    def get_precision_stats(self) -> PrecisionStats:
+        """Get precision allocation statistics (alias for get_precision_statistics)."""
+        return self.get_precision_statistics()
+
+    @property
+    def current_allocation(self) -> Dict[str, Any]:
+        """Get current precision allocation state (API compatibility)."""
+        return {
+            'precision_maps': self.precision_maps.copy(),
+            'quantized_parameters': {name: param.clone() for name, param in self.quantized_parameters.items()},
+            'allocation_strategy': self.config.allocation_strategy.value,
+            'memory_reduction': self.get_precision_statistics().memory_reduction_ratio
+        }
 
     def get_precision_analysis(self) -> Dict[str, Any]:
         """Get detailed analysis of precision allocation."""
