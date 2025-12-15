@@ -246,3 +246,40 @@ demo_outputs/
 # Temporary planning files
 IMMEDIATE_TASK_LIST.md.archive/
 docs/immediate_tasks.md
+
+# ===================================================================
+# LOCAL DEVELOPMENT FILES - Keep repo clean
+# ===================================================================
+
+# All local development files consolidated in local/ directory
+local/
+*.local
+
+# Demo results and test outputs
+*_demo_results.json
+*_benchmark_results.json
+*_test_output.json
+
+# Planning and documentation drafts
+*_PLANNING.md
+*_NOTES.md
+*_DRAFT.md
+
+# Pipeline reports and CI artifacts
+pipeline_report_*.json
+integration_test_report_*.json
+
+# Backup and temporary directories
+*_backup/
+*_temp/
+*_old/
+
+# Script outputs and logs
+run_*.log
+test_*.log
+benchmark_*.log
+
+# Personal development files
+TODO.local
+NOTES.local
+SCRATCH.local
