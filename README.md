@@ -2,7 +2,7 @@
 
 **Production-grade PyTorch GPU optimization framework for 2-5x performance improvements.**
 
-[![Tests](https://img.shields.io/badge/tests-562%20collected-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-19%20available-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Tests](https://img.shields.io/badge/tests-562%20collected-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-5%20available-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## 🚀 What is KernelPyTorch?
 
@@ -16,7 +16,7 @@ KernelPyTorch is a **high-performance optimization framework** that accelerates 
 - **🎨 Adaptive Precision**: 30% quality improvement through entropy-based precision allocation
 - **💾 Advanced Memory Optimization**: 2.5x speedup with Deep Optimizer States, 60% memory reduction
 - **✨ Next-Gen Optimizations**: FlashLight compiler, 2:4 sparsity, FP4 quantization with 1.4x speedup
-- **🧪 Comprehensive Framework**: 562 test cases, 19 demos, extensive benchmarks
+- **🧪 Comprehensive Framework**: 562 test cases, 5 demos, extensive benchmarks
 
 ## ⏱️ Quick Start (2 minutes)
 
@@ -77,14 +77,13 @@ sparse_model = sparsity.apply_to_model(model)
 
 ### **Quick Validation**
 ```bash
-# Run all demos (2-3 minutes) - VERIFIED WORKING
-PYTHONPATH=src python3 demos/run_all_demos.py --quick                    # 3/5 success ✅
+# Run all demos (1 minute) - VERIFIED WORKING
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick          # 5/5 success ✅ in 54.6s
 
-# Run next-gen optimization demos (1-2 minutes) - VERIFIED WORKING
-PYTHONPATH=src python3 demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # 3/3 success ✅
-
-# Run advanced memory optimization demos (1-2 minutes) - VERIFIED WORKING
-PYTHONPATH=src python3 demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # All components ✅
+# Run individual demos - VERIFIED WORKING
+cd demos && PYTHONPATH=../src python3 precision/adaptive.py --quick     # Adaptive precision demo ✅
+cd demos && PYTHONPATH=../src python3 attention/fusion.py --quick       # Neural operator fusion ✅
+cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick     # Deep optimizer states ✅
 
 # Run specific test modules (verified working)
 PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v                # 22/22 pass ✅

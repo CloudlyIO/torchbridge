@@ -5,12 +5,13 @@ Get up and running with **KernelPyTorch** in under 5 minutes.
 ## 1. Installation
 
 ```bash
-# Install KernelPyTorch
-pip install kernel-pytorch
+# Clone and setup KernelPyTorch
+git clone <repository-url>
+cd shahmod
+pip install -r requirements.txt
 
 # Verify installation
-kernelpytorch --version
-kernelpytorch doctor
+python3 -c "import kernel_pytorch; print('✅ KernelPyTorch ready!')"
 ```
 
 ## 2. Your First Optimization

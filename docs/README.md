@@ -6,47 +6,53 @@
 
 | Step | Document | Time | Purpose |
 |------|----------|------|---------|
-| 1️⃣ | [Installation Guide](installation.md) | 5 min | Install and verify |
-| 2️⃣ | [Basic Demo](../demos/01_basic_optimizations.py) | 2 min | See 2.8x speedup |
+| 1️⃣ | [Installation Guide](guides/installation.md) | 5 min | Install and verify |
+| 2️⃣ | [Quick Demo](../demos/README.md) | 2 min | See optimizations working |
 | 3️⃣ | [Benchmarks](../BENCHMARKS.md) | 5 min | Validate claims |
 
-## 📖 Complete Documentation
+## 📖 Documentation Structure
 
-### **Setup & Configuration**
-- **[Installation Guide](installation.md)** - Complete installation instructions
-- **[CUDA Setup](cuda_setup.md)** - Detailed CUDA/Triton configuration
-- **[Cloud Testing](cloud_testing_guide.md)** - AWS/Azure/GCP deployment
+### **📋 Guides** - Setup & Development
+- **[Installation Guide](guides/installation.md)** - Complete installation instructions
+- **[Quick Start Guide](guides/quickstart.md)** - Get started in 5 minutes
+- **[Testing Guide](guides/testing_guide.md)** - Comprehensive testing and benchmarking
+- **[CUDA Setup](guides/cuda_setup.md)** - Detailed CUDA/Triton configuration
+- **[Docker Guide](guides/docker.md)** - Containerized development and deployment
+- **[Cloud Testing](guides/cloud_testing_guide.md)** - AWS/Azure/GCP deployment
 
-### **Technical Documentation**
-- **[Architecture](architecture.md)** - Framework design and optimization strategies
-- **[Hardware Guide](hardware.md)** - Multi-vendor GPU support (NVIDIA/AMD/Intel/Custom)
-- **[Performance Analysis](performance.md)** - Detailed benchmarking and optimization results
+### **⚡ Capabilities** - Technical Documentation
+- **[Architecture](capabilities/architecture.md)** - Framework design and optimization strategies
+- **[Hardware Abstraction](capabilities/hardware.md)** - Multi-vendor GPU support (NVIDIA/AMD/Intel/Custom)
+- **[Performance Analysis](capabilities/performance.md)** - Detailed benchmarking and optimization results
+- **[Dynamic Shape Bucketing](capabilities/dynamic_shape_bucketing.md)** - Variable input optimization
+- **[Core Components](capabilities/core_components.md)** - Core optimization modules
+- **[Hardware Kernels](capabilities/hardware_kernels.md)** - Low-level kernel implementations
+- **[CLI Reference](capabilities/cli_reference.md)** - Command-line interface documentation
+- **[External References](capabilities/references.md)** - Links to papers, documentation, tools
 
-### **Development & Testing**
-- **[Testing Guide](testing_guide.md)** - Comprehensive testing and benchmarking
-- **[Contributing Guide](../CONTRIBUTING.md)** - Development workflow and standards
-- **[API Reference](../API.md)** - Complete API documentation
-
-### **Reference Materials**
-- **[Roadmap](roadmap.md)** - Development roadmap and future plans
-- **[External References](references.md)** - Links to papers, documentation, tools
+### **🗺️ Roadmaps** - Planning & Development
+- **[Main Roadmap](roadmaps/roadmap.md)** - Development roadmap and future plans
+- **[Immediate Tasks](roadmaps/immediate_tasks.md)** - Current priority tasks
+- **[Performance Testing Plan](roadmaps/performance_regression_testing_plan.md)** - Testing strategy
+- **[NVIDIA Optimization Roadmap](roadmaps/nvidia_optimization_roadmap.md)** - NVIDIA-specific optimizations
+- **[TPU Integration Roadmap](roadmaps/tpu_integration_roadmap.md)** - Google TPU support planning
 
 ## 🎯 By Use Case
 
 ### **New Users** (Start here!)
-1. [Installation Guide](installation.md) → [Quick Start](quickstart.md) → [Basic Demo](../demos/) → [Benchmarks](../BENCHMARKS.md)
-2. Expected: 5-minute setup, 2.8-6.1x performance improvements demonstrated
+1. [Installation Guide](guides/installation.md) → [Quick Start](guides/quickstart.md) → [Demo Suite](../demos/) → [Benchmarks](../BENCHMARKS.md)
+2. Expected: 5-minute setup, verified demo results: 5/5 success in 54.6s
 
 ### **Developers**
-1. [Architecture](architecture.md) → [API Reference](../API.md) → [Testing Guide](testing_guide.md)
+1. [Architecture](capabilities/architecture.md) → [API Reference](../API.md) → [Testing Guide](guides/testing_guide.md)
 2. Focus: Framework design, development workflow, comprehensive testing
 
 ### **Hardware Engineers**
-1. [Hardware Guide](hardware.md) → [Cloud Testing](cloud_testing_guide.md) → [Performance Analysis](performance.md)
+1. [Hardware Guide](capabilities/hardware.md) → [Cloud Testing](guides/cloud_testing_guide.md) → [Performance Analysis](capabilities/performance.md)
 2. Focus: Multi-vendor support, deployment, hardware-specific optimization
 
 ### **Performance Engineers**
-1. [Performance Analysis](performance.md) → [Benchmarks](../BENCHMARKS.md) → [Testing Guide](testing_guide.md)
+1. [Performance Analysis](capabilities/performance.md) → [Benchmarks](../BENCHMARKS.md) → [Testing Guide](guides/testing_guide.md)
 2. Focus: Detailed performance analysis, statistical validation, regression testing
 
 ## ✨ Key Features
