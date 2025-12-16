@@ -236,16 +236,16 @@ Run the comprehensive demo to see dynamic shape bucketing in action:
 
 ```bash
 # Basic demo
-PYTHONPATH=src python demos/02_compiler_optimizations/dynamic_shapes_demo.py
+cd demos && PYTHONPATH=../src python3 compiler/shapes.py
 
 # Quick validation
-PYTHONPATH=src python demos/02_compiler_optimizations/dynamic_shapes_demo.py --quick
+cd demos && PYTHONPATH=../src python3 compiler/shapes.py --quick
 
 # Compare all strategies
-PYTHONPATH=src python demos/02_compiler_optimizations/dynamic_shapes_demo.py --compare-strategies
+cd demos && PYTHONPATH=../src python3 compiler/shapes.py --compare-strategies
 
 # GPU demo (if available)
-PYTHONPATH=src python demos/02_compiler_optimizations/dynamic_shapes_demo.py --device cuda
+cd demos && PYTHONPATH=../src python3 compiler/shapes.py --device cuda
 ```
 
 ## 🧪 Production Benchmarks
@@ -429,7 +429,7 @@ For detailed API documentation, see:
 - [`DynamicShapeBucketing`](../src/kernel_pytorch/optimization_patterns/dynamic_shapes.py)
 - [`DynamicShapeModule`](../src/kernel_pytorch/optimization_patterns/dynamic_shapes.py)
 - [Test examples](../tests/test_dynamic_shapes.py)
-- [Demo source](../demos/02_compiler_optimizations/dynamic_shapes_demo.py)
+- [Demo source](../demos/compiler/shapes.py)
 - [Benchmark suite](../benchmarks/dynamic_shapes_benchmark.py)
 
 ---

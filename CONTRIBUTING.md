@@ -68,9 +68,7 @@ PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v          # 22/
 PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v  # 5/8 pass ⚠️
 
 # WORKING: Run demos to validate integration
-PYTHONPATH=src python3 demos/run_all_demos.py --quick                     # 3/5 working ✅
-PYTHONPATH=src python3 demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # All working ✅
-PYTHONPATH=src python3 demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Working ✅
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick           # 5/5 working ✅
 
 # NOTE: Full test suite (PYTHONPATH=src python3 -m pytest tests/) has hanging tests
 # Use specific modules instead for reliable testing
@@ -187,7 +185,7 @@ except ImportError as e:
 "
 
 # Run working performance tests
-PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick
+cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick
 ```
 
 ### **IDE Setup Recommendations**

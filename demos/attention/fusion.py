@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Neural Operator Fusion (NOF) Demo - Phase 2.2 Cutting-Edge Implementation
+Neural Operator Fusion (NOF) Demo - Cutting-Edge Implementation
 
 This demo showcases the 40-60% kernel overhead reduction achieved through
 Neural Operator Fusion, implementing single-kernel attention+FFN+normalization
@@ -15,10 +15,10 @@ Key Demonstrations:
 
 Usage:
     # From project root:
-    PYTHONPATH=src python3 demos/03_advanced_attention/neural_operator_fusion_demo.py [--quick] [--validate] [--benchmark]
+    cd demos && PYTHONPATH=../src python3 attention/fusion.py [--quick] [--validate] [--benchmark]
 
     # From demo directory:
-    python neural_operator_fusion_demo.py [--quick] [--validate] [--benchmark]
+    python fusion.py [--quick] [--validate] [--benchmark]
 
 Requirements:
     - PyTorch 2.1+
@@ -49,7 +49,7 @@ except ImportError as e:
     print(f"Source directory should be: {src_dir}")
     print(f"Python path: {sys.path[:3]}...")
     print("\nTo fix this issue:")
-    print("1. Run from project root with: PYTHONPATH=src python3 demos/03_advanced_attention/neural_operator_fusion_demo.py")
+    print("1. Run from project root with: cd demos && PYTHONPATH=../src python3 attention/fusion.py")
     print("2. Or ensure you're in the correct directory structure")
     sys.exit(1)
 
@@ -64,7 +64,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from contextlib import contextmanager
 
-# Import Phase 2.2 Neural Operator Fusion components
+# Import Neural Operator Fusion components
 from kernel_pytorch.attention.fusion.neural_operator import (
     UnifiedAttentionFusion,
     FusionConfig,
@@ -194,7 +194,7 @@ class NOFDemoRunner:
     def run_all_demos(self):
         """Run all demonstration scenarios."""
         print(f"\n{'='*80}")
-        print(f"🎯 NEURAL OPERATOR FUSION DEMONSTRATION - Phase 2.2")
+        print(f"🎯 NEURAL OPERATOR FUSION DEMONSTRATION")
         print(f"{'='*80}")
 
         # Demo 1: Baseline vs Fused Performance
@@ -908,7 +908,7 @@ class NOFDemoRunner:
         print(f"   • Production-ready integration ✅")
         print(f"   • Hardware-optimized performance ✅")
 
-        print(f"\n🚀 Ready for Phase 2.2 integration!")
+        print(f"\n🚀 Ready for integration!")
 
 
 def create_demo_config() -> DemoConfig:
@@ -956,7 +956,7 @@ def create_demo_config() -> DemoConfig:
 def main():
     """Main demo execution function."""
     parser = argparse.ArgumentParser(
-        description="Neural Operator Fusion Demo - Phase 2.2 Implementation",
+        description="Neural Operator Fusion Demo - Advanced Implementation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -993,7 +993,7 @@ Examples:
     if args.device != 'auto':
         config.device = torch.device(args.device)
 
-    print(f"🎯 Neural Operator Fusion Demo - Phase 2.2")
+    print(f"🎯 Neural Operator Fusion Demo")
     print(f"   Targeting 40-60% kernel overhead reduction")
     print(f"   Device: {config.device}")
     print(f"   Mode: {'Quick' if config.quick_mode else 'Full'}")

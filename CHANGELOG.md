@@ -4,6 +4,41 @@
 
 > **Note**: This changelog reflects actual implemented and tested functionality. Performance claims are based on measured results from working demos and tests.
 
+## [0.1.68] - 2025-12-16 - Comprehensive Cleanup of Stale References & Phasing Language
+
+### 🧹 **Stale Reference Cleanup**
+- **Demo Path References**: Removed all outdated `demos/0X_` path references throughout codebase
+  - Fixed README.md, CONTRIBUTING.md, BENCHMARKS.md references
+  - Updated docs/guides/testing_guide.md, docs/capabilities/dynamic_shape_bucketing.md
+  - Corrected all demo command examples to use current structure
+- **Command Format Standardization**: Updated all demo commands to correct format
+  - From: `PYTHONPATH=src python3 demos/XX_category/demo_name.py`
+  - To: `cd demos && PYTHONPATH=../src python3 category/demo.py`
+
+### 🚫 **Phasing Language Removal**
+- **Documentation Files**: Removed inappropriate "Phase X.X" references from non-planning docs
+  - Cleaned README.md project structure and roadmap sections
+  - Updated demo file headers and internal messaging
+  - Preserved phasing language only in roadmap/planning documents where appropriate
+- **Code Files**: Cleaned up demo implementations
+  - demos/precision/adaptive.py: Removed "Phase 2.2" references
+  - demos/attention/fusion.py: Removed "Phase 2.2" references
+  - demos/compiler/shapes.py: Updated command examples
+  - tests/test_ultra_precision.py: Cleaned test documentation
+
+### 🔧 **Command Accuracy Fixes**
+- **All Documentation**: Verified and updated command examples
+  - BENCHMARKS.md: Fixed benchmark command paths
+  - docs/guides/: Updated all guide command examples
+  - docs/capabilities/: Corrected technical documentation commands
+  - docs/roadmaps/: Updated roadmap quick-start commands
+
+### 🎯 **Impact**
+- **Documentation Consistency**: All command examples now work as documented
+- **Reduced Confusion**: Eliminated outdated paths and inconsistent phasing references
+- **Professional Polish**: Removed development artifacts inappropriate for production documentation
+- **Maintainability**: Simplified command structure easier to maintain and update
+
 ## [0.1.67] - 2025-12-16 - Documentation Reorganization & Comprehensive Testing Validation
 
 ### 📊 **Comprehensive Testing Validation**

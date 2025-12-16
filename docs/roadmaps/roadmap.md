@@ -27,13 +27,13 @@ This roadmap originally bridged **2025 state-of-the-art PyTorch optimizations** 
 ### **🚀 Quick Start for Next Phase**
 ```bash
 # Validate completed work
-python3 demos/01_basic_optimizations.py --quick
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick
 
-# Begin advanced precision work (Priority 2)
-python3 demos/03_fp8_training.py --quick
+# Begin advanced precision work
+cd demos && PYTHONPATH=../src python3 precision/adaptive.py --quick
 
 # Test hardware abstraction
-python3 demos/04_hardware_abstraction.py --quick
+cd demos && PYTHONPATH=../src python3 hardware/multi_vendor.py --quick
 ```
 
 **What's Ready**: All compiler integration complete with validated performance
@@ -417,16 +417,16 @@ result = accelerator.photonic_matmul(a, b)
 ## **Quick Development Setup**
 ```bash
 # Validate Phase 1 completion
-python3 demos/01_basic_optimizations.py --validate
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick
 
 # Install Phase 2 dependencies
-pip install torch[precision] triton[advanced] numpy[precision]
+pip install -r requirements.txt
 
 # Start with FP8 training exploration
-python3 demos/03_fp8_training.py --quick
+cd demos && PYTHONPATH=../src python3 precision/adaptive.py --quick
 
 # Test hardware abstraction
-python3 demos/04_hardware_abstraction.py --quick
+cd demos && PYTHONPATH=../src python3 hardware/multi_vendor.py --quick
 ```
 
 ## **Contribution Areas (Open to Community)**

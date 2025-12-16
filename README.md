@@ -175,10 +175,10 @@ output = optimized_model(variable_input)  # 3x speedup, <10% memory overhead
 #### **Benchmarking & Analysis**
 ```python
 # Run comprehensive benchmark comparing strategies
-python3 demos/02_compiler_optimizations/dynamic_shapes_demo.py --compare-strategies
+cd demos && PYTHONPATH=../src python3 compiler/shapes.py --compare-strategies
 
 # Production benchmark suite
-python3 benchmarks/dynamic_shapes_benchmark.py
+PYTHONPATH=src python3 benchmarks/regression_benchmark.py --quick
 ```
 
 ### **🔧 Hardware Abstraction Layer**
@@ -331,21 +331,21 @@ for segment in segments:
 
 ## 🛠️ Development
 
-### **Project Structure** (Phase 3 Optimized)
+### **Project Structure**
 ```
 src/kernel_pytorch/
-├── core/                  # Unified core optimization components (Phase 3)
+├── core/                  # Unified core optimization components
 │   ├── compilers/        # Compiler integrations (FlashLight, PyGraph)
 │   ├── optimized_layers/ # Optimized layer implementations
 │   └── components/       # Basic optimized components
-├── optimizations/        # Unified optimization strategies (Phase 3)
+├── optimizations/        # Unified optimization strategies
 │   ├── patterns/        # Common optimization patterns
 │   └── next_gen/        # Cutting-edge 2025+ techniques
-├── hardware/            # Unified hardware optimization (Phase 3)
+├── hardware/            # Unified hardware optimization
 │   ├── gpu/            # GPU-specific optimizations
 │   ├── abstraction/    # Hardware abstraction layer
 │   └── kernels/        # CUDA kernels and interfaces
-├── attention/           # Unified attention framework (Phase 2)
+├── attention/           # Unified attention framework
 ├── precision/           # FP8 training and quantization
 ├── mixture_of_experts/  # MoE implementations
 ├── advanced_memory/     # Memory optimizations
@@ -385,12 +385,12 @@ src/kernel_pytorch/
 
 ## 🚀 Next Steps
 
-### **Phase 2 Roadmap (Next)**
+### **Upcoming Features**
 - **FP4/MXFP Training**: Ultra-low precision with adaptive allocation
 - **Structured Sparsity**: 2:4 patterns for Tensor Core acceleration
 - **Hardware Kernels**: NVIDIA generation-specific optimization
 
-### **Phase 3 Vision (Future)**
+### **Future Vision**
 - **Neuromorphic Computing**: 100x energy efficiency
 - **Quantum-Classical Hybrid**: Optimization acceleration
 - **Post-Transformer Architectures**: Beyond attention mechanisms

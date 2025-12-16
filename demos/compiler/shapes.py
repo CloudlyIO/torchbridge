@@ -18,7 +18,7 @@ optimization and hardware-aware bucketing strategies.
 - Hardware utilization: 75% → 90%+ improvement
 
 Usage:
-    python demos/02_compiler_optimizations/dynamic_shapes_demo.py [--quick] [--strategy STRATEGY]
+    cd demos && PYTHONPATH=../src python3 compiler/shapes.py [--quick] [--strategy STRATEGY]
 """
 
 import argparse

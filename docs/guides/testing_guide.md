@@ -23,15 +23,15 @@ print('✅ Framework imports successful')
 "
 
 # Quick benchmark test
-python3 demos/01_basic_optimizations.py --quick
+cd demos && PYTHONPATH=../src python3 precision/adaptive.py --quick
 ```
 
 ### Run Comprehensive Benchmarks (5 minutes)
 ```bash
 # Compare against cutting-edge implementations
-python3 demos/01_basic_optimizations.py --validate
-python3 demos/02_advanced_attention.py --validate
-python3 demos/03_fp8_training.py --validate
+cd demos && PYTHONPATH=../src python3 precision/adaptive.py --validate
+cd demos && PYTHONPATH=../src python3 attention/fusion.py --validate
+cd demos && PYTHONPATH=../src python3 experimental/ultra_precision.py --validate
 ```
 
 ## 📊 Test Categories

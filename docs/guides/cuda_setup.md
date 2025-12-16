@@ -38,7 +38,7 @@ python3 -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 python3 -c "import triton; print('Triton installed successfully')"
 
 # Validate our framework
-python3 demos/01_basic_optimizations.py --quick
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick
 ```
 
 ## 🔧 Detailed Setup Instructions

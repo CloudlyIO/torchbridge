@@ -7,13 +7,13 @@
 ### **Run Benchmarks**
 ```bash
 # Working benchmark commands (verified):
-PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v  # Memory benchmarks
-PYTHONPATH=src python demos/run_all_demos.py --quick                         # Performance demos
-PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick  # Next-gen benchmarks
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v  # Memory benchmarks
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick                # Performance demos
+PYTHONPATH=src python3 benchmarks/regression_benchmark.py --quick             # Regression benchmarks
 
 # Component-specific benchmarks:
-PYTHONPATH=src python demos/03_advanced_attention/neural_operator_fusion_demo.py --quick  # Attention fusion
-PYTHONPATH=src python demos/06_advanced_memory/simple_memory_demo.py --device cpu --quick  # Memory optimizations
+cd demos && PYTHONPATH=../src python3 attention/fusion.py --quick             # Attention fusion
+cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick           # Memory optimizations
 ```
 
 ### **View Results**
@@ -340,9 +340,9 @@ python benchmarks/framework/regression_detector.py --baseline main --current HEA
 ### **Recommended Benchmarking Commands**
 ```bash
 # These commands are verified to work:
-PYTHONPATH=src python -m pytest tests/test_advanced_memory_benchmarks.py -v
-PYTHONPATH=src python demos/run_all_demos.py --quick
-PYTHONPATH=src python demos/05_next_generation/run_next_gen_demos.py --device cpu --quick
+PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v
+cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick
+PYTHONPATH=src python3 benchmarks/regression_benchmark.py --quick
 ```
 
 **For additional benchmark examples, see the `demos/` directory.** 📊
