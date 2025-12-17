@@ -12,27 +12,101 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.1.68"
+__version__ = "0.1.69"
 
-# Core optimization components
-from .core import *
+# Unified Configuration System
+from .core.config import (
+    KernelPyTorchConfig,
+    PrecisionConfig,
+    MemoryConfig,
+    AttentionConfig,
+    HardwareConfig,
+    DistributedConfig,
+    ValidationConfig,
+    get_config,
+    set_config,
+    configure
+)
 
-# Attention mechanisms
-from .attention import *
+# Core Components (explicit imports)
+from .core.compilers.flashlight_compiler import FlashLightKernelCompiler
+from .core.compilers.pygraph_optimizer import PyGraphCUDAOptimizer
+from .core.optimized_layers.activation_functions import FusedGELU
 
-# Specialized optimization modules
-from .precision import *
-from .mixture_of_experts import *
-from .advanced_memory import *
-from .distributed_scale import *
-from .testing_framework import *
-from .utils import *
+# Attention Mechanisms
+from .attention.fusion.neural_operator import UnifiedAttentionFusion, FusionStrategy
+from .attention.distributed.ring_attention import RingAttentionLayer
+from .attention.core.base import BaseAttention as AttentionLayer
 
-# Hardware abstraction layer
-from .hardware import *
+# Precision Optimization
+from .precision.ultra_precision import UltraPrecisionModule, AdaptivePrecisionAllocator
+from .precision.fp8_training_engine import FP8TrainingEngine
 
-# Advanced optimization patterns
-from .optimizations import *
+# Memory Optimization
+from .advanced_memory.deep_optimizer_states import DeepOptimizerStates, CPUGPUHybridOptimizer
+from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing
 
-# Backward compatibility is handled by individual modules through deprecation warnings
-# No need to import non-existent modules here
+# Hardware Abstraction
+from .hardware.abstraction.hal_core import HardwareAbstractionLayer
+
+# Validation Framework
+from .validation.unified_validator import UnifiedValidator
+
+# Public API - explicitly defined exports
+__all__ = [
+    # Version
+    "__version__",
+
+    # Configuration
+    "KernelPyTorchConfig", "PrecisionConfig", "MemoryConfig", "AttentionConfig",
+    "HardwareConfig", "DistributedConfig", "ValidationConfig",
+    "get_config", "set_config", "configure",
+
+    # Core Components
+    "FlashLightKernelCompiler", "PyGraphCUDAOptimizer", "FusedGELU",
+
+    # Attention
+    "UnifiedAttentionFusion", "FusionStrategy", "RingAttentionLayer", "AttentionLayer",
+
+    # Precision
+    "UltraPrecisionModule", "AdaptivePrecisionAllocator", "FP8TrainingEngine",
+
+    # Memory
+    "DeepOptimizerStates", "CPUGPUHybridOptimizer", "SelectiveGradientCheckpointing",
+
+    # Hardware
+    "HardwareAbstractionLayer",
+
+    # Validation
+    "UnifiedValidator",
+]
+
+# Convenience functions for quick setup
+def create_attention(d_model: int, num_heads: int, **kwargs):
+    """Create optimized attention layer with automatic configuration."""
+    config = get_config()
+    return AttentionLayer(
+        embed_dim=d_model,
+        num_heads=num_heads,
+        device=config.device,
+        **kwargs
+    )
+
+def create_precision_module(model, **kwargs):
+    """Create precision-optimized model wrapper."""
+    config = get_config()
+    return UltraPrecisionModule(
+        model,
+        config=config.precision,
+        **kwargs
+    )
+
+def create_memory_optimizer(optimizer, model, **kwargs):
+    """Create memory-optimized training setup."""
+    config = get_config()
+    return DeepOptimizerStates(
+        optimizer=optimizer,
+        model=model,
+        memory_config=config.memory,
+        **kwargs
+    )
