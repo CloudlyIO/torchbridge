@@ -12,7 +12,7 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.1.69"
+__version__ = "0.1.70"
 
 # Unified Configuration System
 from .core.config import (
@@ -32,6 +32,9 @@ from .core.config import (
 from .core.compilers.flashlight_compiler import FlashLightKernelCompiler
 from .core.compilers.pygraph_optimizer import PyGraphCUDAOptimizer
 from .core.optimized_layers.activation_functions import FusedGELU
+
+# Unified Management System
+from .core.management import UnifiedManager, get_manager
 
 # Attention Mechanisms
 from .attention.fusion.neural_operator import UnifiedAttentionFusion, FusionStrategy
@@ -64,6 +67,9 @@ __all__ = [
 
     # Core Components
     "FlashLightKernelCompiler", "PyGraphCUDAOptimizer", "FusedGELU",
+
+    # Management System
+    "UnifiedManager", "get_manager",
 
     # Attention
     "UnifiedAttentionFusion", "FusionStrategy", "RingAttentionLayer", "AttentionLayer",
@@ -110,3 +116,7 @@ def create_memory_optimizer(optimizer, model, **kwargs):
         memory_config=config.memory,
         **kwargs
     )
+
+def optimize_model(model, **kwargs):
+    """Apply unified optimization to model using global manager."""
+    return get_manager().optimize(model, **kwargs)
