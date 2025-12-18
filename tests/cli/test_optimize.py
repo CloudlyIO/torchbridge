@@ -45,13 +45,22 @@ class TestOptimizeCommand:
 
     def test_load_model_resnet50(self):
         """Test loading ResNet50 model."""
-        with patch('torchvision.models.resnet50') as mock_resnet:
-            mock_model = MagicMock()
-            mock_resnet.return_value = mock_model
+        # Create a mock module with resnet50
+        mock_models = MagicMock()
+        mock_model = MagicMock()
+        # Make eval() return the model itself (as PyTorch does)
+        mock_model.eval.return_value = mock_model
+        mock_models.resnet50 = MagicMock(return_value=mock_model)
 
+        # Mock torchvision at sys.modules level
+        mock_torchvision = MagicMock()
+        mock_torchvision.models = mock_models
+
+        with patch.dict('sys.modules', {'torchvision': mock_torchvision, 'torchvision.models': mock_models}):
             model = OptimizeCommand._load_model('resnet50', verbose=False)
-            assert model == mock_model
             mock_model.eval.assert_called_once()
+            # The function returns the model after calling eval()
+            assert model == mock_model
 
     def test_load_model_bert(self):
         """Test loading BERT-like model."""

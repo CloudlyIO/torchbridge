@@ -70,13 +70,25 @@ class TestBenchmarkCommand:
     def test_load_model_resnet50(self):
         """Test loading ResNet50 model."""
         device = torch.device('cpu')
-        with patch('torchvision.models.resnet50') as mock_resnet:
-            mock_model = MagicMock()
-            mock_resnet.return_value = mock_model
 
+        # Create a mock module with resnet50
+        mock_models = MagicMock()
+        mock_model = MagicMock()
+        mock_models.resnet50 = MagicMock(return_value=mock_model)
+
+        # Mock torchvision at sys.modules level
+        mock_torchvision = MagicMock()
+        mock_torchvision.models = mock_models
+
+        with patch.dict('sys.modules', {'torchvision': mock_torchvision, 'torchvision.models': mock_models}):
             model = BenchmarkCommand._load_model('resnet50', device)
-            mock_resnet.assert_called_with(pretrained=False)
-            mock_model.to.assert_called_with(device)
+
+            # Verify resnet50 was called with pretrained=False
+            mock_models.resnet50.assert_called_once_with(pretrained=False)
+            # Verify model was moved to device
+            mock_model.to.assert_called_once_with(device)
+            # Verify eval was called
+            mock_model.to.return_value.eval.assert_called_once()
 
     def test_load_model_fallback(self):
         """Test loading model fallback."""
