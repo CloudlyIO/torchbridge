@@ -457,7 +457,7 @@ def validate_threshold_sensitivity():
 - [x] Statistical analysis framework in place
 - [x] JSON-based result storage working
 
-### **Phase 1 Tasks** ✅ **COMPLETED** - Committed as v0.1.58
+### **Phase 1 Tasks** ✅ **COMPLETED** - Committed as v0.2.1
 - [x] Implement `BaselineManager` class (`benchmarks/regression/baseline_manager.py`)
 - [x] Implement `RegressionDetector` class (`benchmarks/regression/regression_detector.py`)
 - [x] Implement `ThresholdManager` class (`benchmarks/regression/threshold_manager.py`)
@@ -465,7 +465,7 @@ def validate_threshold_sensitivity():
 - [x] Add regression testing demo (`demos/05_next_generation/regression_testing_demo.py`)
 - [x] Create performance benchmark suite (`benchmarks/regression_benchmark.py`)
 - [x] Establish baseline storage structure and data models
-- [x] Update CHANGELOG.md and version to 0.1.58
+- [x] Update CHANGELOG.md and version to 0.2.1
 - [x] Commit and push Phase 1 implementation
 
 ### **Phase 2 Tasks** 🚀 **IN PROGRESS**

@@ -27,15 +27,13 @@
 - **[Dynamic Shape Bucketing](capabilities/dynamic_shape_bucketing.md)** - Variable input optimization
 - **[Core Components](capabilities/core_components.md)** - Core optimization modules
 - **[Hardware Kernels](capabilities/hardware_kernels.md)** - Low-level kernel implementations
+- **[Performance Regression Testing](capabilities/performance_regression_testing.md)** - Automated performance monitoring
 - **[CLI Reference](capabilities/cli_reference.md)** - Command-line interface documentation
 - **[External References](capabilities/references.md)** - Links to papers, documentation, tools
 
-### **🗺️ Roadmaps** - Planning & Development
-- **[Main Roadmap](roadmaps/roadmap.md)** - Development roadmap and future plans
-- **[Immediate Tasks](roadmaps/immediate_tasks.md)** - Current priority tasks
-- **[Performance Testing Plan](roadmaps/performance_regression_testing_plan.md)** - Testing strategy
-- **[NVIDIA Optimization Roadmap](roadmaps/nvidia_optimization_roadmap.md)** - NVIDIA-specific optimizations
-- **[TPU Integration Roadmap](roadmaps/tpu_integration_roadmap.md)** - Google TPU support planning
+### **🗺️ Development Planning** - Unified Strategy
+- **[Unified Roadmap](unified_roadmap.md)** - Complete development strategy (NVIDIA, TPU, Production)
+- **[Immediate Tasks](immediate_tasks.md)** - Current actionable tasks from roadmap
 
 ## 🎯 By Use Case
 
@@ -52,8 +50,8 @@
 2. Focus: Multi-vendor support, deployment, hardware-specific optimization
 
 ### **Performance Engineers**
-1. [Performance Analysis](capabilities/performance.md) → [Benchmarks](../BENCHMARKS.md) → [Testing Guide](guides/testing_guide.md)
-2. Focus: Detailed performance analysis, statistical validation, regression testing
+1. [Performance Analysis](capabilities/performance.md) → [Regression Testing](capabilities/performance_regression_testing.md) → [Testing Guide](guides/testing_guide.md)
+2. Focus: Performance optimization, automated regression detection, statistical validation
 
 ## ✨ Key Features
 

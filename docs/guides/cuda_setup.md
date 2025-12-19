@@ -27,6 +27,17 @@ pip3 install triton
 
 # Install our framework requirements
 pip3 install -r requirements.txt
+
+# Test unified architecture with CUDA
+PYTHONPATH=src python3 -c "
+import torch
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+print(f'CUDA available: {torch.cuda.is_available()}')
+if torch.cuda.is_available():
+    config = KernelPyTorchConfig.for_production()
+    manager = UnifiedManager(config)
+    print('✅ Unified CUDA support ready!')
+"
 ```
 
 ### Quick Validation
@@ -203,8 +214,8 @@ print('✅ Triton kernel compilation successful')
 # Quick functionality test
 export PYTHONPATH=src:$PYTHONPATH
 python3 -c "
-from kernel_pytorch.components import FusedGELU
-from kernel_pytorch.hardware_abstraction import NVIDIAAdapter
+from kernel_pytorch.core.optimized_layers.activation_functions import FusedGELU
+from kernel_pytorch import UnifiedManager
 import torch
 
 print('✅ Framework imports successful')

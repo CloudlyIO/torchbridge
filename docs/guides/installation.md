@@ -1,91 +1,111 @@
 # 📦 Installation Guide
 
-**KernelPyTorch** - Production-grade PyTorch GPU optimization framework
+**KernelPyTorch v0.2.1** - Production-grade PyTorch GPU optimization framework
 
-## Quick Install
+## Development Installation (Current)
 
 ```bash
-pip install kernel-pytorch
+# Clone repository
+git clone <repository-url>
+cd shahmod
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify installation
+PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{kernel_pytorch.__version__} ready!')"
 ```
 
-## Detailed Installation
-
-### System Requirements
+## System Requirements
 
 - **Python**: 3.8+ (3.10+ recommended)
 - **PyTorch**: 2.0+ (2.1+ recommended)
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
+### Unified Architecture (v0.2.1)
+
+KernelPyTorch v0.2.1 features a unified architecture with:
+- **Single Configuration System**: `KernelPyTorchConfig`
+- **Unified Management**: `UnifiedManager`
+- **Comprehensive Validation**: `UnifiedValidator`
+
 ### Installation Options
 
-#### 1. Standard Installation
+#### 1. Basic Development Setup
 
 ```bash
-# Install base package
-pip install kernel-pytorch
+# Clone and install
+git clone <repository-url>
+cd shahmod
+pip install torch numpy
 
-# Verify installation
-kernelpytorch --version
-kernelpytorch doctor
+# Verify core functionality
+PYTHONPATH=src python3 -c "
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+print('✅ Unified architecture ready!')
+"
 ```
 
-#### 2. Complete Installation (All Features)
+#### 2. Complete Development Setup
 
 ```bash
-# Install with all optional dependencies
-pip install kernel-pytorch[all]
-```
-
-#### 3. Development Installation
-
-```bash
-# Clone repository
-git clone https://github.com/KernelPyTorch/kernel-pytorch.git
-cd kernel-pytorch
-
-# Install in development mode
+# Install all dependencies from pyproject.toml
 pip install -e .[dev,all]
 
-# Verify development setup
-python -m pytest tests/ -v
+# Run comprehensive tests
+PYTHONPATH=src python3 -m pytest tests/ --tb=short -q
 ```
 
-#### 4. Docker Installation
+#### 3. Verification Steps
 
 ```bash
-# Production container
-docker run ghcr.io/kernelpytorch/kernel-pytorch:latest kernelpytorch doctor
+# Test unified architecture
+PYTHONPATH=src python3 -c "
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from kernel_pytorch.validation import UnifiedValidator
 
-# Development environment
-docker run -it -v $(pwd):/workspace ghcr.io/kernelpytorch/kernel-pytorch:dev
+config = KernelPyTorchConfig.for_development()
+manager = UnifiedManager(config)
+validator = UnifiedValidator()
+print('✅ v0.2.1 unified architecture verified!')
+"
+
+# Run test suite
+PYTHONPATH=src python3 -m pytest tests/ --tb=short -q
+
+# Run demos
+PYTHONPATH=src python3 demos/run_all_demos.py --quick
 ```
 
-## Optional Dependencies
+## Next Steps
 
-### Core Extensions
+After installation, see:
+- [Quick Start Guide](quickstart.md) - Get started with unified architecture
+- [Architecture Guide](../capabilities/architecture.md) - Understand the unified design
+- [Testing Guide](testing_guide.md) - Run comprehensive validation
+
+## Troubleshooting
+
+### Common Issues
+
+**Import Errors**:
 ```bash
-pip install kernel-pytorch[all]  # All core features
+# Ensure PYTHONPATH is set correctly
+export PYTHONPATH=/path/to/shahmod/src
 ```
 
-### Cloud Integration
+**Version Mismatch**:
 ```bash
-pip install kernel-pytorch[cloud]  # AWS, GCP, Azure support
+# Check version consistency
+PYTHONPATH=src python3 -c "import kernel_pytorch; print(kernel_pytorch.__version__)"
+# Should output: 0.2.1
 ```
 
-### Serving & Deployment
+**Test Failures**:
 ```bash
-pip install kernel-pytorch[serving]  # FastAPI, TorchServe integration
-```
-
-### Monitoring & Profiling
-```bash
-pip install kernel-pytorch[monitoring]  # Weights & Biases, MLflow
-```
-
-### Benchmarking Tools
-```bash
-pip install kernel-pytorch[benchmark]  # Performance analysis tools
+# Platform-specific skips are normal
+# 504 tests should pass, 59 may be skipped on macOS
 ```
 
 ## System Compatibility Check
@@ -170,23 +190,30 @@ kernelpytorch optimize --model test_model.pt --level production
 kernelpytorch benchmark --predefined optimization --quick
 ```
 
-### 3. Test Advanced Features
+### 3. Test Unified Architecture
 
 ```python
-import kernel_pytorch as kpt
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from kernel_pytorch.validation import UnifiedValidator
+import torch
 
-# Test optimization assistant
-from kernel_pytorch.utils.compiler_optimization_assistant import CompilerOptimizationAssistant
+# Test unified optimization system
+config = KernelPyTorchConfig.for_production()
+manager = UnifiedManager(config)
 
-assistant = CompilerOptimizationAssistant()
 model = torch.nn.Sequential(
     torch.nn.Linear(768, 3072),
     torch.nn.GELU(),
     torch.nn.Linear(3072, 768)
 )
 
-result = assistant.optimize_model(model, interactive=False)
-print(f"✓ Found {len(result.optimization_opportunities)} optimization opportunities")
+# Unified optimization and validation
+optimized_model = manager.optimize_model(model)
+validator = UnifiedValidator()
+results = validator.validate_model(optimized_model, (1, 768))
+
+print(f"✓ Unified optimization completed")
+print(f"✓ Validation: {results.passed}/{results.total_tests} tests passed")
 ```
 
 ## Troubleshooting

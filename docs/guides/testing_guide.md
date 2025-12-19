@@ -12,18 +12,21 @@ This guide covers:
 
 ## 🚀 Quick Start
 
-### Validate Framework (30 seconds)
+### Validate Unified Framework (30 seconds)
 ```bash
-# Test that everything is working
-python3 -c "
-from kernel_pytorch.components import FusedGELU
-from kernel_pytorch.hardware_abstraction import NVIDIAAdapter
-import torch
-print('✅ Framework imports successful')
+# Test unified architecture v0.2.1
+PYTHONPATH=src python3 -c "
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from kernel_pytorch.validation import UnifiedValidator
+print('✅ Unified architecture v0.2.1 imports successful')
 "
 
-# Quick benchmark test
-cd demos && PYTHONPATH=../src python3 precision/adaptive.py --quick
+# Quick unified validation test
+PYTHONPATH=src python3 -c "
+from kernel_pytorch.validation import UnifiedValidator
+validator = UnifiedValidator()
+print('✅ Unified validation framework ready')
+"
 ```
 
 ### Run Comprehensive Benchmarks (5 minutes)

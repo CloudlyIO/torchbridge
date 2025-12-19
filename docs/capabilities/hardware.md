@@ -1,6 +1,6 @@
-# 🔧 Hardware Abstraction
+# 🔧 Hardware Abstraction (v0.2.1)
 
-**Multi-vendor GPU support and hardware optimization strategies.**
+**Multi-vendor GPU support through unified hardware management.**
 
 ## 🎯 Supported Hardware
 
@@ -18,29 +18,31 @@
 - **ASICs**: Custom accelerator support framework
 - **Neuromorphic**: Specialized computing hardware (research)
 
-## 🏗️ Hardware Abstraction Layer (HAL)
+## 🏗️ Unified Hardware Management (v0.2.1)
 
-### Architecture
+### Unified Architecture
 ```python
-from kernel_pytorch.hardware_abstraction import HardwareAbstractionLayer
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 
 # Automatic hardware detection and optimization
-hal = HardwareAbstractionLayer()
-devices = hal.detect_available_devices()
-optimized_model = hal.optimize_for_hardware(model)
+config = KernelPyTorchConfig.for_production()
+manager = UnifiedManager(config)
+
+# Hardware is automatically detected and optimized
+optimized_model = manager.optimize_model(model)
 ```
 
-### Device Detection
+### Hardware Detection in Unified System
 ```python
-# Multi-vendor device detection
-def detect_available_devices():
-    devices = {
-        'nvidia_gpus': detect_nvidia_devices(),    # CUDA capability detection
-        'amd_gpus': detect_amd_devices(),          # ROCm platform support
-        'intel_gpus': detect_intel_devices(),      # Intel XPU support
-        'cpus': detect_cpu_capabilities()         # Intel architecture optimization
-    }
-    return devices
+# Hardware detection through unified manager
+manager = UnifiedManager(config)
+
+# Access hardware manager
+hardware_info = manager.hardware_manager.get_hardware_info()
+print(f"Detected hardware: {hardware_info['primary_device']}")
+
+# Automatic optimization selection based on detected hardware
+optimization_strategy = manager.hardware_manager.get_optimization_strategy()
 ```
 
 ## ⚡ Hardware-Specific Optimizations
