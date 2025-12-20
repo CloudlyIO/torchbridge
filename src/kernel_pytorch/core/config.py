@@ -37,6 +37,18 @@ class HardwareBackend(Enum):
     CUSTOM = "custom"
 
 
+class NVIDIAArchitecture(Enum):
+    """NVIDIA GPU architectures."""
+    AUTO = "auto"
+    PASCAL = "pascal"     # GTX 1000 series
+    VOLTA = "volta"       # V100
+    TURING = "turing"     # RTX 2000 series
+    AMPERE = "ampere"     # RTX 3000/A100
+    ADA = "ada"           # RTX 4000 series
+    HOPPER = "hopper"     # H100/H200
+    BLACKWELL = "blackwell"  # B100/B200
+
+
 @dataclass
 class PrecisionConfig:
     """Unified precision configuration."""
@@ -94,13 +106,109 @@ class AttentionConfig:
 
 
 @dataclass
+class NVIDIAConfig:
+    """NVIDIA-specific hardware configuration."""
+    enabled: bool = True
+    architecture: NVIDIAArchitecture = NVIDIAArchitecture.AUTO
+
+    # FP8 settings for H100/Blackwell
+    fp8_enabled: bool = True
+    fp8_recipe: str = "DelayedScaling"
+
+    # Tensor Core optimization
+    tensor_core_version: int = 4  # Auto-detect based on architecture
+    mixed_precision_enabled: bool = True
+
+    # FlashAttention settings
+    flash_attention_version: str = "3"
+    flash_attention_enabled: bool = True
+
+    # Memory optimization
+    memory_pool_enabled: bool = True
+    memory_fraction: float = 0.95
+
+    # Kernel fusion settings
+    kernel_fusion_enabled: bool = True
+    cudnn_benchmark: bool = True
+
+    def __post_init__(self):
+        """Auto-configure based on detected architecture."""
+        if self.architecture == NVIDIAArchitecture.AUTO:
+            self.architecture = self._detect_architecture()
+
+        # Configure FP8 based on architecture
+        if self.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+            self.fp8_enabled = True
+            self.tensor_core_version = 4
+        elif self.architecture == NVIDIAArchitecture.AMPERE:
+            self.fp8_enabled = False  # A100 doesn't support FP8
+            self.tensor_core_version = 3
+        else:
+            self.fp8_enabled = False
+            self.tensor_core_version = 2
+
+    def _detect_architecture(self) -> NVIDIAArchitecture:
+        """Detect NVIDIA GPU architecture."""
+        if not torch.cuda.is_available():
+            return NVIDIAArchitecture.PASCAL
+
+        try:
+            device_props = torch.cuda.get_device_properties(0)
+            device_name = device_props.name.upper()
+
+            # H100/H200 (Hopper)
+            if any(name in device_name for name in ["H100", "H200"]):
+                return NVIDIAArchitecture.HOPPER
+
+            # B100/B200 (Blackwell)
+            if any(name in device_name for name in ["B100", "B200"]):
+                return NVIDIAArchitecture.BLACKWELL
+
+            # A100 (Ampere)
+            if "A100" in device_name:
+                return NVIDIAArchitecture.AMPERE
+
+            # RTX 4000 series (Ada)
+            if any(name in device_name for name in ["RTX 40", "RTX 4090", "RTX 4080"]):
+                return NVIDIAArchitecture.ADA
+
+            # RTX 3000/A40/A30 series (Ampere)
+            if any(name in device_name for name in ["RTX 30", "A40", "A30"]):
+                return NVIDIAArchitecture.AMPERE
+
+            # RTX 2000 series (Turing)
+            if any(name in device_name for name in ["RTX 20", "TITAN RTX"]):
+                return NVIDIAArchitecture.TURING
+
+            # V100 (Volta)
+            if "V100" in device_name:
+                return NVIDIAArchitecture.VOLTA
+
+            # Fallback based on compute capability
+            if device_props.major >= 9:
+                return NVIDIAArchitecture.HOPPER
+            elif device_props.major >= 8:
+                return NVIDIAArchitecture.AMPERE
+            elif device_props.major >= 7:
+                return NVIDIAArchitecture.TURING if device_props.minor >= 5 else NVIDIAArchitecture.VOLTA
+            else:
+                return NVIDIAArchitecture.PASCAL
+
+        except Exception:
+            return NVIDIAArchitecture.PASCAL
+
+
+@dataclass
 class HardwareConfig:
     """Unified hardware optimization configuration."""
     backend: HardwareBackend = HardwareBackend.CUDA
     device_id: Optional[int] = None
     multi_gpu: bool = False
 
-    # Tensor Core settings
+    # NVIDIA-specific configuration
+    nvidia: NVIDIAConfig = field(default_factory=NVIDIAConfig)
+
+    # Tensor Core settings (general)
     tensor_cores_enabled: bool = True
     mixed_precision: bool = True
 
@@ -111,6 +219,13 @@ class HardwareConfig:
 
     # Performance settings
     optimization_level: OptimizationLevel = OptimizationLevel.BALANCED
+
+    def __post_init__(self):
+        """Auto-configure hardware settings based on detected capabilities."""
+        # Auto-detect and configure NVIDIA settings
+        if self.backend == HardwareBackend.CUDA and torch.cuda.is_available():
+            self.nvidia.enabled = True
+            # NVIDIA config will auto-detect architecture in its own __post_init__
 
 
 @dataclass
@@ -228,12 +343,31 @@ class KernelPyTorchConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
+        def _convert_value(value, visited=None):
+            if visited is None:
+                visited = set()
+
+            # Prevent recursion by tracking object IDs
+            if id(value) in visited:
+                return f"<circular reference to {type(value).__name__}>"
+
+            if hasattr(value, '__dict__'):
+                visited.add(id(value))
+                # Handle nested dataclass objects
+                nested_dict = {}
+                for nested_key, nested_value in value.__dict__.items():
+                    nested_dict[nested_key] = _convert_value(nested_value, visited.copy())
+                return nested_dict
+            elif hasattr(value, 'value'):  # Handle Enum objects
+                return value.value
+            elif isinstance(value, torch.device):
+                return str(value)
+            else:
+                return value
+
         result = {}
         for key, value in self.__dict__.items():
-            if hasattr(value, '__dict__'):
-                result[key] = value.__dict__
-            else:
-                result[key] = value
+            result[key] = _convert_value(value)
         return result
 
     def update(self, **kwargs) -> None:

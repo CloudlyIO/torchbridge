@@ -1,4 +1,4 @@
-# 🔧 Hardware Abstraction (v0.2.1)
+# 🔧 Hardware Abstraction (v0.2.3)
 
 **Multi-vendor GPU support through unified hardware management.**
 
@@ -18,7 +18,27 @@
 - **ASICs**: Custom accelerator support framework
 - **Neuromorphic**: Specialized computing hardware (research)
 
-## 🏗️ Unified Hardware Management (v0.2.1)
+## 🏗️ Unified Hardware Management (v0.2.3)
+
+### NVIDIA Hardware Auto-Detection (NEW in v0.2.3)
+```python
+from kernel_pytorch import KernelPyTorchConfig
+
+# NVIDIA hardware auto-detection and configuration
+config = KernelPyTorchConfig()
+
+# Automatic architecture detection
+nvidia_config = config.hardware.nvidia
+print(f"Detected architecture: {nvidia_config.architecture.value}")
+print(f"FP8 training support: {nvidia_config.fp8_enabled}")
+print(f"Tensor Core version: {nvidia_config.tensor_core_version}")
+print(f"FlashAttention version: {nvidia_config.flash_attention_version}")
+
+# Auto-configured optimizations based on detected hardware:
+# H100/Blackwell: FP8 training, Tensor Core 4.x, FlashAttention 3
+# A100/Ampere: Mixed precision, Tensor Core 3.x, FlashAttention 2/3
+# Pascal/Turing: Basic optimizations with compatibility mode
+```
 
 ### Unified Architecture
 ```python
@@ -29,7 +49,7 @@ config = KernelPyTorchConfig.for_production()
 manager = UnifiedManager(config)
 
 # Hardware is automatically detected and optimized
-optimized_model = manager.optimize_model(model)
+optimized_model = manager.optimize(model)
 ```
 
 ### Hardware Detection in Unified System
@@ -47,23 +67,34 @@ optimization_strategy = manager.hardware_manager.get_optimization_strategy()
 
 ## ⚡ Hardware-Specific Optimizations
 
-### NVIDIA GPUs
+### NVIDIA GPUs (Enhanced v0.2.3)
 ```python
-# Generation-specific optimization
-nvidia_config = {
-    'H100': {
-        'fp8_support': True,
-        'transformer_engine': True,
-        'nvlink_bandwidth': '900 GB/s'
-    },
-    'A100': {
-        'tensor_core_optimization': True,
-        'multi_instance_gpu': True
-    },
-    'RTX_4090': {
-        'consumer_optimization': True,
-        'memory_efficient_attention': True
-    }
+from kernel_pytorch import KernelPyTorchConfig
+from kernel_pytorch.core.config import NVIDIAArchitecture
+
+# Automatic detection and optimization for NVIDIA hardware
+config = KernelPyTorchConfig()
+nvidia_config = config.hardware.nvidia
+
+# Architecture-specific features (auto-detected):
+if nvidia_config.architecture == NVIDIAArchitecture.HOPPER:  # H100, H200
+    print(f"FP8 training: {nvidia_config.fp8_enabled}")  # True
+    print(f"Tensor Core: v{nvidia_config.tensor_core_version}")  # 4
+    print(f"Memory fraction: {nvidia_config.memory_fraction}")  # 0.95
+
+elif nvidia_config.architecture == NVIDIAArchitecture.BLACKWELL:  # B100, B200
+    print("Next-gen Blackwell optimizations enabled")
+
+elif nvidia_config.architecture == NVIDIAArchitecture.AMPERE:  # A100, RTX 3000
+    print(f"Mixed precision: {nvidia_config.mixed_precision_enabled}")  # True
+    print(f"FP8 support: {nvidia_config.fp8_enabled}")  # False (A100 limitation)
+
+# Generation-specific features accessible through unified config:
+features = {
+    'H100': nvidia_config.fp8_enabled and nvidia_config.tensor_core_version == 4,
+    'FlashAttention': nvidia_config.flash_attention_enabled,
+    'Memory_Pool': nvidia_config.memory_pool_enabled,
+    'Kernel_Fusion': nvidia_config.kernel_fusion_enabled
 }
 ```
 

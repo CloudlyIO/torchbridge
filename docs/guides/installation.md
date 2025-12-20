@@ -1,6 +1,6 @@
 # 📦 Installation Guide
 
-**KernelPyTorch v0.2.1** - Production-grade PyTorch GPU optimization framework
+**KernelPyTorch v0.2.3** - Production-grade PyTorch GPU optimization framework
 
 ## Development Installation (Current)
 
@@ -23,9 +23,9 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
-### Unified Architecture (v0.2.1)
+### Unified Architecture (v0.2.3)
 
-KernelPyTorch v0.2.1 features a unified architecture with:
+KernelPyTorch v0.2.3 features a unified architecture with:
 - **Single Configuration System**: `KernelPyTorchConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
@@ -68,7 +68,7 @@ from kernel_pytorch.validation import UnifiedValidator
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 validator = UnifiedValidator()
-print('✅ v0.2.1 unified architecture verified!')
+print('✅ v0.2.3 unified architecture verified!')
 "
 
 # Run test suite

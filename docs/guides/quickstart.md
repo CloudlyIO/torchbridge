@@ -1,11 +1,11 @@
-# 🚀 Quick Start Guide (v0.2.1)
+# 🚀 Quick Start Guide (v0.2.3)
 
 Get up and running with **KernelPyTorch unified architecture** in under 5 minutes.
 
 ## 1. Installation
 
 ```bash
-# Clone and setup KernelPyTorch v0.2.1
+# Clone and setup KernelPyTorch v0.2.3
 git clone <repository-url>
 cd shahmod
 pip install -r requirements.txt
@@ -33,12 +33,12 @@ model = torch.nn.Sequential(
     torch.nn.LayerNorm(768)
 )
 
-# Unified optimization approach (v0.2.1)
+# Unified optimization approach (v0.2.3)
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 
 # Automatically detect hardware and apply optimal optimizations
-optimized_model = manager.optimize_model(model)
+optimized_model = manager.optimize(model)
 
 # Test performance
 x = torch.randn(32, 128, 768)
@@ -48,17 +48,42 @@ print(f"✓ Input shape: {x.shape}")
 print(f"✓ Output shape: {y.shape}")
 ```
 
+### NVIDIA Hardware Optimization (v0.2.3)
+
+```python
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+
+# NVIDIA-optimized configuration with auto-detection
+config = KernelPyTorchConfig.for_training()
+
+# The unified system automatically detects:
+print(f"Detected architecture: {config.hardware.nvidia.architecture.value}")
+print(f"FP8 enabled: {config.hardware.nvidia.fp8_enabled}")
+print(f"Tensor Core version: {config.hardware.nvidia.tensor_core_version}")
+print(f"FlashAttention version: {config.hardware.nvidia.flash_attention_version}")
+
+# Unified management with NVIDIA optimization
+manager = UnifiedManager(config)
+optimized_model = manager.optimize(your_model)
+
+# The system automatically:
+# - Detects NVIDIA architecture (H100, Blackwell, Ampere, etc.)
+# - Enables FP8 training on supported hardware
+# - Optimizes memory management and kernel fusion
+# - Validates correctness and performance
+```
+
 ### Production Configuration
 
 ```python
 from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 
 # Production-optimized configuration
-config = KernelPyTorchConfig.for_production()
+config = KernelPyTorchConfig.for_inference()
 
 # Unified management with automatic optimization
 manager = UnifiedManager(config)
-optimized_model = manager.optimize_model(your_model)
+optimized_model = manager.optimize(your_model)
 
 # The unified system automatically:
 # - Detects hardware (NVIDIA, AMD, Intel)
@@ -127,6 +152,12 @@ output = attention_layer(x)
 # Run all demos with unified architecture
 PYTHONPATH=src python3 demos/run_all_demos.py --quick
 
+# NVIDIA configuration demo (v0.2.3)
+PYTHONPATH=src python3 demos/nvidia_configuration_demo.py --quick
+
+# NVIDIA benchmarks
+PYTHONPATH=src python3 benchmarks/nvidia_config_benchmarks.py --quick
+
 # Specific feature demos
 PYTHONPATH=src python3 demos/attention/fusion.py --quick
 PYTHONPATH=src python3 demos/memory/basic.py --quick
@@ -143,7 +174,7 @@ After completing this quick start:
 
 ## Performance Expectations
 
-With KernelPyTorch v0.2.1 unified architecture:
+With KernelPyTorch v0.2.3 unified architecture:
 - **Memory Efficiency**: 30-60% memory reduction through unified management
 - **Optimization Overhead**: Minimal overhead with unified optimization pipeline
 - **Hardware Detection**: Automatic optimization selection based on detected hardware

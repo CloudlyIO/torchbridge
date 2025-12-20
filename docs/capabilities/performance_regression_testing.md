@@ -457,7 +457,7 @@ def validate_threshold_sensitivity():
 - [x] Statistical analysis framework in place
 - [x] JSON-based result storage working
 
-### **Phase 1 Tasks** ✅ **COMPLETED** - Committed as v0.2.1
+### **Phase 1 Tasks** ✅ **COMPLETED** - Committed as v0.2.3
 - [x] Implement `BaselineManager` class (`benchmarks/regression/baseline_manager.py`)
 - [x] Implement `RegressionDetector` class (`benchmarks/regression/regression_detector.py`)
 - [x] Implement `ThresholdManager` class (`benchmarks/regression/threshold_manager.py`)
