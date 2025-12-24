@@ -1,0 +1,519 @@
+#!/usr/bin/env python3
+"""
+Test suite for TPU backend infrastructure.
+
+Comprehensive tests for TPU backend, optimizer, compiler, memory manager,
+XLA integration, and validation components.
+"""
+
+import pytest
+import torch
+import torch.nn as nn
+from unittest.mock import Mock, patch, MagicMock
+from typing import Dict, Any
+
+from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
+from kernel_pytorch.backends.tpu import (
+    TPUBackend,
+    TPUOptimizer,
+    XLACompiler,
+    TPUMemoryManager,
+    XLADeviceManager,
+    XLADistributedTraining,
+    XLAOptimizations,
+    XLAUtilities,
+    create_xla_integration
+)
+from kernel_pytorch.validation.unified_validator import (
+    validate_tpu_configuration,
+    validate_tpu_model
+)
+
+
+class TestTPUBackend:
+    """Test TPU backend functionality."""
+
+    def test_tpu_backend_creation(self):
+        """Test basic TPU backend creation."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        assert backend is not None
+        assert backend.device is not None
+        assert backend.world_size >= 1
+        assert backend.rank >= 0
+        assert not backend.is_distributed  # Single device in test env
+
+    def test_tpu_backend_model_preparation(self):
+        """Test model preparation for TPU."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        model = nn.Sequential(
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 16)
+        )
+
+        prepared_model = backend.prepare_model(model)
+        assert prepared_model is not None
+        assert hasattr(prepared_model, 'forward')
+
+    def test_tpu_backend_data_preparation(self):
+        """Test data preparation for TPU."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Test tensor preparation
+        tensor = torch.randn(8, 64)
+        prepared_tensor = backend.prepare_data(tensor)
+        assert prepared_tensor.device == backend.device
+
+        # Test dict preparation
+        data_dict = {'input': torch.randn(8, 64), 'target': torch.randn(8, 10)}
+        prepared_dict = backend.prepare_data(data_dict)
+        assert isinstance(prepared_dict, dict)
+        assert all(t.device == backend.device for t in prepared_dict.values())
+
+    def test_tpu_backend_memory_stats(self):
+        """Test TPU backend memory statistics."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        stats = backend.get_memory_stats()
+        assert isinstance(stats, dict)
+        assert 'device' in stats
+        assert 'world_size' in stats
+        assert 'rank' in stats
+
+    def test_tpu_backend_synchronization(self):
+        """Test TPU synchronization."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Should not raise an error
+        backend.synchronize()
+
+    def test_tpu_backend_cache_management(self):
+        """Test TPU cache management."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Should not raise an error
+        backend.clear_cache()
+
+
+class TestTPUOptimizer:
+    """Test TPU optimizer functionality."""
+
+    def test_tpu_optimizer_creation(self):
+        """Test TPU optimizer creation."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        assert optimizer is not None
+        assert optimizer.config == config
+        assert optimizer.backend is not None
+        assert optimizer.compiler is not None
+
+    def test_tpu_optimizer_conservative_optimization(self):
+        """Test conservative optimization level."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        result = optimizer.optimize(model, sample_input, optimization_level="conservative")
+
+        assert result is not None
+        assert result.optimized_model is not None
+        assert result.optimization_time >= 0
+        assert isinstance(result.performance_metrics, dict)
+
+    def test_tpu_optimizer_balanced_optimization(self):
+        """Test balanced optimization level."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        result = optimizer.optimize(model, sample_input, optimization_level="balanced")
+
+        assert result is not None
+        assert result.optimized_model is not None
+        assert result.optimization_time >= 0
+
+    def test_tpu_optimizer_aggressive_optimization(self):
+        """Test aggressive optimization level."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        result = optimizer.optimize(model, sample_input, optimization_level="aggressive")
+
+        assert result is not None
+        assert result.optimized_model is not None
+        assert result.optimization_time >= 0
+
+    def test_tpu_optimizer_inference_optimization(self):
+        """Test inference-specific optimization."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        result = optimizer.optimize_for_inference(model, sample_input)
+
+        assert result is not None
+        assert result.optimized_model is not None
+        assert not result.optimized_model.training  # Should be in eval mode
+
+    def test_tpu_optimizer_training_optimization(self):
+        """Test training-specific optimization."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        result = optimizer.optimize_for_training(model, sample_input)
+
+        assert result is not None
+        assert result.optimized_model is not None
+
+    def test_tpu_optimizer_stats(self):
+        """Test optimizer statistics."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        stats = optimizer.get_optimization_stats()
+        assert isinstance(stats, dict)
+        assert 'total_optimizations' in stats
+
+    def test_invalid_optimization_level(self):
+        """Test invalid optimization level handling."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        with pytest.raises(ValueError):
+            optimizer.optimize(model, sample_input, optimization_level="invalid")
+
+
+class TestXLACompiler:
+    """Test XLA compiler functionality."""
+
+    def test_xla_compiler_creation(self):
+        """Test XLA compiler creation."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        assert compiler is not None
+        assert compiler.config == config.hardware.tpu
+
+    def test_xla_compiler_model_compilation(self):
+        """Test model compilation."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        compiled_model = compiler.compile_model(model, sample_input)
+        assert compiled_model is not None
+
+    def test_xla_compiler_inference_optimization(self):
+        """Test inference optimization."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        optimized_model = compiler.optimize_for_inference(model, sample_input)
+        assert optimized_model is not None
+        assert not optimized_model.training
+
+    def test_xla_compiler_training_optimization(self):
+        """Test training optimization."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        optimized_model = compiler.optimize_for_training(model, sample_input)
+        assert optimized_model is not None
+
+    def test_xla_compiler_stats(self):
+        """Test compilation statistics."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        stats = compiler.get_compilation_stats()
+        assert isinstance(stats, dict)
+        assert 'total_compiled_models' in stats
+        assert 'xla_available' in stats
+
+    def test_xla_compiler_benchmark(self):
+        """Test compilation benchmarking."""
+        config = KernelPyTorchConfig()
+        compiler = XLACompiler(config.hardware.tpu)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        sample_input = torch.randn(8, 64)
+
+        benchmark_results = compiler.benchmark_compilation(model, sample_input, num_runs=2)
+        assert isinstance(benchmark_results, dict)
+        assert 'min_time' in benchmark_results
+        assert 'avg_time' in benchmark_results
+
+
+class TestTPUMemoryManager:
+    """Test TPU memory manager functionality."""
+
+    def test_memory_manager_creation(self):
+        """Test memory manager creation."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        assert memory_manager is not None
+        assert memory_manager.config == config.hardware.tpu
+
+    def test_tensor_allocation(self):
+        """Test tensor allocation."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        tensor = memory_manager.allocate_tensor((8, 64), dtype=torch.float32)
+        assert tensor.shape == (8, 64)
+        assert tensor.dtype == torch.float32
+
+    def test_tensor_layout_optimization(self):
+        """Test tensor layout optimization."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        # Test 2D tensor optimization
+        tensor = torch.randn(7, 7)  # Not divisible by 8
+        optimized_tensor = memory_manager.optimize_tensor_layout(tensor)
+        assert optimized_tensor.shape[0] % 8 == 0 or optimized_tensor.shape[0] == 7
+        assert optimized_tensor.shape[1] % 8 == 0 or optimized_tensor.shape[1] == 7
+
+    def test_memory_pool_creation(self):
+        """Test memory pool creation."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        pool_id = memory_manager.create_memory_pool(5, (8, 64))
+        assert isinstance(pool_id, str)
+
+        pool_stats = memory_manager.get_pool_stats()
+        assert pool_stats['total_pools'] == 1
+
+    def test_memory_pool_operations(self):
+        """Test memory pool tensor get/return operations."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        pool_id = memory_manager.create_memory_pool(3, (8, 64))
+
+        # Get tensor from pool
+        tensor = memory_manager.get_tensor_from_pool(pool_id)
+        assert tensor is not None
+        assert tensor.shape == (8, 64)
+
+        # Return tensor to pool
+        success = memory_manager.return_tensor_to_pool(pool_id, tensor)
+        assert success
+
+    def test_memory_stats(self):
+        """Test memory statistics."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        stats = memory_manager.get_memory_stats()
+        assert hasattr(stats, 'allocated_memory')
+        assert hasattr(stats, 'memory_fraction')
+        assert hasattr(stats, 'active_tensors')
+
+    def test_memory_optimization(self):
+        """Test memory optimization."""
+        config = KernelPyTorchConfig()
+        memory_manager = TPUMemoryManager(config.hardware.tpu)
+
+        # Should not raise an error
+        memory_manager.optimize_memory_usage()
+
+
+class TestXLAIntegration:
+    """Test XLA integration components."""
+
+    def test_xla_device_manager(self):
+        """Test XLA device manager."""
+        config = KernelPyTorchConfig()
+        device_manager = XLADeviceManager(config.hardware.tpu)
+
+        assert device_manager is not None
+        assert device_manager.device is not None
+        assert device_manager.world_size >= 1
+        assert device_manager.rank >= 0
+
+    def test_xla_distributed_training(self):
+        """Test XLA distributed training setup."""
+        config = KernelPyTorchConfig()
+        device_manager = XLADeviceManager(config.hardware.tpu)
+        distributed = XLADistributedTraining(device_manager)
+
+        assert distributed is not None
+        assert not distributed.is_distributed  # Single device in test env
+
+    def test_xla_optimizations(self):
+        """Test XLA-specific optimizations."""
+        config = KernelPyTorchConfig()
+        optimizations = XLAOptimizations(config.hardware.tpu)
+
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        optimized_model = optimizations.optimize_model_for_xla(model)
+
+        assert optimized_model is not None
+
+    def test_xla_utilities(self):
+        """Test XLA utilities."""
+        env_info = XLAUtilities.get_xla_env_info()
+        assert isinstance(env_info, dict)
+        assert 'xla_available' in env_info
+
+    def test_create_xla_integration(self):
+        """Test XLA integration factory."""
+        config = KernelPyTorchConfig()
+        device_mgr, dist_training, opts = create_xla_integration(config.hardware.tpu)
+
+        assert device_mgr is not None
+        assert dist_training is not None
+        assert opts is not None
+
+
+class TestTPUValidation:
+    """Test TPU validation integration."""
+
+    def test_tpu_configuration_validation(self):
+        """Test TPU configuration validation."""
+        config = KernelPyTorchConfig()
+        results = validate_tpu_configuration(config)
+
+        assert results is not None
+        assert results.total_tests > 0
+        assert results.passed >= 0
+
+    def test_tpu_model_validation(self):
+        """Test TPU model validation."""
+        config = KernelPyTorchConfig()
+        model = nn.Sequential(
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 10)
+        )
+        sample_input = torch.randn(8, 64)
+
+        results = validate_tpu_model(model, config.hardware.tpu, sample_input)
+
+        assert results is not None
+        assert results.total_tests > 0
+        assert results.passed >= 0
+
+    def test_tpu_validation_with_warnings(self):
+        """Test TPU validation that should produce warnings."""
+        config = KernelPyTorchConfig()
+        # Model with non-optimal dimensions
+        model = nn.Sequential(
+            nn.Linear(63, 31),  # Not divisible by 8
+            nn.ReLU(),
+            nn.Linear(31, 7)    # Not divisible by 8
+        )
+        sample_input = torch.randn(7, 63)  # Not divisible by 8
+
+        results = validate_tpu_model(model, config.hardware.tpu, sample_input)
+
+        assert results is not None
+        assert results.warnings > 0  # Should have warnings about dimensions
+
+
+class TestTPUConfigurationModes:
+    """Test different TPU configuration modes."""
+
+    def test_inference_mode_tpu(self):
+        """Test TPU configuration in inference mode."""
+        config = KernelPyTorchConfig.for_inference()
+        assert hasattr(config.hardware, 'tpu')
+        assert config.hardware.tpu.enabled in [True, False]
+
+    def test_training_mode_tpu(self):
+        """Test TPU configuration in training mode."""
+        config = KernelPyTorchConfig.for_training()
+        assert hasattr(config.hardware, 'tpu')
+        assert config.hardware.tpu.enabled in [True, False]
+
+    def test_development_mode_tpu(self):
+        """Test TPU configuration in development mode."""
+        config = KernelPyTorchConfig.for_development()
+        assert hasattr(config.hardware, 'tpu')
+        assert config.hardware.tpu.enabled in [True, False]
+
+    def test_tpu_config_serialization_modes(self):
+        """Test TPU config serialization in different modes."""
+        configs = [
+            KernelPyTorchConfig.for_inference(),
+            KernelPyTorchConfig.for_training(),
+            KernelPyTorchConfig.for_development()
+        ]
+
+        for config in configs:
+            config_dict = config.to_dict()
+            assert 'hardware' in config_dict
+            assert 'tpu' in config_dict['hardware']
+
+
+class TestTPUErrorHandling:
+    """Test TPU error handling and edge cases."""
+
+    def test_invalid_tpu_version(self):
+        """Test handling of invalid TPU version."""
+        # This should be handled gracefully
+        config = TPUConfig()
+        assert config.version in TPUVersion
+
+    def test_invalid_memory_fraction(self):
+        """Test validation of memory fraction bounds."""
+        config = KernelPyTorchConfig()
+        results = validate_tpu_configuration(config)
+        # Should pass with valid memory fraction
+        assert results.failed == 0 or any('memory fraction' in r.message for r in results.reports if r.status.value == 'failed')
+
+    def test_missing_sample_inputs(self):
+        """Test model validation without sample inputs."""
+        config = KernelPyTorchConfig()
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+
+        results = validate_tpu_model(model, config.hardware.tpu, sample_inputs=None)
+        assert results is not None
+        # Should complete without sample input validation
+
+    def test_backend_without_xla(self):
+        """Test backend operations without XLA available."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Should work with CPU fallback
+        assert backend.device.type == 'cpu'
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])

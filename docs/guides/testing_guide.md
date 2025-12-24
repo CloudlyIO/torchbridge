@@ -14,11 +14,11 @@ This guide covers:
 
 ### Validate Unified Framework (30 seconds)
 ```bash
-# Test unified architecture v0.2.3
+# Test unified architecture v0.2.4 with TPU support
 PYTHONPATH=src python3 -c "
 from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 from kernel_pytorch.validation import UnifiedValidator
-print('✅ Unified architecture v0.2.3 imports successful')
+print('✅ Unified architecture v0.2.4 with TPU support imports successful')
 "
 
 # Quick unified validation test
@@ -29,6 +29,15 @@ print('✅ Unified validation framework ready')
 "
 ```
 
+### NVIDIA Hardware Integration Test (1 minute)
+```bash
+# Quick NVIDIA integration validation
+python3 scripts/test_nvidia_integration.py --quick
+
+# Comprehensive NVIDIA integration test
+python3 scripts/test_nvidia_integration.py
+```
+
 ### Run Comprehensive Benchmarks (5 minutes)
 ```bash
 # Compare against cutting-edge implementations
@@ -36,6 +45,39 @@ cd demos && PYTHONPATH=../src python3 precision/adaptive.py --validate
 cd demos && PYTHONPATH=../src python3 attention/fusion.py --validate
 cd demos && PYTHONPATH=../src python3 experimental/ultra_precision.py --validate
 ```
+
+## 🎯 NVIDIA Hardware Testing
+
+### **Test NVIDIA Integration (v0.2.3)**
+
+The NVIDIA integration test suite validates hardware detection, configuration, and optimization:
+
+```bash
+# Standalone execution
+python3 scripts/test_nvidia_integration.py           # Full test suite
+python3 scripts/test_nvidia_integration.py --quick   # Quick validation
+
+# As pytest
+PYTHONPATH=src pytest scripts/test_nvidia_integration.py -v
+
+# Individual components
+PYTHONPATH=src python3 -m pytest tests/test_nvidia_config.py -v          # Unit tests
+PYTHONPATH=src python3 demos/nvidia_configuration_demo.py --quick        # Demo test
+PYTHONPATH=src python3 benchmarks/nvidia_config_benchmarks.py --quick    # Benchmark test
+```
+
+**What it tests:**
+- ✅ Hardware architecture detection (H100, Blackwell, Ampere, Pascal)
+- ✅ Configuration system integration
+- ✅ FP8 training enablement for supported hardware
+- ✅ Performance validation (<1ms config creation)
+- ✅ Serialization/deserialization
+- ✅ Integration with unified validation framework
+
+**Expected results:**
+- **CPU (no GPU)**: Architecture=`pascal`, FP8=`False`
+- **H100/Hopper**: Architecture=`hopper`, FP8=`True`, TensorCore=`4`
+- **A100/Ampere**: Architecture=`ampere`, FP8=`False`, TensorCore=`3`
 
 ## 📊 Test Categories
 
@@ -47,7 +89,8 @@ cd demos && PYTHONPATH=../src python3 experimental/ultra_precision.py --validate
 
 ```bash
 # Run unit tests
-python3 -m pytest tests/test_basic_functionality.py -v
+PYTHONPATH=src python3 -m pytest tests/test_nvidia_config.py -v              # NVIDIA config tests
+PYTHONPATH=src python3 -m pytest tests/test_basic_functionality.py -v        # Basic functionality
 python3 -m pytest tests/test_components/ -v
 ```
 
@@ -79,8 +122,9 @@ def test_fused_gelu_correctness():
 
 ```bash
 # Run integration tests
-python3 -m pytest tests/test_integration/ -v
-python3 -m pytest tests/test_distributed_scale.py -v
+PYTHONPATH=src python3 -m pytest scripts/test_nvidia_integration.py -v       # NVIDIA integration suite
+python3 -m pytest tests/test_integration/ -v                                 # System integration
+python3 -m pytest tests/test_distributed_scale.py -v                         # Distributed integration
 ```
 
 **Example Integration Test:**

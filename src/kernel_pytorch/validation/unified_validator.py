@@ -146,6 +146,56 @@ class UnifiedValidator:
 
         return self._generate_summary(time.time() - start_time)
 
+    def validate_tpu_compatibility(self, config: KernelPyTorchConfig) -> ValidationSummary:
+        """Validate TPU-specific configuration and compatibility."""
+        self.reports.clear()
+        start_time = time.time()
+
+        tpu_config = config.hardware.tpu
+
+        # Basic TPU configuration validation
+        self._validate_tpu_configuration(tpu_config)
+
+        # XLA integration validation
+        self._validate_xla_integration(tpu_config)
+
+        # TPU memory validation
+        self._validate_tpu_memory_config(tpu_config)
+
+        # TPU compilation validation
+        self._validate_tpu_compilation_config(tpu_config)
+
+        # TPU version-specific validation
+        self._validate_tpu_version_compatibility(tpu_config)
+
+        return self._generate_summary(time.time() - start_time)
+
+    def validate_tpu_model_optimization(self,
+                                      model: nn.Module,
+                                      tpu_config,
+                                      sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+        """Validate TPU model optimization."""
+        self.reports.clear()
+        start_time = time.time()
+
+        # Model structure validation for TPU
+        self._validate_tpu_model_structure(model, tpu_config)
+
+        # Layer optimization validation
+        self._validate_tpu_layer_optimization(model, tpu_config)
+
+        # Tensor shape validation
+        if sample_inputs is not None:
+            self._validate_tpu_tensor_shapes(model, sample_inputs, tpu_config)
+
+        # Memory efficiency validation
+        self._validate_tpu_memory_efficiency(model, tpu_config)
+
+        # Performance characteristics
+        self._validate_tpu_performance_characteristics(model, tpu_config)
+
+        return self._generate_summary(time.time() - start_time)
+
     def validate_hardware_compatibility(self, device: torch.device) -> ValidationSummary:
         """Validate hardware compatibility and capabilities."""
         self.reports.clear()
@@ -557,6 +607,439 @@ class UnifiedValidator:
             reports=self.reports.copy()
         )
 
+    # TPU-specific validation methods
+
+    def _validate_tpu_configuration(self, tpu_config) -> None:
+        """Validate basic TPU configuration."""
+        try:
+            # Check TPU version
+            from ..core.config import TPUVersion, TPUTopology, TPUCompilationMode
+
+            if tpu_config.version not in TPUVersion:
+                self._add_failure(f"Invalid TPU version: {tpu_config.version}")
+            else:
+                self._add_success(f"TPU version valid: {tpu_config.version.value}")
+
+            # Check topology
+            if tpu_config.topology not in TPUTopology:
+                self._add_failure(f"Invalid TPU topology: {tpu_config.topology}")
+            else:
+                self._add_success(f"TPU topology valid: {tpu_config.topology.value}")
+
+            # Check compilation mode
+            if tpu_config.compilation_mode not in TPUCompilationMode:
+                self._add_failure(f"Invalid TPU compilation mode: {tpu_config.compilation_mode}")
+            else:
+                self._add_success(f"TPU compilation mode valid: {tpu_config.compilation_mode.value}")
+
+            # Check precision setting
+            valid_precisions = ['bfloat16', 'float16', 'float32']
+            if tpu_config.precision not in valid_precisions:
+                self._add_warning(f"TPU precision '{tpu_config.precision}' may not be optimal. Consider: {valid_precisions}")
+            else:
+                self._add_success(f"TPU precision valid: {tpu_config.precision}")
+
+        except Exception as e:
+            self._add_failure(f"TPU configuration validation failed: {str(e)}")
+
+    def _validate_xla_integration(self, tpu_config) -> None:
+        """Validate XLA integration availability."""
+        try:
+            import torch_xla
+            import torch_xla.core.xla_model as xm
+
+            # Check XLA availability
+            self._add_success("PyTorch/XLA available")
+
+            # Check XLA device
+            try:
+                device = xm.xla_device()
+                self._add_success(f"XLA device available: {device}")
+            except Exception as e:
+                self._add_warning(f"XLA device access failed: {str(e)}")
+
+            # Check XLA world size
+            try:
+                world_size = xm.xrt_world_size()
+                self._add_success(f"XLA world size: {world_size}")
+
+                if world_size > 1 and tpu_config.topology == "single":
+                    self._add_warning("Multi-device XLA detected but TPU topology set to 'single'")
+
+            except Exception as e:
+                self._add_warning(f"XLA world size check failed: {str(e)}")
+
+        except ImportError:
+            self._add_warning("PyTorch/XLA not available - TPU functionality will be limited")
+
+    def _validate_tpu_memory_config(self, tpu_config) -> None:
+        """Validate TPU memory configuration."""
+        # Memory fraction validation
+        if not 0.1 <= tpu_config.memory_fraction <= 1.0:
+            self._add_failure(f"TPU memory fraction {tpu_config.memory_fraction} must be between 0.1 and 1.0")
+        else:
+            self._add_success(f"TPU memory fraction valid: {tpu_config.memory_fraction}")
+
+        # Gradient checkpointing validation
+        if tpu_config.gradient_checkpointing:
+            self._add_success("TPU gradient checkpointing enabled")
+        else:
+            self._add_warning("TPU gradient checkpointing disabled - may increase memory usage")
+
+    def _validate_tpu_compilation_config(self, tpu_config) -> None:
+        """Validate TPU compilation settings."""
+        # XLA optimization level
+        if not 0 <= tpu_config.xla_optimization_level <= 3:
+            self._add_failure(f"XLA optimization level {tpu_config.xla_optimization_level} must be 0-3")
+        else:
+            self._add_success(f"XLA optimization level valid: {tpu_config.xla_optimization_level}")
+
+        # Dynamic shapes validation
+        if tpu_config.enable_xla_dynamic_shapes:
+            self._add_success("XLA dynamic shapes enabled - supports variable input sizes")
+        else:
+            self._add_warning("XLA dynamic shapes disabled - input sizes must be static")
+
+    def _validate_tpu_version_compatibility(self, tpu_config) -> None:
+        """Validate TPU version-specific features."""
+        from ..core.config import TPUVersion
+
+        # High-performance features for newer TPUs
+        if tpu_config.version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
+            if tpu_config.xla_optimization_level < 2:
+                self._add_warning("Consider using higher XLA optimization level for high-performance TPUs")
+            if tpu_config.memory_fraction < 0.9:
+                self._add_warning("High-performance TPUs can typically use higher memory fractions")
+
+        # Cost-optimized TPU settings
+        elif tpu_config.version == TPUVersion.V5E:
+            if tpu_config.xla_optimization_level > 1:
+                self._add_warning("V5E TPUs may benefit from lower optimization levels for stability")
+
+    def _validate_tpu_model_structure(self, model: nn.Module, tpu_config) -> None:
+        """Validate model structure for TPU optimization."""
+        # Check for TPU-friendly layer sizes
+        for name, module in model.named_modules():
+            if isinstance(module, nn.Linear):
+                in_features, out_features = module.in_features, module.out_features
+
+                if in_features % 8 != 0:
+                    self._add_warning(f"Linear layer {name} input features ({in_features}) not divisible by 8")
+                if out_features % 8 != 0:
+                    self._add_warning(f"Linear layer {name} output features ({out_features}) not divisible by 8")
+
+            elif isinstance(module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
+                in_channels = module.in_channels
+                out_channels = module.out_channels
+
+                if in_channels % 8 != 0:
+                    self._add_warning(f"Conv layer {name} input channels ({in_channels}) not divisible by 8")
+                if out_channels % 8 != 0:
+                    self._add_warning(f"Conv layer {name} output channels ({out_channels}) not divisible by 8")
+
+        self._add_success("TPU model structure validation completed")
+
+    def _validate_tpu_layer_optimization(self, model: nn.Module, tpu_config) -> None:
+        """Validate layer-specific TPU optimizations."""
+        # Check activation functions
+        activation_counts = {}
+        for module in model.modules():
+            if isinstance(module, (nn.ReLU, nn.GELU, nn.SiLU)):
+                activation_type = type(module).__name__
+                activation_counts[activation_type] = activation_counts.get(activation_type, 0) + 1
+
+        if activation_counts:
+            self._add_success(f"TPU-optimized activations found: {activation_counts}")
+
+        # Check for batch normalization
+        bn_count = sum(1 for m in model.modules()
+                      if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)))
+        if bn_count > 0:
+            self._add_success(f"Batch normalization layers: {bn_count}")
+
+    def _validate_tpu_tensor_shapes(self, model: nn.Module, sample_inputs: torch.Tensor, tpu_config) -> None:
+        """Validate tensor shapes for TPU efficiency."""
+        # Check input shape alignment
+        if len(sample_inputs.shape) >= 2:
+            for dim in sample_inputs.shape:
+                if dim % 8 != 0:
+                    self._add_warning(f"Input dimension {dim} not divisible by 8 - may be suboptimal for TPU")
+
+        # Test forward pass shape propagation
+        try:
+            with torch.no_grad():
+                output = model(sample_inputs)
+                self._add_success(f"Forward pass successful: {sample_inputs.shape} → {output.shape}")
+        except Exception as e:
+            self._add_failure(f"Forward pass failed: {str(e)}")
+
+    def _validate_tpu_memory_efficiency(self, model: nn.Module, tpu_config) -> None:
+        """Validate TPU memory efficiency."""
+        # Count parameters
+        param_count = sum(p.numel() for p in model.parameters())
+        param_size_mb = param_count * 4 / (1024**2)  # Assume float32
+
+        # TPU memory capacity estimates
+        memory_estimates = {
+            "v4": 32 * 1024,    # 32GB
+            "v5e": 16 * 1024,   # 16GB
+            "v5p": 95 * 1024,   # 95GB
+            "v6e": 32 * 1024,   # 32GB estimated
+            "v7": 128 * 1024    # 128GB estimated
+        }
+
+        tpu_memory_mb = memory_estimates.get(tpu_config.version.value, 32 * 1024)
+        memory_utilization = param_size_mb / (tpu_memory_mb * tpu_config.memory_fraction)
+
+        if memory_utilization > 0.8:
+            self._add_warning(f"High memory utilization: {memory_utilization:.2%}")
+        elif memory_utilization > 0.5:
+            self._add_success(f"Reasonable memory utilization: {memory_utilization:.2%}")
+        else:
+            self._add_success(f"Low memory utilization: {memory_utilization:.2%}")
+
+    def _validate_tpu_performance_characteristics(self, model: nn.Module, tpu_config) -> None:
+        """Validate TPU performance characteristics."""
+        # Check for performance-impacting patterns
+        sequential_count = sum(1 for m in model.modules() if isinstance(m, nn.Sequential))
+        if sequential_count > 10:
+            self._add_warning(f"High number of Sequential modules ({sequential_count}) may impact TPU performance")
+
+        # Check for attention patterns
+        attention_patterns = 0
+        for name, module in model.named_modules():
+            if 'attention' in name.lower() or hasattr(module, 'attention'):
+                attention_patterns += 1
+
+        if attention_patterns > 0:
+            self._add_success(f"Attention patterns detected: {attention_patterns} (good for TPU)")
+
+        self._add_success("TPU performance characteristics validation completed")
+
+    # NVIDIA-specific validation methods
+
+    def validate_nvidia_compatibility(self, config: KernelPyTorchConfig) -> ValidationSummary:
+        """Validate NVIDIA-specific configuration and compatibility."""
+        self.reports.clear()
+        start_time = time.time()
+
+        nvidia_config = config.hardware.nvidia
+
+        # Basic NVIDIA configuration validation
+        self._validate_nvidia_configuration(nvidia_config)
+
+        # CUDA integration validation
+        self._validate_cuda_integration(nvidia_config)
+
+        # NVIDIA memory validation
+        self._validate_nvidia_memory_config(nvidia_config)
+
+        # FP8 support validation
+        self._validate_fp8_support(nvidia_config)
+
+        # FlashAttention validation
+        self._validate_flash_attention_config(nvidia_config)
+
+        return self._generate_summary(time.time() - start_time)
+
+    def validate_nvidia_model_optimization(self,
+                                          model: nn.Module,
+                                          nvidia_config,
+                                          sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+        """Validate NVIDIA model optimization."""
+        self.reports.clear()
+        start_time = time.time()
+
+        # Model structure validation for NVIDIA
+        self._validate_nvidia_model_structure(model, nvidia_config)
+
+        # Layer optimization validation
+        self._validate_nvidia_layer_optimization(model, nvidia_config)
+
+        # Tensor Core optimization validation
+        self._validate_tensor_core_optimization(model, nvidia_config)
+
+        # Memory efficiency validation
+        self._validate_nvidia_memory_efficiency(model, nvidia_config)
+
+        # Performance characteristics
+        self._validate_nvidia_performance_characteristics(model, nvidia_config)
+
+        return self._generate_summary(time.time() - start_time)
+
+    def _validate_nvidia_configuration(self, nvidia_config) -> None:
+        """Validate basic NVIDIA configuration."""
+        try:
+            from ..core.config import NVIDIAArchitecture
+
+            # Check architecture
+            if nvidia_config.architecture == NVIDIAArchitecture.AUTO:
+                self._add_success("NVIDIA architecture will be auto-detected")
+            else:
+                self._add_success(f"NVIDIA architecture: {nvidia_config.architecture.value}")
+
+            # Check FP8 settings
+            if nvidia_config.fp8_enabled:
+                if nvidia_config.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+                    self._add_success("FP8 training enabled for H100/Blackwell")
+                else:
+                    self._add_warning("FP8 enabled but architecture may not support it")
+
+            # Check Tensor Core version
+            if nvidia_config.tensor_core_version >= 4:
+                self._add_success(f"Tensor Core version {nvidia_config.tensor_core_version} (latest generation)")
+            elif nvidia_config.tensor_core_version >= 3:
+                self._add_success(f"Tensor Core version {nvidia_config.tensor_core_version}")
+            else:
+                self._add_warning(f"Older Tensor Core version {nvidia_config.tensor_core_version}")
+
+        except Exception as e:
+            self._add_failure(f"NVIDIA configuration validation failed: {e}")
+
+    def _validate_cuda_integration(self, nvidia_config) -> None:
+        """Validate CUDA integration."""
+        try:
+            if torch.cuda.is_available():
+                self._add_success("CUDA is available")
+
+                # Check CUDA version
+                cuda_version = torch.version.cuda
+                if cuda_version:
+                    self._add_success(f"CUDA version: {cuda_version}")
+
+                # Check cuDNN
+                if torch.backends.cudnn.is_available():
+                    cudnn_version = torch.backends.cudnn.version()
+                    self._add_success(f"cuDNN version: {cudnn_version}")
+
+            else:
+                self._add_warning("CUDA not available, will use CPU fallback")
+
+        except Exception as e:
+            self._add_failure(f"CUDA integration validation failed: {e}")
+
+    def _validate_nvidia_memory_config(self, nvidia_config) -> None:
+        """Validate NVIDIA memory configuration."""
+        try:
+            if nvidia_config.memory_pool_enabled:
+                self._add_success("Memory pooling enabled")
+
+            if 0.0 < nvidia_config.memory_fraction <= 1.0:
+                self._add_success(f"Memory fraction: {nvidia_config.memory_fraction}")
+            else:
+                self._add_warning(f"Invalid memory fraction: {nvidia_config.memory_fraction}")
+
+        except Exception as e:
+            self._add_failure(f"NVIDIA memory config validation failed: {e}")
+
+    def _validate_fp8_support(self, nvidia_config) -> None:
+        """Validate FP8 support."""
+        try:
+            from ..core.config import NVIDIAArchitecture
+
+            if nvidia_config.fp8_enabled:
+                if nvidia_config.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+                    self._add_success("FP8 supported on current architecture")
+
+                    # Check FP8 recipe
+                    if nvidia_config.fp8_recipe == "DelayedScaling":
+                        self._add_success("Using DelayedScaling FP8 recipe")
+                    else:
+                        self._add_warning(f"Unknown FP8 recipe: {nvidia_config.fp8_recipe}")
+                else:
+                    self._add_warning("FP8 not supported on current architecture")
+
+        except Exception as e:
+            self._add_failure(f"FP8 validation failed: {e}")
+
+    def _validate_flash_attention_config(self, nvidia_config) -> None:
+        """Validate FlashAttention configuration."""
+        try:
+            if nvidia_config.flash_attention_enabled:
+                self._add_success("FlashAttention enabled")
+
+                version = nvidia_config.flash_attention_version
+                if version == "3":
+                    self._add_success("Using FlashAttention-3 (latest)")
+                elif version in ["2", "1"]:
+                    self._add_success(f"Using FlashAttention-{version}")
+                else:
+                    self._add_warning(f"Unknown FlashAttention version: {version}")
+
+        except Exception as e:
+            self._add_failure(f"FlashAttention validation failed: {e}")
+
+    def _validate_nvidia_model_structure(self, model: nn.Module, nvidia_config) -> None:
+        """Validate NVIDIA model structure."""
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        self._add_success(f"Total parameters: {total_params:,}")
+        self._add_success(f"Trainable parameters: {trainable_params:,}")
+
+        # Check for NVIDIA-friendly patterns
+        has_linear = any(isinstance(m, nn.Linear) for m in model.modules())
+        has_conv = any(isinstance(m, (nn.Conv2d, nn.Conv3d)) for m in model.modules())
+
+        if has_linear:
+            self._add_success("Model contains Linear layers (good for Tensor Cores)")
+        if has_conv:
+            self._add_success("Model contains Conv layers (good for CUDA)")
+
+    def _validate_nvidia_layer_optimization(self, model: nn.Module, nvidia_config) -> None:
+        """Validate NVIDIA layer optimization."""
+        from ..core.config import NVIDIAArchitecture
+
+        optimal_div = 16 if nvidia_config.tensor_core_version >= 4 else 8
+
+        for name, module in model.named_modules():
+            if isinstance(module, nn.Linear):
+                in_f, out_f = module.in_features, module.out_features
+
+                if in_f % optimal_div != 0 or out_f % optimal_div != 0:
+                    self._add_warning(
+                        f"Layer {name} dimensions ({in_f}x{out_f}) not optimal for Tensor Cores "
+                        f"(should be divisible by {optimal_div})"
+                    )
+
+        self._add_success("NVIDIA layer optimization validation completed")
+
+    def _validate_tensor_core_optimization(self, model: nn.Module, nvidia_config) -> None:
+        """Validate Tensor Core optimization."""
+        linear_count = sum(1 for m in model.modules() if isinstance(m, nn.Linear))
+
+        if linear_count > 0:
+            self._add_success(f"Model has {linear_count} Linear layers for Tensor Core acceleration")
+
+        # Check for mixed precision
+        if nvidia_config.mixed_precision_enabled:
+            self._add_success("Mixed precision enabled for Tensor Core utilization")
+
+    def _validate_nvidia_memory_efficiency(self, model: nn.Module, nvidia_config) -> None:
+        """Validate NVIDIA memory efficiency."""
+        param_memory = sum(p.numel() * p.element_size() for p in model.parameters()) / 1024**2  # MB
+
+        if param_memory < 100:
+            self._add_success(f"Small model ({param_memory:.1f}MB) - efficient memory usage")
+        elif param_memory < 1000:
+            self._add_success(f"Medium model ({param_memory:.1f}MB) - manageable memory usage")
+        else:
+            self._add_warning(f"Large model ({param_memory:.1f}MB) - consider gradient checkpointing")
+
+    def _validate_nvidia_performance_characteristics(self, model: nn.Module, nvidia_config) -> None:
+        """Validate NVIDIA performance characteristics."""
+        # Check for performance-friendly patterns
+        sequential_count = sum(1 for m in model.modules() if isinstance(m, nn.Sequential))
+        if sequential_count > 0:
+            self._add_success(f"Sequential modules: {sequential_count}")
+
+        # Check for attention patterns
+        attention_count = sum(1 for name, _ in model.named_modules() if 'attention' in name.lower())
+        if attention_count > 0:
+            self._add_success(f"Attention modules: {attention_count} (good for FlashAttention)")
+
+        self._add_success("NVIDIA performance characteristics validation completed")
+
 
 # Global validator instance for convenience
 default_validator = UnifiedValidator()
@@ -575,3 +1058,23 @@ def validate_configuration(config: KernelPyTorchConfig) -> ValidationSummary:
 def validate_hardware(device: torch.device) -> ValidationSummary:
     """Convenience function for hardware validation."""
     return default_validator.validate_hardware_compatibility(device)
+
+
+def validate_tpu_configuration(config: KernelPyTorchConfig) -> ValidationSummary:
+    """Convenience function for TPU configuration validation."""
+    return default_validator.validate_tpu_compatibility(config)
+
+
+def validate_tpu_model(model: nn.Module, tpu_config, sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+    """Convenience function for TPU model optimization validation."""
+    return default_validator.validate_tpu_model_optimization(model, tpu_config, sample_inputs)
+
+
+def validate_nvidia_configuration(config: KernelPyTorchConfig) -> ValidationSummary:
+    """Convenience function for NVIDIA configuration validation."""
+    return default_validator.validate_nvidia_compatibility(config)
+
+
+def validate_nvidia_model(model: nn.Module, nvidia_config, sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+    """Convenience function for NVIDIA model optimization validation."""
+    return default_validator.validate_nvidia_model_optimization(model, nvidia_config, sample_inputs)

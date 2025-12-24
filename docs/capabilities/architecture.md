@@ -1,6 +1,6 @@
-# 🏗️ Technical Architecture (v0.2.3)
+# 🏗️ Technical Architecture (v0.2.4)
 
-**KernelPyTorch unified framework architecture and design details.**
+**KernelPyTorch unified framework architecture with TPU integration and design details.**
 
 ## 📁 Unified Framework Structure
 
@@ -26,7 +26,7 @@ src/kernel_pytorch/
 └── utils/                         # Utility functions and helpers
 ```
 
-## 🎯 **Unified Architecture (v0.2.3)**
+## 🎯 **Unified Architecture with TPU Support (v0.2.4)**
 
 ### **Core Design Principles**
 

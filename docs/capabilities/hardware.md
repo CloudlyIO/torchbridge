@@ -1,6 +1,6 @@
-# 🔧 Hardware Abstraction (v0.2.3)
+# 🔧 Hardware Abstraction (v0.2.4)
 
-**Multi-vendor GPU support through unified hardware management.**
+**Multi-vendor GPU and TPU support through unified hardware management.**
 
 ## 🎯 Supported Hardware
 
@@ -13,12 +13,16 @@
 - **Intel**: x86-64 processors with optimized fallback support
 - **Automatic detection**: Hardware capabilities and optimization selection
 
+### TPUs (NEW in v0.2.4)
+- **Google Cloud TPU**: v4, v5e, v5p, v6e, v7 with auto-detection
+- **PyTorch/XLA**: Complete XLA compiler integration
+- **Memory Optimization**: TPU-specific memory pooling and layout optimization
+
 ### Custom Hardware
-- **TPUs**: Google Cloud TPU integration (planned)
 - **ASICs**: Custom accelerator support framework
 - **Neuromorphic**: Specialized computing hardware (research)
 
-## 🏗️ Unified Hardware Management (v0.2.3)
+## 🏗️ Unified Hardware Management (v0.2.4)
 
 ### NVIDIA Hardware Auto-Detection (NEW in v0.2.3)
 ```python
@@ -38,6 +42,26 @@ print(f"FlashAttention version: {nvidia_config.flash_attention_version}")
 # H100/Blackwell: FP8 training, Tensor Core 4.x, FlashAttention 3
 # A100/Ampere: Mixed precision, Tensor Core 3.x, FlashAttention 2/3
 # Pascal/Turing: Basic optimizations with compatibility mode
+```
+
+### TPU Hardware Auto-Detection (NEW in v0.2.4)
+```python
+from kernel_pytorch import KernelPyTorchConfig
+
+# TPU hardware auto-detection and configuration
+config = KernelPyTorchConfig()
+
+# Automatic TPU detection and configuration
+tpu_config = config.hardware.tpu
+print(f"TPU version: {tpu_config.version.value}")
+print(f"TPU topology: {tpu_config.topology.value}")
+print(f"Compilation mode: {tpu_config.compilation_mode.value}")
+print(f"Precision: {tpu_config.precision}")
+
+# Auto-configured optimizations based on detected TPU:
+# v6e/v7: bfloat16 precision, XLA compilation, memory-optimized kernels
+# v5e/v5p: bfloat16 precision, optimized for large model training
+# v4: Compatibility mode with standard PyTorch/XLA patterns
 ```
 
 ### Unified Architecture

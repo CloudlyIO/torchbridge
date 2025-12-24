@@ -1,11 +1,11 @@
-# 🚀 Quick Start Guide (v0.2.3)
+# 🚀 Quick Start Guide (v0.2.4)
 
-Get up and running with **KernelPyTorch unified architecture** in under 5 minutes.
+Get up and running with **KernelPyTorch unified architecture with TPU support** in under 5 minutes.
 
 ## 1. Installation
 
 ```bash
-# Clone and setup KernelPyTorch v0.2.3
+# Clone and setup KernelPyTorch v0.2.4
 git clone <repository-url>
 cd shahmod
 pip install -r requirements.txt
@@ -33,7 +33,7 @@ model = torch.nn.Sequential(
     torch.nn.LayerNorm(768)
 )
 
-# Unified optimization approach (v0.2.3)
+# Unified optimization approach (v0.2.4)
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 

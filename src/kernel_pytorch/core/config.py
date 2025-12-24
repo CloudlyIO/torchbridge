@@ -32,6 +32,7 @@ class HardwareBackend(Enum):
     """Supported hardware backends."""
     CUDA = "cuda"
     CPU = "cpu"
+    TPU = "tpu"
     AMD = "amd"
     INTEL = "intel"
     CUSTOM = "custom"
@@ -47,6 +48,31 @@ class NVIDIAArchitecture(Enum):
     ADA = "ada"           # RTX 4000 series
     HOPPER = "hopper"     # H100/H200
     BLACKWELL = "blackwell"  # B100/B200
+
+
+class TPUVersion(Enum):
+    """TPU hardware versions."""
+    AUTO = "auto"
+    V4 = "v4"            # TPU v4
+    V5E = "v5e"          # TPU v5e (cost-optimized)
+    V5P = "v5p"          # TPU v5p (performance-optimized)
+    V6E = "v6e"          # TPU v6e (next-gen cost-optimized)
+    V7 = "v7"            # TPU v7 (future)
+
+
+class TPUTopology(Enum):
+    """TPU deployment topologies."""
+    AUTO = "auto"
+    SINGLE = "single"    # Single TPU chip
+    POD = "pod"          # TPU Pod (multiple chips)
+    SUPERPOD = "superpod"  # TPU Superpod (massive scale)
+
+
+class TPUCompilationMode(Enum):
+    """TPU compilation modes."""
+    XLA = "xla"          # Standard XLA compilation
+    PJIT = "pjit"        # JAX pjit compilation
+    TORCH_XLA = "torch_xla"  # PyTorch/XLA compilation
 
 
 @dataclass
@@ -199,14 +225,114 @@ class NVIDIAConfig:
 
 
 @dataclass
+class TPUConfig:
+    """TPU-specific hardware configuration."""
+    enabled: bool = True
+    version: TPUVersion = TPUVersion.AUTO
+    topology: TPUTopology = TPUTopology.AUTO
+
+    # Compilation settings
+    compilation_mode: TPUCompilationMode = TPUCompilationMode.TORCH_XLA
+    xla_flags: Optional[str] = None
+
+    # Performance settings
+    precision: str = "bfloat16"
+    mixed_precision: bool = True
+
+    # Memory optimization
+    memory_fraction: float = 0.90
+    gradient_checkpointing: bool = True
+
+    # XLA optimization flags
+    xla_optimization_level: int = 2  # 0=debug, 1=basic, 2=aggressive
+    enable_xla_dynamic_shapes: bool = True
+
+    # JAX integration settings (if available)
+    enable_jax_integration: bool = False
+    jax_backend: str = "tpu"
+
+    def __post_init__(self):
+        """Auto-configure based on detected TPU environment."""
+        if self.version == TPUVersion.AUTO:
+            self.version = self._detect_tpu_version()
+
+        if self.topology == TPUTopology.AUTO:
+            self.topology = self._detect_tpu_topology()
+
+        # Configure settings based on TPU version
+        if self.version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
+            # High-performance TPUs
+            self.memory_fraction = 0.95
+            self.xla_optimization_level = 2
+        elif self.version == TPUVersion.V5E:
+            # Cost-optimized TPUs
+            self.memory_fraction = 0.90
+            self.xla_optimization_level = 1
+
+    def _detect_tpu_version(self) -> TPUVersion:
+        """Detect TPU version from environment."""
+        try:
+            # Try to import XLA and detect TPU
+            import torch_xla.core.xla_model as xm
+            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                # Try to detect TPU version from environment
+                import os
+                tpu_type = os.environ.get('TPU_TYPE', '')
+
+                if 'v5p' in tpu_type.lower():
+                    return TPUVersion.V5P
+                elif 'v5e' in tpu_type.lower():
+                    return TPUVersion.V5E
+                elif 'v6e' in tpu_type.lower():
+                    return TPUVersion.V6E
+                elif 'v4' in tpu_type.lower():
+                    return TPUVersion.V4
+                else:
+                    # Default to v5e for unknown types
+                    return TPUVersion.V5E
+        except ImportError:
+            # XLA not available
+            pass
+        except Exception:
+            # Other detection errors
+            pass
+
+        return TPUVersion.V5E  # Default fallback
+
+    def _detect_tpu_topology(self) -> TPUTopology:
+        """Detect TPU topology from environment."""
+        try:
+            import torch_xla.core.xla_model as xm
+            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                # Get number of TPU cores
+                world_size = xm.xrt_world_size()
+
+                if world_size == 1:
+                    return TPUTopology.SINGLE
+                elif world_size <= 8:
+                    return TPUTopology.SINGLE  # Single node
+                elif world_size <= 256:
+                    return TPUTopology.POD
+                else:
+                    return TPUTopology.SUPERPOD
+        except ImportError:
+            pass
+        except Exception:
+            pass
+
+        return TPUTopology.SINGLE  # Default fallback
+
+
+@dataclass
 class HardwareConfig:
     """Unified hardware optimization configuration."""
     backend: HardwareBackend = HardwareBackend.CUDA
     device_id: Optional[int] = None
     multi_gpu: bool = False
 
-    # NVIDIA-specific configuration
+    # Hardware-specific configurations
     nvidia: NVIDIAConfig = field(default_factory=NVIDIAConfig)
+    tpu: TPUConfig = field(default_factory=TPUConfig)
 
     # Tensor Core settings (general)
     tensor_cores_enabled: bool = True
@@ -222,10 +348,32 @@ class HardwareConfig:
 
     def __post_init__(self):
         """Auto-configure hardware settings based on detected capabilities."""
-        # Auto-detect and configure NVIDIA settings
+        # Auto-detect hardware backend if not explicitly set
+        if self.backend == HardwareBackend.CUDA and not torch.cuda.is_available():
+            # Try TPU detection if CUDA not available
+            try:
+                import torch_xla.core.xla_model as xm
+                if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                    self.backend = HardwareBackend.TPU
+            except ImportError:
+                # Fall back to CPU
+                self.backend = HardwareBackend.CPU
+
+        # Configure NVIDIA settings
         if self.backend == HardwareBackend.CUDA and torch.cuda.is_available():
             self.nvidia.enabled = True
             # NVIDIA config will auto-detect architecture in its own __post_init__
+        else:
+            self.nvidia.enabled = False
+
+        # Configure TPU settings
+        if self.backend == HardwareBackend.TPU:
+            self.tpu.enabled = True
+            # Disable incompatible settings for TPU
+            self.tensor_cores_enabled = False  # TPU doesn't use Tensor Cores
+            self.triton_enabled = False        # Triton is CUDA-specific
+        else:
+            self.tpu.enabled = False
 
 
 @dataclass
@@ -285,7 +433,7 @@ class KernelPyTorchConfig:
     validation: ValidationConfig = field(default_factory=ValidationConfig)
 
     # Global settings
-    device: torch.device = field(default_factory=lambda: torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    device: torch.device = field(default_factory=lambda: KernelPyTorchConfig._detect_device())
     seed: int = 42
     debug: bool = False
     profile: bool = False
@@ -294,22 +442,52 @@ class KernelPyTorchConfig:
     optimization_level: OptimizationLevel = OptimizationLevel.BALANCED
     experimental_features: bool = False
 
+    @staticmethod
+    def _detect_device() -> torch.device:
+        """Detect the best available device."""
+        # Try CUDA first
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+
+        # Try TPU
+        try:
+            import torch_xla.core.xla_model as xm
+            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                return xm.xla_device()
+        except ImportError:
+            pass
+        except Exception:
+            pass
+
+        # Fall back to CPU
+        return torch.device("cpu")
+
     def __post_init__(self):
         """Validate and adjust configuration after initialization."""
-        # Auto-detect device if not explicitly set
-        if self.device.type == "cuda" and not torch.cuda.is_available():
-            self.device = torch.device("cpu")
-
-        # Adjust hardware config based on device
-        if self.device.type == "cpu":
+        # Sync hardware backend with detected device
+        if self.device.type == "cuda":
+            self.hardware.backend = HardwareBackend.CUDA
+        elif str(self.device).startswith('xla'):  # TPU device
+            self.hardware.backend = HardwareBackend.TPU
+        else:
             self.hardware.backend = HardwareBackend.CPU
+
+        # Adjust hardware config based on device type
+        if self.device.type == "cpu":
             self.hardware.tensor_cores_enabled = False
             self.precision.fp8_enabled = False
+        elif str(self.device).startswith('xla'):  # TPU
+            self.hardware.tensor_cores_enabled = False  # TPU doesn't use Tensor Cores
+            self.precision.fp8_enabled = False          # TPU uses bfloat16, not FP8
+            self.hardware.triton_enabled = False        # Triton is CUDA-specific
 
         # Validate memory settings
         if self.memory.max_memory_gb is None:
             if self.device.type == "cuda":
                 self.memory.max_memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            elif str(self.device).startswith('xla'):  # TPU
+                # TPU memory varies by type, use reasonable default
+                self.memory.max_memory_gb = 32.0  # Default for v5e
 
     @classmethod
     def for_inference(cls) -> 'KernelPyTorchConfig':

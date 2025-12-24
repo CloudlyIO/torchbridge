@@ -1,6 +1,6 @@
-# 🛠️ CLI Reference (v0.2.3)
+# 🛠️ CLI Reference (v0.2.4)
 
-**KernelPyTorch** provides professional command-line tools for PyTorch optimization, benchmarking, and system diagnostics using the unified architecture.
+**KernelPyTorch** provides professional command-line tools for PyTorch optimization, benchmarking, and system diagnostics using the unified architecture with TPU support.
 
 ## Overview
 

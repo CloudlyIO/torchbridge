@@ -1,6 +1,6 @@
 # 📦 Installation Guide
 
-**KernelPyTorch v0.2.3** - Production-grade PyTorch GPU optimization framework
+**KernelPyTorch v0.2.4** - Production-grade PyTorch GPU/TPU optimization framework
 
 ## Development Installation (Current)
 
@@ -23,9 +23,9 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
-### Unified Architecture (v0.2.3)
+### Unified Architecture with TPU Support (v0.2.4)
 
-KernelPyTorch v0.2.3 features a unified architecture with:
+KernelPyTorch v0.2.4 features a unified architecture with TPU integration:
 - **Single Configuration System**: `KernelPyTorchConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
