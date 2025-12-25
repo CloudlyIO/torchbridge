@@ -5,6 +5,8 @@ This module consolidates all core PyTorch optimization functionality:
 - Compiler integrations (FlashLight, PyGraph)
 - Optimized layer implementations
 - Basic optimized components
+- Hardware detection and auto-optimization
+- Performance tracking and regression detection
 
 Note: This module unifies previously separate compiler and component modules
 """
@@ -27,6 +29,29 @@ from .compilers.enhanced_fusion import (
     FusionPass,
     OptimizedFXGraph,
     FusionStrategy
+)
+
+# Hardware detection and auto-optimization
+from .hardware_detector import (
+    HardwareDetector,
+    HardwareProfile,
+    HardwareType,
+    OptimizationCapability,
+    detect_hardware,
+    get_optimal_backend,
+    get_hardware_detector
+)
+
+# Performance tracking and regression detection
+from .performance_tracker import (
+    PerformanceTracker,
+    PerformanceMetrics,
+    RegressionResult,
+    MetricType,
+    RegressionSeverity,
+    get_performance_tracker,
+    track_performance,
+    detect_regression
 )
 
 # Optimized layers
@@ -54,6 +79,15 @@ __all__ = [
     'FlashLightKernelCompiler', 'AttentionPattern', 'CompiledKernel', 'KernelCache',
     'PyGraphCUDAOptimizer', 'WorkloadAnalysis', 'GraphDeploymentStrategy', 'CUDAGraphManager',
     'FusionBoundaryOptimizer', 'FusionPass', 'OptimizedFXGraph', 'FusionStrategy',
+
+    # Hardware detection and auto-optimization
+    'HardwareDetector', 'HardwareProfile', 'HardwareType', 'OptimizationCapability',
+    'detect_hardware', 'get_optimal_backend', 'get_hardware_detector',
+
+    # Performance tracking and regression detection
+    'PerformanceTracker', 'PerformanceMetrics', 'RegressionResult',
+    'MetricType', 'RegressionSeverity', 'get_performance_tracker',
+    'track_performance', 'detect_regression',
 
     # Optimized layers - available implementations
     'FusedGELU', 'FusedSwiGLU', 'FusedReLU', 'create_optimized_activation',

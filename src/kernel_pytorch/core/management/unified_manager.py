@@ -31,6 +31,13 @@ import threading
 from abc import ABC, abstractmethod
 
 from ..config import KernelPyTorchConfig, HardwareConfig, MemoryConfig, PrecisionConfig
+from ..hardware_detector import (
+    HardwareDetector,
+    HardwareProfile,
+    HardwareType,
+    detect_hardware,
+    get_optimal_backend
+)
 
 
 class ManagerType(Enum):
@@ -418,6 +425,14 @@ class UnifiedManager:
             ManagerType.INFRASTRUCTURE: self.infrastructure_manager
         }
 
+        # Initialize hardware detector for auto-optimization
+        self.hardware_detector = HardwareDetector()
+        self._hardware_profile: Optional[HardwareProfile] = None
+
+        # Backend optimizer instances (lazy-loaded)
+        self._nvidia_optimizer = None
+        self._tpu_optimizer = None
+
         self._initialized = True
 
     def optimize(self, target: Any, **kwargs) -> Any:
@@ -435,6 +450,210 @@ class UnifiedManager:
         target = self.infrastructure_manager.optimize(target, **kwargs)
 
         return target
+
+    def auto_optimize(
+        self,
+        model: nn.Module,
+        sample_inputs: Optional[torch.Tensor] = None,
+        optimization_level: Optional[str] = None,
+        for_inference: bool = False
+    ) -> nn.Module:
+        """
+        Automatically optimize model based on detected hardware.
+
+        This method detects available hardware and applies the best
+        optimization strategy automatically.
+
+        Args:
+            model: PyTorch model to optimize
+            sample_inputs: Optional sample inputs for compilation
+            optimization_level: Override optimization level (conservative/balanced/aggressive)
+                              If None, automatically determined based on hardware
+            for_inference: Whether optimizing for inference (vs training)
+
+        Returns:
+            Optimized PyTorch model
+
+        Example:
+            >>> manager = UnifiedManager()
+            >>> optimized_model = manager.auto_optimize(model)
+            >>> # Automatically uses NVIDIA/TPU/CPU based on available hardware
+        """
+        # Detect hardware if not cached
+        if self._hardware_profile is None:
+            self._hardware_profile = self.hardware_detector.detect()
+
+        # Determine optimization level if not specified
+        if optimization_level is None:
+            optimization_level = self.hardware_detector.get_recommended_optimization_level(
+                self._hardware_profile
+            )
+
+        # Route to appropriate backend
+        backend_name = self.hardware_detector.get_optimal_backend(self._hardware_profile)
+
+        if backend_name == 'nvidia':
+            result = self._optimize_with_nvidia(
+                model, sample_inputs, optimization_level, for_inference
+            )
+        elif backend_name == 'tpu':
+            result = self._optimize_with_tpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
+        else:
+            result = self._optimize_with_cpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
+
+        # Extract model from result (backends return result objects)
+        if hasattr(result, 'optimized_model'):
+            return result.optimized_model
+        elif hasattr(result, 'model'):
+            return result.model
+        else:
+            # Fallback: result is already the model
+            return result
+
+    def _optimize_with_nvidia(
+        self,
+        model: nn.Module,
+        sample_inputs: Optional[torch.Tensor],
+        optimization_level: str,
+        for_inference: bool
+    ) -> Any:
+        """Optimize model using NVIDIA backend."""
+        try:
+            from ...backends.nvidia import NVIDIAOptimizer
+
+            if self._nvidia_optimizer is None:
+                self._nvidia_optimizer = NVIDIAOptimizer(self.config)
+
+            if for_inference:
+                result = self._nvidia_optimizer.optimize_for_inference(
+                    model, sample_inputs, optimization_level
+                )
+            else:
+                result = self._nvidia_optimizer.optimize_for_training(
+                    model, sample_inputs, optimization_level
+                )
+
+            return result
+
+        except ImportError as e:
+            warnings.warn(f"NVIDIA backend not available: {e}. Using CPU fallback.")
+            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+
+    def _optimize_with_tpu(
+        self,
+        model: nn.Module,
+        sample_inputs: Optional[torch.Tensor],
+        optimization_level: str,
+        for_inference: bool
+    ) -> Any:
+        """Optimize model using TPU backend."""
+        try:
+            from ...backends.tpu import TPUOptimizer
+
+            if self._tpu_optimizer is None:
+                self._tpu_optimizer = TPUOptimizer(self.config)
+
+            result = self._tpu_optimizer.optimize(
+                model, sample_inputs, optimization_level, for_inference
+            )
+
+            return result
+
+        except ImportError as e:
+            warnings.warn(f"TPU backend not available: {e}. Using CPU fallback.")
+            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+
+    def _optimize_with_cpu(
+        self,
+        model: nn.Module,
+        sample_inputs: Optional[torch.Tensor],
+        optimization_level: str,
+        for_inference: bool
+    ) -> Any:
+        """Optimize model for CPU execution (minimal optimization)."""
+        from dataclasses import dataclass
+        from typing import List
+
+        @dataclass
+        class CPUOptimizationResult:
+            optimized_model: nn.Module
+            optimization_level: str
+            optimizations_applied: List[str]
+            backend: str = "cpu"
+
+        # For CPU, just set to eval mode if for inference
+        if for_inference:
+            model.eval()
+            optimizations = ["eval_mode"]
+        else:
+            optimizations = []
+
+        return CPUOptimizationResult(
+            optimized_model=model,
+            optimization_level=optimization_level,
+            optimizations_applied=optimizations
+        )
+
+    def get_hardware_profile(self, force_redetect: bool = False) -> HardwareProfile:
+        """
+        Get detected hardware profile.
+
+        Args:
+            force_redetect: Force re-detection of hardware
+
+        Returns:
+            HardwareProfile with detected capabilities
+        """
+        if self._hardware_profile is None or force_redetect:
+            self._hardware_profile = self.hardware_detector.detect(force_redetect)
+        return self._hardware_profile
+
+    def get_optimization_recommendations(self, model: Optional[nn.Module] = None) -> Dict[str, Any]:
+        """
+        Get optimization recommendations based on detected hardware.
+
+        Args:
+            model: Optional PyTorch model to analyze (currently unused)
+
+        Returns:
+            Dictionary with recommendations
+        """
+        profile = self.get_hardware_profile()
+
+        recommendations = {
+            'hardware_type': profile.hardware_type.value,
+            'device_name': profile.device_name,
+            'backend': self.hardware_detector.get_optimal_backend(profile),
+            'optimization_level': self.hardware_detector.get_recommended_optimization_level(profile),
+            'capabilities': [cap.value for cap in profile.capabilities],
+            'optimizations': []
+        }
+
+        # Add specific recommendations based on hardware
+        if profile.is_nvidia_h100_or_better():
+            recommendations['optimizations'].append({
+                'type': 'fp8_training',
+                'benefit': '2x training speedup',
+                'requirement': 'H100 or Blackwell GPU'
+            })
+            recommendations['optimizations'].append({
+                'type': 'flash_attention_3',
+                'benefit': '3x memory reduction',
+                'requirement': 'H100 or Blackwell GPU'
+            })
+
+        if profile.is_high_end_tpu():
+            recommendations['optimizations'].append({
+                'type': 'xla_compilation',
+                'benefit': 'Optimized TPU execution',
+                'requirement': f'TPU {profile.tpu_version.value}'
+            })
+
+        return recommendations
 
     def get_status(self) -> Dict[str, Any]:
         """Get status of all managers."""
