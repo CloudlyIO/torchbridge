@@ -27,7 +27,6 @@ from typing import Dict, List, Tuple
 # Import optimization components
 try:
     from kernel_pytorch.core.optimized_layers import FusedGELU, OptimizedLayerNorm
-    from kernel_pytorch.testing_framework.performance_benchmarks import BenchmarkSuite
     OPTIMIZATIONS_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Import warning: {e}")

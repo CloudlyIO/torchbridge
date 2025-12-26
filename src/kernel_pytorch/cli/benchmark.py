@@ -14,7 +14,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
 import kernel_pytorch as kpt
-from kernel_pytorch.testing_framework.performance_benchmarks import PerformanceBenchmarkSuite
 
 
 @dataclass
@@ -198,27 +197,22 @@ Examples:
         results = []
 
         if args.predefined == 'optimization':
-            # Use existing performance benchmarking framework
-            benchmark = PerformanceBenchmarkSuite()
-            predefined_results = benchmark.run_predefined_benchmarks()
+            # Optimization-focused benchmarks (FusedGELU, attention, etc.)
+            test_cases = [
+                ("Linear_512", torch.nn.Linear(512, 512), (32, 512)),
+                ("Linear_1024", torch.nn.Linear(1024, 1024), (32, 1024)),
+                ("FusedGELU", kpt.FusedGELU(), (32, 512)),
+                ("Sequential_MLP", torch.nn.Sequential(
+                    torch.nn.Linear(768, 3072),
+                    torch.nn.GELU(),
+                    torch.nn.Linear(3072, 768)
+                ), (32, 768)),
+            ]
 
-            # Handle the actual nested structure from PerformanceBenchmarkSuite
-            for category_name, category_data in predefined_results.items():
-                if isinstance(category_data, dict):
-                    for sub_name, sub_data_list in category_data.items():
-                        if isinstance(sub_data_list, list) and sub_data_list:
-                            # Take the first result as representative
-                            result_data = sub_data_list[0]
-                            if 'latency_ms' in result_data:
-                                latency_ms = float(result_data['latency_ms'])
-                                results.append(BenchmarkResult(
-                                    name=f"{category_name}_{sub_name}",
-                                    mean_time_ms=latency_ms,
-                                    std_time_ms=0,  # Not available in this format
-                                    throughput_ops_per_sec=float(result_data.get('throughput_ops', 0)),
-                                    memory_usage_mb=float(result_data.get('memory_mb', 0)),
-                                    gpu_utilization_percent=0  # Not available
-                                ))
+            for name, model, input_shape in test_cases:
+                model = model.to(device).eval()
+                result = BenchmarkCommand._benchmark_model(model, name, input_shape, device, args)
+                results.append(result)
 
         elif args.predefined == 'transformers':
             # Transformer-specific benchmarks

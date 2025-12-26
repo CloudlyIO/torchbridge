@@ -67,9 +67,9 @@ class TestPackageInstallation:
         import kernel_pytorch.attention
         assert hasattr(kernel_pytorch.attention, 'FlashAttention2')
 
-        # Test utilities
-        import kernel_pytorch.testing_framework
-        assert hasattr(kernel_pytorch.testing_framework, 'UnifiedValidator')
+        # Test validation
+        import kernel_pytorch.validation
+        assert hasattr(kernel_pytorch.validation, 'UnifiedValidator')
 
     def test_package_metadata(self):
         """Test package metadata is correct."""

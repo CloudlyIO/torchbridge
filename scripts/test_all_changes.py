@@ -105,29 +105,7 @@ def test_next_gen_optimizations():
     print("   Next-generation optimizations working")
 
 
-def test_testing_framework():
-    """Test the testing and validation framework."""
-    from kernel_pytorch.testing_framework import (
-        create_hardware_simulator,
-        create_benchmark_suite,
-        create_validator,
-        UnifiedValidator
-    )
-
-    # Test hardware simulator
-    simulator = create_hardware_simulator(architecture='ampere', simulation_mode='performance')
-    summary = simulator.get_simulation_summary()
-    assert isinstance(summary, dict)
-
-    # Test benchmark suite
-    benchmark = create_benchmark_suite(warmup_iterations=3, measurement_iterations=5)
-    assert benchmark is not None
-
-    # Test unified validator
-    validator = create_validator()
-    assert isinstance(validator, UnifiedValidator)
-
-    print("   Testing framework components working")
+# test_testing_framework removed - testing_framework directory deprecated
 
 
 def test_compiler_optimized_components():
@@ -234,7 +212,6 @@ def test_import_system():
     # Test core components
     from kernel_pytorch.compiler_integration import FlashLightKernelCompiler
     from kernel_pytorch.next_gen_optimizations import AdaptivePrecisionAllocator
-    from kernel_pytorch.testing_framework import create_hardware_simulator
 
     print("   Core import system working")
 
@@ -269,7 +246,6 @@ def main():
     suite.test("Import System", test_import_system)
     suite.test("Compiler Integration", test_compiler_integration)
     suite.test("Next-Gen Optimizations", test_next_gen_optimizations)
-    suite.test("Testing Framework", test_testing_framework)
     suite.test("Advanced Attention Modules", test_attention_modules)
 
     # Optional components (may not be available)

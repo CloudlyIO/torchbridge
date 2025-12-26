@@ -13,8 +13,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 import kernel_pytorch as kpt
-from kernel_pytorch.utils.validation_framework import ComponentValidator
-from kernel_pytorch.utils.compiler_optimization_assistant import CompilerOptimizationAssistant
+from kernel_pytorch.utils.compiler_assistant import CompilerOptimizationAssistant
 
 
 class OptimizeCommand:

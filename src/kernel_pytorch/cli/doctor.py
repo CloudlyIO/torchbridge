@@ -384,7 +384,7 @@ Examples:
 
         # KernelPyTorch components
         try:
-            from kernel_pytorch.utils.compiler_optimization_assistant import CompilerOptimizationAssistant
+            from kernel_pytorch.utils.compiler_assistant import CompilerOptimizationAssistant
             results.append(DiagnosticResult(
                 "KernelPyTorch Optimization",
                 "pass",
