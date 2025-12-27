@@ -7,10 +7,11 @@ Core backend for NVIDIA GPU device management and model preparation.
 import warnings
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Type
 import os
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture
+from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture, PrecisionFormat
+from kernel_pytorch.core.kernel_registry import KernelRegistry, KernelMetadata, KernelType, KernelBackend
 
 
 class NVIDIABackend:
@@ -36,7 +37,14 @@ class NVIDIABackend:
         self._compute_capability = None
         self._device_name = None
 
+        # Initialize kernel registry
+        self._kernel_registry = KernelRegistry()
+
         self._setup_cuda_environment()
+
+        # Register default kernels after CUDA environment is set up
+        if self.config.kernel.enabled and self.is_cuda_available:
+            self._register_default_kernels()
 
     def _setup_cuda_environment(self) -> None:
         """Set up CUDA environment for NVIDIA GPUs."""
@@ -264,3 +272,194 @@ class NVIDIABackend:
         """Reset peak memory statistics."""
         if self.is_cuda_available:
             torch.cuda.reset_peak_memory_stats()
+
+    # ===== Custom Kernel Management =====
+
+    def _register_default_kernels(self) -> None:
+        """Register default CUDA kernels based on hardware capabilities."""
+        try:
+            # Import custom kernels
+            from kernel_pytorch.hardware.gpu.custom_kernels import (
+                FlashAttentionV3, FusedLinearGELU, FusedLinearSiLU
+            )
+
+            # Determine supported precisions based on architecture
+            precisions = [PrecisionFormat.FP32, PrecisionFormat.FP16, PrecisionFormat.BF16]
+            if self.supports_fp8:
+                precisions.append(PrecisionFormat.FP8_E4M3)
+
+            # Register FlashAttention-3 if enabled
+            if self.config.kernel.flash_attention_enabled:
+                fa3_metadata = KernelMetadata(
+                    kernel_id="flash_attention_v3",
+                    kernel_type=KernelType.ATTENTION,
+                    version="3.0",
+                    backend=KernelBackend.CUDA,
+                    description="FlashAttention-3 with FP8 support and Split-K optimization",
+                    min_compute_capability=(7, 0),  # Volta and newer
+                    precision_support=precisions,
+                    kernel_fn=FlashAttentionV3
+                )
+                self._kernel_registry.register_kernel(fa3_metadata)
+
+            # Register Fused Linear+GELU if enabled
+            if self.config.kernel.fused_gelu_enabled:
+                gelu_metadata = KernelMetadata(
+                    kernel_id="fused_linear_gelu",
+                    kernel_type=KernelType.FUSION,
+                    version="1.0",
+                    backend=KernelBackend.CUDA,
+                    description="Fused Linear + GELU activation",
+                    min_compute_capability=(7, 0),
+                    precision_support=precisions,
+                    kernel_fn=FusedLinearGELU
+                )
+                self._kernel_registry.register_kernel(gelu_metadata)
+
+            # Register Fused Linear+SiLU if enabled
+            if self.config.kernel.fused_silu_enabled:
+                silu_metadata = KernelMetadata(
+                    kernel_id="fused_linear_silu",
+                    kernel_type=KernelType.FUSION,
+                    version="1.0",
+                    backend=KernelBackend.CUDA,
+                    description="Fused Linear + SiLU activation",
+                    min_compute_capability=(7, 0),
+                    precision_support=precisions,
+                    kernel_fn=FusedLinearSiLU
+                )
+                self._kernel_registry.register_kernel(silu_metadata)
+
+        except ImportError as e:
+            warnings.warn(f"Could not import custom kernels: {e}")
+
+    def get_optimal_attention_kernel(self,
+                                     head_dim: int,
+                                     precision: Optional[PrecisionFormat] = None) -> Optional[Type[nn.Module]]:
+        """
+        Select optimal attention kernel for current hardware.
+
+        Args:
+            head_dim: Attention head dimension
+            precision: Desired precision (auto-detected if None)
+
+        Returns:
+            Optimal attention kernel class, or None if no suitable kernel found
+        """
+        if not self.config.kernel.enabled or not self.config.kernel.flash_attention_enabled:
+            return None
+
+        # Auto-detect precision if not specified
+        if precision is None:
+            if self.supports_fp8 and self.config.kernel.fp8_attention:
+                precision = PrecisionFormat.FP8_E4M3
+            else:
+                precision = PrecisionFormat.BF16
+
+        # Get optimal kernel from registry
+        kernel_metadata = self._kernel_registry.get_optimal_kernel(
+            kernel_type=KernelType.ATTENTION,
+            device=self.device,
+            precision=precision,
+            prefer_backend=KernelBackend.CUDA
+        )
+
+        if kernel_metadata:
+            return kernel_metadata.kernel_fn
+
+        return None
+
+    def prepare_model_with_custom_kernels(self, model: nn.Module) -> nn.Module:
+        """
+        Replace model layers with optimized custom kernels.
+
+        This method scans the model and replaces compatible layers with
+        fused kernel implementations for better performance.
+
+        Args:
+            model: PyTorch model to optimize
+
+        Returns:
+            Model with custom kernels applied
+        """
+        if not self.config.kernel.enabled or not self.is_cuda_available:
+            return model
+
+        try:
+            from kernel_pytorch.hardware.gpu.custom_kernels import (
+                FusedLinearGELU, FusedLinearSiLU
+            )
+
+            # Track replacements
+            replacements = []
+
+            # Scan for patterns to replace
+            for name, module in list(model.named_modules()):
+                # Look for Linear + GELU pattern
+                if self.config.kernel.fuse_linear_activation and self.config.kernel.fused_gelu_enabled:
+                    if isinstance(module, nn.Sequential) and len(module) == 2:
+                        if isinstance(module[0], nn.Linear) and isinstance(module[1], nn.GELU):
+                            linear = module[0]
+                            fused = FusedLinearGELU(
+                                in_features=linear.in_features,
+                                out_features=linear.out_features,
+                                bias=linear.bias is not None
+                            )
+                            # Copy weights
+                            fused.weight.data.copy_(linear.weight.data)
+                            if linear.bias is not None:
+                                fused.bias.data.copy_(linear.bias.data)
+
+                            # Replace in parent
+                            parent_name = '.'.join(name.split('.')[:-1]) if '.' in name else ''
+                            child_name = name.split('.')[-1]
+                            if parent_name:
+                                parent = dict(model.named_modules())[parent_name]
+                                setattr(parent, child_name, fused)
+                            else:
+                                setattr(model, child_name, fused)
+
+                            replacements.append(f"{name}: Linear+GELU → FusedLinearGELU")
+
+                # Look for Linear + SiLU pattern
+                if self.config.kernel.fuse_linear_activation and self.config.kernel.fused_silu_enabled:
+                    if isinstance(module, nn.Sequential) and len(module) == 2:
+                        if isinstance(module[0], nn.Linear) and isinstance(module[1], nn.SiLU):
+                            linear = module[0]
+                            fused = FusedLinearSiLU(
+                                in_features=linear.in_features,
+                                out_features=linear.out_features,
+                                bias=linear.bias is not None
+                            )
+                            # Copy weights
+                            fused.weight.data.copy_(linear.weight.data)
+                            if linear.bias is not None:
+                                fused.bias.data.copy_(linear.bias.data)
+
+                            # Replace in parent
+                            parent_name = '.'.join(name.split('.')[:-1]) if '.' in name else ''
+                            child_name = name.split('.')[-1]
+                            if parent_name:
+                                parent = dict(model.named_modules())[parent_name]
+                                setattr(parent, child_name, fused)
+                            else:
+                                setattr(model, child_name, fused)
+
+                            replacements.append(f"{name}: Linear+SiLU → FusedLinearSiLU")
+
+            if replacements:
+                print(f"🔧 Applied {len(replacements)} custom kernel replacements:")
+                for r in replacements[:5]:  # Show first 5
+                    print(f"   {r}")
+                if len(replacements) > 5:
+                    print(f"   ... and {len(replacements) - 5} more")
+
+        except Exception as e:
+            warnings.warn(f"Could not apply custom kernels: {e}")
+
+        return model
+
+    @property
+    def kernel_registry(self) -> KernelRegistry:
+        """Get kernel registry instance."""
+        return self._kernel_registry

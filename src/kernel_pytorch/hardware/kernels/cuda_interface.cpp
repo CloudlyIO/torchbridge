@@ -31,6 +31,30 @@ torch::Tensor rotary_embedding_cuda(
     torch::Tensor cos,
     torch::Tensor sin);
 
+// FlashAttention-3 forward declaration
+torch::Tensor flash_attention_v3_cuda(
+    torch::Tensor Q,
+    torch::Tensor K,
+    torch::Tensor V,
+    float scale,
+    bool causal);
+
+// Fused Linear + Activation forward declarations
+torch::Tensor fused_linear_gelu_cuda(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias);
+
+torch::Tensor fused_linear_silu_cuda(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias);
+
+torch::Tensor fused_linear_relu_cuda(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias);
+
 // CPU fallback implementations for debugging/testing
 torch::Tensor fused_layer_norm_cpu(
     torch::Tensor input,
@@ -172,6 +196,150 @@ torch::Tensor rotary_embedding(
     }
 }
 
+torch::Tensor flash_attention_v3(
+    torch::Tensor Q,
+    torch::Tensor K,
+    torch::Tensor V,
+    float scale,
+    bool causal = false) {
+
+    // Input validation
+    TORCH_CHECK(Q.dim() == 4, "Q must be 4-dimensional [batch, heads, seq, head_dim]");
+    TORCH_CHECK(K.dim() == 4, "K must be 4-dimensional [batch, heads, seq, head_dim]");
+    TORCH_CHECK(V.dim() == 4, "V must be 4-dimensional [batch, heads, seq, head_dim]");
+    TORCH_CHECK(Q.sizes() == K.sizes(), "Q and K must have the same shape");
+    TORCH_CHECK(Q.sizes() == V.sizes(), "Q and V must have the same shape");
+    TORCH_CHECK(Q.size(-1) <= 128, "Head dimension must be <= 128 for optimized kernels");
+
+    // Ensure contiguous memory layout
+    Q = Q.contiguous();
+    K = K.contiguous();
+    V = V.contiguous();
+
+    if (Q.is_cuda()) {
+        TORCH_CHECK(K.is_cuda() && V.is_cuda(), "All tensors must be on the same device");
+        return flash_attention_v3_cuda(Q, K, V, scale, causal);
+    } else {
+        // CPU fallback using PyTorch's native implementation
+        auto scores = torch::matmul(Q, K.transpose(-2, -1)) * scale;
+
+        // Apply causal mask if needed
+        if (causal) {
+            int seq_len = Q.size(2);
+            auto mask = torch::triu(
+                torch::ones({seq_len, seq_len}, Q.options()),
+                1
+            ).bool();
+            scores.masked_fill_(mask, -std::numeric_limits<float>::infinity());
+        }
+
+        auto weights = torch::softmax(scores, -1);
+        return torch::matmul(weights, V);
+    }
+}
+
+torch::Tensor fused_linear_gelu(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias) {
+
+    // Input validation
+    TORCH_CHECK(input.dim() == 2, "Input must be 2-dimensional [M, K]");
+    TORCH_CHECK(weight.dim() == 2, "Weight must be 2-dimensional [N, K]");
+    TORCH_CHECK(!bias.defined() || bias.dim() == 1, "Bias must be 1-dimensional [N]");
+    TORCH_CHECK(input.size(1) == weight.size(1), "Input K must match weight K");
+
+    // Ensure contiguous memory layout
+    input = input.contiguous();
+    weight = weight.contiguous();
+    if (bias.defined()) {
+        bias = bias.contiguous();
+    }
+
+    if (input.is_cuda()) {
+        TORCH_CHECK(weight.is_cuda(), "All tensors must be on the same device");
+        if (bias.defined()) {
+            TORCH_CHECK(bias.is_cuda(), "Bias must be on CUDA if input is on CUDA");
+        }
+        return fused_linear_gelu_cuda(input, weight, bias);
+    } else {
+        // CPU fallback
+        auto linear_out = torch::matmul(input, weight.t());
+        if (bias.defined()) {
+            linear_out += bias;
+        }
+        return torch::gelu(linear_out);
+    }
+}
+
+torch::Tensor fused_linear_silu(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias) {
+
+    // Input validation
+    TORCH_CHECK(input.dim() == 2, "Input must be 2-dimensional [M, K]");
+    TORCH_CHECK(weight.dim() == 2, "Weight must be 2-dimensional [N, K]");
+    TORCH_CHECK(!bias.defined() || bias.dim() == 1, "Bias must be 1-dimensional [N]");
+    TORCH_CHECK(input.size(1) == weight.size(1), "Input K must match weight K");
+
+    // Ensure contiguous memory layout
+    input = input.contiguous();
+    weight = weight.contiguous();
+    if (bias.defined()) {
+        bias = bias.contiguous();
+    }
+
+    if (input.is_cuda()) {
+        TORCH_CHECK(weight.is_cuda(), "All tensors must be on the same device");
+        if (bias.defined()) {
+            TORCH_CHECK(bias.is_cuda(), "Bias must be on CUDA if input is on CUDA");
+        }
+        return fused_linear_silu_cuda(input, weight, bias);
+    } else {
+        // CPU fallback
+        auto linear_out = torch::matmul(input, weight.t());
+        if (bias.defined()) {
+            linear_out += bias;
+        }
+        return torch::silu(linear_out);
+    }
+}
+
+torch::Tensor fused_linear_relu(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias) {
+
+    // Input validation
+    TORCH_CHECK(input.dim() == 2, "Input must be 2-dimensional [M, K]");
+    TORCH_CHECK(weight.dim() == 2, "Weight must be 2-dimensional [N, K]");
+    TORCH_CHECK(!bias.defined() || bias.dim() == 1, "Bias must be 1-dimensional [N]");
+    TORCH_CHECK(input.size(1) == weight.size(1), "Input K must match weight K");
+
+    // Ensure contiguous memory layout
+    input = input.contiguous();
+    weight = weight.contiguous();
+    if (bias.defined()) {
+        bias = bias.contiguous();
+    }
+
+    if (input.is_cuda()) {
+        TORCH_CHECK(weight.is_cuda(), "All tensors must be on the same device");
+        if (bias.defined()) {
+            TORCH_CHECK(bias.is_cuda(), "Bias must be on CUDA if input is on CUDA");
+        }
+        return fused_linear_relu_cuda(input, weight, bias);
+    } else {
+        // CPU fallback
+        auto linear_out = torch::matmul(input, weight.t());
+        if (bias.defined()) {
+            linear_out += bias;
+        }
+        return torch::relu(linear_out);
+    }
+}
+
 // Utility functions for performance profiling
 std::vector<double> benchmark_kernel(
     const std::string& kernel_name,
@@ -227,6 +395,22 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("rotary_embedding", &rotary_embedding,
           "Rotary positional embedding",
           py::arg("input"), py::arg("cos"), py::arg("sin"));
+
+    m.def("flash_attention_v3", &flash_attention_v3,
+          "FlashAttention-3 implementation with FP8 support and Split-K optimization",
+          py::arg("Q"), py::arg("K"), py::arg("V"), py::arg("scale"), py::arg("causal") = false);
+
+    m.def("fused_linear_gelu", &fused_linear_gelu,
+          "Fused Linear + GELU activation",
+          py::arg("input"), py::arg("weight"), py::arg("bias"));
+
+    m.def("fused_linear_silu", &fused_linear_silu,
+          "Fused Linear + SiLU activation",
+          py::arg("input"), py::arg("weight"), py::arg("bias"));
+
+    m.def("fused_linear_relu", &fused_linear_relu,
+          "Fused Linear + ReLU activation",
+          py::arg("input"), py::arg("weight"), py::arg("bias"));
 
     // Utility functions
     m.def("benchmark_kernel", &benchmark_kernel,

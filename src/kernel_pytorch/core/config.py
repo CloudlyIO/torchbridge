@@ -412,6 +412,104 @@ class ValidationConfig:
 
 
 @dataclass
+class KernelConfig:
+    """
+    Custom CUDA kernel configuration for Phase 4A.
+
+    Controls the behavior of custom CUDA kernels including FlashAttention-3,
+    fused Linear+Activation, and other optimized operations.
+
+    This configuration integrates with the KernelRegistry system to enable
+    automatic kernel selection based on hardware capabilities and user preferences.
+    """
+
+    # Global kernel settings
+    enabled: bool = True
+    validate_kernels_on_load: bool = True
+    auto_select_optimal: bool = True
+
+    # FlashAttention settings
+    flash_attention_enabled: bool = True
+    flash_attention_version: str = "auto"  # "2", "3", or "auto"
+    flash_attention_split_k: bool = True   # Enable Split-K for long sequences
+    flash_attention_causal_default: bool = False
+
+    # Fused Linear + Activation settings
+    fuse_linear_activation: bool = True
+    fused_gelu_enabled: bool = True
+    fused_silu_enabled: bool = True
+    fused_relu_enabled: bool = True
+
+    # FP8 kernel settings (H100/Blackwell only)
+    fp8_layernorm: bool = False  # Auto-enabled on H100+
+    fp8_attention: bool = False  # Auto-enabled on H100+
+    fp8_matmul: bool = False
+
+    # Kernel fusion settings
+    fusion_enabled: bool = True
+    fusion_threshold: int = 2  # Minimum ops to fuse
+
+    # Performance settings
+    kernel_cache_enabled: bool = True
+    benchmark_on_init: bool = False  # Benchmark kernels during initialization
+    fallback_to_pytorch: bool = True  # Use PyTorch if kernel fails
+
+    # Memory settings
+    preallocate_kernel_memory: bool = False
+    kernel_memory_pool_mb: int = 512
+
+    # Debugging and profiling
+    kernel_profiling: bool = False
+    kernel_logging: bool = False
+    save_kernel_stats: bool = False
+
+    def __post_init__(self):
+        """Auto-configure kernel settings based on hardware."""
+        # Import here to avoid circular dependency
+        try:
+            import torch
+
+            # Disable all kernels if CUDA not available
+            if not torch.cuda.is_available():
+                self.enabled = False
+                self.flash_attention_enabled = False
+                self.fuse_linear_activation = False
+                return
+
+            # Get compute capability
+            compute_cap = torch.cuda.get_device_capability(0)
+
+            # Enable FP8 kernels only on H100+ (compute capability 9.0+)
+            if compute_cap >= (9, 0):
+                self.fp8_layernorm = True
+                self.fp8_attention = True
+                self.fp8_matmul = True
+
+                # Default to FlashAttention-3 on H100+
+                if self.flash_attention_version == "auto":
+                    self.flash_attention_version = "3"
+            else:
+                # Use FlashAttention-2 on older GPUs
+                if self.flash_attention_version == "auto":
+                    self.flash_attention_version = "2"
+
+                # Disable FP8 on older GPUs
+                self.fp8_layernorm = False
+                self.fp8_attention = False
+                self.fp8_matmul = False
+
+            # Disable Split-K on older GPUs (requires compute 8.0+)
+            if compute_cap < (8, 0):
+                self.flash_attention_split_k = False
+
+        except Exception:
+            # If anything fails, use safe defaults
+            self.flash_attention_version = "2"
+            self.fp8_layernorm = False
+            self.fp8_attention = False
+
+
+@dataclass
 class KernelPyTorchConfig:
     """
     Unified configuration for the entire KernelPyTorch framework.
@@ -431,6 +529,7 @@ class KernelPyTorchConfig:
     hardware: HardwareConfig = field(default_factory=HardwareConfig)
     distributed: DistributedConfig = field(default_factory=DistributedConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
+    kernel: KernelConfig = field(default_factory=KernelConfig)
 
     # Global settings
     device: torch.device = field(default_factory=lambda: KernelPyTorchConfig._detect_device())
