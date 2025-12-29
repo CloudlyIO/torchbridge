@@ -4,6 +4,7 @@ CUDA Utilities and Optimizations
 General CUDA utilities and helper functions for NVIDIA GPU optimization.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -12,6 +13,8 @@ import os
 import subprocess
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+
+logger = logging.getLogger(__name__)
 
 
 class CUDADeviceManager:
@@ -61,10 +64,11 @@ class CUDADeviceManager:
                 'max_shared_memory_per_block': props.max_shared_memory_per_block,
             }
 
-        print(f"🔧 CUDA Device Manager initialized:")
-        print(f"   Available devices: {device_count}")
+        logger.info("CUDA Device Manager initialized: num_devices=%d", device_count)
         for i, props in self._device_properties.items():
-            print(f"   Device {i}: {props['name']} (CC {props['compute_capability']})")
+            logger.debug("  Device %d: %s (CC %s, %.1f GB)",
+                        i, props['name'], props['compute_capability'],
+                        props['total_memory_gb'])
 
     @property
     def device(self) -> torch.device:
@@ -176,8 +180,8 @@ class CUDAOptimizations:
                 try:
                     if hasattr(module, 'to_memory_format'):
                         module.to(memory_format=torch.channels_last)
-                except Exception:
-                    pass
+                except (RuntimeError, TypeError) as e:
+                    logger.debug("Could not convert to channels_last: %s", e)
 
         return model
 
@@ -315,8 +319,9 @@ class CUDAUtilities:
                     'memory_total_mb': float(values[3]),
                 }
 
-        except Exception:
-            pass
+        except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError) as e:
+            # nvidia-smi not available or failed, fall back to PyTorch metrics
+            logger.debug("nvidia-smi failed, using PyTorch metrics: %s", e)
 
         # Fallback to PyTorch metrics
         return {

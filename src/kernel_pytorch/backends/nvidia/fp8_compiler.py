@@ -1,9 +1,21 @@
 """
 FP8 Compiler for NVIDIA H100/Blackwell
 
-Provides FP8 training and inference support for Hopper and Blackwell architectures.
+**v0.4.0 STATUS: METADATA-ONLY - NOT PRODUCTION FP8**
+
+This module provides FP8 layer identification and metadata marking for H100/Blackwell
+GPUs. In v0.4.0, it does NOT perform actual FP8 quantization or arithmetic.
+Full FP8 implementation with NVIDIA Transformer Engine is planned for v0.5.0.
+
+Use this module for:
+- Planning FP8 deployments (layer identification, performance estimation)
+- Preparing models for future FP8 optimization (v0.5.0)
+- Infrastructure testing and validation
+
+For ACTUAL FP8 training in production, use NVIDIA Transformer Engine directly.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -11,6 +23,8 @@ from typing import Dict, Any, Optional, Set
 from dataclasses import dataclass
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,8 +40,26 @@ class FP8Compiler:
     """
     FP8 compiler for NVIDIA H100 and Blackwell GPUs.
 
-    Provides FP8 (8-bit floating point) training and inference support
-    for maximum performance on Hopper and Blackwell architectures.
+    **v0.4.0 LIMITATION - METADATA-ONLY**:
+    This version provides FP8 METADATA marking only. Layers are identified
+    and marked for FP8, but actual FP8 quantization and arithmetic are NOT
+    performed. Full FP8 implementation with NVIDIA Transformer Engine
+    integration is planned for v0.5.0.
+
+    Current capabilities (v0.4.0):
+    - Identifies FP8-capable layers (Linear, Conv, Attention)
+    - Marks layers with '_fp8_enabled' attribute
+    - Validates hardware support (H100/Blackwell)
+    - Estimates performance improvements (~2x theoretical)
+    - Prepares infrastructure for v0.5.0
+
+    Future capabilities (v0.5.0):
+    - Actual FP8 weight quantization
+    - FP8 activation scaling
+    - FP8 gradient scaling with Transformer Engine
+    - Calibration and accuracy validation
+
+    For production FP8 training NOW, use NVIDIA Transformer Engine directly.
     """
 
     def __init__(self, config: Optional[KernelPyTorchConfig] = None):
@@ -158,26 +190,64 @@ class FP8Compiler:
                 )
 
     def _add_fp8_scaling_hooks(self, model: nn.Module) -> nn.Module:
-        """Add FP8 scaling hooks for training."""
-        # In production, this would integrate with transformer_engine
-        # or similar libraries for FP8 scaling
+        """Add FP8 scaling hooks for training.
 
-        # Add forward pre-hook for activation scaling
+        **IMPORTANT - v0.4.0 LIMITATION**:
+        FP8 support in v0.4.0 is METADATA-ONLY. The FP8Compiler marks layers as
+        FP8-enabled and estimates performance, but does NOT perform actual FP8
+        operations. This is intentional - full FP8 implementation is planned for v0.5.0.
+
+        Current behavior:
+        - Marks layers with '_fp8_enabled' attribute
+        - Estimates 2x speedup for performance planning
+        - Does NOT quantize weights or activations
+        - Does NOT perform FP8 arithmetic
+
+        For actual FP8 training on H100/Blackwell, use NVIDIA Transformer Engine
+        directly or wait for v0.5.0 integration.
+
+        Roadmap:
+        - v0.4.0 (current): Metadata-only, layer marking
+        - v0.5.0 (planned): Full FP8 with Transformer Engine integration
+
+        Raises:
+            DeprecationWarning: FP8 hooks are metadata-only in v0.4.0
+        """
+        import warnings
+        warnings.warn(
+            "FP8 support is metadata-only in v0.4.0. Layers are marked for FP8 but "
+            "no actual FP8 operations are performed. Full FP8 implementation with "
+            "NVIDIA Transformer Engine integration is planned for v0.5.0. "
+            "For production FP8 training, use Transformer Engine directly.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
+        # Add forward pre-hook for activation scaling (NO-OP in v0.4.0)
         def fp8_forward_pre_hook(module, inputs):
+            """
+            Metadata-only hook (v0.4.0).
+            In v0.5.0, this will apply FP8 scaling from transformer_engine.
+            """
             if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
-                # Apply FP8 scaling (simplified - actual implementation
-                # would use proper FP8 scaling from transformer_engine)
-                return inputs
+                # TODO (v0.5.0): Integrate with transformer_engine for actual FP8 scaling
+                # return scale_to_fp8(inputs)  # Future implementation
+                return inputs  # NO-OP in v0.4.0
             return inputs
 
-        # Add forward hook for gradient scaling
+        # Add forward hook for gradient scaling (NO-OP in v0.4.0)
         def fp8_forward_hook(module, inputs, outputs):
+            """
+            Metadata-only hook (v0.4.0).
+            In v0.5.0, this will apply FP8 gradient scaling.
+            """
             if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
-                # Apply FP8 gradient scaling
-                return outputs
+                # TODO (v0.5.0): Apply FP8 gradient scaling
+                # return scale_fp8_gradients(outputs)  # Future implementation
+                return outputs  # NO-OP in v0.4.0
             return outputs
 
-        # Register hooks on FP8-enabled layers
+        # Register hooks on FP8-enabled layers (for v0.5.0 compatibility)
         for name, module in model.named_modules():
             if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
                 module.register_forward_pre_hook(fp8_forward_pre_hook)

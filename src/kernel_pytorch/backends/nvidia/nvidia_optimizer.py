@@ -4,6 +4,7 @@ NVIDIA Optimizer Implementation
 High-level optimizer for NVIDIA GPU models with multiple optimization levels.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -14,6 +15,8 @@ import time
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
 from .nvidia_backend import NVIDIABackend
 from .fp8_compiler import FP8Compiler
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -208,8 +211,9 @@ class NVIDIAOptimizer:
             if hasattr(module, 'set_use_memory_efficient_attention_xformers'):
                 try:
                     module.set_use_memory_efficient_attention_xformers(True)
-                except Exception:
-                    pass
+                except (AttributeError, RuntimeError) as e:
+                    # Method exists but may not be supported on this hardware
+                    logger.debug("Could not enable memory-efficient attention: %s", e)
 
         # For inference, enable additional optimizations
         if for_inference:

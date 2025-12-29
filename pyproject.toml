@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kernel-pytorch"
-version = "0.3.0"
+version = "0.3.1"
 description = "Production-grade PyTorch GPU optimization framework with custom CUDA kernels (FlashAttention-3, Fused ops) - 2-10x performance improvements"
 authors = [{name = "KernelPyTorch Team"}]
 readme = "README.md"

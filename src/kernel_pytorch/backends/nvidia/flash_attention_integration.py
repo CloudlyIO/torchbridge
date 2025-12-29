@@ -4,6 +4,7 @@ FlashAttention-3 Integration for NVIDIA GPUs
 Optimized attention implementation for H100, Blackwell, and newer NVIDIA GPUs.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -12,6 +13,8 @@ from typing import Optional, Tuple
 import math
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+
+logger = logging.getLogger(__name__)
 
 
 class FlashAttention3(nn.Module):
@@ -28,6 +31,7 @@ class FlashAttention3(nn.Module):
         num_heads: int,
         dropout: float = 0.0,
         bias: bool = True,
+        causal: bool = False,
         config: Optional[KernelPyTorchConfig] = None
     ):
         """
@@ -38,6 +42,7 @@ class FlashAttention3(nn.Module):
             num_heads: Number of attention heads
             dropout: Dropout probability
             bias: Whether to use bias in linear layers
+            causal: Whether to use causal (autoregressive) masking
             config: KernelPyTorch configuration
         """
         super().__init__()
@@ -45,6 +50,7 @@ class FlashAttention3(nn.Module):
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.dropout = dropout
+        self.causal = causal
         self.head_dim = embed_dim // num_heads
 
         if embed_dim % num_heads != 0:
@@ -169,7 +175,7 @@ class FlashAttention3(nn.Module):
                 q, k, v,
                 dropout_p=self.dropout if self.training else 0.0,
                 softmax_scale=None,  # Use default 1/sqrt(head_dim)
-                causal=False,  # TODO: Make configurable
+                causal=self.causal,
             )
 
             # Transpose back

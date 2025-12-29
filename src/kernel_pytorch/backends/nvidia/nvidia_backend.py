@@ -4,6 +4,7 @@ NVIDIA Backend Implementation
 Core backend for NVIDIA GPU device management and model preparation.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -12,6 +13,8 @@ import os
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture, PrecisionFormat
 from kernel_pytorch.core.kernel_registry import KernelRegistry, KernelMetadata, KernelType, KernelBackend
+
+logger = logging.getLogger(__name__)
 
 
 class NVIDIABackend:
@@ -73,12 +76,10 @@ class NVIDIABackend:
                 torch.backends.cuda.matmul.allow_tf32 = True
                 torch.backends.cudnn.allow_tf32 = True
 
-            print(f"🔧 NVIDIA Backend initialized:")
-            print(f"   Device: {self._device_name}")
-            print(f"   Compute Capability: {self._compute_capability}")
-            print(f"   Available devices: {len(self._devices)}")
-            print(f"   Architecture: {self.nvidia_config.architecture.value}")
-            print(f"   FP8 enabled: {self.nvidia_config.fp8_enabled}")
+            logger.info("NVIDIA Backend initialized: device=%s, compute_capability=%s, "
+                       "num_devices=%d, architecture=%s, fp8_enabled=%s",
+                       self._device_name, self._compute_capability, len(self._devices),
+                       self.nvidia_config.architecture.value, self.nvidia_config.fp8_enabled)
 
     @property
     def device(self) -> torch.device:
@@ -185,8 +186,9 @@ class NVIDIABackend:
                 if hasattr(module, 'to_memory_format'):
                     try:
                         module.to(memory_format=torch.channels_last)
-                    except Exception:
-                        pass  # Not all modules support channels_last
+                    except (RuntimeError, TypeError) as e:
+                        # Not all modules support channels_last
+                        logger.debug("Could not convert to channels_last: %s", e)
 
         return model
 
@@ -448,11 +450,11 @@ class NVIDIABackend:
                             replacements.append(f"{name}: Linear+SiLU → FusedLinearSiLU")
 
             if replacements:
-                print(f"🔧 Applied {len(replacements)} custom kernel replacements:")
-                for r in replacements[:5]:  # Show first 5
-                    print(f"   {r}")
+                logger.info("Applied %d custom kernel replacements", len(replacements))
+                for r in replacements[:5]:  # Log first 5
+                    logger.debug("  %s", r)
                 if len(replacements) > 5:
-                    print(f"   ... and {len(replacements) - 5} more")
+                    logger.debug("  ... and %d more", len(replacements) - 5)
 
         except Exception as e:
             warnings.warn(f"Could not apply custom kernels: {e}")

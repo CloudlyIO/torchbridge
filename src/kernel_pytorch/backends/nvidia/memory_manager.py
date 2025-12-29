@@ -4,6 +4,7 @@ NVIDIA Memory Manager
 GPU memory allocation and optimization for NVIDIA devices.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -12,6 +13,9 @@ from collections import defaultdict
 import gc
 
 from kernel_pytorch.core.config import KernelPyTorchConfig
+from .nvidia_exceptions import MemoryAllocationError, OutOfMemoryError
+
+logger = logging.getLogger(__name__)
 
 
 class NVIDIAMemoryManager:
@@ -177,6 +181,135 @@ class NVIDIAMemoryManager:
             }
 
         return stats
+
+    def check_memory_available(self, required_mb: float) -> bool:
+        """
+        Check if required memory is available on GPU.
+
+        Args:
+            required_mb: Required memory in megabytes
+
+        Returns:
+            True if memory is available, False otherwise
+        """
+        if not torch.cuda.is_available():
+            logger.warning("CUDA not available, cannot check GPU memory")
+            return False
+
+        try:
+            # Get current memory stats
+            total_memory = torch.cuda.get_device_properties(0).total_memory / (1024 ** 2)  # MB
+            allocated_memory = torch.cuda.memory_allocated() / (1024 ** 2)  # MB
+            reserved_memory = torch.cuda.memory_reserved() / (1024 ** 2)  # MB
+
+            # Available memory is total - reserved (not allocated, as reserved includes fragmentation)
+            available_memory = total_memory - reserved_memory
+
+            logger.debug("Memory check: required=%.1f MB, available=%.1f MB (total=%.1f MB, reserved=%.1f MB)",
+                        required_mb, available_memory, total_memory, reserved_memory)
+
+            return available_memory >= required_mb
+
+        except Exception as e:
+            logger.error("Failed to check memory availability: %s", e)
+            return False
+
+    def _estimate_tensor_size(self, shape: Tuple[int, ...], dtype: torch.dtype) -> float:
+        """
+        Estimate tensor size in megabytes.
+
+        Args:
+            shape: Tensor shape
+            dtype: Data type
+
+        Returns:
+            Estimated size in MB
+        """
+        num_elements = 1
+        for dim in shape:
+            num_elements *= dim
+
+        # Get dtype size in bytes
+        dtype_size = torch.tensor([], dtype=dtype).element_size()
+
+        size_bytes = num_elements * dtype_size
+        size_mb = size_bytes / (1024 ** 2)
+
+        return size_mb
+
+    def allocate_with_oom_protection(
+        self,
+        shape: Tuple[int, ...],
+        dtype: torch.dtype = torch.float32,
+        requires_grad: bool = False,
+        safety_margin: float = 1.2
+    ) -> torch.Tensor:
+        """
+        Allocate tensor with out-of-memory protection.
+
+        Args:
+            shape: Tensor shape
+            dtype: Data type
+            requires_grad: Whether tensor requires gradients
+            safety_margin: Safety margin multiplier (default 1.2 for 20% buffer)
+
+        Returns:
+            Allocated tensor
+
+        Raises:
+            OutOfMemoryError: If insufficient memory available
+            MemoryAllocationError: If allocation fails for other reasons
+        """
+        # Estimate required memory
+        required_mb = self._estimate_tensor_size(shape, dtype)
+        required_with_margin = required_mb * safety_margin
+
+        logger.debug("Allocating tensor: shape=%s, dtype=%s, size=%.1f MB (with margin: %.1f MB)",
+                    shape, dtype, required_mb, required_with_margin)
+
+        # Check if memory is available
+        if not self.check_memory_available(required_with_margin):
+            # Try to free up memory
+            self.clear_pool()
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            # Check again after cleanup
+            if not self.check_memory_available(required_with_margin):
+                stats = self.get_memory_stats()
+                raise OutOfMemoryError(
+                    f"Insufficient GPU memory for tensor of size {required_mb:.1f} MB. "
+                    f"Allocated: {stats.get('allocated_gb', 0):.2f} GB, "
+                    f"Reserved: {stats.get('reserved_gb', 0):.2f} GB. "
+                    f"Required: {required_with_margin:.1f} MB"
+                )
+
+        # Attempt allocation
+        try:
+            tensor = torch.zeros(
+                shape,
+                dtype=dtype,
+                device=self._device,
+                requires_grad=requires_grad
+            )
+
+            # Track allocation
+            self._allocation_history.append({
+                'shape': shape,
+                'dtype': dtype,
+                'size_bytes': tensor.element_size() * tensor.numel(),
+                'pool_id': None
+            })
+
+            logger.debug("Successfully allocated tensor: %s", shape)
+            return tensor
+
+        except RuntimeError as e:
+            if "out of memory" in str(e).lower():
+                raise OutOfMemoryError(f"GPU out of memory while allocating tensor: {e}") from e
+            else:
+                raise MemoryAllocationError(f"Failed to allocate tensor: {e}") from e
 
     def get_pool_stats(self, pool_id: str) -> Dict[str, Any]:
         """
