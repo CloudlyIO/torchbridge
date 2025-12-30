@@ -5,6 +5,7 @@ High-level optimizer for TPU models that combines backend preparation,
 XLA compilation, and TPU-specific optimizations.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -14,6 +15,9 @@ from dataclasses import dataclass
 from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig
 from .tpu_backend import TPUBackend
 from .xla_compiler import XLACompiler
+from .tpu_exceptions import TPUOptimizationError, TPUValidationError, raise_or_warn
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -69,22 +73,22 @@ class TPUOptimizer:
         import time
         start_time = time.time()
 
-        print(f"🚀 Starting TPU optimization (level: {optimization_level})")
+        logger.info("Starting TPU optimization: level=%s", optimization_level)
 
         # Step 1: Prepare model for TPU backend
-        print("📋 Step 1: Preparing model for TPU...")
+        logger.debug("Step 1: Preparing model for TPU")
         prepared_model = self.backend.prepare_model(model)
 
         # Step 2: Apply optimization-level specific changes
-        print(f"⚙️ Step 2: Applying {optimization_level} optimizations...")
+        logger.debug("Step 2: Applying %s optimizations", optimization_level)
         optimized_model = self._apply_optimization_level(prepared_model, optimization_level)
 
         # Step 3: Compile with XLA
-        print("🔧 Step 3: Compiling with XLA...")
+        logger.debug("Step 3: Compiling with XLA")
         compiled_model = self.compiler.compile_model(optimized_model, sample_inputs)
 
         # Step 4: Validate optimization
-        print("✅ Step 4: Validating optimization...")
+        logger.debug("Step 4: Validating optimization")
         self._validate_optimization(compiled_model, sample_inputs)
 
         optimization_time = time.time() - start_time
@@ -117,7 +121,7 @@ class TPUOptimizer:
             'optimization_time': optimization_time
         })
 
-        print(f"🎯 TPU optimization completed in {optimization_time:.2f}s")
+        logger.info("TPU optimization completed: time=%.2fs, level=%s", optimization_time, optimization_level)
         return result
 
     def _apply_optimization_level(self, model: nn.Module, level: str) -> nn.Module:
@@ -185,18 +189,21 @@ class TPUOptimizer:
         return model
 
     def _apply_layer_fusion(self, model: nn.Module) -> nn.Module:
-        """Apply layer fusion optimizations."""
+        """
+        Apply layer fusion optimizations.
 
-        # Look for common fusion patterns
-        for name, module in model.named_modules():
-            # Fuse Linear + Activation patterns
-            if isinstance(module, nn.Sequential):
-                if len(module) >= 2:
-                    if (isinstance(module[0], nn.Linear) and
-                        isinstance(module[1], (nn.ReLU, nn.GELU, nn.SiLU))):
-                        # Mark for fusion (XLA will handle this automatically)
-                        pass
+        Note: XLA compiler automatically fuses operations during compilation,
+        including Linear+Activation patterns, conv+batch_norm, and other
+        common patterns. No explicit marking is required.
 
+        This method serves as a placeholder for future manual fusion hints
+        if needed, but currently relies on XLA's automatic fusion capabilities.
+        """
+        # XLA handles layer fusion automatically during compilation
+        # Common fusions include:
+        # - Linear + Activation (ReLU, GELU, SiLU)
+        # - Conv + BatchNorm
+        # - ElementWise operations
         return model
 
     def _optimize_attention_layers(self, model: nn.Module) -> nn.Module:
@@ -236,13 +243,23 @@ class TPUOptimizer:
         return model
 
     def _optimize_transformer_model(self, model: nn.Module) -> nn.Module:
-        """Apply Transformer-specific optimizations."""
+        """
+        Apply Transformer-specific optimizations.
 
-        # Enable sequence length bucketing for variable length inputs
-        if hasattr(model, 'config'):
-            if hasattr(model.config, 'max_position_embeddings'):
-                # Optimize for common sequence lengths
-                pass
+        Note: For Transformer models, XLA automatically optimizes:
+        - Attention computation patterns
+        - Matrix multiplications in feed-forward layers
+        - Layer normalization operations
+        - Residual connections
+
+        For sequence length optimizations, use XLA's dynamic shape support
+        which handles variable-length sequences efficiently.
+        """
+        # XLA handles Transformer optimizations automatically
+        # Additional optimizations can be enabled via:
+        # - config.enable_xla_dynamic_shapes for variable sequences
+        # - config.gradient_checkpointing for memory efficiency
+        # - config.mixed_precision for compute efficiency
 
         return model
 
@@ -266,7 +283,7 @@ class TPUOptimizer:
         """Validate that optimization was successful."""
 
         if sample_inputs is None:
-            print("⚠️  No sample inputs provided, skipping validation")
+            logger.warning("No sample inputs provided, skipping validation")
             return
 
         try:
@@ -287,10 +304,16 @@ class TPUOptimizer:
             # Synchronize TPU operations
             self.backend.synchronize()
 
-            print("✅ Optimization validation passed")
+            logger.info("Optimization validation passed")
 
         except Exception as e:
-            warnings.warn(f"Optimization validation failed: {e}")
+            error_msg = f"Optimization validation failed: {str(e)}"
+            raise_or_warn(
+                error_msg,
+                TPUValidationError,
+                strict_mode=self.tpu_config.enable_strict_validation,
+                logger=logger
+            )
 
     def optimize_for_inference(self, model: nn.Module,
                              sample_inputs: Optional[Union[torch.Tensor, tuple]] = None) -> TPUOptimizationResult:

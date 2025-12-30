@@ -362,7 +362,9 @@ class TPUIntegrationDemo:
 
         # Compilation statistics
         comp_stats = compiler.get_compilation_stats()
-        print(f"      Compiled models: {comp_stats['total_compiled_models']}")
+        # v0.3.2: Changed to cache-based statistics
+        cache_stats = comp_stats.get('compilation_cache', {})
+        print(f"      Cache size: {cache_stats.get('size', 0)}/{comp_stats.get('cache_max_size', 0)}")
         print(f"      XLA available: {comp_stats['xla_available']}")
 
         results['xla_compilation'] = {
@@ -440,7 +442,7 @@ class TPUIntegrationDemo:
 
         # Get and return tensor
         pool_tensor = memory_manager.get_tensor_from_pool(pool_id)
-        return_success = memory_manager.return_tensor_to_pool(pool_id, pool_tensor) if pool_tensor else False
+        return_success = memory_manager.return_tensor_to_pool(pool_id, pool_tensor) if pool_tensor is not None else False
 
         pool_stats = memory_manager.get_pool_stats()
 

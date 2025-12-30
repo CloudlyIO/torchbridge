@@ -5,6 +5,7 @@ Core TPU backend that provides device management, model preparation,
 and integration with PyTorch/XLA for Google Cloud TPUs.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -12,6 +13,9 @@ from typing import Dict, Any, Optional, Union, List, Tuple
 from pathlib import Path
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
+from .cache_utils import LRUCache
+
+logger = logging.getLogger(__name__)
 
 
 class TPUBackend:
@@ -38,9 +42,9 @@ class TPUBackend:
         self._rank = 0
         self._setup_xla_environment()
 
-        # Performance tracking
-        self._model_cache = {}
-        self._compilation_cache = {}
+        # Performance tracking with LRU caches
+        self._model_cache = LRUCache(max_size=self.tpu_config.cache_max_size)
+        self._compilation_cache = LRUCache(max_size=self.tpu_config.cache_max_size)
 
     def _setup_xla_environment(self) -> None:
         """Set up PyTorch/XLA environment for TPU."""
@@ -57,12 +61,14 @@ class TPUBackend:
             # Set up XLA environment variables
             self._configure_xla_flags()
 
-            print(f"🚀 TPU Backend initialized:")
-            print(f"   Device: {self._xla_device}")
-            print(f"   World size: {self._world_size}")
-            print(f"   Rank: {self._rank}")
-            print(f"   TPU Version: {self.tpu_config.version.value}")
-            print(f"   Topology: {self.tpu_config.topology.value}")
+            logger.info(
+                "TPU Backend initialized: device=%s, world_size=%d, rank=%d, version=%s, topology=%s",
+                self._xla_device,
+                self._world_size,
+                self._rank,
+                self.tpu_config.version.value,
+                self.tpu_config.topology.value
+            )
 
         except ImportError:
             warnings.warn(
@@ -134,8 +140,9 @@ class TPUBackend:
         """
         # Check cache
         model_id = id(model)
-        if model_id in self._model_cache:
-            return self._model_cache[model_id]
+        cached_model = self._model_cache.get(model_id)
+        if cached_model is not None:
+            return cached_model
 
         # Move model to TPU device
         model = model.to(self.device)
@@ -144,7 +151,7 @@ class TPUBackend:
         model = self._apply_tpu_optimizations(model)
 
         # Cache the prepared model
-        self._model_cache[model_id] = model
+        self._model_cache.set(model_id, model)
 
         return model
 
@@ -248,8 +255,8 @@ class TPUBackend:
             'world_size': self.world_size,
             'rank': self.rank,
             'memory_fraction': self.tpu_config.memory_fraction,
-            'models_cached': len(self._model_cache),
-            'compilations_cached': len(self._compilation_cache)
+            'model_cache_stats': self._model_cache.get_stats(),
+            'compilation_cache_stats': self._compilation_cache.get_stats()
         }
 
         try:

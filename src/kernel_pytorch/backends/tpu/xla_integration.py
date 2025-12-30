@@ -5,6 +5,7 @@ Specialized utilities for PyTorch/XLA integration, including
 device management, distributed training, and XLA-specific optimizations.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -13,6 +14,8 @@ import os
 import time
 
 from kernel_pytorch.core.config import TPUConfig, TPUVersion, TPUTopology, TPUCompilationMode
+
+logger = logging.getLogger(__name__)
 
 
 class XLADeviceManager:
@@ -53,11 +56,13 @@ class XLADeviceManager:
                 self._world_size = xm.xrt_world_size()
                 self._rank = xm.get_ordinal()
 
-            print(f"🔧 XLA Device Manager initialized:")
-            print(f"   Available devices: {len(self._devices)}")
-            print(f"   Current device: {self._current_device}")
-            print(f"   World size: {self._world_size}")
-            print(f"   Rank: {self._rank}")
+            logger.info(
+                "XLA Device Manager initialized: devices=%d, current_device=%s, world_size=%d, rank=%d",
+                len(self._devices),
+                self._current_device,
+                self._world_size,
+                self._rank
+            )
 
         except ImportError:
             warnings.warn("PyTorch/XLA not available. Using CPU fallback.")
@@ -158,10 +163,11 @@ class XLADistributedTraining:
                 )
                 self._is_initialized = True
 
-                print(f"🌐 Distributed training initialized:")
-                print(f"   Backend: xla")
-                print(f"   World size: {self.device_manager.world_size}")
-                print(f"   Rank: {self.device_manager.rank}")
+                logger.info(
+                    "Distributed training initialized: backend=xla, world_size=%d, rank=%d",
+                    self.device_manager.world_size,
+                    self.device_manager.rank
+                )
 
         except ImportError:
             warnings.warn("XLA distributed backend not available")

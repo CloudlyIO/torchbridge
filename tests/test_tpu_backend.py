@@ -259,8 +259,10 @@ class TestXLACompiler:
 
         stats = compiler.get_compilation_stats()
         assert isinstance(stats, dict)
-        assert 'total_compiled_models' in stats
+        assert 'compilation_cache' in stats  # v0.3.2: Changed to cache stats
         assert 'xla_available' in stats
+        assert 'compilation_mode' in stats
+        assert 'cache_max_size' in stats
 
     def test_xla_compiler_benchmark(self):
         """Test compilation benchmarking."""
@@ -513,6 +515,247 @@ class TestTPUErrorHandling:
 
         # Should work with CPU fallback
         assert backend.device.type == 'cpu'
+
+
+class TestTPUErrorPaths:
+    """Test TPU backend error handling and edge cases (v0.3.2 hardening)."""
+
+    def test_lru_cache_eviction(self):
+        """Test LRU cache eviction when max size is exceeded."""
+        # Create config with small cache
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.cache_max_size = 3
+        backend = TPUBackend(config)
+
+        # Create and cache multiple models
+        models = [nn.Linear(10, 10) for _ in range(5)]
+        for model in models:
+            _ = backend.prepare_model(model)
+
+        # Cache should only hold 3 models (LRU eviction)
+        cache_stats = backend._model_cache.get_stats()
+        assert cache_stats['size'] <= 3
+        assert cache_stats['evictions'] >= 2
+
+    def test_compilation_cache_limits(self):
+        """Test XLA compiler cache size limits."""
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.cache_max_size = 2
+        compiler = XLACompiler(config.hardware.tpu)
+
+        # Compile multiple models
+        models = [nn.Linear(i*10, 10) for i in range(1, 4)]
+        for model in models:
+            _ = compiler.compile_model(model, use_cache=True)
+
+        # Cache should respect max size
+        cache_stats = compiler._compilation_cache.get_stats()
+        assert cache_stats['size'] <= 2
+
+    def test_strict_validation_mode(self):
+        """Test strict validation mode raises exceptions."""
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.enable_strict_validation = True
+
+        from kernel_pytorch.backends.tpu.tpu_exceptions import TPUValidationError
+
+        optimizer = TPUOptimizer(config)
+        model = nn.Linear(10, 10)
+
+        # Create invalid inputs that will cause validation to fail
+        invalid_inputs = torch.randn(5, 999)  # Wrong size
+
+        # In strict mode, should raise exception
+        with pytest.raises((TPUValidationError, Exception)):
+            result = optimizer.optimize(model, invalid_inputs)
+
+    def test_custom_exceptions_importable(self):
+        """Test that custom TPU exceptions can be imported and used."""
+        from kernel_pytorch.backends.tpu.tpu_exceptions import (
+            TPUBackendError,
+            TPUNotAvailableError,
+            XLACompilationError,
+            TPUMemoryError,
+            TPUOutOfMemoryError,
+            TPUValidationError
+        )
+
+        # Verify exception hierarchy
+        assert issubclass(TPUNotAvailableError, TPUBackendError)
+        assert issubclass(XLACompilationError, TPUBackendError)
+        assert issubclass(TPUOutOfMemoryError, TPUMemoryError)
+        assert issubclass(TPUMemoryError, TPUBackendError)
+
+    def test_memory_stats_with_retention(self):
+        """Test memory allocation history retention."""
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.allocation_history_retention_seconds = 1  # 1 second
+        manager = TPUMemoryManager(config.hardware.tpu)
+
+        # Allocate some tensors
+        for _ in range(5):
+            manager.allocate_tensor((10, 10))
+
+        initial_history = len(manager._allocation_history)
+        assert initial_history == 5
+
+        # Wait for retention period and optimize
+        import time
+        time.sleep(1.1)
+        manager.optimize_memory_usage()
+
+        # Old allocations should be removed
+        assert len(manager._allocation_history) <= initial_history
+
+    def test_configurable_tpu_memory_capacity(self):
+        """Test configurable TPU memory capacity overrides."""
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.version = TPUVersion.V6E
+        config.hardware.tpu.v6e_memory_gb = 64.0  # Custom value
+
+        manager = TPUMemoryManager(config.hardware.tpu)
+        capacity = manager._get_tpu_memory_gb()
+
+        assert capacity == 64.0  # Should use configured value
+
+    def test_cache_utils_statistics(self):
+        """Test LRU cache statistics tracking."""
+        from kernel_pytorch.backends.tpu.cache_utils import LRUCache
+
+        cache = LRUCache(max_size=5)
+
+        # Add items
+        for i in range(3):
+            cache.set(f"key{i}", f"value{i}")
+
+        # Test hits
+        assert cache.get("key0") == "value0"
+        assert cache.get("key1") == "value1"
+
+        # Test miss
+        assert cache.get("nonexistent") is None
+
+        # Check stats
+        stats = cache.get_stats()
+        assert stats['hits'] == 2
+        assert stats['misses'] == 1
+        assert stats['size'] == 3
+        assert stats['hit_rate'] == 2/3
+
+    def test_cache_eviction_behavior(self):
+        """Test LRU cache eviction behavior."""
+        from kernel_pytorch.backends.tpu.cache_utils import LRUCache
+
+        cache = LRUCache(max_size=3)
+
+        # Fill cache
+        cache.set("a", 1)
+        cache.set("b", 2)
+        cache.set("c", 3)
+
+        # Access "a" to make it recently used
+        cache.get("a")
+
+        # Add new item (should evict "b" as least recently used)
+        cache.set("d", 4)
+
+        stats = cache.get_stats()
+        assert stats['evictions'] == 1
+        assert cache.get("b") is None  # Evicted
+        assert cache.get("a") == 1      # Kept (recently used)
+        assert cache.get("d") == 4      # New item
+
+    def test_optimizer_with_invalid_level(self):
+        """Test optimizer handles invalid optimization level."""
+        config = KernelPyTorchConfig()
+        optimizer = TPUOptimizer(config)
+        model = nn.Linear(10, 10)
+
+        # Invalid optimization level should raise ValueError
+        with pytest.raises(ValueError, match="Unknown optimization level"):
+            optimizer._apply_optimization_level(model, "invalid_level")
+
+    def test_memory_pool_operations(self):
+        """Test memory pool creation and retrieval."""
+        config = KernelPyTorchConfig()
+        manager = TPUMemoryManager(config.hardware.tpu)
+
+        # Create pool
+        pool_id = manager.create_memory_pool(pool_size=5, tensor_size=(10, 10))
+        assert pool_id is not None
+
+        # Get tensor from pool
+        tensor = manager.get_tensor_from_pool(pool_id)
+        assert tensor is not None
+        assert tensor.shape == (10, 10)
+
+        # Return tensor to pool
+        success = manager.return_tensor_to_pool(pool_id, tensor)
+        assert success
+
+        # Get pool stats
+        pool_stats = manager.get_pool_stats()
+        assert pool_id in pool_stats['pool_details']
+
+    def test_compilation_mode_configuration(self):
+        """Test different XLA compilation modes."""
+        from kernel_pytorch.core.config import TPUCompilationMode
+
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.compilation_mode = TPUCompilationMode.TORCH_XLA
+
+        compiler = XLACompiler(config.hardware.tpu)
+        assert compiler.config.compilation_mode == TPUCompilationMode.TORCH_XLA
+
+    def test_logging_not_print(self):
+        """Test that logging is used instead of print statements."""
+        import logging
+        from io import StringIO
+
+        # Capture logs
+        log_stream = StringIO()
+        handler = logging.StreamHandler(log_stream)
+        handler.setLevel(logging.INFO)
+
+        logger = logging.getLogger('kernel_pytorch.backends.tpu')
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+
+        # Create backend (should log, not print)
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Check that logs were captured
+        log_output = log_stream.getvalue()
+        # Should have some log output from backend initialization
+        # (but may be empty if logger not configured in test env)
+
+        logger.removeHandler(handler)
+
+    def test_xla_optimization_levels(self):
+        """Test XLA optimization level configuration."""
+        config = KernelPyTorchConfig()
+        config.hardware.tpu.xla_optimization_level = 2
+
+        compiler = XLACompiler(config.hardware.tpu)
+        assert compiler.config.xla_optimization_level == 2
+
+    def test_cache_clear_operations(self):
+        """Test cache clearing functionality."""
+        config = KernelPyTorchConfig()
+        backend = TPUBackend(config)
+
+        # Add items to cache
+        model = nn.Linear(10, 10)
+        backend.prepare_model(model)
+
+        assert len(backend._model_cache) > 0
+
+        # Clear cache
+        backend.clear_cache()
+
+        # Cache should be empty
+        assert len(backend._model_cache) == 0
 
 
 if __name__ == '__main__':

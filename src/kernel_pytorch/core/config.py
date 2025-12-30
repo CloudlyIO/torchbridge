@@ -251,6 +251,22 @@ class TPUConfig:
     enable_jax_integration: bool = False
     jax_backend: str = "tpu"
 
+    # Cache management settings
+    cache_max_size: int = 100  # Maximum number of cached compilations/models
+    compilation_timeout_seconds: int = 300  # XLA compilation timeout
+
+    # Memory management settings
+    allocation_history_retention_seconds: int = 3600  # Keep allocation history for 1 hour
+    v6e_memory_gb: Optional[float] = None  # Override TPU v6e memory capacity (default: 32.0)
+    v7_memory_gb: Optional[float] = None  # Override TPU v7 memory capacity (default: 128.0)
+
+    # Validation settings
+    enable_strict_validation: bool = False  # Raise errors instead of warnings for validation failures
+
+    # Monitoring settings
+    monitoring_interval_seconds: float = 1.0  # Memory monitoring interval
+    monitoring_duration_seconds: float = 60.0  # Default monitoring duration
+
     def __post_init__(self):
         """Auto-configure based on detected TPU environment."""
         if self.version == TPUVersion.AUTO:

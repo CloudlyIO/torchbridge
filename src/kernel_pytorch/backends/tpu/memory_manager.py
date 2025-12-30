@@ -5,6 +5,7 @@ Manages TPU memory allocation, optimization, and monitoring
 for efficient TPU model execution.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -13,6 +14,9 @@ from dataclasses import dataclass
 import time
 
 from kernel_pytorch.core.config import TPUConfig, TPUVersion
+from .tpu_exceptions import TPUMemoryError, raise_or_warn
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -60,9 +64,11 @@ class TPUMemoryManager:
 
             # Initialize memory tracking
             self._device = xm.xla_device()
-            print(f"💾 TPU Memory Manager initialized:")
-            print(f"   Memory fraction: {self.config.memory_fraction}")
-            print(f"   Device: {self._device}")
+            logger.info(
+                "TPU Memory Manager initialized: memory_fraction=%.2f, device=%s",
+                self.config.memory_fraction,
+                self._device
+            )
 
         except ImportError:
             warnings.warn("PyTorch/XLA not available. Memory manager will use CPU fallback.")
@@ -183,7 +189,7 @@ class TPUMemoryManager:
             'created_at': time.time()
         }
 
-        print(f"📦 Created memory pool '{pool_id}' with {pool_size} tensors of shape {tensor_size}")
+        logger.debug("Created memory pool '%s': size=%d, tensor_shape=%s", pool_id, pool_size, tensor_size)
         return pool_id
 
     def get_tensor_from_pool(self, pool_id: str) -> Optional[torch.Tensor]:
@@ -252,9 +258,10 @@ class TPUMemoryManager:
         """
         try:
             # Calculate memory usage from allocation history
+            retention_seconds = self.config.allocation_history_retention_seconds
             total_allocated = sum(
                 alloc['size_bytes'] for alloc in self._allocation_history
-                if time.time() - alloc['timestamp'] < 3600  # Last hour
+                if time.time() - alloc['timestamp'] < retention_seconds
             )
 
             # Estimate cached memory from pools
@@ -289,18 +296,19 @@ class TPUMemoryManager:
             )
 
         except Exception as e:
-            warnings.warn(f"Failed to get memory stats: {e}")
+            error_msg = f"Failed to get memory stats: {e}"
+            raise_or_warn(error_msg, TPUMemoryError, strict_mode=self.config.enable_strict_validation, logger=logger)
             return MemoryStats(0, 0, 0, 0, 0.0, 0, 0)
 
     def _get_tpu_memory_gb(self) -> float:
         """Get TPU memory capacity in GB."""
         # TPU memory capacities by version
         memory_map = {
-            TPUVersion.V4: 32.0,    # 32GB HBM
-            TPUVersion.V5E: 16.0,   # 16GB HBM
-            TPUVersion.V5P: 95.0,   # 95GB HBM
-            TPUVersion.V6E: 32.0,   # Estimated
-            TPUVersion.V7: 128.0,   # Estimated
+            TPUVersion.V4: 32.0,    # 32GB HBM (verified)
+            TPUVersion.V5E: 16.0,   # 16GB HBM (verified)
+            TPUVersion.V5P: 95.0,   # 95GB HBM (verified)
+            TPUVersion.V6E: self.config.v6e_memory_gb or 32.0,   # Configurable (default: 32GB)
+            TPUVersion.V7: self.config.v7_memory_gb or 128.0,    # Configurable (default: 128GB)
         }
 
         return memory_map.get(self.config.version, 32.0)  # Default to 32GB
@@ -319,12 +327,13 @@ class TPUMemoryManager:
 
             # Clean up old allocations from history
             current_time = time.time()
+            retention_seconds = self.config.allocation_history_retention_seconds
             self._allocation_history = [
                 alloc for alloc in self._allocation_history
-                if current_time - alloc['timestamp'] < 3600  # Keep last hour
+                if current_time - alloc['timestamp'] < retention_seconds
             ]
 
-            print("🧹 Memory optimization completed")
+            logger.info("Memory optimization completed")
 
         except ImportError:
             pass
@@ -332,7 +341,7 @@ class TPUMemoryManager:
     def clear_memory_pools(self) -> None:
         """Clear all memory pools."""
         self._memory_pool.clear()
-        print("🗑️  Memory pools cleared")
+        logger.debug("Memory pools cleared")
 
     def get_pool_stats(self) -> Dict[str, Any]:
         """Get memory pool statistics."""
@@ -351,17 +360,23 @@ class TPUMemoryManager:
             'pool_details': pool_stats
         }
 
-    def monitor_memory(self, interval: float = 1.0, duration: float = 60.0) -> List[MemoryStats]:
+    def monitor_memory(
+        self,
+        interval: Optional[float] = None,
+        duration: Optional[float] = None
+    ) -> List[MemoryStats]:
         """
         Monitor memory usage over time.
 
         Args:
-            interval: Monitoring interval in seconds
-            duration: Total monitoring duration in seconds
+            interval: Monitoring interval in seconds (default: from config)
+            duration: Total monitoring duration in seconds (default: from config)
 
         Returns:
             List of memory statistics over time
         """
+        interval = interval or self.config.monitoring_interval_seconds
+        duration = duration or self.config.monitoring_duration_seconds
         stats_history = []
         start_time = time.time()
 

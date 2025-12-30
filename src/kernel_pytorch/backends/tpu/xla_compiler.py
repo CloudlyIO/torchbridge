@@ -4,6 +4,7 @@ XLA Compiler for TPU Optimization
 Provides XLA compilation, optimization, and caching for TPU models.
 """
 
+import logging
 import warnings
 import torch
 import torch.nn as nn
@@ -13,6 +14,10 @@ import hashlib
 import pickle
 
 from kernel_pytorch.core.config import TPUConfig, TPUCompilationMode
+from .cache_utils import LRUCache
+from .tpu_exceptions import XLACompilationError, raise_or_warn
+
+logger = logging.getLogger(__name__)
 
 
 class XLACompiler:
@@ -31,8 +36,8 @@ class XLACompiler:
             config: TPU configuration
         """
         self.config = config
-        self._compilation_cache = {}
-        self._compilation_stats = {}
+        self._compilation_cache = LRUCache(max_size=config.cache_max_size)
+        self._compilation_stats = LRUCache(max_size=config.cache_max_size)
 
         # Initialize XLA environment
         self._setup_xla_compiler()
@@ -44,10 +49,12 @@ class XLACompiler:
             import torch_xla.core.xla_model as xm
 
             self._xla_available = True
-            print(f"🔧 XLA Compiler initialized:")
-            print(f"   Compilation mode: {self.config.compilation_mode.value}")
-            print(f"   Optimization level: {self.config.xla_optimization_level}")
-            print(f"   Dynamic shapes: {self.config.enable_xla_dynamic_shapes}")
+            logger.info(
+                "XLA Compiler initialized: mode=%s, optimization_level=%d, dynamic_shapes=%s",
+                self.config.compilation_mode.value,
+                self.config.xla_optimization_level,
+                self.config.enable_xla_dynamic_shapes
+            )
 
         except ImportError:
             self._xla_available = False
@@ -77,9 +84,10 @@ class XLACompiler:
         # Generate cache key
         if use_cache:
             cache_key = self._generate_cache_key(model, sample_inputs)
-            if cache_key in self._compilation_cache:
-                print(f"📦 Using cached compilation for model")
-                return self._compilation_cache[cache_key]
+            cached_model = self._compilation_cache.get(cache_key)
+            if cached_model is not None:
+                logger.debug("Using cached compilation for model")
+                return cached_model
 
         # Perform compilation based on mode
         start_time = time.time()
@@ -97,14 +105,14 @@ class XLACompiler:
 
         # Cache the result
         if use_cache:
-            self._compilation_cache[cache_key] = compiled_model
-            self._compilation_stats[cache_key] = {
+            self._compilation_cache.set(cache_key, compiled_model)
+            self._compilation_stats.set(cache_key, {
                 'compilation_time': compilation_time,
                 'timestamp': time.time(),
                 'model_size': self._estimate_model_size(model)
-            }
+            })
 
-        print(f"⚡ Model compiled in {compilation_time:.2f}s")
+        logger.info("Model compiled: time=%.2fs, mode=%s", compilation_time, self.config.compilation_mode.value)
         return compiled_model
 
     def _compile_torch_xla(self, model: nn.Module,
@@ -129,7 +137,8 @@ class XLACompiler:
                 return model
 
         except Exception as e:
-            warnings.warn(f"PyTorch/XLA compilation failed: {e}")
+            error_msg = f"PyTorch/XLA compilation failed: {e}"
+            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
             return model
 
     def _compile_xla_direct(self, model: nn.Module,
@@ -158,7 +167,8 @@ class XLACompiler:
             return model
 
         except Exception as e:
-            warnings.warn(f"Direct XLA compilation failed: {e}")
+            error_msg = f"Direct XLA compilation failed: {e}"
+            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
             return model
 
     def _compile_pjit(self, model: nn.Module,
@@ -174,7 +184,8 @@ class XLACompiler:
             return self._compile_torch_xla(model, sample_inputs)
 
         except Exception as e:
-            warnings.warn(f"pjit compilation failed: {e}")
+            error_msg = f"pjit compilation failed: {e}"
+            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
             return model
 
     def _generate_cache_key(self, model: nn.Module,
@@ -260,18 +271,13 @@ class XLACompiler:
 
     def get_compilation_stats(self) -> Dict[str, Any]:
         """Get compilation statistics."""
-        total_models = len(self._compilation_stats)
-        total_compilation_time = sum(stats['compilation_time']
-                                   for stats in self._compilation_stats.values())
-        avg_compilation_time = total_compilation_time / total_models if total_models > 0 else 0
+        cache_stats = self._compilation_cache.get_stats()
 
         return {
-            'total_compiled_models': total_models,
-            'total_compilation_time': total_compilation_time,
-            'average_compilation_time': avg_compilation_time,
-            'cache_size': len(self._compilation_cache),
+            'compilation_cache': cache_stats,
             'xla_available': self._xla_available,
-            'compilation_mode': self.config.compilation_mode.value
+            'compilation_mode': self.config.compilation_mode.value,
+            'cache_max_size': self.config.cache_max_size
         }
 
     def clear_cache(self) -> None:
