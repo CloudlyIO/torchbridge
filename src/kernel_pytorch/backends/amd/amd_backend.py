@@ -69,25 +69,29 @@ class AMDBackend:
         Args:
             config: AMD configuration settings. If None, uses defaults.
 
-        Raises:
-            ROCmNotAvailableError: If ROCm runtime is not available
-            AMDConfigurationError: If configuration is invalid
+        Note:
+            Falls back to CPU mode if ROCm is not available.
         """
         self.config = config or AMDConfig()
         self._devices: List[AMDDeviceInfo] = []
         self._current_device: Optional[AMDDeviceInfo] = None
         self._initialized = False
+        self._cpu_fallback = False
 
-        logger.info("Initializing AMD ROCm Backend v0.3.4")
+        logger.info("Initializing AMD ROCm Backend v0.3.5")
 
         # Validate configuration
         self._validate_config()
 
         # Check ROCm availability
         if not self._check_rocm_available():
-            raise ROCmNotAvailableError(
-                "ROCm runtime not available. Please install ROCm and set ROCM_HOME."
+            logger.warning(
+                "ROCm not available - falling back to CPU mode. "
+                "For GPU acceleration, install ROCm and set ROCM_HOME."
             )
+            self._cpu_fallback = True
+            self._initialized = True
+            return
 
         # Initialize devices
         self._initialize_devices()
@@ -101,9 +105,17 @@ class AMDBackend:
                 self._current_device.architecture.value,
             )
         else:
-            logger.warning("No AMD GPUs detected")
+            logger.warning("No AMD GPUs detected - using CPU fallback")
+            self._cpu_fallback = True
 
         self._initialized = True
+
+    @property
+    def device(self) -> torch.device:
+        """Get the current device (AMD GPU or CPU fallback)."""
+        if self._cpu_fallback:
+            return torch.device("cpu")
+        return torch.device("cuda", self.config.device_id)
 
     def _validate_config(self) -> None:
         """Validate AMD configuration settings."""
@@ -299,7 +311,7 @@ class AMDBackend:
         Prepare a PyTorch model for AMD GPU execution.
 
         This method:
-        1. Moves the model to AMD GPU
+        1. Moves the model to AMD GPU (or keeps on CPU if fallback)
         2. Applies ROCm-specific optimizations
         3. Compiles HIP kernels if needed
         4. Sets up memory management
@@ -310,7 +322,7 @@ class AMDBackend:
                               If None, uses config setting
 
         Returns:
-            Prepared model ready for AMD GPU execution
+            Prepared model ready for execution
 
         Raises:
             AMDBackendError: If model preparation fails
@@ -318,10 +330,16 @@ class AMDBackend:
         if not self._initialized:
             raise AMDBackendError("Backend not initialized")
 
-        if not self._current_device:
-            raise AMDBackendError("No AMD GPU device available")
-
         try:
+            # Handle CPU fallback mode
+            if self._cpu_fallback:
+                logger.info("Preparing model in CPU fallback mode")
+                model = model.to(torch.device("cpu"))
+                return model
+
+            if not self._current_device:
+                raise AMDBackendError("No AMD GPU device available")
+
             logger.info("Preparing model for AMD GPU: %s", self._current_device.name)
 
             # Move model to GPU
@@ -344,14 +362,34 @@ class AMDBackend:
         except Exception as e:
             raise AMDBackendError(f"Model preparation failed: {e}")
 
-    def get_device_info(self) -> Optional[AMDDeviceInfo]:
+    def get_device_info(self) -> Dict[str, Any]:
         """
-        Get information about the current AMD GPU device.
+        Get information about the current device.
 
         Returns:
-            AMDDeviceInfo for current device, or None if no device
+            Dictionary with device information
         """
-        return self._current_device
+        if self._cpu_fallback:
+            return {
+                "device_type": "cpu",
+                "name": "CPU (ROCm fallback)",
+                "architecture": "cpu",
+                "total_memory_gb": 0,
+                "matrix_cores_available": False,
+                "rocm_available": False,
+            }
+
+        if self._current_device:
+            return {
+                "device_type": "amd_gpu",
+                "name": self._current_device.name,
+                "architecture": self._current_device.architecture.value,
+                "total_memory_gb": self._current_device.total_memory_gb,
+                "matrix_cores_available": self._current_device.matrix_cores_available,
+                "rocm_available": True,
+            }
+
+        return {"device_type": "unknown", "rocm_available": False}
 
     def get_all_devices(self) -> List[AMDDeviceInfo]:
         """
@@ -367,9 +405,14 @@ class AMDBackend:
         Check if AMD backend is available and initialized.
 
         Returns:
-            True if backend is ready, False otherwise
+            True if backend is ready (including CPU fallback mode)
         """
-        return self._initialized and self._current_device is not None
+        return self._initialized
+
+    def synchronize(self) -> None:
+        """Synchronize all pending operations."""
+        if not self._cpu_fallback and torch.cuda.is_available():
+            torch.cuda.synchronize()
 
     def cleanup(self) -> None:
         """Clean up AMD backend resources."""

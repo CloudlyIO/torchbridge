@@ -2,9 +2,9 @@
 Cross-Backend Integration Tests
 
 Tests automatic backend selection, backend initialization, and cross-backend
-compatibility for NVIDIA and TPU backends.
+compatibility for NVIDIA, TPU, and AMD backends.
 
-Phase 4C-Pre Week 3: Integration Testing (v0.3.3)
+Phase 4C-Pre Week 5: AMD Testing & Integration (v0.3.5)
 """
 
 import pytest
@@ -12,10 +12,11 @@ import torch
 import torch.nn as nn
 import logging
 
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from kernel_pytorch.core.config import KernelPyTorchConfig, AMDConfig, AMDArchitecture
 from kernel_pytorch.core.hardware_detector import HardwareDetector, HardwareProfile
 from kernel_pytorch.backends.nvidia import NVIDIABackend
 from kernel_pytorch.backends.tpu import TPUBackend
+from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
 from kernel_pytorch.validation.unified_validator import UnifiedValidator
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class TestHardwareDetection:
         """Test optimal backend can be selected."""
         detector = HardwareDetector()
         backend = detector.get_optimal_backend()
-        assert backend in ['nvidia', 'tpu', 'cpu']
+        assert backend in ['nvidia', 'tpu', 'amd', 'cpu']
 
     def test_cpu_always_available(self):
         """Test CPU backend is always available."""
@@ -119,6 +120,45 @@ class TestBackendInitialization:
         assert prepared_model is not None
         assert isinstance(prepared_model, nn.Module)
 
+    def test_amd_backend_initializes(self):
+        """Test AMD backend can be initialized."""
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        assert backend is not None
+        assert hasattr(backend, 'prepare_model')
+        assert hasattr(backend, 'device')
+        assert backend.device.type in ['cuda', 'hip', 'cpu']
+
+    def test_amd_backend_prepares_model(self):
+        """Test AMD backend can prepare models."""
+        config = AMDConfig()
+        backend = AMDBackend(config)
+        model = SimpleModel()
+
+        prepared_model = backend.prepare_model(model)
+        assert prepared_model is not None
+        assert isinstance(prepared_model, nn.Module)
+
+    def test_amd_optimizer_initializes(self):
+        """Test AMD optimizer can be initialized."""
+        config = AMDConfig(optimization_level="balanced")
+        optimizer = AMDOptimizer(config)
+
+        assert optimizer is not None
+        assert hasattr(optimizer, 'optimize')
+        assert hasattr(optimizer, 'get_optimization_summary')
+
+    def test_amd_optimizer_optimizes_model(self):
+        """Test AMD optimizer can optimize models."""
+        config = AMDConfig(optimization_level="balanced")
+        optimizer = AMDOptimizer(config)
+        model = SimpleModel()
+
+        optimized_model = optimizer.optimize(model)
+        assert optimized_model is not None
+        assert isinstance(optimized_model, nn.Module)
+
 
 # ============================================================================
 # Test Class: Cross-Backend Consistency
@@ -130,6 +170,7 @@ class TestCrossBackendConsistency:
     def test_model_parameters_consistent(self):
         """Test model parameters remain consistent across backends."""
         config = KernelPyTorchConfig()
+        amd_config = AMDConfig()
         model = SimpleModel()
 
         # Prepare with NVIDIA
@@ -140,10 +181,31 @@ class TestCrossBackendConsistency:
         tpu_backend = TPUBackend(config)
         tpu_model = tpu_backend.prepare_model(model)
 
+        # Prepare with AMD
+        amd_backend = AMDBackend(amd_config)
+        amd_model = amd_backend.prepare_model(model)
+
         # Should have same number of parameters
         nvidia_params = sum(p.numel() for p in nvidia_model.parameters())
         tpu_params = sum(p.numel() for p in tpu_model.parameters())
-        assert nvidia_params == tpu_params
+        amd_params = sum(p.numel() for p in amd_model.parameters())
+        assert nvidia_params == tpu_params == amd_params
+
+    def test_amd_nvidia_parameter_consistency(self):
+        """Test AMD and NVIDIA backends produce consistent parameter counts."""
+        config = KernelPyTorchConfig()
+        amd_config = AMDConfig()
+        model = SimpleModel()
+
+        nvidia_backend = NVIDIABackend(config)
+        nvidia_model = nvidia_backend.prepare_model(model)
+
+        amd_backend = AMDBackend(amd_config)
+        amd_model = amd_backend.prepare_model(model)
+
+        nvidia_params = sum(p.numel() for p in nvidia_model.parameters())
+        amd_params = sum(p.numel() for p in amd_model.parameters())
+        assert nvidia_params == amd_params
 
     @pytest.mark.skip(reason="TPU backend uses bfloat16 which causes dtype mismatch - expected behavior")
     def test_forward_pass_shapes_consistent(self):
@@ -230,6 +292,36 @@ class TestBackendCapabilities:
 
         # Should complete without error
         backend.synchronize()
+
+    def test_amd_backend_device_info(self):
+        """Test AMD backend provides device info."""
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        info = backend.get_device_info()
+        assert isinstance(info, dict)
+        assert 'device_type' in info
+
+    def test_amd_backend_synchronization(self):
+        """Test AMD backend can synchronize."""
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        # Should complete without error
+        backend.synchronize()
+
+    def test_amd_optimizer_summary(self):
+        """Test AMD optimizer provides summary."""
+        config = AMDConfig(optimization_level="balanced")
+        optimizer = AMDOptimizer(config)
+        model = SimpleModel()
+
+        optimizer.optimize(model)
+        summary = optimizer.get_optimization_summary()
+
+        assert isinstance(summary, dict)
+        assert 'optimization_level' in summary
+        assert 'architecture' in summary
 
 
 # ============================================================================
@@ -358,20 +450,30 @@ def test_integration_summary():
 
     # 2. Backend selection works
     backend_name = detector.get_optimal_backend()
-    assert backend_name in ['nvidia', 'tpu', 'cpu']
+    assert backend_name in ['nvidia', 'tpu', 'amd', 'cpu']
 
     # 3. Backends initialize
     config = KernelPyTorchConfig()
+    amd_config = AMDConfig()
     nvidia_backend = NVIDIABackend(config)
     tpu_backend = TPUBackend(config)
+    amd_backend = AMDBackend(amd_config)
     assert nvidia_backend is not None
     assert tpu_backend is not None
+    assert amd_backend is not None
 
     # 4. Models can be prepared
     model = SimpleModel()
     nvidia_model = nvidia_backend.prepare_model(model)
     tpu_model = tpu_backend.prepare_model(model)
+    amd_model = amd_backend.prepare_model(model)
     assert nvidia_model is not None
     assert tpu_model is not None
+    assert amd_model is not None
 
-    logger.info("✅ Cross-backend integration validated")
+    # 5. AMD optimizer works
+    amd_optimizer = AMDOptimizer(amd_config)
+    optimized = amd_optimizer.optimize(model)
+    assert optimized is not None
+
+    logger.info("✅ Cross-backend integration validated (NVIDIA, TPU, AMD)")

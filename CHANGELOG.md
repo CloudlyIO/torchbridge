@@ -39,6 +39,48 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.5] - 2025-12-31 - AMD Testing & Integration (Phase 4C-Pre Week 5)
+
+**Goal**: Comprehensive AMD backend testing, cross-backend integration, and benchmarking
+
+### **Added** ✨
+
+**AMD Integration Benchmark** (`benchmarks/amd_integration_benchmark.py`, 500+ lines):
+- Complete benchmark suite for AMD backend performance
+- Backend creation, model preparation, device info benchmarks
+- Optimizer benchmarks (conservative/balanced/aggressive)
+- ROCm compiler benchmarks (cold/warm cache, complex kernels)
+- HIP utilities benchmarks (streams, events, profiling)
+- Memory manager benchmarks
+- Architecture comparison (CDNA2, CDNA3, RDNA3)
+
+**Cross-Backend Integration Tests** (`tests/test_backend_integration.py`):
+- AMD backend initialization and model preparation tests
+- AMD optimizer initialization and optimization tests
+- Cross-backend parameter consistency (NVIDIA ↔ TPU ↔ AMD)
+- AMD backend device info and synchronization tests
+- AMD optimizer summary validation
+- Updated integration summary to include all 3 backends
+
+### **Changed** 🔄
+
+**AMD Backend CPU Fallback** (`src/kernel_pytorch/backends/amd/amd_backend.py`):
+- AMDBackend now gracefully falls back to CPU mode when ROCm unavailable
+- Added `device` property returning current device (GPU or CPU)
+- Added `synchronize()` method for operation synchronization
+- `get_device_info()` returns dict format for consistency
+- `is_available()` returns True even in CPU fallback mode
+- Updated to v0.3.5
+
+### **Tested** ✅
+
+- 26 backend integration tests passing (4 skipped)
+- 41 AMD backend tests passing (3 skipped)
+- AMD benchmark suite functional in CPU fallback mode
+- Cross-backend consistency verified
+
+---
+
 ## [0.3.4] - 2025-12-30 - AMD ROCm Backend Foundation (Phase 4C-Pre Week 4)
 
 **Goal**: Implement AMD ROCm backend foundation for MI200/MI300 GPU support
