@@ -308,11 +308,5 @@ SCRATCH.local
 /DOCUMENTATION_SYNC*.md
 /CLEANUP_SUMMARY*.md
 
-# Block recently added backend documentation (keep locally)
-docs/backends/nvidia.md
-docs/backends/tpu.md
-docs/guides/backend_selection.md
-docs/guides/troubleshooting.md
-
 # Block any new .md files in docs/ - require explicit approval
 # Note: This will be enforced by pre-commit hook
