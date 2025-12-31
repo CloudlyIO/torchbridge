@@ -75,6 +75,16 @@ class TPUCompilationMode(Enum):
     TORCH_XLA = "torch_xla"  # PyTorch/XLA compilation
 
 
+class AMDArchitecture(Enum):
+    """AMD GPU architectures."""
+    AUTO = "auto"
+    CDNA = "cdna"        # MI50, MI60 (1st gen)
+    CDNA2 = "cdna2"      # MI200 series (MI210, MI250, MI250X)
+    CDNA3 = "cdna3"      # MI300 series (MI300A, MI300X)
+    RDNA2 = "rdna2"      # Consumer GPUs (RX 6000 series)
+    RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
+
+
 @dataclass
 class PrecisionConfig:
     """Unified precision configuration."""
@@ -340,6 +350,125 @@ class TPUConfig:
 
 
 @dataclass
+class AMDConfig:
+    """AMD ROCm-specific hardware configuration."""
+    enabled: bool = True
+    architecture: AMDArchitecture = AMDArchitecture.AUTO
+    device_id: int = 0
+
+    # ROCm settings
+    rocm_version: str = "auto"  # ROCm version (e.g., "5.7", "6.0")
+    hip_version: str = "auto"   # HIP version
+
+    # Matrix Core settings (AMD's equivalent of Tensor Cores)
+    enable_matrix_cores: bool = True
+    matrix_core_precision: str = "auto"  # "fp16", "bf16", "fp32"
+
+    # Performance optimization
+    optimization_level: str = "balanced"  # "conservative", "balanced", "aggressive"
+
+    # Memory settings
+    enable_memory_pooling: bool = True
+    memory_pool_size_gb: float = 8.0
+    memory_pool_init_mb: int = 1024
+    memory_growth_enabled: bool = True
+    max_memory_fraction: float = 0.9
+
+    # HIP kernel settings
+    hip_kernel_cache_enabled: bool = True
+    hip_kernel_cache_size: int = 100
+    hip_compiler_cache_size: int = 100
+    hip_compiler_cache_dir: str = "/tmp/hip_cache"
+
+    # rocBLAS settings
+    rocblas_enabled: bool = True
+    rocblas_workspace_mb: int = 256
+    enable_rocblas_tuning: bool = True
+
+    # MIOpen settings (AMD's equivalent of cuDNN)
+    miopen_enabled: bool = True
+    miopen_find_mode: str = "NORMAL"  # "NORMAL", "FAST", "HYBRID"
+
+    # Precision settings
+    default_precision: str = "fp32"  # Default precision: "fp32", "fp16", "bf16"
+    enable_mixed_precision: bool = True
+    allow_fp16: bool = True
+    allow_bf16: bool = True
+
+    # Profiling and debugging
+    enable_profiling: bool = False
+
+    # Operator fusion
+    enable_operator_fusion: bool = True
+
+    # Validation and error handling
+    enable_strict_validation: bool = False
+    enable_oom_protection: bool = True
+
+    def __post_init__(self):
+        """Auto-configure based on detected architecture."""
+        if self.architecture == AMDArchitecture.AUTO:
+            self.architecture = self._detect_architecture()
+
+        # Configure settings based on architecture
+        if self.architecture == AMDArchitecture.CDNA3:
+            # MI300 series - most advanced
+            self.enable_matrix_cores = True
+            self.matrix_core_precision = "bf16"
+            self.allow_bf16 = True
+        elif self.architecture == AMDArchitecture.CDNA2:
+            # MI200 series - data center
+            self.enable_matrix_cores = True
+            self.matrix_core_precision = "fp16"
+            self.allow_bf16 = True
+        elif self.architecture == AMDArchitecture.CDNA:
+            # MI50/MI60 - older data center
+            self.enable_matrix_cores = False
+            self.allow_bf16 = False
+        else:
+            # Consumer GPUs (RDNA2/RDNA3)
+            self.enable_matrix_cores = False
+            self.allow_bf16 = False
+
+    def _detect_architecture(self) -> AMDArchitecture:
+        """Detect AMD GPU architecture."""
+        try:
+            # Try to detect ROCm availability
+            import torch
+            if hasattr(torch, 'hip') and torch.hip.is_available():
+                device_props = torch.hip.get_device_properties(0)
+                device_name = device_props.name.upper()
+
+                # MI300 series (CDNA3)
+                if any(name in device_name for name in ["MI300", "MI3"]):
+                    return AMDArchitecture.CDNA3
+
+                # MI200 series (CDNA2)
+                if any(name in device_name for name in ["MI210", "MI250", "MI2"]):
+                    return AMDArchitecture.CDNA2
+
+                # MI50/MI60 series (CDNA)
+                if any(name in device_name for name in ["MI50", "MI60"]):
+                    return AMDArchitecture.CDNA
+
+                # RDNA3 (RX 7000 series)
+                if any(name in device_name for name in ["RX 7", "RADEON 7"]):
+                    return AMDArchitecture.RDNA3
+
+                # RDNA2 (RX 6000 series)
+                if any(name in device_name for name in ["RX 6", "RADEON 6"]):
+                    return AMDArchitecture.RDNA2
+
+                # Default to CDNA2 for unknown GPUs
+                return AMDArchitecture.CDNA2
+        except (ImportError, AttributeError, Exception):
+            pass
+
+        # Default to CDNA2 (most common data center GPU)
+        return AMDArchitecture.CDNA2
+
+
+@dataclass
 class HardwareConfig:
     """Unified hardware optimization configuration."""
     backend: HardwareBackend = HardwareBackend.CUDA
@@ -349,6 +478,7 @@ class HardwareConfig:
     # Hardware-specific configurations
     nvidia: NVIDIAConfig = field(default_factory=NVIDIAConfig)
     tpu: TPUConfig = field(default_factory=TPUConfig)
+    amd: AMDConfig = field(default_factory=AMDConfig)
 
     # Tensor Core settings (general)
     tensor_cores_enabled: bool = True
@@ -366,14 +496,28 @@ class HardwareConfig:
         """Auto-configure hardware settings based on detected capabilities."""
         # Auto-detect hardware backend if not explicitly set
         if self.backend == HardwareBackend.CUDA and not torch.cuda.is_available():
-            # Try TPU detection if CUDA not available
+            # Try AMD ROCm detection
             try:
-                import torch_xla.core.xla_model as xm
-                if xm.xla_device_hw(xm.xla_device()) == 'TPU':
-                    self.backend = HardwareBackend.TPU
-            except ImportError:
-                # Fall back to CPU
-                self.backend = HardwareBackend.CPU
+                if hasattr(torch, 'hip') and torch.hip.is_available():
+                    self.backend = HardwareBackend.AMD
+                else:
+                    # Try TPU detection if ROCm not available
+                    try:
+                        import torch_xla.core.xla_model as xm
+                        if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                            self.backend = HardwareBackend.TPU
+                    except ImportError:
+                        # Fall back to CPU
+                        self.backend = HardwareBackend.CPU
+            except (ImportError, AttributeError):
+                # Try TPU detection
+                try:
+                    import torch_xla.core.xla_model as xm
+                    if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+                        self.backend = HardwareBackend.TPU
+                except ImportError:
+                    # Fall back to CPU
+                    self.backend = HardwareBackend.CPU
 
         # Configure NVIDIA settings
         if self.backend == HardwareBackend.CUDA and torch.cuda.is_available():
@@ -381,6 +525,13 @@ class HardwareConfig:
             # NVIDIA config will auto-detect architecture in its own __post_init__
         else:
             self.nvidia.enabled = False
+
+        # Configure AMD settings
+        if self.backend == HardwareBackend.AMD:
+            self.amd.enabled = True
+            # AMD config will auto-detect architecture in its own __post_init__
+        else:
+            self.amd.enabled = False
 
         # Configure TPU settings
         if self.backend == HardwareBackend.TPU:

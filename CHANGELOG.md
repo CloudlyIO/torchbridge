@@ -39,6 +39,116 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.4] - 2025-12-30 - AMD ROCm Backend Foundation (Phase 4C-Pre Week 4)
+
+**Goal**: Implement AMD ROCm backend foundation for MI200/MI300 GPU support
+
+### **Added** ✨
+
+**AMD Backend Core Infrastructure** (`src/kernel_pytorch/backends/amd/`):
+- **AMDBackend** (`amd_backend.py`, 400+ lines)
+  - Main orchestrator for AMD ROCm/HIP operations
+  - Automatic device detection and initialization
+  - Architecture detection (CDNA2, CDNA3, RDNA2, RDNA3)
+  - Model preparation with precision support (FP32, FP16, BF16)
+  - Device info and multi-GPU support
+
+- **AMDOptimizer** (`amd_optimizer.py`, 450+ lines)
+  - Multi-level optimization (conservative/balanced/aggressive)
+  - Operator fusion (Conv+BN+ReLU, Linear+GELU)
+  - Matrix Core utilization for CDNA2/CDNA3
+  - Mixed precision configuration
+  - Gradient checkpointing support
+
+- **ROCmCompiler** (`rocm_compiler.py`, 450+ lines)
+  - HIP kernel compilation with optimization flags
+  - LRU compilation cache for fast reloading
+  - Architecture-specific GPU targets (gfx90a, gfx940, etc.)
+  - Disk cache persistence
+  - Compilation statistics tracking
+
+- **AMDMemoryManager** (`memory_manager.py`, 380+ lines)
+  - HBM-optimized memory management
+  - Memory pooling for reduced allocation overhead
+  - OOM protection and monitoring
+  - Allocation tracking by purpose
+  - Defragmentation support
+
+- **HIPUtilities** (`hip_utilities.py`, 400+ lines)
+  - Stream management for concurrent operations
+  - Event-based timing and profiling
+  - Context managers for profiling regions
+  - Multi-device coordination
+  - Memory transfer utilities
+
+- **AMD Exceptions** (`amd_exceptions.py`, 200+ lines)
+  - 11 specialized exception classes
+  - Hierarchical error handling
+  - raise_or_warn utility for flexible error handling
+
+**AMD Configuration** (`src/kernel_pytorch/core/config.py`):
+- `AMDArchitecture` enum (AUTO, CDNA, CDNA2, CDNA3, RDNA2, RDNA3)
+- `AMDConfig` dataclass with comprehensive settings:
+  - ROCm/HIP settings (rocm_home, hip_version)
+  - Matrix Core configuration (enable, precision)
+  - Memory settings (pool size, pooling)
+  - rocBLAS/MIOpen optimization settings
+  - Profiling configuration
+- Updated `HardwareConfig` with AMD detection
+
+**Testing** (`tests/test_amd_backend.py`, 500+ lines):
+- 50+ comprehensive tests for AMD backend
+- Configuration tests (architectures, optimization levels, precision)
+- Exception hierarchy tests
+- Optimizer tests (all optimization levels)
+- Compiler tests (compilation, caching, statistics)
+- Memory manager tests
+- HIP utilities tests (streams, events, profiling)
+- LRU cache tests
+- Integration tests
+
+**Demo** (`demos/amd_backend_demo.py`, 500+ lines):
+- Interactive demonstration of all AMD features
+- Configuration examples for MI200/MI300
+- Optimizer benchmarks
+- Compiler demonstration
+- HIP utilities with profiling
+- Full pipeline demonstration
+- Quick mode for fast validation
+
+**Documentation Enforcement**:
+- `scripts/sync_doc_versions.py` - Automatic version synchronization
+- Pre-commit hook for version consistency
+- Documentation policy enforcement
+
+### **Architecture Support**
+
+| Architecture | GPUs | Matrix Cores | Memory |
+|--------------|------|--------------|--------|
+| CDNA2 | MI210, MI250, MI250X | Yes | HBM2e |
+| CDNA3 | MI300A, MI300X | Yes (v2) | HBM3 |
+| RDNA2 | RX 6000 series | No | GDDR6 |
+| RDNA3 | RX 7000 series | No | GDDR6 |
+
+### **Tested** ✅
+
+- All AMD backend tests passing (50+ tests)
+- Configuration validation complete
+- Optimizer functionality verified
+- Compiler caching working correctly
+- Memory manager operations validated
+- HIP utilities profiling functional
+- Integration with existing infrastructure confirmed
+
+### **Known Limitations** ⚠️
+
+- Actual AMD GPU hardware required for full functionality
+- Tests run in simulation mode without ROCm
+- FP8 support limited to CDNA3 (MI300 series)
+- Real hardware validation pending (v0.3.7)
+
+---
+
 ## [0.3.3] - 2025-12-29 - Cross-Backend Integration Testing (Phase 4C-Pre Week 3)
 
 **Goal**: Validate cross-backend compatibility and create comprehensive integration test suite
