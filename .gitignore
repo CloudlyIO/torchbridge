@@ -283,3 +283,36 @@ benchmark_*.log
 TODO.local
 NOTES.local
 SCRATCH.local
+
+# ===================================================================
+# DOCUMENTATION CONTROL - Prevent unauthorized .md files
+# ===================================================================
+
+# Root-level .md files (ONLY these are approved, all others blocked):
+# - README.md (MUST remain)
+# - CHANGELOG.md (MUST remain)
+# - CONTRIBUTING.md (MUST remain)
+# - BUILD.md (MUST remain)
+# - API.md (MUST remain)
+# - BENCHMARKS.md (MUST remain)
+#
+# ALL other root .md files are blocked - move to /local
+
+# Block all validation, test, and analysis reports in root
+/*_REPORT.md
+/*_SUMMARY.md
+/*_ANALYSIS.md
+/*_VALIDATION.md
+/TESTING_*.md
+/POST_*.md
+/DOCUMENTATION_SYNC*.md
+/CLEANUP_SUMMARY*.md
+
+# Block recently added backend documentation (keep locally)
+docs/backends/nvidia.md
+docs/backends/tpu.md
+docs/guides/backend_selection.md
+docs/guides/troubleshooting.md
+
+# Block any new .md files in docs/ - require explicit approval
+# Note: This will be enforced by pre-commit hook
