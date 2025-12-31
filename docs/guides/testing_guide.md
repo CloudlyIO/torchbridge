@@ -14,11 +14,11 @@ This guide covers:
 
 ### Validate Unified Framework (30 seconds)
 ```bash
-# Test unified architecture v0.2.4 with TPU support
+# Test unified architecture v0.3.3 with production backends
 PYTHONPATH=src python3 -c "
 from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 from kernel_pytorch.validation import UnifiedValidator
-print('✅ Unified architecture v0.2.4 with TPU support imports successful')
+print('✅ Unified architecture v0.3.3 with production backends imports successful')
 "
 
 # Quick unified validation test

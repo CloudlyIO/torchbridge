@@ -1,6 +1,6 @@
-# 🏗️ Technical Architecture (v0.2.4)
+# 🏗️ Technical Architecture (v0.3.3)
 
-**KernelPyTorch unified framework architecture with TPU integration and design details.**
+**KernelPyTorch unified framework architecture with production-ready GPU/TPU backends.**
 
 ## 📁 Unified Framework Structure
 
@@ -26,7 +26,7 @@ src/kernel_pytorch/
 └── utils/                         # Utility functions and helpers
 ```
 
-## 🎯 **Unified Architecture with TPU Support (v0.2.4)**
+## 🎯 **Unified Architecture with Production Backends (v0.3.3)**
 
 ### **Core Design Principles**
 
@@ -143,7 +143,7 @@ class UnifiedValidator:
 
 ## 📊 **Architecture Benefits**
 
-### **Cleanup Achievements (v0.2.3)**
+### **Cleanup Achievements**
 - **96% Complexity Reduction**: 74+ classes → 3 unified systems
 - **Configuration Consolidation**: 36+ Config classes → 1 KernelPyTorchConfig
 - **Management Unification**: 38+ Manager/Optimizer classes → 1 UnifiedManager
@@ -178,4 +178,4 @@ class UnifiedValidator:
 
 ---
 
-**🎯 The v0.2.3 unified architecture provides a clean, maintainable foundation for 2-5x PyTorch performance improvements while maintaining 100% backward compatibility.**
+**🎯 The unified architecture provides a clean, maintainable foundation for 2-5x PyTorch performance improvements while maintaining 100% backward compatibility.**

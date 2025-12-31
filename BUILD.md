@@ -384,5 +384,5 @@ If you encounter build issues:
 
 ---
 
-**Last Updated**: 2025-12-26 (Phase 4B)
-**Version**: 0.3.0
+**Last Updated**: 2025-12-30 (Phase 4C-Pre)
+**Version**: 0.3.3

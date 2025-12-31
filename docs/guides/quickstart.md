@@ -1,11 +1,11 @@
-# 🚀 Quick Start Guide (v0.2.4)
+# 🚀 Quick Start Guide (v0.3.3)
 
-Get up and running with **KernelPyTorch unified architecture with TPU support** in under 5 minutes.
+Get up and running with **KernelPyTorch production-ready backends** in under 5 minutes.
 
 ## 1. Installation
 
 ```bash
-# Clone and setup KernelPyTorch v0.2.4
+# Clone and setup KernelPyTorch v0.3.3
 git clone <repository-url>
 cd shahmod
 pip install -r requirements.txt
@@ -33,7 +33,7 @@ model = torch.nn.Sequential(
     torch.nn.LayerNorm(768)
 )
 
-# Unified optimization approach (v0.2.4)
+# Unified optimization approach (v0.3.3)
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 
@@ -48,7 +48,7 @@ print(f"✓ Input shape: {x.shape}")
 print(f"✓ Output shape: {y.shape}")
 ```
 
-### NVIDIA Hardware Optimization (v0.2.3)
+### NVIDIA Hardware Optimization (v0.3.1+)
 
 ```python
 from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
@@ -152,7 +152,7 @@ output = attention_layer(x)
 # Run all demos with unified architecture
 PYTHONPATH=src python3 demos/run_all_demos.py --quick
 
-# NVIDIA configuration demo (v0.2.3)
+# NVIDIA configuration demo
 PYTHONPATH=src python3 demos/nvidia_configuration_demo.py --quick
 
 # NVIDIA benchmarks
@@ -174,7 +174,7 @@ After completing this quick start:
 
 ## Performance Expectations
 
-With KernelPyTorch v0.2.3 unified architecture:
+With KernelPyTorch v0.3.3 production backends:
 - **Memory Efficiency**: 30-60% memory reduction through unified management
 - **Optimization Overhead**: Minimal overhead with unified optimization pipeline
 - **Hardware Detection**: Automatic optimization selection based on detected hardware

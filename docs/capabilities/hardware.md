@@ -1,4 +1,4 @@
-# 🔧 Hardware Abstraction (v0.2.4)
+# 🔧 Hardware Abstraction (v0.3.3)
 
 **Multi-vendor GPU and TPU support through unified hardware management.**
 

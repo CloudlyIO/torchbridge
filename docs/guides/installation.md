@@ -1,6 +1,6 @@
 # 📦 Installation Guide
 
-**KernelPyTorch v0.2.4** - Production-grade PyTorch GPU/TPU optimization framework
+**KernelPyTorch v0.3.3** - Production-grade PyTorch GPU/TPU optimization framework
 
 ## Development Installation (Current)
 
@@ -23,12 +23,15 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
-### Unified Architecture with TPU Support (v0.2.4)
+### Unified Architecture with Backend Hardening (v0.3.3)
 
-KernelPyTorch v0.2.4 features a unified architecture with TPU integration:
+KernelPyTorch v0.3.3 features a unified architecture with production-ready backends:
 - **Single Configuration System**: `KernelPyTorchConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
+- **NVIDIA Backend** (v0.3.1): H100/Blackwell support with FP8 training
+- **TPU Backend** (v0.3.2): Google Cloud TPU v4/v5/v6 with XLA compilation
+- **Integration Testing** (v0.3.3): Cross-backend validation framework
 
 ### Installation Options
 
@@ -68,7 +71,7 @@ from kernel_pytorch.validation import UnifiedValidator
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 validator = UnifiedValidator()
-print('✅ v0.2.3 unified architecture verified!')
+print('✅ v0.3.3 unified architecture verified!')
 "
 
 # Run test suite
@@ -99,7 +102,7 @@ export PYTHONPATH=/path/to/shahmod/src
 ```bash
 # Check version consistency
 PYTHONPATH=src python3 -c "import kernel_pytorch; print(kernel_pytorch.__version__)"
-# Should output: 0.2.1
+# Should output: 0.3.3
 ```
 
 **Test Failures**:
