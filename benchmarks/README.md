@@ -1,67 +1,66 @@
-# 🏁 PyTorch Optimization Benchmarks
+# 🏁 PyTorch Optimization Benchmarks (v0.3.3)
 
-**Benchmarking suite comparing against state-of-the-art implementations.**
+**Benchmarking suite for validating GPU optimizations.**
 
 ## ⚡ Quick Start
 
 ```bash
 # Quick validation (30 seconds)
-python3 benchmarks/simple_benchmark_test.py
+PYTHONPATH=src python3 benchmarks/simple_benchmark_test.py
 
-# Compare against cutting-edge baselines (5 minutes)
-python3 benchmarks/next_gen/demo_cutting_edge_benchmark.py --quick
+# NVIDIA backend benchmarks
+PYTHONPATH=src python3 benchmarks/nvidia_config_benchmarks.py --quick
+
+# Backend comparison
+PYTHONPATH=src python3 benchmarks/backend_comparison_benchmark.py --quick
 ```
 
-Expected results: **1.2-6.1x speedup** vs industry baselines
+## 📊 Available Benchmarks
 
-## 📊 Benchmarked Against
+| Benchmark | Focus | Hardware |
+|-----------|-------|----------|
+| `simple_benchmark_test.py` | Quick validation | Any |
+| `nvidia_config_benchmarks.py` | NVIDIA backend performance | NVIDIA GPU |
+| `nvidia_integration_benchmark.py` | NVIDIA integration tests | NVIDIA GPU |
+| `tpu_integration_benchmark.py` | TPU backend performance | Cloud TPU |
+| `backend_comparison_benchmark.py` | Cross-backend comparison | Any GPU |
+| `custom_kernel_benchmark.py` | Custom CUDA kernels | CUDA GPU |
+| `hardware_abstraction_benchmark.py` | Hardware layer performance | Any |
+| `dynamic_shapes_benchmark.py` | Dynamic shape handling | Any |
+| `regression_benchmark.py` | Performance regression detection | Any |
+| `cli_performance_benchmark.py` | CLI tool performance | Any |
 
-| Framework | Focus | Status |
-|-----------|-------|--------|
-| **Flash Attention 3** | Latest memory optimization | ✅ **1.3x faster** |
-| **vLLM Production** | PagedAttention inference | ✅ **1.1x faster** |
-| **Ring Attention** | Long sequences (2M tokens) | ✅ **1.5x faster** |
-| **Mamba (SSM)** | O(n) vs O(n²) complexity | ✅ **1.4x faster** |
-| **PyTorch Native** | torch.compile baseline | ✅ **4.2x faster** |
-
-## 🎯 Benchmark Types
+## 🎯 Benchmark Categories
 
 - **Performance** - Latency, throughput, memory usage
-- **Quality** - Numerical accuracy, model stability
-- **Scalability** - Batch size, sequence length, multi-GPU
+- **Integration** - Backend-specific optimization validation
+- **Regression** - Detect performance regressions across versions
+- **Scalability** - Batch size, sequence length scaling
 
 ## 🔧 Configuration
 
-**Model Sizes:**
-- Small: 124M params (GPT2-small)
-- Medium: 355M params (GPT2-medium)
-- Large: 1.5B+ params (GPT2-large+)
-
-**Hardware:**
-- Single GPU: RTX 4090, A100, H100
-- Multi-GPU: 2-8 GPU configurations
-- CPU: Intel, AMD, Apple Silicon
-
-## 📈 Statistical Validation
-
-- **Measurement**: Median of 100 runs with warmup
-- **Confidence**: 95% confidence intervals
-- **Significance**: Minimum 1.2x improvement required
-- **Accuracy**: Maximum 1e-5 numerical difference
+**Hardware Support:**
+- NVIDIA GPU: RTX 4090, A100, H100, Blackwell
+- Cloud TPU: v4, v5e, v5p, v6e
+- CPU: Fallback for non-GPU systems
 
 ## 🚀 Running Benchmarks
 
 ```bash
-# Comprehensive benchmark suite
-python3 benchmarks/run_all_benchmarks.py
+# Comprehensive benchmark run
+PYTHONPATH=src python3 benchmarks/run_comprehensive_benchmark.py
 
-# Compare specific baseline
-python3 benchmarks/compare_baseline.py --baseline flash_attention_v2
+# Unified runner (all benchmarks)
+PYTHONPATH=src python3 benchmarks/unified_runner.py --quick
 
-# Generate HTML report
-python3 benchmarks/generate_report.py --output reports/benchmark.html
+# Quick benchmark
+PYTHONPATH=src python3 benchmarks/quick_benchmark.py
 ```
+
+## 📈 Output
+
+Benchmarks produce JSON results in `local/benchmark_results/` (gitignored).
 
 For detailed results: [BENCHMARKS.md](../BENCHMARKS.md)
 
-**🎯 Validated 2-6x performance improvements over industry standards!**
+**🎯 Run benchmarks to validate optimization improvements!**

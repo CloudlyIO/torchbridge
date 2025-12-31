@@ -214,8 +214,8 @@ print('✅ Triton kernel compilation successful')
 # Quick functionality test
 export PYTHONPATH=src:$PYTHONPATH
 python3 -c "
+from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 from kernel_pytorch.core.optimized_layers.activation_functions import FusedGELU
-from kernel_pytorch import UnifiedManager
 import torch
 
 print('✅ Framework imports successful')
@@ -227,9 +227,10 @@ if torch.cuda.is_available():
     y = gelu(x)
     print(f'✅ GPU optimization working: {y.shape}')
 
-    # Test hardware abstraction
-    adapter = NVIDIAAdapter()
-    print(f'✅ Hardware adapter: CUDA available = {adapter.cuda_available}')
+    # Test NVIDIA backend configuration
+    config = KernelPyTorchConfig.for_production()
+    print(f'✅ NVIDIA architecture: {config.hardware.nvidia.architecture.value}')
+    print(f'✅ FP8 enabled: {config.hardware.nvidia.fp8_enabled}')
 else:
     print('⚠️  No GPU available - CPU-only mode')
 "

@@ -1,8 +1,18 @@
-# CUDA Kernels - Advanced GPU Programming
+# Custom CUDA Kernels (v0.3.3)
 
-This directory contains custom CUDA C++ kernel implementations demonstrating maximum performance optimization techniques for machine learning operations.
+**Production CUDA kernel implementations for maximum GPU performance.**
 
-## ⚡ **CUDA: Maximum Performance Programming**
+## 📁 Kernel Locations
+
+KernelPyTorch includes custom CUDA kernels in:
+- `src/kernel_pytorch/cuda_kernels/` - Primary custom kernels
+  - `flash_attention_v3.cu` - FlashAttention-3 implementation
+  - `fused_linear_activation.cu` - Fused linear + activation kernels
+  - `fused_ops.cu` - General fused operations
+  - `cuda_interface.cpp` - PyTorch C++ bindings
+- `src/kernel_pytorch/hardware/kernels/` - Hardware-specific kernels
+
+## ⚡ **CUDA Programming Reference**
 
 CUDA (Compute Unified Device Architecture) provides **direct access to GPU hardware**, enabling optimal performance through explicit control over:
 - **Memory hierarchy management**
@@ -10,11 +20,11 @@ CUDA (Compute Unified Device Architecture) provides **direct access to GPU hardw
 - **Warp-level primitive operations**
 - **Hardware-specific optimizations**
 
-### **Why CUDA for Advanced Optimization?**
-- **Maximum Performance**: Direct hardware feature utilization
+### **Why Custom CUDA Kernels?**
+- **Maximum Performance**: Direct hardware feature utilization (FP8, Tensor Cores)
 - **Complete Control**: Explicit memory and execution management
-- **Hardware Features**: Access to latest GPU architectural improvements
-- **Production Ready**: Battle-tested for high-performance computing
+- **Hardware Features**: H100/Blackwell-specific optimizations
+- **Production Ready**: Used in NVIDIA backend (v0.3.1+)
 
 ## 🏗️ **GPU Architecture Fundamentals**
 

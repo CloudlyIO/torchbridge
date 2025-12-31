@@ -48,3 +48,19 @@ repos:
         entry: python3 scripts/check_docs_updated.py
         language: system
         files: ^src/kernel_pytorch/backends/
+
+      # Check documentation versions match __version__
+      - id: sync-doc-versions
+        name: Sync documentation versions
+        entry: python3 scripts/sync_doc_versions.py
+        language: system
+        pass_filenames: false
+        files: ^src/kernel_pytorch/__init__\.py$
+
+      # Check documentation policy (no unauthorized .md files)
+      - id: check-documentation-policy
+        name: Check documentation policy
+        entry: python3 scripts/check_documentation_policy.py
+        language: system
+        pass_filenames: false
+        types: [markdown]
