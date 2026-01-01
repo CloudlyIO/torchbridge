@@ -1,11 +1,11 @@
 # Backend Selection Guide
 
-**Version**: v0.3.3
-**Last Updated**: December 29, 2025
+**Version**: v0.3.6
+**Last Updated**: December 31, 2025
 
 ## Overview
 
-KernelPyTorch supports multiple hardware backends (NVIDIA GPU, TPU, CPU) with automatic detection and intelligent selection. This guide helps you choose the right backend for your workload and configure it optimally.
+KernelPyTorch supports multiple hardware backends (NVIDIA GPU, AMD ROCm, TPU, CPU) with automatic detection and intelligent selection. This guide helps you choose the right backend for your workload and configure it optimally.
 
 ## Table of Contents
 
@@ -46,6 +46,7 @@ Explicitly choose a specific backend:
 ```python
 from kernel_pytorch.backends.nvidia import NVIDIABackend
 from kernel_pytorch.backends.tpu import TPUBackend
+from kernel_pytorch.backends.amd import AMDBackend
 from kernel_pytorch.core.config import KernelPyTorchConfig
 
 config = KernelPyTorchConfig()
@@ -57,6 +58,10 @@ model = nvidia_backend.prepare_model(your_model)
 # Or use TPU backend
 tpu_backend = TPUBackend(config)
 model = tpu_backend.prepare_model(your_model)
+
+# Or use AMD ROCm backend
+amd_backend = AMDBackend()
+model = amd_backend.prepare_model(your_model)
 ```
 
 ---
@@ -107,11 +112,14 @@ print(f"Recommended Backend: {backend}")
 
 Default priority order:
 1. **NVIDIA H100/Blackwell** - Best for large-scale training
-2. **TPU v5p/v6e/v7** - Best for XLA-optimized workloads
-3. **NVIDIA A100** - Great for most training tasks
-4. **TPU v4/v5e** - Good for TPU-optimized inference
-5. **Other NVIDIA GPUs** - Fallback for CUDA workloads
-6. **CPU** - Universal fallback
+2. **AMD MI300X** - Best for AMD data center workloads
+3. **TPU v5p/v6e/v7** - Best for XLA-optimized workloads
+4. **NVIDIA A100** - Great for most training tasks
+5. **AMD MI200 Series** - Good for ROCm-optimized training
+6. **TPU v4/v5e** - Good for TPU-optimized inference
+7. **Other NVIDIA GPUs** - Fallback for CUDA workloads
+8. **AMD RDNA3 GPUs** - Consumer AMD GPU support
+9. **CPU** - Universal fallback
 
 ---
 
@@ -190,6 +198,43 @@ model = backend.prepare_model(your_model)
 - `get_memory_stats()` - Get TPU memory usage
 - `synchronize()` - Synchronize XLA operations
 
+### AMD Backend
+
+**Best For:**
+- ROCm-based training and inference
+- MI200/MI300 data center workloads
+- Matrix Core acceleration (CDNA2/CDNA3)
+- HIP kernel compilation
+
+**Configuration:**
+
+```python
+from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
+
+config = AMDConfig(
+    architecture=AMDArchitecture.CDNA3,  # MI300 series
+    optimization_level="balanced",
+    enable_matrix_cores=True,
+    memory_pool_size_gb=16.0,
+)
+
+backend = AMDBackend(config)
+
+# Prepare model
+model = backend.prepare_model(your_model)
+
+# Optional: Apply optimizations
+optimizer = AMDOptimizer(config)
+optimized_model = optimizer.optimize(model)
+```
+
+**Key Methods:**
+- `prepare_model(model)` - Move model to AMD GPU
+- `get_device_info()` - Get GPU information
+- `synchronize()` - Synchronize HIP operations
+- `empty_cache()` - Clear GPU memory
+
 ### CPU Backend (Fallback)
 
 **Best For:**
@@ -205,15 +250,16 @@ Both NVIDIA and TPU backends automatically fall back to CPU when hardware is una
 
 ### Feature Matrix
 
-| Feature | NVIDIA | TPU | CPU |
-|---------|--------|-----|-----|
-| **Custom CUDA Kernels** | ✅ Full Support | ❌ Not Applicable | ❌ No |
-| **FlashAttention-3** | ✅ H100/Blackwell | ❌ No | ❌ No |
-| **FP8 Training** | ✅ H100/Blackwell | ❌ No | ❌ No |
-| **XLA Compilation** | ⚠️ Limited | ✅ Native | ❌ No |
-| **BFloat16** | ✅ Yes | ✅ Native | ✅ Yes |
-| **Multi-GPU** | ✅ Native | ❌ Use Pods | ⚠️ Limited |
-| **Dynamic Shapes** | ✅ Yes | ⚠️ Limited | ✅ Yes |
+| Feature | NVIDIA | AMD | TPU | CPU |
+|---------|--------|-----|-----|-----|
+| **Custom CUDA/HIP Kernels** | ✅ Full Support | ✅ HIP Kernels | ❌ Not Applicable | ❌ No |
+| **FlashAttention-3** | ✅ H100/Blackwell | ⚠️ HIP Port | ❌ No | ❌ No |
+| **FP8 Training** | ✅ H100/Blackwell | ⚠️ MI300 Only | ❌ No | ❌ No |
+| **Matrix Cores** | ✅ Tensor Cores | ✅ CDNA2/3 | ✅ MXU | ❌ No |
+| **XLA Compilation** | ⚠️ Limited | ❌ No | ✅ Native | ❌ No |
+| **BFloat16** | ✅ Yes | ✅ Yes | ✅ Native | ✅ Yes |
+| **Multi-GPU** | ✅ Native | ✅ Native | ❌ Use Pods | ⚠️ Limited |
+| **Dynamic Shapes** | ✅ Yes | ✅ Yes | ⚠️ Limited | ✅ Yes |
 
 ### Performance Characteristics
 
@@ -221,6 +267,11 @@ Both NVIDIA and TPU backends automatically fall back to CPU when hardware is una
 - **Strengths**: Custom kernels, FlashAttention, FP8, dynamic shapes
 - **Weaknesses**: Memory constraints on consumer GPUs
 - **Best Workloads**: LLM training, custom CUDA ops, mixed precision
+
+**AMD GPU:**
+- **Strengths**: Matrix Cores (CDNA), HIP kernels, multi-GPU, competitive pricing
+- **Weaknesses**: Smaller ecosystem, fewer optimized libraries
+- **Best Workloads**: ROCm-optimized training, data center workloads, HPC
 
 **TPU:**
 - **Strengths**: Large batch sizes, XLA optimization, cost-effective for scale
@@ -291,6 +342,31 @@ tpu_config = TPUConfig(
 )
 ```
 
+### AMD Configuration
+
+```python
+from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+
+amd_config = AMDConfig(
+    # Hardware
+    architecture=AMDArchitecture.CDNA3,  # MI300 series
+    device_id=0,  # GPU device ID
+
+    # Optimization
+    optimization_level="balanced",  # conservative, balanced, aggressive
+    enable_matrix_cores=True,  # Enable Matrix Core acceleration
+    enable_profiling=False,  # Performance profiling
+
+    # Memory
+    memory_pool_size_gb=16.0,  # Memory pool size
+    enable_memory_pooling=True,  # Enable memory pooling
+
+    # Compilation
+    enable_kernel_cache=True,  # Cache compiled HIP kernels
+    kernel_cache_size=1000,  # Max cached kernels
+)
+```
+
 ---
 
 ## Performance Optimization
@@ -349,6 +425,41 @@ tpu_config = TPUConfig(
    config.hardware.tpu.precision = "bfloat16"
    ```
 
+### AMD Optimization Tips
+
+1. **Enable Matrix Cores for CDNA Architectures**
+   ```python
+   # MI200/MI300 have Matrix Cores for accelerated matrix ops
+   config = AMDConfig(
+       architecture=AMDArchitecture.CDNA3,
+       enable_matrix_cores=True,
+   )
+   ```
+
+2. **Use Kernel Caching**
+   ```python
+   # Cache HIP kernels for faster subsequent runs
+   config = AMDConfig(
+       enable_kernel_cache=True,
+       kernel_cache_size=1000,
+   )
+   ```
+
+3. **Choose Appropriate Optimization Level**
+   ```python
+   # conservative: Safe, minimal changes
+   # balanced: Good tradeoff (recommended)
+   # aggressive: Maximum optimization, may affect numerics
+   config = AMDConfig(optimization_level="balanced")
+   ```
+
+4. **Monitor Memory Usage**
+   ```python
+   # Get memory statistics
+   stats = backend.get_device_info()
+   print(f"Memory: {stats}")
+   ```
+
 ---
 
 ## Best Practices
@@ -379,7 +490,7 @@ tpu_result = validator.validate_tpu_compatibility(model)
 
 ```python
 # Test your model works on all backends
-backends = [NVIDIABackend(config), TPUBackend(config)]
+backends = [NVIDIABackend(config), TPUBackend(config), AMDBackend()]
 
 for backend in backends:
     model = backend.prepare_model(your_model)
@@ -389,12 +500,15 @@ for backend in backends:
 ### 4. Use Backend-Specific Optimizations
 
 ```python
-# Don't use NVIDIA-specific features on TPU
+# Use appropriate features for each backend
 if backend_name == "nvidia":
     # Use FlashAttention, FP8, custom kernels
     pass
 elif backend_name == "tpu":
     # Use large batches, static shapes, bfloat16
+    pass
+elif backend_name == "amd":
+    # Use Matrix Cores, HIP kernels, ROCm optimizations
     pass
 ```
 
@@ -433,7 +547,7 @@ tpu_model.load_state_dict(checkpoint['model_state_dict'])
 ## Next Steps
 
 - **Troubleshooting**: See [Troubleshooting Guide](troubleshooting.md)
-- **Hardware Details**: See [NVIDIA Backend](../backends/nvidia.md) and [TPU Backend](../backends/tpu.md)
+- **Hardware Details**: See [NVIDIA Backend](../backends/nvidia.md), [AMD Backend](../backends/amd.md), and [TPU Backend](../backends/tpu.md)
 - **API Reference**: See [CLI Reference](../capabilities/cli_reference.md)
 - **Testing**: See [Testing Guide](testing_guide.md)
 
@@ -444,9 +558,11 @@ tpu_model.load_state_dict(checkpoint['model_state_dict'])
 **Quick Selection Guide:**
 
 - **Large-scale LLM Training** → NVIDIA H100 with FP8
+- **AMD Data Center** → MI300X with Matrix Cores
 - **Cost-effective Scale** → TPU v5e/v5p
-- **Custom Kernels** → NVIDIA GPU
+- **Custom Kernels** → NVIDIA GPU or AMD HIP
 - **XLA-optimized Models** → TPU
+- **ROCm Workloads** → AMD MI200/MI300
 - **Development/Testing** → CPU Fallback
 
 **Remember:**

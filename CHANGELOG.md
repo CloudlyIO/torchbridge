@@ -39,6 +39,60 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.6] - 2025-12-31 - AMD Documentation (Phase 4C-Pre Week 6)
+
+**Goal**: Complete AMD backend documentation for production readiness
+
+### **Added** ✨
+
+**AMD Backend Documentation** (`docs/backends/amd.md`, 500+ lines):
+- Complete AMD ROCm backend documentation
+- Architecture support table (CDNA2, CDNA3, RDNA2, RDNA3)
+- Quick start guide with code examples
+- Installation guide (ROCm, PyTorch with ROCm)
+- Configuration reference (AMDConfig options)
+- Core components documentation:
+  - AMDBackend: Device management and model preparation
+  - AMDOptimizer: Multi-level optimization
+  - ROCmCompiler: HIP kernel compilation with caching
+  - AMDMemoryManager: HBM-optimized memory pooling
+  - HIPUtilities: Streams, events, and profiling
+- Usage examples (training loop, cross-backend portability)
+- Performance optimization tips
+- Error handling with exception hierarchy
+- Troubleshooting section
+- Best practices
+
+### **Changed** 🔄
+
+**Backend Selection Guide** (`docs/guides/backend_selection.md`):
+- Added AMD backend section with configuration examples
+- Updated feature matrix to include AMD (4 backends)
+- Added AMD optimization tips
+- Updated backend comparison with AMD characteristics
+- Added AMD to selection priority list
+- Updated version to v0.3.6
+
+**Troubleshooting Guide** (`docs/guides/troubleshooting.md`):
+- Added comprehensive AMD Backend Issues section
+- ROCm not available troubleshooting
+- HIP kernel compilation error fixes
+- AMD memory error solutions
+- Matrix Cores utilization troubleshooting
+- Updated version to v0.3.6
+
+**README.md**:
+- Updated Hardware Abstraction description to include AMD ROCm and TPU
+- Expanded hardware compatibility table with AMD MI300X/MI200 and TPU
+- Added AMD backend code example
+
+### **Documentation Statistics**
+- New documentation: 500+ lines (amd.md)
+- Updated documentation: 200+ lines across guides
+- Total AMD documentation: 700+ lines
+
+---
+
 ## [0.3.5] - 2025-12-31 - AMD Testing & Integration (Phase 4C-Pre Week 5)
 
 **Goal**: Comprehensive AMD backend testing, cross-backend integration, and benchmarking

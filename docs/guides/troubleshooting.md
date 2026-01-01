@@ -1,16 +1,17 @@
 # Backend Troubleshooting Guide
 
-**Version**: v0.3.3
-**Last Updated**: December 29, 2025
+**Version**: v0.3.6
+**Last Updated**: December 31, 2025
 
 ## Overview
 
-This guide helps you diagnose and resolve common issues with NVIDIA GPU and TPU backends in KernelPyTorch.
+This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROCm, and TPU backends in KernelPyTorch.
 
 ## Table of Contents
 
 - [Common Issues](#common-issues)
 - [NVIDIA Backend Issues](#nvidia-backend-issues)
+- [AMD Backend Issues](#amd-backend-issues)
 - [TPU Backend Issues](#tpu-backend-issues)
 - [Performance Issues](#performance-issues)
 - [Debugging Tools](#debugging-tools)
@@ -47,6 +48,10 @@ This guide helps you diagnose and resolve common issues with NVIDIA GPU and TPU 
    ```bash
    # NVIDIA: Check driver
    nvidia-smi
+
+   # AMD: Check ROCm
+   rocminfo
+   rocm-smi
 
    # TPU: Check environment
    echo $TPU_NAME
@@ -88,6 +93,7 @@ This guide helps you diagnose and resolve common issues with NVIDIA GPU and TPU 
    ```python
    # Correct imports
    from kernel_pytorch.backends.nvidia import NVIDIABackend
+   from kernel_pytorch.backends.amd import AMDBackend
    from kernel_pytorch.backends.tpu import TPUBackend
    ```
 
@@ -241,6 +247,163 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
    ```python
    # Use prepare_model_with_custom_kernels
    model = backend.prepare_model_with_custom_kernels(model)
+   ```
+
+---
+
+## AMD Backend Issues
+
+### Issue: ROCm Not Available
+
+**Symptoms:**
+- `RuntimeWarning: ROCm not available`
+- AMD backend falls back to CPU
+- HIP initialization errors
+
+**Solutions:**
+
+1. **Check ROCm Installation**
+   ```bash
+   # Verify ROCm is installed
+   rocminfo
+
+   # Check supported GPUs
+   rocm-smi --showid
+
+   # Verify ROCM_HOME
+   echo $ROCM_HOME
+   ```
+
+2. **Install ROCm**
+   ```bash
+   # Ubuntu 22.04 with ROCm 6.x
+   wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
+       sudo gpg --dearmor -o /etc/apt/keyrings/rocm.gpg
+   echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] \
+       https://repo.radeon.com/rocm/apt/6.0 jammy main" | \
+       sudo tee /etc/apt/sources.list.d/rocm.list
+   sudo apt update && sudo apt install rocm
+   ```
+
+3. **Set Environment Variables**
+   ```bash
+   export ROCM_HOME=/opt/rocm
+   export PATH=$ROCM_HOME/bin:$PATH
+   export LD_LIBRARY_PATH=$ROCM_HOME/lib:$LD_LIBRARY_PATH
+   ```
+
+4. **Install PyTorch with ROCm**
+   ```bash
+   pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
+   ```
+
+---
+
+### Issue: HIP Kernel Compilation Errors
+
+**Symptoms:**
+- `HIPCompilationError`
+- Kernel cache misses
+- Slow first-run performance
+
+**Solutions:**
+
+1. **Check HIP Compiler**
+   ```bash
+   # Verify hipcc is available
+   hipcc --version
+   ```
+
+2. **Clear Kernel Cache**
+   ```python
+   from kernel_pytorch.backends.amd import ROCmCompiler
+   from kernel_pytorch.core.config import AMDConfig
+
+   compiler = ROCmCompiler(AMDConfig())
+   compiler.clear_cache()
+   ```
+
+3. **Enable Verbose Compilation**
+   ```python
+   config = AMDConfig(enable_profiling=True)
+   compiler = ROCmCompiler(config)
+   stats = compiler.get_compilation_stats()
+   print(f"Cache hits: {stats['cache_hit_rate_percent']:.1f}%")
+   ```
+
+---
+
+### Issue: AMD Memory Errors
+
+**Symptoms:**
+- `ROCm out of memory`
+- Training crashes with memory allocation errors
+
+**Solutions:**
+
+1. **Monitor Memory Usage**
+   ```python
+   from kernel_pytorch.backends.amd import AMDBackend
+
+   backend = AMDBackend()
+   info = backend.get_device_info()
+   print(f"Memory: {info}")
+   ```
+
+2. **Configure Memory Pool**
+   ```python
+   from kernel_pytorch.core.config import AMDConfig
+
+   config = AMDConfig(
+       memory_pool_size_gb=8.0,  # Reduce pool size
+       enable_memory_pooling=True,
+   )
+   ```
+
+3. **Clear GPU Cache**
+   ```python
+   backend.empty_cache()
+   ```
+
+4. **Use Gradient Checkpointing**
+   ```python
+   from kernel_pytorch.advanced_memory import SelectiveGradientCheckpointing
+
+   checkpointing = SelectiveGradientCheckpointing(model)
+   ```
+
+---
+
+### Issue: Matrix Cores Not Used
+
+**Symptoms:**
+- No performance improvement with CDNA GPUs
+- Matrix operations not accelerated
+
+**Solutions:**
+
+1. **Check Architecture Support**
+   ```python
+   from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+
+   # Only CDNA2 (MI200) and CDNA3 (MI300) have Matrix Cores
+   config = AMDConfig(
+       architecture=AMDArchitecture.CDNA3,
+       enable_matrix_cores=True,
+   )
+   ```
+
+2. **Verify GPU Type**
+   ```bash
+   # Check if you have a CDNA GPU (MI series)
+   rocm-smi --showproductname
+   # Matrix Cores only on: MI100, MI200, MI300 series
+   ```
+
+3. **Use Appropriate Data Types**
+   ```python
+   # Matrix Cores work best with FP16/BF16
+   model = model.half()  # Convert to FP16
    ```
 
 ---
@@ -433,6 +596,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # For specific modules
 logging.getLogger('kernel_pytorch.backends.nvidia').setLevel(logging.DEBUG)
+logging.getLogger('kernel_pytorch.backends.amd').setLevel(logging.DEBUG)
 logging.getLogger('kernel_pytorch.backends.tpu').setLevel(logging.DEBUG)
 ```
 
@@ -491,6 +655,7 @@ if result.has_regression:
 
 - [Backend Selection Guide](backend_selection.md)
 - [NVIDIA Backend Documentation](../backends/nvidia.md)
+- [AMD Backend Documentation](../backends/amd.md)
 - [TPU Backend Documentation](../backends/tpu.md)
 - [Testing Guide](testing_guide.md)
 
@@ -544,7 +709,7 @@ config.hardware.tpu.enable_strict_validation = True
 **Quick Troubleshooting Checklist:**
 
 - ✅ Hardware detected correctly?
-- ✅ Dependencies installed?
+- ✅ Dependencies installed? (CUDA/ROCm/XLA)
 - ✅ Drivers up to date?
 - ✅ Correct backend selected?
 - ✅ Dtypes match?
@@ -559,5 +724,11 @@ config.hardware.tpu.enable_strict_validation = True
 - Check dtype consistency
 - Verify backend selection
 - Monitor memory usage
+
+**Backend-Specific Quick Fixes:**
+
+- **NVIDIA**: Check `nvidia-smi`, verify CUDA version
+- **AMD**: Check `rocminfo`, verify `$ROCM_HOME`
+- **TPU**: Check `$TPU_NAME`, verify PyTorch/XLA installation
 
 For persistent issues, enable debug logging and use validation tools to identify the root cause.
