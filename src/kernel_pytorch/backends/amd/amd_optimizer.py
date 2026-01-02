@@ -13,7 +13,7 @@ Supported Architectures:
 - CDNA2 (MI200 series): Matrix Cores, HBM2e
 - CDNA3 (MI300 series): Matrix Cores v2, HBM3
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging

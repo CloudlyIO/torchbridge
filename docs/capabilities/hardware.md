@@ -1,4 +1,4 @@
-# 🔧 Hardware Abstraction (v0.3.3)
+# 🔧 Hardware Abstraction (v0.3.6)
 
 **Multi-vendor GPU and TPU support through unified hardware management.**
 
@@ -6,14 +6,14 @@
 
 ### GPUs
 - **NVIDIA**: RTX 4090, A100, H100, Blackwell (all generations)
-- **AMD**: MI200 series, MI300 series, RX 7000 series
+- **AMD**: MI200 series (CDNA2), MI300 series (CDNA3), RX 7000 series (RDNA3)
 - **Intel**: Arc A-series, Xe-HPG, Data Center GPU
 
 ### CPUs
 - **Intel**: x86-64 processors with optimized fallback support
 - **Automatic detection**: Hardware capabilities and optimization selection
 
-### TPUs (NEW in v0.2.4)
+### TPUs
 - **Google Cloud TPU**: v4, v5e, v5p, v6e, v7 with auto-detection
 - **PyTorch/XLA**: Complete XLA compiler integration
 - **Memory Optimization**: TPU-specific memory pooling and layout optimization

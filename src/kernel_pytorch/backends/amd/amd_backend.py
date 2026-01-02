@@ -17,7 +17,7 @@ Key Features:
 - Matrix Core acceleration
 - ROCm profiling integration
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging
@@ -78,7 +78,7 @@ class AMDBackend:
         self._initialized = False
         self._cpu_fallback = False
 
-        logger.info("Initializing AMD ROCm Backend v0.3.5")
+        logger.info("Initializing AMD ROCm Backend v0.3.6")
 
         # Validate configuration
         self._validate_config()

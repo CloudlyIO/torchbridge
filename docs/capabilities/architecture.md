@@ -1,4 +1,4 @@
-# 🏗️ Technical Architecture (v0.3.3)
+# 🏗️ Technical Architecture (v0.3.6)
 
 **KernelPyTorch unified framework architecture with production-ready GPU/TPU backends.**
 

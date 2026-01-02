@@ -14,7 +14,7 @@ Key Features:
 - Kernel performance profiling
 - Error handling and diagnostics
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging

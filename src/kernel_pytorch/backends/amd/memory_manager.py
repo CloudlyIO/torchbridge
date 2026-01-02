@@ -16,7 +16,7 @@ Key Features:
 - Out-of-memory (OOM) protection
 - Automatic cleanup and defragmentation
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging

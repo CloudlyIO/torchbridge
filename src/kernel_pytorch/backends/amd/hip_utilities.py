@@ -14,7 +14,7 @@ Key Features:
 - Memory transfer utilities
 - Multi-GPU coordination
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging

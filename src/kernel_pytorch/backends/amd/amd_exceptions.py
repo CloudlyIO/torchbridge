@@ -15,7 +15,7 @@ Exception Hierarchy:
   - AMDConfigurationError: Configuration validation errors
   - MatrixCoreError: Matrix core operation errors
 
-Version: 0.3.4
+Version: 0.3.6
 """
 
 import logging
