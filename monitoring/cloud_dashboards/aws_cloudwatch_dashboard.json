@@ -1,0 +1,176 @@
+{
+  "widgets": [
+    {
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 1,
+      "properties": {
+        "markdown": "# KernelPyTorch Cloud Testing Dashboard - AWS"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 1,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "GPU Utilization",
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["KernelPyTorch/Testing", "GPUUtilization", "InstanceType", "p4d.24xlarge"],
+          ["...", "p5.48xlarge"]
+        ],
+        "region": "us-west-2",
+        "period": 60,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 1,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "GPU Memory Usage",
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["KernelPyTorch/Testing", "GPUMemoryUsed", "InstanceType", "p4d.24xlarge"],
+          ["...", "p5.48xlarge"]
+        ],
+        "region": "us-west-2",
+        "period": 60,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Test Pass Rate",
+        "view": "gauge",
+        "metrics": [
+          ["KernelPyTorch/Testing", "TestPassRate"]
+        ],
+        "region": "us-west-2",
+        "period": 300,
+        "stat": "Average",
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Inference Latency (ms)",
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["KernelPyTorch/Testing", "InferenceLatencyP50"],
+          [".", "InferenceLatencyP95"],
+          [".", "InferenceLatencyP99"]
+        ],
+        "region": "us-west-2",
+        "period": 60,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Throughput (samples/sec)",
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["KernelPyTorch/Testing", "Throughput", "InstanceType", "p4d.24xlarge"],
+          ["...", "p5.48xlarge"]
+        ],
+        "region": "us-west-2",
+        "period": 60,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 13,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Tests Executed",
+        "view": "timeSeries",
+        "stacked": true,
+        "metrics": [
+          ["KernelPyTorch/Testing", "TestsPassed", {"color": "#2ca02c"}],
+          [".", "TestsFailed", {"color": "#d62728"}],
+          [".", "TestsSkipped", {"color": "#ff7f0e"}]
+        ],
+        "region": "us-west-2",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 13,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Cost Tracking (USD)",
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["KernelPyTorch/Testing", "CostPerHour", "InstanceType", "p4d.24xlarge"],
+          ["...", "p5.48xlarge"],
+          ["...", "g5.xlarge"]
+        ],
+        "region": "us-west-2",
+        "period": 3600,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 19,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Benchmark Performance Comparison",
+        "view": "bar",
+        "metrics": [
+          ["KernelPyTorch/Testing", "FlashAttentionLatency"],
+          [".", "FusedLinearGELULatency"],
+          [".", "TransformerForwardLatency"],
+          [".", "PyTorchSDPALatency"]
+        ],
+        "region": "us-west-2",
+        "period": 3600,
+        "stat": "Average"
+      }
+    }
+  ],
+  "dashboardName": "KernelPyTorch-AWS-Testing",
+  "periodOverride": "auto"
+}

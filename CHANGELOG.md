@@ -39,6 +39,116 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.7] - 2026-01-02 - Real Hardware Validation Infrastructure (Phase 4D-Cloud)
+
+**Goal**: Build cloud testing infrastructure for real hardware validation on AWS/GCP
+
+### **Added** ✨
+
+**Cloud Testing Infrastructure** (`tests/cloud_testing/`):
+- `aws_test_harness.py` (~400 lines): AWS EC2 test orchestration
+  - AWSInstanceType enum (P5, P4d, G5 instances)
+  - AWSInstanceConfig dataclass for instance configuration
+  - AWSTestResult dataclass for result tracking
+  - AWSTestHarness class with instance lifecycle management
+  - Spot instance support with configurable max price
+  - Cost tracking and estimation
+- `gcp_test_harness.py` (~400 lines): GCP Compute Engine and TPU testing
+  - GCPMachineType enum (A3, A2, G2 instances)
+  - TPUType enum (v5litepod, v5p, v6e)
+  - GCPInstanceConfig and TPUConfig dataclasses
+  - GCPTestHarness for GPU instances
+  - TPUTestHarness for TPU pods
+  - Preemptible instance support
+- `result_uploader.py` (~200 lines): Cloud storage integration
+  - ResultUploader abstract base class
+  - S3Uploader for AWS (boto3 integration)
+  - GCSUploader for GCP (google-cloud-storage integration)
+  - Simulation mode for local development
+  - Metadata support for result tagging
+- `benchmark_database.py` (~300 lines): SQLite benchmark storage
+  - BenchmarkRecord dataclass with full metadata
+  - ComparisonResult for cross-platform analysis
+  - BenchmarkDatabase with CRUD operations
+  - Query by platform, hardware, date range
+  - Statistics aggregation (avg, min, max)
+  - compare_platforms() for AWS vs GCP comparison
+
+**Monitoring Dashboards** (`monitoring/cloud_dashboards/`):
+- `aws_cloudwatch_dashboard.json`: CloudWatch dashboard configuration
+  - GPU utilization and memory widgets
+  - Test pass rate gauge
+  - Inference latency (P50/P95/P99) charts
+  - Throughput monitoring
+  - Cost tracking by instance type
+  - Benchmark performance comparison bar charts
+- `gcp_monitoring_dashboard.json`: GCP Cloud Monitoring dashboard
+  - GPU and TPU utilization widgets
+  - Memory usage tracking
+  - XLA compilation time monitoring
+  - TPU HBM usage visualization
+  - Cost tracking by machine type
+- `cross_platform_comparison.py` (~300 lines): Comparison tool
+  - PlatformMetrics dataclass for platform data
+  - ComparisonMetric for individual metric comparison
+  - ComparisonReport with markdown/JSON export
+  - CrossPlatformComparison class for analysis
+  - Significance detection (10% threshold)
+  - create_comparison_chart() for text visualization
+
+**Cloud Testing Documentation** (`docs/cloud_testing/`, 7 guides):
+- `aws_setup.md`: Complete AWS environment setup guide
+  - IAM permissions and policies
+  - Instance types and AMI selection
+  - Security group and S3 bucket setup
+  - Test harness usage examples
+  - Spot instance best practices
+- `gcp_setup.md`: Complete GCP environment setup guide
+  - Service account and IAM configuration
+  - GPU and TPU instance types
+  - VM image selection
+  - TPU VM vs TPU Node comparison
+  - Preemptible instance usage
+- `instance_selection.md`: Hardware selection guide
+  - Quick reference by test type and budget
+  - AWS and GCP instance details
+  - Hardware feature matrix
+  - Multi-platform testing strategy
+- `cost_optimization.md`: Cost management strategies
+  - Spot/preemptible pricing comparison
+  - Right-sizing recommendations
+  - Monthly budget examples
+  - Cost reduction checklist
+- `team_workflow.md`: Multi-developer testing protocols
+  - Team roles and responsibilities
+  - Scheduling and booking system
+  - Configuration management
+  - Cost accountability tracking
+- `result_sharing.md`: Benchmark result collaboration
+  - Result storage architecture
+  - Standard result format
+  - Cross-platform comparison usage
+  - Regression detection examples
+- `troubleshooting.md`: Common cloud issues and fixes
+  - Instance launch failures
+  - SSH connection issues
+  - GPU/CUDA problems
+  - TPU-specific issues
+  - Cost runaway prevention
+
+### **Infrastructure Statistics**
+- Cloud testing modules: 4 files, ~1,300 lines
+- Monitoring dashboards: 3 files, ~500 lines
+- Documentation: 7 guides, ~2,500 lines
+- Total new code: ~4,300 lines
+
+### **Supported Platforms**
+- AWS: P5.48xlarge (H100), P4d.24xlarge (A100), G5 (A10G)
+- GCP: A3-highgpu-8g (H100), A2-highgpu (A100), G2 (L4)
+- TPU: v5litepod-1/4/8/16, v5p-8, v6e-1
+
+---
+
 ## [0.3.6] - 2025-12-31 - AMD Documentation (Phase 4C-Pre Week 6)
 
 **Goal**: Complete AMD backend documentation for production readiness
