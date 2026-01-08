@@ -16,6 +16,7 @@ import pickle
 from kernel_pytorch.core.config import TPUConfig, TPUCompilationMode
 from .cache_utils import LRUCache
 from .tpu_exceptions import XLACompilationError, raise_or_warn
+from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
@@ -119,10 +120,8 @@ class XLACompiler:
                           sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> nn.Module:
         """Compile using PyTorch/XLA torch.compile."""
         try:
-            import torch_xla.core.xla_model as xm
-
-            # Mark step for XLA compilation
-            xm.mark_step()
+            # Sync for XLA compilation using compatibility layer
+            xla_compat.sync()
 
             # Use torch.compile with XLA backend if available
             if hasattr(torch, 'compile'):
@@ -145,12 +144,10 @@ class XLACompiler:
                            sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> nn.Module:
         """Compile using direct XLA compilation."""
         try:
-            import torch_xla.core.xla_model as xm
-
             # Force XLA compilation with sample inputs
             if sample_inputs is not None:
-                # Move inputs to XLA device
-                xla_device = xm.xla_device()
+                # Move inputs to XLA device using compatibility layer
+                xla_device = xla_compat.get_xla_device()
                 if isinstance(sample_inputs, torch.Tensor):
                     sample_inputs = sample_inputs.to(xla_device)
                 elif isinstance(sample_inputs, (list, tuple)):
@@ -162,7 +159,7 @@ class XLACompiler:
                 model.eval()
                 with torch.no_grad():
                     _ = model(sample_inputs)
-                xm.mark_step()
+                xla_compat.sync()
 
             return model
 
@@ -287,9 +284,8 @@ class XLACompiler:
 
         # Clear XLA compilation cache
         try:
-            import torch_xla.core.xla_model as xm
-            xm.mark_step()
-        except ImportError:
+            xla_compat.sync()
+        except Exception:
             pass
 
     def benchmark_compilation(self, model: nn.Module,

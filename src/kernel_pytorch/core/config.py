@@ -298,16 +298,15 @@ class TPUConfig:
     def _detect_tpu_version(self) -> TPUVersion:
         """Detect TPU version from environment."""
         try:
-            # Try to import XLA and detect TPU
-            import torch_xla.core.xla_model as xm
-            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
+            # Check if we're on a TPU using compatible API
+            if self._is_tpu_environment():
                 # Try to detect TPU version from environment
                 import os
                 tpu_type = os.environ.get('TPU_TYPE', '')
 
                 if 'v5p' in tpu_type.lower():
                     return TPUVersion.V5P
-                elif 'v5e' in tpu_type.lower():
+                elif 'v5e' in tpu_type.lower() or 'v5lite' in tpu_type.lower():
                     return TPUVersion.V5E
                 elif 'v6e' in tpu_type.lower():
                     return TPUVersion.V6E
@@ -328,10 +327,9 @@ class TPUConfig:
     def _detect_tpu_topology(self) -> TPUTopology:
         """Detect TPU topology from environment."""
         try:
-            import torch_xla.core.xla_model as xm
-            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
-                # Get number of TPU cores
-                world_size = xm.xrt_world_size()
+            if self._is_tpu_environment():
+                # Get number of TPU cores using compatible API
+                world_size = self._get_world_size()
 
                 if world_size == 1:
                     return TPUTopology.SINGLE
@@ -347,6 +345,56 @@ class TPUConfig:
             pass
 
         return TPUTopology.SINGLE  # Default fallback
+
+    def _is_tpu_environment(self) -> bool:
+        """Check if running in TPU environment (compatible with torch_xla 2.9+)."""
+        try:
+            import torch_xla
+            import torch_xla.core.xla_model as xm
+
+            # Get device using new API if available
+            if hasattr(torch_xla, 'device'):
+                device = torch_xla.device()
+            else:
+                device = xm.xla_device()
+
+            if device.type != 'xla':
+                return False
+
+            # Check device hardware type
+            if hasattr(xm, 'xla_device_hw'):
+                return xm.xla_device_hw(device) == 'TPU'
+
+            # Fallback: check environment variable
+            import os
+            return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
+        except Exception:
+            return False
+
+    def _get_world_size(self) -> int:
+        """Get world size (compatible with torch_xla 2.9+)."""
+        try:
+            # Try new runtime API first (torch_xla 2.9+)
+            import torch_xla
+            if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+                return torch_xla.runtime.world_size()
+
+            # Try older runtime API
+            try:
+                from torch_xla import runtime as xr
+                if hasattr(xr, 'world_size'):
+                    return xr.world_size()
+            except ImportError:
+                pass
+
+            # Fall back to old xm API
+            import torch_xla.core.xla_model as xm
+            if hasattr(xm, 'xrt_world_size'):
+                return xm.xrt_world_size()
+
+            return 1
+        except ImportError:
+            return 1
 
 
 @dataclass
@@ -502,20 +550,16 @@ class HardwareConfig:
                     self.backend = HardwareBackend.AMD
                 else:
                     # Try TPU detection if ROCm not available
-                    try:
-                        import torch_xla.core.xla_model as xm
-                        if xm.xla_device_hw(xm.xla_device()) == 'TPU':
-                            self.backend = HardwareBackend.TPU
-                    except ImportError:
+                    if self._detect_tpu_environment():
+                        self.backend = HardwareBackend.TPU
+                    else:
                         # Fall back to CPU
                         self.backend = HardwareBackend.CPU
             except (ImportError, AttributeError):
                 # Try TPU detection
-                try:
-                    import torch_xla.core.xla_model as xm
-                    if xm.xla_device_hw(xm.xla_device()) == 'TPU':
-                        self.backend = HardwareBackend.TPU
-                except ImportError:
+                if self._detect_tpu_environment():
+                    self.backend = HardwareBackend.TPU
+                else:
                     # Fall back to CPU
                     self.backend = HardwareBackend.CPU
 
@@ -541,6 +585,31 @@ class HardwareConfig:
             self.triton_enabled = False        # Triton is CUDA-specific
         else:
             self.tpu.enabled = False
+
+    def _detect_tpu_environment(self) -> bool:
+        """Check if running in TPU environment (compatible with torch_xla 2.9+)."""
+        try:
+            import torch_xla
+            import torch_xla.core.xla_model as xm
+
+            # Get device using new API if available
+            if hasattr(torch_xla, 'device'):
+                device = torch_xla.device()
+            else:
+                device = xm.xla_device()
+
+            if device.type != 'xla':
+                return False
+
+            # Check device hardware type
+            if hasattr(xm, 'xla_device_hw'):
+                return xm.xla_device_hw(device) == 'TPU'
+
+            # Fallback: check environment variable
+            import os
+            return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
+        except Exception:
+            return False
 
 
 @dataclass
@@ -715,11 +784,25 @@ class KernelPyTorchConfig:
         if torch.cuda.is_available():
             return torch.device("cuda")
 
-        # Try TPU
+        # Try TPU (compatible with torch_xla 2.9+)
         try:
+            import torch_xla
             import torch_xla.core.xla_model as xm
-            if xm.xla_device_hw(xm.xla_device()) == 'TPU':
-                return xm.xla_device()
+
+            # Get device using new API if available
+            if hasattr(torch_xla, 'device'):
+                device = torch_xla.device()
+            else:
+                device = xm.xla_device()
+
+            if device.type == 'xla':
+                # Check if it's actually a TPU
+                if hasattr(xm, 'xla_device_hw'):
+                    if xm.xla_device_hw(device) == 'TPU':
+                        return device
+                else:
+                    # Assume it's a TPU if we got an XLA device
+                    return device
         except ImportError:
             pass
         except Exception:

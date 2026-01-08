@@ -651,16 +651,27 @@ class UnifiedValidator:
             # Check XLA availability
             self._add_success("PyTorch/XLA available")
 
-            # Check XLA device
+            # Check XLA device (compatible with torch_xla 2.9+)
             try:
-                device = xm.xla_device()
+                # Use new API if available
+                if hasattr(torch_xla, 'device'):
+                    device = torch_xla.device()
+                else:
+                    device = xm.xla_device()
                 self._add_success(f"XLA device available: {device}")
             except Exception as e:
                 self._add_warning(f"XLA device access failed: {str(e)}")
 
-            # Check XLA world size
+            # Check XLA world size (compatible with torch_xla 2.9+)
             try:
-                world_size = xm.xrt_world_size()
+                # Use new runtime API if available
+                if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+                    world_size = torch_xla.runtime.world_size()
+                elif hasattr(xm, 'xrt_world_size'):
+                    world_size = xm.xrt_world_size()
+                else:
+                    world_size = 1
+
                 self._add_success(f"XLA world size: {world_size}")
 
                 if world_size > 1 and tpu_config.topology == "single":

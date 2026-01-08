@@ -14,6 +14,7 @@ import os
 import time
 
 from kernel_pytorch.core.config import TPUConfig, TPUVersion, TPUTopology, TPUCompilationMode
+from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
@@ -45,16 +46,16 @@ class XLADeviceManager:
         """Set up XLA devices for TPU."""
         try:
             import torch_xla
-            import torch_xla.core.xla_model as xm
 
-            # Get available XLA devices
-            self._devices = xm.get_xla_supported_devices()
-            self._current_device = xm.xla_device()
+            # Get current device using compatibility layer
+            self._current_device = xla_compat.get_xla_device()
+            self._devices = [self._current_device]  # Simplified device list
 
-            # Set up distributed environment
-            if xm.xrt_world_size() > 1:
-                self._world_size = xm.xrt_world_size()
-                self._rank = xm.get_ordinal()
+            # Set up distributed environment using compatibility layer
+            world_size = xla_compat.get_world_size()
+            if world_size > 1:
+                self._world_size = world_size
+                self._rank = xla_compat.get_ordinal()
 
             logger.info(
                 "XLA Device Manager initialized: devices=%d, current_device=%s, world_size=%d, rank=%d",
@@ -98,11 +99,10 @@ class XLADeviceManager:
     def sync_all_devices(self) -> None:
         """Synchronize all XLA devices."""
         try:
-            import torch_xla.core.xla_model as xm
-            xm.mark_step()
+            xla_compat.sync()
             if self.world_size > 1:
-                xm.rendezvous('sync_all')
-        except ImportError:
+                xla_compat.rendezvous('sync_all')
+        except Exception:
             pass
 
     def get_device_stats(self) -> Dict[str, Any]:
@@ -115,13 +115,10 @@ class XLADeviceManager:
         }
 
         try:
-            import torch_xla.core.xla_model as xm
             stats.update({
-                'xla_device_count': xm.xla_device_count(),
-                'xla_real_devices': xm.xla_real_devices(),
-                'is_master_ordinal': xm.is_master_ordinal()
+                'xla_device_count': xla_compat.get_device_count(),
             })
-        except ImportError:
+        except Exception:
             pass
 
         return stats
@@ -394,13 +391,11 @@ class XLAUtilities:
                 'xla_available': True
             })
 
-            import torch_xla.core.xla_model as xm
             env_info.update({
-                'xla_device_count': xm.xla_device_count(),
-                'xla_real_devices': xm.xla_real_devices(),
-                'xrt_world_size': xm.xrt_world_size()
+                'xla_device_count': xla_compat.get_device_count(),
+                'xrt_world_size': xla_compat.get_world_size()
             })
-        except ImportError:
+        except Exception:
             env_info['xla_available'] = False
 
         return env_info
@@ -411,10 +406,8 @@ class XLAUtilities:
         """Profile XLA compilation performance."""
 
         try:
-            import torch_xla.core.xla_model as xm
-
-            # Warmup
-            device = xm.xla_device()
+            # Use compatibility layer for device access
+            device = xla_compat.get_xla_device()
             model = model.to(device)
             sample_input = sample_input.to(device)
 
@@ -423,7 +416,7 @@ class XLAUtilities:
 
             with torch.no_grad():
                 output = model(sample_input)
-                xm.mark_step()  # Force compilation
+                xla_compat.sync()  # Force compilation
 
             compilation_time = time.time() - start_time
 
@@ -432,7 +425,7 @@ class XLAUtilities:
             for _ in range(10):
                 with torch.no_grad():
                     output = model(sample_input)
-                    xm.mark_step()
+                    xla_compat.sync()
 
             execution_time = (time.time() - start_time) / 10
 
@@ -443,7 +436,7 @@ class XLAUtilities:
                 'device': str(device)
             }
 
-        except ImportError:
+        except Exception:
             return {'error': 'PyTorch/XLA not available'}
 
     @staticmethod
@@ -452,10 +445,9 @@ class XLAUtilities:
         """Get XLA computation graph for debugging."""
 
         try:
-            import torch_xla.core.xla_model as xm
             import torch_xla.debug.metrics as met
 
-            device = xm.xla_device()
+            device = xla_compat.get_xla_device()
             model = model.to(device)
             sample_input = sample_input.to(device)
 
@@ -465,13 +457,13 @@ class XLAUtilities:
             # Run model to generate graph
             with torch.no_grad():
                 output = model(sample_input)
-                xm.mark_step()
+                xla_compat.sync()
 
             # Get metrics report
             metrics_report = met.metrics_report()
             return metrics_report
 
-        except ImportError:
+        except Exception:
             return "PyTorch/XLA debug utilities not available"
 
     @staticmethod

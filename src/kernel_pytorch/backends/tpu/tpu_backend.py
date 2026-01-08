@@ -14,6 +14,7 @@ from pathlib import Path
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
 from .cache_utils import LRUCache
+from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +51,12 @@ class TPUBackend:
         """Set up PyTorch/XLA environment for TPU."""
         try:
             import torch_xla
-            import torch_xla.core.xla_model as xm
             import torch_xla.distributed.xla_backend
 
-            # Get TPU device
-            self._xla_device = xm.xla_device()
-            self._world_size = xm.xrt_world_size()
-            self._rank = xm.get_ordinal()
+            # Get TPU device using compatibility layer
+            self._xla_device = xla_compat.get_xla_device()
+            self._world_size = xla_compat.get_world_size()
+            self._rank = xla_compat.get_ordinal()
 
             # Set up XLA environment variables
             self._configure_xla_flags()
@@ -191,10 +191,8 @@ class TPUBackend:
 
         # Enable optimizations specific to newer TPU generations
         try:
-            import torch_xla.core.xla_model as xm
-
-            # Mark step for efficient compilation
-            xm.mark_step()
+            # Sync for efficient compilation using compatibility layer
+            xla_compat.sync()
 
             # Enable faster collective operations for distributed training
             if self.is_distributed:
@@ -241,11 +239,10 @@ class TPUBackend:
     def synchronize(self) -> None:
         """Synchronize TPU operations."""
         try:
-            import torch_xla.core.xla_model as xm
-            xm.mark_step()
+            xla_compat.sync()
             if self.is_distributed:
-                xm.rendezvous('sync')
-        except ImportError:
+                xla_compat.rendezvous('sync')
+        except Exception:
             pass
 
     def get_memory_stats(self) -> Dict[str, Any]:
@@ -260,10 +257,8 @@ class TPUBackend:
         }
 
         try:
-            import torch_xla.core.xla_model as xm
-            stats['xla_device_count'] = xm.xla_device_count()
-            stats['xla_real_devices'] = xm.xla_real_devices()
-        except ImportError:
+            stats['xla_device_count'] = xla_compat.get_device_count()
+        except Exception:
             pass
 
         return stats
@@ -274,10 +269,9 @@ class TPUBackend:
         self._compilation_cache.clear()
 
         try:
-            import torch_xla.core.xla_model as xm
             # Clear XLA compilation cache
-            xm.mark_step()
-        except ImportError:
+            xla_compat.sync()
+        except Exception:
             pass
 
     def save_model(self, model: nn.Module, path: Union[str, Path],

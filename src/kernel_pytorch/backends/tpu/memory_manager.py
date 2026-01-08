@@ -15,6 +15,7 @@ import time
 
 from kernel_pytorch.core.config import TPUConfig, TPUVersion
 from .tpu_exceptions import TPUMemoryError, raise_or_warn
+from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
@@ -57,13 +58,13 @@ class TPUMemoryManager:
     def _setup_memory_management(self) -> None:
         """Set up TPU memory management."""
         try:
-            import torch_xla.core.xla_model as xm
+            import torch_xla
 
             # Set memory fraction
             self._apply_memory_fraction()
 
-            # Initialize memory tracking
-            self._device = xm.xla_device()
+            # Initialize memory tracking using compatibility layer
+            self._device = xla_compat.get_xla_device()
             logger.info(
                 "TPU Memory Manager initialized: memory_fraction=%.2f, device=%s",
                 self.config.memory_fraction,
@@ -273,10 +274,9 @@ class TPUMemoryManager:
 
             # TPU-specific memory info (if available)
             try:
-                import torch_xla.core.xla_model as xm
-                device_count = xm.xla_device_count()
+                device_count = xla_compat.get_device_count()
                 reserved_memory = total_allocated + cached_memory
-            except ImportError:
+            except Exception:
                 device_count = 1
                 reserved_memory = total_allocated
 
@@ -316,10 +316,8 @@ class TPUMemoryManager:
     def optimize_memory_usage(self) -> None:
         """Optimize memory usage by clearing caches and consolidating allocations."""
         try:
-            import torch_xla.core.xla_model as xm
-
-            # Clear XLA compilation cache
-            xm.mark_step()
+            # Clear XLA compilation cache using compatibility layer
+            xla_compat.sync()
 
             # Clear PyTorch cache
             if torch.cuda.is_available():
@@ -335,7 +333,7 @@ class TPUMemoryManager:
 
             logger.info("Memory optimization completed")
 
-        except ImportError:
+        except Exception:
             pass
 
     def clear_memory_pools(self) -> None:

@@ -193,8 +193,12 @@ class HardwareDetector:
             import torch_xla
             import torch_xla.core.xla_model as xm
 
-            # TPU is available
-            device_count = xm.xla_device_count() if hasattr(xm, 'xla_device_count') else 1
+            # TPU is available - get device count (compatible with torch_xla 2.9+)
+            device_count = 1
+            if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'device_count'):
+                device_count = torch_xla.runtime.device_count()
+            elif hasattr(xm, 'xla_device_count'):
+                device_count = xm.xla_device_count()
 
             # Detect TPU version from environment
             import os
