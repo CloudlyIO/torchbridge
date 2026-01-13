@@ -129,6 +129,10 @@ class NVIDIABackend:
         Returns:
             Prepared model ready for NVIDIA GPU execution
         """
+        if model is None:
+            warnings.warn("Model is None, returning unchanged")
+            return model
+
         if not self.is_cuda_available:
             warnings.warn("CUDA not available, returning model unchanged")
             return model

@@ -60,8 +60,9 @@ class CUDADeviceManager:
                 'compute_capability': (props.major, props.minor),
                 'total_memory_gb': props.total_memory / 1024**3,
                 'multi_processor_count': props.multi_processor_count,
-                'max_threads_per_block': props.max_threads_per_block,
-                'max_shared_memory_per_block': props.max_shared_memory_per_block,
+                # These attributes may not exist in all PyTorch versions
+                'max_threads_per_block': getattr(props, 'max_threads_per_block', 1024),
+                'max_shared_memory_per_block': getattr(props, 'max_shared_memory_per_block', 49152),
             }
 
         logger.info("CUDA Device Manager initialized: num_devices=%d", device_count)
