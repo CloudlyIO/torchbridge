@@ -272,6 +272,27 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
   - `.archive/` (empty)
   - `.github-workflows-backup/` (outdated workflow backups)
 
+**Phase 5: Structure Improvements** (`setup.py`, documentation):
+- Simplified `setup.py` from 219 to 101 lines:
+  - Removed duplicate metadata (now in `pyproject.toml` only)
+  - Retained only CUDA extension building logic
+  - Package metadata follows PEP 621 standard
+- Documented god classes for future refactoring (v0.4.0):
+  - `UnifiedValidator` (1,327 lines) → `ModelValidator`, `ConfigValidator`, `HardwareValidator`
+  - `DynamicShapesOptimizer` (1,366 lines) → Smaller focused optimizers
+  - `NeuralOperatorFusion` (1,058 lines) → Separate fusion strategy classes
+
+### **v0.3.7 Refactoring Summary**
+| Phase | Description | Lines Changed |
+|-------|-------------|---------------|
+| Phase 1 | Critical duplicates eliminated | -800 lines |
+| Phase 2 | Backend base classes | +765 lines (shared), -400 lines (duplicated) |
+| Phase 3 | Configuration consolidation | +52 lines (centralized) |
+| Phase 4 | Dead code cleanup | -400 lines |
+| Phase 5 | Structure improvements | -118 lines (setup.py) |
+
+**Total estimated reduction**: ~1,700 lines of duplicate/dead code
+
 ---
 
 ## [0.3.6] - 2025-12-31 - AMD Documentation (Phase 4C-Pre Week 6)

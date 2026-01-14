@@ -1,219 +1,101 @@
 """
-Setup script for building custom CUDA extensions.
+CUDA Extension Build Script for KernelPyTorch
 
-This script enables compilation of custom CUDA kernels alongside PyTorch,
-demonstrating how to integrate low-level GPU programming with high-level ML frameworks.
+This script handles building custom CUDA kernels only.
+Package metadata is defined in pyproject.toml (PEP 621).
+
+Usage:
+    pip install -e .                  # Editable install (uses pyproject.toml)
+    python setup.py build_ext --inplace  # Build CUDA extensions only
 """
 
-from setuptools import setup, Extension
-from pybind11.setup_helpers import Pybind11Extension, build_ext
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
-import torch
+from setuptools import setup
 import os
+import sys
 
-# Get CUDA toolkit path
-def get_cuda_toolkit_path():
+# Only import CUDA-related modules if we're building extensions
+def get_cuda_extension():
+    """Create CUDA extension if CUDA is available."""
+    try:
+        import torch
+        from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+
+        if not torch.cuda.is_available():
+            return None, {}
+
+    except ImportError:
+        return None, {}
+
+    # Get CUDA toolkit path
     cuda_home = os.environ.get('CUDA_HOME') or os.environ.get('CUDA_PATH')
     if cuda_home is None:
-        # Try to find CUDA installation
-        import subprocess
         try:
+            import subprocess
             nvcc_path = subprocess.check_output(['which', 'nvcc']).decode().strip()
             cuda_home = os.path.dirname(os.path.dirname(nvcc_path))
-        except:
+        except Exception:
             cuda_home = '/usr/local/cuda'
-    return cuda_home
 
-# CUDA extension for custom kernels
-def create_cuda_extension():
     cuda_sources = [
-        # Original kernels
         'src/kernel_pytorch/cuda_kernels/fused_ops.cu',
-        # Phase 4A: Custom kernel system
         'src/kernel_pytorch/cuda_kernels/flash_attention_v3.cu',
         'src/kernel_pytorch/cuda_kernels/fused_linear_activation.cu',
-        # C++ interface
-        'src/kernel_pytorch/hardware/kernels/cuda_interface.cpp'
+        'src/kernel_pytorch/cuda_kernels/cuda_interface.cpp',
     ]
 
-    # CUDA compilation flags
+    # Check which source files exist
+    existing_sources = [s for s in cuda_sources if os.path.exists(s)]
+    if not existing_sources:
+        print("No CUDA source files found, skipping CUDA extension build")
+        return None, {}
+
     nvcc_flags = [
         '-O3',
         '--use_fast_math',
         '-Xptxas=-O3',
         '--expt-relaxed-constexpr',
-        # Architecture-specific code generation
         '-gencode=arch=compute_70,code=sm_70',  # V100
         '-gencode=arch=compute_75,code=sm_75',  # T4, RTX 20xx
         '-gencode=arch=compute_80,code=sm_80',  # A100, RTX 30xx
         '-gencode=arch=compute_86,code=sm_86',  # RTX 30xx
         '-gencode=arch=compute_89,code=sm_89',  # RTX 40xx
-        '-gencode=arch=compute_90,code=sm_90',  # H100 (with FP8 support)
-        # FP8 support for H100/Blackwell
+        '-gencode=arch=compute_90,code=sm_90',  # H100
         '-DENABLE_FP8',
         '-DENABLE_FLASH_ATTENTION_V3',
         '-DENABLE_FUSED_KERNELS',
-        # Debug and profiling
         '-lineinfo',
-        # Additional optimizations
-        '--extra-device-vectorization',
     ]
 
-    # C++ compilation flags
-    cxx_flags = [
-        '-O3',
-        '-std=c++17',
-    ]
+    cxx_flags = ['-O3', '-std=c++17']
 
-    cuda_home = get_cuda_toolkit_path()
     include_dirs = [
         'src/kernel_pytorch/cuda_kernels',
-        'src/kernel_pytorch/hardware/kernels',  # Phase 4A: C++ interface
+        'src/kernel_pytorch/hardware/kernels',
         f'{cuda_home}/include',
-        f'{cuda_home}/include/cub',  # For CUB library
     ]
 
-    return CUDAExtension(
+    ext = CUDAExtension(
         name='kernel_pytorch_cuda',
-        sources=cuda_sources,
+        sources=existing_sources,
         include_dirs=include_dirs,
-        extra_compile_args={
-            'cxx': cxx_flags,
-            'nvcc': nvcc_flags
-        },
+        extra_compile_args={'cxx': cxx_flags, 'nvcc': nvcc_flags},
         libraries=['cudart', 'cublas', 'curand'],
         library_dirs=[f'{cuda_home}/lib64'],
     )
 
-# Check if we can build CUDA extensions
-def cuda_is_available():
-    try:
-        import torch
-        return torch.cuda.is_available() and torch.version.cuda is not None
-    except:
-        return False
+    return ext, {'build_ext': BuildExtension}
 
-# Setup configuration
-ext_modules = []
-cmdclass = {}
 
-if cuda_is_available():
-    print("CUDA detected, building CUDA extensions...")
-    ext_modules.append(create_cuda_extension())
-    cmdclass['build_ext'] = BuildExtension
+# Only build CUDA extensions when explicitly requested
+if 'build_ext' in sys.argv or 'bdist_wheel' in sys.argv or 'install' in sys.argv:
+    ext_module, cmdclass = get_cuda_extension()
+    ext_modules = [ext_module] if ext_module else []
 else:
-    print("CUDA not available, skipping CUDA extensions...")
+    ext_modules = []
+    cmdclass = {}
 
+# Minimal setup - metadata comes from pyproject.toml
 setup(
-    name='kernel-pytorch',
-    version='0.3.7',
-    author='KernelPyTorch Team',
-    description='Kernel-optimized PyTorch components with custom CUDA kernels',
-    long_description=open('README.md').read() if os.path.exists('README.md') else '',
-    long_description_content_type='text/markdown',
-    packages=[
-        'kernel_pytorch',
-        'kernel_pytorch.advanced_attention',
-        'kernel_pytorch.advanced_memory',
-        'kernel_pytorch.attention',
-        # Phase 4A: Backend system
-        'kernel_pytorch.backends',
-        'kernel_pytorch.backends.nvidia',
-        'kernel_pytorch.backends.tpu',
-        'kernel_pytorch.compiler_integration',
-        'kernel_pytorch.compiler_optimized',
-        'kernel_pytorch.components',
-        # Phase 4A: Core configuration and registry
-        'kernel_pytorch.core',
-        'kernel_pytorch.distributed_scale',
-        'kernel_pytorch.gpu_integration',
-        # Phase 4A: Hardware abstraction
-        'kernel_pytorch.hardware',
-        'kernel_pytorch.hardware.gpu',
-        'kernel_pytorch.hardware.kernels',
-        'kernel_pytorch.hardware_abstraction',
-        'kernel_pytorch.mixture_of_experts',
-        'kernel_pytorch.next_gen_optimizations',
-        'kernel_pytorch.optimization_patterns',
-        'kernel_pytorch.precision',
-        'kernel_pytorch.testing_framework',
-        'kernel_pytorch.utils',
-        # Phase 4A: Validation system
-        'kernel_pytorch.validation',
-    ],
-    package_dir={'': 'src'},
     ext_modules=ext_modules,
     cmdclass=cmdclass,
-    python_requires='>=3.8',
-    install_requires=[
-        'torch>=2.0.0',
-        'numpy>=1.21.0',
-        'triton>=2.0.0',
-    ],
-    extras_require={
-        'dev': [
-            'pytest>=7.0.0',
-            'matplotlib>=3.5.0',
-            'seaborn>=0.11.0',
-            'jupyter>=1.0.0',
-            'tensorboard>=2.9.0',
-        ],
-        'benchmark': [
-            'memory-profiler',
-            'py-spy',
-            'torch-tb-profiler',
-        ]
-    },
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Education',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-    zip_safe=False,
 )
-
-# Additional build instructions
-if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("KERNEL PYTORCH SETUP")
-    print("="*60)
-
-    if cuda_is_available():
-        print("✓ CUDA toolkit detected")
-        print("✓ Will build custom CUDA kernels")
-        print("\nPhase 4A kernels included:")
-        print("  - FlashAttention-3 (memory-efficient attention)")
-        print("  - Fused Linear+GELU/SiLU (FFN optimization)")
-        print("  - FP8 support for H100/Blackwell GPUs")
-        print("\nBuild commands:")
-        print("  python setup.py build_ext --inplace  # Development build")
-        print("  pip install -e .                      # Editable install")
-        print("  pip install .                         # Production install")
-    else:
-        print("⚠ CUDA not available")
-        print("  Only CPU-based components will be available")
-        print("  Install CUDA toolkit and PyTorch with CUDA for full functionality")
-        print("\nPhase 4A features require CUDA GPU:")
-        print("  - FlashAttention-3")
-        print("  - Fused activation kernels")
-        print("  - Hardware-aware kernel selection")
-
-    print("\nOptimization levels available:")
-    print("  Level 1: PyTorch native (always available)")
-    print("  Level 2: TorchScript JIT (always available)")
-    print("  Level 3: torch.compile (PyTorch 2.0+)")
-    if cuda_is_available():
-        print("  Level 4: Triton kernels (CUDA required)")
-        print("  Level 5: Custom CUDA kernels (CUDA required)")
-        print("    ↳ FlashAttention-3, Fused kernels (Phase 4A)")
-
-    print("\nAfter installation, run:")
-    print("  python -c 'import kernel_pytorch; print(\"Installation successful!\")'")
-    print("="*60)
