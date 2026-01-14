@@ -8,10 +8,12 @@ into a single, unified framework with consistent interfaces and enhanced capabil
 # Core framework
 from .core import (
     BaseAttention,
-    AttentionConfig,
+    AttentionConfig,  # Backward compat alias for AttentionModuleConfig
+    AttentionModuleConfig,
     AttentionPatterns,
     FP8AttentionConfig,
     DynamicSparseConfig,
+    RingAttentionConfig,
     register_attention,
     create_attention
 )
@@ -40,10 +42,12 @@ except ImportError:
 __all__ = [
     # Core framework
     'BaseAttention',
-    'AttentionConfig',
+    'AttentionConfig',  # Backward compat alias
+    'AttentionModuleConfig',
     'AttentionPatterns',
     'FP8AttentionConfig',
     'DynamicSparseConfig',
+    'RingAttentionConfig',
     'register_attention',
     'create_attention',
 

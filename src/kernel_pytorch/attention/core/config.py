@@ -1,70 +1,39 @@
 """
 Unified Configuration System for Attention Mechanisms
 
-Combines and enhances configuration classes from both attention/ and advanced_attention/
-directories to provide a comprehensive, unified configuration system.
+This module provides attention-specific configuration classes.
+Common configs (AttentionPatterns, FP8AttentionConfig, etc.) are
+now centralized in kernel_pytorch.core.config.
+
+Backward compatibility is maintained through re-exports.
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, field
-from enum import Enum
+from typing import Dict, Optional, Tuple, Any
+from dataclasses import dataclass
 
-
-class AttentionPatterns(Enum):
-    """Supported attention patterns - unified from both implementations"""
-    FULL = "full"                           # Standard full attention
-    CAUSAL = "causal"                      # Causal/autoregressive attention
-    SLIDING_WINDOW = "sliding_window"       # Local sliding window
-    SPARSE = "sparse"                      # Sparse attention patterns
-    RING = "ring"                          # Ring attention for long sequences
-    LOCAL = "local"                        # Local attention (fixed window)
-    GLOBAL = "global"                      # Global + local attention
-    DIFFERENTIAL = "differential"          # Differential attention
-    DYNAMIC_SPARSE = "dynamic_sparse"      # Dynamic sparse attention
+# Import shared configs from core (centralized in Phase 3)
+from kernel_pytorch.core.config import (
+    AttentionPatterns,
+    FP8AttentionConfig,
+    DynamicSparseConfig,
+    RingAttentionConfig,
+)
 
 
 @dataclass
-class FP8AttentionConfig:
-    """Enhanced FP8 configuration - merged from both implementations"""
-    use_fp8: bool = False
-    fp8_format: str = "e4m3"  # "e4m3" or "e5m2"
-    async_compute: bool = True
-    warp_specialization: bool = True
-    tensor_core_utilization: float = 0.75
-    sequence_length_threshold: int = 8192  # Use FP8 for sequences longer than this
+class AttentionModuleConfig:
+    """
+    Detailed configuration for attention module instances.
 
-    # Additional options from attention/
-    gradient_checkpointing: bool = False
-    mixed_precision: bool = True
+    This config is used when creating attention layers with specific
+    model parameters (embed_dim, num_heads, etc.).
 
+    Note: Renamed from AttentionConfig to avoid conflict with the
+    high-level AttentionConfig in core/config.py. A backward-compatible
+    alias is provided below.
+    """
 
-@dataclass
-class DynamicSparseConfig:
-    """Configuration for dynamic sparse attention - from advanced_attention/"""
-    sparsity_threshold: float = 0.1
-    adaptive_threshold: bool = True
-    content_aware: bool = True
-    efficiency_target: float = 0.8
-    pattern_learning: bool = False
-    min_sparsity: float = 0.05
-    max_sparsity: float = 0.9
-
-
-@dataclass
-class RingAttentionConfig:
-    """Configuration for ring attention - from advanced_attention/"""
-    segment_size: int = 2048
-    communication_backend: str = "nccl"  # "nccl", "gloo", "mpi"
-    overlap_communication: bool = True
-    pipeline_parallel: bool = False
-    memory_efficient: bool = True
-
-
-@dataclass
-class AttentionConfig:
-    """Unified configuration for all attention implementations"""
-
-    # Core parameters (from both implementations)
+    # Core parameters
     embed_dim: int
     num_heads: int
     head_dim: Optional[int] = None
@@ -73,31 +42,31 @@ class AttentionConfig:
     pattern: AttentionPatterns = AttentionPatterns.FULL
     causal: bool = False
 
-    # Performance optimizations (enhanced)
+    # Performance optimizations
     use_flash_attention: bool = True
     use_memory_efficient: bool = False
     enable_compilation: bool = True
     gradient_checkpointing: bool = False
 
-    # Precision settings (enhanced)
+    # Precision settings
     precision: str = "float32"  # float32, float16, bfloat16, fp8
     use_fp8: bool = False
     fp8_config: Optional[FP8AttentionConfig] = None
 
-    # Advanced configurations (new)
+    # Advanced configurations
     sparse_config: Optional[DynamicSparseConfig] = None
     ring_config: Optional[RingAttentionConfig] = None
 
-    # Hardware optimization (from advanced_attention/)
+    # Hardware optimization
     enable_hopper_optimization: bool = True
     warp_specialization: bool = True
     device_mesh: Optional[Tuple[int, ...]] = None
 
-    # Sequence length handling (merged)
+    # Sequence length handling
     max_sequence_length: int = 8192
     sliding_window_size: Optional[int] = None
 
-    # Memory optimization (enhanced)
+    # Memory optimization
     memory_efficient_backend: str = "auto"  # "auto", "triton", "flash_attn", "pytorch"
     chunk_size: Optional[int] = None
 
@@ -148,8 +117,12 @@ class AttentionConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'AttentionConfig':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'AttentionModuleConfig':
         """Create from dictionary"""
         if 'pattern' in config_dict:
             config_dict['pattern'] = AttentionPatterns(config_dict['pattern'])
         return cls(**config_dict)
+
+
+# Backward compatibility alias
+AttentionConfig = AttentionModuleConfig

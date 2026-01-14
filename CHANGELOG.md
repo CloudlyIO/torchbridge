@@ -228,10 +228,32 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 - Unified exception handling with structured details
 
 ### **Testing Summary**
-- All 816 tests passing
-- 96 tests skipped (hardware-specific)
+- All 817 tests passing
+- 95 tests skipped (hardware-specific)
 - All demos working (NVIDIA, TPU, AMD, auto-optimization)
 - Benchmarks verified
+
+**Phase 3: Configuration Consolidation** (`src/kernel_pytorch/`):
+- Centralized attention configs in `core/config.py`
+  - `AttentionPatterns` enum (FULL, CAUSAL, SLIDING_WINDOW, SPARSE, RING, etc.)
+  - `FP8AttentionConfig` dataclass for FP8 attention settings
+  - `DynamicSparseConfig` dataclass for dynamic sparse attention
+  - `RingAttentionConfig` dataclass for ring attention
+- Renamed `AttentionConfig` to `AttentionModuleConfig` in attention module
+  - Avoids conflict with high-level `AttentionConfig` in core/config.py
+  - Backward compatibility alias maintained: `AttentionConfig = AttentionModuleConfig`
+- Updated exports in `attention/core/__init__.py` and `attention/__init__.py`
+- Added config exports to `core/__init__.py`
+
+### **Deprecated** ⚠️
+
+**Legacy Import Paths** (scheduled for removal in v0.4.0):
+- `kernel_pytorch.compiler_integration` → use `kernel_pytorch.core`
+- `kernel_pytorch.compiler_optimized` → use `kernel_pytorch.core`
+- `kernel_pytorch.components` → use `kernel_pytorch.core`
+
+These legacy import paths emit `DeprecationWarning` and will be removed in v0.4.0.
+See the migration guide in `docs/guides/migration.md` for update instructions.
 
 ---
 

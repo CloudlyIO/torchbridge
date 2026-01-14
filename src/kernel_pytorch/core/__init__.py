@@ -55,6 +55,39 @@ from .performance_tracker import (
     detect_regression
 )
 
+# Configuration system (Phase 3)
+from .config import (
+    KernelPyTorchConfig,
+    PrecisionConfig,
+    MemoryConfig,
+    AttentionConfig,
+    HardwareConfig,
+    NVIDIAConfig,
+    TPUConfig,
+    AMDConfig,
+    DistributedConfig,
+    ValidationConfig,
+    KernelConfig,
+    # Enums
+    PrecisionFormat,
+    OptimizationLevel,
+    HardwareBackend,
+    NVIDIAArchitecture,
+    TPUVersion,
+    TPUTopology,
+    TPUCompilationMode,
+    AMDArchitecture,
+    # Attention configs (centralized from attention module)
+    AttentionPatterns,
+    FP8AttentionConfig,
+    DynamicSparseConfig,
+    RingAttentionConfig,
+    # Helpers
+    get_config,
+    set_config,
+    configure,
+)
+
 # Optimized layers
 from .optimized_layers.activation_functions import FusedGELU, FusedSwiGLU, FusedReLU, create_optimized_activation
 from .optimized_layers.linear_transformations import (
@@ -90,6 +123,15 @@ __all__ = [
     'MetricType', 'RegressionSeverity', 'get_performance_tracker',
     'track_performance', 'detect_regression',
 
+    # Configuration system
+    'KernelPyTorchConfig', 'PrecisionConfig', 'MemoryConfig', 'AttentionConfig',
+    'HardwareConfig', 'NVIDIAConfig', 'TPUConfig', 'AMDConfig',
+    'DistributedConfig', 'ValidationConfig', 'KernelConfig',
+    'PrecisionFormat', 'OptimizationLevel', 'HardwareBackend',
+    'NVIDIAArchitecture', 'TPUVersion', 'TPUTopology', 'TPUCompilationMode', 'AMDArchitecture',
+    'AttentionPatterns', 'FP8AttentionConfig', 'DynamicSparseConfig', 'RingAttentionConfig',
+    'get_config', 'set_config', 'configure',
+
     # Optimized layers - available implementations
     'FusedGELU', 'FusedSwiGLU', 'FusedReLU', 'create_optimized_activation',
     'MultiHeadLinearProjection', 'GroupedLinearTransformation', 'MemoryEfficientLinear', 'FusedLinearSequence',
@@ -118,7 +160,20 @@ def _deprecation_warning(old_path: str, new_path: str):
         stacklevel=3
     )
 
-# Legacy import support with deprecation warnings
+
+# =============================================================================
+# DEPRECATED: Legacy import support (TO BE REMOVED IN v0.4.0)
+#
+# The following classes and sys.modules manipulation provide backward
+# compatibility for old import paths:
+#   - kernel_pytorch.compiler_integration → kernel_pytorch.core
+#   - kernel_pytorch.compiler_optimized → kernel_pytorch.core
+#   - kernel_pytorch.components → kernel_pytorch.core
+#
+# Migration guide: Use 'from kernel_pytorch.core import ...' instead.
+# See CHANGELOG.md and docs/guides/migration.md for details.
+# =============================================================================
+
 class _LegacyImportHelper:
     def __getattr__(self, name):
         if name in ['compiler_integration', 'compiler_optimized', 'components']:

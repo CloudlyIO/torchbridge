@@ -4,7 +4,8 @@ Core attention framework components
 
 from .base import BaseAttention, AttentionWithCache
 from .config import (
-    AttentionConfig,
+    AttentionConfig,  # Backward compat alias for AttentionModuleConfig
+    AttentionModuleConfig,
     AttentionPatterns,
     FP8AttentionConfig,
     DynamicSparseConfig,
@@ -23,7 +24,8 @@ from .registry import (
 __all__ = [
     'BaseAttention',
     'AttentionWithCache',
-    'AttentionConfig',
+    'AttentionConfig',  # Backward compat alias
+    'AttentionModuleConfig',
     'AttentionPatterns',
     'FP8AttentionConfig',
     'DynamicSparseConfig',

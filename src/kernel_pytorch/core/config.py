@@ -6,7 +6,7 @@ replacing the scattered 36+ config classes throughout the codebase.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple, Union
 from enum import Enum
 import torch
 
@@ -83,6 +83,56 @@ class AMDArchitecture(Enum):
     CDNA3 = "cdna3"      # MI300 series (MI300A, MI300X)
     RDNA2 = "rdna2"      # Consumer GPUs (RX 6000 series)
     RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
+
+
+class AttentionPatterns(Enum):
+    """Supported attention patterns - from attention module."""
+    FULL = "full"                           # Standard full attention
+    CAUSAL = "causal"                       # Causal/autoregressive attention
+    SLIDING_WINDOW = "sliding_window"       # Local sliding window
+    SPARSE = "sparse"                       # Sparse attention patterns
+    RING = "ring"                           # Ring attention for long sequences
+    LOCAL = "local"                         # Local attention (fixed window)
+    GLOBAL = "global"                       # Global + local attention
+    DIFFERENTIAL = "differential"           # Differential attention
+    DYNAMIC_SPARSE = "dynamic_sparse"       # Dynamic sparse attention
+
+
+@dataclass
+class FP8AttentionConfig:
+    """Enhanced FP8 configuration for attention mechanisms."""
+    use_fp8: bool = False
+    fp8_format: str = "e4m3"  # "e4m3" or "e5m2"
+    async_compute: bool = True
+    warp_specialization: bool = True
+    tensor_core_utilization: float = 0.75
+    sequence_length_threshold: int = 8192  # Use FP8 for sequences longer than this
+
+    # Additional options
+    gradient_checkpointing: bool = False
+    mixed_precision: bool = True
+
+
+@dataclass
+class DynamicSparseConfig:
+    """Configuration for dynamic sparse attention."""
+    sparsity_threshold: float = 0.1
+    adaptive_threshold: bool = True
+    content_aware: bool = True
+    efficiency_target: float = 0.8
+    pattern_learning: bool = False
+    min_sparsity: float = 0.05
+    max_sparsity: float = 0.9
+
+
+@dataclass
+class RingAttentionConfig:
+    """Configuration for ring attention."""
+    segment_size: int = 2048
+    communication_backend: str = "nccl"  # "nccl", "gloo", "mpi"
+    overlap_communication: bool = True
+    pipeline_parallel: bool = False
+    memory_efficient: bool = True
 
 
 @dataclass
