@@ -18,11 +18,12 @@ from .compilers.flashlight_compiler import (
     CompiledKernel,
     KernelCache
 )
-from .compilers.pygraph_optimizer import (
+from .compilers import (
     PyGraphCUDAOptimizer,
     WorkloadAnalysis,
     GraphDeploymentStrategy,
-    CUDAGraphManager
+    CUDAGraphState,
+    CUDAGraphManager  # Backward compatibility alias
 )
 from .compilers.enhanced_fusion import (
     FusionBoundaryOptimizer,
@@ -77,7 +78,7 @@ except ImportError as e:
 __all__ = [
     # Compiler integrations
     'FlashLightKernelCompiler', 'AttentionPattern', 'CompiledKernel', 'KernelCache',
-    'PyGraphCUDAOptimizer', 'WorkloadAnalysis', 'GraphDeploymentStrategy', 'CUDAGraphManager',
+    'PyGraphCUDAOptimizer', 'WorkloadAnalysis', 'GraphDeploymentStrategy', 'CUDAGraphState', 'CUDAGraphManager',
     'FusionBoundaryOptimizer', 'FusionPass', 'OptimizedFXGraph', 'FusionStrategy',
 
     # Hardware detection and auto-optimization

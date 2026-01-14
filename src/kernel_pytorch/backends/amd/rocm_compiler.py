@@ -23,9 +23,8 @@ import pickle
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
-from collections import OrderedDict
-
 from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from kernel_pytorch.utils.cache import LRUCache
 from .amd_exceptions import HIPCompilationError, HIPKernelError
 
 logger = logging.getLogger(__name__)
@@ -41,61 +40,6 @@ class CompiledKernel:
     architecture: AMDArchitecture
     optimization_flags: List[str]
     compile_time_ms: float
-
-
-class LRUCache:
-    """LRU cache implementation for kernel caching."""
-
-    def __init__(self, max_size: int = 100):
-        """
-        Initialize LRU cache.
-
-        Args:
-            max_size: Maximum number of items to cache
-        """
-        self._cache: OrderedDict = OrderedDict()
-        self._max_size = max_size
-
-    def get(self, key: str) -> Optional[Any]:
-        """
-        Get item from cache.
-
-        Args:
-            key: Cache key
-
-        Returns:
-            Cached value or None
-        """
-        if key in self._cache:
-            # Move to end (most recently used)
-            self._cache.move_to_end(key)
-            return self._cache[key]
-        return None
-
-    def set(self, key: str, value: Any) -> None:
-        """
-        Set item in cache.
-
-        Args:
-            key: Cache key
-            value: Value to cache
-        """
-        if key in self._cache:
-            # Update existing item
-            self._cache.move_to_end(key)
-        self._cache[key] = value
-
-        # Evict oldest if over capacity
-        if len(self._cache) > self._max_size:
-            self._cache.popitem(last=False)
-
-    def clear(self) -> None:
-        """Clear all cached items."""
-        self._cache.clear()
-
-    def __len__(self) -> int:
-        """Get number of cached items."""
-        return len(self._cache)
 
 
 class ROCmCompiler:

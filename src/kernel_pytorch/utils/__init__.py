@@ -10,6 +10,8 @@ from .profiling import (
     profile_model_inference
 )
 
+from .cache import LRUCache, TTLCache
+
 # Optional imports for advanced features
 try:
     from .ab_testing import (
@@ -35,6 +37,9 @@ except ImportError:
 
 # Build __all__ dynamically based on available imports
 __all__ = [
+    # Cache utilities (always available)
+    'LRUCache',
+    'TTLCache',
     # Profiling and benchmarking (always available)
     'KernelProfiler',
     'ComparisonSuite',

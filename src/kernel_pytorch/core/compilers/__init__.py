@@ -21,7 +21,8 @@ from .pygraph_optimizer import (
     PyGraphCUDAOptimizer,
     WorkloadAnalysis,
     GraphDeploymentStrategy,
-    CUDAGraphManager
+    CUDAGraphState,
+    CUDAGraphState as CUDAGraphManager  # Backward compatibility alias
 )
 
 from .enhanced_fusion import (
@@ -42,7 +43,8 @@ __all__ = [
     'PyGraphCUDAOptimizer',
     'WorkloadAnalysis',
     'GraphDeploymentStrategy',
-    'CUDAGraphManager',
+    'CUDAGraphState',
+    'CUDAGraphManager',  # Backward compatibility alias
 
     # Enhanced Fusion
     'FusionBoundaryOptimizer',

@@ -39,7 +39,7 @@ class WorkloadAnalysis:
     deployment_strategy: GraphDeploymentStrategy
 
 @dataclass
-class CUDAGraphManager:
+class CUDAGraphState:
     """Manager for CUDA graph lifecycle"""
     graph: Optional[torch.cuda.CUDAGraph] = None
     static_inputs: Optional[List[torch.Tensor]] = None
@@ -61,7 +61,7 @@ class PyGraphCUDAOptimizer:
     def __init__(self, cost_threshold: float = 0.1, strategy: str = "balanced"):
         self.cost_threshold = cost_threshold
         self.strategy = GraphDeploymentStrategy(strategy)
-        self.graph_cache: Dict[str, CUDAGraphManager] = {}
+        self.graph_cache: Dict[str, CUDAGraphState] = {}
         self.analysis_cache: Dict[str, WorkloadAnalysis] = {}
 
         # Performance tracking
@@ -140,7 +140,7 @@ class PyGraphCUDAOptimizer:
         model: nn.Module,
         inputs: List[torch.Tensor],
         analysis: Optional[WorkloadAnalysis] = None
-    ) -> CUDAGraphManager:
+    ) -> CUDAGraphState:
         """
         Create optimized CUDA graph with parameter overhead reduction
 
@@ -185,7 +185,7 @@ class PyGraphCUDAOptimizer:
         if not isinstance(static_outputs, (list, tuple)):
             static_outputs = [static_outputs]
 
-        graph_manager = CUDAGraphManager(
+        graph_manager = CUDAGraphState(
             graph=graph,
             static_inputs=static_inputs,
             static_outputs=list(static_outputs),
@@ -200,7 +200,7 @@ class PyGraphCUDAOptimizer:
 
     def execute_cuda_graph(
         self,
-        graph_manager: CUDAGraphManager,
+        graph_manager: CUDAGraphState,
         inputs: List[torch.Tensor]
     ) -> List[torch.Tensor]:
         """

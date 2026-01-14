@@ -33,7 +33,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from typing import Dict, List, Optional, Tuple, Union, Any, Callable, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
 import math
@@ -66,6 +66,12 @@ class PrecisionFormat(Enum):
     INT8 = "int8"
     INT4 = "int4"
     MIXED = "mixed"
+    # Ultra-low precision formats (from next_gen)
+    FP4 = "fp4"
+    NVFP4 = "nvfp4"
+    MXFP4 = "mxfp4"
+    MXFP6 = "mxfp6"
+    MXFP8 = "mxfp8"
 
 
 class AllocationStrategy(Enum):
@@ -1090,8 +1096,638 @@ def benchmark_precision_allocation(
     return results
 
 
+# =============================================================================
+# Ultra-Low Precision Quantizers (FP4, NVFP4, MXFP)
+# Merged from optimizations/next_gen/ultra_precision.py
+# =============================================================================
+
+class FP4Quantizer(nn.Module):
+    """
+    FP4 Quantizer with NVFP4 support.
+
+    Implements ultra-low precision quantization achieving up to
+    4x performance improvement while maintaining model quality.
+    """
+
+    def __init__(
+        self,
+        format_type: PrecisionFormat = PrecisionFormat.FP4,
+        block_size: int = 64,
+        use_double_quantization: bool = True,
+        adaptive_scaling: bool = True
+    ):
+        super().__init__()
+
+        self.format_type = format_type
+        self.block_size = block_size
+        self.use_double_quantization = use_double_quantization
+        self.adaptive_scaling = adaptive_scaling
+
+        # FP4 quantization levels
+        if format_type in [PrecisionFormat.FP4, PrecisionFormat.NVFP4]:
+            self.num_levels = 16  # 2^4
+        elif format_type == PrecisionFormat.MXFP4:
+            self.num_levels = 16
+        else:
+            self.num_levels = 256  # Default for other formats
+
+        # Initialize quantization tables
+        self._init_quantization_tables()
+
+    def _init_quantization_tables(self):
+        """Initialize quantization tables for different formats."""
+        if self.format_type == PrecisionFormat.FP4:
+            self.register_buffer('quant_table', self._create_fp4_table())
+        elif self.format_type == PrecisionFormat.NVFP4:
+            self.register_buffer('quant_table', self._create_nvfp4_table())
+        elif self.format_type == PrecisionFormat.MXFP4:
+            self.register_buffer('quant_table', self._create_mxfp4_table())
+
+    def _create_fp4_table(self) -> torch.Tensor:
+        """Create FP4 quantization table."""
+        values = []
+        for sign in [0, 1]:
+            for exp in range(4):
+                for mant in range(2):
+                    if exp == 0 and mant == 0:
+                        val = 0.0
+                    elif exp == 3:
+                        val = float('inf') if mant == 0 else float('nan')
+                    else:
+                        val = (1 + mant * 0.5) * (2 ** (exp - 1))
+
+                    if sign == 1 and val != 0 and not math.isnan(val) and not math.isinf(val):
+                        val = -val
+                    values.append(val)
+
+        values = [v for v in values if not (math.isnan(v) or math.isinf(v))]
+        return torch.tensor(sorted(set(values)), dtype=torch.float32)
+
+    def _create_nvfp4_table(self) -> torch.Tensor:
+        """Create NVIDIA FP4 quantization table optimized for Transformer Engine."""
+        values = [
+            -12.0, -10.0, -8.0, -7.0, -6.0, -5.0, -4.0, -3.5,
+            0.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0
+        ]
+        return torch.tensor(values, dtype=torch.float32)
+
+    def _create_mxfp4_table(self) -> torch.Tensor:
+        """Create Microscaling FP4 table."""
+        values = []
+        for i in range(16):
+            if i == 0:
+                values.append(0.0)
+            else:
+                sign = 1 if i < 8 else -1
+                magnitude = (i % 8) / 8.0
+                values.append(sign * magnitude)
+        return torch.tensor(values, dtype=torch.float32)
+
+    def quantize(self, x: torch.Tensor) -> Tuple[Any, torch.Size]:
+        """Quantize tensor to FP4 format."""
+        original_shape = x.shape
+        x_flat = x.view(-1)
+
+        num_blocks = (x_flat.numel() + self.block_size - 1) // self.block_size
+        padded_size = num_blocks * self.block_size
+
+        if x_flat.numel() < padded_size:
+            x_padded = F.pad(x_flat, (0, padded_size - x_flat.numel()))
+        else:
+            x_padded = x_flat
+
+        x_blocks = x_padded.view(num_blocks, self.block_size)
+
+        if self.adaptive_scaling:
+            scales = self._compute_adaptive_scales(x_blocks)
+        else:
+            scales = x_blocks.abs().max(dim=1)[0]
+            scales = torch.clamp(scales, min=1e-8)
+
+        x_normalized = x_blocks / scales.unsqueeze(1)
+        quantized_indices = self._find_nearest_quantization_levels(x_normalized)
+
+        if self.use_double_quantization:
+            scales_quantized, scale_scale = self._quantize_scales(scales)
+            return (quantized_indices, scales_quantized, scale_scale), original_shape
+        else:
+            return (quantized_indices, scales), original_shape
+
+    def _compute_adaptive_scales(self, x_blocks: torch.Tensor) -> torch.Tensor:
+        """Compute adaptive scaling factors based on distribution."""
+        abs_blocks = x_blocks.abs()
+        scales = torch.quantile(abs_blocks, 0.95, dim=1)
+        scales = torch.clamp(scales, min=1e-8)
+        return scales
+
+    def _find_nearest_quantization_levels(self, x: torch.Tensor) -> torch.Tensor:
+        """Find nearest quantization levels for normalized values."""
+        x_expanded = x.unsqueeze(-1)
+        quant_table_expanded = self.quant_table.unsqueeze(0).unsqueeze(0)
+        distances = (x_expanded - quant_table_expanded).abs()
+        indices = distances.argmin(dim=-1)
+        return indices
+
+    def _quantize_scales(self, scales: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Double quantization: quantize the scaling factors."""
+        scale_min = scales.min()
+        scale_max = scales.max()
+
+        if scale_max > scale_min:
+            scale_scale = (scale_max - scale_min) / 255.0
+            quantized_scales = ((scales - scale_min) / scale_scale).round()
+            quantized_scales = torch.clamp(quantized_scales, 0, 255).to(torch.uint8)
+        else:
+            scale_scale = torch.tensor(1.0, device=scales.device)
+            quantized_scales = torch.zeros_like(scales, dtype=torch.uint8)
+
+        return quantized_scales, scale_scale
+
+    def dequantize(self, quantized_data: Tuple, original_shape: torch.Size) -> torch.Tensor:
+        """Dequantize FP4 tensor back to FP32."""
+        if self.use_double_quantization:
+            quantized_indices, quantized_scales, scale_scale = quantized_data
+            scales = quantized_scales.float() * scale_scale
+        else:
+            quantized_indices, scales = quantized_data
+
+        flat_indices = quantized_indices.view(-1)
+        dequantized_flat = self.quant_table[flat_indices]
+
+        num_blocks = scales.numel()
+        dequantized_blocks = dequantized_flat.view(num_blocks, -1) * scales.unsqueeze(1)
+        dequantized_flat = dequantized_blocks.view(-1)
+
+        original_numel = 1
+        for dim in original_shape:
+            original_numel *= dim
+        dequantized_flat = dequantized_flat[:original_numel]
+
+        return dequantized_flat.view(original_shape)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with quantization/dequantization."""
+        if self.training:
+            quantized_data, original_shape = self.quantize(x.detach())
+            x_quantized = self.dequantize(quantized_data, original_shape)
+            return x + (x_quantized - x).detach()
+        else:
+            quantized_data, original_shape = self.quantize(x)
+            return self.dequantize(quantized_data, original_shape)
+
+    def quantize_module(self, module: nn.Module) -> nn.Module:
+        """
+        Quantize a neural network module's weights to FP4.
+
+        Args:
+            module: Module to quantize (e.g., nn.Linear, nn.Conv2d)
+
+        Returns:
+            Quantized module wrapper
+        """
+        # Create a wrapper that applies quantization
+        class QuantizedModuleWrapper(nn.Module):
+            def __init__(wrapper_self, original_module: nn.Module, quantizer: 'FP4Quantizer'):
+                super().__init__()
+                wrapper_self.original_module = original_module
+                wrapper_self.quantizer = quantizer
+
+                # Quantize weights
+                if hasattr(original_module, 'weight') and original_module.weight is not None:
+                    wrapper_self.register_buffer(
+                        '_weight_quantized_data',
+                        torch.zeros(1)  # Placeholder
+                    )
+                    wrapper_self._weight_shape = original_module.weight.shape
+
+            def forward(wrapper_self, x: torch.Tensor) -> torch.Tensor:
+                # Apply quantization to input, run through module
+                x_quantized = wrapper_self.quantizer(x)
+                return wrapper_self.original_module(x_quantized)
+
+        return QuantizedModuleWrapper(module, self)
+
+
+class MXFPOptimizer(nn.Module):
+    """
+    Microscaling Floating Point (MXFP) Optimizer.
+
+    Implements MXFP4, MXFP6, and MXFP8 formats with shared exponents
+    for improved numerical precision at ultra-low bit widths.
+    """
+
+    def __init__(
+        self,
+        format_type: PrecisionFormat = PrecisionFormat.MXFP6,
+        block_size: int = 32,
+        shared_exponent_bits: int = 8
+    ):
+        super().__init__()
+
+        self.format_type = format_type
+        self.block_size = block_size
+        self.shared_exponent_bits = shared_exponent_bits
+
+        if format_type == PrecisionFormat.MXFP4:
+            self.mantissa_bits = 3
+        elif format_type == PrecisionFormat.MXFP6:
+            self.mantissa_bits = 5
+        elif format_type == PrecisionFormat.MXFP8:
+            self.mantissa_bits = 7
+        else:
+            raise ValueError(f"Unsupported MXFP format: {format_type}")
+
+        self.num_mantissa_levels = 2 ** self.mantissa_bits
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with MXFP quantization."""
+        if not self.training:
+            return self._apply_mxfp_quantization(x)
+        else:
+            x_quantized = self._apply_mxfp_quantization(x.detach())
+            return x + (x_quantized - x).detach()
+
+    def _apply_mxfp_quantization(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply MXFP quantization."""
+        original_shape = x.shape
+        x_flat = x.view(-1)
+
+        num_blocks = (x_flat.numel() + self.block_size - 1) // self.block_size
+        padded_size = num_blocks * self.block_size
+
+        if x_flat.numel() < padded_size:
+            x_padded = F.pad(x_flat, (0, padded_size - x_flat.numel()))
+        else:
+            x_padded = x_flat
+
+        x_blocks = x_padded.view(num_blocks, self.block_size)
+        shared_exponents = self._compute_shared_exponents(x_blocks)
+        quantized_mantissas = self._quantize_mantissas(x_blocks, shared_exponents)
+        dequantized_blocks = self._dequantize_mxfp(quantized_mantissas, shared_exponents)
+
+        dequantized_flat = dequantized_blocks.view(-1)
+        original_numel = 1
+        for dim in original_shape:
+            original_numel *= dim
+        dequantized_flat = dequantized_flat[:original_numel]
+
+        return dequantized_flat.view(original_shape)
+
+    def _compute_shared_exponents(self, x_blocks: torch.Tensor) -> torch.Tensor:
+        """Compute shared exponent for each block."""
+        max_vals = x_blocks.abs().max(dim=1)[0]
+        max_vals = torch.clamp(max_vals, min=1e-8)
+        exponents = torch.floor(torch.log2(max_vals))
+        return exponents
+
+    def _quantize_mantissas(self, x_blocks: torch.Tensor, shared_exponents: torch.Tensor) -> torch.Tensor:
+        """Quantize mantissas using shared exponents."""
+        scale_factors = 2.0 ** shared_exponents.unsqueeze(1)
+        normalized_blocks = x_blocks / scale_factors
+        max_mantissa = 2 ** (self.mantissa_bits - 1) - 1
+        quantized = torch.round(normalized_blocks * max_mantissa)
+        quantized = torch.clamp(quantized, -max_mantissa, max_mantissa)
+        return quantized
+
+    def _dequantize_mxfp(self, quantized_mantissas: torch.Tensor, shared_exponents: torch.Tensor) -> torch.Tensor:
+        """Dequantize MXFP values."""
+        max_mantissa = 2 ** (self.mantissa_bits - 1) - 1
+        normalized_values = quantized_mantissas / max_mantissa
+        scale_factors = 2.0 ** shared_exponents.unsqueeze(1)
+        dequantized = normalized_values * scale_factors
+        return dequantized
+
+
+class InformationEntropyPrecision(nn.Module):
+    """
+    Information Entropy-Based Precision Allocation Module.
+
+    Dynamically allocates bit-width during forward pass based on information
+    entropy to minimize precision loss while maximizing performance.
+
+    This is an nn.Module that can be inserted into a model, distinct from
+    InformationEntropyAnalyzer which is a utility class for analysis.
+    """
+
+    def __init__(
+        self,
+        min_bits: int = 4,
+        max_bits: int = 16,
+        entropy_window: int = 100,
+        adaptation_rate: float = 0.01
+    ):
+        super().__init__()
+
+        self.min_bits = min_bits
+        self.max_bits = max_bits
+        self.entropy_window = entropy_window
+        self.adaptation_rate = adaptation_rate
+
+        self.register_buffer('entropy_history', torch.zeros(entropy_window))
+        self.register_buffer('entropy_index', torch.tensor(0))
+        self.register_buffer('current_precision', torch.tensor(8.0))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with entropy-based precision allocation."""
+        if self.training:
+            self._update_entropy(x)
+            optimal_precision = self._compute_optimal_precision()
+            self.current_precision.data = (
+                (1 - self.adaptation_rate) * self.current_precision +
+                self.adaptation_rate * optimal_precision
+            )
+
+        return self._apply_entropy_quantization(x)
+
+    def _update_entropy(self, x: torch.Tensor):
+        """Update entropy statistics."""
+        x_flat = x.view(-1)
+        hist = torch.histc(x_flat, bins=64, min=x_flat.min(), max=x_flat.max())
+        probs = hist / hist.sum()
+        probs = torch.clamp(probs, min=1e-8)
+        entropy = -(probs * torch.log2(probs)).sum()
+
+        idx = int(self.entropy_index.item())
+        self.entropy_history[idx] = entropy
+        self.entropy_index.data = torch.tensor((idx + 1) % self.entropy_window)
+
+    def _compute_optimal_precision(self) -> float:
+        """Compute optimal precision based on entropy."""
+        avg_entropy = self.entropy_history.mean()
+        max_entropy = 6.0
+        entropy_ratio = torch.clamp(avg_entropy / max_entropy, 0.0, 1.0)
+        optimal_precision = self.min_bits + entropy_ratio * (self.max_bits - self.min_bits)
+        return optimal_precision.item()
+
+    def _apply_entropy_quantization(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply quantization based on entropy-determined precision."""
+        precision_bits = int(self.current_precision.item())
+        num_levels = 2 ** precision_bits
+
+        x_max = x.abs().max()
+        if x_max > 0:
+            scale = x_max / (num_levels / 2 - 1)
+            quantized = torch.round(x / scale)
+            quantized = torch.clamp(quantized, -(num_levels // 2), (num_levels // 2) - 1)
+            dequantized = quantized * scale
+        else:
+            dequantized = x
+
+        if self.training:
+            return x + (dequantized - x).detach()
+        else:
+            return dequantized
+
+    def get_precision_stats(self) -> Dict[str, float]:
+        """Get precision allocation statistics."""
+        return {
+            'current_precision_bits': self.current_precision.item(),
+            'avg_entropy': self.entropy_history.mean().item(),
+            'precision_utilization': (self.current_precision.item() - self.min_bits) / (self.max_bits - self.min_bits)
+        }
+
+    def analyze_precision_requirements(self, x: torch.Tensor, block_size: int = 64) -> Dict[str, Any]:
+        """
+        Analyze tensor for optimal precision allocation.
+
+        Args:
+            x: Input tensor to analyze
+            block_size: Size of blocks for analysis
+
+        Returns:
+            Dictionary with block_precisions, entropy_scores, compression_ratio
+        """
+        x_flat = x.view(-1)
+        num_blocks = max(1, x_flat.numel() // block_size)
+
+        block_precisions = []
+        entropy_scores = []
+
+        for i in range(num_blocks):
+            start_idx = i * block_size
+            end_idx = min((i + 1) * block_size, x_flat.numel())
+            block = x_flat[start_idx:end_idx]
+
+            # Calculate entropy for this block
+            hist = torch.histc(block.float(), bins=32, min=block.min(), max=block.max())
+            probs = hist / hist.sum()
+            probs = torch.clamp(probs, min=1e-8)
+            entropy = -(probs * torch.log2(probs)).sum().item()
+
+            entropy_scores.append(entropy)
+
+            # Map entropy to precision (higher entropy = more bits needed)
+            normalized_entropy = min(entropy / 5.0, 1.0)
+            precision = int(self.min_bits + normalized_entropy * (self.max_bits - self.min_bits))
+            block_precisions.append(precision)
+
+        avg_precision = sum(block_precisions) / len(block_precisions) if block_precisions else 8
+        compression_ratio = 32.0 / avg_precision  # Assuming original is FP32
+
+        return {
+            'block_precisions': block_precisions,
+            'entropy_scores': entropy_scores,
+            'compression_ratio': compression_ratio,
+            'avg_precision': avg_precision
+        }
+
+    def apply_precision_allocation(
+        self,
+        x: torch.Tensor,
+        precision_map: Dict[str, Any],
+        block_size: int = 64
+    ) -> torch.Tensor:
+        """
+        Apply precision allocation to tensor based on analysis.
+
+        Args:
+            x: Input tensor
+            precision_map: Result from analyze_precision_requirements
+            block_size: Size of blocks
+
+        Returns:
+            Tensor with applied precision allocation
+        """
+        x_flat = x.view(-1)
+        result = x_flat.clone()
+        block_precisions = precision_map.get('block_precisions', [8])
+
+        for i, precision in enumerate(block_precisions):
+            start_idx = i * block_size
+            end_idx = min((i + 1) * block_size, x_flat.numel())
+
+            if start_idx >= x_flat.numel():
+                break
+
+            block = x_flat[start_idx:end_idx]
+            num_levels = 2 ** precision
+
+            block_max = block.abs().max()
+            if block_max > 0:
+                scale = block_max / (num_levels / 2 - 1)
+                quantized = torch.round(block / scale)
+                quantized = torch.clamp(quantized, -(num_levels // 2), (num_levels // 2) - 1)
+                result[start_idx:end_idx] = quantized * scale
+
+        return result.view(x.shape)
+
+
+class ModelPrecisionOptimizer(nn.Module):
+    """
+    Model-level Precision Optimizer.
+
+    Automatically allocates optimal precision for each layer based on
+    sensitivity analysis and performance requirements.
+
+    Note: This is distinct from AdaptivePrecisionAllocator which works
+    on individual tensors. This class optimizes entire models.
+    """
+
+    def __init__(
+        self,
+        model: nn.Module,
+        target_speedup: float = 4.0,
+        sensitivity_threshold: float = 0.05
+    ):
+        super().__init__()
+
+        self.model = model
+        self.target_speedup = target_speedup
+        self.sensitivity_threshold = sensitivity_threshold
+
+        self.layer_precisions: Dict[str, int] = {}
+        self.layer_sensitivities: Dict[str, float] = {}
+
+        self._initialize_precision_mapping()
+
+    def _initialize_precision_mapping(self):
+        """Initialize precision mapping for all quantizable layers."""
+        for name, module in self.model.named_modules():
+            if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv1d)):
+                self.layer_precisions[name] = 8
+                self.layer_sensitivities[name] = 0.0
+
+    def calibrate_sensitivities(
+        self,
+        calibration_dataloader,
+        metric_fn: Callable,
+        num_samples: int = 100
+    ):
+        """Calibrate layer sensitivities using calibration data."""
+        baseline_metric = self._evaluate_model(calibration_dataloader, metric_fn, num_samples)
+
+        for layer_name in self.layer_precisions.keys():
+            original_precision = self.layer_precisions[layer_name]
+            self.layer_precisions[layer_name] = 4
+
+            reduced_metric = self._evaluate_model(calibration_dataloader, metric_fn, num_samples)
+            sensitivity = abs(baseline_metric - reduced_metric) / max(abs(baseline_metric), 1e-8)
+            self.layer_sensitivities[layer_name] = sensitivity
+
+            self.layer_precisions[layer_name] = original_precision
+
+    def _evaluate_model(self, dataloader, metric_fn, num_samples):
+        """Evaluate model with current precision settings."""
+        self.model.eval()
+        total_metric = 0.0
+        samples_processed = 0
+
+        with torch.no_grad():
+            for batch_idx, (data, target) in enumerate(dataloader):
+                if samples_processed >= num_samples:
+                    break
+                output = self.model(data)
+                metric = metric_fn(output, target)
+                total_metric += metric.item()
+                samples_processed += data.size(0)
+
+        return total_metric / max(samples_processed, 1)
+
+    def optimize_allocation(self) -> float:
+        """Optimize precision allocation to meet target speedup."""
+        sorted_layers = sorted(self.layer_sensitivities.items(), key=lambda x: x[1])
+        current_speedup = 1.0
+
+        for layer_name, sensitivity in sorted_layers:
+            if current_speedup >= self.target_speedup:
+                break
+
+            if sensitivity <= self.sensitivity_threshold:
+                current_precision = self.layer_precisions[layer_name]
+                if current_precision > 4:
+                    self.layer_precisions[layer_name] = max(4, current_precision - 2)
+                    precision_ratio = current_precision / self.layer_precisions[layer_name]
+                    current_speedup *= precision_ratio ** 0.5
+
+        return current_speedup
+
+    def get_allocation_summary(self) -> Dict[str, Any]:
+        """Get summary of precision allocation."""
+        precision_counts: Dict[str, int] = {}
+        for precision in self.layer_precisions.values():
+            key = f"{precision}-bit"
+            precision_counts[key] = precision_counts.get(key, 0) + 1
+
+        avg_precision = sum(self.layer_precisions.values()) / max(len(self.layer_precisions), 1)
+
+        return {
+            'average_precision_bits': avg_precision,
+            'precision_distribution': precision_counts,
+            'total_layers': len(self.layer_precisions),
+            'high_sensitivity_layers': sum(1 for s in self.layer_sensitivities.values() if s > self.sensitivity_threshold)
+        }
+
+    def optimize_model_precision(
+        self,
+        model: nn.Module,
+        sample_input: torch.Tensor
+    ) -> Dict[str, Any]:
+        """
+        Optimize model precision based on layer analysis.
+
+        Args:
+            model: Model to optimize
+            sample_input: Sample input for analysis
+
+        Returns:
+            Dictionary with layer_precisions, memory_reduction, estimated_speedup
+        """
+        # Analyze each layer
+        layer_precisions = {}
+        total_params = 0
+        reduced_params = 0
+
+        for name, module in model.named_modules():
+            if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv1d)):
+                params = sum(p.numel() for p in module.parameters())
+                total_params += params
+
+                # Determine precision based on layer type and size
+                if params > 100000:  # Large layers can use lower precision
+                    precision = 4
+                elif params > 10000:
+                    precision = 6
+                else:
+                    precision = 8
+
+                layer_precisions[name] = precision
+                reduced_params += params * (precision / 32.0)
+
+        memory_reduction = 1.0 - (reduced_params / max(total_params, 1))
+        avg_precision = sum(layer_precisions.values()) / max(len(layer_precisions), 1) if layer_precisions else 8
+        estimated_speedup = 32.0 / avg_precision
+
+        return {
+            'layer_precisions': layer_precisions,
+            'memory_reduction': memory_reduction,
+            'estimated_speedup': estimated_speedup,
+            'total_layers': len(layer_precisions)
+        }
+
+
 # Export key components
 __all__ = [
+    # Core classes
     'UltraPrecisionModule',
     'PrecisionConfig',
     'PrecisionFormat',
@@ -1100,6 +1736,12 @@ __all__ = [
     'PrecisionStats',
     'InformationEntropyAnalyzer',
     'AdaptivePrecisionAllocator',
+    # Ultra-low precision (FP4, MXFP)
+    'FP4Quantizer',
+    'MXFPOptimizer',
+    'InformationEntropyPrecision',
+    'ModelPrecisionOptimizer',
+    # Factory functions
     'create_ultra_precision_module',
     'analyze_precision_opportunities',
     'benchmark_precision_allocation'

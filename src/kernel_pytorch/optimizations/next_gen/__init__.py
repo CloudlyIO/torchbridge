@@ -28,11 +28,12 @@ from .pygraph_optimizer import (
     create_pygraph_optimizer
 )
 
-from .ultra_precision import (
+# Ultra-precision imports from consolidated module
+from kernel_pytorch.precision.ultra_precision import (
     FP4Quantizer,
     MXFPOptimizer,
     InformationEntropyPrecision,
-    AdaptivePrecisionAllocator,
+    ModelPrecisionOptimizer as AdaptivePrecisionAllocator,  # Alias for backward compatibility
     PrecisionFormat
 )
 
