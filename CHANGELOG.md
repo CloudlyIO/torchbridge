@@ -177,6 +177,62 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 - GCP: A3-highgpu-8g (H100), A2-highgpu (A100), G2 (L4)
 - TPU: v5litepod-1/4/8/16, v5p-8, v6e-1
 
+### **Refactored** 🔧
+
+**Backend Base Classes** (`src/kernel_pytorch/backends/`):
+- `base_memory_manager.py` (~470 lines): Abstract base class for all backend memory managers
+  - `BaseMemoryManager` with 7 abstract methods: `_get_device()`, `_get_optimal_alignment()`, `_get_total_memory_bytes()`, `_get_allocated_memory_bytes()`, `_get_reserved_memory_bytes()`, `_device_synchronize()`, `_empty_device_cache()`
+  - Common implementations: `allocate_tensor()`, `return_to_pool()`, `clear_pool()`, `optimize_tensor_layout()`, `get_memory_stats()`, `optimize_model_memory()`
+  - `BaseMemoryStats` dataclass with properties for MB/GB conversion and utilization
+  - `MemoryAllocationInfo` dataclass for allocation tracking
+- `base_exceptions.py` (~295 lines): Shared exception hierarchy for all backends
+  - `BackendError` base class with details dict support
+  - Device errors: `DeviceNotAvailableError`, `DeviceError`
+  - Memory errors: `MemoryError`, `OutOfMemoryError`, `MemoryAllocationError`, `MemoryPoolError`
+  - Compilation errors: `CompilationError`, `KernelCompilationError`
+  - Other errors: `OptimizationError`, `ModelOptimizationError`, `ConfigurationError`, `InvalidArchitectureError`, `KernelError`, `KernelLaunchError`
+  - `raise_or_warn()` utility function for flexible error handling
+- `__init__.py`: Module exports for base classes
+
+**NVIDIA Backend Refactoring** (`src/kernel_pytorch/backends/nvidia/`):
+- `memory_manager.py`: Now inherits from `BaseMemoryManager`
+  - Implements abstract methods with CUDA-specific logic
+  - Tensor Core alignment: 8 (Ampere) or 16 (Hopper/Blackwell)
+  - Preserves NVIDIA-specific methods: `allocate_with_oom_protection()`, `enable_memory_efficient_mode()`
+- `nvidia_exceptions.py`: Now inherits from base exceptions
+  - Multiple inheritance for backward compatibility
+  - All exception classes now support details dict
+
+**AMD Backend Refactoring** (`src/kernel_pytorch/backends/amd/`):
+- `memory_manager.py`: Now inherits from `BaseMemoryManager`
+  - Implements abstract methods with ROCm-specific logic
+  - Matrix Core alignment: 16 (CDNA2) or 32 (MI300 series)
+  - Preserves AMD-specific methods: `defragment()`, HBM optimization
+  - `AMDMemoryStats` dataclass with fragmentation tracking
+- `amd_exceptions.py`: Now inherits from base exceptions
+  - `ROCmMemoryError`, `HIPCompilationError`, `MatrixCoreError` etc.
+
+**TPU Backend Refactoring** (`src/kernel_pytorch/backends/tpu/`):
+- `memory_manager.py`: Now inherits from `BaseMemoryManager`
+  - Implements abstract methods with XLA-specific logic
+  - TPU alignment: 8 (matrix units)
+  - XLA memory fraction management preserved
+  - `TPUMemoryStats` dataclass for TPU-specific stats
+- `tpu_exceptions.py`: Now inherits from base exceptions
+  - Multiple inheritance preserves `issubclass(TPUMemoryError, TPUBackendError)`
+
+**Benefits**:
+- Eliminated ~400+ lines of duplicated memory management code
+- Consistent interface across all backends
+- Easier to add new backends (just implement 7 abstract methods)
+- Unified exception handling with structured details
+
+### **Testing Summary**
+- All 816 tests passing
+- 96 tests skipped (hardware-specific)
+- All demos working (NVIDIA, TPU, AMD, auto-optimization)
+- Benchmarks verified
+
 ---
 
 ## [0.3.6] - 2025-12-31 - AMD Documentation (Phase 4C-Pre Week 6)

@@ -106,7 +106,7 @@ else:
 
 setup(
     name='kernel-pytorch',
-    version='0.3.0',
+    version='0.3.7',
     author='KernelPyTorch Team',
     description='Kernel-optimized PyTorch components with custom CUDA kernels',
     long_description=open('README.md').read() if os.path.exists('README.md') else '',

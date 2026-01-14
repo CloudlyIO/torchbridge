@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 # Version compatibility
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 __nvidia_support__ = True
 __phase__ = "Phase 4C-Pre Complete"
 
