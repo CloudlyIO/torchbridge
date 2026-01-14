@@ -3,6 +3,10 @@ TPU Memory Manager
 
 Manages TPU memory allocation, optimization, and monitoring
 for efficient TPU model execution.
+
+Inherits from BaseMemoryManager for shared functionality.
+
+Version: 0.3.7
 """
 
 import logging
@@ -12,17 +16,19 @@ import torch.nn as nn
 from typing import Dict, Any, Optional, Union, List, Tuple
 from dataclasses import dataclass
 import time
+import gc
 
 from kernel_pytorch.core.config import TPUConfig, TPUVersion
-from .tpu_exceptions import TPUMemoryError, raise_or_warn
+from kernel_pytorch.backends.base_memory_manager import BaseMemoryManager, BaseMemoryStats
+from .tpu_exceptions import TPUMemoryError, TPUOutOfMemoryError, raise_or_warn
 from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class MemoryStats:
-    """TPU memory statistics."""
+class TPUMemoryStats:
+    """TPU-specific memory statistics."""
     allocated_memory: int
     cached_memory: int
     reserved_memory: int
@@ -32,12 +38,14 @@ class MemoryStats:
     peak_memory: int
 
 
-class TPUMemoryManager:
+class TPUMemoryManager(BaseMemoryManager):
     """
     TPU memory manager for optimal memory usage.
 
     Provides memory allocation, monitoring, and optimization
     specifically designed for TPU hardware characteristics.
+
+    Inherits from BaseMemoryManager for shared functionality.
     """
 
     def __init__(self, config: TPUConfig):
@@ -47,13 +55,84 @@ class TPUMemoryManager:
         Args:
             config: TPU configuration
         """
-        self.config = config
-        self._memory_pool = {}
-        self._allocation_history = []
-        self._peak_memory = 0
+        self._tpu_config = config
 
-        # Initialize memory management
+        # TPU-specific memory pool tracking
+        self._tpu_memory_pool: Dict[str, Dict] = {}
+        self._tpu_peak_memory = 0
+
+        # Initialize base class
+        super().__init__(config)
+
+        # Initialize TPU-specific memory management
         self._setup_memory_management()
+
+    # =========================================================================
+    # Abstract method implementations
+    # =========================================================================
+
+    def _get_device(self) -> torch.device:
+        """Get the XLA/TPU device."""
+        try:
+            return xla_compat.get_xla_device()
+        except Exception:
+            warnings.warn("PyTorch/XLA not available. Using CPU fallback.")
+            return torch.device("cpu")
+
+    def _get_optimal_alignment(self) -> int:
+        """
+        Get optimal tensor dimension alignment for TPU.
+
+        TPU matrix units work best with dimensions divisible by 8.
+        """
+        return 8
+
+    def _get_total_memory_bytes(self) -> int:
+        """Get total TPU memory in bytes."""
+        tpu_memory_gb = self._get_tpu_memory_gb()
+        return int(tpu_memory_gb * 1e9)
+
+    def _get_allocated_memory_bytes(self) -> int:
+        """
+        Get currently allocated memory in bytes.
+
+        Note: XLA doesn't expose memory stats the same way as CUDA,
+        so we estimate from allocation history.
+        """
+        retention_seconds = self._tpu_config.allocation_history_retention_seconds
+        return sum(
+            alloc.size_bytes for alloc in self._allocation_history
+            if time.time() - alloc.timestamp < retention_seconds
+        )
+
+    def _get_reserved_memory_bytes(self) -> int:
+        """Get reserved (cached) memory in bytes."""
+        allocated = self._get_allocated_memory_bytes()
+        cached = sum(
+            len(pool.get('tensors', [])) * pool['tensors'][0].numel() * pool['tensors'][0].element_size()
+            for pool in self._tpu_memory_pool.values()
+            if pool.get('tensors')
+        )
+        return allocated + cached
+
+    def _device_synchronize(self) -> None:
+        """Synchronize XLA operations."""
+        try:
+            xla_compat.sync()
+        except Exception:
+            pass
+
+    def _empty_device_cache(self) -> None:
+        """Empty device cache."""
+        try:
+            xla_compat.sync()
+            gc.collect()
+        except Exception:
+            pass
+
+    # =========================================================================
+    # TPU-specific methods
+    # =========================================================================
 
     def _setup_memory_management(self) -> None:
         """Set up TPU memory management."""
@@ -63,33 +142,45 @@ class TPUMemoryManager:
             # Set memory fraction
             self._apply_memory_fraction()
 
-            # Initialize memory tracking using compatibility layer
-            self._device = xla_compat.get_xla_device()
             logger.info(
                 "TPU Memory Manager initialized: memory_fraction=%.2f, device=%s",
-                self.config.memory_fraction,
+                self._tpu_config.memory_fraction,
                 self._device
             )
 
         except ImportError:
             warnings.warn("PyTorch/XLA not available. Memory manager will use CPU fallback.")
-            self._device = torch.device("cpu")
 
     def _apply_memory_fraction(self) -> None:
         """Apply memory fraction limits for TPU."""
-        # TPU memory management is handled through XLA environment variables
         import os
 
         # Set TPU memory fraction
         if 'XLA_PYTHON_CLIENT_MEM_FRACTION' not in os.environ:
-            os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = str(self.config.memory_fraction)
+            os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = str(self._tpu_config.memory_fraction)
 
         # Enable memory growth for TPUs
         os.environ['XLA_PYTHON_CLIENT_ALLOCATOR'] = 'platform'
 
-    def allocate_tensor(self, shape: Tuple[int, ...],
-                       dtype: torch.dtype = torch.float32,
-                       requires_grad: bool = False) -> torch.Tensor:
+    def _get_tpu_memory_gb(self) -> float:
+        """Get TPU memory capacity in GB."""
+        memory_map = {
+            TPUVersion.V4: 32.0,    # 32GB HBM (verified)
+            TPUVersion.V5E: 16.0,   # 16GB HBM (verified)
+            TPUVersion.V5P: 95.0,   # 95GB HBM (verified)
+            TPUVersion.V6E: self._tpu_config.v6e_memory_gb or 32.0,
+            TPUVersion.V7: self._tpu_config.v7_memory_gb or 128.0,
+        }
+        return memory_map.get(self._tpu_config.version, 32.0)
+
+    def allocate_tensor(
+        self,
+        shape: Tuple[int, ...],
+        dtype: torch.dtype = torch.float32,
+        requires_grad: bool = False,
+        pool_id: Optional[str] = None,
+        purpose: str = "unknown"
+    ) -> torch.Tensor:
         """
         Allocate tensor with optimal TPU memory placement.
 
@@ -97,24 +188,14 @@ class TPUMemoryManager:
             shape: Tensor shape
             dtype: Tensor data type
             requires_grad: Whether tensor requires gradients
+            pool_id: Optional pool ID for memory pooling
+            purpose: Purpose description for tracking
 
         Returns:
             Allocated tensor on TPU
         """
-        # Create tensor on TPU device
-        tensor = torch.zeros(shape, dtype=dtype, device=self._device, requires_grad=requires_grad)
-
-        # Track allocation
-        allocation_info = {
-            'shape': shape,
-            'dtype': dtype,
-            'size_bytes': tensor.numel() * tensor.element_size(),
-            'timestamp': time.time(),
-            'requires_grad': requires_grad
-        }
-        self._allocation_history.append(allocation_info)
-
-        return tensor
+        # Use base class allocation
+        return super().allocate_tensor(shape, dtype, requires_grad, pool_id, purpose)
 
     def optimize_tensor_layout(self, tensor: torch.Tensor) -> torch.Tensor:
         """
@@ -126,16 +207,15 @@ class TPUMemoryManager:
         Returns:
             Tensor with optimized layout
         """
-        # TPU prefers certain memory layouts for performance
         original_shape = tensor.shape
+        optimal_div = self._get_optimal_alignment()
 
-        # For 2D tensors, ensure dimensions are multiples of 8 (TPU matrix units)
+        # For 2D tensors, ensure dimensions are multiples of 8
         if len(original_shape) == 2:
             height, width = original_shape
-            if height % 8 != 0 or width % 8 != 0:
-                # Pad to nearest multiple of 8
-                new_height = ((height + 7) // 8) * 8
-                new_width = ((width + 7) // 8) * 8
+            if height % optimal_div != 0 or width % optimal_div != 0:
+                new_height = ((height + optimal_div - 1) // optimal_div) * optimal_div
+                new_width = ((width + optimal_div - 1) // optimal_div) * optimal_div
 
                 if new_height != height or new_width != width:
                     padded_tensor = torch.zeros(
@@ -149,9 +229,8 @@ class TPUMemoryManager:
         # For 4D tensors (NCHW), optimize channel dimensions
         elif len(original_shape) == 4:
             n, c, h, w = original_shape
-            if c % 8 != 0:
-                # Pad channels to multiple of 8
-                new_c = ((c + 7) // 8) * 8
+            if c % optimal_div != 0:
+                new_c = ((c + optimal_div - 1) // optimal_div) * optimal_div
                 padded_tensor = torch.zeros(
                     (n, new_c, h, w),
                     dtype=tensor.dtype,
@@ -162,8 +241,12 @@ class TPUMemoryManager:
 
         return tensor
 
-    def create_memory_pool(self, pool_size: int, tensor_size: Tuple[int, ...],
-                          dtype: torch.dtype = torch.float32) -> str:
+    def create_memory_pool(
+        self,
+        pool_size: int,
+        tensor_size: Tuple[int, ...],
+        dtype: torch.dtype = torch.float32
+    ) -> str:
         """
         Create a memory pool for efficient tensor reuse.
 
@@ -175,7 +258,7 @@ class TPUMemoryManager:
         Returns:
             Pool identifier
         """
-        pool_id = f"pool_{len(self._memory_pool)}_{int(time.time())}"
+        pool_id = f"tpu_pool_{len(self._tpu_memory_pool)}_{int(time.time())}"
 
         # Pre-allocate tensors
         pool_tensors = []
@@ -183,14 +266,15 @@ class TPUMemoryManager:
             tensor = self.allocate_tensor(tensor_size, dtype)
             pool_tensors.append(tensor)
 
-        self._memory_pool[pool_id] = {
+        self._tpu_memory_pool[pool_id] = {
             'tensors': pool_tensors,
             'available': list(range(pool_size)),
             'in_use': [],
             'created_at': time.time()
         }
 
-        logger.debug("Created memory pool '%s': size=%d, tensor_shape=%s", pool_id, pool_size, tensor_size)
+        logger.debug("Created TPU memory pool '%s': size=%d, tensor_shape=%s",
+                     pool_id, pool_size, tensor_size)
         return pool_id
 
     def get_tensor_from_pool(self, pool_id: str) -> Optional[torch.Tensor]:
@@ -203,19 +287,18 @@ class TPUMemoryManager:
         Returns:
             Tensor from pool or None if pool is empty
         """
-        if pool_id not in self._memory_pool:
+        if pool_id not in self._tpu_memory_pool:
             return None
 
-        pool = self._memory_pool[pool_id]
+        pool = self._tpu_memory_pool[pool_id]
         if not pool['available']:
             return None
 
-        # Get tensor from available list
         tensor_idx = pool['available'].pop(0)
         pool['in_use'].append(tensor_idx)
 
         tensor = pool['tensors'][tensor_idx]
-        tensor.zero_()  # Clear tensor data
+        tensor.zero_()
         return tensor
 
     def return_tensor_to_pool(self, pool_id: str, tensor: torch.Tensor) -> bool:
@@ -229,12 +312,11 @@ class TPUMemoryManager:
         Returns:
             True if successful, False otherwise
         """
-        if pool_id not in self._memory_pool:
+        if pool_id not in self._tpu_memory_pool:
             return False
 
-        pool = self._memory_pool[pool_id]
+        pool = self._tpu_memory_pool[pool_id]
 
-        # Find tensor index
         tensor_idx = None
         for idx, pool_tensor in enumerate(pool['tensors']):
             if torch.equal(tensor, pool_tensor):
@@ -244,108 +326,95 @@ class TPUMemoryManager:
         if tensor_idx is None or tensor_idx not in pool['in_use']:
             return False
 
-        # Move tensor back to available list
         pool['in_use'].remove(tensor_idx)
         pool['available'].append(tensor_idx)
-
         return True
 
-    def get_memory_stats(self) -> MemoryStats:
+    def get_memory_stats(self) -> TPUMemoryStats:
         """
         Get current memory statistics.
 
-        Returns:
-            Memory statistics
+        Returns TPUMemoryStats dataclass for TPU.
         """
-        try:
-            # Calculate memory usage from allocation history
-            retention_seconds = self.config.allocation_history_retention_seconds
-            total_allocated = sum(
-                alloc['size_bytes'] for alloc in self._allocation_history
-                if time.time() - alloc['timestamp'] < retention_seconds
-            )
+        base_stats = super().get_memory_stats()
 
-            # Estimate cached memory from pools
-            cached_memory = sum(
-                len(pool['tensors']) * pool['tensors'][0].numel() * pool['tensors'][0].element_size()
-                for pool in self._memory_pool.values()
-                if pool['tensors']
-            )
+        # Calculate cached memory from TPU pools
+        cached_memory = sum(
+            len(pool['tensors']) * pool['tensors'][0].numel() * pool['tensors'][0].element_size()
+            for pool in self._tpu_memory_pool.values()
+            if pool.get('tensors')
+        )
 
-            # TPU-specific memory info (if available)
-            try:
-                device_count = xla_compat.get_device_count()
-                reserved_memory = total_allocated + cached_memory
-            except Exception:
-                device_count = 1
-                reserved_memory = total_allocated
+        return TPUMemoryStats(
+            allocated_memory=base_stats.allocated_bytes,
+            cached_memory=cached_memory,
+            reserved_memory=base_stats.reserved_bytes,
+            available_memory=base_stats.free_bytes,
+            memory_fraction=self._tpu_config.memory_fraction,
+            active_tensors=base_stats.num_allocations,
+            peak_memory=base_stats.peak_allocated_bytes,
+        )
 
-            # Estimate available memory based on TPU type
-            tpu_memory_gb = self._get_tpu_memory_gb()
-            total_memory = int(tpu_memory_gb * 1e9)  # Convert to bytes
-            available_memory = total_memory - reserved_memory
+    def get_tpu_memory_stats(self) -> TPUMemoryStats:
+        """
+        Get TPU-specific memory statistics as dataclass.
 
-            return MemoryStats(
-                allocated_memory=total_allocated,
-                cached_memory=cached_memory,
-                reserved_memory=reserved_memory,
-                available_memory=max(0, available_memory),
-                memory_fraction=self.config.memory_fraction,
-                active_tensors=len(self._allocation_history),
-                peak_memory=self._peak_memory
-            )
+        Alias for get_memory_stats for backward compatibility.
 
-        except Exception as e:
-            error_msg = f"Failed to get memory stats: {e}"
-            raise_or_warn(error_msg, TPUMemoryError, strict_mode=self.config.enable_strict_validation, logger=logger)
-            return MemoryStats(0, 0, 0, 0, 0.0, 0, 0)
-
-    def _get_tpu_memory_gb(self) -> float:
-        """Get TPU memory capacity in GB."""
-        # TPU memory capacities by version
-        memory_map = {
-            TPUVersion.V4: 32.0,    # 32GB HBM (verified)
-            TPUVersion.V5E: 16.0,   # 16GB HBM (verified)
-            TPUVersion.V5P: 95.0,   # 95GB HBM (verified)
-            TPUVersion.V6E: self.config.v6e_memory_gb or 32.0,   # Configurable (default: 32GB)
-            TPUVersion.V7: self.config.v7_memory_gb or 128.0,    # Configurable (default: 128GB)
-        }
-
-        return memory_map.get(self.config.version, 32.0)  # Default to 32GB
+        Returns:
+            TPUMemoryStats object with current memory state
+        """
+        return self.get_memory_stats()
 
     def optimize_memory_usage(self) -> None:
         """Optimize memory usage by clearing caches and consolidating allocations."""
         try:
-            # Clear XLA compilation cache using compatibility layer
-            xla_compat.sync()
-
-            # Clear PyTorch cache
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            # Clear XLA compilation cache
+            self._device_synchronize()
+            self._empty_device_cache()
 
             # Clean up old allocations from history
             current_time = time.time()
-            retention_seconds = self.config.allocation_history_retention_seconds
+            retention_seconds = self._tpu_config.allocation_history_retention_seconds
             self._allocation_history = [
                 alloc for alloc in self._allocation_history
-                if current_time - alloc['timestamp'] < retention_seconds
+                if current_time - alloc.timestamp < retention_seconds
             ]
 
-            logger.info("Memory optimization completed")
+            logger.info("TPU memory optimization completed")
 
         except Exception:
             pass
 
     def clear_memory_pools(self) -> None:
-        """Clear all memory pools."""
-        self._memory_pool.clear()
-        logger.debug("Memory pools cleared")
+        """Clear all TPU memory pools."""
+        self._tpu_memory_pool.clear()
+        logger.debug("TPU memory pools cleared")
 
-    def get_pool_stats(self) -> Dict[str, Any]:
-        """Get memory pool statistics."""
+    def get_pool_stats(self, pool_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get TPU memory pool statistics.
+
+        Args:
+            pool_id: Specific pool ID, or None for all pools
+
+        Returns:
+            Dictionary with pool statistics
+        """
+        if pool_id and pool_id in self._tpu_memory_pool:
+            pool = self._tpu_memory_pool[pool_id]
+            return {
+                'pool_id': pool_id,
+                'total_tensors': len(pool['tensors']),
+                'available_tensors': len(pool['available']),
+                'in_use_tensors': len(pool['in_use']),
+                'utilization': len(pool['in_use']) / len(pool['tensors']) if pool['tensors'] else 0,
+                'created_at': pool['created_at']
+            }
+
         pool_stats = {}
-        for pool_id, pool in self._memory_pool.items():
-            pool_stats[pool_id] = {
+        for pid, pool in self._tpu_memory_pool.items():
+            pool_stats[pid] = {
                 'total_tensors': len(pool['tensors']),
                 'available_tensors': len(pool['available']),
                 'in_use_tensors': len(pool['in_use']),
@@ -354,7 +423,7 @@ class TPUMemoryManager:
             }
 
         return {
-            'total_pools': len(self._memory_pool),
+            'total_pools': len(self._tpu_memory_pool),
             'pool_details': pool_stats
         }
 
@@ -362,38 +431,48 @@ class TPUMemoryManager:
         self,
         interval: Optional[float] = None,
         duration: Optional[float] = None
-    ) -> List[MemoryStats]:
+    ) -> List[TPUMemoryStats]:
         """
         Monitor memory usage over time.
 
         Args:
-            interval: Monitoring interval in seconds (default: from config)
-            duration: Total monitoring duration in seconds (default: from config)
+            interval: Monitoring interval in seconds
+            duration: Total monitoring duration in seconds
 
         Returns:
             List of memory statistics over time
         """
-        interval = interval or self.config.monitoring_interval_seconds
-        duration = duration or self.config.monitoring_duration_seconds
+        interval = interval or self._tpu_config.monitoring_interval_seconds
+        duration = duration or self._tpu_config.monitoring_duration_seconds
         stats_history = []
         start_time = time.time()
 
         while time.time() - start_time < duration:
-            stats = self.get_memory_stats()
+            stats = self.get_tpu_memory_stats()
             stats_history.append(stats)
 
             # Update peak memory
-            self._peak_memory = max(self._peak_memory, stats.allocated_memory)
+            self._tpu_peak_memory = max(self._tpu_peak_memory, stats.allocated_memory)
 
             time.sleep(interval)
 
         return stats_history
+
+    def cleanup(self) -> None:
+        """Clean up all tracked allocations and pools."""
+        logger.info("Cleaning up TPU memory manager...")
+        self.clear_memory_pools()
+        super().cleanup()
+        logger.info("TPU memory manager cleanup complete")
 
     def __repr__(self) -> str:
         """String representation of memory manager."""
         stats = self.get_memory_stats()
         return (
             f"TPUMemoryManager(allocated={stats.allocated_memory/1e6:.1f}MB, "
-            f"pools={len(self._memory_pool)}, "
-            f"fraction={self.config.memory_fraction})"
+            f"pools={len(self._tpu_memory_pool)}, "
+            f"fraction={self._tpu_config.memory_fraction})"
         )
+
+
+__all__ = ["TPUMemoryManager", "TPUMemoryStats"]

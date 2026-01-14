@@ -16,36 +16,29 @@ Key Features:
 - Out-of-memory (OOM) protection
 - Automatic cleanup and defragmentation
 
-Version: 0.3.6
+Inherits from BaseMemoryManager for shared functionality.
+
+Version: 0.3.7
 """
 
 import logging
 import torch
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple, Any
+from dataclasses import dataclass
 from collections import defaultdict
 import time
+import gc
 
 from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from kernel_pytorch.backends.base_memory_manager import BaseMemoryManager, BaseMemoryStats
 from .amd_exceptions import ROCmMemoryError, AMDDeviceError
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class MemoryAllocation:
-    """Represents a memory allocation on AMD GPU."""
-
-    size_bytes: int
-    device_id: int
-    timestamp: float
-    purpose: str = "unknown"
-    tensor_ref: Optional[torch.Tensor] = None
-
-
-@dataclass
-class MemoryStats:
-    """Memory statistics for AMD GPU."""
+class AMDMemoryStats:
+    """Extended memory statistics for AMD GPU with fragmentation tracking."""
 
     total_mb: float
     allocated_mb: float
@@ -57,7 +50,7 @@ class MemoryStats:
     fragmentation_percent: float = 0.0
 
 
-class AMDMemoryManager:
+class AMDMemoryManager(BaseMemoryManager):
     """
     Memory manager for AMD GPUs with HBM optimization.
 
@@ -88,24 +81,19 @@ class AMDMemoryManager:
         Raises:
             AMDDeviceError: If device initialization fails
         """
-        self.config = config
+        self._amd_config = config
         self.device_id = device_id
-        self._device = torch.device(f"cuda:{device_id}")
 
-        # Memory tracking
-        self._allocations: Dict[str, MemoryAllocation] = {}
-        self._allocation_history: List[MemoryAllocation] = []
-        self._peak_memory_mb: float = 0.0
+        # Initialize base class
+        super().__init__(config)
 
-        # Statistics
-        self._stats = {
-            "total_allocations": 0,
-            "total_frees": 0,
+        # AMD-specific statistics
+        self._amd_stats = {
             "oom_count": 0,
             "defrag_count": 0,
         }
 
-        # Memory pool
+        # Memory pool setup
         self._pool_enabled = config.enable_memory_pooling
         if self._pool_enabled:
             self._initialize_memory_pool()
@@ -117,11 +105,63 @@ class AMDMemoryManager:
             self._pool_enabled,
         )
 
+    # =========================================================================
+    # Abstract method implementations
+    # =========================================================================
+
+    def _get_device(self) -> torch.device:
+        """Get the AMD GPU device."""
+        return torch.device(f"cuda:{self.device_id}")
+
+    def _get_optimal_alignment(self) -> int:
+        """
+        Get optimal tensor dimension alignment for AMD Matrix Cores.
+
+        CDNA architecture works best with dimensions divisible by 16 (or 32 for MI300).
+        """
+        # MI300 series benefits from 32-alignment
+        if hasattr(self._amd_config, 'architecture'):
+            if self._amd_config.architecture in [AMDArchitecture.MI300X, AMDArchitecture.MI300A]:
+                return 32
+        return 16
+
+    def _get_total_memory_bytes(self) -> int:
+        """Get total GPU memory in bytes."""
+        if not torch.cuda.is_available():
+            return 0
+        return torch.cuda.get_device_properties(self.device_id).total_memory
+
+    def _get_allocated_memory_bytes(self) -> int:
+        """Get currently allocated memory in bytes."""
+        if not torch.cuda.is_available():
+            return 0
+        return torch.cuda.memory_allocated(self.device_id)
+
+    def _get_reserved_memory_bytes(self) -> int:
+        """Get reserved (cached) memory in bytes."""
+        if not torch.cuda.is_available():
+            return 0
+        return torch.cuda.memory_reserved(self.device_id)
+
+    def _device_synchronize(self) -> None:
+        """Synchronize device operations."""
+        if torch.cuda.is_available():
+            torch.cuda.synchronize(self.device_id)
+
+    def _empty_device_cache(self) -> None:
+        """Empty CUDA/ROCm cache."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    # =========================================================================
+    # AMD-specific methods
+    # =========================================================================
+
     def _initialize_memory_pool(self) -> None:
         """Initialize memory pool for efficient allocations."""
         try:
             # Pre-allocate memory pool
-            pool_size_bytes = int(self.config.memory_pool_size_gb * 1024**3)
+            pool_size_bytes = int(self._amd_config.memory_pool_size_gb * 1024**3)
 
             # Check if enough memory is available
             free_memory = self.get_free_memory_mb() * 1024**2
@@ -138,7 +178,7 @@ class AMDMemoryManager:
                 "Initializing memory pool: %.2fGB", pool_size_bytes / 1024**3
             )
 
-            # Enable PyTorch's CUD A caching allocator (works with ROCm too)
+            # Enable PyTorch's caching allocator (works with ROCm too)
             torch.cuda.empty_cache()
 
             logger.info("Memory pool initialized successfully")
@@ -150,7 +190,9 @@ class AMDMemoryManager:
     def allocate_tensor(
         self,
         shape: Tuple[int, ...],
-        dtype: torch.dtype,
+        dtype: torch.dtype = torch.float32,
+        requires_grad: bool = False,
+        pool_id: Optional[str] = None,
         purpose: str = "unknown",
         check_oom: bool = True,
     ) -> torch.Tensor:
@@ -160,6 +202,8 @@ class AMDMemoryManager:
         Args:
             shape: Tensor shape
             dtype: Tensor data type
+            requires_grad: Whether tensor requires gradients
+            pool_id: Optional pool ID for memory pooling
             purpose: Purpose description for tracking
             check_oom: Whether to check for OOM before allocation
 
@@ -170,8 +214,7 @@ class AMDMemoryManager:
             ROCmMemoryError: If allocation fails or OOM detected
         """
         # Estimate memory requirement
-        element_size = torch.tensor([], dtype=dtype).element_size()
-        size_bytes = int(torch.tensor(shape).prod().item() * element_size)
+        size_bytes = self.estimate_tensor_size(shape, dtype)
         size_mb = size_bytes / (1024**2)
 
         logger.debug(
@@ -186,7 +229,7 @@ class AMDMemoryManager:
         if check_oom:
             free_mb = self.get_free_memory_mb()
             if size_mb > free_mb * 0.9:  # Leave 10% buffer
-                self._stats["oom_count"] += 1
+                self._amd_stats["oom_count"] += 1
                 raise ROCmMemoryError(
                     "allocation",
                     required_mb=size_mb,
@@ -194,33 +237,11 @@ class AMDMemoryManager:
                 )
 
         try:
-            # Allocate tensor
-            tensor = torch.zeros(shape, dtype=dtype, device=self._device)
-
-            # Track allocation
-            allocation = MemoryAllocation(
-                size_bytes=size_bytes,
-                device_id=self.device_id,
-                timestamp=time.time(),
-                purpose=purpose,
-                tensor_ref=tensor,
-            )
-
-            alloc_id = str(id(tensor))
-            self._allocations[alloc_id] = allocation
-            self._allocation_history.append(allocation)
-            self._stats["total_allocations"] += 1
-
-            # Update peak memory
-            current_allocated = self.get_allocated_memory_mb()
-            if current_allocated > self._peak_memory_mb:
-                self._peak_memory_mb = current_allocated
-
-            logger.debug("Tensor allocated successfully: %.2fMB", size_mb)
-            return tensor
+            # Use base class allocation for pooling support
+            return super().allocate_tensor(shape, dtype, requires_grad, pool_id, purpose)
 
         except torch.cuda.OutOfMemoryError as e:
-            self._stats["oom_count"] += 1
+            self._amd_stats["oom_count"] += 1
             raise ROCmMemoryError(
                 "allocation",
                 required_mb=size_mb,
@@ -236,53 +257,67 @@ class AMDMemoryManager:
         """
         alloc_id = str(id(tensor))
 
-        if alloc_id in self._allocations:
-            allocation = self._allocations[alloc_id]
-            logger.debug(
-                "Freeing tensor: size=%.2fMB, purpose=%s",
-                allocation.size_bytes / (1024**2),
-                allocation.purpose,
-            )
+        logger.debug(
+            "Freeing tensor: size=%.2fMB",
+            tensor.element_size() * tensor.numel() / (1024**2),
+        )
 
-            del self._allocations[alloc_id]
-            self._stats["total_frees"] += 1
+        self._stats['total_frees'] += 1
 
         # Delete tensor reference
         del tensor
 
-    def get_memory_stats(self) -> MemoryStats:
+    def get_memory_stats(self) -> Dict[str, Any]:
         """
         Get current memory statistics.
 
-        Returns:
-            MemoryStats object with current memory state
+        Returns extended stats including fragmentation for AMD.
         """
-        # Get PyTorch memory stats (works with ROCm)
-        allocated = torch.cuda.memory_allocated(self.device_id)
-        reserved = torch.cuda.memory_reserved(self.device_id)
-        total = torch.cuda.get_device_properties(self.device_id).total_memory
-
-        allocated_mb = allocated / (1024**2)
-        reserved_mb = reserved / (1024**2)
-        total_mb = total / (1024**2)
-        free_mb = total_mb - allocated_mb
+        base_stats = super().get_memory_stats()
 
         # Calculate fragmentation
+        total_mb = base_stats.total_bytes / (1024**2)
+        allocated_mb = base_stats.allocated_bytes / (1024**2)
+        reserved_mb = base_stats.reserved_bytes / (1024**2)
         fragmentation = (
             ((reserved_mb - allocated_mb) / total_mb * 100)
             if total_mb > 0
             else 0.0
         )
 
-        return MemoryStats(
-            total_mb=total_mb,
-            allocated_mb=allocated_mb,
-            reserved_mb=reserved_mb,
-            free_mb=free_mb,
-            peak_allocated_mb=self._peak_memory_mb,
-            num_allocations=self._stats["total_allocations"],
-            num_frees=self._stats["total_frees"],
-            fragmentation_percent=fragmentation,
+        # Return dict format for AMD-specific stats
+        return {
+            'total_mb': total_mb,
+            'allocated_mb': allocated_mb,
+            'reserved_mb': reserved_mb,
+            'free_mb': base_stats.free_bytes / (1024**2),
+            'peak_allocated_mb': base_stats.peak_allocated_bytes / (1024**2),
+            'num_allocations': base_stats.num_allocations,
+            'num_frees': self._stats['total_frees'],
+            'fragmentation_percent': fragmentation,
+            'device': str(self._device),
+            'pool_count': base_stats.pool_count,
+            'oom_count': self._amd_stats['oom_count'],
+            'defrag_count': self._amd_stats['defrag_count'],
+        }
+
+    def get_amd_memory_stats(self) -> AMDMemoryStats:
+        """
+        Get AMD-specific memory statistics as dataclass.
+
+        Returns:
+            AMDMemoryStats object with current memory state
+        """
+        stats = self.get_memory_stats()
+        return AMDMemoryStats(
+            total_mb=stats['total_mb'],
+            allocated_mb=stats['allocated_mb'],
+            reserved_mb=stats['reserved_mb'],
+            free_mb=stats['free_mb'],
+            peak_allocated_mb=stats['peak_allocated_mb'],
+            num_allocations=stats['num_allocations'],
+            num_frees=stats['num_frees'],
+            fragmentation_percent=stats['fragmentation_percent'],
         )
 
     def get_allocated_memory_mb(self) -> float:
@@ -292,7 +327,7 @@ class AMDMemoryManager:
         Returns:
             Allocated memory in MB
         """
-        return torch.cuda.memory_allocated(self.device_id) / (1024**2)
+        return self._get_allocated_memory_bytes() / (1024**2)
 
     def get_free_memory_mb(self) -> float:
         """
@@ -301,8 +336,8 @@ class AMDMemoryManager:
         Returns:
             Free memory in MB
         """
-        total = torch.cuda.get_device_properties(self.device_id).total_memory
-        allocated = torch.cuda.memory_allocated(self.device_id)
+        total = self._get_total_memory_bytes()
+        allocated = self._get_allocated_memory_bytes()
         return (total - allocated) / (1024**2)
 
     def get_total_memory_mb(self) -> float:
@@ -312,8 +347,7 @@ class AMDMemoryManager:
         Returns:
             Total memory in MB
         """
-        total = torch.cuda.get_device_properties(self.device_id).total_memory
-        return total / (1024**2)
+        return self._get_total_memory_bytes() / (1024**2)
 
     def defragment(self) -> None:
         """
@@ -326,9 +360,10 @@ class AMDMemoryManager:
 
         try:
             # Empty cache to consolidate free blocks
-            torch.cuda.empty_cache()
+            gc.collect()
+            self._empty_device_cache()
 
-            self._stats["defrag_count"] += 1
+            self._amd_stats["defrag_count"] += 1
             logger.info("Memory defragmentation complete")
 
         except Exception as e:
@@ -336,8 +371,9 @@ class AMDMemoryManager:
 
     def reset_peak_stats(self) -> None:
         """Reset peak memory statistics."""
-        self._peak_memory_mb = self.get_allocated_memory_mb()
-        torch.cuda.reset_peak_memory_stats(self.device_id)
+        super().reset_peak_memory()
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats(self.device_id)
         logger.debug("Peak memory stats reset")
 
     def get_allocation_summary(self) -> Dict[str, int]:
@@ -348,22 +384,15 @@ class AMDMemoryManager:
             Dictionary mapping purpose to count
         """
         summary = defaultdict(int)
-        for allocation in self._allocations.values():
+        for allocation in self._allocation_history:
             summary[allocation.purpose] += 1
         return dict(summary)
 
     def cleanup(self) -> None:
         """Clean up all tracked allocations."""
-        logger.info("Cleaning up memory manager...")
-
-        # Clear all allocations
-        self._allocations.clear()
-        self._allocation_history.clear()
-
-        # Empty CUDA cache
-        torch.cuda.empty_cache()
-
-        logger.info("Memory manager cleanup complete")
+        logger.info("Cleaning up AMD memory manager...")
+        super().cleanup()
+        logger.info("AMD memory manager cleanup complete")
 
     def __repr__(self) -> str:
         """String representation of memory manager."""
@@ -371,10 +400,10 @@ class AMDMemoryManager:
         return (
             f"AMDMemoryManager("
             f"device={self.device_id}, "
-            f"allocated={stats.allocated_mb:.2f}MB, "
-            f"free={stats.free_mb:.2f}MB, "
-            f"fragmentation={stats.fragmentation_percent:.1f}%)"
+            f"allocated={stats['allocated_mb']:.2f}MB, "
+            f"free={stats['free_mb']:.2f}MB, "
+            f"fragmentation={stats['fragmentation_percent']:.1f}%)"
         )
 
 
-__all__ = ["AMDMemoryManager", "MemoryAllocation", "MemoryStats"]
+__all__ = ["AMDMemoryManager", "AMDMemoryStats"]
