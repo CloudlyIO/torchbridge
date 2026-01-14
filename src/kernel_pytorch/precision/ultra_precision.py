@@ -845,13 +845,17 @@ class UltraPrecisionModule(nn.Module):
         return self.base_module(*args, **kwargs)
 
     def _apply_dynamic_adaptation(self):
-        """Apply dynamic precision adaptation during runtime."""
+        """Apply dynamic precision adaptation during runtime.
 
-        # This could include techniques like:
-        # TODO: Implement dynamic precision adaptation:
-        # - Activation-based precision adjustment
-        # - Memory pressure-based adaptation
-        # - Performance-based optimization
+        Note: Dynamic adaptation is a placeholder for future implementation.
+        Currently, precision is statically determined during quantization.
+
+        Future features may include:
+        - Activation-based precision adjustment
+        - Memory pressure-based adaptation
+        - Performance-based optimization
+        """
+        # Dynamic adaptation not yet implemented - using static precision
         pass
 
     def get_precision_statistics(self) -> PrecisionStats:

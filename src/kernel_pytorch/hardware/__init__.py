@@ -44,7 +44,7 @@ for attr_name in dir(current_module):
                                                 'kernel_pytorch.gpu_integration' in str(getattr(attr, '__module__', '')) or
                                                 'kernel_pytorch.hardware_abstraction' in str(getattr(attr, '__module__', ''))):
                 __all__.append(attr_name)
-        except:
+        except Exception:
             pass
 
 # Backward compatibility support

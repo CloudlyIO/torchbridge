@@ -146,7 +146,7 @@ for attr_name in dir(current_module):
             attr = getattr(current_module, attr_name)
             if hasattr(attr, '__module__') and 'kernel_pytorch.core' in str(getattr(attr, '__module__', '')):
                 __all__.append(attr_name)
-        except:
+        except Exception:
             pass
 
 # Backward compatibility

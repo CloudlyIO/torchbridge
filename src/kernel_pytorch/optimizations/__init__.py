@@ -38,7 +38,7 @@ for attr_name in dir(current_module):
                                                 'kernel_pytorch.optimization_patterns' in str(getattr(attr, '__module__', '')) or
                                                 'kernel_pytorch.next_gen_optimizations' in str(getattr(attr, '__module__', ''))):
                 __all__.append(attr_name)
-        except:
+        except Exception:
             pass
 
 # Backward compatibility

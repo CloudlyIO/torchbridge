@@ -687,7 +687,7 @@ class UnifiedAttentionFusion(nn.Module):
                 if cached > 0:
                     return min(1.0, allocated / cached)
             return 0.5  # Default estimate
-        except:
+        except Exception:
             return 0.5
 
     def _calculate_fusion_efficiency(
@@ -821,7 +821,7 @@ class UnifiedAttentionFusion(nn.Module):
                     "memory_gb": props.total_memory // (1024**3),
                     "tensor_cores": props.major >= 7  # Volta and later
                 })
-            except:
+            except Exception:
                 pass
 
         return gpu_info

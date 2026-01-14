@@ -515,7 +515,7 @@ class KernelProfiler:
                     recommendations.append("  - High memory utilization. Consider gradient checkpointing or model sharding.")
                 elif utilization < 0.3:
                     recommendations.append("  - Low memory utilization. Consider increasing batch size for better efficiency.")
-            except:
+            except Exception:
                 pass
 
         if not recommendations:

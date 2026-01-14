@@ -255,6 +255,23 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 These legacy import paths emit `DeprecationWarning` and will be removed in v0.4.0.
 See the migration guide in `docs/guides/migration.md` for update instructions.
 
+**Phase 4: Dead Code Cleanup** (`src/kernel_pytorch/`):
+- Fixed 8 bare `except:` handlers to use `except Exception:`:
+  - `optimizations/__init__.py`
+  - `utils/profiling.py`
+  - `hardware/__init__.py`
+  - `utils/compiler_assistant.py`
+  - `attention/fusion/neural_operator.py` (2 locations)
+  - `core/__init__.py`
+  - `core/performance_tracker.py`
+- Added proper skip messages to unimplemented functions:
+  - `precision/ultra_precision.py`: `_apply_dynamic_adaptation()`
+  - `precision/fp8_training_engine.py`: `__exit__()` context cleanup
+  - `backends/amd/amd_optimizer.py`: Fusion methods and FP8 preparation
+- Removed backup directories:
+  - `.archive/` (empty)
+  - `.github-workflows-backup/` (outdated workflow backups)
+
 ---
 
 ## [0.3.6] - 2025-12-31 - AMD Documentation (Phase 4C-Pre Week 6)

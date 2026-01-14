@@ -286,7 +286,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
         try:
             indices = [int(x.strip()) - 1 for x in selection.split(',')]
             return [recommendations[i] for i in indices if 0 <= i < len(recommendations)]
-        except:
+        except Exception:
             print("Invalid selection, using all recommendations")
             return recommendations
 
