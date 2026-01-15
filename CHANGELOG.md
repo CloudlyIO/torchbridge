@@ -39,6 +39,53 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.8] - 2026-01-14 - Model Export Infrastructure (Phase 4E Week 8)
+
+**Goal**: Add production deployment infrastructure with model export capabilities
+
+### **Added** ✨
+
+**Deployment Module** (`src/kernel_pytorch/deployment/`, ~1,100 lines):
+- **`optimization_metadata.py`** (~400 lines): Metadata schema for preserving optimizations
+  - `OptimizationMetadata`: Top-level metadata class
+  - `HardwareMetadata`: Hardware-specific optimization info
+  - `PrecisionMetadata`: Precision configuration (FP8, FP16, etc.)
+  - `FusionMetadata`: Kernel fusion information
+  - `PerformanceMetadata`: Latency, throughput, memory metrics
+  - `ModelMetadata`: Model architecture details
+  - `create_metadata()`: Factory function for metadata creation
+
+- **`onnx_exporter.py`** (~500 lines): ONNX export with optimization preservation
+  - `ONNXExporter`: Full-featured ONNX exporter
+  - `ONNXExportConfig`: Export configuration
+  - Dynamic axes support (batch size, sequence length)
+  - Export validation via ONNX Runtime
+  - Metadata embedding in ONNX model properties
+  - `export_to_onnx()`: Convenience function
+
+- **`torchscript_exporter.py`** (~400 lines): TorchScript export
+  - `TorchScriptExporter`: Trace and script export
+  - `TorchScriptExportConfig`: Export configuration
+  - Model freezing and inference optimization
+  - Mobile optimization support
+  - Metadata preservation in extra_files
+  - `export_to_torchscript()`, `load_torchscript()`: Convenience functions
+
+**Tests** (`tests/test_deployment.py`, ~400 lines):
+- 24 comprehensive tests (19 passed, 5 skipped for ONNX)
+- Metadata serialization tests
+- TorchScript trace/script export tests
+- ONNX export tests (when available)
+- Integration and consistency tests
+
+### **Testing Summary**
+- 24 new deployment tests
+- TorchScript export fully tested
+- ONNX export tested when onnx package available
+- All exports validated for output consistency
+
+---
+
 ## [0.3.7] - 2026-01-13 - Real Hardware Validation Complete (Phase 4D-Cloud)
 
 **Goal**: Build cloud testing infrastructure and validate all backends on real hardware

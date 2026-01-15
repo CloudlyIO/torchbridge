@@ -12,7 +12,7 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 
 # Unified Configuration System
 from .core.config import (
