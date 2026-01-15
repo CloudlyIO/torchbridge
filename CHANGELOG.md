@@ -39,6 +39,58 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.9] - 2026-01-15 - Inference Serving Integration (Phase 4E Week 9)
+
+**Goal**: Add inference serving integration for production deployment
+
+**Test Coverage**: **866 tests passing** (100% success rate), **5/5 demos passing**
+
+### **Added** ✨
+
+**Serving Module** (`src/kernel_pytorch/deployment/serving/`, ~1,200 lines):
+
+- **`torchserve_handler.py`** (~400 lines): TorchServe integration
+  - `KernelPyTorchHandler`: Custom handler with KernelPyTorch optimizations
+  - `BaseHandler`: Abstract base class for custom handlers
+  - `HandlerConfig`: Configuration for handler settings
+  - `package_for_torchserve()`: Create .mar archives for deployment
+  - Automatic model optimization on load
+  - FP16/FP8 precision support
+  - Batch inference with metrics
+
+- **`triton_config.py`** (~400 lines): Triton Inference Server configuration
+  - `TritonModelConfig`: Full Triton configuration generation
+  - `TritonInput`, `TritonOutput`: Input/output specifications
+  - `TritonDynamicBatching`: Dynamic batching configuration
+  - `TritonInstanceGroup`: Multi-GPU instance management
+  - `create_triton_config()`: Easy config creation
+  - `generate_triton_model_repository()`: Full model repository generation
+
+- **`fastapi_server.py`** (~400 lines): REST API inference server
+  - `InferenceServer`: Full-featured FastAPI server
+  - `ServerConfig`: Server configuration
+  - Health check endpoints (`/health`, `/health/live`, `/health/ready`)
+  - Metrics endpoint (`/metrics`)
+  - Batch inference support (`/predict/batch`)
+  - Async request handling
+  - FP16 inference optimization
+
+**Tests** (`tests/test_serving.py`, ~400 lines):
+- 31 comprehensive tests (30 passed, 1 skipped for ONNX)
+- TorchServe handler tests (preprocessing, postprocessing, metrics)
+- Triton configuration generation tests
+- FastAPI server creation tests
+- Integration workflow tests
+
+### **Testing Summary**
+- **866 total tests passing** (100% success rate)
+- 31 new serving tests
+- TorchServe handler functionality validated
+- Triton model repository generation tested
+- FastAPI server creation tested
+
+---
+
 ## [0.3.8] - 2026-01-15 - Model Export Infrastructure (Phase 4E Week 8)
 
 **Goal**: Add production deployment infrastructure with model export capabilities
