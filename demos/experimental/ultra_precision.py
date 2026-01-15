@@ -29,7 +29,7 @@ import numpy as np
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from kernel_pytorch.optimizations.next_gen.ultra_precision import (
+from kernel_pytorch.precision.ultra_precision import (
     FP4Quantizer,
     MXFPOptimizer,
     InformationEntropyPrecision,

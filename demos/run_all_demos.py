@@ -27,10 +27,13 @@ def print_header():
 
 def run_demo(demo_path, mode="quick"):
     """Run a single demo."""
-    if not os.path.exists(demo_path):
+    demos_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.join(demos_dir, demo_path)
+
+    if not os.path.exists(full_path):
         return False, f"Demo not found: {demo_path}"
 
-    cmd = [sys.executable, demo_path, f"--{mode}"]
+    cmd = [sys.executable, full_path, f"--{mode}"]
 
     try:
         start_time = time.time()

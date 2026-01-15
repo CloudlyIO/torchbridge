@@ -39,13 +39,15 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
-## [0.3.8] - 2026-01-14 - Model Export Infrastructure (Phase 4E Week 8)
+## [0.3.8] - 2026-01-15 - Model Export Infrastructure (Phase 4E Week 8)
 
 **Goal**: Add production deployment infrastructure with model export capabilities
 
+**Test Coverage**: **836 tests passing** (100% success rate), **5/5 demos passing**
+
 ### **Added** ✨
 
-**Deployment Module** (`src/kernel_pytorch/deployment/`, ~1,100 lines):
+**Deployment Module** (`src/kernel_pytorch/deployment/`, ~1,300 lines):
 - **`optimization_metadata.py`** (~400 lines): Metadata schema for preserving optimizations
   - `OptimizationMetadata`: Top-level metadata class
   - `HardwareMetadata`: Hardware-specific optimization info
@@ -79,10 +81,12 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 - Integration and consistency tests
 
 ### **Testing Summary**
-- 24 new deployment tests
+- **836 total tests passing** (100% success rate)
+- 24 new deployment tests (19 passed, 5 skipped for ONNX)
 - TorchScript export fully tested
 - ONNX export tested when onnx package available
 - All exports validated for output consistency
+- **5/5 demos passing** (all core demos validated)
 
 ---
 

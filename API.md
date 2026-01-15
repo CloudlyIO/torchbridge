@@ -39,6 +39,15 @@ from kernel_pytorch.attention import (
 
 # ✅ WORKING: Core Optimized Components (Partial)
 from kernel_pytorch.core import FusedGELU
+
+# ✅ WORKING: Deployment Module (v0.3.8)
+from kernel_pytorch.deployment import (
+    TorchScriptExporter,
+    ONNXExporter,
+    OptimizationMetadata,
+    export_to_torchscript,
+    export_to_onnx
+)
 ```
 
 ## 🎯 Advanced Attention APIs
@@ -529,6 +538,94 @@ except Exception as e:
 
 ---
 
+## 📦 Deployment APIs (v0.3.8)
+
+### **TorchScript Export**
+
+#### `TorchScriptExporter`
+```python
+from kernel_pytorch.deployment import TorchScriptExporter, ExportMethod
+
+exporter = TorchScriptExporter()
+result = exporter.export(
+    model,
+    output_path="model.pt",
+    sample_input=sample_input,
+    method=ExportMethod.TRACE,  # or ExportMethod.SCRIPT
+    optimization_level="balanced",
+    freeze=True,
+    optimize_for_inference=True
+)
+
+print(f"Exported to: {result.output_path}")
+print(f"Export time: {result.export_time_ms:.2f}ms")
+```
+
+#### `export_to_torchscript()` (Convenience Function)
+```python
+from kernel_pytorch.deployment import export_to_torchscript
+
+result = export_to_torchscript(model, "model.pt", sample_input)
+```
+
+### **ONNX Export**
+
+#### `ONNXExporter`
+```python
+from kernel_pytorch.deployment import ONNXExporter
+
+exporter = ONNXExporter()
+result = exporter.export(
+    model,
+    output_path="model.onnx",
+    sample_input=sample_input,
+    opset_version=17,
+    dynamic_axes={'input': {0: 'batch_size'}},
+    validate=True  # Validates with ONNX Runtime
+)
+
+print(f"ONNX Runtime validation: {result.validation_passed}")
+```
+
+#### `export_to_onnx()` (Convenience Function)
+```python
+from kernel_pytorch.deployment import export_to_onnx
+
+result = export_to_onnx(model, "model.onnx", sample_input)
+```
+
+### **Optimization Metadata**
+
+#### `OptimizationMetadata`
+```python
+from kernel_pytorch.deployment import OptimizationMetadata, create_metadata
+
+# Create metadata for export
+metadata = create_metadata(
+    optimization_level="aggressive",
+    backend="nvidia",
+    model_name="my_transformer"
+)
+
+# Serialize to JSON
+metadata_json = metadata.to_json()
+
+# Load from JSON
+loaded = OptimizationMetadata.from_json(metadata_json)
+```
+
+**Metadata Schema:**
+- `schema_version`: Metadata format version
+- `kernel_pytorch_version`: Framework version used
+- `export_timestamp`: When the model was exported
+- `optimization_level`: Conservative/balanced/aggressive
+- `hardware`: Target hardware information (backend, compute capability)
+- `precision`: Precision settings (dtype, mixed precision config)
+- `fusion`: Fusion optimizations applied
+- `performance`: Performance metrics from export
+
+---
+
 ## 🎯 API Implementation Status
 
 ### **✅ Fully Working APIs**
@@ -536,6 +633,7 @@ except Exception as e:
 - **Next-Gen Optimizations**: All 3 components working with demo validation
 - **Basic FP8 Training**: Core functionality working
 - **Core FusedGELU**: Optimized activation function
+- **Deployment Module** (v0.3.8): TorchScript/ONNX export with optimization metadata
 
 ### **🔄 Partial Implementation**
 - **Attention Framework**: Core components working, some distributed features limited
