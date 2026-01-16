@@ -39,6 +39,69 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.10] - 2026-01-15 - Monitoring & Containerization (Phase 4E Week 10)
+
+**Goal**: Add production monitoring and container deployment infrastructure
+
+**Test Coverage**: **905 tests passing** (100% success rate), **5/5 demos passing**
+
+### **Added** ✨
+
+**Monitoring Module** (`src/kernel_pytorch/monitoring/`, ~900 lines):
+
+- **`prometheus_exporter.py`** (~400 lines): Prometheus metrics integration
+  - `MetricsExporter`: Full Prometheus metrics exporter
+  - `MetricsConfig`: Configuration for metrics collection
+  - Inference latency histograms and percentiles
+  - Throughput counters and gauges
+  - GPU memory usage tracking
+  - Context manager for automatic timing
+  - `start_metrics_server()`: HTTP server for scraping
+
+- **`grafana_dashboards.py`** (~300 lines): Grafana dashboard generation
+  - `GrafanaDashboard`: Dashboard definition class
+  - `DashboardPanel`: Panel configuration
+  - `create_inference_dashboard()`: Inference metrics dashboard
+  - `create_system_dashboard()`: System resources dashboard
+  - `create_full_dashboard()`: Complete operational dashboard
+  - `export_dashboard_json()`: Export for Grafana import
+
+- **`health_monitor.py`** (~250 lines): Health monitoring
+  - `HealthMonitor`: Component health tracking
+  - `HealthStatus`: Health status enum (healthy/degraded/unhealthy)
+  - `HealthCheck`: Kubernetes-compatible health probes
+  - Model, GPU, and inference health checks
+  - Custom health check registration
+
+**Docker Configurations** (`docker/`):
+
+- **`Dockerfile.nvidia`**: NVIDIA GPU container with CUDA 12.1
+- **`Dockerfile.cpu`**: Lightweight CPU-only container
+- **`docker-compose.yml`**: Full stack deployment (inference + Prometheus + Grafana)
+- **`prometheus.yml`**: Prometheus scrape configuration
+
+**Kubernetes Manifests** (`docker/kubernetes/`):
+
+- **`deployment.yaml`**: Deployment, Service, PVC
+- **`hpa.yaml`**: Horizontal Pod Autoscaler
+- **`servicemonitor.yaml`**: Prometheus Operator ServiceMonitor + PrometheusRule
+
+**Tests** (`tests/test_monitoring.py`, ~400 lines):
+- 39 comprehensive tests (100% passing)
+- Prometheus exporter tests
+- Grafana dashboard generation tests
+- Health monitoring tests
+- Integration workflow tests
+
+### **Testing Summary**
+- **905 total tests passing** (100% success rate)
+- 39 new monitoring tests
+- Prometheus metrics validated
+- Grafana dashboards generated successfully
+- Health monitoring functional
+
+---
+
 ## [0.3.9] - 2026-01-15 - Inference Serving Integration (Phase 4E Week 9)
 
 **Goal**: Add inference serving integration for production deployment

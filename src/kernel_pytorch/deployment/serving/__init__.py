@@ -57,7 +57,7 @@ from .fastapi_server import (
     run_server,
 )
 
-__version__ = "0.3.9"
+__version__ = "0.3.10"
 
 __all__ = [
     # TorchServe

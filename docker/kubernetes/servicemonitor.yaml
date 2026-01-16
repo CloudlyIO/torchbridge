@@ -1,0 +1,65 @@
+# KernelPyTorch ServiceMonitor for Prometheus Operator
+# Version: 0.3.10
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kernelpytorch-inference
+  labels:
+    app: kernelpytorch
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: kernelpytorch
+      component: inference
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - default
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kernelpytorch-alerts
+  labels:
+    app: kernelpytorch
+    release: prometheus
+spec:
+  groups:
+    - name: kernelpytorch.rules
+      rules:
+        - alert: KernelPyTorchHighLatency
+          expr: |
+            histogram_quantile(0.95, rate(kernelpytorch_inference_latency_milliseconds_bucket[5m])) > 100
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High inference latency"
+            description: "P95 latency is above 100ms for 5 minutes"
+
+        - alert: KernelPyTorchHighErrorRate
+          expr: |
+            rate(kernelpytorch_inference_requests_total{status="error"}[5m]) 
+            / rate(kernelpytorch_inference_requests_total[5m]) > 0.05
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate"
+            description: "Error rate is above 5% for 2 minutes"
+
+        - alert: KernelPyTorchGPUMemoryHigh
+          expr: |
+            kernelpytorch_gpu_memory_used_bytes / kernelpytorch_gpu_memory_total_bytes > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "GPU memory usage high"
+            description: "GPU memory usage is above 90%"

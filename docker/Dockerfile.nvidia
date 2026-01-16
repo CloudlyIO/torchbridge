@@ -1,0 +1,76 @@
+# KernelPyTorch NVIDIA GPU Container
+# Optimized for production inference with CUDA support
+#
+# Build:
+#   docker build -f docker/Dockerfile.nvidia -t kernelpytorch:nvidia .
+#
+# Run:
+#   docker run --gpus all -p 8000:8000 kernelpytorch:nvidia
+#
+# Version: 0.3.10
+
+# Use NVIDIA CUDA base image with Python
+FROM nvidia/cuda:12.1-cudnn8-runtime-ubuntu22.04 AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=UTF-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --upgrade pip && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install -r requirements.txt
+
+# Install optional serving dependencies
+RUN pip install fastapi uvicorn prometheus-client psutil
+
+# Copy application code
+COPY src/ ./src/
+COPY pyproject.toml ./
+
+# Install KernelPyTorch
+RUN pip install -e .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose ports
+# 8000: FastAPI inference server
+# 9090: Prometheus metrics
+EXPOSE 8000 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
+# Default command: Run FastAPI server
+CMD ["python", "-m", "uvicorn", "kernel_pytorch.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Labels
+LABEL org.opencontainers.image.title="KernelPyTorch NVIDIA" \
+      org.opencontainers.image.description="Production inference container with NVIDIA GPU support" \
+      org.opencontainers.image.version="0.3.10" \
+      org.opencontainers.image.vendor="KernelPyTorch" \
+      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch"

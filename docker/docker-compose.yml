@@ -1,147 +1,128 @@
+# KernelPyTorch Docker Compose Configuration
+#
+# Deploy complete inference stack with monitoring
+#
+# Usage:
+#   docker-compose -f docker/docker-compose.yml up -d
+#
+# Services:
+#   - inference: KernelPyTorch inference server
+#   - prometheus: Metrics collection
+#   - grafana: Metrics visualization
+#
+# Version: 0.3.10
+
 version: '3.8'
 
 services:
-  # Production KernelPyTorch service
-  kernelpytorch:
+  # =============================================================================
+  # KernelPyTorch Inference Server
+  # =============================================================================
+  inference:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.production
-    image: kernelpytorch:latest
-    container_name: kernelpytorch-prod
+      dockerfile: docker/Dockerfile.nvidia
+    image: kernelpytorch:nvidia
+    container_name: kernelpytorch-inference
     ports:
       - "8000:8000"
-    volumes:
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./logs:/app/logs
+      - "9090:9090"
     environment:
-      - PYTHONPATH=/app
-      - CUDA_VISIBLE_DEVICES=0
-      - PORT=8000
-      - WORKERS=2
+      - MODEL_NAME=${MODEL_NAME:-model}
+      - MODEL_PATH=${MODEL_PATH:-/models/model.pt}
+      - DEVICE=${DEVICE:-cuda}
+      - ENABLE_FP16=${ENABLE_FP16:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+      - inference-logs:/app/logs
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu]
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import kernel_pytorch; print('Healthy')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - kernelpytorch-net
 
-  # Development environment
-  kernelpytorch-dev:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.development
-    image: kernelpytorch:dev
-    container_name: kernelpytorch-dev
-    ports:
-      - "8888:8888"  # Jupyter
-      - "6006:6006"  # TensorBoard
-      - "8080:8080"  # Streamlit
-      - "7860:7860"  # Gradio
-    volumes:
-      - ..:/workspace
-      - ./data:/workspace/data
-      - ./models:/workspace/models
-      - jupyter-data:/root/.jupyter
-    environment:
-      - PYTHONPATH=/workspace/src
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    stdin_open: true
-    tty: true
-    command: >
-      bash -c "
-        echo 'Starting development environment...' &&
-        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
-        tensorboard --logdir=/workspace/logs --host=0.0.0.0 --port=6006 &
-        echo 'Services started. Connect to:' &&
-        echo '  Jupyter Lab: http://localhost:8888' &&
-        echo '  TensorBoard: http://localhost:6006' &&
-        echo '  Container shell: docker exec -it kernelpytorch-dev bash' &&
-        tail -f /dev/null
-      "
-
-  # Benchmarking service
-  benchmarker:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.production
-    image: kernelpytorch:latest
-    container_name: kernelpytorch-benchmark
-    volumes:
-      - ./benchmark-results:/app/results
-      - ./models:/app/models
-    environment:
-      - PYTHONPATH=/app
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    command: >
-      bash -c "
-        echo 'Running comprehensive benchmarks...' &&
-        kernelpytorch benchmark --predefined optimization --output /app/results/optimization_$(date +%Y%m%d_%H%M%S).json &&
-        kernelpytorch benchmark --predefined transformers --output /app/results/transformers_$(date +%Y%m%d_%H%M%S).json &&
-        echo 'Benchmarks completed. Results saved to ./benchmark-results/'
-      "
-    profiles:
-      - benchmark
-
-  # Monitoring and metrics
+  # =============================================================================
+  # Prometheus - Metrics Collection
+  # =============================================================================
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.48.0
     container_name: kernelpytorch-prometheus
     ports:
-      - "9090:9090"
+      - "9091:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
       - '--web.enable-lifecycle'
-    profiles:
-      - monitoring
+    restart: unless-stopped
+    networks:
+      - kernelpytorch-net
+    depends_on:
+      - inference
 
+  # =============================================================================
+  # Grafana - Metrics Visualization
+  # =============================================================================
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.2
     container_name: kernelpytorch-grafana
     ports:
       - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=kernelpytorch
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - kernelpytorch-net
+    depends_on:
+      - prometheus
+
+  # =============================================================================
+  # Inference CPU (Alternative)
+  # =============================================================================
+  inference-cpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cpu
+    image: kernelpytorch:cpu
+    container_name: kernelpytorch-inference-cpu
     profiles:
-      - monitoring
+      - cpu-only
+    ports:
+      - "8001:8000"
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-model}
+      - DEVICE=cpu
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+    restart: unless-stopped
+    networks:
+      - kernelpytorch-net
 
 volumes:
-  jupyter-data:
+  inference-logs:
   prometheus-data:
   grafana-data:
 
 networks:
-  default:
+  kernelpytorch-net:
     driver: bridge

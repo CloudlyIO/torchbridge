@@ -1,0 +1,37 @@
+# Prometheus Configuration for KernelPyTorch
+# Version: 0.3.10
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # KernelPyTorch inference server metrics
+  - job_name: 'kernelpytorch-inference'
+    static_configs:
+      - targets: ['inference:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+
+  # Node metrics (if node-exporter is running)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # GPU metrics (if dcgm-exporter is running)
+  - job_name: 'gpu'
+    static_configs:
+      - targets: ['dcgm-exporter:9400']

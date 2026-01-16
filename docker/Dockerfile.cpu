@@ -1,0 +1,67 @@
+# KernelPyTorch CPU Container
+# Lightweight container for CPU-only inference
+#
+# Build:
+#   docker build -f docker/Dockerfile.cpu -t kernelpytorch:cpu .
+#
+# Run:
+#   docker run -p 8000:8000 kernelpytorch:cpu
+#
+# Version: 0.3.10
+
+FROM python:3.11-slim AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=UTF-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --upgrade pip && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
+    pip install -r requirements.txt
+
+# Install optional serving dependencies
+RUN pip install fastapi uvicorn prometheus-client psutil
+
+# Copy application code
+COPY src/ ./src/
+COPY pyproject.toml ./
+
+# Install KernelPyTorch
+RUN pip install -e .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose ports
+EXPOSE 8000 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
+# Default command
+CMD ["python", "-m", "uvicorn", "kernel_pytorch.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Labels
+LABEL org.opencontainers.image.title="KernelPyTorch CPU" \
+      org.opencontainers.image.description="Lightweight CPU-only inference container" \
+      org.opencontainers.image.version="0.3.10" \
+      org.opencontainers.image.vendor="KernelPyTorch"
