@@ -88,6 +88,32 @@ from .config import (
     configure,
 )
 
+# Error handling framework (v0.3.11)
+from .errors import (
+    KernelPyTorchError,
+    ValidationError,
+    ConfigValidationError,
+    InputValidationError,
+    ModelValidationError,
+    HardwareError,
+    HardwareDetectionError,
+    HardwareNotFoundError,
+    HardwareCapabilityError,
+    OptimizationError,
+    CompilationError,
+    FusionError,
+    PrecisionError,
+    DeploymentError,
+    ExportError,
+    ServingError,
+    ContainerError,
+    MonitoringError,
+    MetricsError,
+    HealthCheckError,
+    raise_or_warn,
+    format_error_chain,
+)
+
 # Optimized layers
 from .optimized_layers.activation_functions import FusedGELU, FusedSwiGLU, FusedReLU, create_optimized_activation
 from .optimized_layers.linear_transformations import (
@@ -131,6 +157,13 @@ __all__ = [
     'NVIDIAArchitecture', 'TPUVersion', 'TPUTopology', 'TPUCompilationMode', 'AMDArchitecture',
     'AttentionPatterns', 'FP8AttentionConfig', 'DynamicSparseConfig', 'RingAttentionConfig',
     'get_config', 'set_config', 'configure',
+
+    # Error handling framework
+    'KernelPyTorchError', 'ValidationError', 'ConfigValidationError', 'InputValidationError',
+    'ModelValidationError', 'HardwareError', 'HardwareDetectionError', 'HardwareNotFoundError',
+    'HardwareCapabilityError', 'OptimizationError', 'CompilationError', 'FusionError',
+    'PrecisionError', 'DeploymentError', 'ExportError', 'ServingError', 'ContainerError',
+    'MonitoringError', 'MetricsError', 'HealthCheckError', 'raise_or_warn', 'format_error_chain',
 
     # Optimized layers - available implementations
     'FusedGELU', 'FusedSwiGLU', 'FusedReLU', 'create_optimized_activation',

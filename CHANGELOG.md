@@ -39,6 +39,115 @@ The v0.3.x series focuses on hardening existing backends (NVIDIA, TPU) to 90%+ p
 
 ---
 
+## [0.3.11] - 2026-01-15 - Technical Debt Cleanup (Phase 4F Week 11)
+
+**Goal**: Code quality improvements and final polish before v0.4.0 release
+
+**Test Coverage**: **905 tests passing** (100% success rate)
+
+### **Changed** 🔄
+
+**Management Module Refactoring** (`src/kernel_pytorch/core/management/`):
+
+The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused modules:
+
+- **`base.py`** (~128 lines): Foundation classes
+  - `BaseManager`: Abstract base class with lifecycle management
+  - `ManagerType`, `ManagerState`: Enums for type safety
+  - `ManagerContext`: Dataclass for manager coordination
+  - Thread-safe operations with `threading.RLock`
+
+- **`hardware_manager.py`** (~151 lines): Hardware management
+  - `HardwareManager`: Device capabilities, memory pooling
+  - Memory optimization with gradient checkpointing
+  - Distributed coordination setup
+  - GPU/CPU device detection
+
+- **`optimization_manager.py`** (~144 lines): Optimization strategies
+  - `OptimizationManager`: Compilation, precision, fusion
+  - torch.compile integration
+  - Adaptive precision allocation tracking
+  - Optimization capabilities reporting
+
+- **`infrastructure_manager.py`** (~117 lines): Lifecycle management
+  - `InfrastructureManager`: Testing, deprecation tracking
+  - Validation infrastructure
+  - Deprecation registration and warnings
+
+- **`unified_manager.py`** (~375 lines): Coordinator
+  - `UnifiedManager`: Orchestrates all managers
+  - `auto_optimize()`: Hardware-aware optimization
+  - AMD backend support added to backend routing
+
+### **Added** ✨
+
+**Unified Error Handling Framework** (`src/kernel_pytorch/core/errors.py`, ~350 lines):
+
+- **`KernelPyTorchError`**: Base exception for all framework errors
+  - Structured error details with `to_dict()` serialization
+  - Cause chaining for debugging
+  - Consistent error message formatting
+
+- **Validation Errors**:
+  - `ValidationError`: Base validation exception
+  - `ConfigValidationError`: Configuration validation failures
+  - `InputValidationError`: Input validation failures
+  - `ModelValidationError`: Model validation failures
+
+- **Hardware Errors**:
+  - `HardwareError`: Base hardware exception
+  - `HardwareDetectionError`: Detection failures
+  - `HardwareNotFoundError`: Missing required hardware
+  - `HardwareCapabilityError`: Missing capabilities
+
+- **Optimization Errors**:
+  - `OptimizationError`: Base optimization exception
+  - `CompilationError`: Model compilation failures
+  - `FusionError`: Operator fusion failures
+  - `PrecisionError`: Precision conversion failures
+
+- **Deployment Errors**:
+  - `DeploymentError`: Base deployment exception
+  - `ExportError`: Model export failures
+  - `ServingError`: Inference serving failures
+  - `ContainerError`: Container operation failures
+
+- **Monitoring Errors**:
+  - `MonitoringError`: Base monitoring exception
+  - `MetricsError`: Metrics collection failures
+  - `HealthCheckError`: Health check failures
+
+- **Utility Functions**:
+  - `raise_or_warn()`: Flexible error handling (strict vs warning mode)
+  - `format_error_chain()`: Format exception chains for logging
+
+**Backend Integration**:
+- `BackendError` now inherits from `KernelPyTorchError`
+- All backend exceptions (NVIDIA, AMD, TPU) unified under common hierarchy
+- Updated `base_exceptions.py` to v0.3.11
+
+### **Documentation** 📚
+
+- Updated `docs/unified_roadmap.md` with Phase 4F completion status
+- Updated `docs/immediate_tasks.md` to reflect v0.3.11 ready state
+- All phase milestones updated to show completion
+
+### **Technical Notes** 📋
+
+**Refactoring Benefits**:
+- Smaller, focused modules (~100-150 lines each vs 700+ monolithic)
+- Better separation of concerns
+- Easier testing and maintenance
+- Clear module boundaries
+
+**Error Handling Benefits**:
+- Unified exception hierarchy across all modules
+- Consistent error message formatting
+- Cause chaining for debugging
+- Serializable errors for logging/APIs
+
+---
+
 ## [0.3.10] - 2026-01-15 - Monitoring & Containerization (Phase 4E Week 10)
 
 **Goal**: Add production monitoring and container deployment infrastructure

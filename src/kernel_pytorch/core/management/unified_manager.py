@@ -1,388 +1,34 @@
 """
 Unified Management System for KernelPyTorch
 
-This module consolidates 38+ scattered Manager/Optimizer classes into a unified
-management system that provides:
+This module provides the main UnifiedManager class that orchestrates
+all management subsystems:
 
 - Hardware management (GPU, memory, distributed)
 - Optimization management (compilation, precision, performance)
 - Infrastructure management (testing, deprecation, lifecycle)
 
-Replaces scattered managers from:
-- hardware/gpu/*.py (6 classes)
-- distributed_scale/*.py (9 classes)
-- core/compilers/*.py (4 classes)
-- advanced_memory/*.py (8 classes)
-- testing_framework/*.py (2 classes)
-- optimizations/next_gen/*.py (6 classes)
-- precision/*.py (2 classes)
-- utils/*.py (1 class)
+The original 38+ scattered Manager/Optimizer classes have been consolidated
+into three focused managers coordinated by UnifiedManager.
+
+Version: 0.3.11
 """
 
 import torch
 import torch.nn as nn
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
-from dataclasses import dataclass, field
-from enum import Enum
+from typing import Any, Dict, Optional
 import warnings
-import time
-import gc
-import threading
-from abc import ABC, abstractmethod
-
-from ..config import KernelPyTorchConfig, HardwareConfig, MemoryConfig, PrecisionConfig
-from ..hardware_detector import (
-    HardwareDetector,
-    HardwareProfile,
-    HardwareType,
-    detect_hardware,
-    get_optimal_backend
-)
-
-
-class ManagerType(Enum):
-    """Types of management domains."""
-    HARDWARE = "hardware"
-    OPTIMIZATION = "optimization"
-    INFRASTRUCTURE = "infrastructure"
-
-
-class ManagerState(Enum):
-    """Manager lifecycle states."""
-    INITIALIZING = "initializing"
-    READY = "ready"
-    ACTIVE = "active"
-    SUSPENDED = "suspended"
-    ERROR = "error"
-    SHUTDOWN = "shutdown"
-
-
-@dataclass
-class ManagerContext:
-    """Management context for coordination."""
-    manager_id: str
-    manager_type: ManagerType
-    state: ManagerState
-    device: torch.device
-    config: KernelPyTorchConfig
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: float = field(default_factory=time.time)
-    last_activity: float = field(default_factory=time.time)
-
-
-class BaseManager(ABC):
-    """
-    Unified base class for all managers.
-
-    Consolidates common functionality from all 38+ manager classes.
-    """
-
-    def __init__(self, config: KernelPyTorchConfig, context: Optional[ManagerContext] = None):
-        self.config = config
-        self.context = context or ManagerContext(
-            manager_id=self._generate_id(),
-            manager_type=self._get_manager_type(),
-            state=ManagerState.INITIALIZING,
-            device=config.device,
-            config=config
-        )
-
-        self._lock = threading.RLock()
-        self._initialized = False
-        self._active_operations = {}
-
-        self._initialize()
-
-    @abstractmethod
-    def _get_manager_type(self) -> ManagerType:
-        """Get the manager type classification."""
-        pass
-
-    @abstractmethod
-    def _initialize(self) -> None:
-        """Initialize manager-specific resources."""
-        pass
-
-    @abstractmethod
-    def optimize(self, target: Any, **kwargs) -> Any:
-        """Primary optimization/management operation."""
-        pass
-
-    def _generate_id(self) -> str:
-        """Generate unique manager ID."""
-        import uuid
-        return f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
-
-    def get_status(self) -> Dict[str, Any]:
-        """Get current manager status."""
-        return {
-            "manager_id": self.context.manager_id,
-            "type": self.context.manager_type.value,
-            "state": self.context.state.value,
-            "device": str(self.context.device),
-            "active_operations": len(self._active_operations),
-            "uptime": time.time() - self.context.created_at
-        }
-
-    def suspend(self) -> None:
-        """Suspend manager operations."""
-        with self._lock:
-            self.context.state = ManagerState.SUSPENDED
-
-    def resume(self) -> None:
-        """Resume manager operations."""
-        with self._lock:
-            self.context.state = ManagerState.ACTIVE
-
-    def shutdown(self) -> None:
-        """Shutdown manager and cleanup resources."""
-        with self._lock:
-            self.context.state = ManagerState.SHUTDOWN
-            self._cleanup()
-
-    def _cleanup(self) -> None:
-        """Cleanup manager resources."""
-        self._active_operations.clear()
-        gc.collect()
-
-
-class HardwareManager(BaseManager):
-    """
-    Unified hardware management.
-
-    Consolidates:
-    - MemoryOptimizer
-    - TensorCoreOptimizer
-    - DistributedManager
-    - HardwareTopologyManager
-    - DeviceMeshOptimizer
-    - And 10+ other hardware managers
-    """
-
-    def _get_manager_type(self) -> ManagerType:
-        return ManagerType.HARDWARE
-
-    def _initialize(self) -> None:
-        """Initialize hardware management."""
-        self.memory_config = self.config.memory
-        self.hardware_config = self.config.hardware
-
-        # Initialize device capabilities
-        self.device_capabilities = self._detect_device_capabilities()
-
-        # Initialize memory management
-        self.memory_pool = self._setup_memory_pool()
-
-        # Initialize distributed coordination if enabled
-        if self.config.distributed.enabled:
-            self.distributed_state = self._setup_distributed()
-
-        self.context.state = ManagerState.READY
-        self._initialized = True
-
-    def optimize(self, target: Any, **kwargs) -> Any:
-        """Optimize hardware usage for target."""
-        if not self._initialized:
-            raise RuntimeError("HardwareManager not initialized")
-
-        optimization_type = kwargs.get('type', 'memory')
-
-        if optimization_type == 'memory':
-            return self._optimize_memory(target, **kwargs)
-        elif optimization_type == 'tensor_cores':
-            return self._optimize_tensor_cores(target, **kwargs)
-        elif optimization_type == 'distributed':
-            return self._optimize_distributed(target, **kwargs)
-        else:
-            raise ValueError(f"Unknown optimization type: {optimization_type}")
-
-    def _detect_device_capabilities(self) -> Dict[str, Any]:
-        """Detect device capabilities."""
-        capabilities = {
-            'device_type': self.context.device.type,
-            'device_name': 'unknown'
-        }
-
-        if self.context.device.type == 'cuda' and torch.cuda.is_available():
-            props = torch.cuda.get_device_properties(self.context.device)
-            capabilities.update({
-                'device_name': props.name,
-                'compute_capability': (props.major, props.minor),
-                'memory_gb': props.total_memory / (1024**3),
-                'tensor_cores': props.major >= 7
-            })
-
-        return capabilities
-
-    def _setup_memory_pool(self) -> Optional[Any]:
-        """Setup memory pooling."""
-        if self.memory_config.memory_pool_enabled:
-            # Memory pool setup would go here
-            return {}
-        return None
-
-    def _setup_distributed(self) -> Optional[Dict]:
-        """Setup distributed coordination."""
-        if self.config.distributed.enabled:
-            return {
-                'backend': self.config.distributed.backend,
-                'world_size': self.config.distributed.world_size,
-                'rank': self.config.distributed.rank
-            }
-        return None
-
-    def _optimize_memory(self, target: Any, **kwargs) -> Any:
-        """Optimize memory usage."""
-        # Memory optimization logic
-        return target
-
-    def _optimize_tensor_cores(self, target: Any, **kwargs) -> Any:
-        """Optimize for tensor cores."""
-        # Tensor core optimization logic
-        return target
-
-    def _optimize_distributed(self, target: Any, **kwargs) -> Any:
-        """Optimize for distributed execution."""
-        # Distributed optimization logic
-        return target
-
-
-class OptimizationManager(BaseManager):
-    """
-    Unified optimization management.
-
-    Consolidates:
-    - PyGraphCUDAOptimizer
-    - FusionBoundaryOptimizer
-    - LongSequenceOptimizer
-    - AdaptiveCompressionOptimizer
-    - FP8Optimizer
-    - And 15+ other optimization managers
-    """
-
-    def _get_manager_type(self) -> ManagerType:
-        return ManagerType.OPTIMIZATION
-
-    def _initialize(self) -> None:
-        """Initialize optimization management."""
-        self.precision_config = self.config.precision
-
-        # Initialize compilation optimization
-        self.compilation_enabled = self.config.hardware.torch_compile
-        self.triton_enabled = self.config.hardware.triton_enabled
-
-        # Initialize precision optimization
-        self.precision_formats = self._setup_precision_formats()
-
-        # Initialize fusion optimization
-        self.fusion_enabled = self.config.attention.fusion_enabled
-
-        self.context.state = ManagerState.READY
-        self._initialized = True
-
-    def optimize(self, target: Any, **kwargs) -> Any:
-        """Apply comprehensive optimizations to target."""
-        if not self._initialized:
-            raise RuntimeError("OptimizationManager not initialized")
-
-        optimization_level = kwargs.get('level', self.config.optimization_level)
-
-        # Apply compilation optimizations
-        if self.compilation_enabled:
-            target = self._apply_compilation_optimization(target, **kwargs)
-
-        # Apply precision optimizations
-        if self.precision_config.adaptive_allocation:
-            target = self._apply_precision_optimization(target, **kwargs)
-
-        # Apply fusion optimizations
-        if self.fusion_enabled:
-            target = self._apply_fusion_optimization(target, **kwargs)
-
-        return target
-
-    def _setup_precision_formats(self) -> List[str]:
-        """Setup available precision formats."""
-        formats = ['fp32', 'fp16']
-
-        if self.precision_config.fp8_enabled:
-            formats.extend(['fp8_e4m3', 'fp8_e5m2'])
-
-        return formats
-
-    def _apply_compilation_optimization(self, target: Any, **kwargs) -> Any:
-        """Apply compilation-based optimizations."""
-        if hasattr(target, 'forward') and callable(target.forward):
-            if self.compilation_enabled:
-                try:
-                    # Apply torch.compile if available
-                    return torch.compile(target)
-                except Exception as e:
-                    warnings.warn(f"Compilation optimization failed: {e}")
-
-        return target
-
-    def _apply_precision_optimization(self, target: Any, **kwargs) -> Any:
-        """Apply precision-based optimizations."""
-        # Precision optimization logic would go here
-        return target
-
-    def _apply_fusion_optimization(self, target: Any, **kwargs) -> Any:
-        """Apply fusion-based optimizations."""
-        # Fusion optimization logic would go here
-        return target
-
-
-class InfrastructureManager(BaseManager):
-    """
-    Unified infrastructure management.
-
-    Consolidates:
-    - TestEnvironmentManager
-    - CIPipelineManager
-    - DeprecationManager
-    - And other infrastructure managers
-    """
-
-    def _get_manager_type(self) -> ManagerType:
-        return ManagerType.INFRASTRUCTURE
-
-    def _initialize(self) -> None:
-        """Initialize infrastructure management."""
-        self.validation_config = self.config.validation
-
-        # Initialize testing infrastructure
-        self.testing_enabled = self.validation_config.enabled
-
-        # Initialize lifecycle management
-        self.deprecation_tracking = {}
-
-        self.context.state = ManagerState.READY
-        self._initialized = True
-
-    def optimize(self, target: Any, **kwargs) -> Any:
-        """Apply infrastructure optimizations."""
-        if not self._initialized:
-            raise RuntimeError("InfrastructureManager not initialized")
-
-        # Apply validation optimizations
-        if self.testing_enabled:
-            self._validate_target(target, **kwargs)
-
-        # Apply deprecation management
-        self._check_deprecations(target, **kwargs)
-
-        return target
-
-    def _validate_target(self, target: Any, **kwargs) -> None:
-        """Validate target for infrastructure requirements."""
-        # Validation logic would go here
-        pass
-
-    def _check_deprecations(self, target: Any, **kwargs) -> None:
-        """Check for deprecated usage patterns."""
-        # Deprecation checking logic would go here
-        pass
+from dataclasses import dataclass
+from typing import List
+
+from ..config import KernelPyTorchConfig
+from ..hardware_detector import HardwareDetector, HardwareProfile
+
+# Import management components
+from .base import ManagerType, ManagerState, ManagerContext, BaseManager
+from .hardware_manager import HardwareManager
+from .optimization_manager import OptimizationManager
+from .infrastructure_manager import InfrastructureManager
 
 
 class UnifiedManager:
@@ -432,6 +78,7 @@ class UnifiedManager:
         # Backend optimizer instances (lazy-loaded)
         self._nvidia_optimizer = None
         self._tpu_optimizer = None
+        self._amd_optimizer = None
 
         self._initialized = True
 
@@ -477,7 +124,7 @@ class UnifiedManager:
         Example:
             >>> manager = UnifiedManager()
             >>> optimized_model = manager.auto_optimize(model)
-            >>> # Automatically uses NVIDIA/TPU/CPU based on available hardware
+            >>> # Automatically uses NVIDIA/TPU/AMD/CPU based on available hardware
         """
         # Detect hardware if not cached
         if self._hardware_profile is None:
@@ -498,6 +145,10 @@ class UnifiedManager:
             )
         elif backend_name == 'tpu':
             result = self._optimize_with_tpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
+        elif backend_name == 'amd':
+            result = self._optimize_with_amd(
                 model, sample_inputs, optimization_level, for_inference
             )
         else:
@@ -567,6 +218,30 @@ class UnifiedManager:
             warnings.warn(f"TPU backend not available: {e}. Using CPU fallback.")
             return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
 
+    def _optimize_with_amd(
+        self,
+        model: nn.Module,
+        sample_inputs: Optional[torch.Tensor],
+        optimization_level: str,
+        for_inference: bool
+    ) -> Any:
+        """Optimize model using AMD ROCm backend."""
+        try:
+            from ...backends.amd import AMDOptimizer
+
+            if self._amd_optimizer is None:
+                self._amd_optimizer = AMDOptimizer(self.config)
+
+            result = self._amd_optimizer.optimize(
+                model, sample_inputs, optimization_level, for_inference
+            )
+
+            return result
+
+        except ImportError as e:
+            warnings.warn(f"AMD backend not available: {e}. Using CPU fallback.")
+            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+
     def _optimize_with_cpu(
         self,
         model: nn.Module,
@@ -575,9 +250,6 @@ class UnifiedManager:
         for_inference: bool
     ) -> Any:
         """Optimize model for CPU execution (minimal optimization)."""
-        from dataclasses import dataclass
-        from typing import List
-
         @dataclass
         class CPUOptimizationResult:
             optimized_model: nn.Module
@@ -679,7 +351,8 @@ class UnifiedManager:
 
 
 # Global unified manager instance for convenience
-default_manager = None
+default_manager: Optional[UnifiedManager] = None
+
 
 def get_manager(config: Optional[KernelPyTorchConfig] = None) -> UnifiedManager:
     """Get the global unified manager."""

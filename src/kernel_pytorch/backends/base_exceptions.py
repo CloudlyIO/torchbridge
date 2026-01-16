@@ -6,7 +6,7 @@ exceptions should inherit from. This ensures consistent error handling
 across NVIDIA, AMD, and TPU backends.
 
 Exception Hierarchy:
-- BackendError: Base for all backend errors
+- BackendError (inherits from KernelPyTorchError): Base for all backend errors
   - DeviceNotAvailableError: Device/runtime not available
   - DeviceError: Device operations failure
   - MemoryError: Memory-related errors
@@ -18,20 +18,23 @@ Exception Hierarchy:
   - ConfigurationError: Configuration validation errors
   - KernelError: Kernel execution errors
 
-Version: 0.3.7
+Version: 0.3.11
 """
 
 import logging
 from typing import Optional, Dict, Any
 
+from kernel_pytorch.core.errors import KernelPyTorchError
+
 logger = logging.getLogger(__name__)
 
 
-class BackendError(Exception):
+class BackendError(KernelPyTorchError):
     """
     Base exception for all backend errors.
 
     All backend-specific exceptions should inherit from this class.
+    Inherits from KernelPyTorchError for unified error handling.
     Supports optional details dictionary for structured error information.
     """
 
@@ -43,9 +46,7 @@ class BackendError(Exception):
             message: Error message
             details: Optional dictionary with additional error details
         """
-        self.message = message
-        self.details = details or {}
-        super().__init__(self.message)
+        super().__init__(message, details)
 
     def __str__(self) -> str:
         if self.details:
