@@ -650,21 +650,31 @@ class TPUConfig:
 | **v0.3.9** | 4E W9 | Inference Serving | Week 9 | ✅ Released |
 | **v0.3.10** | 4E W10 | Monitoring & Containers | Week 10 | ✅ Released |
 | **v0.3.11** | 4F W11 | Technical Debt | Week 11 | ✅ Released |
+| **v0.4.0** | Release | Production-Ready | - | ✅ Released |
 
-### v0.4.0 - Production-Ready Multi-Backend System (**FINAL RELEASE**)
+### v0.4.0 - Production-Ready Multi-Backend System ✅ **RELEASED**
 
-**Release Criteria** (ALL must be met):
+**Release Date**: January 15, 2026
+
+**Release Criteria** (ALL met):
 - ✅ NVIDIA backend: 90%+ production-ready
 - ✅ TPU backend: 90%+ production-ready
-- ✅ AMD backend: 90%+ production-ready (NEW)
+- ✅ AMD backend: 90%+ production-ready
 - ✅ Production deployment infrastructure complete
-- ✅ 800+ tests passing (100% success rate)
+- ✅ 905 tests passing (100% success rate)
 - ✅ Complete documentation for all backends
 - ✅ Docker/Kubernetes deployment ready
 - ✅ Monitoring and observability complete
 
 **Breaking Changes**: None
 **Deprecations**: FP8 hooks metadata-only (full FP8 in v0.5.0)
+
+**Key Features**:
+- Multi-backend support (NVIDIA, AMD, TPU)
+- Model export (ONNX, TorchScript)
+- Inference serving (TorchServe, Triton, FastAPI)
+- Monitoring (Prometheus, Grafana, Health probes)
+- Containerization (Docker, Kubernetes)
 
 ### v0.5.0 - Full FP8 & Intel XPU (**FUTURE**)
 

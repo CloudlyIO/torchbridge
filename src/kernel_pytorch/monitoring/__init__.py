@@ -56,7 +56,7 @@ from .health_monitor import (
     create_health_monitor,
 )
 
-__version__ = "0.3.11"
+__version__ = "0.4.0"
 
 __all__ = [
     # Prometheus
