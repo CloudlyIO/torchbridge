@@ -287,12 +287,25 @@ class TPUOptimizer:
             return
 
         try:
-            # Move inputs to TPU
+            # Determine the model's dtype (check first parameter)
+            model_dtype = None
+            for param in model.parameters():
+                model_dtype = param.dtype
+                break
+
+            # Move inputs to TPU and match dtype if model uses bfloat16
+            def prepare_input(inp: torch.Tensor) -> torch.Tensor:
+                inp = inp.to(self.backend.device)
+                # Match input dtype to model dtype for bfloat16 models
+                if model_dtype == torch.bfloat16 and inp.dtype == torch.float32:
+                    inp = inp.to(dtype=torch.bfloat16)
+                return inp
+
             if isinstance(sample_inputs, torch.Tensor):
-                sample_inputs = sample_inputs.to(self.backend.device)
+                sample_inputs = prepare_input(sample_inputs)
             elif isinstance(sample_inputs, (list, tuple)):
                 sample_inputs = tuple(
-                    inp.to(self.backend.device) if isinstance(inp, torch.Tensor) else inp
+                    prepare_input(inp) if isinstance(inp, torch.Tensor) else inp
                     for inp in sample_inputs
                 )
 

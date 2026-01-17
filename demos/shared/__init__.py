@@ -41,7 +41,7 @@ from .data import (
     create_sample_batch,
 )
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 __all__ = [
     # Printing utilities

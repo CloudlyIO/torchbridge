@@ -8,7 +8,7 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.1 (Production/Stable)
+**Current Version**: v0.4.2 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
@@ -16,6 +16,35 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.2] - 2026-01-17 - torch_xla 2.9.0 Compatibility
+
+### **Fixed** 🐛
+
+- **torch_xla 2.9.0 API Compatibility**: Fixed deprecated backend issues
+  - Replaced `aot_torchxla_trace_once` with version-aware backend detection
+  - Uses `openxla` backend for torch_xla 2.9+, falls back to legacy for older versions
+  - Added `get_torch_compile_backend()` helper in xla_compat.py
+  - Added `is_torch_xla_2_9_plus()` version detection function
+
+- **TPU Optimizer dtype handling**: Fixed tensor data check failure
+  - Issue: `Check failed: data()->tensor_data` during validation
+  - Cause: Float32 inputs passed to bfloat16 optimized models
+  - Fix: Auto-convert inputs to match model dtype during validation
+
+### **Improved** 📈
+
+- **xla_compiler.py**: Now uses compatibility layer for backend selection
+- **xla_compat.py**: Added torch_xla 2.9+ compatibility functions
+- **tpu_optimizer.py**: Smarter input dtype handling for mixed precision models
+
+### **Technical Notes** 📋
+
+- All 905 tests passing locally
+- 57/57 TPU backend tests passing
+- Compatible with torch_xla 2.9.0, 2.8.x, and earlier versions
 
 ---
 

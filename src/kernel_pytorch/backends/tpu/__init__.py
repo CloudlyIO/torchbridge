@@ -50,7 +50,7 @@ __all__ = [
 ]
 
 # Version compatibility
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __tpu_support__ = True
 __phase__ = "Phase 4C-Pre Complete"
 

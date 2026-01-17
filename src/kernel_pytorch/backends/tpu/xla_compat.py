@@ -4,7 +4,7 @@ XLA Compatibility Layer for torch_xla 2.9.0+
 This module provides backward-compatible wrappers for deprecated
 torch_xla APIs, supporting both old (2.x) and new (2.9+) versions.
 
-Version: 0.3.7
+Version: 0.4.2
 """
 
 import warnings
@@ -260,3 +260,69 @@ def get_torch_xla_version() -> str:
         return getattr(torch_xla, '__version__', 'unknown')
     except ImportError:
         return 'not installed'
+
+
+def get_torch_compile_backend() -> Optional[str]:
+    """
+    Get the appropriate torch.compile backend for the installed torch_xla version.
+
+    Returns:
+        Backend string for torch.compile, or None if XLA compilation unavailable
+    """
+    try:
+        import torch_xla
+        version = getattr(torch_xla, '__version__', '0.0.0')
+
+        # Parse version (format: "2.9.0" or "2.9.0+cpu")
+        version_parts = version.split('+')[0].split('.')
+        major = int(version_parts[0]) if len(version_parts) > 0 else 0
+        minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+
+        # torch_xla 2.9+ uses 'openxla' backend
+        if major > 2 or (major == 2 and minor >= 9):
+            # Check if openxla backend is available
+            try:
+                import torch._dynamo
+                backends = torch._dynamo.list_backends()
+                if 'openxla' in backends:
+                    return 'openxla'
+                elif 'openxla_eval' in backends:
+                    return 'openxla_eval'
+            except Exception:
+                pass
+
+            # For torch_xla 2.9+, return None to use default compilation
+            # (torch.compile with no backend works with XLA devices)
+            return None
+
+        # torch_xla < 2.9 uses 'aot_torchxla_trace_once'
+        try:
+            import torch._dynamo
+            backends = torch._dynamo.list_backends()
+            if 'aot_torchxla_trace_once' in backends:
+                return 'aot_torchxla_trace_once'
+        except Exception:
+            pass
+
+        return None
+
+    except ImportError:
+        return None
+
+
+def is_torch_xla_2_9_plus() -> bool:
+    """
+    Check if torch_xla version is 2.9.0 or higher.
+
+    Returns:
+        True if torch_xla >= 2.9.0
+    """
+    try:
+        import torch_xla
+        version = getattr(torch_xla, '__version__', '0.0.0')
+        version_parts = version.split('+')[0].split('.')
+        major = int(version_parts[0]) if len(version_parts) > 0 else 0
+        minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+        return major > 2 or (major == 2 and minor >= 9)
+    except (ImportError, ValueError):
+        return False

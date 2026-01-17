@@ -125,11 +125,23 @@ class XLACompiler:
 
             # Use torch.compile with XLA backend if available
             if hasattr(torch, 'compile'):
-                compiled_model = torch.compile(
-                    model,
-                    backend='aot_torchxla_trace_once',
-                    dynamic=self.config.enable_xla_dynamic_shapes
-                )
+                # Get the appropriate backend for the installed torch_xla version
+                backend = xla_compat.get_torch_compile_backend()
+
+                if backend is not None:
+                    # Use specific backend (openxla for 2.9+, aot_torchxla_trace_once for older)
+                    compiled_model = torch.compile(
+                        model,
+                        backend=backend,
+                        dynamic=self.config.enable_xla_dynamic_shapes
+                    )
+                else:
+                    # For torch_xla 2.9+ without explicit backend, use default compilation
+                    # torch.compile works directly with XLA tensors
+                    compiled_model = torch.compile(
+                        model,
+                        dynamic=self.config.enable_xla_dynamic_shapes
+                    )
                 return compiled_model
             else:
                 # Fallback for older PyTorch versions
