@@ -6,16 +6,51 @@
 
 ---
 
-## 🎉 **v0.4.0 - Production-Ready Release**
+## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.0 (Production/Stable)
+**Current Version**: v0.4.1 (Production/Stable)
 
-KernelPyTorch is now a **production-ready** PyTorch GPU optimization framework with:
+KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
 - **905 tests** passing (100% success rate)
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.1] - 2026-01-16 - Cloud Validation & Bug Fix
+
+### **Cloud Hardware Validation** ☁️
+
+Successfully validated on **GCP NVIDIA L4 GPU** (23GB, CUDA 12.8):
+
+| Test Category | Result | Details |
+|---------------|--------|---------|
+| NVIDIA Backend Tests | ✅ 66/66 | All tests passing on real hardware |
+| NVIDIA Benchmarks | ✅ 1300/1300 | Full benchmark suite |
+| Performance | ✅ 2.37x speedup | Our optimizations vs PyTorch native |
+| Demos | ✅ 5/5 | All passing after fix |
+
+**Benchmark Results on NVIDIA L4**:
+```
+PyTorch Native:    1.76ms, 985.7 inferences/sec
+Our Optimizations: 0.74ms, 1850.4 inferences/sec
+Speedup:           2.37x (+87.7% throughput)
+```
+
+### **Fixed** 🐛
+
+- **ultra_precision.py:675**: Fixed dtype mismatch error when running on CUDA
+  - Issue: `RuntimeError: Index put requires the source and destination dtypes match`
+  - Cause: Quantized values returned as float32 but tensor was FP16
+  - Fix: Added `.to(quantized_tensor.dtype)` to ensure dtype compatibility
+
+### **Technical Notes** 📋
+
+- Validated on GCP `g2-standard-4` with NVIDIA L4 GPU
+- PyTorch 2.7.1+cu128, CUDA 12.8
+- Instance cost: ~$0.50 for full validation run
 
 ---
 

@@ -671,8 +671,8 @@ class UltraPrecisionModule(nn.Module):
                 # Apply precision-specific quantization
                 quantized_values = self._quantize_values(level_values, precision_fmt)
 
-                # Place back in tensor
-                quantized_tensor[level_mask] = quantized_values
+                # Place back in tensor (ensure dtype matches to avoid CUDA errors)
+                quantized_tensor[level_mask] = quantized_values.to(quantized_tensor.dtype)
 
         return quantized_tensor
 
