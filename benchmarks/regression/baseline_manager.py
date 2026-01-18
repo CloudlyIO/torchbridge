@@ -91,7 +91,7 @@ class BaselineManager:
         """Save the baseline registry"""
         self.registry["last_updated"] = datetime.now().isoformat()
         with open(self.registry_file, 'w') as f:
-            json.dump(self.registry, f, indent=2)
+            json.dump(self.registry, f, indent=2, default=str)
 
     def establish_baseline_from_historical_data(
         self,
@@ -337,7 +337,7 @@ class BaselineManager:
             baseline_file = self.models_dir / f"{baseline.model_name}_baseline.json"
 
             with open(baseline_file, 'w') as f:
-                json.dump(baseline.to_dict(), f, indent=2)
+                json.dump(baseline.to_dict(), f, indent=2, default=str)
 
             # Update registry
             self.registry["models"][baseline.model_name] = {

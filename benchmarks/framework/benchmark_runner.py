@@ -431,12 +431,7 @@ class BenchmarkRunner:
         }
 
         with open(filepath, 'w') as f:
-            try:
-                json.dump(report_data, f, indent=2)
-            except TypeError as e:
-                # Handle non-JSON-serializable objects by converting to string
-                print(f"   ⚠️  JSON serialization warning: {e}")
-                json.dump(report_data, f, indent=2, default=str)
+            json.dump(report_data, f, indent=2, default=str)
 
         print(f"   💾 Results saved: {filepath}")
 

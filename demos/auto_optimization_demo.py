@@ -20,6 +20,9 @@ from typing import Dict, Any
 from kernel_pytorch.core.management import get_manager
 from kernel_pytorch.core.hardware_detector import detect_hardware, get_optimal_backend
 
+# Use shared utilities
+from demos.shared.utils import print_section
+
 
 # Simple test models
 class SimpleLinearModel(nn.Module):
@@ -59,13 +62,6 @@ class SimpleTransformerBlock(nn.Module):
         ffn_out = self.ffn(x)
         x = self.norm2(x + ffn_out)
         return x
-
-
-def print_section(title: str):
-    """Print section header."""
-    print(f"\n{'='*70}")
-    print(f"  {title}")
-    print(f"{'='*70}\n")
 
 
 def print_hardware_info(profile):

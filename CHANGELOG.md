@@ -8,7 +8,7 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.2 (Production/Stable)
+**Current Version**: v0.4.3 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
@@ -16,6 +16,49 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.3] - 2026-01-18 - Codebase Cleanup & Documentation Sync
+
+### **Improved** 📈
+
+- **Documentation Version Sync**: All documentation now references v0.4.3
+  - Updated `docs/guides/installation.md` from v0.3.3
+  - Updated `docs/guides/quickstart.md` from v0.3.3
+  - Updated `docs/backends/nvidia.md` from v0.3.1
+  - Fixed README.md test count (905 tests) and version badge
+  - Added `setup.py` version tracking (synced with pyproject.toml)
+
+- **Demo Code Consolidation**: Reduced code duplication in demo scripts
+  - 6 demos now use shared `print_section()` from `demos/shared/utils.py`
+  - Removed duplicate utility functions
+
+- **Package Structure**: Added missing `__init__.py` files
+  - Added to 7 demo subdirectories: attention, compiler, experimental, hardware, memory, precision, production
+  - Added to 2 benchmark subdirectories: analysis, next_gen
+  - Improves import behavior and package discovery
+
+### **Fixed** 🐛
+
+- **JSON Serialization**: Fixed potential serialization warnings in benchmark framework
+  - Added `default=str` handler to 8 benchmark files for datetime/object serialization
+  - Files fixed: unified_runner.py, cli_performance_benchmark.py, dynamic_shapes_benchmark.py,
+    threshold_manager.py, baseline_manager.py, regression_benchmark.py, benchmark_runner.py
+
+### **Added** ✨
+
+- **End-to-End Deployment Tutorial**: New comprehensive deployment guide
+  - `docs/guides/deployment_tutorial.md` covering full deployment pipeline
+  - Model optimization, export (TorchScript/ONNX), inference servers
+  - Docker containerization, cloud deployment (AWS, GCP, Kubernetes)
+  - Monitoring and observability setup
+
+### **Technical Notes** 📋
+
+- All 905 tests remain passing
+- No breaking changes to API
+- Cloud validation results from v0.4.2 still valid
 
 ---
 

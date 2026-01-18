@@ -21,12 +21,8 @@ from typing import Dict, Any
 import torch
 import torch.nn as nn
 
-
-def print_section(title: str) -> None:
-    """Print a section header."""
-    print(f"\n{'='*60}")
-    print(f"  {title}")
-    print(f"{'='*60}\n")
+# Use shared utilities
+from demos.shared.utils import print_section
 
 
 def print_result(name: str, status: str, details: str = "") -> None:

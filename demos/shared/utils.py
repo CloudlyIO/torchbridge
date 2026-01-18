@@ -3,7 +3,7 @@ Shared utility functions for KernelPyTorch demos.
 
 This module provides common utility functions used across demo scripts.
 
-Version: 0.3.6
+Version: 0.4.3
 """
 
 import argparse

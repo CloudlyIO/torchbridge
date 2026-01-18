@@ -25,6 +25,9 @@ from kernel_pytorch.core.performance_tracker import get_performance_tracker
 from kernel_pytorch.validation.unified_validator import UnifiedValidator
 from kernel_pytorch.core.config import KernelPyTorchConfig
 
+# Use shared utilities
+from demos.shared.utils import print_section
+
 
 # Production Model Example
 class ProductionTransformer(nn.Module):
@@ -348,11 +351,7 @@ class ProductionPipeline:
         return self.manager.get_optimization_recommendations()
 
 
-def print_section(title: str):
-    """Print section header."""
-    print(f"\n{'='*70}")
-    print(f"  {title}")
-    print(f"{'='*70}\n")
+# Note: print_section imported at top of file from demos.shared.utils
 
 
 def demo_1_training_workflow():

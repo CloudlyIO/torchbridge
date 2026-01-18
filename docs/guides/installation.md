@@ -1,6 +1,6 @@
 # 📦 Installation Guide
 
-**KernelPyTorch v0.3.3** - Production-grade PyTorch GPU/TPU optimization framework
+**KernelPyTorch v0.4.3** - Production-grade PyTorch GPU/TPU optimization framework
 
 ## Development Installation (Current)
 
@@ -23,15 +23,16 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
-### Unified Architecture with Backend Hardening (v0.3.3)
+### Unified Architecture with Multi-Backend Support (v0.4.3)
 
-KernelPyTorch v0.3.3 features a unified architecture with production-ready backends:
+KernelPyTorch v0.4.3 is a production-ready framework with:
 - **Single Configuration System**: `KernelPyTorchConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
-- **NVIDIA Backend** (v0.3.1): H100/Blackwell support with FP8 training
-- **TPU Backend** (v0.3.2): Google Cloud TPU v4/v5/v6 with XLA compilation
-- **Integration Testing** (v0.3.3): Cross-backend validation framework
+- **NVIDIA Backend**: H100/Blackwell support with FP8 training (cloud validated)
+- **TPU Backend**: Google Cloud TPU v4/v5e/v6 with XLA compilation (cloud validated)
+- **AMD Backend**: MI200/MI300 with ROCm/HIP support
+- **Cloud Validated**: GCP (L4, TPU v5e), AWS (A10G)
 
 ### Installation Options
 
@@ -71,7 +72,7 @@ from kernel_pytorch.validation import UnifiedValidator
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 validator = UnifiedValidator()
-print('✅ v0.3.3 unified architecture verified!')
+print('✅ v0.4.3 unified architecture verified!')
 "
 
 # Run test suite
@@ -102,13 +103,13 @@ export PYTHONPATH=/path/to/shahmod/src
 ```bash
 # Check version consistency
 PYTHONPATH=src python3 -c "import kernel_pytorch; print(kernel_pytorch.__version__)"
-# Should output: 0.3.3
+# Should output: 0.4.3
 ```
 
 **Test Failures**:
 ```bash
 # Platform-specific skips are normal
-# 504 tests should pass, 59 may be skipped on macOS
+# 905 tests should pass, 101 may be skipped (platform-specific)
 ```
 
 ## System Compatibility Check

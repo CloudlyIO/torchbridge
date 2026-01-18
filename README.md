@@ -2,7 +2,7 @@
 
 **Production-ready PyTorch GPU optimization framework for 2-5x performance improvements.**
 
-[![Version](https://img.shields.io/badge/version-0.4.0-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-905%20passed%2C%20101%20skipped-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-5%2F5%20passing-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/badge/version-0.4.3-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-905%20passed%2C%20101%20skipped-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-5%2F5%20passing-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## 🚀 What is KernelPyTorch?
 
@@ -86,7 +86,7 @@ cd demos && PYTHONPATH=../src python3 attention/fusion.py --quick       # Neural
 cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick     # Deep optimizer states ✅
 
 # Run full test suite (verified on macOS and Linux)
-PYTHONPATH=src python3 -m pytest tests/ -v                              # 504 passed, 59 skipped ✅
+PYTHONPATH=src python3 -m pytest tests/ -v                              # 905 passed, 101 skipped ✅
 
 # Run specific test modules
 PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v                # All passing ✅
@@ -313,10 +313,10 @@ for segment in segments:
 ## 🧪 Production Quality
 
 ### **Comprehensive Testing**
-- ✅ **770+ tests passing** across all modules
+- ✅ **905 tests passing** across all modules (101 platform-specific skips)
 - ✅ **100% test success rate** on supported platforms
 - ✅ **Cloud Validated**: NVIDIA (GCP L4, AWS A10G), TPU (GCP v5e)
-- ✅ **1,327 benchmarks passing** across all backends
+- ✅ **2,600+ benchmarks passing** across all backends
 - ✅ **Real Hardware Reports**: Comprehensive test/benchmark reports generated
 - ✅ **Cross-platform**: Tested on macOS, Linux, AWS, GCP
 

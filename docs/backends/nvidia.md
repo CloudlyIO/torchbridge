@@ -1,7 +1,7 @@
 # NVIDIA Backend Documentation
 
-**Version**: v0.3.1
-**Status**: Production-Ready (90%+)
+**Version**: v0.4.3
+**Status**: Production-Ready (90%+) - Cloud Validated
 **Supported Architectures**: Ampere, Hopper (H100), Blackwell
 
 ---
@@ -497,9 +497,9 @@ util = manager.get_gpu_utilization()
 
 ## Next Steps
 
-1. **Try the examples**: See `demos/nvidia_backend_demo.py`
+1. **Try the examples**: See `demos/nvidia_integration_demo.py`
 2. **Run benchmarks**: `benchmarks/nvidia_integration_benchmark.py`
-3. **Read API docs**: Complete API reference (coming soon)
+3. **Read API docs**: See [API.md](../../API.md) for complete API reference
 4. **Join community**: Report issues, contribute improvements
 
 ---
@@ -513,6 +513,6 @@ util = manager.get_gpu_utilization()
 
 ---
 
-**Last Updated**: December 28, 2025
-**Version**: v0.3.1
-**Status**: Production-Ready (90%+)
+**Last Updated**: January 18, 2026
+**Version**: v0.4.3
+**Status**: Production-Ready (90%+) - Cloud Validated (GCP L4, AWS A10G)

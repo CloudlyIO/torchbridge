@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide (v0.3.3)
+# 🚀 Quick Start Guide (v0.4.3)
 
 Get up and running with **KernelPyTorch** in under 5 minutes.
 

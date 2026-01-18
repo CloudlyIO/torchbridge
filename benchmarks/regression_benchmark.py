@@ -114,7 +114,7 @@ class RegressionFrameworkBenchmark:
                 }
 
                 with open(results_dir / filename, 'w') as f:
-                    json.dump(result_data, f, indent=2)
+                    json.dump(result_data, f, indent=2, default=str)
 
         return results_dir
 

@@ -424,7 +424,7 @@ class UnifiedBenchmarkRunner:
         summary = self.get_benchmark_summary()
 
         with open(filepath, 'w') as f:
-            json.dump(summary, f, indent=2)
+            json.dump(summary, f, indent=2, default=str)
 
         print(f"📊 Benchmark results saved to: {filepath}")
         return filepath

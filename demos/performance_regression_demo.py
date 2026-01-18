@@ -24,6 +24,9 @@ from kernel_pytorch.core.performance_tracker import (
 )
 from kernel_pytorch.core.management import get_manager
 
+# Use shared utilities
+from demos.shared.utils import print_section
+
 
 # Test models
 class SimpleLinearModel(nn.Module):
@@ -59,13 +62,6 @@ class SlowLinearModel(nn.Module):
         x = self.relu(self.fc3(x))
         x = self.relu(self.fc4(x))
         return self.fc5(x)
-
-
-def print_section(title: str):
-    """Print section header."""
-    print(f"\n{'='*70}")
-    print(f"  {title}")
-    print(f"{'='*70}\n")
 
 
 def print_metrics(metrics: PerformanceMetrics, label: str = "Metrics"):

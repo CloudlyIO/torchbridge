@@ -24,12 +24,8 @@ from kernel_pytorch.core.config import KernelPyTorchConfig, PrecisionFormat
 from kernel_pytorch.backends.nvidia.nvidia_backend import NVIDIABackend
 from kernel_pytorch.core.kernel_registry import KernelType
 
-
-def print_section(title: str):
-    """Print a formatted section header."""
-    print(f"\n{'=' * 80}")
-    print(f"{title}")
-    print(f"{'=' * 80}\n")
+# Use shared utilities
+from demos.shared.utils import print_section
 
 
 def demo_kernel_registry():

@@ -278,7 +278,7 @@ class CLIPerformanceBenchmark:
         }
 
         with open(output_file, 'w') as f:
-            json.dump(results_with_metadata, f, indent=2)
+            json.dump(results_with_metadata, f, indent=2, default=str)
 
         print(f"\n💾 Results saved to: {output_file}")
 

@@ -27,12 +27,8 @@ from kernel_pytorch.backends.nvidia import (
     create_cuda_integration
 )
 
-
-def print_section(title: str):
-    """Print formatted section header."""
-    print("\n" + "=" * 70)
-    print(f"  {title}")
-    print("=" * 70)
+# Use shared utilities
+from demos.shared.utils import print_section
 
 
 def demo_nvidia_backend():

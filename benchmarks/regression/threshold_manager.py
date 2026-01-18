@@ -99,7 +99,7 @@ class ThresholdManager:
             }
 
             with open(self.config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
+                json.dump(config_data, f, indent=2, default=str)
         except (OSError, json.JSONEncodeError) as e:
             warnings.warn(f"Failed to save threshold configurations: {e}")
 

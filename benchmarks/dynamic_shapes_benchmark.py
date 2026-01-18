@@ -843,7 +843,7 @@ def save_benchmark_results(
     output_path.mkdir(exist_ok=True)
 
     with open(output_path / output_file, 'w') as f:
-        json.dump(serializable_results, f, indent=2)
+        json.dump(serializable_results, f, indent=2, default=str)
 
     print(f"📄 Results saved to {output_path / output_file}")
 
