@@ -35,14 +35,19 @@ logger = logging.getLogger(__name__)
 class AWSInstanceType(Enum):
     """Supported AWS instance types for testing."""
     # NVIDIA Instances
-    P5_24XLARGE = "p5.48xlarge"      # 8x H100 80GB
+    P5_48XLARGE = "p5.48xlarge"      # 8x H100 80GB
     P4D_24XLARGE = "p4d.24xlarge"    # 8x A100 40GB
     P4DE_24XLARGE = "p4de.24xlarge"  # 8x A100 80GB
     G5_XLARGE = "g5.xlarge"          # 1x A10G 24GB (dev/test)
     G5_12XLARGE = "g5.12xlarge"      # 4x A10G 24GB
+    G6_XLARGE = "g6.xlarge"          # 1x L4 24GB
+    G6_12XLARGE = "g6.12xlarge"      # 4x L4 24GB
 
-    # AMD ROCm Instances (when available)
-    # Note: AMD instances may not be available in all regions
+    # AMD ROCm Instances (MI300X)
+    # Available in us-east-1, us-west-2 (limited availability)
+    P5E_48XLARGE = "p5e.48xlarge"    # 8x MI300X 192GB HBM3 (preview)
+    G6E_XLARGE = "g6e.xlarge"        # 1x MI300X 192GB HBM3
+    G6E_12XLARGE = "g6e.12xlarge"    # 4x MI300X 192GB HBM3
 
     # CPU Instances (fallback)
     C6I_8XLARGE = "c6i.8xlarge"      # 32 vCPU, 64GB RAM
@@ -157,7 +162,7 @@ class AWSTestHarness:
 
     # Hourly costs for cost estimation (approximate, may vary)
     INSTANCE_COSTS = {
-        AWSInstanceType.P5_24XLARGE: 98.32,
+        AWSInstanceType.P5_48XLARGE: 98.32,
         AWSInstanceType.P4D_24XLARGE: 32.77,
         AWSInstanceType.P4DE_24XLARGE: 40.96,
         AWSInstanceType.G5_XLARGE: 1.006,
