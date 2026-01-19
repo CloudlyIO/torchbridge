@@ -138,8 +138,8 @@ class FP8LinearLayer(nn.Module):
     def _update_amax(self, tensor: torch.Tensor, amax_buffer: torch.Tensor):
         """Update AMAX tracking for dynamic scaling"""
         current_amax = tensor.abs().max()
-        # Exponential moving average
-        self.amax_buffer.data = 0.99 * amax_buffer + 0.01 * current_amax
+        # Exponential moving average - update the passed buffer directly
+        amax_buffer.data = 0.99 * amax_buffer + 0.01 * current_amax
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward pass with FP8 optimization"""

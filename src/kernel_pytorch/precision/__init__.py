@@ -7,25 +7,52 @@ Production-grade FP8 training implementation with support for:
 - Transformer Engine integration
 - Automatic mixed precision workflows
 - Hardware-optimized training pipelines
+- Native PyTorch FP8 types (PyTorch 2.1+)
 
 Key Features:
 - 2x training speedup on H100/Blackwell hardware
 - Maintained accuracy with <1% loss
 - Production reliability and deployment readiness
 - Integration with existing optimization framework
+- Real FP8 quantization and GEMM operations
 """
 
 from .fp8_training_engine import (
     FP8TrainingEngine,
     FP8Config,
     FP8Format,
-    create_fp8_trainer
+    create_fp8_trainer,
+    validate_fp8_setup
 )
 from .fp8_optimizations import (
     FP8LinearLayer,
     FP8Optimizer,
     FP8LossScaler,
-    convert_model_to_fp8
+    convert_model_to_fp8,
+    estimate_fp8_speedup
+)
+from .fp8_native import (
+    # Core types
+    FP8Dtype,
+    FP8TensorSpec,
+    FP8QuantizedTensor,
+    # Native FP8 layer
+    NativeFP8Linear,
+    # Inference
+    FP8InferenceEngine,
+    # Functions
+    is_fp8_available,
+    get_fp8_info,
+    get_fp8_dtype,
+    compute_fp8_scale,
+    quantize_to_fp8,
+    dequantize_from_fp8,
+    convert_model_to_native_fp8,
+    benchmark_fp8_layer,
+    # Constants
+    FP8_NATIVE_AVAILABLE,
+    FP8_DTYPES_AVAILABLE,
+    FP8_SCALED_MM_AVAILABLE,
 )
 from .ultra_precision import (
     UltraPrecisionModule,
@@ -42,14 +69,37 @@ from .ultra_precision import (
 )
 
 __all__ = [
+    # FP8 Training Engine
     'FP8TrainingEngine',
     'FP8Config',
     'FP8Format',
     'create_fp8_trainer',
+    'validate_fp8_setup',
+
+    # FP8 Optimizations
     'FP8LinearLayer',
     'FP8Optimizer',
     'FP8LossScaler',
     'convert_model_to_fp8',
+    'estimate_fp8_speedup',
+
+    # Native FP8 (PyTorch 2.1+)
+    'FP8Dtype',
+    'FP8TensorSpec',
+    'FP8QuantizedTensor',
+    'NativeFP8Linear',
+    'FP8InferenceEngine',
+    'is_fp8_available',
+    'get_fp8_info',
+    'get_fp8_dtype',
+    'compute_fp8_scale',
+    'quantize_to_fp8',
+    'dequantize_from_fp8',
+    'convert_model_to_native_fp8',
+    'benchmark_fp8_layer',
+    'FP8_NATIVE_AVAILABLE',
+    'FP8_DTYPES_AVAILABLE',
+    'FP8_SCALED_MM_AVAILABLE',
 
     # Ultra Precision components
     'UltraPrecisionModule',

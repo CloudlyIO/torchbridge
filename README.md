@@ -2,7 +2,7 @@
 
 **Production-ready PyTorch GPU optimization framework for 2-5x performance improvements.**
 
-[![Version](https://img.shields.io/badge/version-0.4.4-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-936%20passed%2C%20105%20skipped-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-6%2F6%20passing-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/badge/version-0.4.5-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-987%20passed%2C%2085%20skipped-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-7%2F7%20passing-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## 🚀 What is KernelPyTorch?
 
@@ -17,7 +17,7 @@ KernelPyTorch is a **high-performance optimization framework** that accelerates 
 - **🎨 Adaptive Precision**: 30% quality improvement through entropy-based precision allocation
 - **💾 Advanced Memory Optimization**: 2.5x speedup with Deep Optimizer States, 60% memory reduction
 - **✨ Next-Gen Optimizations**: FlashLight compiler, 2:4 sparsity, FP4 quantization with 1.4x speedup
-- **🧪 Comprehensive Framework**: 936 passing tests, 105 platform-specific skips, 6 production demos
+- **🧪 Comprehensive Framework**: 987 passing tests, 85 platform-specific skips, 7 production demos
 
 ## ⏱️ Quick Start (2 minutes)
 

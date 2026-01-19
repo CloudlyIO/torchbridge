@@ -8,15 +8,85 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.4 (Production/Stable)
+**Current Version**: v0.4.5 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
-- **936 tests** passing (100% success rate)
+- **987 tests** passing (100% success rate)
 - **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
+- **Full FP8**: Native PyTorch FP8 types for 2x speedup on H100/Blackwell
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.5] - 2026-01-18 - Full FP8 Implementation
+
+### **Added** ✨
+
+- **Native FP8 Support**: Full FP8 implementation using PyTorch 2.1+ native types
+  - `torch.float8_e4m3fn` for forward pass (higher precision)
+  - `torch.float8_e5m2` for backward pass/gradients (wider range)
+  - Real FP8 quantization and dequantization functions
+  - Dynamic scaling for numerical stability
+  - Simulated fallback for older PyTorch versions
+
+- **NativeFP8Linear Layer**: Production-ready FP8 linear layer
+  - Actual FP8 weight storage and computation
+  - Automatic scale computation and tracking
+  - AMAX (max absolute value) tracking for dynamic scaling
+  - Training mode uses dequantize approach for gradient support
+  - Inference mode can use native FP8 GEMM operations
+
+- **FP8InferenceEngine**: Complete FP8 inference pipeline
+  - Automatic model conversion to FP8
+  - Calibration data support for optimal scales
+  - Memory savings analysis (75% memory reduction)
+  - Layer-level FP8 statistics
+
+- **New Functions and Types**:
+  - `FP8Dtype` enum (E4M3, E5M2)
+  - `FP8QuantizedTensor` wrapper class
+  - `compute_fp8_scale()` for optimal scale computation
+  - `quantize_to_fp8()` and `dequantize_from_fp8()`
+  - `convert_model_to_native_fp8()` for model conversion
+  - `benchmark_fp8_layer()` for performance comparison
+  - `is_fp8_available()` and `get_fp8_info()` utilities
+
+- **FP8 Native Demo**: Comprehensive demo script
+  - `demos/fp8_native_demo.py` with 8 demonstrations
+  - Quantization roundtrip accuracy
+  - Native FP8 linear layer usage
+  - Inference engine with memory analysis
+  - Training with dynamic scaling
+  - Performance benchmarking
+  - Numerical stability analysis
+
+- **FP8 Native Tests**: 51 comprehensive tests
+  - Availability and type detection
+  - Quantization accuracy (E4M3 vs E5M2)
+  - Linear layer creation and forward pass
+  - Gradient flow verification
+  - Inference engine functionality
+  - Model conversion
+  - Numerical stability with extreme values
+  - Integration tests
+
+### **Fixed** 🐛
+
+- **AMAX Bug**: Fixed `_update_amax` method in `fp8_optimizations.py`
+  - Was incorrectly referencing `self.amax_buffer` (undefined)
+  - Now correctly uses the `amax_buffer` parameter
+
+### **Technical Notes** 📋
+
+- 987 tests passing (51 new FP8 native tests)
+- Native FP8 requires PyTorch 2.1+ for `float8_e4m3fn`/`float8_e5m2` types
+- FP8 scaled_mm available in PyTorch 2.4+ (used for inference)
+- Training uses dequantize approach to preserve gradients (autograd compatible)
+- Memory savings: ~75% reduction (FP8 vs FP32 weights)
+- Best performance on H100/Blackwell with hardware FP8 support
 
 ---
 
