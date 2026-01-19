@@ -11,7 +11,7 @@ Usage:
     python setup.py build_ext --inplace  # Build CUDA extensions only
 """
 
-__version__ = "0.4.3"  # Keep in sync with pyproject.toml
+__version__ = "0.4.4"  # Keep in sync with pyproject.toml
 
 from setuptools import setup
 import os

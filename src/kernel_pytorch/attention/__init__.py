@@ -20,6 +20,15 @@ from .core import (
 
 # Main implementations
 from .implementations.flash_attention import FlashAttention3, FlashAttention2
+from .implementations.flex_attention import (
+    FlexAttentionLayer,
+    FlexAttentionCausal,
+    FlexAttentionSlidingWindow,
+    FlexAttentionScoreMods,
+    create_flex_attention,
+    is_flex_attention_available,
+    get_flex_attention_info,
+)
 
 # Distributed attention - import what exists
 try:
@@ -51,9 +60,18 @@ __all__ = [
     'register_attention',
     'create_attention',
 
-    # Implementations
+    # FlashAttention implementations
     'FlashAttention3',
-    'FlashAttention2'
+    'FlashAttention2',
+
+    # FlexAttention implementations (PyTorch 2.5+)
+    'FlexAttentionLayer',
+    'FlexAttentionCausal',
+    'FlexAttentionSlidingWindow',
+    'FlexAttentionScoreMods',
+    'create_flex_attention',
+    'is_flex_attention_available',
+    'get_flex_attention_info',
 ]
 
 # Add available distributed components

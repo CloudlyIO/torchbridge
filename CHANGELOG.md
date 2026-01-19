@@ -8,14 +8,60 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.3 (Production/Stable)
+**Current Version**: v0.4.4 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
-- **905 tests** passing (100% success rate)
+- **936 tests** passing (100% success rate)
+- **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.4] - 2026-01-18 - FlexAttention Integration
+
+### **Added** ✨
+
+- **FlexAttention Integration**: Native PyTorch 2.5+ FlexAttention support
+  - New `FlexAttentionLayer` with configurable score_mod functions
+  - `FlexAttentionCausal` for autoregressive attention
+  - `FlexAttentionSlidingWindow` for local context attention
+  - `FlexAttentionScoreMods` with built-in patterns:
+    - `causal` - Autoregressive masking
+    - `sliding_window` - Fixed window local attention
+    - `causal_sliding_window` - Combined causal + local
+    - `alibi` - Attention with Linear Biases
+    - `soft_cap` - Gemma 2 style logit capping
+    - `document_masking` - Same-document attention
+    - `prefix_lm` - Prefix LM bidirectional + causal
+  - `FlexAttentionMaskGenerators` for efficient block masks (CUDA)
+  - Factory function `create_flex_attention()` for easy creation
+  - Full registry integration (`flex_attention`, `flex_attention_causal`, `flex_attention_sliding_window`)
+
+- **FlexAttention Demo**: Comprehensive demo script
+  - `demos/flex_attention_demo.py` with 9 demonstrations
+  - Pattern examples: causal, sliding window, ALiBi, custom
+  - Performance comparison with FlashAttention-3
+  - Transformer block integration example
+
+- **FlexAttention Tests**: 35 comprehensive tests
+  - Availability and info checks
+  - Layer creation and forward pass
+  - Score modification patterns
+  - Block mask generation (CUDA)
+  - Registry integration
+  - Fallback behavior (CPU)
+  - Performance benchmarks
+
+### **Technical Notes** 📋
+
+- 936 tests passing (31 new FlexAttention tests)
+- FlexAttention uses native PyTorch API when available (PyTorch 2.5+)
+- Automatic fallback to standard attention on CPU or older PyTorch
+- Block masks require CUDA (gracefully skipped on CPU)
+- torch.compile compatible for additional optimization
 
 ---
 
