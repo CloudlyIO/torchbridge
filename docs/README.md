@@ -27,6 +27,7 @@
 - **[Dynamic Shape Bucketing](capabilities/dynamic_shape_bucketing.md)** - Variable input optimization
 - **[Core Components](capabilities/core_components.md)** - Core optimization modules
 - **[Hardware Kernels](capabilities/hardware_kernels.md)** - Low-level kernel implementations
+- **[MoE Optimization](capabilities/moe_optimization.md)** - Mixture of Experts support (v0.5.0 planned)
 - **[Performance Regression Testing](capabilities/performance_regression_testing.md)** - Automated performance monitoring
 - **[CLI Reference](capabilities/cli_reference.md)** - Command-line interface documentation
 - **[External References](capabilities/references.md)** - Links to papers, documentation, tools
@@ -34,6 +35,7 @@
 ### **🗺️ Development Planning** - Unified Strategy
 - **[Unified Roadmap](unified_roadmap.md)** - Complete development strategy (NVIDIA, TPU, Production)
 - **[Immediate Tasks](immediate_tasks.md)** - Current actionable tasks from roadmap
+- **[Industry Landscape 2026](INDUSTRY_LANDSCAPE_2026.md)** - Strategic alignment with industry developments
 
 ## 🎯 By Use Case
 

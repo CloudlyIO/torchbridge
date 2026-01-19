@@ -1,11 +1,23 @@
 # 🚀 KernelPyTorch Unified Development Roadmap
 
-**Status**: v0.3.8 - Phase 4E Week 8 - Model Export Infrastructure COMPLETE
-**Next**: v0.3.9 - Inference Serving Infrastructure
+**Status**: v0.4.3 - Production Release with All Backends Complete
+**Next**: v0.5.0 - FlexAttention, Full FP8, and MoE Support
 
 ## 📋 **Executive Summary**
 
-This unified roadmap outlines the development path from the current v0.3.3 with complete NVIDIA & TPU backend hardening to AMD ROCm backend implementation and production deployment capabilities.
+This unified roadmap outlines the development path for KernelPyTorch, now a production-ready multi-backend optimization framework. The v0.4.x series represents full production maturity with NVIDIA, AMD, and TPU backends at 95%+ readiness.
+
+### **Industry Alignment (January 2026)**
+
+See [INDUSTRY_LANDSCAPE_2026.md](INDUSTRY_LANDSCAPE_2026.md) for detailed analysis. Key alignments:
+
+| Area | Industry Standard | KernelPyTorch Status | v0.5.0 Priority |
+|------|------------------|---------------------|-----------------|
+| **Attention** | FlexAttention (PyTorch 2.5+) | FlashAttention-3 custom | HIGH - Integrate FlexAttention |
+| **Precision** | FP8/FP4 native (Blackwell) | FP8 metadata-only | HIGH - Full FP8 |
+| **MoE** | DeepSeek-V3, Mixtral patterns | No support | HIGH - Add MoE |
+| **Compiler** | torch.compile + Inductor | Fully integrated | ALIGNED |
+| **TPU** | PyTorch/XLA 2.9+ | torch_xla 2.9.0 validated | ALIGNED |
 
 ### **✅ UNIFIED ARCHITECTURE COMPLETED (v0.2.3)**
 - **🏗️ Architecture Consolidation**: 74+ classes → 3 unified systems (96% reduction)
@@ -676,12 +688,63 @@ class TPUConfig:
 - Monitoring (Prometheus, Grafana, Health probes)
 - Containerization (Docker, Kubernetes)
 
-### v0.5.0 - Full FP8 & Intel XPU (**FUTURE**)
+### v0.4.1-v0.4.3 - Production Hardening ✅ **RELEASED**
+
+**Release Date**: January 18, 2026
+
+**v0.4.1 Changes**:
+- Demo utility consolidation (shared print_section)
+- Added missing __init__.py files
+
+**v0.4.2 Changes**:
+- torch_xla 2.9.0 API compatibility fixes
+- NVIDIA backend PyTorch version compatibility
+
+**v0.4.3 Changes**:
+- JSON serialization fixes across 8 benchmark files
+- README test count accuracy (905 tests)
+- Comprehensive deployment tutorial
+- Version tracking in setup.py
+
+### v0.5.0 - FlexAttention, Full FP8, MoE Support (**PLANNED**)
+
+**Target Release**: Q2 2026
 
 **Planned Features**:
-- Full FP8 implementation with NVIDIA Transformer Engine
-- Intel XPU backend (Ponte Vecchio, Data Center GPU Max)
-- Advanced optimizations and ML-driven optimizer selection
+1. **FlexAttention Integration** (HIGH)
+   - Adopt PyTorch 2.5+ FlexAttention API
+   - Support arbitrary attention patterns via score_mod
+   - Deprecate custom patterns in favor of FlexAttention
+
+2. **Full FP8 Implementation** (HIGH)
+   - NVIDIA Transformer Engine integration
+   - Dynamic loss scaling for mixed-precision training
+   - Per-tensor scaling calibration
+
+3. **Mixture of Experts (MoE) Support** (HIGH)
+   - Expert routing optimization kernels
+   - Load balancing for even expert utilization
+   - Sparse attention pattern support
+   - Documentation and examples
+
+4. **Intel XPU Backend** (MEDIUM)
+   - Intel Data Center GPU Max (Ponte Vecchio)
+   - oneAPI/DPC++ integration
+
+### v0.6.0 - Blackwell & Advanced Inference (**FUTURE**)
+
+**Planned Features**:
+1. **FP4/NVFP4 for Blackwell**
+   - Native Blackwell 5th-gen Tensor Core support
+   - 3.5x memory reduction vs FP8
+
+2. **AOTriton for AMD**
+   - ROCm 7.0 native Triton compilation
+   - MI300X/MI325X optimized kernels
+
+3. **Inference Engine Integration**
+   - vLLM PagedAttention compatibility hooks
+   - SGLang RadixAttention support
 
 ---
 
@@ -790,30 +853,48 @@ regression_results = validator.check_performance_regression(
 
 ## 🎯 **NEXT IMMEDIATE ACTIONS**
 
-Based on current v0.3.3 completion status (Phase 4C-Pre complete), the immediate next steps are:
+Based on v0.4.3 production release and industry landscape analysis, the immediate next steps are:
 
-1. **Phase 4C: AMD ROCm Backend Implementation** (HIGH PRIORITY - NEXT)
-   - Implement complete AMD backend following hardened NVIDIA/TPU pattern
-   - Add 20+ comprehensive AMD tests
-   - AMD backend documentation and troubleshooting guide
-   - Target: AMD backend 90%+ production-ready
+### **Phase 5: v0.5.0 Development** (HIGH PRIORITY)
 
-2. **Phase 4D: Production Deployment Integration** (HIGH PRIORITY)
-   - ONNX/TorchScript export with optimization preservation
-   - TorchServe/Triton inference server integration
-   - Production monitoring dashboard (Prometheus/Grafana)
-   - Docker/containerization for all backends
+1. **FlexAttention Integration** (Week 1-2)
+   - Integrate PyTorch 2.5+ FlexAttention API
+   - Create FlexAttention adapter for custom patterns
+   - Migrate sliding window, document masking to FlexAttention
+   - Maintain FlashAttention-3 for peak performance scenarios
 
-3. **Documentation & Community**
-   - API reference documentation
-   - Optimization tuning guide
-   - Production deployment checklist
-   - Contribution guidelines
+2. **Full FP8 Implementation** (Week 3-4)
+   - NVIDIA Transformer Engine integration
+   - Dynamic loss scaling with per-tensor calibration
+   - FP8 training examples and documentation
+   - Remove "metadata-only" limitation
 
-4. **Technical Debt Cleanup** (MEDIUM PRIORITY)
-   - Refactor `unified_manager.py` (500+ lines) into smaller components
-   - Complete remaining high-priority TODOs
-   - Improve error handling and structured logging
+3. **MoE Support** (Week 5-6)
+   - Expert routing kernels (top-k gating)
+   - Load balancing optimization
+   - Sparse expert attention patterns
+   - MoE documentation with DeepSeek/Mixtral examples
+
+4. **Intel XPU Backend** (Week 7-8)
+   - Intel Data Center GPU Max support
+   - oneAPI/DPC++ kernel compilation
+   - XPU-specific optimization levels
+
+### **Production Hardening** (ONGOING)
+
+1. **Documentation Gaps**
+   - MoE guide (currently missing)
+   - Distributed training advanced guide
+   - FlexAttention migration guide
+
+2. **Testing Enhancements**
+   - FlexAttention unit tests
+   - FP8 accuracy validation tests
+   - MoE routing tests
+
+3. **Benchmark Expansion**
+   - Modern model benchmarks (DeepSeek, Mixtral, LLaMA-3)
+   - Inference throughput comparisons vs vLLM/SGLang
 
 ## 📚 **RELATED DOCUMENTATION**
 

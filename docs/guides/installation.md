@@ -6,8 +6,8 @@
 
 ```bash
 # Clone repository
-git clone <repository-url>
-cd shahmod
+git clone https://github.com/your-org/kernel-pytorch.git
+cd kernel-pytorch
 
 # Install dependencies
 pip install -r requirements.txt
@@ -40,8 +40,8 @@ KernelPyTorch v0.4.3 is a production-ready framework with:
 
 ```bash
 # Clone and install
-git clone <repository-url>
-cd shahmod
+git clone https://github.com/your-org/kernel-pytorch.git
+cd kernel-pytorch
 pip install torch numpy
 
 # Verify core functionality

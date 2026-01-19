@@ -13,8 +13,8 @@
 ### **Development Setup**
 ```bash
 # Clone and setup
-git clone <repository-url>
-cd shahmod
+git clone https://github.com/your-org/kernel-pytorch.git
+cd kernel-pytorch
 pip install -r requirements.txt
 
 # Validate setup

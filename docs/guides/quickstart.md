@@ -8,8 +8,8 @@ Get up and running with **KernelPyTorch** in under 5 minutes.
 
 ```bash
 # Clone and install
-git clone <repository-url>
-cd shahmod
+git clone https://github.com/your-org/kernel-pytorch.git
+cd kernel-pytorch
 pip install -r requirements.txt
 
 # Verify installation

@@ -1,16 +1,71 @@
 # 🚀 IMMEDIATE TASK LIST - POST-CLEANUP ROADMAP
 
-**Status**: v0.4.0 - Production-Ready Multi-Backend Release
-**Last Updated**: January 15, 2026
+**Status**: v0.4.3 - Production Release with Hardening Complete
+**Last Updated**: January 18, 2026
 
-## 🎉 **v0.4.0 RELEASED - MAJOR MILESTONE**
+## 🎉 **v0.4.3 RELEASED - PRODUCTION HARDENED**
 
 KernelPyTorch is now **production-ready** with:
 - **905 tests** passing (100% success rate)
-- **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
+- **3 backends**: NVIDIA, AMD, TPU (all 95%+ production-ready)
 - **Full deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Monitoring**: Prometheus, Grafana, K8s health probes
 - **Containers**: Docker (GPU/CPU), Kubernetes manifests
+- **Deployment Tutorial**: End-to-end guide from optimization to cloud
+
+### v0.4.1-v0.4.3 Improvements
+- Demo utility consolidation (shared print_section)
+- torch_xla 2.9.0 API compatibility fixes
+- NVIDIA backend PyTorch version compatibility
+- JSON serialization fixes across 8 benchmark files
+- Comprehensive deployment tutorial (docs/guides/deployment_tutorial.md)
+- Version tracking in setup.py
+
+---
+
+## 🔥 **v0.5.0 PLANNING - INDUSTRY ALIGNMENT**
+
+Based on [INDUSTRY_LANDSCAPE_2026.md](INDUSTRY_LANDSCAPE_2026.md) analysis:
+
+### Priority 1: FlexAttention Integration (HIGH)
+**Why**: PyTorch 2.5+ provides FlexAttention - flexible attention with FlashAttention-like performance for ANY pattern.
+
+**Tasks**:
+- [ ] Create FlexAttention adapter module
+- [ ] Migrate sliding window attention to FlexAttention
+- [ ] Migrate document masking to FlexAttention
+- [ ] Add FlexAttention examples and documentation
+- [ ] Benchmark vs custom FlashAttention-3 implementation
+
+### Priority 2: Full FP8 Implementation (HIGH)
+**Why**: Current FP8 is metadata-only. Full implementation needed for H100/Blackwell performance.
+
+**Tasks**:
+- [ ] NVIDIA Transformer Engine integration
+- [ ] Dynamic loss scaling implementation
+- [ ] Per-tensor scaling calibration
+- [ ] FP8 training examples (GPT, LLaMA, BERT)
+- [ ] Remove "metadata-only" deprecation warnings
+
+### Priority 3: MoE Support (HIGH)
+**Why**: Critical gap - no MoE documentation or optimizations. MoE is central to modern large models (DeepSeek, Mixtral).
+
+**Tasks**:
+- [ ] Expert routing optimization kernels
+- [ ] Top-k gating with load balancing
+- [ ] Sparse expert attention patterns
+- [ ] MoE configuration in KernelPyTorchConfig
+- [ ] MoE documentation with examples
+- [ ] Benchmark with Mixtral-style architectures
+
+### Priority 4: Intel XPU Backend (MEDIUM)
+**Why**: Complete enterprise hardware coverage.
+
+**Tasks**:
+- [ ] Intel XPU detection and configuration
+- [ ] oneAPI/DPC++ kernel compilation path
+- [ ] Intel-specific optimization levels
+- [ ] Intel backend documentation
 
 ---
 
@@ -345,7 +400,7 @@ KernelPyTorch is now **production-ready** with:
 
 ## 🚀 **NEXT STEPS: PHASE 4C & BEYOND**
 
-### **📊 Current State Analysis (v0.3.3)**
+### **📊 Current State Analysis (v0.4.3)**
 - **✅ Phases 1-4B Complete**: NVIDIA, TPU, Production Pipeline, Custom CUDA Kernels fully implemented
 - **✅ Phase 4C-Pre Complete**: NVIDIA & TPU backend hardening + integration testing complete (both 90%+ production-ready)
 - **✅ 767 Tests Passing**: 100% success rate with comprehensive integration and error path coverage
@@ -765,5 +820,5 @@ logger = logging.getLogger('kernel_pytorch')
 
 ---
 
-**Last Updated**: January 15, 2026 (v0.3.8)
-**Next Review**: After Phase 4E completion (v0.3.9-v0.3.10 Inference Serving & Monitoring)
+**Last Updated**: January 18, 2026 (v0.4.3)
+**Next Review**: After v0.5.0 planning complete (FlexAttention, Full FP8, MoE)
