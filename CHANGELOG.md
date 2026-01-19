@@ -8,16 +8,83 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.5 (Production/Stable)
+**Current Version**: v0.4.6 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
-- **987 tests** passing (100% success rate)
+- **1,035 tests** passing (100% success rate)
+- **Mixture of Experts (MoE)**: Comprehensive sparse MoE implementation
 - **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
 - **Full FP8**: Native PyTorch FP8 types for 2x speedup on H100/Blackwell
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.6] - 2026-01-18 - Mixture of Experts (MoE) Support
+
+### **Added** ✨
+
+- **MoE Layer Types**: Complete suite of MoE implementations
+  - `MoELayer`: Standard MoE with configurable routing
+  - `SparseMoELayer`: Sparse expert activation for efficiency
+  - `SwitchTransformerMoE`: Top-1 routing (Switch Transformer style)
+  - `GLaMStyleMoE`: Parameter-efficient experts (GLaM style)
+  - `AdaptiveMoELayer`: Dynamic expert selection
+
+- **Routing Strategies**: Multiple router implementations
+  - `TopKRouter`: Standard top-k expert routing with noise injection
+  - `SwitchRouter`: Top-1 routing with capacity constraints
+  - `HashRouter`: Deterministic hash-based routing
+  - `LearnedRouter`: Neural network gating with attention
+  - `DynamicCapacityRouter`: Adaptive capacity based on input complexity
+
+- **Expert Networks**: Diverse expert architectures
+  - `FeedForwardExpert`: Standard FFN experts
+  - `ConvolutionalExpert`: Conv-based experts for local patterns
+  - `AttentionExpert`: Self-attention experts
+  - `ParameterEfficientExpert`: Low-rank approximation for efficiency
+
+- **Load Balancing**: Production-ready load balancing
+  - `LoadBalancer`: Multiple loss types (switch, gshard, entropy)
+  - Capacity management with dynamic adjustment
+  - Expert utilization tracking and statistics
+
+- **Optimization Utilities**:
+  - `ExpertParallelism`: Distributed expert processing
+  - `ExpertScheduler`: Dynamic capacity factor adaptation
+  - `MemoryEfficientSwitching`: Gradient checkpointing and offloading
+
+- **New Main Package Exports**:
+  - `MoELayer`, `SparseMoELayer`, `SwitchTransformerMoE`, `GLaMStyleMoE`
+  - `MoEConfig`, `create_moe_layer`, `create_moe`
+  - `TopKRouter`, `SwitchRouter`, `LoadBalancer`, `FeedForwardExpert`
+
+- **Convenience Function**: `create_moe(hidden_size, num_experts, top_k, moe_type)`
+  - One-line MoE creation with sensible defaults
+  - Support for all MoE types via `moe_type` parameter
+
+- **MoE Demo**: Comprehensive demo script (`demos/moe_demo.py`)
+  - 8 demonstrations covering all MoE functionality
+  - Layer types, routing strategies, expert networks
+  - Load balancing, training, transformer integration
+  - Performance comparison with standard FFN
+
+- **MoE Tests**: 48 comprehensive tests
+  - Configuration and layer creation
+  - Forward pass for all MoE types
+  - All router types and expert networks
+  - Load balancing and training
+  - Expert parallelism and memory efficiency
+  - Integration with transformer architectures
+
+### **Fixed** 🐛
+
+- **Router Parameter Conflicts**: Fixed `top_k` parameter conflict in routing
+  - `SwitchRouter` now properly handles when `top_k` is passed in kwargs
+  - All routers now filter kwargs to avoid duplicate arguments to parent class
+  - Fixes TypeError when using factory functions or MoE layer types
 
 ---
 

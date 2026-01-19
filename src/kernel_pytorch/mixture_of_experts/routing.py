@@ -102,8 +102,10 @@ class TopKRouter(BaseRouter):
         noise_epsilon: float = 1e-2,
         **kwargs
     ):
+        # Only keep device/dtype in kwargs for BaseRouter
+        base_kwargs = {k: v for k, v in kwargs.items() if k in ('device', 'dtype')}
         super().__init__(
-            hidden_size, num_experts, top_k, dropout, normalize_probs, **kwargs
+            hidden_size, num_experts, top_k, dropout, normalize_probs, **base_kwargs
         )
 
         self.noise_epsilon = noise_epsilon
@@ -186,6 +188,9 @@ class SwitchRouter(BaseRouter):
         jitter_noise: float = 1e-2,
         **kwargs
     ):
+        # Remove top_k from kwargs if present (Switch always uses top_k=1)
+        kwargs.pop('top_k', None)
+        kwargs.pop('normalize_probs', None)
         super().__init__(
             hidden_size, num_experts, top_k=1, dropout=dropout, **kwargs
         )
@@ -250,6 +255,9 @@ class HashRouter(BaseRouter):
         use_token_position: bool = True,
         **kwargs
     ):
+        # Remove params that might conflict with BaseRouter
+        kwargs.pop('dropout', None)
+        kwargs.pop('normalize_probs', None)
         super().__init__(
             hidden_size, num_experts, top_k, **kwargs
         )
@@ -361,6 +369,8 @@ class LearnedRouter(BaseRouter):
         dropout: float = 0.1,
         **kwargs
     ):
+        # Remove params already handled from kwargs to avoid conflicts
+        kwargs.pop('normalize_probs', None)
         super().__init__(
             hidden_size, num_experts, top_k, dropout, **kwargs
         )
@@ -469,6 +479,9 @@ class DynamicCapacityRouter(BaseRouter):
         complexity_threshold: float = 1.0,
         **kwargs
     ):
+        # Remove params that might conflict with BaseRouter
+        kwargs.pop('dropout', None)
+        kwargs.pop('normalize_probs', None)
         super().__init__(
             hidden_size, num_experts, top_k, **kwargs
         )
