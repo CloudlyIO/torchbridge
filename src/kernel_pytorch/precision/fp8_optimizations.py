@@ -16,6 +16,7 @@ References:
     - Mixed Precision Training: https://arxiv.org/abs/1710.03740
 """
 
+import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -477,7 +478,7 @@ def convert_model_to_fp8(
         >>> # Now model uses FP8 optimized layers
     """
     if not inplace:
-        model = type(model)(**model.__dict__) if hasattr(model, '__dict__') else model
+        model = copy.deepcopy(model)
 
     fp8_config = fp8_config or FP8Config()
 

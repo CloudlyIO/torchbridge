@@ -419,11 +419,23 @@ class FP8TrainingEngine:
         if TRANSFORMER_ENGINE_AVAILABLE and self.fp8_recipe is not None:
             with te.fp8_autocast(enabled=self.fp8_enabled, fp8_recipe=self.fp8_recipe):
                 outputs = self.model(inputs)
+                # Handle sequence outputs: reshape [B, S, C] to [B*S, C] for cross_entropy
+                if outputs.dim() == 3 and targets.dim() == 1:
+                    outputs = outputs[:, -1, :]  # Take last token
+                elif outputs.dim() == 3 and targets.dim() == 2:
+                    outputs = outputs.reshape(-1, outputs.size(-1))
+                    targets = targets.reshape(-1)
                 loss = F.cross_entropy(outputs, targets)
         else:
             # Fallback to standard training with manual scaling
             with torch.autocast(device_type=str(self.device).split(':')[0], dtype=torch.bfloat16):
                 outputs = self.model(inputs)
+                # Handle sequence outputs: reshape [B, S, C] to [B*S, C] for cross_entropy
+                if outputs.dim() == 3 and targets.dim() == 1:
+                    outputs = outputs[:, -1, :]  # Take last token
+                elif outputs.dim() == 3 and targets.dim() == 2:
+                    outputs = outputs.reshape(-1, outputs.size(-1))
+                    targets = targets.reshape(-1)
                 loss = F.cross_entropy(outputs, targets)
 
                 # Apply FP8 scaling manually
