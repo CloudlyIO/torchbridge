@@ -65,9 +65,18 @@ class SimpleTransformerBlock(nn.Module):
 
 
 @pytest.fixture
-def simple_model():
+def device():
+    """Get test device (CUDA if available, else CPU)"""
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    return torch.device('cpu')
+
+
+@pytest.fixture
+def simple_model(device):
     """Create a simple model for testing"""
-    return SimpleTransformerBlock(d_model=256, num_heads=4, d_ff=512)
+    model = SimpleTransformerBlock(d_model=256, num_heads=4, d_ff=512)
+    return model.to(device)
 
 
 @pytest.fixture
@@ -83,14 +92,14 @@ def fp8_config():
 
 
 @pytest.fixture
-def sample_data():
+def sample_data(device):
     """Create sample training data"""
     batch_size = 4
     seq_len = 32
     d_model = 256
 
-    inputs = torch.randn(batch_size, seq_len, d_model)
-    targets = torch.randint(0, d_model, (batch_size, seq_len))
+    inputs = torch.randn(batch_size, seq_len, d_model, device=device)
+    targets = torch.randint(0, d_model, (batch_size, seq_len), device=device)
 
     return inputs, targets
 
@@ -256,11 +265,11 @@ class TestFP8ModelConversion:
         assert fp8_linear_count > 0
         assert original_linear_count >= fp8_linear_count
 
-    def test_converted_model_forward(self, simple_model, fp8_config):
+    def test_converted_model_forward(self, simple_model, fp8_config, device):
         """Test forward pass through converted model"""
         fp8_model = convert_model_to_fp8(simple_model, fp8_config)
 
-        x = torch.randn(2, 16, 256)
+        x = torch.randn(2, 16, 256, device=device)
         output = fp8_model(x)
 
         assert output.shape == (2, 16, 256)
@@ -294,15 +303,15 @@ class TestFP8Integration:
         assert isinstance(trainer, FP8TrainingEngine)
         assert isinstance(trainer.config, FP8Config)
 
-    def test_end_to_end_training(self, simple_model, fp8_config):
+    def test_end_to_end_training(self, simple_model, fp8_config, device):
         """Test end-to-end FP8 training"""
         # Create training data
         batch_size = 2
         seq_len = 16
         d_model = 256
 
-        inputs = torch.randn(batch_size, seq_len, d_model)
-        targets = torch.randint(0, d_model, (batch_size,))  # Classification targets
+        inputs = torch.randn(batch_size, seq_len, d_model, device=device)
+        targets = torch.randint(0, d_model, (batch_size,), device=device)  # Classification targets
 
         # Convert model and create trainer
         fp8_model = convert_model_to_fp8(simple_model, fp8_config)

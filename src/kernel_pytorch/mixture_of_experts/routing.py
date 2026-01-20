@@ -145,7 +145,8 @@ class TopKRouter(BaseRouter):
 
         # Add noise during training for load balancing
         if self.training and self.noise_epsilon > 0:
-            noise = torch.randn_like(logits) * self.noise_std.unsqueeze(0)
+            noise_std = self.noise_std.to(logits.device)
+            noise = torch.randn_like(logits) * noise_std.unsqueeze(0)
             logits = logits + noise
 
         # Compute routing probabilities
@@ -255,6 +256,9 @@ class HashRouter(BaseRouter):
         use_token_position: bool = True,
         **kwargs
     ):
+        # Extract device/dtype before removing other params
+        factory_kwargs = {k: kwargs.get(k) for k in ('device', 'dtype') if k in kwargs}
+
         # Remove params that might conflict with BaseRouter
         kwargs.pop('dropout', None)
         kwargs.pop('normalize_probs', None)
@@ -267,7 +271,7 @@ class HashRouter(BaseRouter):
 
         # Note: Gate is not used for hash routing, but we keep it for interface compatibility
         # Instead, we use a simple projection for consistent interface
-        self.token_projection = nn.Linear(hidden_size, 32)  # Project to smaller space for hashing
+        self.token_projection = nn.Linear(hidden_size, 32, **factory_kwargs)  # Project to smaller space for hashing
 
     def forward(
         self,
@@ -479,6 +483,9 @@ class DynamicCapacityRouter(BaseRouter):
         complexity_threshold: float = 1.0,
         **kwargs
     ):
+        # Extract device/dtype before removing other params
+        factory_kwargs = {k: kwargs.get(k) for k in ('device', 'dtype') if k in kwargs}
+
         # Remove params that might conflict with BaseRouter
         kwargs.pop('dropout', None)
         kwargs.pop('normalize_probs', None)
@@ -500,9 +507,9 @@ class DynamicCapacityRouter(BaseRouter):
 
         # Input complexity analyzer
         self.complexity_analyzer = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size // 4),
+            nn.Linear(hidden_size, hidden_size // 4, **factory_kwargs),
             nn.ReLU(),
-            nn.Linear(hidden_size // 4, 1),
+            nn.Linear(hidden_size // 4, 1, **factory_kwargs),
             nn.Sigmoid()
         )
 
@@ -532,11 +539,13 @@ class DynamicCapacityRouter(BaseRouter):
                 self.max_capacity_factor / self.initial_capacity_factor
             )
 
-            # Update capacity factors with EMA
-            self.capacity_factors.data = (
-                (1 - self.adaptation_rate) * self.capacity_factors +
+            # Update capacity factors with EMA (ensure device compatibility)
+            capacity_on_device = self.capacity_factors.to(x.device)
+            updated_capacity = (
+                (1 - self.adaptation_rate) * capacity_on_device +
                 self.adaptation_rate * self.initial_capacity_factor * complexity_adjustment
             )
+            self.capacity_factors.data.copy_(updated_capacity.cpu())
 
         # Standard routing computation
         logits = self.gate(x)
@@ -545,8 +554,9 @@ class DynamicCapacityRouter(BaseRouter):
         # Apply complexity-based routing adjustments
         # Boost routing to less-utilized experts for complex inputs
         if self.training:
-            utilization_penalty = self.expert_utilization_ema.unsqueeze(0) * 0.1
-            complexity_boost = complexity_scores.unsqueeze(-1) * (1.0 - self.expert_utilization_ema.unsqueeze(0))
+            expert_utilization = self.expert_utilization_ema.to(logits.device)
+            utilization_penalty = expert_utilization.unsqueeze(0) * 0.1
+            complexity_boost = complexity_scores.unsqueeze(-1) * (1.0 - expert_utilization.unsqueeze(0))
             logits = logits - utilization_penalty + complexity_boost
 
         # Compute probabilities and top-k selection
@@ -561,11 +571,13 @@ class DynamicCapacityRouter(BaseRouter):
                     usage_mask = (top_k_indices == expert_idx)
                     current_utilization[expert_idx] = usage_mask.sum().float() / num_tokens
 
-                # Update EMA
-                self.expert_utilization_ema.data = (
-                    (1 - self.adaptation_rate) * self.expert_utilization_ema +
+                # Update EMA (ensure device compatibility)
+                ema_on_device = self.expert_utilization_ema.to(x.device)
+                updated_ema = (
+                    (1 - self.adaptation_rate) * ema_on_device +
                     self.adaptation_rate * current_utilization
                 )
+                self.expert_utilization_ema.data.copy_(updated_ema.cpu())
 
         return {
             'logits': logits,

@@ -257,9 +257,9 @@ class MoELayer(nn.Module):
     def _update_statistics(self, expert_indices: torch.Tensor, num_tokens: int):
         """Update expert usage statistics"""
         with torch.no_grad():
-            # Count expert usage
+            # Count expert usage (ensure device compatibility)
             for expert_idx in range(self.num_experts):
-                count = (expert_indices == expert_idx).sum()
+                count = (expert_indices == expert_idx).sum().cpu()
                 self.expert_usage_count[expert_idx] += count
 
             self.total_tokens_processed += num_tokens
@@ -405,16 +405,18 @@ class AdaptiveMoELayer(MoELayer):
         # Compute input complexity (variance as proxy)
         input_complexity = x.var(dim=-1).mean()
 
-        # Update EMA of input complexity
+        # Update EMA of input complexity (ensure device compatibility)
         if self.training:
-            self.input_complexity_ema = (
-                (1 - self.adaptation_rate) * self.input_complexity_ema +
+            ema_on_device = self.input_complexity_ema.to(x.device)
+            updated_ema = (
+                (1 - self.adaptation_rate) * ema_on_device +
                 self.adaptation_rate * input_complexity
             )
+            self.input_complexity_ema.data.copy_(updated_ema.cpu())
 
         # Adjust capacity factor based on complexity
         complexity_factor = torch.clamp(
-            self.input_complexity_ema / 1.0,  # Normalize to some baseline
+            self.input_complexity_ema.to(x.device) / 1.0,  # Normalize to some baseline
             0.5, 2.0
         )
 

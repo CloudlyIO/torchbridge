@@ -169,7 +169,8 @@ class TestFP8Quantization:
         quantized, returned_scale = quantize_to_fp8(x, scale, FP8Dtype.E5M2)
 
         assert quantized.shape == x.shape
-        assert torch.isfinite(quantized).all()
+        # Convert to float for isfinite check (FP8 types don't support isfinite)
+        assert torch.isfinite(quantized.to(torch.float32)).all()
         assert returned_scale == scale
 
     def test_dequantize_from_fp8(self, device):
@@ -230,7 +231,7 @@ class TestFP8QuantizedTensor:
         fp8_tensor = FP8QuantizedTensor.from_tensor(x, FP8Dtype.E4M3)
 
         assert fp8_tensor.shape == x.shape
-        assert fp8_tensor.device == device
+        assert fp8_tensor.device.type == device.type  # Compare device types (cuda vs cuda:0)
         assert fp8_tensor.format == FP8Dtype.E4M3
 
     def test_dequantize(self, device):
@@ -248,7 +249,7 @@ class TestFP8QuantizedTensor:
         fp8_tensor = FP8QuantizedTensor.from_tensor(x, FP8Dtype.E4M3)
         moved = fp8_tensor.to(device)
 
-        assert moved.device == device
+        assert moved.device.type == device.type  # Compare device types (cuda vs cuda:0)
 
     def test_with_custom_scale(self, device):
         """Test FP8QuantizedTensor with custom scale"""

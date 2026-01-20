@@ -310,7 +310,7 @@ class AttentionExpert(nn.Module):
 
         # Add positional encoding if sequence length allows
         if seq_len <= self.max_seq_len:
-            x = x + self.pos_encoding[:, :seq_len, :]
+            x = x + self.pos_encoding[:, :seq_len, :].to(x.device)
 
         # Self-attention
         residual = x
