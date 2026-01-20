@@ -355,13 +355,18 @@ class TestIntelBackend:
 
     def test_get_device_info(self):
         """Test get_device_info."""
+        from kernel_pytorch.backends import DeviceInfo
         backend = IntelBackend()
         info = backend.get_device_info()
-        assert isinstance(info, dict)
-        assert 'backend' in info
-        assert info['backend'] == 'intel'
-        assert 'xpu_available' in info
-        assert 'ipex_available' in info
+        assert isinstance(info, DeviceInfo)
+        assert info.backend == 'intel'
+
+        # Also test legacy dict format
+        info_dict = backend.get_device_info_dict()
+        assert isinstance(info_dict, dict)
+        assert info_dict['backend'] == 'intel'
+        assert 'xpu_available' in info_dict
+        assert 'ipex_available' in info_dict
 
     def test_get_memory_stats(self):
         """Test get_memory_stats."""
@@ -551,7 +556,7 @@ class TestIntelBackendIntegration:
 
         # Get device info
         info = backend.get_device_info()
-        assert info['backend'] == 'intel'
+        assert info.backend == 'intel'
 
         # Check memory
         stats = backend.get_memory_stats()

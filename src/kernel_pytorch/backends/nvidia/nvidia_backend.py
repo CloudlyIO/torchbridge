@@ -2,28 +2,40 @@
 NVIDIA Backend Implementation
 
 Core backend for NVIDIA GPU device management and model preparation.
+
+Inherits from BaseBackend to provide a consistent interface across all
+hardware backends while implementing NVIDIA-specific optimizations.
+
+Version: 0.4.8
 """
 
 import logging
 import warnings
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, List, Type
+from typing import Dict, Any, Optional, List, Type, Union, Tuple
 import os
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture, PrecisionFormat
 from kernel_pytorch.core.kernel_registry import KernelRegistry, KernelMetadata, KernelType, KernelBackend
+from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel, OptimizationResult
 
 logger = logging.getLogger(__name__)
 
 
-class NVIDIABackend:
+class NVIDIABackend(BaseBackend):
     """
     Core NVIDIA GPU backend for device management and model preparation.
 
     Provides device coordination, memory management, and model optimization
     for NVIDIA GPUs (H100, Blackwell, Ampere, etc.).
+
+    Inherits from BaseBackend to provide a unified interface while maintaining
+    backward compatibility with existing NVIDIA-specific APIs.
     """
+
+    # Backend identifier
+    BACKEND_NAME: str = "nvidia"
 
     def __init__(self, config: Optional[KernelPyTorchConfig] = None):
         """
@@ -32,10 +44,10 @@ class NVIDIABackend:
         Args:
             config: KernelPyTorch configuration with NVIDIA settings
         """
-        self.config = config or KernelPyTorchConfig()
-        self.nvidia_config = self.config.hardware.nvidia
+        # Store config before calling super().__init__
+        self._full_config = config or KernelPyTorchConfig()
+        self.nvidia_config = self._full_config.hardware.nvidia
 
-        self._device = None
         self._devices = []
         self._compute_capability = None
         self._device_name = None
@@ -43,14 +55,18 @@ class NVIDIABackend:
         # Initialize kernel registry
         self._kernel_registry = KernelRegistry()
 
-        self._setup_cuda_environment()
+        # Call parent init (which calls _setup_environment)
+        super().__init__(config=self._full_config)
+
+        # Alias for backward compatibility
+        self.config = self._full_config
 
         # Register default kernels after CUDA environment is set up
-        if self.config.kernel.enabled and self.is_cuda_available:
+        if self._full_config.kernel.enabled and self.is_cuda_available:
             self._register_default_kernels()
 
-    def _setup_cuda_environment(self) -> None:
-        """Set up CUDA environment for NVIDIA GPUs."""
+    def _setup_environment(self) -> None:
+        """Set up CUDA environment for NVIDIA GPUs (implements BaseBackend abstract method)."""
         if not torch.cuda.is_available():
             warnings.warn("CUDA not available. Using CPU fallback.")
             self._device = torch.device("cpu")
@@ -81,6 +97,41 @@ class NVIDIABackend:
                        self._device_name, self._compute_capability, len(self._devices),
                        self.nvidia_config.architecture.value, self.nvidia_config.fp8_enabled)
 
+    def _check_availability(self) -> bool:
+        """Check if CUDA is available (implements BaseBackend abstract method)."""
+        return torch.cuda.is_available() and self._device is not None and self._device.type == "cuda"
+
+    def _get_device_info(self, device_id: int = 0) -> DeviceInfo:
+        """Get information about a specific CUDA device (implements BaseBackend abstract method)."""
+        if not self._check_availability() or device_id >= len(self._devices):
+            return DeviceInfo(
+                backend="nvidia",
+                device_type="cpu",
+                device_id=0,
+                device_name="CPU (CUDA not available)",
+                is_available=False
+            )
+
+        props = torch.cuda.get_device_properties(device_id)
+        return DeviceInfo(
+            backend="nvidia",
+            device_type=f"cuda:{device_id}",
+            device_id=device_id,
+            device_name=props.name,
+            compute_capability=f"{props.major}.{props.minor}",
+            total_memory_bytes=props.total_memory,
+            driver_version=torch.version.cuda,
+            is_available=True,
+            properties={
+                'multi_processor_count': props.multi_processor_count,
+                'major': props.major,
+                'minor': props.minor,
+                'architecture': self.nvidia_config.architecture.value,
+                'fp8_supported': self.supports_fp8,
+                'tensor_core_version': self.nvidia_config.tensor_core_version,
+            }
+        )
+
     @property
     def device(self) -> torch.device:
         """Get current CUDA device."""
@@ -90,6 +141,11 @@ class NVIDIABackend:
     def devices(self) -> List[torch.device]:
         """Get all available CUDA devices."""
         return self._devices
+
+    @property
+    def device_count(self) -> int:
+        """Get the number of available CUDA devices (overrides BaseBackend)."""
+        return len(self._devices)
 
     @property
     def compute_capability(self) -> Optional[tuple]:
@@ -119,12 +175,17 @@ class NVIDIABackend:
             NVIDIAArchitecture.BLACKWELL
         ]
 
-    def prepare_model(self, model: nn.Module) -> nn.Module:
+    def prepare_model(
+        self,
+        model: nn.Module,
+        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+    ) -> nn.Module:
         """
-        Prepare model for NVIDIA GPU execution.
+        Prepare model for NVIDIA GPU execution (implements BaseBackend abstract method).
 
         Args:
             model: PyTorch model to prepare
+            optimization_level: Optional optimization level (O0, O1, O2, O3)
 
         Returns:
             Prepared model ready for NVIDIA GPU execution
@@ -140,13 +201,90 @@ class NVIDIABackend:
         # Move model to device
         model = model.to(self.device)
 
-        # Apply NVIDIA-specific optimizations
-        model = self._apply_nvidia_optimizations(model)
+        # Apply NVIDIA-specific optimizations based on level
+        if optimization_level is None or optimization_level == OptimizationLevel.O0:
+            # O0: Minimal optimizations (just device placement)
+            pass
+        else:
+            # O1+: Apply NVIDIA-specific optimizations
+            model = self._apply_nvidia_optimizations(model)
 
-        # Enable gradient checkpointing if configured
-        if self.config.memory.gradient_checkpointing:
-            model = self._enable_gradient_checkpointing(model)
+            # O2+: Enable gradient checkpointing if configured
+            if optimization_level in (OptimizationLevel.O2, OptimizationLevel.O3, "O2", "O3", "balanced", "aggressive"):
+                if self.config.memory.gradient_checkpointing:
+                    model = self._enable_gradient_checkpointing(model)
 
+        return model
+
+    def optimize_for_inference(
+        self,
+        model: nn.Module,
+        sample_input: Optional[torch.Tensor] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> nn.Module:
+        """
+        Optimize a model for inference (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            sample_input: Optional sample input for tracing
+            dtype: Optional dtype for precision
+
+        Returns:
+            Inference-optimized model
+        """
+        # Prepare model with aggressive optimizations
+        model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
+
+        # Set to eval mode
+        model.eval()
+
+        # Disable gradients
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Apply torch.compile if available and sample input provided
+        if sample_input is not None and hasattr(torch, 'compile'):
+            try:
+                mode = 'max-autotune' if (self.is_h100 or self.is_blackwell) else 'reduce-overhead'
+                model = torch.compile(model, mode=mode)
+                # Warm up
+                with torch.no_grad():
+                    _ = model(sample_input.to(self.device))
+            except Exception as e:
+                logger.warning(f"torch.compile failed: {e}")
+
+        return model
+
+    def optimize_for_training(
+        self,
+        model: nn.Module,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        """
+        Optimize a model for training (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            optimizer: Optional optimizer to optimize along with model
+            dtype: Optional dtype for precision
+
+        Returns:
+            Training-optimized model, or tuple of (model, optimizer)
+        """
+        # Prepare model with balanced optimizations
+        model = self.prepare_model(model, optimization_level=OptimizationLevel.O1)
+
+        # Ensure train mode
+        model.train()
+
+        # Apply mixed precision settings if configured
+        if self.nvidia_config.mixed_precision_enabled:
+            setattr(model, '_mixed_precision_enabled', True)
+
+        if optimizer:
+            return model, optimizer
         return model
 
     def _apply_nvidia_optimizations(self, model: nn.Module) -> nn.Module:
@@ -241,8 +379,8 @@ class NVIDIABackend:
             'compute_capability': self._compute_capability
         }
 
-    def get_device_info(self) -> Dict[str, Any]:
-        """Get comprehensive device information."""
+    def get_device_info_dict(self) -> Dict[str, Any]:
+        """Get comprehensive device information (legacy format)."""
         info = {
             'backend': 'nvidia',
             'cuda_available': self.is_cuda_available,

@@ -2,6 +2,11 @@
 NVIDIA Optimizer Implementation
 
 High-level optimizer for NVIDIA GPU models with multiple optimization levels.
+
+Inherits from BaseOptimizer to provide a consistent interface across all
+hardware backends while implementing NVIDIA-specific optimizations.
+
+Version: 0.4.8
 """
 
 import logging
@@ -13,6 +18,8 @@ from dataclasses import dataclass
 import time
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+from kernel_pytorch.backends.base_backend import OptimizationLevel, OptimizationResult
+from kernel_pytorch.backends.base_optimizer import BaseOptimizer, OptimizationStrategy
 from .nvidia_backend import NVIDIABackend
 from .fp8_compiler import FP8Compiler
 
@@ -21,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class NVIDIAOptimizationResult:
-    """Results from NVIDIA model optimization."""
+    """Results from NVIDIA model optimization (legacy format for backward compatibility)."""
     optimized_model: nn.Module
     optimization_level: str
     optimizations_applied: List[str]
@@ -31,28 +38,143 @@ class NVIDIAOptimizationResult:
     warnings: List[str]
 
 
-class NVIDIAOptimizer:
+class NVIDIAOptimizer(BaseOptimizer):
     """
     High-level NVIDIA GPU optimizer with multiple optimization levels.
 
     Provides conservative, balanced, and aggressive optimization strategies
     for NVIDIA GPUs (H100, Blackwell, Ampere, etc.).
+
+    Inherits from BaseOptimizer to provide a unified interface while
+    maintaining backward compatibility with existing NVIDIA-specific APIs.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    OPTIMIZER_NAME: str = "nvidia"
+    DEFAULT_LEVEL = OptimizationLevel.O2
+
+    def __init__(self, config: Optional[KernelPyTorchConfig] = None, device: Optional[torch.device] = None):
         """
         Initialize NVIDIA optimizer.
 
         Args:
             config: KernelPyTorch configuration with NVIDIA settings
+            device: Target device (auto-detected if not provided)
         """
-        self.config = config or KernelPyTorchConfig()
-        self.backend = NVIDIABackend(self.config)
-        self.fp8_compiler = FP8Compiler(self.config)
+        self._full_config = config or KernelPyTorchConfig()
+        self.backend = NVIDIABackend(self._full_config)
+        self.fp8_compiler = FP8Compiler(self._full_config)
+
+        # Call parent init
+        super().__init__(config=self._full_config, device=device or self.backend.device)
+
+        # Alias for backward compatibility
+        self.config = self._full_config
 
         self._optimization_warnings = []
 
-    def optimize(
+    def _apply_optimizations(
+        self,
+        model: nn.Module,
+        level: OptimizationLevel,
+        sample_input: Optional[torch.Tensor] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> Tuple[nn.Module, OptimizationResult]:
+        """
+        Apply NVIDIA-specific optimizations (implements BaseOptimizer abstract method).
+
+        Args:
+            model: PyTorch model to optimize
+            level: Optimization level
+            sample_input: Optional sample input for tracing
+            dtype: Optional dtype for precision
+
+        Returns:
+            Tuple of (optimized_model, OptimizationResult)
+        """
+        # Map OptimizationLevel to string for backward compatibility
+        level_map = {
+            OptimizationLevel.O0: "conservative",
+            OptimizationLevel.O1: "conservative",
+            OptimizationLevel.O2: "balanced",
+            OptimizationLevel.O3: "aggressive"
+        }
+        level_str = level_map.get(level, "balanced")
+
+        # Use existing implementation
+        result = self.optimize_legacy(
+            model=model,
+            sample_inputs=sample_input,
+            optimization_level=level_str,
+            for_inference=False
+        )
+
+        # Convert to unified OptimizationResult
+        return result.optimized_model, OptimizationResult(
+            success=True,
+            model=result.optimized_model,
+            level=level,
+            optimizations_applied=result.optimizations_applied,
+            warnings=result.warnings,
+            metrics={
+                'compilation_time': result.compilation_time,
+                'memory_stats': result.memory_stats,
+                'device_info': result.device_info
+            }
+        )
+
+    def get_available_strategies(self) -> List[OptimizationStrategy]:
+        """Get available NVIDIA optimization strategies (implements BaseOptimizer abstract method)."""
+        strategies = [
+            OptimizationStrategy(
+                name='device_placement',
+                description='Move model to CUDA device',
+                applicable_levels=[OptimizationLevel.O0, OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
+                speedup_estimate=1.0
+            ),
+            OptimizationStrategy(
+                name='mixed_precision',
+                description='FP16/BF16 mixed precision training',
+                applicable_levels=[OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
+                speedup_estimate=1.8,
+                precision_impact='minor',
+                requires=['compute_capability>=7.0']
+            ),
+            OptimizationStrategy(
+                name='gradient_checkpointing',
+                description='Trade compute for memory during training',
+                applicable_levels=[OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
+                speedup_estimate=0.9,  # Slightly slower
+                memory_impact=0.5
+            ),
+            OptimizationStrategy(
+                name='torch_compile',
+                description='PyTorch 2.0 compilation with inductor',
+                applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3],
+                speedup_estimate=2.0,
+                requires=['torch>=2.0']
+            ),
+            OptimizationStrategy(
+                name='kernel_fusion',
+                description='Fuse operations for reduced memory bandwidth',
+                applicable_levels=[OptimizationLevel.O3],
+                speedup_estimate=1.3
+            ),
+        ]
+
+        # Add FP8 strategy if supported
+        if self.backend.supports_fp8:
+            strategies.append(OptimizationStrategy(
+                name='fp8_precision',
+                description='FP8 precision for maximum throughput',
+                applicable_levels=[OptimizationLevel.O3],
+                speedup_estimate=2.5,
+                precision_impact='significant',
+                requires=['H100 or Blackwell GPU']
+            ))
+
+        return strategies
+
+    def optimize_legacy(
         self,
         model: nn.Module,
         sample_inputs: Optional[torch.Tensor] = None,
@@ -60,7 +182,9 @@ class NVIDIAOptimizer:
         for_inference: bool = False
     ) -> NVIDIAOptimizationResult:
         """
-        Optimize model for NVIDIA GPU execution.
+        Legacy optimize method for backward compatibility.
+
+        Use the unified `optimize()` method from BaseOptimizer for new code.
 
         Args:
             model: PyTorch model to optimize
@@ -98,7 +222,7 @@ class NVIDIAOptimizer:
             optimizations_applied=applied_optimizations,
             compilation_time=compilation_time,
             memory_stats=self.backend.get_memory_stats(),
-            device_info=self.backend.get_device_info(),
+            device_info=self.backend.get_device_info_dict(),
             warnings=self._optimization_warnings
         )
 
@@ -277,14 +401,14 @@ class NVIDIAOptimizer:
             )
             return model
 
-    def optimize_for_inference(
+    def optimize_for_inference_legacy(
         self,
         model: nn.Module,
         sample_inputs: Optional[torch.Tensor] = None,
         optimization_level: str = "aggressive"
     ) -> NVIDIAOptimizationResult:
         """
-        Optimize model specifically for inference.
+        Legacy inference optimization method for backward compatibility.
 
         Args:
             model: PyTorch model to optimize
@@ -294,21 +418,21 @@ class NVIDIAOptimizer:
         Returns:
             NVIDIAOptimizationResult with inference-optimized model
         """
-        return self.optimize(
+        return self.optimize_legacy(
             model=model,
             sample_inputs=sample_inputs,
             optimization_level=optimization_level,
             for_inference=True
         )
 
-    def optimize_for_training(
+    def optimize_for_training_legacy(
         self,
         model: nn.Module,
         sample_inputs: Optional[torch.Tensor] = None,
         optimization_level: str = "balanced"
     ) -> NVIDIAOptimizationResult:
         """
-        Optimize model specifically for training.
+        Legacy training optimization method for backward compatibility.
 
         Args:
             model: PyTorch model to optimize
@@ -318,7 +442,7 @@ class NVIDIAOptimizer:
         Returns:
             NVIDIAOptimizationResult with training-optimized model
         """
-        return self.optimize(
+        return self.optimize_legacy(
             model=model,
             sample_inputs=sample_inputs,
             optimization_level=optimization_level,

@@ -3,6 +3,11 @@ TPU Backend Implementation
 
 Core TPU backend that provides device management, model preparation,
 and integration with PyTorch/XLA for Google Cloud TPUs.
+
+Inherits from BaseBackend to provide a consistent interface across all
+hardware backends.
+
+Version: 0.4.8
 """
 
 import logging
@@ -13,19 +18,26 @@ from typing import Dict, Any, Optional, Union, List, Tuple
 from pathlib import Path
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
+from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
 from .cache_utils import LRUCache
 from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
 
-class TPUBackend:
+class TPUBackend(BaseBackend):
     """
     Core TPU backend for PyTorch/XLA integration.
 
     Provides TPU device management, model preparation, and optimization
     specifically designed for Google Cloud TPU deployments.
+
+    Inherits from BaseBackend to provide a unified interface while maintaining
+    backward compatibility with existing TPU-specific APIs.
     """
+
+    # Backend identifier
+    BACKEND_NAME: str = "tpu"
 
     def __init__(self, config: Optional[KernelPyTorchConfig] = None):
         """
@@ -34,18 +46,83 @@ class TPUBackend:
         Args:
             config: Optional configuration. If None, creates default TPU config.
         """
-        self.config = config or KernelPyTorchConfig()
-        self.tpu_config = self.config.hardware.tpu
+        self._full_config = config or KernelPyTorchConfig()
+        self.tpu_config = self._full_config.hardware.tpu
 
         # Initialize XLA environment
         self._xla_device = None
         self._world_size = 1
         self._rank = 0
-        self._setup_xla_environment()
+
+        # Call parent init (which calls _setup_environment)
+        super().__init__(config=self._full_config)
+
+        # Alias for backward compatibility
+        self.config = self._full_config
 
         # Performance tracking with LRU caches
         self._model_cache = LRUCache(max_size=self.tpu_config.cache_max_size)
         self._compilation_cache = LRUCache(max_size=self.tpu_config.cache_max_size)
+
+    def _setup_environment(self) -> None:
+        """Set up PyTorch/XLA environment (implements BaseBackend abstract method)."""
+        self._setup_xla_environment()
+
+    def _check_availability(self) -> bool:
+        """Check if XLA/TPU is available (implements BaseBackend abstract method)."""
+        try:
+            import torch_xla
+            return self._xla_device is not None and str(self._xla_device) != 'cpu'
+        except ImportError:
+            return False
+
+    def _get_device_info(self, device_id: int = 0) -> DeviceInfo:
+        """Get TPU device info (implements BaseBackend abstract method)."""
+        try:
+            device_count = xla_compat.get_device_count()
+            if device_id >= device_count:
+                return DeviceInfo(
+                    backend="tpu",
+                    device_type="cpu",
+                    device_id=0,
+                    device_name="CPU (XLA fallback)",
+                    is_available=False
+                )
+
+            return DeviceInfo(
+                backend="tpu",
+                device_type=f"xla:{device_id}",
+                device_id=device_id,
+                device_name=f"TPU {self.tpu_config.version.value}",
+                compute_capability=self.tpu_config.version.value,
+                total_memory_bytes=self._estimate_tpu_memory(),
+                is_available=True,
+                properties={
+                    'version': self.tpu_config.version.value,
+                    'topology': self.tpu_config.topology.value,
+                    'world_size': self._world_size,
+                    'rank': self._rank,
+                }
+            )
+        except Exception:
+            return DeviceInfo(
+                backend="tpu",
+                device_type="cpu",
+                device_id=0,
+                device_name="CPU (XLA fallback)",
+                is_available=False
+            )
+
+    def _estimate_tpu_memory(self) -> int:
+        """Estimate TPU memory based on version."""
+        memory_map = {
+            TPUVersion.V4: 32 * (1024**3),  # 32GB HBM
+            TPUVersion.V5E: 16 * (1024**3),  # 16GB HBM
+            TPUVersion.V5P: 95 * (1024**3),  # 95GB HBM
+            TPUVersion.V6E: 32 * (1024**3),  # 32GB HBM
+            TPUVersion.V7: 256 * (1024**3),  # 256GB HBM (estimated)
+        }
+        return memory_map.get(self.tpu_config.version, 16 * (1024**3))
 
     def _setup_xla_environment(self) -> None:
         """Set up PyTorch/XLA environment for TPU."""
@@ -128,12 +205,17 @@ class TPUBackend:
         """Get the total number of processes."""
         return self._world_size
 
-    def prepare_model(self, model: nn.Module) -> nn.Module:
+    def prepare_model(
+        self,
+        model: nn.Module,
+        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+    ) -> nn.Module:
         """
-        Prepare a PyTorch model for TPU execution.
+        Prepare a PyTorch model for TPU execution (implements BaseBackend abstract method).
 
         Args:
             model: PyTorch model to prepare
+            optimization_level: Optional optimization level
 
         Returns:
             Model prepared for TPU execution
@@ -147,13 +229,75 @@ class TPUBackend:
         # Move model to TPU device
         model = model.to(self.device)
 
-        # Apply TPU-specific optimizations
-        model = self._apply_tpu_optimizations(model)
+        # Apply TPU-specific optimizations if level is not O0
+        if optimization_level != OptimizationLevel.O0 and optimization_level != "O0":
+            model = self._apply_tpu_optimizations(model)
 
         # Cache the prepared model
         self._model_cache.set(model_id, model)
 
         return model
+
+    def optimize_for_inference(
+        self,
+        model: nn.Module,
+        sample_input: Optional[torch.Tensor] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> nn.Module:
+        """
+        Optimize a model for inference (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            sample_input: Optional sample input for tracing
+            dtype: Optional dtype for precision
+
+        Returns:
+            Inference-optimized model
+        """
+        model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
+        model.eval()
+
+        # Disable gradients
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Synchronize
+        self.synchronize()
+
+        return model
+
+    def optimize_for_training(
+        self,
+        model: nn.Module,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        """
+        Optimize a model for training (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            optimizer: Optional optimizer to optimize along with model
+            dtype: Optional dtype for precision
+
+        Returns:
+            Training-optimized model, or tuple of (model, optimizer)
+        """
+        model = self.prepare_model(model, optimization_level=OptimizationLevel.O1)
+        model.train()
+
+        if optimizer:
+            return model, optimizer
+        return model
+
+    @property
+    def device_count(self) -> int:
+        """Get the number of available TPU devices (overrides BaseBackend)."""
+        try:
+            return xla_compat.get_device_count()
+        except Exception:
+            return 0
 
     def _apply_tpu_optimizations(self, model: nn.Module) -> nn.Module:
         """Apply TPU-specific model optimizations."""

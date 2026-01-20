@@ -116,7 +116,7 @@ class TestNVIDIABackend:
         mock_props.return_value = mock_device_props
 
         backend = NVIDIABackend()
-        info = backend.get_device_info()
+        info = backend.get_device_info_dict()
         assert info['backend'] == 'nvidia'
         assert info['cuda_available']
 
@@ -172,7 +172,7 @@ class TestNVIDIAOptimizer:
         """Test conservative optimization level."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize(model, optimization_level="conservative")
+        result = optimizer.optimize_legacy(model, optimization_level="conservative")
         assert result.optimization_level == "conservative"
         assert result.optimized_model is not None
 
@@ -180,7 +180,7 @@ class TestNVIDIAOptimizer:
         """Test balanced optimization level."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize(model, optimization_level="balanced")
+        result = optimizer.optimize_legacy(model, optimization_level="balanced")
         assert result.optimization_level == "balanced"
         # Check that at least some optimizations were applied
         assert len(result.optimizations_applied) > 0
@@ -189,7 +189,7 @@ class TestNVIDIAOptimizer:
         """Test aggressive optimization level."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize(model, optimization_level="aggressive")
+        result = optimizer.optimize_legacy(model, optimization_level="aggressive")
         assert result.optimization_level == "aggressive"
         assert len(result.optimizations_applied) > 0
 
@@ -197,14 +197,14 @@ class TestNVIDIAOptimizer:
         """Test inference optimization."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize_for_inference(model)
+        result = optimizer.optimize_for_inference_legacy(model)
         assert "eval_mode" in result.optimizations_applied
 
     def test_optimize_for_training(self):
         """Test training optimization."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize_for_training(model)
+        result = optimizer.optimize_for_training_legacy(model)
         assert result.optimized_model is not None
 
     def test_get_optimization_recommendations(self):
@@ -220,7 +220,7 @@ class TestNVIDIAOptimizer:
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
         sample_inputs = torch.randn(1, 16)
-        result = optimizer.optimize(model, sample_inputs=sample_inputs)
+        result = optimizer.optimize_legacy(model, sample_inputs=sample_inputs)
         assert result.optimized_model is not None
 
     def test_mixed_precision_enablement(self):
@@ -229,7 +229,7 @@ class TestNVIDIAOptimizer:
         config.precision.mixed_precision = True
         optimizer = NVIDIAOptimizer(config)
         model = nn.Linear(16, 16)
-        result = optimizer.optimize(model, optimization_level="balanced")
+        result = optimizer.optimize_legacy(model, optimization_level="balanced")
         # Check that optimization was attempted
         assert result.optimized_model is not None
 
@@ -237,7 +237,7 @@ class TestNVIDIAOptimizer:
         """Test optimization warnings."""
         optimizer = NVIDIAOptimizer()
         model = nn.Linear(16, 16)
-        result = optimizer.optimize(model, optimization_level="unknown_level")
+        result = optimizer.optimize_legacy(model, optimization_level="unknown_level")
         assert len(result.warnings) > 0
 
 
@@ -515,7 +515,7 @@ class TestNVIDIAIntegration:
             nn.ReLU(),
             nn.Linear(128, 64)
         )
-        result = optimizer.optimize(model, optimization_level="balanced")
+        result = optimizer.optimize_legacy(model, optimization_level="balanced")
         assert result.optimized_model is not None
         assert len(result.optimizations_applied) > 0
 
@@ -532,7 +532,7 @@ class TestNVIDIAIntegration:
         optimizer = NVIDIAOptimizer(config)
         model = nn.Linear(128, 128)
         sample_input = torch.randn(1, 128)
-        result = optimizer.optimize_for_inference(
+        result = optimizer.optimize_for_inference_legacy(
             model,
             sample_inputs=sample_input,
             optimization_level="aggressive"
@@ -664,7 +664,7 @@ class TestNVIDIAErrorPaths:
         import warnings
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = optimizer.optimize(model, optimization_level="invalid_level")
+            result = optimizer.optimize_legacy(model, optimization_level="invalid_level")
             # Should issue warning about invalid level and fall back to default
             assert result is not None
             # May issue warning about invalid optimization level

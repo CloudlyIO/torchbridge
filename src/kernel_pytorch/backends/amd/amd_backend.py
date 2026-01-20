@@ -17,15 +17,20 @@ Key Features:
 - Matrix Core acceleration
 - ROCm profiling integration
 
-Version: 0.3.6
+Inherits from BaseBackend to provide a consistent interface across all
+hardware backends.
+
+Version: 0.4.8
 """
 
 import logging
 import torch
-from typing import Optional, Dict, Any, List
+import torch.nn as nn
+from typing import Optional, Dict, Any, List, Union, Tuple
 from dataclasses import dataclass
 
 from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
 from .amd_exceptions import (
     AMDBackendError,
     ROCmNotAvailableError,
@@ -37,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class AMDDeviceInfo:
+class AMDDeviceInfoLegacy:
     """Information about an AMD GPU device."""
 
     device_id: int
@@ -49,18 +54,24 @@ class AMDDeviceInfo:
     rocm_version: str
 
 
-class AMDBackend:
+class AMDBackend(BaseBackend):
     """
     Main backend orchestrator for AMD ROCm/HIP operations.
 
     This class manages AMD GPU devices, coordinates optimization strategies,
     and provides a unified interface for model preparation and execution.
 
+    Inherits from BaseBackend to provide a unified interface while maintaining
+    backward compatibility with existing AMD-specific APIs.
+
     Example:
         >>> config = AMDConfig(architecture=AMDArchitecture.CDNA3)
         >>> backend = AMDBackend(config)
         >>> model = backend.prepare_model(model)
     """
+
+    # Backend identifier
+    BACKEND_NAME: str = "amd"
 
     def __init__(self, config: Optional[AMDConfig] = None):
         """
@@ -72,43 +83,23 @@ class AMDBackend:
         Note:
             Falls back to CPU mode if ROCm is not available.
         """
-        self.config = config or AMDConfig()
-        self._devices: List[AMDDeviceInfo] = []
-        self._current_device: Optional[AMDDeviceInfo] = None
-        self._initialized = False
+        self._amd_config = config or AMDConfig()
+        self._amd_devices: List[AMDDeviceInfoLegacy] = []
+        self._current_amd_device: Optional[AMDDeviceInfoLegacy] = None
         self._cpu_fallback = False
 
-        logger.info("Initializing AMD ROCm Backend v0.3.6")
+        logger.info("Initializing AMD ROCm Backend v0.4.8")
 
         # Validate configuration
         self._validate_config()
 
-        # Check ROCm availability
-        if not self._check_rocm_available():
-            logger.warning(
-                "ROCm not available - falling back to CPU mode. "
-                "For GPU acceleration, install ROCm and set ROCM_HOME."
-            )
-            self._cpu_fallback = True
-            self._initialized = True
-            return
+        # Call parent init (which calls _setup_environment)
+        super().__init__(config=self._amd_config)
 
-        # Initialize devices
-        self._initialize_devices()
-
-        # Set default device
-        if self._devices:
-            self._current_device = self._devices[self.config.device_id]
-            logger.info(
-                "AMD backend initialized: device=%s, architecture=%s",
-                self._current_device.name,
-                self._current_device.architecture.value,
-            )
-        else:
-            logger.warning("No AMD GPUs detected - using CPU fallback")
-            self._cpu_fallback = True
-
-        self._initialized = True
+        # Alias for backward compatibility
+        self.config = self._amd_config
+        self._devices = self._amd_devices
+        self._current_device = self._current_amd_device
 
     @property
     def device(self) -> torch.device:
@@ -120,29 +111,89 @@ class AMDBackend:
     def _validate_config(self) -> None:
         """Validate AMD configuration settings."""
         # Validate device ID
-        if self.config.device_id < 0:
+        if self._amd_config.device_id < 0:
             raise AMDConfigurationError(
-                "device_id", self.config.device_id, "Device ID must be non-negative"
+                "device_id", self._amd_config.device_id, "Device ID must be non-negative"
             )
 
         # Validate memory settings
-        if self.config.memory_pool_size_gb <= 0:
+        if self._amd_config.memory_pool_size_gb <= 0:
             raise AMDConfigurationError(
                 "memory_pool_size_gb",
-                self.config.memory_pool_size_gb,
+                self._amd_config.memory_pool_size_gb,
                 "Memory pool size must be positive",
             )
 
         # Validate precision settings
         valid_precisions = ["fp32", "fp16", "bf16", "fp8"]
-        if self.config.default_precision not in valid_precisions:
+        if self._amd_config.default_precision not in valid_precisions:
             raise AMDConfigurationError(
                 "default_precision",
-                self.config.default_precision,
+                self._amd_config.default_precision,
                 f"Must be one of {valid_precisions}",
             )
 
         logger.debug("Configuration validated successfully")
+
+    def _setup_environment(self) -> None:
+        """Set up ROCm environment for AMD GPUs (implements BaseBackend abstract method)."""
+        # Check ROCm availability
+        if not self._check_rocm_available():
+            logger.warning(
+                "ROCm not available - falling back to CPU mode. "
+                "For GPU acceleration, install ROCm and set ROCM_HOME."
+            )
+            self._cpu_fallback = True
+            self._device = torch.device("cpu")
+            return
+
+        # Initialize devices
+        self._initialize_amd_devices()
+
+        # Set default device
+        if self._amd_devices:
+            self._current_amd_device = self._amd_devices[self._amd_config.device_id]
+            self._device = torch.device(f"cuda:{self._amd_config.device_id}")
+            logger.info(
+                "AMD backend initialized: device=%s, architecture=%s",
+                self._current_amd_device.name,
+                self._current_amd_device.architecture.value,
+            )
+        else:
+            logger.warning("No AMD GPUs detected - using CPU fallback")
+            self._cpu_fallback = True
+            self._device = torch.device("cpu")
+
+    def _check_availability(self) -> bool:
+        """Check if ROCm is available (implements BaseBackend abstract method)."""
+        return not self._cpu_fallback and self._check_rocm_available()
+
+    def _get_device_info(self, device_id: int = 0) -> DeviceInfo:
+        """Get device info in unified format (implements BaseBackend abstract method)."""
+        if self._cpu_fallback or device_id >= len(self._amd_devices):
+            return DeviceInfo(
+                backend="amd",
+                device_type="cpu",
+                device_id=0,
+                device_name="CPU (ROCm fallback)",
+                is_available=False
+            )
+
+        amd_info = self._amd_devices[device_id]
+        return DeviceInfo(
+            backend="amd",
+            device_type=f"cuda:{device_id}",
+            device_id=device_id,
+            device_name=amd_info.name,
+            compute_capability=amd_info.compute_capability,
+            total_memory_bytes=int(amd_info.total_memory_gb * 1024**3),
+            driver_version=amd_info.rocm_version,
+            is_available=True,
+            properties={
+                'architecture': amd_info.architecture.value,
+                'matrix_cores_available': amd_info.matrix_cores_available,
+            }
+        )
 
     def _check_rocm_available(self) -> bool:
         """
@@ -178,7 +229,7 @@ class AMDBackend:
             logger.error("Failed to check ROCm availability: %s", e)
             return False
 
-    def _initialize_devices(self) -> None:
+    def _initialize_amd_devices(self) -> None:
         """
         Initialize and catalog all AMD GPU devices.
 
@@ -190,8 +241,8 @@ class AMDBackend:
             logger.info("Detected %d AMD GPU device(s)", device_count)
 
             for device_id in range(device_count):
-                device_info = self._get_device_info(device_id)
-                self._devices.append(device_info)
+                device_info = self._get_amd_device_info(device_id)
+                self._amd_devices.append(device_info)
 
                 logger.debug(
                     "Device %d: %s (%s, %.2f GB, Matrix Cores: %s)",
@@ -204,20 +255,20 @@ class AMDBackend:
 
         except Exception as e:
             raise AMDDeviceError(
-                self.config.device_id,
+                self._amd_config.device_id,
                 "initialization",
                 f"Failed to initialize devices: {e}",
             )
 
-    def _get_device_info(self, device_id: int) -> AMDDeviceInfo:
+    def _get_amd_device_info(self, device_id: int) -> AMDDeviceInfoLegacy:
         """
-        Get detailed information about an AMD GPU device.
+        Get detailed information about an AMD GPU device (legacy format).
 
         Args:
             device_id: Device ID to query
 
         Returns:
-            AMDDeviceInfo object with device details
+            AMDDeviceInfoLegacy object with device details
         """
         device_name = torch.cuda.get_device_name(device_id)
         properties = torch.cuda.get_device_properties(device_id)
@@ -241,7 +292,7 @@ class AMDBackend:
         # Get ROCm version (approximation from compute capability)
         rocm_version = self._get_rocm_version()
 
-        return AMDDeviceInfo(
+        return AMDDeviceInfoLegacy(
             device_id=device_id,
             name=device_name,
             architecture=architecture,
@@ -305,10 +356,12 @@ class AMDBackend:
             return "unknown"
 
     def prepare_model(
-        self, model: torch.nn.Module, optimization_level: Optional[str] = None
-    ) -> torch.nn.Module:
+        self,
+        model: nn.Module,
+        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+    ) -> nn.Module:
         """
-        Prepare a PyTorch model for AMD GPU execution.
+        Prepare a PyTorch model for AMD GPU execution (implements BaseBackend abstract method).
 
         This method:
         1. Moves the model to AMD GPU (or keeps on CPU if fallback)
@@ -318,8 +371,7 @@ class AMDBackend:
 
         Args:
             model: PyTorch model to prepare
-            optimization_level: Optimization level (conservative/balanced/aggressive)
-                              If None, uses config setting
+            optimization_level: Optimization level
 
         Returns:
             Prepared model ready for execution
@@ -337,24 +389,20 @@ class AMDBackend:
                 model = model.to(torch.device("cpu"))
                 return model
 
-            if not self._current_device:
+            if not self._current_amd_device:
                 raise AMDBackendError("No AMD GPU device available")
 
-            logger.info("Preparing model for AMD GPU: %s", self._current_device.name)
+            logger.info("Preparing model for AMD GPU: %s", self._current_amd_device.name)
 
             # Move model to GPU
-            device = torch.device(f"cuda:{self.config.device_id}")
+            device = torch.device(f"cuda:{self._amd_config.device_id}")
             model = model.to(device)
 
             # Set precision if specified
-            if self.config.default_precision == "fp16":
+            if self._amd_config.default_precision == "fp16":
                 model = model.half()
-            elif self.config.default_precision == "bf16":
+            elif self._amd_config.default_precision == "bf16":
                 model = model.bfloat16()
-
-            # TODO: Apply optimizations via AMDOptimizer
-            # TODO: Compile HIP kernels via ROCmCompiler
-            # TODO: Set up memory management via AMDMemoryManager
 
             logger.info("Model prepared successfully for AMD GPU")
             return model
@@ -362,9 +410,73 @@ class AMDBackend:
         except Exception as e:
             raise AMDBackendError(f"Model preparation failed: {e}")
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def optimize_for_inference(
+        self,
+        model: nn.Module,
+        sample_input: Optional[torch.Tensor] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> nn.Module:
         """
-        Get information about the current device.
+        Optimize a model for inference (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            sample_input: Optional sample input for tracing
+            dtype: Optional dtype for precision
+
+        Returns:
+            Inference-optimized model
+        """
+        model = self.prepare_model(model)
+        model.eval()
+
+        # Disable gradients
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Apply torch.compile if available
+        if sample_input is not None and hasattr(torch, 'compile'):
+            try:
+                model = torch.compile(model, mode='reduce-overhead')
+                with torch.no_grad():
+                    _ = model(sample_input.to(self.device))
+            except Exception as e:
+                logger.warning(f"torch.compile failed: {e}")
+
+        return model
+
+    def optimize_for_training(
+        self,
+        model: nn.Module,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        dtype: Optional[torch.dtype] = None
+    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        """
+        Optimize a model for training (implements BaseBackend abstract method).
+
+        Args:
+            model: PyTorch model
+            optimizer: Optional optimizer to optimize along with model
+            dtype: Optional dtype for precision
+
+        Returns:
+            Training-optimized model, or tuple of (model, optimizer)
+        """
+        model = self.prepare_model(model)
+        model.train()
+
+        if optimizer:
+            return model, optimizer
+        return model
+
+    @property
+    def device_count(self) -> int:
+        """Get the number of available AMD devices (overrides BaseBackend)."""
+        return len(self._amd_devices)
+
+    def get_device_info_dict(self) -> Dict[str, Any]:
+        """
+        Get information about the current device (legacy method).
 
         Returns:
             Dictionary with device information
@@ -379,59 +491,49 @@ class AMDBackend:
                 "rocm_available": False,
             }
 
-        if self._current_device:
+        if self._current_amd_device:
             return {
                 "device_type": "amd_gpu",
-                "name": self._current_device.name,
-                "architecture": self._current_device.architecture.value,
-                "total_memory_gb": self._current_device.total_memory_gb,
-                "matrix_cores_available": self._current_device.matrix_cores_available,
+                "name": self._current_amd_device.name,
+                "architecture": self._current_amd_device.architecture.value,
+                "total_memory_gb": self._current_amd_device.total_memory_gb,
+                "matrix_cores_available": self._current_amd_device.matrix_cores_available,
                 "rocm_available": True,
             }
 
         return {"device_type": "unknown", "rocm_available": False}
 
-    def get_all_devices(self) -> List[AMDDeviceInfo]:
+    def get_all_amd_devices(self) -> List[AMDDeviceInfoLegacy]:
         """
-        Get information about all available AMD GPU devices.
+        Get information about all available AMD GPU devices (legacy method).
 
         Returns:
-            List of AMDDeviceInfo objects
+            List of AMDDeviceInfoLegacy objects
         """
-        return self._devices.copy()
-
-    def is_available(self) -> bool:
-        """
-        Check if AMD backend is available and initialized.
-
-        Returns:
-            True if backend is ready (including CPU fallback mode)
-        """
-        return self._initialized
+        return self._amd_devices.copy()
 
     def synchronize(self) -> None:
-        """Synchronize all pending operations."""
+        """Synchronize all pending operations (overrides BaseBackend)."""
         if not self._cpu_fallback and torch.cuda.is_available():
             torch.cuda.synchronize()
 
-    def cleanup(self) -> None:
-        """Clean up AMD backend resources."""
-        if self._initialized:
-            logger.info("Cleaning up AMD backend resources")
-            # TODO: Clean up memory pools
-            # TODO: Clear compilation caches
-            self._initialized = False
-            logger.info("AMD backend cleanup complete")
+    def empty_cache(self) -> None:
+        """Empty ROCm cache (overrides BaseBackend)."""
+        if not self._cpu_fallback and torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def __repr__(self) -> str:
         """String representation of AMD backend."""
-        if self._current_device:
+        if self._current_amd_device:
             return (
-                f"AMDBackend(device={self._current_device.name}, "
-                f"architecture={self._current_device.architecture.value}, "
-                f"memory={self._current_device.total_memory_gb:.2f}GB)"
+                f"AMDBackend(device={self._current_amd_device.name}, "
+                f"architecture={self._current_amd_device.architecture.value}, "
+                f"memory={self._current_amd_device.total_memory_gb:.2f}GB)"
             )
         return "AMDBackend(no device)"
 
 
-__all__ = ["AMDBackend", "AMDDeviceInfo"]
+# Alias for backward compatibility
+AMDDeviceInfo = AMDDeviceInfoLegacy
+
+__all__ = ["AMDBackend", "AMDDeviceInfo", "AMDDeviceInfoLegacy"]

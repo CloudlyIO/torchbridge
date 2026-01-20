@@ -8,17 +8,123 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.7 (Production/Stable)
+**Current Version**: v0.4.8 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 90%+ production-ready)
-- **1,111 tests** passing (100% success rate)
+- **Unified backend interface**: BaseBackend, BackendFactory, OptimizationLevel
+- **1,167 tests** passing (100% success rate)
 - **Mixture of Experts (MoE)**: Comprehensive sparse MoE implementation
 - **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
 - **Full FP8**: Native PyTorch FP8 types for 2x speedup on H100/Blackwell
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.8] - 2026-01-20 - Backend Unification
+
+### **Added** ✨
+
+- **Unified Backend Architecture**: Abstract base classes for consistent interfaces
+  - `BaseBackend`: Abstract base class defining unified backend interface
+  - `BaseOptimizer`: Abstract base class for optimizers with standardized API
+  - `CPUBackend`: Concrete CPU fallback implementation
+  - `CPUOptimizer`: CPU-specific optimizer with threading optimizations
+
+- **BackendFactory**: Automatic hardware detection and backend selection
+  - `BackendFactory.create()`: Create backends with AUTO selection
+  - `BackendType` enum: AUTO, NVIDIA, AMD, TPU, INTEL, CPU
+  - `get_backend()`: Convenience function for quick backend access
+  - `get_optimizer()`: Convenience function for optimizer access
+  - `detect_best_backend()`: Get recommended backend for current hardware
+  - `list_available_backends()`: Get list of available backend names
+
+- **Optimization Levels**: Standardized optimization enum
+  - `OptimizationLevel`: O0, O1, O2, O3 levels
+  - String aliases: "conservative", "balanced", "aggressive", "none"
+  - Case-insensitive parsing with `from_string()`
+
+- **Standardized Data Types**:
+  - `DeviceInfo`: Unified device information dataclass
+    - Properties: backend, device_type, device_id, device_name
+    - Memory properties: total_memory_bytes, total_memory_gb, total_memory_mb
+    - Capability info: compute_capability, driver_version, is_available
+    - Backend-specific: properties dict
+  - `OptimizationResult`: Standardized optimization results
+    - Fields: success, model, level, optimizations_applied, warnings, metrics
+  - `OptimizationStrategy`: Describes available optimization strategies
+  - `KernelConfig`: Kernel-level optimization configuration
+
+- **Backend Refactoring**: All backends now inherit from BaseBackend
+  - NVIDIA: `NVIDIABackend` with unified interface, `get_device_info_dict()` for legacy
+  - AMD: `AMDBackend` with unified interface, `AMDDeviceInfoLegacy` for compatibility
+  - TPU: `TPUBackend` with unified interface and XLA integration
+  - Intel: `IntelBackend` with unified interface and IPEX support
+
+- **Optimizer Refactoring**: NVIDIAOptimizer inherits from BaseOptimizer
+  - `_apply_optimizations()`: Unified optimization method
+  - `get_available_strategies()`: Returns applicable optimization strategies
+  - `optimize_legacy()`: Backward-compatible optimization method
+
+- **Tests**: 56 comprehensive tests for backend unification
+  - OptimizationLevel parsing and aliases
+  - DeviceInfo creation and properties
+  - OptimizationResult handling
+  - CPUBackend and CPUOptimizer functionality
+  - BackendFactory creation and auto-selection
+  - Backend inheritance verification
+  - Unified interface compliance
+  - Integration tests for end-to-end workflows
+
+- **Demo**: `demos/unified_backend_demo.py`
+  - BackendFactory auto-detection demonstration
+  - Optimization level usage
+  - DeviceInfo standardization
+  - Unified interface across backends
+  - Context manager usage
+  - Complete workflow example
+
+- **Benchmarks**: `benchmarks/backend_comparison.py`
+  - Backend initialization time
+  - Model preparation time
+  - Inference latency comparison
+  - Optimization overhead measurement
+  - Device info retrieval overhead
+  - Throughput benchmarking
+
+- **Documentation**: `docs/backends/unification.md`
+  - Architecture overview
+  - BaseBackend interface specification
+  - BackendFactory usage guide
+  - Optimization levels explanation
+  - DeviceInfo standardization
+  - Migration guide from v0.3.x
+  - Best practices and examples
+
+### **Changed** 🔄
+
+- **Backend Exports**: `kernel_pytorch.backends` now exports all base classes
+  - BaseBackend, CPUBackend, OptimizationLevel, DeviceInfo, OptimizationResult
+  - BaseOptimizer, CPUOptimizer, KernelConfig, OptimizationStrategy
+  - BackendFactory, BackendType, get_backend, get_optimizer
+
+- **Method Renames for Clarity**:
+  - NVIDIA: `get_device_info()` → `get_device_info_dict()` (dict return)
+  - Intel: `get_device_info()` → `get_device_info_dict()` (dict return)
+  - AMD: Already had `get_device_info_dict()` for dict format
+  - All backends: `get_device_info()` now returns `DeviceInfo` dataclass
+
+- **Internal Variable Renames**:
+  - Intel: `_devices` → `_xpu_devices` (internal clarity)
+  - AMD: `AMDDeviceInfo` → `AMDDeviceInfoLegacy` (backward compatibility)
+
+### **Fixed** 🐛
+
+- **Unified Interface Compliance**: All backends now pass unified interface tests
+- **NVIDIA get_device_info**: Fixed method override conflict with base class
+- **Intel get_device_info**: Fixed method override conflict with base class
 
 ---
 

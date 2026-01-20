@@ -295,12 +295,13 @@ class TestBackendCapabilities:
 
     def test_amd_backend_device_info(self):
         """Test AMD backend provides device info."""
+        from kernel_pytorch.backends import DeviceInfo
         config = AMDConfig()
         backend = AMDBackend(config)
 
         info = backend.get_device_info()
-        assert isinstance(info, dict)
-        assert 'device_type' in info
+        assert isinstance(info, DeviceInfo)
+        assert hasattr(info, 'device_type')
 
     def test_amd_backend_synchronization(self):
         """Test AMD backend can synchronize."""

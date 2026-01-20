@@ -3,14 +3,20 @@ Intel XPU Backend Implementation
 
 Core backend for Intel XPU device management and model preparation,
 using Intel Extension for PyTorch (IPEX) for optimizations.
+
+Inherits from BaseBackend to provide a consistent interface across all
+hardware backends.
+
+Version: 0.4.8
 """
 
 import logging
 import warnings
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union, Tuple
 
+from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
 from .intel_exceptions import (
     XPUNotAvailableError,
     IPEXNotInstalledError,
@@ -30,13 +36,19 @@ from .memory_manager import IntelMemoryManager
 logger = logging.getLogger(__name__)
 
 
-class IntelBackend:
+class IntelBackend(BaseBackend):
     """
     Core Intel XPU backend for device management and model preparation.
 
     Provides device coordination, memory management, and model optimization
     for Intel XPU devices (Ponte Vecchio, Arc, Data Center Max, etc.).
+
+    Inherits from BaseBackend to provide a unified interface while maintaining
+    backward compatibility with existing Intel-specific APIs.
     """
+
+    # Backend identifier
+    BACKEND_NAME: str = "intel"
 
     def __init__(self, config=None):
         """
@@ -45,13 +57,12 @@ class IntelBackend:
         Args:
             config: KernelPyTorchConfig configuration with Intel settings
         """
-        self.config = config
+        self._full_config = config
         self._intel_config = None
         if config is not None:
             self._intel_config = getattr(config.hardware, 'intel', None)
 
-        self._device = None
-        self._devices = []
+        self._xpu_devices = []
         self._device_name = None
         self._device_type = None
 
@@ -61,10 +72,51 @@ class IntelBackend:
         # Initialize optimizations helper
         self._optimizations = XPUOptimizations(self._device_manager)
 
-        # Initialize memory manager
-        self._memory_manager = None
+        # Call parent init (which calls _setup_environment)
+        super().__init__(config=config)
 
+        # Alias for backward compatibility
+        self.config = self._full_config
+        self._devices = self._xpu_devices
+
+    def _setup_environment(self) -> None:
+        """Set up XPU environment (implements BaseBackend abstract method)."""
         self._setup_xpu_environment()
+
+    def _check_availability(self) -> bool:
+        """Check if XPU is available (implements BaseBackend abstract method)."""
+        return XPU_AVAILABLE and self._device is not None and self._device.type == "xpu"
+
+    def _get_device_info(self, device_id: int = 0) -> DeviceInfo:
+        """Get XPU device info (implements BaseBackend abstract method)."""
+        if not self._check_availability() or device_id >= len(self._xpu_devices):
+            return DeviceInfo(
+                backend="intel",
+                device_type="cpu",
+                device_id=0,
+                device_name="CPU (XPU fallback)",
+                is_available=False
+            )
+
+        device_info = self._device_manager.get_device_info(device_id)
+        return DeviceInfo(
+            backend="intel",
+            device_type=f"xpu:{device_id}",
+            device_id=device_id,
+            device_name=device_info.name,
+            compute_capability=device_info.driver_version,
+            total_memory_bytes=device_info.total_memory,
+            driver_version=device_info.driver_version,
+            is_available=True,
+            properties={
+                'device_type': device_info.device_type,
+                'supports_amx': device_info.supports_amx,
+                'supports_fp16': device_info.supports_fp16,
+                'supports_bf16': device_info.supports_bf16,
+                'max_compute_units': device_info.max_compute_units,
+                'ipex_version': get_ipex_version(),
+            }
+        )
 
     def _setup_xpu_environment(self) -> None:
         """Set up XPU environment for Intel devices."""
@@ -82,8 +134,8 @@ class IntelBackend:
         # Get device information
         device_count = self._device_manager.device_count
         if device_count > 0:
-            self._devices = [torch.device(f"xpu:{i}") for i in range(device_count)]
-            self._device = self._devices[0]
+            self._xpu_devices = [torch.device(f"xpu:{i}") for i in range(device_count)]
+            self._device = self._xpu_devices[0]
 
             # Get device info
             device_info = self._device_manager.get_device_info(0)
@@ -104,7 +156,7 @@ class IntelBackend:
                 "num_devices=%d, ipex_version=%s",
                 self._device_name,
                 self._device_type,
-                len(self._devices),
+                len(self._xpu_devices),
                 get_ipex_version() or "not installed"
             )
         else:
@@ -141,7 +193,7 @@ class IntelBackend:
     @property
     def devices(self) -> List[torch.device]:
         """Get all available XPU devices."""
-        return self._devices
+        return self._xpu_devices
 
     @property
     def device_name(self) -> Optional[str]:
@@ -189,12 +241,17 @@ class IntelBackend:
         """Get memory manager instance."""
         return self._memory_manager
 
-    def prepare_model(self, model: nn.Module) -> nn.Module:
+    def prepare_model(
+        self,
+        model: nn.Module,
+        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+    ) -> nn.Module:
         """
-        Prepare model for Intel XPU execution.
+        Prepare model for Intel XPU execution (implements BaseBackend abstract method).
 
         Args:
             model: PyTorch model to prepare
+            optimization_level: Optional optimization level
 
         Returns:
             Prepared model ready for Intel XPU execution
@@ -210,10 +267,16 @@ class IntelBackend:
         # Move model to device
         model = model.to(self.device)
 
-        # Apply Intel-specific optimizations
-        model = self._apply_intel_optimizations(model)
+        # Apply Intel-specific optimizations if level is not O0
+        if optimization_level != OptimizationLevel.O0 and optimization_level != "O0":
+            model = self._apply_intel_optimizations(model)
 
         return model
+
+    @property
+    def device_count(self) -> int:
+        """Get the number of available XPU devices (overrides BaseBackend)."""
+        return len(self._xpu_devices)
 
     def _apply_intel_optimizations(self, model: nn.Module) -> nn.Module:
         """Apply Intel-specific optimizations to model."""
@@ -258,16 +321,16 @@ class IntelBackend:
     def optimize_for_inference(
         self,
         model: nn.Module,
-        dtype: Optional[torch.dtype] = None,
-        sample_input: Optional[torch.Tensor] = None
+        sample_input: Optional[torch.Tensor] = None,
+        dtype: Optional[torch.dtype] = None
     ) -> nn.Module:
         """
-        Optimize model for inference using IPEX.
+        Optimize model for inference using IPEX (implements BaseBackend abstract method).
 
         Args:
             model: Model to optimize
-            dtype: Data type to use (auto-detected if None)
             sample_input: Optional sample input for tracing
+            dtype: Data type to use (auto-detected if None)
 
         Returns:
             Optimized model
@@ -282,26 +345,32 @@ class IntelBackend:
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: torch.optim.Optimizer,
+        optimizer: Optional[torch.optim.Optimizer] = None,
         dtype: Optional[torch.dtype] = None
-    ) -> tuple:
+    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
         """
-        Optimize model and optimizer for training using IPEX.
+        Optimize model and optimizer for training using IPEX (implements BaseBackend abstract method).
 
         Args:
             model: Model to optimize
-            optimizer: Optimizer to optimize
+            optimizer: Optional optimizer to optimize
             dtype: Data type to use
 
         Returns:
-            Tuple of (optimized_model, optimized_optimizer)
+            Optimized model, or tuple of (optimized_model, optimized_optimizer) if optimizer provided
         """
         if dtype is None:
             dtype = self._optimizations.get_optimal_dtype()
 
-        return self._optimizations.optimize_model_for_training(
-            model, optimizer, dtype=dtype
-        )
+        if optimizer is not None:
+            return self._optimizations.optimize_model_for_training(
+                model, optimizer, dtype=dtype
+            )
+
+        # If no optimizer provided, just return the model
+        model = self.prepare_model(model)
+        model.train()
+        return model
 
     def synchronize(self) -> None:
         """Synchronize XPU device."""
@@ -341,8 +410,8 @@ class IntelBackend:
             'device_name': self._device_name,
         }
 
-    def get_device_info(self) -> Dict[str, Any]:
-        """Get comprehensive device information."""
+    def get_device_info_dict(self) -> Dict[str, Any]:
+        """Get comprehensive device information (legacy format)."""
         info = {
             'backend': 'intel',
             'xpu_available': self.is_xpu_available,
@@ -368,10 +437,10 @@ class IntelBackend:
         return info
 
     def set_device(self, device_id: int) -> None:
-        """Set current XPU device."""
-        if device_id < len(self._devices):
+        """Set current XPU device (overrides BaseBackend)."""
+        if device_id < len(self._xpu_devices):
             self._device_manager.set_device(device_id)
-            self._device = self._devices[device_id]
+            self._device = self._xpu_devices[device_id]
 
             # Update device info
             device_info = self._device_manager.get_device_info(device_id)
