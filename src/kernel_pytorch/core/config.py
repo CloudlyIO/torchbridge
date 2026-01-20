@@ -85,6 +85,16 @@ class AMDArchitecture(Enum):
     RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
 
 
+class IntelArchitecture(Enum):
+    """Intel XPU architectures."""
+    AUTO = "auto"
+    PVC = "pvc"          # Ponte Vecchio (Data Center Max)
+    ATS = "ats"          # Arctic Sound (older data center)
+    DG2 = "dg2"          # Arc GPUs (A770, A750, A580)
+    FLEX = "flex"        # Data Center Flex series
+    INTEGRATED = "integrated"  # Integrated graphics (Iris Xe, etc.)
+
+
 class AttentionPatterns(Enum):
     """Supported attention patterns - from attention module."""
     FULL = "full"                           # Standard full attention
@@ -567,6 +577,94 @@ class AMDConfig:
 
 
 @dataclass
+class IntelConfig:
+    """Intel XPU-specific hardware configuration."""
+    enabled: bool = True
+    architecture: IntelArchitecture = IntelArchitecture.AUTO
+    device_id: int = 0
+
+    # IPEX settings
+    ipex_enabled: bool = True
+    ipex_optimization_level: str = "O1"  # "O0", "O1"
+
+    # oneDNN settings
+    onednn_enabled: bool = True
+    onednn_fusion_enabled: bool = True
+
+    # Precision settings
+    default_precision: str = "fp32"  # "fp32", "fp16", "bf16"
+    enable_mixed_precision: bool = True
+    allow_fp16: bool = True
+    allow_bf16: bool = True
+
+    # Memory settings
+    enable_memory_pooling: bool = True
+    max_memory_fraction: float = 0.9
+
+    # Performance optimization
+    optimization_level: str = "balanced"  # "conservative", "balanced", "aggressive"
+    enable_amx: bool = True  # Enable AMX (Advanced Matrix Extensions) if available
+    auto_kernel_selection: bool = True
+
+    # Profiling and debugging
+    enable_profiling: bool = False
+
+    def __post_init__(self):
+        """Auto-configure based on detected architecture."""
+        if self.architecture == IntelArchitecture.AUTO:
+            self.architecture = self._detect_architecture()
+
+        # Configure settings based on architecture
+        if self.architecture == IntelArchitecture.PVC:
+            # Ponte Vecchio (Data Center Max) - most advanced
+            self.allow_bf16 = True
+            self.enable_amx = True
+        elif self.architecture == IntelArchitecture.DG2:
+            # Arc GPUs - consumer
+            self.allow_bf16 = True
+            self.enable_amx = False
+        elif self.architecture == IntelArchitecture.FLEX:
+            # Flex series - data center
+            self.allow_bf16 = True
+            self.enable_amx = False
+        else:
+            # Integrated graphics
+            self.allow_bf16 = False
+            self.enable_amx = False
+            self.max_memory_fraction = 0.5  # Share memory with system
+
+    def _detect_architecture(self) -> IntelArchitecture:
+        """Detect Intel XPU architecture."""
+        try:
+            import torch
+            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                device_props = torch.xpu.get_device_properties(0)
+                device_name = device_props.name.upper()
+
+                # Ponte Vecchio / Data Center Max
+                if any(name in device_name for name in ["MAX", "PONTE VECCHIO", "PVC"]):
+                    return IntelArchitecture.PVC
+
+                # Arc GPUs (DG2)
+                if any(name in device_name for name in ["ARC", "DG2", "A770", "A750", "A580"]):
+                    return IntelArchitecture.DG2
+
+                # Flex series
+                if "FLEX" in device_name:
+                    return IntelArchitecture.FLEX
+
+                # Integrated graphics
+                if any(name in device_name for name in ["IRIS", "UHD", "INTEGRATED"]):
+                    return IntelArchitecture.INTEGRATED
+
+                return IntelArchitecture.DG2  # Default to Arc for unknown
+        except (ImportError, AttributeError, Exception):
+            pass
+
+        return IntelArchitecture.DG2  # Default fallback
+
+
+@dataclass
 class HardwareConfig:
     """Unified hardware optimization configuration."""
     backend: HardwareBackend = HardwareBackend.CUDA
@@ -577,6 +675,7 @@ class HardwareConfig:
     nvidia: NVIDIAConfig = field(default_factory=NVIDIAConfig)
     tpu: TPUConfig = field(default_factory=TPUConfig)
     amd: AMDConfig = field(default_factory=AMDConfig)
+    intel: IntelConfig = field(default_factory=IntelConfig)
 
     # Tensor Core settings (general)
     tensor_cores_enabled: bool = True
@@ -594,24 +693,18 @@ class HardwareConfig:
         """Auto-configure hardware settings based on detected capabilities."""
         # Auto-detect hardware backend if not explicitly set
         if self.backend == HardwareBackend.CUDA and not torch.cuda.is_available():
+            # Try Intel XPU detection first
+            if self._detect_intel_xpu():
+                self.backend = HardwareBackend.INTEL
             # Try AMD ROCm detection
-            try:
-                if hasattr(torch, 'hip') and torch.hip.is_available():
-                    self.backend = HardwareBackend.AMD
-                else:
-                    # Try TPU detection if ROCm not available
-                    if self._detect_tpu_environment():
-                        self.backend = HardwareBackend.TPU
-                    else:
-                        # Fall back to CPU
-                        self.backend = HardwareBackend.CPU
-            except (ImportError, AttributeError):
-                # Try TPU detection
-                if self._detect_tpu_environment():
-                    self.backend = HardwareBackend.TPU
-                else:
-                    # Fall back to CPU
-                    self.backend = HardwareBackend.CPU
+            elif self._detect_amd_rocm():
+                self.backend = HardwareBackend.AMD
+            # Try TPU detection
+            elif self._detect_tpu_environment():
+                self.backend = HardwareBackend.TPU
+            else:
+                # Fall back to CPU
+                self.backend = HardwareBackend.CPU
 
         # Configure NVIDIA settings
         if self.backend == HardwareBackend.CUDA and torch.cuda.is_available():
@@ -627,6 +720,15 @@ class HardwareConfig:
         else:
             self.amd.enabled = False
 
+        # Configure Intel settings
+        if self.backend == HardwareBackend.INTEL:
+            self.intel.enabled = True
+            # Disable incompatible settings for Intel XPU
+            self.triton_enabled = False  # Triton is CUDA-specific
+            # Intel config will auto-detect architecture in its own __post_init__
+        else:
+            self.intel.enabled = False
+
         # Configure TPU settings
         if self.backend == HardwareBackend.TPU:
             self.tpu.enabled = True
@@ -635,6 +737,26 @@ class HardwareConfig:
             self.triton_enabled = False        # Triton is CUDA-specific
         else:
             self.tpu.enabled = False
+
+    def _detect_intel_xpu(self) -> bool:
+        """Check if Intel XPU is available."""
+        try:
+            import torch
+            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _detect_amd_rocm(self) -> bool:
+        """Check if AMD ROCm is available."""
+        try:
+            import torch
+            if hasattr(torch, 'hip') and torch.hip.is_available():
+                return True
+        except Exception:
+            pass
+        return False
 
     def _detect_tpu_environment(self) -> bool:
         """Check if running in TPU environment (compatible with torch_xla 2.9+)."""
@@ -834,6 +956,13 @@ class KernelPyTorchConfig:
         if torch.cuda.is_available():
             return torch.device("cuda")
 
+        # Try Intel XPU
+        try:
+            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                return torch.device("xpu")
+        except Exception:
+            pass
+
         # Try TPU (compatible with torch_xla 2.9+)
         try:
             import torch_xla
@@ -866,6 +995,8 @@ class KernelPyTorchConfig:
         # Sync hardware backend with detected device
         if self.device.type == "cuda":
             self.hardware.backend = HardwareBackend.CUDA
+        elif self.device.type == "xpu":
+            self.hardware.backend = HardwareBackend.INTEL
         elif str(self.device).startswith('xla'):  # TPU device
             self.hardware.backend = HardwareBackend.TPU
         else:
@@ -875,6 +1006,10 @@ class KernelPyTorchConfig:
         if self.device.type == "cpu":
             self.hardware.tensor_cores_enabled = False
             self.precision.fp8_enabled = False
+        elif self.device.type == "xpu":  # Intel XPU
+            self.hardware.tensor_cores_enabled = False  # Intel uses Vector Engine, not Tensor Cores
+            self.precision.fp8_enabled = False          # Intel XPU uses BF16/FP16, not FP8
+            self.hardware.triton_enabled = False        # Triton is CUDA-specific
         elif str(self.device).startswith('xla'):  # TPU
             self.hardware.tensor_cores_enabled = False  # TPU doesn't use Tensor Cores
             self.precision.fp8_enabled = False          # TPU uses bfloat16, not FP8
@@ -884,6 +1019,13 @@ class KernelPyTorchConfig:
         if self.memory.max_memory_gb is None:
             if self.device.type == "cuda":
                 self.memory.max_memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            elif self.device.type == "xpu":
+                # Intel XPU memory varies by device
+                try:
+                    props = torch.xpu.get_device_properties(0)
+                    self.memory.max_memory_gb = props.total_memory / (1024**3)
+                except Exception:
+                    self.memory.max_memory_gb = 16.0  # Default for Arc GPUs
             elif str(self.device).startswith('xla'):  # TPU
                 # TPU memory varies by type, use reasonable default
                 self.memory.max_memory_gb = 32.0  # Default for v5e

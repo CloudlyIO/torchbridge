@@ -8,17 +8,73 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.6 (Production/Stable)
+**Current Version**: v0.4.7 (Production/Stable)
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
-- **3 backends**: NVIDIA, AMD, TPU (all 90%+ production-ready)
-- **1,035 tests** passing (100% success rate)
+- **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 90%+ production-ready)
+- **1,111 tests** passing (100% success rate)
 - **Mixture of Experts (MoE)**: Comprehensive sparse MoE implementation
 - **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
 - **Full FP8**: Native PyTorch FP8 types for 2x speedup on H100/Blackwell
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.7] - 2026-01-19 - Intel XPU Backend
+
+### **Added** ✨
+
+- **Intel XPU Backend**: Full support for Intel GPUs via IPEX
+  - `IntelBackend`: Main backend class for device management and model preparation
+  - `IntelMemoryManager`: XPU memory management with pooling and allocation tracking
+  - `XPUDeviceManager`: Multi-device coordination and detection
+  - `XPUOptimizations`: IPEX integration for model optimization
+
+- **Intel Architectures Supported**:
+  - Intel Data Center Max Series (Ponte Vecchio/PVC)
+  - Intel Arc GPUs (A770, A750, A580 - DG2 architecture)
+  - Intel Flex Series (data center)
+  - Intel integrated graphics (Iris Xe, UHD)
+
+- **Intel Optimizer**: Multi-level optimization (O0-O3)
+  - `IntelOptimizer`: Graph and model-level optimizations
+  - `IntelKernelOptimizer`: Kernel-level configs for GEMM, conv, attention
+  - oneDNN operator fusion integration
+  - AMX (Advanced Matrix Extensions) support for BF16
+
+- **Configuration**:
+  - `IntelArchitecture` enum: PVC, DG2, FLEX, INTEGRATED, AUTO
+  - `IntelConfig` dataclass: IPEX settings, oneDNN, precision, memory
+  - Full integration with `HardwareConfig` and `KernelPyTorchConfig`
+
+- **Exception Hierarchy**: Intel-specific exceptions
+  - `XPUNotAvailableError`, `IPEXNotInstalledError`
+  - `XPUDeviceError`, `XPUOutOfMemoryError`, `XPUMemoryAllocationError`
+  - `OneDNNError`, `SYCLCompilationError`, `DPCPPError`
+  - `XPUOptimizationError`, `InvalidXPUArchitectureError`
+
+- **Tests**: 56 comprehensive tests for Intel backend
+  - Configuration and exceptions
+  - Device detection and management
+  - Memory management
+  - Backend operations
+  - Optimizer functionality
+  - Integration tests
+
+- **Demo**: `demos/intel_xpu_demo.py`
+  - Device detection and backend initialization
+  - Model preparation and optimization
+  - Memory management demonstration
+  - Optimizer benchmarks
+  - Configuration examples
+
+### **Changed** 🔄
+
+- **HardwareConfig**: Added `intel` field for Intel XPU configuration
+- **KernelPyTorchConfig**: Added XPU device detection in auto-detection
+- **HardwareBackend**: Added `INTEL` enum value
 
 ---
 
