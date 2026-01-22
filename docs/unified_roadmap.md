@@ -752,10 +752,10 @@ class TPUConfig:
 |---------|-------|-------|--------|
 | **v0.4.8** | Backend Unification | BaseBackend, BackendFactory, OptimizationLevel | ✅ Released |
 | **v0.4.9** | AMD Backend Completion | Full AMD ROCm parity with NVIDIA | ✅ Released |
-| **v0.4.10** | Intel Documentation + Cloud | Complete Intel docs, DevCloud validation | 🔄 RC1 |
-| **v0.4.11** | Small Model Integration | BERT, GPT-2 small, DistilBERT | 📋 Planned |
-| **v0.4.12** | Medium Model Integration | Llama-2-7B, Mistral-7B, Phi-2 | 📋 Planned |
-| **v0.4.13** | Large Model Integration | Llama-70B, Mixtral, distributed | 📋 Planned |
+| **v0.4.10** | Intel Documentation + Cloud | Complete Intel docs, DevCloud validation | ✅ Released |
+| **v0.4.11** | Small Model Integration | BERT, GPT-2 small, DistilBERT | ✅ Released |
+| **v0.4.12** | Medium Model Integration | Llama-2-7B, Mistral-7B, Phi-2 | ✅ Released |
+| **v0.4.13** | Large Model Integration | Llama-70B, Mixtral, distributed | 🔄 In Progress |
 | **v0.4.14** | Vision Model Integration | ResNet, ViT, Stable Diffusion | 📋 Planned |
 | **v0.4.15** | Multi-modal Integration | CLIP, LLaVA, Whisper | 📋 Planned |
 
@@ -848,7 +848,9 @@ This series validates the KernelPyTorch framework with production models from Hu
 
 ---
 
-### v0.4.11 - Small Model Integration 📋 **PLANNED**
+### v0.4.11 - Small Model Integration ✅ **RELEASED**
+
+**Release Date**: January 22, 2026
 
 **Theme**: "Foundation Models Made Fast"
 
@@ -876,7 +878,9 @@ This series validates the KernelPyTorch framework with production models from Hu
 
 ---
 
-### v0.4.12 - Medium Model Integration 📋 **PLANNED**
+### v0.4.12 - Medium Model Integration ✅ **RELEASED**
+
+**Release Date**: January 22, 2026
 
 **Theme**: "LLM Optimization for Production"
 
@@ -905,7 +909,7 @@ This series validates the KernelPyTorch framework with production models from Hu
 
 ---
 
-### v0.4.13 - Large Model Integration 📋 **PLANNED**
+### v0.4.13 - Large Model Integration 🔄 **IN PROGRESS**
 
 **Theme**: "Enterprise-Scale Deployment"
 
