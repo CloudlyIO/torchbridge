@@ -1,0 +1,23 @@
+/home/shahrahman/kernel_pytorch/attention/distributed/ring_attention.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+  warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+/home/shahrahman/kernel_pytorch/attention/distributed/context_parallel.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+  warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+/home/shahrahman/kernel_pytorch/precision/fp8_training_engine.py:34: UserWarning: Transformer Engine not available - FP8 training will use fallback implementations
+  warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations")
+/home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:28: FutureWarning: communication_optimization.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: communication_primitives, network_optimization, communication_profiling
+  from .communication_optimization import (
+/home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:35: FutureWarning: hardware_adaptation.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter
+  from .hardware_adaptation import (
+/home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:42: FutureWarning: orchestration.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: job_management, cluster_management, scaling_fault_tolerance
+  from .orchestration import (
+/home/shahrahman/kernel_pytorch/hardware/__init__.py:28: UserWarning: Hardware abstraction import failed: No module named 'kernel_pytorch.hardware.distributed_scale'
+  warnings.warn(f"Hardware abstraction import failed: {e}")
+/home/shahrahman/kernel_pytorch/precision/fp8_optimizations.py:32: UserWarning: Transformer Engine not available - using fallback FP8 implementations
+  warnings.warn("Transformer Engine not available - using fallback FP8 implementations")
+
+============================================================
+  MoE Performance Benchmark (GCP L4)
+============================================================
+Hidden size 512: 7.79ms/batch, 525.7K tokens/sec
+Hidden size 1024: 13.17ms/batch, 311.0K tokens/sec
+

@@ -1,0 +1,189 @@
+/opt/pytorch/lib/python3.12/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/opt/pytorch/lib/python3.12/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/ubuntu/demos/../src/kernel_pytorch/attention/distributed/ring_attention.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+  warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+/home/ubuntu/demos/../src/kernel_pytorch/attention/distributed/context_parallel.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+  warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+/home/ubuntu/demos/../src/kernel_pytorch/distributed_scale/__init__.py:28: FutureWarning: communication_optimization.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: communication_primitives, network_optimization, communication_profiling
+  from .communication_optimization import (
+/home/ubuntu/demos/../src/kernel_pytorch/distributed_scale/__init__.py:35: FutureWarning: hardware_adaptation.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter
+  from .hardware_adaptation import (
+/home/ubuntu/demos/../src/kernel_pytorch/distributed_scale/__init__.py:42: FutureWarning: orchestration.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: job_management, cluster_management, scaling_fault_tolerance
+  from .orchestration import (
+/home/ubuntu/demos/../src/kernel_pytorch/hardware/__init__.py:28: UserWarning: Hardware abstraction import failed: No module named 'kernel_pytorch.hardware.distributed_scale'
+  warnings.warn(f"Hardware abstraction import failed: {e}")
+Traceback (most recent call last):
+  File "/home/ubuntu/demos/fp8_native_demo.py", line 483, in main
+    success = demo_fn()
+              ^^^^^^^^^
+  File "/home/ubuntu/demos/fp8_native_demo.py", line 326, in demo_fp8_training
+    trainer = create_fp8_trainer(model, device, **config.__dict__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/demos/../src/kernel_pytorch/precision/fp8_training_engine.py", line 626, in create_fp8_trainer
+    return FP8TrainingEngine(model, config, device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/demos/../src/kernel_pytorch/precision/fp8_training_engine.py", line 284, in __init__
+    self.fp8_recipe = config.to_te_recipe() if TRANSFORMER_ENGINE_AVAILABLE else None
+                      ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/demos/../src/kernel_pytorch/precision/fp8_training_engine.py", line 110, in to_te_recipe
+    return DelayedScaling(
+           ^^^^^^^^^^^^^^^
+  File "/opt/pytorch/lib/python3.12/site-packages/pydantic/_internal/_dataclasses.py", line 141, in __init__
+    s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for DelayedScaling
+scaling_factor_compute_algo
+  Input should be callable [type=callable_type, input_value='max', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/callable_type
+
+============================================================
+  Native FP8 Demo - KernelPyTorch v0.4.5
+  Full FP8 with Native PyTorch Types
+============================================================
+
+======================================================================
+  FP8 Availability Check
+======================================================================
+PyTorch Version: 2.7.0+cu128
+Native FP8 Available: True
+FP8 scaled_mm Available: True
+
+Supported FP8 Formats:
+  - e4m3fn
+  - e5m2
+
+FP8 Format Specifications:
+  E4M3FN max value: 448.0
+  E5M2 max value: 57344.0
+
+Recommended Usage:
+  e4m3fn: Forward pass (weights, activations) - higher precision
+  e5m2: Backward pass (gradients) - wider dynamic range
+
+======================================================================
+  FP8 Quantization
+======================================================================
+Device: cuda
+
+Original tensor shape: torch.Size([4, 256])
+Original range: [-2.8746, 3.1888]
+
+E4M3 Quantization:
+  Scale: 140.4916
+  MSE: 0.000660
+  Relative error: 2.5609%
+
+E5M2 Quantization:
+  Scale: 17982.9297
+  MSE: 0.002635
+  Relative error: 5.1161%
+
+Conclusion: E4M3 provides 4.0x lower error than E5M2
+
+======================================================================
+  Native FP8 Linear Layer
+======================================================================
+Device: cuda
+
+Layer configuration:
+  NativeFP8Linear(in_features=512, out_features=256, bias=True, weight_format=e4m3fn, fp8_native=True)
+
+FP8 Layer Info:
+  Weight format: e4m3fn
+  Activation format: e4m3fn
+  Weight scale: 5068.6060
+  FP8 native: True
+  FP8 active: True
+
+Forward pass:
+  Input shape: torch.Size([4, 512])
+  Output shape: torch.Size([4, 256])
+  Output finite: True
+  Gradient flow: OK (grad shape: torch.Size([4, 512]))
+
+======================================================================
+  FP8 Inference Engine
+======================================================================
+Device: cuda
+
+Original model: 6 Linear layers
+
+Memory Analysis:
+  FP32 memory: 3.00 MB
+  FP8 memory: 0.75 MB
+  Savings: 75.0%
+  FP8 layers: 6
+
+Inference:
+  Input shape: torch.Size([2, 32, 256])
+  Output shape: torch.Size([2, 32, 256])
+  Output finite: True
+
+======================================================================
+  Model Conversion to Native FP8
+======================================================================
+Converting model to native FP8...
+Converted 6 Linear layers to NativeFP8Linear
+Converted 6 layers to NativeFP8Linear
+
+Forward pass after conversion:
+  Input: torch.Size([2, 32, 256])
+  Output: torch.Size([2, 32, 256])
+  Output finite: True
+
+======================================================================
+  FP8 Training
+======================================================================
+Error in training: 1 validation error for DelayedScaling
+scaling_factor_compute_algo
+  Input should be callable [type=callable_type, input_value='max', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/callable_type
+
+======================================================================
+  FP8 Performance Benchmark
+======================================================================
+Device: cuda
+
+Benchmarking FP8 vs Standard Linear layers:
+    In    Out  Batch   FP8 (ms)   Std (ms)  Speedup
+--------------------------------------------------
+   512    512     32      0.278      0.034    0.12x
+  1024   1024     32      0.279      0.033    0.12x
+  2048   2048     16      0.281      0.049    0.17x
+
+Note: FP8 native = True
+
+======================================================================
+  FP8 Numerical Stability
+======================================================================
+Testing FP8 quantization stability:
+Case               Scale   E4M3 Error   E5M2 Error Recommended
+------------------------------------------------------------
+Normal range        1.00     0.000687     0.002733 E4M3      
+Large values       10.00     0.069728     0.283469 E4M3      
+Small values        0.01     0.000000     0.000000 E4M3      
+Very large        100.00     7.074339    28.278023 E4M3      
+
+Conclusion: E4M3 is generally preferred for activations (higher precision)
+            E5M2 is better for gradients (wider dynamic range)
+
+======================================================================
+  Demo Summary
+======================================================================
+Results: 7/8 demos passed
+
+  [PASS] availability
+  [PASS] quantization
+  [PASS] native_linear
+  [PASS] inference_engine
+  [PASS] model_conversion
+  [FAIL] training
+  [PASS] benchmark
+  [PASS] numerical_stability
+
+FP8 Support Status:
+  Native FP8 types: Available
+  PyTorch version: 2.7.0+cu128
+  GPU: NVIDIA A10G
+  Hardware FP8: Limited (Compute 8.6)

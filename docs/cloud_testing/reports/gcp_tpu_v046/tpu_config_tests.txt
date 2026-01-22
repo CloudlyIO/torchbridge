@@ -1,0 +1,67 @@
+SSH key found in project metadata; not updating instance.
+Using ssh batch size of 1. Attempting to SSH into 1 nodes with a total of 1 workers.
+SSH: Attempting to connect to worker 0...
+============================= test session starts ==============================
+platform linux -- Python 3.10.6, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/shahrahman
+collecting ... collected 22 items
+
+tests/test_tpu_config.py::TestTPUConfig::test_tpu_config_creation PASSED [  4%]
+tests/test_tpu_config.py::TestTPUConfig::test_tpu_config_custom_values PASSED [  9%]
+tests/test_tpu_config.py::TestTPUConfig::test_tpu_config_serialization PASSED [ 13%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_version_v4 PASSED [ 18%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_version_v5p PASSED [ 22%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_topology_single PASSED [ 27%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_topology_pod PASSED [ 31%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_version_no_xla PASSED [ 36%]
+tests/test_tpu_config.py::TestTPUConfig::test_detect_tpu_topology_no_xla PASSED [ 40%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_config_with_tpu_backend PASSED [ 45%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_config_tpu_serialization PASSED [ 50%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_device_detection_tpu_available PASSED [ 54%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_device_detection_no_tpu PASSED [ 59%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_tpu_config_modes PASSED [ 63%]
+tests/test_tpu_config.py::TestKernelPyTorchConfigTPU::test_tpu_hardware_backend_enum PASSED [ 68%]
+tests/test_tpu_config.py::TestTPUEnums::test_tpu_version_enum PASSED     [ 72%]
+tests/test_tpu_config.py::TestTPUEnums::test_tpu_topology_enum PASSED    [ 77%]
+tests/test_tpu_config.py::TestTPUEnums::test_tpu_compilation_mode_enum PASSED [ 81%]
+tests/test_tpu_config.py::TestTPUConfigValidation::test_valid_tpu_configs PASSED [ 86%]
+tests/test_tpu_config.py::TestTPUConfigValidation::test_tpu_config_memory_bounds PASSED [ 90%]
+tests/test_tpu_config.py::TestTPUConfigValidation::test_tpu_config_xla_optimization_levels PASSED [ 95%]
+tests/test_tpu_config.py::TestTPUConfigValidation::test_tpu_config_precision_values PASSED [100%]
+
+=============================== warnings summary ===============================
+kernel_pytorch/attention/distributed/ring_attention.py:41
+  /home/shahrahman/kernel_pytorch/attention/distributed/ring_attention.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+
+kernel_pytorch/attention/distributed/context_parallel.py:41
+  /home/shahrahman/kernel_pytorch/attention/distributed/context_parallel.py:41: UserWarning: Hardware Abstraction Layer not available - using basic device coordination
+    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+
+kernel_pytorch/precision/fp8_training_engine.py:34
+  /home/shahrahman/kernel_pytorch/precision/fp8_training_engine.py:34: UserWarning: Transformer Engine not available - FP8 training will use fallback implementations
+    warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations")
+
+kernel_pytorch/distributed_scale/__init__.py:28
+  /home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:28: FutureWarning: communication_optimization.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: communication_primitives, network_optimization, communication_profiling
+    from .communication_optimization import (
+
+kernel_pytorch/distributed_scale/__init__.py:35
+  /home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:35: FutureWarning: hardware_adaptation.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter
+    from .hardware_adaptation import (
+
+kernel_pytorch/distributed_scale/__init__.py:42
+  /home/shahrahman/kernel_pytorch/distributed_scale/__init__.py:42: FutureWarning: orchestration.py has been refactored into multiple focused modules. Consider importing from the specific modules directly: job_management, cluster_management, scaling_fault_tolerance
+    from .orchestration import (
+
+kernel_pytorch/hardware/__init__.py:28
+  /home/shahrahman/kernel_pytorch/hardware/__init__.py:28: UserWarning: Hardware abstraction import failed: No module named 'kernel_pytorch.hardware.distributed_scale'
+    warnings.warn(f"Hardware abstraction import failed: {e}")
+
+kernel_pytorch/precision/fp8_optimizations.py:32
+  /home/shahrahman/kernel_pytorch/precision/fp8_optimizations.py:32: UserWarning: Transformer Engine not available - using fallback FP8 implementations
+    warnings.warn("Transformer Engine not available - using fallback FP8 implementations")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 22 passed, 8 warnings in 2.37s ========================
