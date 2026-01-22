@@ -18,7 +18,7 @@ Key Features:
 
 Inherits from BaseMemoryManager for shared functionality.
 
-Version: 0.3.7
+Version: 0.4.9
 """
 
 import logging

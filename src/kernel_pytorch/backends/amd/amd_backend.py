@@ -20,7 +20,7 @@ Key Features:
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.4.8
+Version: 0.4.9
 """
 
 import logging

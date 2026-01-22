@@ -1,9 +1,15 @@
 """
-AMD Backend Tests (v0.3.4)
+AMD Backend Tests (v0.4.9)
 
 Comprehensive test suite for AMD ROCm backend implementation.
 Tests cover configuration, backend operations, optimization, compilation,
 memory management, and utilities.
+
+v0.4.9 Additions:
+- Operator fusion tests (Conv+BN, Linear+GELU, aggressive fusion)
+- HIP compilation tests with simulation mode
+- Memory layout optimization tests
+- Enhanced integration tests
 
 Note: Tests are designed to work without actual AMD hardware by using
 mocks and CPU fallbacks where appropriate.
@@ -541,6 +547,362 @@ class TestLRUCache:
 
         assert len(cache) == 0
         assert cache.get("a") is None
+
+
+class TestAMDOperatorFusion:
+    """Tests for AMD operator fusion (v0.4.9)."""
+
+    def test_conv_bn_fusion_pattern_detection(self):
+        """Test Conv+BatchNorm fusion pattern detection."""
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+
+        config = AMDConfig(enable_operator_fusion=True)
+        optimizer = AMDOptimizer(config)
+
+        # Create model with Conv+BN pattern
+        model = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 16, 3, padding=1),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.ReLU(),
+        )
+        model.eval()  # Required for fusion
+
+        optimized = optimizer.optimize(model, level="conservative")
+        assert optimized is not None
+
+    def test_linear_gelu_fusion_pattern(self):
+        """Test Linear+GELU fusion pattern detection."""
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+
+        config = AMDConfig(enable_operator_fusion=True)
+        optimizer = AMDOptimizer(config)
+
+        model = torch.nn.Sequential(
+            torch.nn.Linear(256, 512),
+            torch.nn.GELU(),
+            torch.nn.Linear(512, 256),
+        )
+
+        optimized = optimizer.optimize(model, level="balanced")
+        summary = optimizer.get_optimization_summary()
+
+        assert "fused_operations" in summary
+        assert optimized is not None
+
+    def test_aggressive_fusion_patterns(self):
+        """Test aggressive fusion patterns."""
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+
+        config = AMDConfig(
+            architecture=AMDArchitecture.CDNA3,
+            enable_operator_fusion=True
+        )
+        optimizer = AMDOptimizer(config)
+
+        # Transformer-like model
+        model = torch.nn.Sequential(
+            torch.nn.Linear(256, 256),
+            torch.nn.GELU(),
+            torch.nn.LayerNorm(256),
+            torch.nn.Linear(256, 256),
+        )
+
+        optimized = optimizer.optimize(model, level="aggressive")
+        assert optimized is not None
+
+    def test_memory_layout_optimization(self):
+        """Test memory layout optimization for HBM."""
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+
+        config = AMDConfig()
+        optimizer = AMDOptimizer(config)
+
+        model = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 64, 3, padding=1),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(64, 128, 3, padding=1),
+        )
+
+        optimized = optimizer.optimize(model, level="conservative")
+        summary = optimizer.get_optimization_summary()
+
+        assert optimized is not None
+
+
+class TestHIPCompilationEnhanced:
+    """Enhanced tests for HIP compilation (v0.4.9)."""
+
+    def test_simulated_compilation(self):
+        """Test simulated compilation without ROCm."""
+        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+
+        config = AMDConfig()
+        compiler = ROCmCompiler(config)
+
+        source = """
+        __global__ void vector_add(float* a, float* b, float* c, int n) {
+            int idx = blockIdx.x * blockDim.x + threadIdx.x;
+            if (idx < n) {
+                c[idx] = a[idx] + b[idx];
+            }
+        }
+        """
+
+        kernel = compiler.compile_kernel(source, "vector_add")
+
+        assert kernel.name == "vector_add"
+        assert kernel.binary is not None
+        assert kernel.compile_time_ms >= 0
+
+    def test_compilation_with_different_opt_levels(self):
+        """Test compilation with different optimization levels."""
+        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+
+        for level in ["conservative", "balanced", "aggressive"]:
+            config = AMDConfig(optimization_level=level)
+            compiler = ROCmCompiler(config)
+
+            source = "__global__ void test() {}"
+            kernel = compiler.compile_kernel(source, "test", level)
+
+            assert kernel.optimization_flags is not None
+            assert len(kernel.optimization_flags) > 0
+
+    def test_gpu_target_mapping(self):
+        """Test GPU target mapping for different architectures."""
+        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+
+        arch_targets = {
+            AMDArchitecture.CDNA2: "gfx90a",
+            AMDArchitecture.CDNA3: "gfx940",
+            AMDArchitecture.RDNA2: "gfx1030",
+            AMDArchitecture.RDNA3: "gfx1100",
+        }
+
+        for arch, expected_target in arch_targets.items():
+            config = AMDConfig(architecture=arch)
+            compiler = ROCmCompiler(config)
+            target = compiler._get_gpu_target()
+            assert target == expected_target
+
+    def test_precompile_standard_kernels(self):
+        """Test precompilation of standard kernels."""
+        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+
+        config = AMDConfig()
+        compiler = ROCmCompiler(config)
+
+        # Should complete without errors
+        compiler.precompile_standard_kernels()
+
+        stats = compiler.get_compilation_stats()
+        assert stats["total_compilations"] >= 0
+
+
+class TestAMDBackendEnhanced:
+    """Enhanced tests for AMD backend (v0.4.9)."""
+
+    def test_backend_with_all_architectures(self):
+        """Test backend initialization with all architectures."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+
+        for arch in [AMDArchitecture.CDNA2, AMDArchitecture.CDNA3,
+                     AMDArchitecture.RDNA2, AMDArchitecture.RDNA3]:
+            config = AMDConfig(architecture=arch)
+            backend = AMDBackend(config)
+
+            # Should initialize (with CPU fallback if no AMD GPU)
+            assert backend is not None
+            assert backend.device is not None
+
+    def test_backend_get_device_info(self):
+        """Test unified device info method."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from kernel_pytorch.backends import DeviceInfo
+
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        info = backend.get_device_info()
+
+        assert isinstance(info, DeviceInfo)
+        assert info.backend == "amd"
+        assert hasattr(info, 'device_type')
+        assert hasattr(info, 'is_available')
+
+    def test_backend_optimize_for_inference(self):
+        """Test inference optimization."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        model = torch.nn.Linear(64, 32)
+        optimized = backend.optimize_for_inference(model)
+
+        assert optimized is not None
+        assert not any(p.requires_grad for p in optimized.parameters())
+
+    def test_backend_optimize_for_training(self):
+        """Test training optimization."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        model = torch.nn.Linear(64, 32)
+        optimized = backend.optimize_for_training(model)
+
+        assert optimized is not None
+        assert optimized.training
+
+    def test_backend_with_optimizer(self):
+        """Test training optimization with optimizer."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+
+        config = AMDConfig()
+        backend = AMDBackend(config)
+
+        model = torch.nn.Linear(64, 32)
+        optimizer = torch.optim.Adam(model.parameters())
+
+        result = backend.optimize_for_training(model, optimizer=optimizer)
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+
+
+class TestAMDMemoryManagerEnhanced:
+    """Enhanced tests for AMD memory manager (v0.4.9)."""
+
+    def test_memory_manager_defragmentation(self):
+        """Test memory defragmentation."""
+        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+
+        config = AMDConfig(memory_pool_size_gb=1.0)
+        manager = AMDMemoryManager(config)
+
+        # Should complete without errors
+        manager.defragment()
+
+        stats = manager.get_memory_stats()
+        assert stats['defrag_count'] >= 1
+
+    def test_memory_stats_dataclass(self):
+        """Test AMD memory stats dataclass."""
+        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+
+        config = AMDConfig()
+        manager = AMDMemoryManager(config)
+
+        stats = manager.get_amd_memory_stats()
+
+        # Check dataclass fields
+        assert hasattr(stats, 'total_mb')
+        assert hasattr(stats, 'allocated_mb')
+        assert hasattr(stats, 'fragmentation_percent')
+
+    def test_memory_manager_cleanup(self):
+        """Test memory manager cleanup."""
+        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+
+        config = AMDConfig()
+        manager = AMDMemoryManager(config)
+
+        # Should complete without errors
+        manager.cleanup()
+
+    def test_tensor_size_estimation(self):
+        """Test tensor size estimation."""
+        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+
+        config = AMDConfig()
+        manager = AMDMemoryManager(config)
+
+        # 1024 x 1024 float32 = 4MB
+        size = manager.estimate_tensor_size((1024, 1024), torch.float32)
+        expected = 1024 * 1024 * 4  # 4 bytes per float32
+
+        assert size == expected
+
+
+class TestAMDIntegrationV049:
+    """Integration tests for v0.4.9 AMD improvements."""
+
+    def test_full_optimization_pipeline(self):
+        """Test complete optimization pipeline."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+
+        config = AMDConfig(
+            architecture=AMDArchitecture.CDNA3,
+            optimization_level="aggressive",
+            enable_operator_fusion=True,
+            enable_matrix_cores=True,
+        )
+
+        backend = AMDBackend(config)
+        optimizer = AMDOptimizer(config)
+
+        model = torch.nn.Sequential(
+            torch.nn.Linear(256, 512),
+            torch.nn.GELU(),
+            torch.nn.LayerNorm(512),
+            torch.nn.Linear(512, 256),
+        )
+
+        # Prepare model
+        prepared = backend.prepare_model(model)
+        assert prepared is not None
+
+        # Optimize model
+        optimized = optimizer.optimize(prepared)
+        assert optimized is not None
+
+        summary = optimizer.get_optimization_summary()
+        assert summary['architecture'] == 'cdna3'
+        assert summary['matrix_cores_enabled'] is True
+
+    def test_optimizer_and_compiler_integration(self):
+        """Test optimizer and compiler work together."""
+        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+
+        config = AMDConfig(optimization_level="balanced")
+
+        optimizer = AMDOptimizer(config)
+        compiler = ROCmCompiler(config)
+
+        # Compile a kernel
+        kernel = compiler.compile_kernel(
+            "__global__ void test() {}",
+            "test"
+        )
+        assert kernel is not None
+
+        # Optimize a model
+        model = torch.nn.Linear(64, 32)
+        optimized = optimizer.optimize(model)
+        assert optimized is not None
+
+    def test_memory_manager_and_backend_integration(self):
+        """Test memory manager and backend work together."""
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+
+        config = AMDConfig()
+
+        backend = AMDBackend(config)
+        mem_manager = AMDMemoryManager(config)
+
+        # Memory stats should be available regardless of device
+        stats = mem_manager.get_memory_stats()
+        assert stats is not None
+
+        # Check that device types are valid
+        assert backend.device.type in ['cpu', 'cuda', 'hip']
+        assert mem_manager._get_device().type in ['cpu', 'cuda', 'hip']
 
 
 # Run tests if executed directly

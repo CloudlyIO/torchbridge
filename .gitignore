@@ -310,3 +310,4 @@ SCRATCH.local
 
 # Block any new .md files in docs/ - require explicit approval
 # Note: This will be enforced by pre-commit hook
+test_results_local/
