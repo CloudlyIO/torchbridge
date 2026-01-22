@@ -1,7 +1,7 @@
 # 🚀 KernelPyTorch Unified Development Roadmap
 
-**Status**: v0.4.3 - Production Release with All Backends Complete
-**Next**: v0.5.0 - FlexAttention, Full FP8, and MoE Support
+**Status**: v0.4.10-rc1 - Intel Documentation + Cloud Validation (Release Candidate)
+**Next**: v0.4.11 - Small Model Integration (BERT, GPT-2, DistilBERT)
 
 ## 📋 **Executive Summary**
 
@@ -690,61 +690,554 @@ class TPUConfig:
 
 ### v0.4.1-v0.4.3 - Production Hardening ✅ **RELEASED**
 
-**Release Date**: January 18, 2026
-
-**v0.4.1 Changes**:
+**v0.4.1** (January 16, 2026) - **Cloud Validation & Bug Fixes**:
+- GCP NVIDIA L4 validation: 66/66 tests, 1300 benchmarks, 2.37x speedup
+- Fixed ultra_precision.py:675 dtype mismatch on CUDA
 - Demo utility consolidation (shared print_section)
 - Added missing __init__.py files
 
-**v0.4.2 Changes**:
-- torch_xla 2.9.0 API compatibility fixes
-- NVIDIA backend PyTorch version compatibility
+**v0.4.2** (January 17, 2026) - **torch_xla 2.9.0 Compatibility**:
+- Fixed deprecated `aot_torchxla_trace_once` backend
+- Version-aware backend detection (`openxla` for 2.9+, legacy fallback)
+- TPU optimizer dtype auto-conversion for mixed precision
+- 57/57 TPU backend tests passing
 
-**v0.4.3 Changes**:
+**v0.4.3** (January 18, 2026) - **Codebase Cleanup & Documentation**:
 - JSON serialization fixes across 8 benchmark files
+- Documentation version sync (all docs reference v0.4.3)
 - README test count accuracy (905 tests)
-- Comprehensive deployment tutorial
-- Version tracking in setup.py
+- End-to-end deployment tutorial (`docs/guides/deployment_tutorial.md`)
+- Version tracking in setup.py (synced with pyproject.toml)
 
-### v0.5.0 - FlexAttention, Full FP8, MoE Support (**PLANNED**)
+### v0.4.4-v0.4.7 - Feature Additions ✅ **RELEASED**
 
-**Target Release**: Q2 2026
+**v0.4.4** (January 18, 2026) - **FlexAttention Integration**:
+- `FlexAttentionLayer` with configurable score_mod functions
+- `FlexAttentionCausal` for autoregressive attention
+- `FlexAttentionSlidingWindow` for local context attention
+- Built-in patterns: causal, sliding_window, alibi, soft_cap, document_masking, prefix_lm
+- `FlexAttentionMaskGenerators` for efficient CUDA block masks
+- Factory function `create_flex_attention()` for easy creation
+- 35 new tests, 936 total tests passing
 
-**Planned Features**:
-1. **FlexAttention Integration** (HIGH)
-   - Adopt PyTorch 2.5+ FlexAttention API
-   - Support arbitrary attention patterns via score_mod
-   - Deprecate custom patterns in favor of FlexAttention
+**v0.4.5** (January 18, 2026) - **Full FP8 Implementation**:
+- Native PyTorch FP8 types (`torch.float8_e4m3fn`, `torch.float8_e5m2`)
+- `NativeFP8Linear` layer with real FP8 weight storage
+- AMAX tracking for dynamic scaling
+- `FP8InferenceEngine` for complete inference pipeline
+- 75% memory reduction vs FP32 weights
+- 51 new tests, 987 total tests passing
 
-2. **Full FP8 Implementation** (HIGH)
-   - NVIDIA Transformer Engine integration
-   - Dynamic loss scaling for mixed-precision training
-   - Per-tensor scaling calibration
+**v0.4.6** (January 18, 2026) - **MoE Support**:
+- `MoELayer`, `SparseMoELayer`, `SwitchTransformerMoE`, `GLaMStyleMoE`, `AdaptiveMoELayer`
+- Routers: `TopKRouter`, `SwitchRouter`, `HashRouter`, `LearnedRouter`, `DynamicCapacityRouter`
+- Expert networks: `FeedForwardExpert`, `ConvolutionalExpert`, `AttentionExpert`, `ParameterEfficientExpert`
+- `LoadBalancer` with multiple loss types (switch, gshard, entropy)
+- `ExpertParallelism` for distributed processing
+- 48 new tests
 
-3. **Mixture of Experts (MoE) Support** (HIGH)
-   - Expert routing optimization kernels
-   - Load balancing for even expert utilization
-   - Sparse attention pattern support
-   - Documentation and examples
+**v0.4.7** (January 19, 2026) - **Intel XPU Backend**:
+- `IntelBackend` for full Intel GPU support via IPEX
+- Architectures: Ponte Vecchio (PVC), Arc (DG2), Flex, integrated
+- `IntelMemoryManager` with pooling and allocation tracking
+- `IntelOptimizer` with O0-O3 optimization levels
+- oneDNN operator fusion and AMX (BF16) support
+- 56 new Intel tests
 
-4. **Intel XPU Backend** (MEDIUM)
-   - Intel Data Center GPU Max (Ponte Vecchio)
-   - oneAPI/DPC++ integration
+### v0.4.8-v0.4.15 - Backend Refinement & Model Integration Series 🔄 **CURRENT TRACK**
+
+**Theme**: Complete backend parity + Real-world model optimization
+
+| Version | Theme | Focus | Status |
+|---------|-------|-------|--------|
+| **v0.4.8** | Backend Unification | BaseBackend, BackendFactory, OptimizationLevel | ✅ Released |
+| **v0.4.9** | AMD Backend Completion | Full AMD ROCm parity with NVIDIA | ✅ Released |
+| **v0.4.10** | Intel Documentation + Cloud | Complete Intel docs, DevCloud validation | 🔄 RC1 |
+| **v0.4.11** | Small Model Integration | BERT, GPT-2 small, DistilBERT | 📋 Planned |
+| **v0.4.12** | Medium Model Integration | Llama-2-7B, Mistral-7B, Phi-2 | 📋 Planned |
+| **v0.4.13** | Large Model Integration | Llama-70B, Mixtral, distributed | 📋 Planned |
+| **v0.4.14** | Vision Model Integration | ResNet, ViT, Stable Diffusion | 📋 Planned |
+| **v0.4.15** | Multi-modal Integration | CLIP, LLaVA, Whisper | 📋 Planned |
+
+---
+
+### v0.4.8 - Backend Unification ✅ **RELEASED**
+
+**Release Date**: January 20, 2026
+
+**Key Features**:
+- `BaseBackend` abstract class for unified backend interface
+- `BaseOptimizer` abstract class with standardized API
+- `BackendFactory` for automatic hardware detection and selection
+- `OptimizationLevel` enum (O0-O3) with string aliases
+- `DeviceInfo` standardized device information dataclass
+- All 4 backends (NVIDIA, AMD, TPU, Intel) inherit from BaseBackend
+- 56 new tests, 1167 total tests passing
+
+---
+
+### v0.4.9 - AMD Backend Completion ✅ **RELEASED**
+
+**Release Date**: January 20, 2026
+**Theme**: "Full AMD Support"
+
+**Key Features**:
+- **Operator Fusion**: Conv+BN, Linear+GELU, aggressive fusion patterns
+- **HIP Compilation**: Enhanced hipcc integration with simulation fallback
+- **Memory Layout**: channels_last optimization for HBM efficiency
+- **torch.compile**: max-autotune mode for aggressive optimization
+
+**Deliverables** (all complete):
+- ✅ `_fuse_conv_bn_relu()`: PyTorch fuse_conv_bn_eval integration
+- ✅ `_fuse_linear_gelu()`: torch.compile reduce-overhead mode
+- ✅ `_aggressive_kernel_fusion()`: Flash attention, max-autotune
+- ✅ `_compile_with_hipcc()`: Real hipcc when ROCM_HOME is set
+- ✅ `_simulate_compilation()`: Structured simulation mode
+- ✅ Memory layout optimization for Conv2d/Conv3d
+- ✅ 25+ new tests in `test_amd_backend.py`
+- ✅ `benchmarks/amd_optimization_benchmark.py`
+- ✅ Updated `docs/backends/amd.md`
+
+**Success Criteria** (all met):
+- ✅ All AMD TODOs resolved
+- ✅ AMD backend feature parity with NVIDIA
+- ✅ 100% test pass rate
+- ✅ Performance benchmarks documented
+
+---
+
+### v0.4.10 - Intel Documentation + Cloud Validation ✅ **RELEASED**
+
+**Release Date**: January 22, 2026
+**Theme**: "Complete Intel Support"
+
+**Key Features**:
+- **Comprehensive Documentation**: `docs/backends/intel.md` (700+ lines)
+- **DevCloud Validation Script**: `scripts/cloud_testing/intel_devcloud/run_validation.sh`
+- **Intel Benchmark Suite**: `benchmarks/intel_benchmark.py`
+- **Documentation Parity**: Intel docs now match NVIDIA/AMD/TPU
+
+**Deliverables** (all complete):
+- ✅ `docs/backends/intel.md` - Full Intel XPU guide (700+ lines)
+- ✅ Hardware support table (PVC, Arc, Flex, Integrated)
+- ✅ IPEX integration and oneDNN fusion guide
+- ✅ Performance optimization best practices
+- ✅ Intel DevCloud validation script (6-step pipeline)
+- ✅ Intel benchmark suite with O0-O3 comparison
+- ✅ Precision benchmarks (FP32, BF16, FP16)
+
+**Success Criteria** (all met):
+- ✅ Documentation parity with NVIDIA/AMD/TPU
+- ✅ Validation scripts ready for Intel DevCloud
+- ✅ All 61 Intel tests passing
+- ✅ Benchmark suite complete
+
+---
+
+### v0.4.11-v0.4.15 - Real-World Model Integration Series 🔄 **CURRENT TRACK**
+
+**Theme**: "Production Models at Scale"
+**Goal**: Demonstrate the optimization stack with real-world models across all scales
+
+This series validates the KernelPyTorch framework with production models from HuggingFace:
+- **Small Models** (50-150M params): Fast iteration, single GPU
+- **Medium Models** (1-7B params): Production inference, consumer GPUs
+- **Large Models** (13-70B params): Enterprise deployment, distributed
+- **Vision Models**: Computer vision and image generation
+- **Multi-modal Models**: Vision-language, speech, cross-modal
+
+---
+
+### v0.4.11 - Small Model Integration 📋 **PLANNED**
+
+**Theme**: "Foundation Models Made Fast"
+
+| Model | Parameters | Use Cases |
+|-------|------------|-----------|
+| BERT-base | 110M | Text classification, NER, Q&A |
+| DistilBERT | 66M | Lightweight inference |
+| GPT-2 Small | 124M | Text generation, fine-tuning |
+
+**Target Hardware**: Single GPU, <8GB VRAM, CPU fallback
+
+**Deliverables**:
+- `src/kernel_pytorch/models/text/` - Text model optimization wrappers
+- `examples/models/small/bert_optimization.py` - BERT optimization demo
+- `examples/models/small/gpt2_small_optimization.py` - GPT-2 optimization demo
+- `benchmarks/models/small_model_benchmark.py` - Performance benchmarks
+- `tests/test_small_model_integration.py` - Integration tests
+- `docs/guides/small_model_guide.md` - User guide
+
+**Success Criteria**:
+- 2-3x inference speedup vs baseline PyTorch
+- Memory reduction with FP16/BF16
+- Works on all 4 backends (NVIDIA, AMD, TPU, Intel)
+- <8GB VRAM requirement for all models
+
+---
+
+### v0.4.12 - Medium Model Integration 📋 **PLANNED**
+
+**Theme**: "LLM Optimization for Production"
+
+| Model | Parameters | Use Cases |
+|-------|------------|-----------|
+| Llama-2-7B | 7B | Chat, text generation |
+| Mistral-7B | 7B | High-quality generation |
+| Phi-2 | 2.7B | Efficient small LLM |
+
+**Target Hardware**: Single GPU 16-24GB (RTX 3090/4090, A10G, L4)
+
+**Deliverables**:
+- `src/kernel_pytorch/models/llm/` - LLM optimization wrappers
+- `src/kernel_pytorch/models/llm/kv_cache.py` - KV-cache optimization
+- `examples/models/medium/llama_optimization.py` - Llama-2-7B demo
+- `examples/models/medium/mistral_optimization.py` - Mistral-7B demo
+- `benchmarks/models/medium_model_benchmark.py` - LLM benchmarks
+- `tests/test_medium_model_integration.py` - Integration tests
+- `docs/guides/llm_optimization_guide.md` - LLM optimization guide
+
+**Success Criteria**:
+- 1.5-2x inference speedup with KV-cache
+- 50% memory reduction with FP8/INT8 quantization
+- Support for 4096+ token context
+- Compatible with HuggingFace Transformers API
+
+---
+
+### v0.4.13 - Large Model Integration 📋 **PLANNED**
+
+**Theme**: "Enterprise-Scale Deployment"
+
+| Model | Parameters | Use Cases |
+|-------|------------|-----------|
+| Llama-2-13B | 13B | High-quality generation |
+| Llama-2-70B | 70B | Enterprise inference |
+| Mixtral-8x7B | 46.7B (12.9B active) | MoE-based generation |
+
+**Target Hardware**: Multi-GPU (2-8x A100/H100), Distributed
+
+**Deliverables**:
+- `src/kernel_pytorch/models/distributed/` - Distributed model loading
+- `src/kernel_pytorch/models/distributed/tensor_parallel.py` - Tensor parallelism
+- `src/kernel_pytorch/models/distributed/pipeline_parallel.py` - Pipeline parallelism
+- `examples/models/large/llama70b_distributed.py` - Multi-GPU Llama-70B
+- `examples/models/large/mixtral_moe.py` - Mixtral MoE demo
+- `benchmarks/models/large_model_benchmark.py` - Distributed benchmarks
+- `tests/test_large_model_integration.py` - Integration tests
+- `docs/guides/distributed_llm_guide.md` - Distributed deployment guide
+
+**Success Criteria**:
+- Linear scaling efficiency >85% (2-8 GPUs)
+- Llama-70B running on 4x A100 40GB
+- Support for FSDP and tensor parallelism
+- Production-ready distributed inference
+
+---
+
+### v0.4.14 - Vision Model Integration 📋 **PLANNED**
+
+**Theme**: "Computer Vision at Scale"
+
+| Model | Parameters | Use Cases |
+|-------|------------|-----------|
+| ResNet-50/152 | 25M/60M | Image classification |
+| ViT-Base/Large | 86M/307M | Vision transformers |
+| Stable Diffusion 1.5/XL | 860M/6.6B | Image generation |
+
+**Target Hardware**: Single GPU 8-24GB, optimized for batch inference
+
+**Deliverables**:
+- `src/kernel_pytorch/models/vision/` - Vision model optimization
+- `src/kernel_pytorch/models/vision/diffusion.py` - Diffusion optimization
+- `examples/models/vision/resnet_optimization.py` - ResNet demo
+- `examples/models/vision/vit_optimization.py` - ViT demo
+- `examples/models/vision/stable_diffusion_optimization.py` - SD demo
+- `benchmarks/models/vision_model_benchmark.py` - Vision benchmarks
+- `tests/test_vision_model_integration.py` - Integration tests
+- `docs/guides/vision_model_guide.md` - Vision optimization guide
+
+**Success Criteria**:
+- 2x batch inference throughput for ResNet/ViT
+- 1.5x Stable Diffusion generation speedup
+- Memory-efficient attention for high-resolution
+- INT8 quantization support for edge deployment
+
+---
+
+### v0.4.15 - Multi-modal Model Integration 📋 **PLANNED**
+
+**Theme**: "Cross-Modal Intelligence"
+
+| Model | Parameters | Use Cases |
+|-------|------------|-----------|
+| CLIP ViT-B/L | 150M/430M | Vision-language embedding |
+| LLaVA-1.5 | 7B/13B | Visual instruction following |
+| Whisper (base/large) | 74M/1.5B | Speech recognition |
+
+**Target Hardware**: Single to multi-GPU, cross-modal workloads
+
+**Deliverables**:
+- `src/kernel_pytorch/models/multimodal/` - Multi-modal optimization
+- `src/kernel_pytorch/models/multimodal/cross_attention.py` - Cross-attention opt
+- `examples/models/multimodal/clip_optimization.py` - CLIP demo
+- `examples/models/multimodal/llava_optimization.py` - LLaVA demo
+- `examples/models/multimodal/whisper_optimization.py` - Whisper demo
+- `benchmarks/models/multimodal_benchmark.py` - Multi-modal benchmarks
+- `tests/test_multimodal_integration.py` - Integration tests
+- `docs/guides/multimodal_guide.md` - Multi-modal optimization guide
+
+**Success Criteria**:
+- 2x CLIP embedding throughput
+- Optimized cross-attention for vision-language
+- Real-time Whisper transcription
+- Memory-efficient multi-modal inference
+
+---
+
+### v0.4.16-v0.4.20 - RecSys & Prediction Model Series 📋 **PLANNED**
+
+**Theme**: "Production Recommendation Systems at Scale"
+**Goal**: Optimize recommendation systems and tabular prediction models leveraging KernelPyTorch's infrastructure
+
+This series adds enterprise-grade RecSys capabilities:
+- **Sparse Embedding Optimization**: Billion-parameter embedding tables
+- **Feature Interaction Kernels**: Fused cross-network operations
+- **KV-Cache for Sequential RecSys**: Efficient user history processing
+- **Batch Inference Engine**: High-throughput serving
+- **Quantization for Embeddings**: INT8/INT4/FP4 for massive tables
+
+---
+
+### v0.4.16 - RecSys Foundation 📋 **PLANNED**
+
+**Theme**: "Core Infrastructure & Two-Tower Models"
+
+| Component | Details |
+|-----------|---------|
+| Sparse Embeddings | Hybrid GPU/CPU placement, frequency-based caching |
+| Embedding Sharding | Multi-GPU distributed embedding tables |
+| Two-Tower Models | User/Item towers with optimized interaction |
+| Embedding Quantization | INT8/INT4 for large catalogs |
+
+**Models Supported**:
+- SimpleTwoTower - Basic user-item matching
+- MultiModalTwoTower - Text + image features
+- HierarchicalTwoTower - Category-aware embeddings
+
+**Deliverables**:
+- `src/kernel_pytorch/models/recsys/` - RecSys module
+- `src/kernel_pytorch/models/recsys/optimizations/sparse_embeddings.py`
+- `src/kernel_pytorch/models/recsys/optimizations/embedding_table_optimization.py`
+- `src/kernel_pytorch/models/recsys/models/two_tower/`
+- `tests/test_recsys_foundation.py` - 40+ tests
+
+**Success Criteria**:
+- 3x throughput vs baseline for two-tower inference
+- 75% memory reduction with INT8 embeddings
+- Support for 1B+ parameter embedding tables
+
+---
+
+### v0.4.17 - Deep RecSys Models 📋 **PLANNED**
+
+**Theme**: "CTR Prediction & Feature Interaction"
+
+| Model | Use Case | Key Optimization |
+|-------|----------|------------------|
+| Wide & Deep | CTR prediction | Fused cross-product kernels |
+| DeepFM | Factorization + DNN | Fused FM layer computation |
+| DCN (Deep & Cross) | Feature crossing | Fused cross-layer operations |
+| xDeepFM | Compressed interactions | CIN layer acceleration |
+
+**Deliverables**:
+- `src/kernel_pytorch/models/recsys/models/deep_recsys/wide_and_deep.py`
+- `src/kernel_pytorch/models/recsys/models/deep_recsys/deepfm.py`
+- `src/kernel_pytorch/models/recsys/models/deep_recsys/dcn.py`
+- `src/kernel_pytorch/models/recsys/optimizations/feature_interaction_kernels.py`
+- `examples/models/recsys/ctr_prediction.py`
+- `tests/test_deep_recsys.py` - 35+ tests
+
+**Success Criteria**:
+- 3x speedup on feature interaction computation
+- Competitive AUC with reference implementations
+- Support for 1000+ sparse features
+
+---
+
+### v0.4.18 - Sequential & Graph RecSys 📋 **PLANNED**
+
+**Theme**: "User History & Graph-Based Recommendations"
+
+| Model | Use Case | Key Optimization |
+|-------|----------|------------------|
+| SASRec | Next-item prediction | FlashAttention for sequences |
+| BERT4Rec | Bidirectional history | FlexAttention integration |
+| LightGCN | Graph collaborative filtering | Fused message passing |
+| PinSage | Large-scale graph | Importance sampling kernels |
+
+**Deliverables**:
+- `src/kernel_pytorch/models/recsys/models/sequential/sasrec.py`
+- `src/kernel_pytorch/models/recsys/models/sequential/bert4rec.py`
+- `src/kernel_pytorch/models/recsys/models/graph_based/lightgcn.py`
+- `src/kernel_pytorch/models/recsys/models/graph_based/pinsage.py`
+- `examples/models/recsys/sequential_recommendation.py`
+- `tests/test_sequential_graph_recsys.py` - 40+ tests
+
+**Success Criteria**:
+- 4x speedup for SASRec with FlashAttention
+- Support for 10M+ node graphs (LightGCN)
+- Efficient long user history (1000+ items)
+
+---
+
+### v0.4.19 - Tabular & Time Series Models 📋 **PLANNED**
+
+**Theme**: "Structured Data Prediction"
+
+| Model | Use Case | Key Optimization |
+|-------|----------|------------------|
+| TabNet | Tabular classification | Fused GLU + attention |
+| FT-Transformer | Feature tokenization | FlashAttention blocks |
+| Temporal Fusion Transformer | Time series forecasting | Variable selection acceleration |
+| N-BEATS | Pure DL forecasting | Fused stack computation |
+
+**Deliverables**:
+- `src/kernel_pytorch/models/recsys/models/tabular/tabnet.py`
+- `src/kernel_pytorch/models/recsys/models/tabular/ft_transformer.py`
+- `src/kernel_pytorch/models/recsys/models/tabular/time_series/temporal_fusion.py`
+- `src/kernel_pytorch/models/recsys/models/tabular/time_series/nbeats.py`
+- `examples/models/recsys/tabular_prediction.py`
+- `benchmarks/models/tabular_benchmark.py`
+- `tests/test_tabular_models.py` - 35+ tests
+
+**Success Criteria**:
+- Competitive accuracy with XGBoost/LightGBM
+- 3.5x throughput vs baseline TabNet
+- Support for 1000+ features
+
+---
+
+### v0.4.20 - Production RecSys Serving 📋 **PLANNED**
+
+**Theme**: "Enterprise Deployment"
+
+| Component | Details |
+|-----------|---------|
+| Batch Inference Engine | Dynamic batching, SLA-aware |
+| Candidate Generation | FAISS/HNSW integration |
+| Ranking Engine | Feature enrichment, diversification |
+| Evaluation Suite | Recall@K, NDCG, calibration |
+
+**Deliverables**:
+- `src/kernel_pytorch/models/recsys/serving/recsys_server.py` - FastAPI server
+- `src/kernel_pytorch/models/recsys/serving/batch_inference_engine.py`
+- `src/kernel_pytorch/models/recsys/serving/candidate_generation.py`
+- `src/kernel_pytorch/models/recsys/evaluation/metrics.py`
+- `docs/guides/recsys_deployment_guide.md`
+- `tests/test_recsys_serving.py` - 30+ tests
+
+**Success Criteria**:
+- <10ms p99 latency for single predictions
+- >100k items/sec batch inference throughput
+- Production-ready with health checks and monitoring
+
+---
+
+### RecSys Optimization Techniques Summary
+
+| Optimization | Memory Reduction | Speedup | Use Case |
+|--------------|------------------|---------|----------|
+| Sparse Embeddings | 50-90% | 2x | Large item catalogs |
+| INT8 Quantization | 75% | 1.5x | Memory-constrained serving |
+| INT4/FP4 Quantization | 94% | 1.2x | Extreme scale (1B+ items) |
+| Fused Feature Interaction | - | 3x | CTR prediction |
+| FlashAttention (Sequential) | 50% | 4x | User history modeling |
+| Distributed Sharding | Linear | Linear | Multi-GPU training |
+
+---
+
+### v0.5.0 - Next Generation Features (**PLANNED**)
+
+**Target Release**: Q1 2026
+
+**Note**: Many v0.5.0 features have been accelerated into v0.4.x series:
+- ✅ FlexAttention → v0.4.4
+- ✅ Full FP8 → v0.4.5
+- ✅ MoE Support → v0.4.6
+- ✅ Intel XPU → v0.4.7
+
+**Remaining v0.5.0 Features**:
+1. **Speculative Decoding**
+   - Multi-token draft model support
+   - Token verification and acceptance tracking
+   - Dynamic speculation depth
+
+2. **Quantization Suite Enhancement**
+   - GPTQ integration for 4-bit quantization
+   - AWQ (Activation-aware Weight Quantization)
+   - SmoothQuant for INT8 inference
+
+3. **Distributed Training Improvements**
+   - FSDP 2.0 integration
+   - Tensor parallel across backends
+   - Pipeline parallelism support
+
+4. **Performance Profiling Suite**
+   - Integrated profiling with torch.profiler
+   - Automatic bottleneck detection
+   - Memory leak detection tools
 
 ### v0.6.0 - Blackwell & Advanced Inference (**FUTURE**)
+
+**Target Release**: Q2 2026
 
 **Planned Features**:
 1. **FP4/NVFP4 for Blackwell**
    - Native Blackwell 5th-gen Tensor Core support
    - 3.5x memory reduction vs FP8
+   - NVFP4 quantization pipeline
 
 2. **AOTriton for AMD**
    - ROCm 7.0 native Triton compilation
    - MI300X/MI325X optimized kernels
+   - Native AMD tensor core support
 
 3. **Inference Engine Integration**
    - vLLM PagedAttention compatibility hooks
    - SGLang RadixAttention support
+   - TensorRT-LLM export pipeline
+
+4. **Advanced Memory Management**
+   - KV-cache optimization
+   - Continuous batching support
+   - Memory-efficient long context handling
+
+### v0.7.0 - Enterprise & Cloud Native (**FUTURE**)
+
+**Target Release**: Q3 2026
+
+**Planned Features**:
+1. **Cloud-Native Infrastructure**
+   - AWS SageMaker integration
+   - GCP Vertex AI integration
+   - Azure ML integration
+   - Multi-cloud deployment automation
+
+2. **Enterprise Features**
+   - Model encryption and secure inference
+   - Audit logging for compliance
+   - Role-based access control hooks
+
+3. **Advanced Monitoring**
+   - Real-time inference analytics
+   - Cost optimization recommendations
+   - A/B testing framework integration
+
+4. **Model Hub Integration**
+   - HuggingFace Hub direct integration
+   - Automatic optimization on download
+   - Model versioning and lineage tracking
 
 ---
 

@@ -8,18 +8,240 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.8 (Production/Stable)
+**Current Version**: v0.4.12
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
-- **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 90%+ production-ready)
+- **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 95%+ production-ready)
 - **Unified backend interface**: BaseBackend, BackendFactory, OptimizationLevel
-- **1,167 tests** passing (100% success rate)
+- **Real-world model integration**: BERT, GPT-2, Llama, Mistral, Phi optimization wrappers
+- **1,342 tests** passing (100% success rate)
+
+**Key Features**:
 - **Mixture of Experts (MoE)**: Comprehensive sparse MoE implementation
 - **FlexAttention**: PyTorch 2.5+ native flexible attention patterns
 - **Full FP8**: Native PyTorch FP8 types for 2x speedup on H100/Blackwell
 - **Complete deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
 - **Full monitoring**: Prometheus, Grafana, Kubernetes health probes
 - **Container support**: Docker, Kubernetes, Helm-ready
+
+---
+
+## [0.4.12] - 2026-01-22 - Medium Model Integration (LLMs)
+
+### **Added** ✨
+
+- **LLM Optimization Framework**: `src/kernel_pytorch/models/llm/`
+  - `LLMOptimizer` - Core optimizer for 7B+ parameter LLMs
+  - `LLMConfig` - Configuration with quantization, KV-cache, Flash Attention
+  - `OptimizedLlama` - Llama-2/3 wrapper with automatic optimization
+  - `OptimizedMistral` - Mistral-7B wrapper with 8K context support
+  - `OptimizedPhi` - Phi-2 wrapper for efficient small LLMs
+  - `create_optimized_llm()` - Factory function with quantization support
+
+- **Quantization Modes**:
+  - `NONE` - Full precision (FP16/BF16)
+  - `INT8` - Dynamic INT8 quantization
+  - `INT4` - Weight-only INT4 (GPTQ/AWQ compatible)
+  - `FP8` - FP8 for H100+ hardware
+  - `BNBT4` - BitsAndBytes 4-bit NF4 quantization
+
+- **KV-Cache Optimization**: `src/kernel_pytorch/models/llm/kv_cache.py`
+  - `KVCacheManager` - Standard KV-cache with automatic truncation
+  - `PagedKVCache` - vLLM-style paged attention for memory efficiency
+  - `SlidingWindowCache` - Sliding window for Mistral-style attention
+
+- **Memory Estimation**: Automatic memory requirement calculation
+  - Per-model estimates (7B, 8B, 13B, 70B)
+  - Quantization-aware memory reduction
+  - KV-cache overhead estimation
+
+- **Example Scripts**: `examples/models/medium/`
+  - `llama_optimization.py` - Llama-7B optimization demo
+
+- **Tests**: `tests/test_llm_integration.py` (35 tests)
+  - LLM type detection
+  - Quantization modes
+  - KV-cache operations
+  - Memory estimation
+  - Backend integration
+
+### **Changed** 🔄
+
+- **Version**: 0.4.11 → 0.4.12
+- **Models module**: Added LLM exports to `kernel_pytorch.models`
+
+### **Technical Notes** 📋
+
+- LLM optimizer supports automatic backend detection across NVIDIA, AMD, TPU, Intel
+- Flash Attention 2 enabled by default when available
+- BetterTransformer integration for additional speedup
+- KV-cache supports dynamic growth up to max_sequence_length
+- Paged KV-cache implements efficient memory allocation for long contexts
+- Memory estimation helps select appropriate hardware/quantization
+
+---
+
+## [0.4.11] - 2026-01-22 - Small Model Integration
+
+### **Added** ✨
+
+- **Text Model Optimization Framework**: `src/kernel_pytorch/models/text/`
+  - `TextModelOptimizer` - Core optimizer with automatic backend detection
+  - `TextModelConfig` - Configuration dataclass for optimization settings
+  - `OptimizedBERT` - Optimized BERT wrapper for classification tasks
+  - `OptimizedGPT2` - Optimized GPT-2 wrapper for text generation
+  - `OptimizedDistilBERT` - Optimized DistilBERT for lightweight inference
+  - `create_optimized_text_model()` - Factory function for easy model creation
+
+- **Optimization Modes**:
+  - `INFERENCE` - Low-latency single-request optimization
+  - `THROUGHPUT` - High-throughput batch processing
+  - `MEMORY` - Minimal memory footprint
+  - `BALANCED` - Balance between speed and memory
+
+- **Example Scripts**: `examples/models/small/`
+  - `bert_optimization.py` - BERT optimization with benchmarks
+  - `gpt2_optimization.py` - GPT-2 text generation demo
+
+- **Benchmark Suite**: `benchmarks/models/small_model_benchmark.py`
+  - Latency benchmarks (avg, p50, p95, p99)
+  - Throughput measurements
+  - Memory profiling
+  - Baseline vs optimized comparison
+
+- **Documentation**: `docs/guides/small_model_guide.md`
+  - Quick start guide
+  - Optimization modes explained
+  - Backend-specific settings
+  - Performance benchmarks table
+  - Troubleshooting guide
+
+- **Tests**: `tests/test_small_model_integration.py` (31 tests)
+  - Model type detection
+  - Optimization modes
+  - Backend integration
+  - Factory function tests
+
+### **Changed** 🔄
+
+- **Version**: 0.4.10-rc1 → 0.4.11
+- **Roadmap**: Updated with v0.4.11-v0.4.15 model integration series
+
+### **Technical Notes** 📋
+
+- Text model optimizer automatically detects and uses optimal backend (NVIDIA, AMD, TPU, Intel, CPU)
+- torch.compile integration with configurable modes (reduce-overhead, max-autotune)
+- FP16/BF16 precision automatically selected based on hardware
+- Memory-efficient attention (SDPA) enabled by default
+- Warmup functionality for consistent benchmarking
+
+---
+
+## [0.4.10] - 2026-01-22 - Intel Documentation + Cloud Validation
+
+### **Added** ✨
+
+- **Comprehensive Intel Documentation**: `docs/backends/intel.md` (700+ lines)
+  - Full Intel XPU backend guide matching NVIDIA/AMD/TPU documentation
+  - Hardware support table (Ponte Vecchio, Arc, Flex, Integrated)
+  - Installation and configuration guides
+  - IPEX integration examples
+  - Performance optimization best practices
+  - Memory management documentation
+  - Troubleshooting guide
+
+- **Intel DevCloud Validation Script**: `scripts/cloud_testing/intel_devcloud/run_validation.sh`
+  - 6-step validation pipeline for Intel hardware
+  - XPU device detection and configuration
+  - Full test suite execution
+  - Performance benchmarks
+  - v0.4.10 feature validation
+  - Automated report generation
+
+- **Intel Benchmark Suite**: `benchmarks/intel_benchmark.py`
+  - Optimization level comparison (O0, O1, O2, O3)
+  - Precision benchmarks (FP32, BF16, FP16)
+  - Memory management benchmarks
+  - IPEX optimization impact measurement
+  - CNN workload benchmarks
+
+### **Changed** 🔄
+
+- **Version Updates**: All Intel module versions updated to 0.4.10
+  - `intel_backend.py`: v0.4.8 → v0.4.10
+
+- **Documentation Parity**: Intel backend now has documentation matching other backends
+  - NVIDIA: 518 lines
+  - TPU: 713 lines
+  - AMD: 681 lines
+  - **Intel: 700+ lines** (NEW)
+
+### **Technical Notes** 📋
+
+- Intel backend documentation covers all features: device detection, IPEX optimization, oneDNN fusion, AMX/XMX acceleration
+- DevCloud validation script works on any Intel XPU system (DevCloud, local, cloud)
+- Benchmarks work in CPU fallback mode when XPU is unavailable
+- All 61 Intel tests passing
+
+---
+
+## [0.4.9] - 2026-01-20 - AMD Backend Completion
+
+### **Added** ✨
+
+- **AMD Operator Fusion**: Real operator fusion implementations
+  - `_fuse_conv_bn_relu()`: Fuses Conv2D + BatchNorm using PyTorch's `fuse_conv_bn_eval()`
+  - `_fuse_linear_gelu()`: Identifies Linear+GELU patterns for torch.compile optimization
+  - `_aggressive_kernel_fusion()`: Aggressive patterns including attention, LayerNorm, Flash Attention
+  - `_replace_module()`: Helper method for in-place module replacement
+
+- **HIP Kernel Compilation Pipeline**: Enhanced compilation
+  - `_compile_with_hipcc()`: Real hipcc compilation when ROCM_HOME is set
+  - `_simulate_compilation()`: Structured simulation for non-ROCm environments
+  - Binary output with metadata for debugging
+
+- **Memory Layout Optimization**: HBM efficiency improvements
+  - `channels_last` conversion for Conv2d (NHWC format)
+  - `channels_last_3d` conversion for Conv3d (NDHWC format)
+  - Contiguous tensor enforcement for optimal rocBLAS performance
+
+- **torch.compile Integration**: Aggressive optimization modes
+  - `reduce-overhead` mode for inference
+  - `max-autotune` mode for aggressive optimization
+  - Flash attention backend enablement on supported hardware
+
+- **AMD Optimization Benchmarks**: `benchmarks/amd_optimization_benchmark.py`
+  - Optimization level comparison (conservative, balanced, aggressive)
+  - Compilation cache performance measurement
+  - Memory management benchmarks
+  - Convolutional block optimization benchmarks
+
+- **Extended AMD Tests**: 25+ new tests in `test_amd_backend.py`
+  - `TestAMDOperatorFusion`: Fusion pattern tests
+  - `TestHIPCompilationEnhanced`: Enhanced compilation tests
+  - `TestAMDBackendEnhanced`: Backend integration tests
+  - `TestAMDMemoryManagerEnhanced`: Memory manager tests
+  - `TestAMDIntegrationV049`: Full integration tests
+
+### **Changed** 🔄
+
+- **Version Updates**: All AMD module versions updated to 0.4.9
+  - `amd_backend.py`: v0.4.8 → v0.4.9
+  - `amd_optimizer.py`: v0.3.6 → v0.4.9
+  - `rocm_compiler.py`: v0.3.6 → v0.4.9
+  - `memory_manager.py`: v0.3.7 → v0.4.9
+
+- **Documentation**: Updated `docs/backends/amd.md`
+  - v0.4.9 feature documentation
+  - Updated production readiness to 95%+
+
+### **Technical Notes** 📋
+
+- AMD backend now has full parity with NVIDIA backend for operator fusion
+- HIP compilation supports both real hipcc (when available) and simulation mode
+- Memory layout optimization improves HBM bandwidth utilization on MI200/MI300
+- torch.compile integration provides automatic optimization without manual kernel writing
+- All benchmarks work in simulation mode when ROCm is not available
 
 ---
 
