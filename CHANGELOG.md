@@ -139,6 +139,8 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 
 ## [0.4.10] - 2026-01-22 - Intel Documentation + Cloud Validation
 
+**Note**: This version was committed retroactively on 2026-01-22. Features were implemented between v0.4.8 and v0.4.11 but not committed as a separate release until after v0.4.11-v0.4.12 were released.
+
 ### **Added** ✨
 
 - **Comprehensive Intel Documentation**: `docs/backends/intel.md` (700+ lines)
@@ -185,7 +187,9 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 
 ---
 
-## [0.4.9] - 2026-01-20 - AMD Backend Completion
+## [0.4.9] - 2026-01-22 - AMD Backend Completion
+
+**Note**: This version was committed retroactively on 2026-01-22. Features were implemented between v0.4.8 and v0.4.11 but not committed as a separate release until after v0.4.11-v0.4.12 were released. Originally planned for 2026-01-20.
 
 ### **Added** ✨
 
