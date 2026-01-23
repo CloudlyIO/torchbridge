@@ -48,6 +48,24 @@
   - mypy configuration
   - pytest configuration (moved from pytest.ini)
 
+### **Test Organization** 🧪
+
+- Reorganized test directory into hierarchical structure:
+  - `tests/unit/` - Fast, isolated tests
+  - `tests/integration/` - Multi-component tests
+  - `tests/backends/` - Hardware backend tests
+  - `tests/features/` - Feature-specific tests
+  - `tests/e2e/` - End-to-end tests
+  - `tests/benchmarks_tests/` - Benchmark validation tests
+- Updated tests/README.md with new structure documentation
+- Fixed import paths for reorganized test modules
+
+### **Benchmark Organization** 📊
+
+- Cleaned up redundant nested benchmarks directory
+- Updated benchmarks/README.md with current structure
+- Results continue to be stored in gitignored `benchmarks/results/`
+
 ### **Infrastructure** 🏗️
 
 - Pre-commit hooks updated to v4.6.0

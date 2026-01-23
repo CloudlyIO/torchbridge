@@ -1,112 +1,141 @@
-# 🧪 PyTorch Optimization Tests (v0.3.3)
+# KernelPyTorch Test Suite
 
-**Comprehensive test suite for validating GPU optimizations.**
+Comprehensive test suite for validating GPU optimizations.
 
-## ⚡ Quick Start
+## Quick Start
 
 ```bash
-# Run all tests
-export PYTHONPATH=src:$PYTHONPATH
-python3 -m pytest tests/ -v
+# Run all tests (excluding GPU/slow)
+python3 -m pytest tests/ -v -m "not gpu and not slow"
+
+# Run specific test category
+python3 -m pytest tests/unit/ -v          # Fast unit tests
+python3 -m pytest tests/integration/ -v   # Integration tests
+python3 -m pytest tests/backends/ -v      # Backend tests
+python3 -m pytest tests/features/ -v      # Feature tests
+python3 -m pytest tests/e2e/ -v           # End-to-end tests
 
 # Quick validation
-python3 -m pytest tests/test_basic_functionality.py -v
-
-# Run with limited failures (faster feedback)
-python3 -m pytest tests/ --maxfail=5 -q
+python3 -m pytest tests/unit/ -v --maxfail=3
 ```
 
-## 📊 Test Statistics
+## Directory Structure
 
-- **Total Tests**: ~860 tests across all modules
-- **Categories**: Unit, Integration, Hardware, Performance
-- **Skip Reasons**: Platform-specific (macOS vs Linux), GPU requirements, edge cases
-
-## 📋 Test Modules
-
-| Module | Focus | Notes |
-|--------|-------|-------|
-| `test_configs.py` | Configuration validation | Always available |
-| `test_integration.py` | Core functionality | Always available |
-| `test_testing_framework.py` | Framework validation | Always available |
-| `test_hardware_abstraction.py` | Multi-vendor GPUs | Requires CUDA GPU |
-| `test_nvidia_backend.py` | NVIDIA backend (v0.3.1) | Requires NVIDIA GPU |
-| `test_tpu_backend.py` | TPU backend (v0.3.2) | Requires TPU or mocks |
-| `test_neural_operator_fusion.py` | Advanced attention | GPU recommended |
-| `test_ultra_precision.py` | Precision optimization | Some tests skip on edge cases |
-| `test_fp8_training.py` | FP8 precision | Requires H100+ GPU |
-| `test_distributed_scale.py` | Multi-GPU scaling | Requires 2+ GPUs |
-
-## 🎯 Test Categories
-
-- **Unit Tests** - Fast component validation
-- **Integration Tests** - End-to-end workflows
-- **Hardware Tests** - GPU-specific functionality
-- **Performance Tests** - Regression detection
-
-## 🔧 Requirements
-
-```bash
-# Basic testing
-pip install pytest
-
-# GPU testing (optional)
-nvidia-smi  # Verify CUDA
-
-# Coverage analysis
-pip install pytest-cov
-python3 -m pytest tests/ --cov=src --cov-report=html
+```
+tests/
+├── conftest.py              # Shared fixtures
+├── README.md
+│
+├── unit/                    # Fast, isolated tests (<1s each)
+│   ├── test_configs.py
+│   ├── test_kernel_registry.py
+│   ├── test_package_installation.py
+│   └── test_performance_tracker.py
+│
+├── integration/             # Multi-component tests (1-30s)
+│   ├── test_backend_integration.py
+│   ├── test_backend_unification.py
+│   ├── test_distributed_integration.py
+│   ├── test_integration.py
+│   ├── test_kernel_integration.py
+│   ├── test_llm_integration.py
+│   ├── test_multimodal_integration.py
+│   ├── test_small_model_integration.py
+│   └── test_vision_model_integration.py
+│
+├── backends/                # Hardware backend tests
+│   ├── test_nvidia_backend.py
+│   ├── test_nvidia_config.py
+│   ├── test_amd_backend.py
+│   ├── test_intel_backend.py
+│   ├── test_tpu_backend.py
+│   ├── test_tpu_config.py
+│   ├── test_hardware_abstraction.py
+│   └── test_custom_kernels.py
+│
+├── features/                # Feature-specific tests
+│   ├── test_advanced.py
+│   ├── test_advanced_memory.py
+│   ├── test_attention_compatibility.py
+│   ├── test_auto_optimization.py
+│   ├── test_compiler.py
+│   ├── test_distributed_scale.py
+│   ├── test_dynamic_shapes.py
+│   ├── test_flex_attention.py
+│   ├── test_fp8_native.py
+│   ├── test_fp8_training.py
+│   ├── test_moe.py
+│   ├── test_neural_operator_fusion.py
+│   ├── test_next_gen.py
+│   └── test_ultra_precision.py
+│
+├── e2e/                     # End-to-end tests
+│   ├── test_deployment.py
+│   ├── test_monitoring.py
+│   └── test_serving.py
+│
+├── benchmarks_tests/        # Benchmark validation tests
+│   ├── test_advanced_memory_benchmarks.py
+│   ├── test_cli_benchmarks.py
+│   └── test_next_gen_benchmarks.py
+│
+├── cli/                     # CLI command tests
+├── cloud_testing/           # Cloud platform tests
+├── patterns/                # Optimization pattern tests
+└── regression/              # Regression detection tests
 ```
 
-## 🧪 Hardware-Specific Testing
+## Test Markers
 
-**CPU Only (Always Available):**
+Use pytest markers to run specific test categories:
+
 ```bash
-export CUDA_VISIBLE_DEVICES=""
-PYTHONPATH=src python3 -m pytest tests/test_integration.py tests/test_testing_framework.py -v
+# By test type
+pytest -m unit           # Fast unit tests
+pytest -m integration    # Integration tests
+pytest -m e2e            # End-to-end tests
+pytest -m benchmark      # Performance benchmarks
+
+# By hardware requirement
+pytest -m gpu            # Requires CUDA GPU
+pytest -m tpu            # Requires TPU
+pytest -m amd            # Requires AMD GPU (ROCm)
+pytest -m intel          # Requires Intel GPU (XPU)
+pytest -m fp8            # Requires FP8 hardware (H100+)
+
+# By duration
+pytest -m slow           # Long-running tests
+pytest -m "not slow"     # Quick tests only
 ```
 
-**Standard GPU (CUDA):**
+## Hardware-Specific Testing
+
+**CPU Only:**
 ```bash
-# Requires any CUDA GPU
-PYTHONPATH=src python3 -m pytest tests/test_hardware_abstraction.py tests/test_neural_operator_fusion.py -v
+pytest tests/unit/ tests/integration/ -v -m "not gpu"
 ```
 
-**Advanced GPU Features:**
+**NVIDIA GPU:**
 ```bash
-# FP8 training - requires H100/Hopper GPU
-export ENABLE_FP8_TESTS=1
-PYTHONPATH=src python3 -m pytest tests/test_fp8_training.py -v
+pytest tests/backends/test_nvidia_backend.py -v
+pytest tests/features/test_fp8_training.py -v  # H100+ required
+```
 
-# Multi-GPU - requires 2+ GPUs
+**Multi-GPU:**
+```bash
 export CUDA_VISIBLE_DEVICES=0,1
-PYTHONPATH=src python3 -m pytest tests/test_distributed_scale.py -v
+pytest tests/features/test_distributed_scale.py -v
 ```
 
-**Edge Case Resolution:**
+## Coverage
+
 ```bash
-# To enable currently skipped edge cases, implement:
-# 1. UltraPrecisionModule single layer support
-# 2. Enhanced tensor masking for small models
-# 3. NaN/Inf handling in precision allocation
-# 4. Complete benchmark_precision_allocation function
-
-# Check specific skip reasons:
-PYTHONPATH=src python3 -m pytest tests/test_ultra_precision.py -v -rs
+pytest tests/ --cov=src/kernel_pytorch --cov-report=html
+open htmlcov/index.html
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
-**Common Issues:**
-- Clear compilation cache: `rm -rf ~/.cache/torch/`
-- Set path: `export PYTHONPATH=src:$PYTHONPATH`
-- Memory errors: Use `--quick` flags in tests
-
-## 📈 Current Test Status
-
-Run `pytest --collect-only` to see exact test counts. Results vary by platform:
-- **macOS**: Some GPU tests skip (no CUDA)
-- **Linux + NVIDIA GPU**: Full test coverage
-- **Cloud TPU**: TPU-specific tests enabled
-
-**🎯 Run tests to validate 2-6x performance improvements!**
+- Clear cache: `rm -rf ~/.cache/torch/ __pycache__`
+- Memory errors: Use `pytest -x` to stop on first failure
+- Check skips: `pytest -v -rs` to see skip reasons

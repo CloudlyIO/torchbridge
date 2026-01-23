@@ -28,7 +28,7 @@ from kernel_pytorch.core.compilers import (
     AttentionPattern,
     PyGraphCUDAOptimizer
 )
-from test_configs import TEST_CONFIGS, TestDataConfig
+from tests.unit.test_configs import TEST_CONFIGS, TestDataConfig
 
 
 class TestRealisticScaleCompilation:
