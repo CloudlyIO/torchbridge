@@ -15,7 +15,7 @@ Supported Hardware:
 - AMD MI200 series (CDNA2): MI210, MI250, MI250X
 - AMD MI300 series (CDNA3): MI300A, MI300X
 
-Version: 0.3.6
+Version: 0.4.18
 """
 
 from .amd_backend import AMDBackend
@@ -32,4 +32,4 @@ __all__ = [
     "HIPUtilities",
 ]
 
-__version__ = "0.4.2"
+__version__ = "0.4.18"

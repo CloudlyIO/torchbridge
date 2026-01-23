@@ -73,7 +73,7 @@ from .intel_optimizer import (
     OptimizationResult,
 )
 
-__version__ = "0.4.7"
+__version__ = "0.4.18"
 
 __all__ = [
     # Main backend

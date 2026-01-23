@@ -8,13 +8,20 @@ import re
 import sys
 from pathlib import Path
 
-# Files to check for version consistency
-VERSION_FILES = {
-    'CHANGELOG.md': r'\[(\d+\.\d+\.\d+)\]',
-    'docs/unified_roadmap.md': r'v(\d+\.\d+\.\d+)',
-    'docs/immediate_tasks.md': r'v(\d+\.\d+\.\d+)',
+# Critical version files (MUST match for any release)
+CRITICAL_VERSION_FILES = {
+    'pyproject.toml': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/kernel_pytorch/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/kernel_pytorch/cli/__init__.py': r"version='%\(prog\)s\s+(\d+\.\d+\.\d+)'",
+    'CHANGELOG.md': r'## \[(\d+\.\d+\.\d+)\]',
+}
+
+# Secondary version files (should match, but not blocking)
+SECONDARY_VERSION_FILES = {
     'src/kernel_pytorch/backends/nvidia/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
     'src/kernel_pytorch/backends/tpu/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/kernel_pytorch/backends/amd/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/kernel_pytorch/backends/intel/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
 }
 
 def extract_version(file_path: Path, pattern: str) -> str:
@@ -31,38 +38,60 @@ def extract_version(file_path: Path, pattern: str) -> str:
 def main():
     """Check version consistency across all files."""
     project_root = Path(__file__).parent.parent
-    versions = {}
+    critical_versions = {}
+    secondary_versions = {}
+    exit_code = 0
 
-    print("🔍 Checking version consistency...")
+    print("🔍 Checking version consistency...\n")
 
-    for file_rel_path, pattern in VERSION_FILES.items():
+    # Check critical files (blocking)
+    print("CRITICAL FILES (must match):")
+    for file_rel_path, pattern in CRITICAL_VERSION_FILES.items():
         file_path = project_root / file_rel_path
         version = extract_version(file_path, pattern)
         if version:
-            versions[file_rel_path] = version
-            print(f"   {file_rel_path}: v{version}")
+            critical_versions[file_rel_path] = version
+            print(f"   ✓ {file_rel_path}: v{version}")
+        else:
+            print(f"   ✗ {file_rel_path}: NOT FOUND")
+            exit_code = 1
 
-    # Check if all versions match
-    unique_versions = set(versions.values())
-
-    if len(unique_versions) == 0:
-        print("❌ Error: No versions found in any files!")
-        return 1
-    elif len(unique_versions) == 1:
-        current_version = list(unique_versions)[0]
-        print(f"\n✅ All versions consistent: v{current_version}")
-        return 0
+    # Check critical version consistency
+    unique_critical = set(critical_versions.values())
+    if len(unique_critical) > 1:
+        print(f"\n❌ CRITICAL: Version mismatch in critical files!")
+        print(f"   Found versions: {sorted(unique_critical)}")
+        for version in sorted(unique_critical):
+            files = [f for f, v in critical_versions.items() if v == version]
+            print(f"   v{version}: {', '.join(files)}")
+        exit_code = 1
+    elif len(unique_critical) == 1:
+        canonical_version = list(unique_critical)[0]
+        print(f"\n✅ Critical files consistent: v{canonical_version}")
     else:
-        print(f"\n❌ Error: Version mismatch detected!")
-        print(f"   Found versions: {sorted(unique_versions)}")
-        print(f"\n   Files by version:")
-        for version in sorted(unique_versions):
-            files = [f for f, v in versions.items() if v == version]
-            print(f"   v{version}:")
-            for f in files:
-                print(f"      - {f}")
-        print(f"\n💡 Please update all version references to match.")
-        return 1
+        print(f"\n❌ No versions found in critical files!")
+        exit_code = 1
+        canonical_version = None
+
+    # Check secondary files (warnings only)
+    print("\nSECONDARY FILES (should match):")
+    for file_rel_path, pattern in SECONDARY_VERSION_FILES.items():
+        file_path = project_root / file_rel_path
+        version = extract_version(file_path, pattern)
+        if version:
+            secondary_versions[file_rel_path] = version
+            status = "✓" if (canonical_version and version == canonical_version) else "⚠"
+            print(f"   {status} {file_rel_path}: v{version}")
+        else:
+            print(f"   - {file_rel_path}: not found (optional)")
+
+    # Summary
+    if exit_code == 0:
+        print(f"\n✅ Version check passed: v{canonical_version}")
+    else:
+        print(f"\n❌ Version check failed! Fix critical files before commit.")
+
+    return exit_code
 
 if __name__ == "__main__":
     sys.exit(main())

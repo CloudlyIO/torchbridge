@@ -2,7 +2,7 @@
 
 **Production-ready PyTorch GPU optimization framework for 2-5x performance improvements.**
 
-[![Version](https://img.shields.io/badge/version-0.4.5-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-987%20passed%2C%2085%20skipped-blue)](./BENCHMARKS.md) [![Demos](https://img.shields.io/badge/demos-7%2F7%20passing-green)](./demos/) [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/badge/version-0.4.18-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-235%20passed%2C%2016%20skipped-blue)](./BENCHMARKS.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## 🚀 What is KernelPyTorch?
 

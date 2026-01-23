@@ -8,7 +8,40 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.17
+**Current Version**: v0.4.18
+
+---
+
+## [0.4.18] - 2026-01-23 - Quality Standards & Version Consistency
+
+### **Added** ✨
+
+- **Quality Standards Document** (`QUALITY_STANDARDS.md`)
+  - Comprehensive quality gates for patch releases (0.0.x)
+  - Full release quality bar for minor releases (0.y.0)
+  - Automated enforcement guidelines
+  - Quality metrics dashboard with baseline values
+
+- **Enhanced Version Checking** (`scripts/check_version_consistency.py`)
+  - Critical files check (blocking): pyproject.toml, __init__.py, cli/__init__.py, CHANGELOG.md
+  - Secondary files check (warning): all backend __init__.py files
+  - Clear pass/fail output for CI integration
+
+### **Fixed** 🐛
+
+- **Version Inconsistencies**
+  - CLI version: 0.1.58 → 0.4.18
+  - README badge: 0.4.5 → 0.4.18
+  - NVIDIA backend: 0.4.2 → 0.4.18
+  - TPU backend: 0.4.2 → 0.4.18
+  - AMD backend: 0.4.2 → 0.4.18
+  - Intel backend: 0.4.7 → 0.4.18
+  - AMD docstring: 0.3.6 → 0.4.18
+
+### **Technical Debt** 🧹
+
+- All version strings now consistently synchronized across codebase
+- Version check script now covers all critical locations
 
 ---
 
