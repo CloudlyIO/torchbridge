@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kernel-pytorch"
-version = "0.4.15"
+version = "0.4.16"
 description = "Production-grade PyTorch GPU optimization framework with custom CUDA kernels (FlashAttention-3, Fused ops) - 2-10x performance improvements"
 authors = [{name = "KernelPyTorch Team"}]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["pytorch", "gpu", "optimization", "cuda", "triton", "machine-learning", "deep-learning", "performance"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -18,14 +18,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: System :: Hardware :: Universal Serial Bus (USB) :: Graphics Processing Unit (GPU)",
 ]
 dependencies = [
     "torch>=2.0.0",
@@ -54,10 +52,9 @@ dev = [
     "seaborn>=0.11.0",
     "jupyter>=1.0.0",
     "tensorboard>=2.9.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
+    "ruff>=0.4.0",
     "mypy>=1.0.0",
+    "pre-commit>=3.5.0",
 ]
 all = [
     "transformers>=4.35.0",
@@ -100,3 +97,66 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+ignore = [
+    "E501",   # Line length handled by formatter
+    "B008",   # Do not perform function calls in argument defaults
+    "B905",   # zip without strict
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kernel_pytorch"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "build",
+    "dist",
+    "\\.git",
+    "__pycache__",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers -ra"
+markers = [
+    "unit: Fast unit tests (< 1 second)",
+    "integration: Integration tests (1-30 seconds)",
+    "e2e: End-to-end tests (> 30 seconds)",
+    "gpu: Requires CUDA GPU",
+    "tpu: Requires TPU",
+    "amd: Requires AMD GPU (ROCm)",
+    "intel: Requires Intel GPU (XPU)",
+    "fp8: Requires FP8 hardware (H100+)",
+    "slow: Long-running tests",
+    "benchmark: Performance benchmarks",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

@@ -1,10 +1,10 @@
 # Pre-commit hooks for KernelPyTorch
-# Ensures version updates and documentation updates are never missed
+# Ensures code quality and version consistency
 
 repos:
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -16,13 +16,13 @@ repos:
       - id: pretty-format-json
         args: ['--autofix', '--no-sort-keys']
 
-  # Python code formatting
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  # Ruff - Fast Python linter and formatter (replaces Black, isort, flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
     hooks:
-      - id: black
-        language_version: python3.11
-        exclude: ^(migrations|snapshots)/
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
 
   # Local custom hooks for version/doc validation
   - repo: local

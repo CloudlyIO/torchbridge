@@ -4,14 +4,10 @@ CUDA Extension Build Script for KernelPyTorch
 This script handles building custom CUDA kernels only.
 Package metadata is defined in pyproject.toml (PEP 621).
 
-Version: 0.4.5 (synced with pyproject.toml)
-
 Usage:
     pip install -e .                  # Editable install (uses pyproject.toml)
     python setup.py build_ext --inplace  # Build CUDA extensions only
 """
-
-__version__ = "0.4.5"  # Keep in sync with pyproject.toml
 
 from setuptools import setup
 import os

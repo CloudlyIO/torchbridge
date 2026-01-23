@@ -12,7 +12,12 @@ Optimization Levels:
 - Level 5: Custom CUDA kernels (maximum control)
 """
 
-__version__ = "0.4.15"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("kernel-pytorch")
+except PackageNotFoundError:
+    __version__ = "0.4.16"  # Fallback for development
 
 # Unified Configuration System
 from .core.config import (

@@ -7,8 +7,6 @@ This module provides reusable fixtures for:
 - Sample input data
 - Backend configurations
 - Mock utilities for hardware simulation
-
-Version: 0.3.6
 """
 
 import pytest

@@ -9,8 +9,6 @@ Components:
 - gcp_test_harness: GCP test orchestration (NVIDIA A3/A2, TPU v5e/v6e)
 - result_uploader: Upload results to S3/GCS
 - benchmark_database: Store and query benchmark results
-
-Version: 0.3.7
 """
 
 from .aws_test_harness import (
@@ -41,8 +39,6 @@ from .benchmark_database import (
     query_benchmarks,
     compare_platforms,
 )
-
-__version__ = "0.3.7"
 
 __all__ = [
     # AWS

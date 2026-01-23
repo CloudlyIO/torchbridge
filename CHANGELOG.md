@@ -8,7 +8,53 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.15
+**Current Version**: v0.4.16
+
+---
+
+## [0.4.16] - 2026-01-22 - Repository Modernization & CI/CD
+
+### **Added** ✨
+
+- **GitHub Actions CI/CD**: Complete CI/CD pipeline
+  - `.github/workflows/ci.yml` - Lint, type-check, test matrix (Python 3.10-3.12, Ubuntu/macOS)
+  - `.github/workflows/release.yml` - Automated releases on tags
+  - Ruff linting and formatting checks
+  - mypy type checking
+  - pytest with coverage
+
+- **Type Checking Support**
+  - `src/kernel_pytorch/py.typed` - PEP 561 marker for type checkers
+  - mypy configuration in pyproject.toml
+
+### **Changed** 🔄
+
+- **Migrated to Ruff**: Replaced Black/isort/flake8 with Ruff
+  - 200x faster linting
+  - Single tool for formatting and linting
+  - Updated `.pre-commit-config.yaml` to use ruff-pre-commit
+
+- **Updated Python Requirements**: 3.8+ → 3.10+
+  - Dropped Python 3.8 (EOL Oct 2024) and 3.9 (EOL Oct 2025)
+  - Added Python 3.13 support
+
+- **Version Management**: Single source of truth
+  - `pyproject.toml` is now the sole version source
+  - `__init__.py` uses `importlib.metadata` to read version
+  - Removed hardcoded versions from `setup.py` and `conftest.py`
+
+- **Consolidated Configuration**: All tool configs in pyproject.toml
+  - Ruff lint and format settings
+  - mypy configuration
+  - pytest configuration (moved from pytest.ini)
+
+### **Infrastructure** 🏗️
+
+- Pre-commit hooks updated to v4.6.0
+- Ruff pre-commit hook v0.4.10
+- pytest configuration consolidated into pyproject.toml
+
+---
 
 KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 - **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 95%+ production-ready)
