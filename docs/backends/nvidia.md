@@ -14,7 +14,7 @@ The NVIDIA backend provides production-grade GPU acceleration for PyTorch models
 
 - **Multi-GPU Support**: Automatic detection and coordination of multiple NVIDIA GPUs
 - **Custom CUDA Kernels**: FlashAttention-3, fused Linear+Activation kernels
-- **FP8 Support**: Metadata-only FP8 layer marking (H100/Blackwell) - Full FP8 in v0.5.0
+- **FP8 Support**: Metadata-only FP8 layer marking (H100/Blackwell) - use Transformer Engine for production FP8
 - **Memory Management**: Advanced memory pooling with OOM protection
 - **Optimization Levels**: Conservative, Balanced, Aggressive modes
 - **Error Handling**: Comprehensive exception hierarchy with detailed logging
@@ -140,9 +140,9 @@ print(f"Estimated speedup: {result.estimated_speedup:.2f}x")
 
 FP8 layer identification for H100/Blackwell GPUs.
 
-**⚠️ v0.3.1 LIMITATION - METADATA-ONLY**:
+**⚠️ METADATA-ONLY BY DESIGN**:
 
-The FP8Compiler in v0.3.1 provides FP8 METADATA marking only. Layers are identified and marked for FP8, but actual FP8 quantization and arithmetic are NOT performed. Full FP8 implementation with NVIDIA Transformer Engine is planned for v0.5.0.
+The FP8Compiler provides FP8 METADATA marking only. Layers are identified and marked for FP8, but actual FP8 quantization and arithmetic are NOT performed. This is intentional to avoid duplicating NVIDIA Transformer Engine. For production FP8, use Transformer Engine directly.
 
 **Current Capabilities**:
 - ✅ Identifies FP8-capable layers (Linear, Conv, Attention)
@@ -344,8 +344,7 @@ result = optimizer.optimize(model, optimization_level="aggressive")
 FP8 support in v0.3.1 is **metadata-only**. Layers are marked for FP8 but no actual FP8 operations are performed. This is intentional.
 
 **For Production FP8**:
-- Use NVIDIA Transformer Engine directly
-- Wait for v0.5.0 (full FP8 integration planned)
+- Use NVIDIA Transformer Engine directly: `pip install transformer-engine`
 
 #### 6. Compute Capability Too Low
 
@@ -389,9 +388,9 @@ DEBUG:kernel_pytorch.backends.nvidia.memory_manager:Allocating tensor: shape=(10
 
 ## Known Limitations (v0.3.1)
 
-1. **FP8 Support**: Metadata-only in v0.3.1
+1. **FP8 Support**: Metadata-only by design
    - Layers are marked for FP8 but no actual FP8 operations
-   - Full FP8 with Transformer Engine in v0.5.0
+   - Use NVIDIA Transformer Engine directly for production FP8
 
 2. **FlashAttention**: Requires flash-attn package
    - Falls back to PyTorch SDPA if unavailable

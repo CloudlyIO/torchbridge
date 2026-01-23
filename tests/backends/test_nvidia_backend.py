@@ -627,12 +627,12 @@ class TestNVIDIAErrorPaths:
         compiler = FP8Compiler(config)
         model = nn.Linear(128, 128)
         
-        # Should issue deprecation warning about metadata-only FP8
+        # Should issue warning about metadata-only FP8
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = compiler.prepare_for_fp8(model, for_inference=False)
-            # Check if deprecation warning was issued
-            assert any("metadata-only" in str(warning.message).lower() for warning in w if issubclass(warning.category, DeprecationWarning))
+            # Check if warning was issued (UserWarning or DeprecationWarning)
+            assert any("metadata-only" in str(warning.message).lower() for warning in w)
 
     def test_memory_allocation_with_cleanup(self):
         """Test that memory allocation attempts cleanup before failing."""
