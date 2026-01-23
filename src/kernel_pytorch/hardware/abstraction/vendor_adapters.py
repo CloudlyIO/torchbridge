@@ -1016,8 +1016,9 @@ class IntelAdapter(VendorAdapter):
                     pass
 
             elif self.xpu_available:
-                # TODO: Implement Intel XPU metrics using Intel Level Zero APIs
-                # This would require Intel GPU monitoring APIs for arc GPU metrics
+                # FUTURE: Intel XPU metrics require Level Zero API (ze_api.h) and Intel
+                # GPU drivers. Not implementable without Intel Arc/Flex hardware.
+                # See: https://spec.oneapi.io/level-zero/latest/
                 metrics.update({
                     'utilization': 50.0,  # Placeholder
                     'memory_used_gb': 2.0,  # Placeholder
@@ -1317,7 +1318,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     super().__init__("asic", HardwareVendor.UNKNOWN)
 
                 def synchronize_device(self, device_id: int):
-                    # TODO: Implement ASIC-specific device synchronization
+                    # FUTURE: ASIC synchronization requires vendor-specific APIs
+                    # (e.g., Google TPU libtpu, Graphcore PopART, SambaNova runtime).
                     pass
 
                 def get_device_properties(self, device_id: int) -> Dict[str, Any]:
@@ -1522,8 +1524,8 @@ class CustomHardwareAdapter(VendorAdapter):
 
     def _discover_asic_devices(self) -> List[DeviceSpec]:
         """Discover ASIC devices"""
-        # TODO: Implement ASIC device discovery using vendor-specific APIs
-        # This would require custom ASIC vendor drivers and device management APIs
+        # FUTURE: ASIC discovery requires vendor-specific device enumeration APIs.
+        # Current implementation uses ASIC_NUM_DEVICES env var as fallback.
         devices = []
 
         try:
@@ -1545,9 +1547,8 @@ class CustomHardwareAdapter(VendorAdapter):
         devices = []
 
         try:
-            # TODO: Implement neuromorphic device discovery using vendor-specific APIs
-            # This would integrate with Intel Loihi, BrainChip Akida, or other neuromorphic platforms
-            # Neuromorphic devices are typically single chip
+            # FUTURE: Neuromorphic discovery requires vendor APIs (Intel Loihi NxSDK,
+            # BrainChip MetaTF). Not implementable without neuromorphic hardware.
             devices.append(self._initialize_neuromorphic_device(0))
         except Exception as e:
             logger.error(f"Error discovering neuromorphic devices: {e}")
@@ -1717,8 +1718,9 @@ class CustomHardwareAdapter(VendorAdapter):
 
         try:
             if self.hardware_type == "tpu":
-                # TODO: Implement TPU metrics collection using GCP monitoring APIs
-                # This would require Google Cloud Monitoring API integration for production TPUs
+                # FUTURE: TPU metrics require Google Cloud Monitoring API and GCP
+                # credentials. Requires google-cloud-monitoring package and IAM permissions.
+                # Placeholder values based on TPU v4 specifications.
                 base_metrics.update({
                     'utilization': 75.0,  # TPUs typically run at high utilization
                     'memory_used_gb': 24.0,
@@ -1727,8 +1729,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     'power_w': 200.0  # TPU v4 power consumption
                 })
             elif self.hardware_type == "asic":
-                # TODO: Implement ASIC metrics collection using vendor-specific monitoring APIs
-                # This would require custom ASIC vendor monitoring libraries
+                # FUTURE: ASIC metrics require vendor-specific monitoring libraries.
+                # Placeholder values based on typical AI accelerator specifications.
                 base_metrics.update({
                     'utilization': 80.0,
                     'memory_used_gb': 12.0,
@@ -1737,8 +1739,8 @@ class CustomHardwareAdapter(VendorAdapter):
                     'power_w': 150.0
                 })
             elif self.hardware_type == "neuromorphic":
-                # TODO: Implement neuromorphic device metrics using spike-based monitoring APIs
-                # This would require vendor-specific neuromorphic chip monitoring interfaces
+                # FUTURE: Neuromorphic metrics require vendor-specific spike monitoring APIs.
+                # Placeholder values based on Intel Loihi 2 specifications.
                 base_metrics.update({
                     'utilization': 30.0,  # Event-driven, lower continuous utilization
                     'memory_used_gb': 2.0,

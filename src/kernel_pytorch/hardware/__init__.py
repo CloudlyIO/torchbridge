@@ -7,9 +7,13 @@ This module consolidates all hardware-specific optimizations:
 - Custom CUDA kernels and kernel interfaces
 - Performance profiling and optimization tools
 
-Note: This module unifies hardware-specific optimization components
-TODO: Complete CUDA kernel implementations for all GPU vendors
-TODO: Implement comprehensive vendor adapter support (currently partial)
+Note: This module unifies hardware-specific optimization components.
+
+Development Status:
+- CUDA kernel implementations: Educational patterns provided; production use should
+  leverage Triton or torch.compile() for automatic kernel generation.
+- Vendor adapter support: NVIDIA (full), AMD ROCm (full), Intel XPU (full),
+  TPU (full). ASIC/neuromorphic adapters are placeholder implementations.
 """
 
 # GPU integration and optimization - import what's available

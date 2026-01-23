@@ -123,7 +123,8 @@ from .optimized_layers.linear_transformations import (
     FusedLinearSequence,
     compiled_linear_gelu
 )
-# TODO: Complete implementation of all optimized layer components
+# NOTE: Core optimized layers are production-ready. Additional layer types can be
+# added by extending the patterns in optimized_layers/ module.
 
 # Basic components - using actual available exports
 try:

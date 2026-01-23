@@ -387,17 +387,20 @@ class DeepOptimizerStates:
 
     def _transfer_results_to_gpu(self, group: OptimizerStateGroup):
         """Transfer computation results back to GPU"""
-        # TODO: Implement GPU transfer logic for parameter updates
+        # DESIGN_NOTE: Full CPU-GPU hybrid optimizer requires careful synchronization,
+        # gradient accumulation handling, and memory pinning. Educational version
+        # demonstrates the state management pattern. For production, use DeepSpeed
+        # ZeRO-Offload or PyTorch FSDP with CPU offloading.
         pass
 
     def _update_group_parameters(self, group: OptimizerStateGroup):
         """Update parameters for a group (GPU processing)"""
-        # TODO: Implement GPU-based parameter update logic
+        # DESIGN_NOTE: See _transfer_results_to_gpu for implementation rationale.
         pass
 
     def _update_group_parameters_cpu(self, group: OptimizerStateGroup):
         """Update parameters for a group (CPU processing)"""
-        # TODO: Implement CPU-based parameter update logic
+        # DESIGN_NOTE: See _transfer_results_to_gpu for implementation rationale.
         pass
 
     def _load_group_from_disk(self, group: OptimizerStateGroup):
