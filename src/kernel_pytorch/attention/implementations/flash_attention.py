@@ -3,33 +3,37 @@ Unified FlashAttention Implementation
 
 Combines FlashAttention v2/v3 implementations from both attention/ and advanced_attention/
 directories into a single, comprehensive implementation with the best features from both.
+
+Uses shared attention operations from kernel_pytorch.attention.core.attention_ops
+for the core PyTorch fallback computation.
 """
 
-import math
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import warnings
 
-from ..core.base import BaseAttention, AttentionWithCache
+from ..core.base import AttentionWithCache
 from ..core.config import AttentionConfig, FP8AttentionConfig
 from ..core.registry import register_attention
+from ..core.attention_ops import (
+    check_flash_attention_available,
+    scaled_dot_product_attention,
+)
+
+# Check FlashAttention availability using shared function
+FLASH_ATTN_AVAILABLE = check_flash_attention_available()
 
 try:
     import flash_attn
     from flash_attn import flash_attn_func
-    FLASH_ATTN_AVAILABLE = True
-
     # Check for FlashAttention-3 specific features
     FLASH_ATTN_3_AVAILABLE = hasattr(flash_attn, 'flash_attn_v3') or hasattr(flash_attn, 'flash_attn_kvpacked_func')
 except ImportError:
-    FLASH_ATTN_AVAILABLE = False
     FLASH_ATTN_3_AVAILABLE = False
 
 try:
     import triton
-    import triton.language as tl
     TRITON_AVAILABLE = True
 except ImportError:
     TRITON_AVAILABLE = False
@@ -186,36 +190,28 @@ class FlashAttention3(AttentionWithCache):
         return self._pytorch_attention_forward(q, k, v, attn_mask)
 
     def _pytorch_attention_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: Optional[torch.Tensor]) -> torch.Tensor:
-        """PyTorch native attention implementation"""
-        # Rearrange to [B, S, H, D] -> [B*H, S, D] for efficient computation
+        """PyTorch native attention implementation using shared attention ops."""
+        # Input is [B, S, H, D], rearrange to [B, H, S, D] for shared function
         batch_size, seq_len, num_heads, head_dim = q.shape
+        q = q.transpose(1, 2)  # [B, H, S, D]
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
 
-        q = q.transpose(1, 2).reshape(batch_size * num_heads, seq_len, head_dim)
-        k = k.transpose(1, 2).reshape(batch_size * num_heads, seq_len, head_dim)
-        v = v.transpose(1, 2).reshape(batch_size * num_heads, seq_len, head_dim)
-
-        # Compute attention scores
-        scores = torch.bmm(q, k.transpose(1, 2)) * self.scale
-
-        # Apply mask if provided
-        if attn_mask is not None:
-            scores = self._apply_attention_mask(scores, attn_mask)
-
-        # Apply causal mask if needed
-        if self.config.causal:
-            causal_mask = self._create_causal_mask(seq_len, q.device)
-            scores = scores.masked_fill(causal_mask.unsqueeze(0), float('-inf'))
-
-        # Compute attention weights and apply to values
-        attn_weights = F.softmax(scores, dim=-1)
-        attn_weights = self.attention_dropout(attn_weights)
-
-        attn_output = torch.bmm(attn_weights, v)
+        # Use shared scaled_dot_product_attention
+        attn_output, _ = scaled_dot_product_attention(
+            Q=q,
+            K=k,
+            V=v,
+            scale=self.scale,
+            causal=self.config.causal,
+            dropout=self.config.attention_dropout,
+            training=self.training,
+            attention_mask=attn_mask,
+            return_weights=False,
+        )
 
         # Reshape back to [B, S, H, D]
-        attn_output = attn_output.reshape(batch_size, num_heads, seq_len, head_dim)
         attn_output = attn_output.transpose(1, 2)
-
         return attn_output
 
     def get_attention_stats(self):

@@ -20,6 +20,14 @@ from .registry import (
     create_memory_efficient_attention,
     create_sparse_attention
 )
+from .attention_ops import (
+    check_flash_attention_available,
+    check_cuda_kernel_available,
+    validate_attention_inputs,
+    compute_attention_scale,
+    scaled_dot_product_attention,
+    flash_attention_forward,
+)
 
 __all__ = [
     'BaseAttention',
@@ -36,5 +44,12 @@ __all__ = [
     'list_available_attention',
     'create_flash_attention',
     'create_memory_efficient_attention',
-    'create_sparse_attention'
+    'create_sparse_attention',
+    # Core attention operations
+    'check_flash_attention_available',
+    'check_cuda_kernel_available',
+    'validate_attention_inputs',
+    'compute_attention_scale',
+    'scaled_dot_product_attention',
+    'flash_attention_forward',
 ]

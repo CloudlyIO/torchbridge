@@ -2,17 +2,20 @@
 FlashAttention-3 Integration for NVIDIA GPUs
 
 Optimized attention implementation for H100, Blackwell, and newer NVIDIA GPUs.
+Uses shared attention operations from kernel_pytorch.attention.core.attention_ops.
 """
 
 import logging
 import warnings
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from typing import Optional, Tuple
-import math
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+from kernel_pytorch.core.config import KernelPyTorchConfig
+from kernel_pytorch.attention.core.attention_ops import (
+    check_flash_attention_available,
+    flash_attention_forward,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,9 @@ class FlashAttention3(nn.Module):
 
     Provides memory-efficient attention with 3x memory reduction
     and faster execution compared to standard attention.
+
+    This implementation uses the shared attention operations from
+    kernel_pytorch.attention.core.attention_ops for the core computation.
     """
 
     def __init__(
@@ -75,12 +81,11 @@ class FlashAttention3(nn.Module):
         # Output projection
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
-        # Dropout
-        self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else None
+        # Dropout for residual
         self.resid_dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-        # FlashAttention availability
-        self._flash_available = self._check_flash_availability()
+        # FlashAttention availability (using shared check)
+        self._flash_available = check_flash_attention_available()
 
         # Use FlashAttention-3 if available
         self.use_flash_attention = (
@@ -88,16 +93,6 @@ class FlashAttention3(nn.Module):
             self.nvidia_config.flash_attention_enabled and
             self.nvidia_config.flash_attention_version == "3"
         )
-
-    def _check_flash_availability(self) -> bool:
-        """Check if FlashAttention is available."""
-        try:
-            # Check for flash_attn package
-            import flash_attn
-            return True
-        except ImportError:
-            # FlashAttention not available, will use PyTorch implementation
-            return False
 
     def forward(
         self,
@@ -124,15 +119,18 @@ class FlashAttention3(nn.Module):
         qkv = qkv.permute(2, 0, 3, 1, 4)  # (3, batch, num_heads, seq_len, head_dim)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        # Apply FlashAttention if available
-        if self.use_flash_attention and not return_attention_weights:
-            attn_output = self._flash_attention_forward(q, k, v, attention_mask)
-            attn_weights = None
-        else:
-            # Fall back to standard attention
-            attn_output, attn_weights = self._standard_attention_forward(
-                q, k, v, attention_mask, return_attention_weights
-            )
+        # Use shared attention forward (handles FlashAttention and fallback)
+        attn_output, attn_weights = flash_attention_forward(
+            Q=q,
+            K=k,
+            V=v,
+            scale=None,  # Use default 1/sqrt(head_dim)
+            causal=self.causal,
+            dropout=self.dropout,
+            training=self.training,
+            attention_mask=attention_mask,
+            return_weights=return_attention_weights,
+        )
 
         # Reshape and project output
         attn_output = attn_output.transpose(1, 2).contiguous()
@@ -143,94 +141,6 @@ class FlashAttention3(nn.Module):
             output = self.resid_dropout(output)
 
         return output, attn_weights
-
-    def _flash_attention_forward(
-        self,
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """
-        FlashAttention-3 forward pass.
-
-        Args:
-            q, k, v: Query, key, value tensors
-            attention_mask: Optional attention mask
-
-        Returns:
-            Attention output
-        """
-        try:
-            from flash_attn import flash_attn_func
-
-            # Prepare inputs for FlashAttention
-            # FlashAttention expects (batch, seq_len, num_heads, head_dim)
-            q = q.transpose(1, 2)  # (batch, seq_len, num_heads, head_dim)
-            k = k.transpose(1, 2)
-            v = v.transpose(1, 2)
-
-            # Apply FlashAttention
-            output = flash_attn_func(
-                q, k, v,
-                dropout_p=self.dropout if self.training else 0.0,
-                softmax_scale=None,  # Use default 1/sqrt(head_dim)
-                causal=self.causal,
-            )
-
-            # Transpose back
-            output = output.transpose(1, 2)  # (batch, num_heads, seq_len, head_dim)
-
-            return output
-
-        except Exception as e:
-            warnings.warn(
-                f"FlashAttention failed ({e}), falling back to standard attention"
-            )
-            # Fall back to standard attention
-            return self._standard_attention_forward(q, k, v, attention_mask, False)[0]
-
-    def _standard_attention_forward(
-        self,
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        return_weights: bool = False
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """
-        Standard scaled dot-product attention.
-
-        Args:
-            q, k, v: Query, key, value tensors
-            attention_mask: Optional attention mask
-            return_weights: Whether to return attention weights
-
-        Returns:
-            Tuple of (output, weights)
-        """
-        # Compute attention scores
-        scale = 1.0 / math.sqrt(self.head_dim)
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) * scale
-
-        # Apply attention mask if provided
-        if attention_mask is not None:
-            attn_scores = attn_scores + attention_mask
-
-        # Softmax
-        attn_weights = F.softmax(attn_scores, dim=-1)
-
-        # Apply dropout
-        if self.attn_dropout and self.training:
-            attn_weights = self.attn_dropout(attn_weights)
-
-        # Apply attention to values
-        attn_output = torch.matmul(attn_weights, v)
-
-        if return_weights:
-            return attn_output, attn_weights
-        else:
-            return attn_output, None
 
 
 def create_flash_attention_3(

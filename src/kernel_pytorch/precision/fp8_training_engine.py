@@ -298,7 +298,7 @@ class FP8TrainingEngine:
 
         # Initialize HAL if available
         if HAL_AVAILABLE:
-            self.hal = HardwareAbstractionLayer(vendor="auto", device=self.device)
+            self.hal = HardwareAbstractionLayer()
         else:
             self.hal = None
 

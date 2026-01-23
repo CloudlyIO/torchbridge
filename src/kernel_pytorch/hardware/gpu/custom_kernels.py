@@ -613,6 +613,16 @@ def print_kernel_optimization_results(results: Dict[str, Any]) -> None:
 
 
 # 🚀 FLASHATTENTION-3: Production-grade attention kernel with H100 optimizations
+# Uses shared attention operations from kernel_pytorch.attention.core.attention_ops
+
+# Import shared attention operations
+from kernel_pytorch.attention.core.attention_ops import (
+    check_cuda_kernel_available,
+    validate_attention_inputs,
+    compute_attention_scale,
+    flash_attention_forward,
+)
+
 
 class FlashAttentionV3(nn.Module):
     """
@@ -624,6 +634,9 @@ class FlashAttentionV3(nn.Module):
     - Split-K optimization for sequences >2048 tokens
     - Head dimension templates (64, 128) for optimal performance
     - Causal masking support for autoregressive models
+
+    Uses shared attention operations from kernel_pytorch.attention.core.attention_ops
+    for the core computation, eliminating code duplication.
 
     🔧 PERFORMANCE IMPROVEMENTS OVER FA-2:
     - 2-5x speedup over PyTorch SDPA
@@ -654,21 +667,14 @@ class FlashAttentionV3(nn.Module):
         self.causal = causal
         self.dropout = dropout
         self.scale = scale
-        self._cuda_kernel_available = self._check_cuda_kernel_availability()
+        self._cuda_kernel_available = check_cuda_kernel_available()
 
-    def _check_cuda_kernel_availability(self) -> bool:
-        """Check if FlashAttention-3 CUDA kernel is available."""
-        try:
-            # Try to import the compiled CUDA extension
-            import kernel_pytorch_cuda
-            return hasattr(kernel_pytorch_cuda, 'flash_attention_v3')
-        except (ImportError, AttributeError):
+        if not self._cuda_kernel_available:
             warnings.warn(
                 "FlashAttention-3 CUDA kernel not available. "
                 "Falling back to PyTorch implementation. "
                 "For optimal performance, compile CUDA kernels with setup.py"
             )
-            return False
 
     def forward(
         self,
@@ -689,46 +695,10 @@ class FlashAttentionV3(nn.Module):
         Returns:
             Output tensor [batch, num_heads, seq_len, head_dim]
         """
-        # Validate inputs
-        self._validate_inputs(Q, K, V)
+        # Validate inputs using shared validation
+        validate_attention_inputs(Q, K, V, expected_dims=4)
 
-        # Compute scale if not provided
-        if self.scale is None:
-            head_dim = Q.size(-1)
-            scale = 1.0 / math.sqrt(head_dim)
-        else:
-            scale = self.scale
-
-        # Use CUDA kernel if available, otherwise fallback
-        if self._cuda_kernel_available and Q.is_cuda:
-            try:
-                import kernel_pytorch_cuda
-                output = kernel_pytorch_cuda.flash_attention_v3(
-                    Q, K, V, scale, self.causal
-                )
-                return output
-            except Exception as e:
-                warnings.warn(f"FlashAttention-3 kernel failed: {e}. Using fallback.")
-                return self._pytorch_fallback(Q, K, V, scale, attn_mask)
-        else:
-            return self._pytorch_fallback(Q, K, V, scale, attn_mask)
-
-    def _validate_inputs(
-        self,
-        Q: torch.Tensor,
-        K: torch.Tensor,
-        V: torch.Tensor
-    ) -> None:
-        """Validate input tensor shapes and types."""
-        # Shape validation
-        assert Q.dim() == 4, f"Q must be 4D [batch, heads, seq, head_dim], got {Q.dim()}D"
-        assert K.dim() == 4, f"K must be 4D [batch, heads, seq, head_dim], got {K.dim()}D"
-        assert V.dim() == 4, f"V must be 4D [batch, heads, seq, head_dim], got {V.dim()}D"
-
-        assert Q.shape == K.shape, f"Q and K shapes must match: {Q.shape} vs {K.shape}"
-        assert Q.shape == V.shape, f"Q and V shapes must match: {Q.shape} vs {V.shape}"
-
-        # Head dimension validation (kernel optimized for 64, 128)
+        # Additional warnings for head dimension optimization
         head_dim = Q.size(-1)
         if head_dim not in [64, 128]:
             warnings.warn(
@@ -743,42 +713,18 @@ class FlashAttentionV3(nn.Module):
                 f"Recommend torch.float16 or torch.bfloat16 for best performance"
             )
 
-    def _pytorch_fallback(
-        self,
-        Q: torch.Tensor,
-        K: torch.Tensor,
-        V: torch.Tensor,
-        scale: float,
-        attn_mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """
-        Fallback PyTorch implementation of attention.
-
-        Uses PyTorch's native operations for CPU or when CUDA kernel unavailable.
-        """
-        # Compute attention scores
-        scores = torch.matmul(Q, K.transpose(-2, -1)) * scale
-
-        # Apply causal mask
-        if self.causal:
-            seq_len = Q.size(2)
-            causal_mask = torch.triu(
-                torch.ones(seq_len, seq_len, device=Q.device, dtype=torch.bool),
-                diagonal=1
-            )
-            scores = scores.masked_fill(causal_mask, float('-inf'))
-
-        # Apply custom attention mask if provided
-        if attn_mask is not None:
-            scores = scores + attn_mask
-
-        # Softmax and dropout
-        attn_weights = F.softmax(scores, dim=-1)
-        if self.dropout > 0.0 and self.training:
-            attn_weights = F.dropout(attn_weights, p=self.dropout)
-
-        # Compute output
-        output = torch.matmul(attn_weights, V)
+        # Use shared flash attention forward (handles CUDA kernel and fallback)
+        output, _ = flash_attention_forward(
+            Q=Q,
+            K=K,
+            V=V,
+            scale=self.scale,
+            causal=self.causal,
+            dropout=self.dropout,
+            training=self.training,
+            attention_mask=attn_mask,
+            return_weights=False,
+        )
         return output
 
     def extra_repr(self) -> str:

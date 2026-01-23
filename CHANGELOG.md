@@ -8,7 +8,43 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.16
+**Current Version**: v0.4.17
+
+---
+
+## [0.4.17] - 2026-01-23 - Code Consolidation & Cleanup
+
+### **Added** ✨
+
+- **Shared Attention Operations** (`attention/core/attention_ops.py`)
+  - `scaled_dot_product_attention()` - Canonical attention computation
+  - `flash_attention_forward()` - Unified FlashAttention with automatic fallback
+  - `check_flash_attention_available()` - Shared availability check
+  - `check_cuda_kernel_available()` - Shared CUDA kernel check
+  - `validate_attention_inputs()` - Shared input validation
+
+### **Changed** 🔄
+
+- **Consolidated FlashAttention Implementations**
+  - All FlashAttention variants now use shared `attention_ops.py` core
+  - `backends/nvidia/flash_attention_integration.py` - Uses shared attention ops
+  - `hardware/gpu/custom_kernels.py::FlashAttentionV3` - Uses shared attention ops
+  - `attention/implementations/flash_attention.py` - Uses shared attention ops
+  - Eliminated ~200 lines of duplicated attention computation code
+
+- **Fixed Import Paths**
+  - Corrected relative import in `hardware/abstraction/vendor_adapters.py`
+  - Fixed backward compatibility helpers in `hardware/__init__.py`
+  - Added proper submodule registration for legacy imports
+
+- **Bug Fixes**
+  - Fixed `HardwareAbstractionLayer` constructor call in `fp8_training_engine.py`
+
+### **Removed** 🗑️
+
+- **Orphaned Code**
+  - Removed unused `cuda_kernels/` directory (4 files, 1,661 lines)
+  - Removed empty `attention/utils/` directory
 
 ---
 
