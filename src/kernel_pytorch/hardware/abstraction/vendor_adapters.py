@@ -13,11 +13,11 @@ from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
 
 from .hal_core import VendorAdapter, DeviceSpec, HardwareCapabilities, ComputeCapability
-from ..distributed_scale.hardware_discovery import HardwareVendor
+from ...distributed_scale.hardware_discovery import HardwareVendor
 from .privateuse1_integration import CustomDeviceBackend, PrivateUse1Config
 
 # Import existing hardware discovery for compatibility
-from ..distributed_scale.hardware_discovery import DeviceInfo, DeviceCapability, ThermalState
+from ...distributed_scale.hardware_discovery import DeviceInfo, DeviceCapability, ThermalState
 
 logger = logging.getLogger(__name__)
 

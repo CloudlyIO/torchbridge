@@ -51,26 +51,46 @@ for attr_name in dir(current_module):
 import warnings
 import sys
 
-def _deprecation_warning(old_path: str):
+def _deprecation_warning(old_path: str, new_path: str):
     warnings.warn(
         f"Importing from '{old_path}' is deprecated. "
-        f"Please use 'from kernel_pytorch.hardware import ...' instead.",
+        f"Please use 'from {new_path} import ...' instead.",
         DeprecationWarning,
         stacklevel=3
     )
 
-class _LegacyHardwareImportHelper:
-    """Helper for backward compatibility with old hardware import paths"""
+class _LegacyGPUIntegrationHelper:
+    """Helper for backward compatibility with old gpu_integration import path"""
     def __getattr__(self, name):
-        if 'gpu_integration' in str(self.__class__):
-            _deprecation_warning('kernel_pytorch.gpu_integration')
-        elif 'hardware_abstraction' in str(self.__class__):
-            _deprecation_warning('kernel_pytorch.hardware_abstraction')
-        elif 'cuda_kernels' in str(self.__class__):
-            _deprecation_warning('kernel_pytorch.cuda_kernels')
-        return getattr(self, name)
+        _deprecation_warning('kernel_pytorch.gpu_integration', 'kernel_pytorch.hardware.gpu')
+        from kernel_pytorch.hardware import gpu
+        return getattr(gpu, name)
 
-# Legacy import support
-sys.modules['kernel_pytorch.gpu_integration'] = _LegacyHardwareImportHelper()
-sys.modules['kernel_pytorch.hardware_abstraction'] = _LegacyHardwareImportHelper()
-sys.modules['kernel_pytorch.cuda_kernels'] = _LegacyHardwareImportHelper()
+class _LegacyHardwareAbstractionHelper:
+    """Helper for backward compatibility with old hardware_abstraction import path"""
+    def __getattr__(self, name):
+        _deprecation_warning('kernel_pytorch.hardware_abstraction', 'kernel_pytorch.hardware.abstraction')
+        from kernel_pytorch.hardware import abstraction
+        return getattr(abstraction, name)
+
+class _LegacyCUDAKernelsHelper:
+    """Helper for backward compatibility with old cuda_kernels import path"""
+    def __getattr__(self, name):
+        _deprecation_warning('kernel_pytorch.cuda_kernels', 'kernel_pytorch.hardware.gpu')
+        # cuda_kernels was removed - forward to gpu module
+        from kernel_pytorch.hardware import gpu
+        return getattr(gpu, name)
+
+# Legacy import support - register parent modules
+sys.modules['kernel_pytorch.gpu_integration'] = _LegacyGPUIntegrationHelper()
+sys.modules['kernel_pytorch.hardware_abstraction'] = _LegacyHardwareAbstractionHelper()
+sys.modules['kernel_pytorch.cuda_kernels'] = _LegacyCUDAKernelsHelper()
+
+# Also register submodules for deep imports (e.g., kernel_pytorch.hardware_abstraction.privateuse1_integration)
+try:
+    from kernel_pytorch.hardware import abstraction
+    sys.modules['kernel_pytorch.hardware_abstraction.hal_core'] = abstraction.hal_core if hasattr(abstraction, 'hal_core') else abstraction
+    sys.modules['kernel_pytorch.hardware_abstraction.privateuse1_integration'] = __import__('kernel_pytorch.hardware.abstraction.privateuse1_integration', fromlist=[''])
+    sys.modules['kernel_pytorch.hardware_abstraction.vendor_adapters'] = __import__('kernel_pytorch.hardware.abstraction.vendor_adapters', fromlist=[''])
+except ImportError:
+    pass  # Abstraction module may not be fully available
