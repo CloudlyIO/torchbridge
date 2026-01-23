@@ -606,7 +606,7 @@ async def live():
 ## Next Steps
 
 - [Docker Guide](docker.md) - Detailed container configuration
-- [Cloud Testing Guide](cloud_testing_guide.md) - Cloud platform validation
+- [Cloud Testing Guide](../cloud-deployment/validated-guide.md) - Cloud platform validation
 - [Backend Selection](backend_selection.md) - Choose optimal backend for your hardware
 
 ---

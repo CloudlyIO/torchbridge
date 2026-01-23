@@ -1,6 +1,8 @@
 # 📦 Installation Guide
 
-**KernelPyTorch v0.4.3** - Production-grade PyTorch GPU/TPU optimization framework
+> **Version**: v0.4.15 | **Status**: ✅ Current | **Last Updated**: Jan 22, 2026
+
+**KernelPyTorch** - Production-grade PyTorch GPU/TPU optimization framework
 
 ## Development Installation (Current)
 

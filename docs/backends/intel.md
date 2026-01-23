@@ -667,7 +667,7 @@ Intel DevCloud provides free access to Intel hardware for testing.
 ```bash
 # On DevCloud, run validation
 cd kernel_pytorch
-bash scripts/cloud_testing/intel_devcloud/run_validation.sh
+bash scripts/cloud-deployment/intel_devcloud/run_validation.sh
 ```
 
 ### Test Script

@@ -25,7 +25,7 @@ KernelPyTorch is now **production-ready** with:
 
 ## 🔥 **v0.5.0 PLANNING - INDUSTRY ALIGNMENT**
 
-Based on [INDUSTRY_LANDSCAPE_2026.md](INDUSTRY_LANDSCAPE_2026.md) analysis:
+Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.md) analysis:
 
 ### Priority 1: FlexAttention Integration (HIGH)
 **Why**: PyTorch 2.5+ provides FlexAttention - flexible attention with FlashAttention-like performance for ANY pattern.
@@ -218,22 +218,22 @@ Based on [INDUSTRY_LANDSCAPE_2026.md](INDUSTRY_LANDSCAPE_2026.md) analysis:
 #### **Week 7: Cloud Testing Infrastructure** 🔄 **IN PROGRESS**
 
 **Infrastructure Created** ✅:
-- ✅ `tests/cloud_testing/aws_test_harness.py` (~400 lines) - AWS EC2 test orchestration
-- ✅ `tests/cloud_testing/gcp_test_harness.py` (~400 lines) - GCP and TPU testing
-- ✅ `tests/cloud_testing/result_uploader.py` (~200 lines) - S3/GCS uploaders
-- ✅ `tests/cloud_testing/benchmark_database.py` (~300 lines) - SQLite storage
+- ✅ `tests/cloud-deployment/aws_test_harness.py` (~400 lines) - AWS EC2 test orchestration
+- ✅ `tests/cloud-deployment/gcp_test_harness.py` (~400 lines) - GCP and TPU testing
+- ✅ `tests/cloud-deployment/result_uploader.py` (~200 lines) - S3/GCS uploaders
+- ✅ `tests/cloud-deployment/benchmark_database.py` (~300 lines) - SQLite storage
 - ✅ `monitoring/cloud_dashboards/aws_cloudwatch_dashboard.json` - CloudWatch dashboard
 - ✅ `monitoring/cloud_dashboards/gcp_monitoring_dashboard.json` - GCP Monitoring dashboard
 - ✅ `monitoring/cloud_dashboards/cross_platform_comparison.py` (~300 lines) - Comparison tool
 
 **Documentation Created** ✅:
-- ✅ `docs/cloud_testing/aws_setup.md` - AWS environment setup
-- ✅ `docs/cloud_testing/gcp_setup.md` - GCP environment setup
-- ✅ `docs/cloud_testing/instance_selection.md` - Hardware selection guide
-- ✅ `docs/cloud_testing/cost_optimization.md` - Cost management
-- ✅ `docs/cloud_testing/team_workflow.md` - Multi-developer protocols
-- ✅ `docs/cloud_testing/result_sharing.md` - Benchmark collaboration
-- ✅ `docs/cloud_testing/troubleshooting.md` - Common cloud issues
+- ✅ `docs/cloud-deployment/aws_setup.md` - AWS environment setup
+- ✅ `docs/cloud-deployment/gcp_setup.md` - GCP environment setup
+- ✅ `docs/cloud-deployment/instance_selection.md` - Hardware selection guide
+- ✅ `docs/cloud-deployment/cost_optimization.md` - Cost management
+- ✅ `docs/cloud-deployment/team_workflow.md` - Multi-developer protocols
+- ✅ `docs/cloud-deployment/result_sharing.md` - Benchmark collaboration
+- ✅ `docs/cloud-deployment/troubleshooting.md` - Common cloud issues
 
 **Next: Actual Cloud Testing** 📋:
 - 📋 Deploy AWS P5/P4d instances and run NVIDIA tests
@@ -796,7 +796,7 @@ logger = logging.getLogger('kernel_pytorch')
 ## 🔗 **KEY RESOURCES**
 
 ### **Documentation**
-- [Unified Roadmap](unified_roadmap.md) - Complete development roadmap
+- [Unified Roadmap](planning/unified-roadmap.md) - Complete development roadmap
 - [Architecture Guide](capabilities/architecture.md) - System architecture
 - [Hardware Capabilities](capabilities/hardware.md) - Supported hardware
 - [Testing Guide](guides/testing_guide.md) - Contributor testing guide

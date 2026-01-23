@@ -9,7 +9,7 @@ This unified roadmap outlines the development path for KernelPyTorch, now a prod
 
 ### **Industry Alignment (January 2026)**
 
-See [INDUSTRY_LANDSCAPE_2026.md](INDUSTRY_LANDSCAPE_2026.md) for detailed analysis. Key alignments:
+See [planning/industry-landscape-2026.md](planning/industry-landscape-2026.md) for detailed analysis. Key alignments:
 
 | Area | Industry Standard | KernelPyTorch Status | v0.5.0 Priority |
 |------|------------------|---------------------|-----------------|
@@ -490,7 +490,7 @@ class TPUConfig:
 #### **Result Capture & Analysis Infrastructure**
 
 **Automated Result Storage**:
-- 📋 `tests/cloud_testing/` (new directory)
+- 📋 `tests/cloud-deployment/` (new directory)
   - `aws_test_harness.py` (~400 lines)
   - `gcp_test_harness.py` (~400 lines)
   - `result_uploader.py` (~200 lines)
@@ -517,15 +517,15 @@ class TPUConfig:
 #### **Documentation for Team Onboarding**
 
 **Cloud Setup Guides**:
-- 📋 `docs/cloud_testing/aws_setup.md` - Complete AWS environment setup
-- 📋 `docs/cloud_testing/gcp_setup.md` - Complete GCP environment setup
-- 📋 `docs/cloud_testing/instance_selection.md` - Hardware selection guide
-- 📋 `docs/cloud_testing/cost_optimization.md` - Cost management strategies
+- 📋 `docs/cloud-deployment/aws_setup.md` - Complete AWS environment setup
+- 📋 `docs/cloud-deployment/gcp_setup.md` - Complete GCP environment setup
+- 📋 `docs/cloud-deployment/instance_selection.md` - Hardware selection guide
+- 📋 `docs/cloud-deployment/cost_optimization.md` - Cost management strategies
 
 **Collaboration Workflows**:
-- 📋 `docs/cloud_testing/team_workflow.md` - Multi-developer testing protocols
-- 📋 `docs/cloud_testing/result_sharing.md` - Benchmark result collaboration
-- 📋 `docs/cloud_testing/troubleshooting.md` - Common cloud issues and fixes
+- 📋 `docs/cloud-deployment/team_workflow.md` - Multi-developer testing protocols
+- 📋 `docs/cloud-deployment/result_sharing.md` - Benchmark result collaboration
+- 📋 `docs/cloud-deployment/troubleshooting.md` - Common cloud issues and fixes
 
 **Developer Onboarding**:
 - Step-by-step cloud credential setup (AWS IAM, GCP service accounts)
@@ -813,7 +813,7 @@ class TPUConfig:
 
 **Key Features**:
 - **Comprehensive Documentation**: `docs/backends/intel.md` (700+ lines)
-- **DevCloud Validation Script**: `scripts/cloud_testing/intel_devcloud/run_validation.sh`
+- **DevCloud Validation Script**: `scripts/cloud-deployment/intel_devcloud/run_validation.sh`
 - **Intel Benchmark Suite**: `benchmarks/intel_benchmark.py`
 - **Documentation Parity**: Intel docs now match NVIDIA/AMD/TPU
 
@@ -1442,10 +1442,10 @@ Based on v0.4.3 production release and industry landscape analysis, the immediat
 
 ## 📚 **RELATED DOCUMENTATION**
 
-- **[Immediate Tasks](immediate_tasks.md)** - Specific actionable tasks from this roadmap
+- **[Immediate Tasks](planning/immediate-tasks.md)** - Specific actionable tasks from this roadmap
 - **[Architecture Guide](capabilities/architecture.md)** - Unified v0.2.3 architecture details
 - **[Hardware Capabilities](capabilities/hardware.md)** - Current hardware abstraction
-- **[Installation Guide](guides/installation.md)** - Development setup instructions
+- **[Installation Guide](getting-started/installation.md)** - Development setup instructions
 
 ---
 

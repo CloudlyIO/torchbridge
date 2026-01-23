@@ -1,2 +1,0 @@
-name, memory.total [MiB]
-NVIDIA A10G, 23028 MiB

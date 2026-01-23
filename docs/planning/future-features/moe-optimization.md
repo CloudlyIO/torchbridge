@@ -1,6 +1,8 @@
 # Mixture of Experts (MoE) Optimization
 
-**KernelPyTorch v0.5.0 (Planned)** - Expert routing and sparse attention optimization
+> **Version**: v0.5.0 | **Status**: 📋 Planned | **ETA**: Q2 2026
+
+**Expert routing and sparse attention optimization**
 
 ## Overview
 

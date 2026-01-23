@@ -436,7 +436,7 @@ print('✅ Performance validation complete')
 5. **Advanced**: Move to advanced features like multi-GPU and custom kernels
 
 For more advanced setup and cloud deployment, see:
-- [Cloud Testing Guide](cloud_testing_guide.md)
+- [Cloud Testing Guide](../cloud-deployment/validated-guide.md)
 - [Hardware Abstraction Setup](hardware.md)
 - [Performance Optimization Guide](performance.md)
 

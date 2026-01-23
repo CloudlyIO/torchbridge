@@ -1,8 +1,8 @@
-# Validated Cloud Hardware Testing Guide (v0.3.7)
+# Validated Cloud Hardware Testing Guide
+
+> **Version**: v0.4.15 | **Status**: ✅ Current | **Last Updated**: Jan 22, 2026
 
 **Tested and verified steps for cloud GPU/TPU testing.**
-
-Last validated: January 2026
 
 ## Quick Reference
 

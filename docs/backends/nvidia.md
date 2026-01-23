@@ -508,7 +508,7 @@ util = manager.get_gpu_utilization()
 
 - [NVIDIA Backend Source Code](../../src/kernel_pytorch/backends/nvidia/)
 - [NVIDIA Backend Tests](../../tests/test_nvidia_backend.py)
-- [Unified Roadmap](../unified_roadmap.md)
+- [Unified Roadmap](../planning/unified-roadmap.md)
 - [Hardware Capabilities Guide](../capabilities/hardware.md)
 
 ---

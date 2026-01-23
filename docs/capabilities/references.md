@@ -198,7 +198,7 @@ This document maintains a comprehensive list of external resources, documentatio
 
 ### Setup Guides
 - [CUDA Setup](cuda_setup.md)
-- [Cloud Testing](cloud_testing_guide.md)
+- [Cloud Testing](../cloud-deployment/validated-guide.md)
 - [Hardware Abstraction](hardware.md)
 
 ### Performance Resources

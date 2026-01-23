@@ -311,3 +311,37 @@ SCRATCH.local
 # Block any new .md files in docs/ - require explicit approval
 # Note: This will be enforced by pre-commit hook
 test_results_local/
+
+# ===================================================================
+# REPORTS AND VALIDATION - NEVER COMMIT TO REPO
+# ===================================================================
+
+# All validation reports (belong in ~/Documents/shahmod-reports-backup/)
+docs/validation-reports/
+**/validation-reports/
+**/validation_reports/
+
+# All test reports and summaries
+**/*_report.md
+**/*_REPORT.md
+**/*_summary.md
+**/*_SUMMARY.md
+**/*_validation*.md
+**/*_VALIDATION*.md
+**/TEST_REPORT*.md
+**/test_report*.md
+
+# Cloud testing reports and results
+**/cloud_testing/reports/
+**/cloud-deployment/reports/
+
+# Test artifacts and raw outputs
+**/*_tests.txt
+**/*_benchmark.txt
+**/*_demo.txt
+**/results.json
+**/*_results.json
+**/test-artifacts/
+
+# Archive directories that might contain reports
+**/archive/v*/

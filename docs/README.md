@@ -1,61 +1,59 @@
-# 📚 Documentation
+# KernelPyTorch Documentation
 
-**Complete guide to PyTorch GPU optimization framework with 2-6x performance improvements.**
+> Production-ready PyTorch GPU optimization framework
+> Current Version: v0.4.15
 
-## 🚀 Quick Start
+## Quick Navigation
 
-| Step | Document | Time | Purpose |
-|------|----------|------|---------|
-| 1️⃣ | [Installation Guide](guides/installation.md) | 5 min | Install and verify |
-| 2️⃣ | [Quick Demo](../demos/README.md) | 2 min | See optimizations working |
-| 3️⃣ | [Benchmarks](../BENCHMARKS.md) | 5 min | Validate claims |
+### 🚀 Getting Started
+- [Installation](getting-started/installation.md) - Setup & dependencies
+- [Quickstart](getting-started/quickstart.md) - 5-minute tutorial
+- [Troubleshooting](getting-started/troubleshooting.md) - Common issues
 
-## 📖 Documentation Structure
+### 📚 User Guides
+- [All Guides](guides/README.md) - Deployment, testing, model optimization
+- [Small Models](guides/small_model_guide.md) - BERT, GPT-2, DistilBERT
+- [Vision Models](guides/vision_model_guide.md) - ResNet, ViT, Stable Diffusion
 
-### **📋 Guides** - Setup & Development
-- **[Installation Guide](guides/installation.md)** - Complete installation instructions
-- **[Quick Start Guide](guides/quickstart.md)** - Get started in 5 minutes
-- **[Testing Guide](guides/testing_guide.md)** - Comprehensive testing and benchmarking
-- **[CUDA Setup](guides/cuda_setup.md)** - Detailed CUDA/Triton configuration
-- **[Docker Guide](guides/docker.md)** - Containerized development and deployment
-- **[Cloud Testing](guides/cloud_testing_guide.md)** - AWS/Azure/GCP deployment
+### ⚙️ Hardware Backends
+- [Backend Selection](backends/README.md) - Choose the right backend
+- [NVIDIA](backends/nvidia.md) | [AMD](backends/amd.md) | [Intel](backends/intel.md) | [TPU](backends/tpu.md)
 
-### **⚡ Capabilities** - Technical Documentation
-- **[Architecture](capabilities/architecture.md)** - Framework design and optimization strategies
-- **[Hardware Abstraction](capabilities/hardware.md)** - Multi-vendor GPU support (NVIDIA/AMD/Intel/Custom)
-- **[Performance Analysis](capabilities/performance.md)** - Detailed benchmarking and optimization results
-- **[Dynamic Shape Bucketing](capabilities/dynamic_shape_bucketing.md)** - Variable input optimization
-- **[Core Components](capabilities/core_components.md)** - Core optimization modules
-- **[Hardware Kernels](capabilities/hardware_kernels.md)** - Low-level kernel implementations
-- **[MoE Optimization](capabilities/moe_optimization.md)** - Mixture of Experts support (v0.5.0 planned)
-- **[Performance Regression Testing](capabilities/performance_regression_testing.md)** - Automated performance monitoring
-- **[CLI Reference](capabilities/cli_reference.md)** - Command-line interface documentation
-- **[External References](capabilities/references.md)** - Links to papers, documentation, tools
+### 🔬 Technical Deep-Dives
+- [Capabilities Overview](capabilities/README.md)
+- [Architecture](capabilities/architecture.md) - Framework design
+- [Performance](capabilities/performance.md) - Benchmarks & optimization
 
-### **🗺️ Development Planning** - Unified Strategy
-- **[Unified Roadmap](unified_roadmap.md)** - Complete development strategy (NVIDIA, TPU, Production)
-- **[Immediate Tasks](immediate_tasks.md)** - Current actionable tasks from roadmap
-- **[Industry Landscape 2026](INDUSTRY_LANDSCAPE_2026.md)** - Strategic alignment with industry developments
+### ☁️ Cloud Deployment
+- [Cloud Guide](cloud-deployment/README.md) - AWS, GCP, Azure deployment
 
-## 🎯 By Use Case
+### 📋 Project Planning
+- [Roadmap](planning/README.md) - Development roadmap & future features
+- Internal strategic documents
 
-### **New Users** (Start here!)
-1. [Installation Guide](guides/installation.md) → [Quick Start](guides/quickstart.md) → [Demo Suite](../demos/) → [Benchmarks](../BENCHMARKS.md)
-2. Expected: 5-minute setup, verified demo results: 5/5 success in 54.6s
+---
 
-### **Developers**
+## Quick Start Guide
+
+**New Users** (Start here!)
+1. [Installation Guide](getting-started/installation.md) → [Quick Start](getting-started/quickstart.md) → [Demo Suite](../demos/) → [Benchmarks](../BENCHMARKS.md)
+2. Expected: 5-minute setup, verified demo results
+
+**Developers**
 1. [Architecture](capabilities/architecture.md) → [API Reference](../API.md) → [Testing Guide](guides/testing_guide.md)
 2. Focus: Framework design, development workflow, comprehensive testing
 
-### **Hardware Engineers**
-1. [Hardware Guide](capabilities/hardware.md) → [Cloud Testing](guides/cloud_testing_guide.md) → [Performance Analysis](capabilities/performance.md)
+**Hardware Engineers**
+1. [Hardware Guide](capabilities/hardware.md) → [Cloud Deployment](cloud-deployment/README.md) → [Performance Analysis](capabilities/performance.md)
 2. Focus: Multi-vendor support, deployment, hardware-specific optimization
 
-### **Performance Engineers**
+**Performance Engineers**
 1. [Performance Analysis](capabilities/performance.md) → [Regression Testing](capabilities/performance_regression_testing.md) → [Testing Guide](guides/testing_guide.md)
-2. Focus: Performance optimization, automated regression detection, statistical validation
+2. Focus: Performance optimization, automated regression detection
 
-## ✨ Key Features
+---
+
+## Key Features
 
 - **🚀 Advanced Attention**: Ring, Sparse, Context Parallel - up to 6.1x speedup
 - **🔥 FP8 Training**: Production-ready with 2x H100 speedup
@@ -64,4 +62,4 @@
 
 ---
 
-**🎯 Ready to achieve 2-6x PyTorch performance improvements!**
+**Version**: v0.4.15 | **License**: MIT | **Last Updated**: Jan 22, 2026
