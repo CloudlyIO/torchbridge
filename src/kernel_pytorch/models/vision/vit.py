@@ -50,9 +50,16 @@ class ViTOptimizer(BaseVisionOptimizer):
         # Apply cuDNN optimizations
         self.apply_cudnn_optimization()
 
+        # Apply operator fusion (Conv+BN+ReLU patterns)
+        if self.config.enable_fusion:
+            model = self.apply_operator_fusion(model)
+
         # Apply attention slicing if enabled
         if self.config.enable_attention_slicing:
             model = self.apply_attention_slicing(model)
+
+        # Apply memory format optimization
+        model = self.apply_memory_format_optimization(model)
 
         # Apply precision optimization
         model = self.apply_precision_optimization(model)

@@ -490,6 +490,10 @@ class NVIDIABackend(BaseBackend):
         Returns:
             Optimal attention kernel class, or None if no suitable kernel found
         """
+        # Return None if CUDA is not available
+        if not torch.cuda.is_available():
+            return None
+
         if not self.config.kernel.enabled or not self.config.kernel.flash_attention_enabled:
             return None
 

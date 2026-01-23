@@ -340,10 +340,18 @@ class TestViTOptimizer:
     @pytest.fixture
     def simple_vit(self):
         """Create a simple ViT-like model for testing."""
+        class Transpose(nn.Module):
+            def __init__(self, dim0, dim1):
+                super().__init__()
+                self.dim0 = dim0
+                self.dim1 = dim1
+            def forward(self, x):
+                return x.transpose(self.dim0, self.dim1)
+
         return nn.Sequential(
             nn.Conv2d(3, 768, kernel_size=16, stride=16),
             nn.Flatten(2),
-            nn.Transpose(1, 2),
+            Transpose(1, 2),
             nn.Linear(768, 1000),
         )
 

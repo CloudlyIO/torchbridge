@@ -37,9 +37,40 @@ from .llm import (
     SlidingWindowCache,
 )
 
-# Note: Distributed models (v0.4.13) are available via:
-#   from kernel_pytorch.models.distributed import ...
-# They will be exposed here when v0.4.13 is complete.
+# Distributed models (v0.4.13)
+from .distributed import (
+    # Tensor Parallelism
+    TensorParallelConfig,
+    TensorParallelLinear,
+    TensorParallelEmbedding,
+    ColumnParallelLinear,
+    RowParallelLinear,
+    apply_tensor_parallelism,
+    # Pipeline Parallelism
+    PipelineParallelConfig,
+    PipelineStage,
+    PipelineScheduler,
+    GPipeScheduler,
+    InterleavedScheduler,
+    create_pipeline_stages,
+    estimate_pipeline_memory,
+    # Model Sharding
+    ShardingStrategy,
+    ShardingConfig,
+    ModelSharder,
+    WeightDistributor,
+    automatic_sharding,
+    # Large Model Optimizer
+    DistributedLLMOptimizer,
+    DistributedConfig,
+    DistributedLlama70B,
+    DistributedFalcon,
+    DistributedMixtral,
+    create_distributed_llm,
+    estimate_gpu_requirements,
+    LargeModelType,
+    ParallelismStrategy,
+)
 
 __all__ = [
     # Text models (v0.4.11)
@@ -60,4 +91,32 @@ __all__ = [
     "KVCacheManager",
     "PagedKVCache",
     "SlidingWindowCache",
+    # Distributed models (v0.4.13)
+    "TensorParallelConfig",
+    "TensorParallelLinear",
+    "TensorParallelEmbedding",
+    "ColumnParallelLinear",
+    "RowParallelLinear",
+    "apply_tensor_parallelism",
+    "PipelineParallelConfig",
+    "PipelineStage",
+    "PipelineScheduler",
+    "GPipeScheduler",
+    "InterleavedScheduler",
+    "create_pipeline_stages",
+    "estimate_pipeline_memory",
+    "ShardingStrategy",
+    "ShardingConfig",
+    "ModelSharder",
+    "WeightDistributor",
+    "automatic_sharding",
+    "DistributedLLMOptimizer",
+    "DistributedConfig",
+    "DistributedLlama70B",
+    "DistributedFalcon",
+    "DistributedMixtral",
+    "create_distributed_llm",
+    "estimate_gpu_requirements",
+    "LargeModelType",
+    "ParallelismStrategy",
 ]
