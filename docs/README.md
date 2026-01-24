@@ -1,7 +1,7 @@
 # KernelPyTorch Documentation
 
 > Production-ready PyTorch GPU optimization framework
-> Current Version: v0.4.15
+> Current Version: v0.4.18
 
 ## Quick Navigation
 
@@ -62,4 +62,4 @@
 
 ---
 
-**Version**: v0.4.15 | **License**: MIT | **Last Updated**: Jan 22, 2026
+**Version**: v0.4.18 | **License**: MIT | **Last Updated**: Jan 22, 2026

@@ -36,14 +36,8 @@ from .scaling_fault_tolerance import (
     FaultToleranceManager
 )
 
-# Backward compatibility warning
-warnings.warn(
-    "orchestration.py has been refactored into multiple focused modules. "
-    "Consider importing from the specific modules directly: "
-    "job_management, cluster_management, scaling_fault_tolerance",
-    FutureWarning,
-    stacklevel=2
-)
+# NOTE: This module provides backward compatibility for the refactored orchestration system.
+# For new code, consider importing from: job_management, cluster_management, scaling_fault_tolerance
 
 
 # Factory functions for easy orchestrator creation

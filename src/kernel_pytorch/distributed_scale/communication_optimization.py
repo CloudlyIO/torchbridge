@@ -34,14 +34,8 @@ from .communication_profiling import (
     CommunicationProfiler
 )
 
-# Backward compatibility warning
-warnings.warn(
-    "communication_optimization.py has been refactored into multiple focused modules. "
-    "Consider importing from the specific modules directly: "
-    "communication_primitives, network_optimization, communication_profiling",
-    FutureWarning,
-    stacklevel=2
-)
+# NOTE: This module provides backward compatibility for the refactored communication system.
+# For new code, consider importing from: communication_primitives, network_optimization, communication_profiling
 
 
 # Factory functions for easy component creation

@@ -1,4 +1,4 @@
-# 🔧 Hardware Abstraction (v0.3.6)
+# 🔧 Hardware Abstraction (v0.4.18)
 
 **Multi-vendor GPU and TPU support through unified hardware management.**
 
@@ -22,9 +22,9 @@
 - **ASICs**: Custom accelerator support framework
 - **Neuromorphic**: Specialized computing hardware (research)
 
-## 🏗️ Unified Hardware Management (v0.2.4)
+## 🏗️ Unified Hardware Management (v0.4.18)
 
-### NVIDIA Hardware Auto-Detection (NEW in v0.2.3)
+### NVIDIA Hardware Auto-Detection (NEW in v0.4.18)
 ```python
 from kernel_pytorch import KernelPyTorchConfig
 
@@ -44,7 +44,7 @@ print(f"FlashAttention version: {nvidia_config.flash_attention_version}")
 # Pascal/Turing: Basic optimizations with compatibility mode
 ```
 
-### TPU Hardware Auto-Detection (NEW in v0.2.4)
+### TPU Hardware Auto-Detection (NEW in v0.4.18)
 ```python
 from kernel_pytorch import KernelPyTorchConfig
 
@@ -91,7 +91,7 @@ optimization_strategy = manager.hardware_manager.get_optimization_strategy()
 
 ## ⚡ Hardware-Specific Optimizations
 
-### NVIDIA GPUs (Enhanced v0.2.3)
+### NVIDIA GPUs (Enhanced v0.4.18)
 ```python
 from kernel_pytorch import KernelPyTorchConfig
 from kernel_pytorch.core.config import NVIDIAArchitecture
@@ -228,4 +228,4 @@ def test_attention_layer(device):
 
 ---
 
-**For specific hardware setup instructions, see [Installation Guide](installation.md).**
+**For specific hardware setup instructions, see [Installation Guide](../getting-started/installation.md).**

@@ -437,7 +437,7 @@ print('✅ Performance validation complete')
 
 For more advanced setup and cloud deployment, see:
 - [Cloud Testing Guide](../cloud-deployment/validated-guide.md)
-- [Hardware Abstraction Setup](hardware.md)
-- [Performance Optimization Guide](performance.md)
+- [Hardware Abstraction](../capabilities/hardware.md)
+- [Performance](../capabilities/performance.md)
 
 **🚀 Ready for GPU-accelerated PyTorch development!**

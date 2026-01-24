@@ -33,6 +33,29 @@ jobs:
       - name: Run Ruff formatter check
         run: ruff format --check src tests
 
+  docs-validation:
+    name: Docs Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check version consistency
+        run: python scripts/check_version_consistency.py
+
+      - name: Check for broken internal links
+        run: python scripts/check_doc_links.py
+
+      - name: Validate demos import
+        run: |
+          pip install torch numpy
+          pip install -e .
+          python -c "from demos.run_all_demos import main; print('Demos import OK')"
+
   type-check:
     name: Type Check
     runs-on: ubuntu-latest

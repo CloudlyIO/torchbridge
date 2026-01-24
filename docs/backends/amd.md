@@ -1,17 +1,17 @@
-# AMD ROCm Backend Guide - v0.4.9
+# AMD ROCm Backend Guide - v0.4.18
 
 **Status**: Production-Ready (95%+)
 **Last Updated**: January 20, 2026
-**Version**: v0.4.9 (AMD Backend Completion)
+**Version**: v0.4.18 (AMD Backend Completion)
 
-## What's New in v0.4.9
+## What's New in v0.4.18
 
 - **Operator Fusion**: Conv+BatchNorm, Linear+GELU, and aggressive fusion patterns
 - **HIP Compilation Pipeline**: Enhanced hipcc integration with caching
 - **Memory Layout Optimization**: channels_last for HBM efficiency
 - **torch.compile Integration**: max-autotune mode for aggressive optimization
 - **Enhanced Benchmarks**: Comprehensive optimization benchmarks
-- **Extended Tests**: 25+ new tests for v0.4.9 features
+- **Extended Tests**: 25+ new tests for v0.4.18 features
 
 ---
 
@@ -654,7 +654,7 @@ if backend.device.type == "cpu":
 ## Next Steps
 
 - **Backend Selection**: See [Backend Selection Guide](../guides/backend_selection.md)
-- **Troubleshooting**: See [Troubleshooting Guide](../guides/troubleshooting.md)
+- **Troubleshooting**: See [Troubleshooting Guide](../getting-started/troubleshooting.md)
 - **NVIDIA Backend**: See [NVIDIA Backend](nvidia.md)
 - **TPU Backend**: See [TPU Backend](tpu.md)
 - **Testing Guide**: See [Testing Guide](../guides/testing_guide.md)

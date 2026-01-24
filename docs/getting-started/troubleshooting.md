@@ -1,6 +1,6 @@
 # Backend Troubleshooting Guide
 
-**Version**: v0.3.6
+**Version**: v0.4.18
 **Last Updated**: December 31, 2025
 
 ## Overview
@@ -653,11 +653,11 @@ if result.has_regression:
 
 ### Check Documentation
 
-- [Backend Selection Guide](backend_selection.md)
+- [Backend Selection Guide](../guides/backend_selection.md)
 - [NVIDIA Backend Documentation](../backends/nvidia.md)
 - [AMD Backend Documentation](../backends/amd.md)
 - [TPU Backend Documentation](../backends/tpu.md)
-- [Testing Guide](testing_guide.md)
+- [Testing Guide](../guides/testing_guide.md)
 
 ### Report Issues
 

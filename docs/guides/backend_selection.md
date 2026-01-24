@@ -1,6 +1,6 @@
 # Backend Selection Guide
 
-**Version**: v0.3.6
+**Version**: v0.4.18
 **Last Updated**: December 31, 2025
 
 ## Overview
@@ -546,7 +546,7 @@ tpu_model.load_state_dict(checkpoint['model_state_dict'])
 
 ## Next Steps
 
-- **Troubleshooting**: See [Troubleshooting Guide](troubleshooting.md)
+- **Troubleshooting**: See [Troubleshooting Guide](../getting-started/troubleshooting.md)
 - **Hardware Details**: See [NVIDIA Backend](../backends/nvidia.md), [AMD Backend](../backends/amd.md), and [TPU Backend](../backends/tpu.md)
 - **API Reference**: See [CLI Reference](../capabilities/cli_reference.md)
 - **Testing**: See [Testing Guide](testing_guide.md)

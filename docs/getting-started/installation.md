@@ -1,6 +1,6 @@
 # 📦 Installation Guide
 
-> **Version**: v0.4.15 | **Status**: ✅ Current | **Last Updated**: Jan 22, 2026
+> **Version**: v0.4.18 | **Status**: ✅ Current | **Last Updated**: Jan 22, 2026
 
 **KernelPyTorch** - Production-grade PyTorch GPU/TPU optimization framework
 
@@ -25,9 +25,9 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 - **Platform**: Linux, macOS, Windows
 - **GPU**: CUDA 11.8+ (optional, for GPU acceleration)
 
-### Unified Architecture with Multi-Backend Support (v0.4.3)
+### Unified Architecture with Multi-Backend Support (v0.4.18)
 
-KernelPyTorch v0.4.3 is a production-ready framework with:
+KernelPyTorch v0.4.18 is a production-ready framework with:
 - **Single Configuration System**: `KernelPyTorchConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
@@ -74,7 +74,7 @@ from kernel_pytorch.validation import UnifiedValidator
 config = KernelPyTorchConfig.for_development()
 manager = UnifiedManager(config)
 validator = UnifiedValidator()
-print('✅ v0.4.3 unified architecture verified!')
+print('✅ v0.4.18 unified architecture verified!')
 "
 
 # Run test suite
@@ -89,7 +89,7 @@ PYTHONPATH=src python3 demos/run_all_demos.py --quick
 After installation, see:
 - [Quick Start Guide](quickstart.md) - Get started with unified architecture
 - [Architecture Guide](../capabilities/architecture.md) - Understand the unified design
-- [Testing Guide](testing_guide.md) - Run comprehensive validation
+- [Testing Guide](../guides/testing_guide.md) - Run comprehensive validation
 
 ## Troubleshooting
 
@@ -294,9 +294,9 @@ pip install kernel-pytorch[cloud,serving]
 After installation:
 
 1. **📖 Read the [Quick Start Guide](quickstart.md)**
-2. **🔧 Try the [Optimization Tutorial](tutorials/optimization.md)**
-3. **📊 Explore [Performance Benchmarks](benchmarks.md)**
-4. **🐳 Setup [Docker Development Environment](docker.md)**
+2. **🔧 Try the [Guides](../guides/README.md)**
+3. **📊 Explore [Performance](../capabilities/performance.md)**
+4. **🐳 Setup [Docker Guide](../guides/docker.md)**
 
 ---
 

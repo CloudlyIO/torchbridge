@@ -1,18 +1,44 @@
 # Hardware Backend Selection
 
-KernelPyTorch supports 4 hardware backends with unified interfaces.
+> **Version**: v0.4.18 | KernelPyTorch supports 4 hardware backends with unified interfaces
+
+All backends provide the same API with hardware-specific optimizations under the hood.
 
 ## Quick Selection Guide
 
-| Hardware | Backend | Status | Guide |
-|----------|---------|--------|-------|
-| NVIDIA GPUs (CUDA) | [nvidia.md](nvidia.md) | ✅ Production | A100, H100, RTX 4090 |
-| AMD GPUs (ROCm) | [amd.md](amd.md) | ✅ Production | MI250X, MI300, RX 7900 |
-| Intel GPUs (XPU) | [intel.md](intel.md) | ✅ Production | Arc, Flex, Ponte Vecchio |
-| Google TPUs | [tpu.md](tpu.md) | ✅ Production | TPU v2/v3/v4 |
+| Hardware | Backend | Status | Best For |
+|----------|---------|--------|----------|
+| **NVIDIA GPUs** | [nvidia.md](nvidia.md) | ✅ Production | Training & inference, FP8 on H100+ |
+| **AMD GPUs** | [amd.md](amd.md) | ✅ Production | HPC workloads, MI250X/MI300 clusters |
+| **Intel GPUs** | [intel.md](intel.md) | ✅ Production | Arc for inference, Ponte Vecchio for training |
+| **Google TPUs** | [tpu.md](tpu.md) | ✅ Production | Large-scale training on GCP |
 
-## Architecture
-- [Backend Unification](unification.md) - Unified interface design
+## Unified Architecture
 
-## Selection Criteria
-Choose based on your hardware availability and workload requirements. All backends support the full feature set with hardware-specific optimizations.
+- [Backend Unification](unification.md) - How the unified interface works across vendors
+
+## Which Backend Should I Use?
+
+| Scenario | Recommended Backend |
+|----------|---------------------|
+| General training/inference | NVIDIA (widest support) |
+| Cloud training at scale | TPU (best price/performance on GCP) |
+| AMD hardware available | AMD ROCm (full feature parity) |
+| Intel hardware available | Intel XPU (IPEX integration) |
+
+## Common Operations
+
+```python
+from kernel_pytorch.backends.nvidia import NVIDIABackend
+from kernel_pytorch.backends.amd import AMDBackend
+from kernel_pytorch.backends.intel import IntelBackend
+from kernel_pytorch.backends.tpu import TPUBackend
+
+# All backends share the same API
+backend = NVIDIABackend()  # or AMDBackend(), IntelBackend(), TPUBackend()
+optimized_model = backend.prepare_model(model)
+```
+
+---
+
+**See Also**: [Getting Started](../getting-started/README.md) | [Capabilities](../capabilities/README.md)

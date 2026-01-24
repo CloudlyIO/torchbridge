@@ -338,7 +338,7 @@ gcloud compute instances list \
 harness = AWSTestHarness(config, max_runtime_hours=4)
 
 # Set budget alerts
-# See cost_optimization.md for details
+# See cost-optimization.md for details
 ```
 
 #### Spot Instance Termination
@@ -458,6 +458,6 @@ aws s3 cp debug-logs.tar.gz s3://bucket/debug/$(date +%Y%m%d-%H%M%S).tar.gz
 
 ## Next Steps
 
-- [AWS Setup Guide](aws_setup.md)
-- [GCP Setup Guide](gcp_setup.md)
-- [Team Workflow](team_workflow.md)
+- [AWS Setup Guide](aws-setup.md)
+- [GCP Setup Guide](gcp-setup.md)
+- [Team Workflow](team-workflow.md)

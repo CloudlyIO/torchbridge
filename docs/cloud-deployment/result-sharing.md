@@ -417,6 +417,6 @@ print(chart)
 
 ## Next Steps
 
-- [Team Workflow](team_workflow.md)
+- [Team Workflow](team-workflow.md)
 - [Troubleshooting](troubleshooting.md)
-- [Cost Optimization](cost_optimization.md)
+- [Cost Optimization](cost-optimization.md)

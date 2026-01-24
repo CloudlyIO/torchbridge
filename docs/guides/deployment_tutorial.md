@@ -1,6 +1,6 @@
 # End-to-End Deployment Tutorial
 
-**KernelPyTorch v0.4.3** - Complete guide from model optimization to production deployment
+**KernelPyTorch v0.4.18** - Complete guide from model optimization to production deployment
 
 This tutorial walks through deploying an optimized PyTorch model from development to production, covering all stages of the deployment pipeline.
 
@@ -324,10 +324,10 @@ uvicorn[standard]>=0.23.0
 Build and run:
 ```bash
 # Build image
-docker build -t kernelpytorch-model:v0.4.3 .
+docker build -t kernelpytorch-model:latest .
 
 # Run container
-docker run -p 8000:8000 kernelpytorch-model:v0.4.3
+docker run -p 8000:8000 kernelpytorch-model:latest
 
 # Test
 curl http://localhost:8000/health
@@ -360,7 +360,7 @@ CMD ["python3", "server.py"]
 
 Run with GPU:
 ```bash
-docker run --gpus all -p 8000:8000 kernelpytorch-model:v0.4.3-gpu
+docker run --gpus all -p 8000:8000 kernelpytorch-model:latest-gpu
 ```
 
 ---
@@ -381,7 +381,7 @@ Create task definition `ecs-task.json`:
   "containerDefinitions": [
     {
       "name": "inference",
-      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:v0.4.3",
+      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest",
       "portMappings": [
         {"containerPort": 8000, "protocol": "tcp"}
       ],
@@ -408,8 +408,8 @@ Deploy:
 ```bash
 # Push to ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin ACCOUNT.dkr.ecr.REGION.amazonaws.com
-docker tag kernelpytorch-model:v0.4.3 ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:v0.4.3
-docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:v0.4.3
+docker tag kernelpytorch-model:latest ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest
+docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest
 
 # Register task definition
 aws ecs register-task-definition --cli-input-json file://ecs-task.json
@@ -428,11 +428,11 @@ aws ecs create-service \
 
 ```bash
 # Build and push to Artifact Registry
-gcloud builds submit --tag gcr.io/PROJECT/kernelpytorch-model:v0.4.3
+gcloud builds submit --tag gcr.io/PROJECT/kernelpytorch-model:latest
 
 # Deploy to Cloud Run
 gcloud run deploy kernelpytorch-service \
-  --image gcr.io/PROJECT/kernelpytorch-model:v0.4.3 \
+  --image gcr.io/PROJECT/kernelpytorch-model:latest \
   --platform managed \
   --region us-central1 \
   --memory 4Gi \
@@ -465,7 +465,7 @@ spec:
     spec:
       containers:
       - name: inference
-        image: kernelpytorch-model:v0.4.3
+        image: kernelpytorch-model:latest
         ports:
         - containerPort: 8000
         resources:

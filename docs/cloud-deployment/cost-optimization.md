@@ -271,6 +271,6 @@ gcloud compute addresses list --filter="status=RESERVED"
 
 ## Next Steps
 
-- [Instance Selection Guide](instance_selection.md)
-- [Team Workflow](team_workflow.md)
-- [Result Sharing](result_sharing.md)
+- [Instance Selection Guide](instance-selection.md)
+- [Team Workflow](team-workflow.md)
+- [Result Sharing](result-sharing.md)

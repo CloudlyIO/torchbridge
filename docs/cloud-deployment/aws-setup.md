@@ -265,6 +265,6 @@ aws ec2 describe-security-groups --group-ids sg-0123456789abcdef0
 
 ## Next Steps
 
-- [Instance Selection Guide](instance_selection.md)
-- [Cost Optimization](cost_optimization.md)
-- [Team Workflow](team_workflow.md)
+- [Instance Selection Guide](instance-selection.md)
+- [Cost Optimization](cost-optimization.md)
+- [Team Workflow](team-workflow.md)

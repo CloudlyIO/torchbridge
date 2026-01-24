@@ -1,6 +1,6 @@
 # Vision Model Optimization Guide
 
-Complete guide to optimizing computer vision models using KernelPyTorch (v0.4.14).
+Complete guide to optimizing computer vision models using KernelPyTorch (v0.4.18).
 
 ## Table of Contents
 
@@ -703,5 +703,5 @@ pip install xformers
 
 ---
 
-**Version**: KernelPyTorch v0.4.14
+**Version**: KernelPyTorch v0.4.18
 **Last Updated**: January 22, 2026

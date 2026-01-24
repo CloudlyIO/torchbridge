@@ -197,7 +197,7 @@ This document maintains a comprehensive list of external resources, documentatio
 - [Triton Tutorial](https://triton-lang.org/main/getting-started/tutorials/index.html)
 
 ### Setup Guides
-- [CUDA Setup](cuda_setup.md)
+<!-- CUDA Setup guide pending -->
 - [Cloud Testing](../cloud-deployment/validated-guide.md)
 - [Hardware Abstraction](hardware.md)
 

@@ -386,7 +386,7 @@ DEBUG:kernel_pytorch.backends.nvidia.memory_manager:Allocating tensor: shape=(10
 
 ---
 
-## Known Limitations (v0.3.1)
+## Known Limitations
 
 1. **FP8 Support**: Metadata-only by design
    - Layers are marked for FP8 but no actual FP8 operations

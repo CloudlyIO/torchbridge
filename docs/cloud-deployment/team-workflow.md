@@ -374,6 +374,6 @@ gcloud compute instances list \
 
 ## Next Steps
 
-- [Result Sharing](result_sharing.md)
+- [Result Sharing](result-sharing.md)
 - [Troubleshooting](troubleshooting.md)
-- [Cost Optimization](cost_optimization.md)
+- [Cost Optimization](cost-optimization.md)

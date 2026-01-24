@@ -14,11 +14,11 @@ This guide covers:
 
 ### Validate Unified Framework (30 seconds)
 ```bash
-# Test unified architecture v0.3.3 with production backends
+# Test unified architecture v0.4.18 with production backends
 PYTHONPATH=src python3 -c "
 from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
 from kernel_pytorch.validation import UnifiedValidator
-print('✅ Unified architecture v0.3.3 with production backends imports successful')
+print('✅ Unified architecture v0.4.18 with production backends imports successful')
 "
 
 # Quick unified validation test
@@ -48,7 +48,7 @@ cd demos && PYTHONPATH=../src python3 experimental/ultra_precision.py --validate
 
 ## 🎯 NVIDIA Hardware Testing
 
-### **Test NVIDIA Integration (v0.2.3)**
+### **Test NVIDIA Integration (v0.4.18)**
 
 The NVIDIA integration test suite validates hardware detection, configuration, and optimization:
 

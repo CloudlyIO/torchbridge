@@ -1,4 +1,4 @@
-# 🏗️ Technical Architecture (v0.3.6)
+# 🏗️ Technical Architecture (v0.4.18)
 
 **KernelPyTorch unified framework architecture with production-ready GPU/TPU backends.**
 
@@ -26,7 +26,7 @@ src/kernel_pytorch/
 └── utils/                         # Utility functions and helpers
 ```
 
-## 🎯 **Unified Architecture with Production Backends (v0.3.3)**
+## 🎯 **Unified Architecture with Production Backends (v0.4.18)**
 
 ### **Core Design Principles**
 

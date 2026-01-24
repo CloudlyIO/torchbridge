@@ -1,6 +1,6 @@
 # Small Model Optimization Guide
 
-**KernelPyTorch v0.4.11 - Text Model Integration**
+**KernelPyTorch v0.4.18 - Text Model Integration**
 
 This guide covers optimization of small text models (50-150M parameters) including BERT, GPT-2, and DistilBERT. These models are ideal for single-GPU deployment with <8GB VRAM requirements.
 
@@ -358,9 +358,9 @@ config = TextModelConfig(
 
 ## Next Steps
 
-- **v0.4.12**: Medium model optimization (Llama-7B, Mistral-7B)
-- **v0.4.13**: Large model distributed training (Llama-70B)
-- **v0.4.14**: Vision models (ViT, Stable Diffusion)
+- **v0.4.18**: Medium model optimization (Llama-7B, Mistral-7B)
+- **v0.4.18**: Large model distributed training (Llama-70B)
+- **v0.4.18**: Vision models (ViT, Stable Diffusion)
 - **v0.4.15**: Multi-modal models (CLIP, LLaVA, Whisper)
 
 ## API Reference

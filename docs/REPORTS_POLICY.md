@@ -1,6 +1,6 @@
 # Reports and Validation Policy
 
-> **Version**: v0.4.15 | **Status**: ✅ Policy | **Last Updated**: Jan 22, 2026
+> **Version**: v0.4.18 | **Status**: ✅ Policy | **Last Updated**: Jan 22, 2026
 
 ## ⚠️ NEVER COMMIT REPORTS TO THE REPOSITORY
 

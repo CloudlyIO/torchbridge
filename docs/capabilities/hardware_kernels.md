@@ -1,4 +1,4 @@
-# Custom CUDA Kernels (v0.3.3)
+# Custom CUDA Kernels (v0.4.18)
 
 **Production CUDA kernel implementations for maximum GPU performance.**
 
@@ -24,7 +24,7 @@ CUDA (Compute Unified Device Architecture) provides **direct access to GPU hardw
 - **Maximum Performance**: Direct hardware feature utilization (FP8, Tensor Cores)
 - **Complete Control**: Explicit memory and execution management
 - **Hardware Features**: H100/Blackwell-specific optimizations
-- **Production Ready**: Used in NVIDIA backend (v0.3.1+)
+- **Production Ready**: Used in NVIDIA backend (v0.4.18+)
 
 ## 🏗️ **GPU Architecture Fundamentals**
 

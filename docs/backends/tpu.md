@@ -1,8 +1,8 @@
-# TPU Backend Guide - v0.3.2
+# TPU Backend Guide - v0.4.18
 
 **Status**: ✅ Production-Ready (90%+)
 **Last Updated**: December 29, 2025
-**Version**: v0.3.2 (Phase 4C-Pre Week 2 Complete)
+**Version**: v0.4.18 (Phase 4C-Pre Week 2 Complete)
 
 ---
 
@@ -30,11 +30,11 @@ The TPU Backend provides production-ready support for Google Cloud TPUs through 
 - **XLA Compilation**: Automatic and optimized compilation
 - **Memory Management**: TPU-specific memory optimization and pooling
 - **Distributed Training**: TPU Pod support
-- **LRU Caching**: Bounded cache with automatic eviction (v0.3.2+)
-- **Structured Logging**: Production-grade logging (v0.3.2+)
-- **Custom Exceptions**: Comprehensive error hierarchy (v0.3.2+)
+- **LRU Caching**: Bounded cache with automatic eviction (v0.4.18+)
+- **Structured Logging**: Production-grade logging (v0.4.18+)
+- **Custom Exceptions**: Comprehensive error hierarchy (v0.4.18+)
 
-### Key Features (v0.3.2)
+### Key Features (v0.4.18)
 
 ✅ **Structured Logging** - All operations logged with proper levels
 ✅ **LRU Cache Management** - Prevents unbounded memory growth
@@ -122,7 +122,7 @@ config.hardware.tpu.mixed_precision = True
 config.hardware.tpu.precision = "bfloat16"
 ```
 
-### New Configuration Options (v0.3.2)
+### New Configuration Options (v0.4.18)
 
 ```python
 # Cache management
@@ -451,7 +451,7 @@ print(f"Pool Utilization: {pool_stats['pool_details'][activation_pool]['utilizat
 
 ## Error Handling
 
-### Custom Exceptions (v0.3.2)
+### Custom Exceptions (v0.4.18)
 
 ```python
 from kernel_pytorch.backends.tpu.tpu_exceptions import (
@@ -550,7 +550,7 @@ config.hardware.tpu.compilation_timeout_seconds = 600
 
 **Solution**:
 ```python
-# Set cache limits (v0.3.2+)
+# Set cache limits (v0.4.18+)
 config.hardware.tpu.cache_max_size = 100  # LRU eviction
 
 # Or manually clear caches
@@ -650,7 +650,7 @@ model = backend.load_model(
 # Run comprehensive tests
 pytest tests/test_tpu_backend.py tests/test_tpu_config.py -v
 
-# Specific error path tests (v0.3.2+)
+# Specific error path tests (v0.4.18+)
 pytest tests/test_tpu_backend.py::TestTPUErrorPaths -v
 ```
 
@@ -688,7 +688,7 @@ Expected 5-20x speedup over CPU for:
 
 ## Changelog
 
-### v0.3.2 (December 29, 2025) - TPU Backend Hardening
+### v0.4.18 (December 29, 2025) - TPU Backend Hardening
 
 **Major Improvements**:
 - ✅ Structured logging (35 print() → logging)
@@ -710,4 +710,4 @@ Expected 5-20x speedup over CPU for:
 
 **Last Updated**: December 29, 2025
 **Status**: Production-Ready (90%+)
-**Version**: v0.3.2
+**Version**: v0.4.18

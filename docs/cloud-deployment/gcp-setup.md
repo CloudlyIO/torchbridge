@@ -300,6 +300,6 @@ gcloud compute tpus tpu-vm ssh my-tpu --zone=us-central1-a
 
 ## Next Steps
 
-- [Instance Selection Guide](instance_selection.md)
-- [Cost Optimization](cost_optimization.md)
-- [Team Workflow](team_workflow.md)
+- [Instance Selection Guide](instance-selection.md)
+- [Cost Optimization](cost-optimization.md)
+- [Team Workflow](team-workflow.md)

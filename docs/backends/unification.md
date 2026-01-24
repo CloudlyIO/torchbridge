@@ -664,7 +664,7 @@ results = predict(my_inputs)
 - [NVIDIA Backend](nvidia.md)
 - [AMD Backend](amd.md)
 - [TPU Backend](tpu.md)
-- [Troubleshooting](../guides/troubleshooting.md)
+- [Troubleshooting](../getting-started/troubleshooting.md)
 
 ---
 

@@ -8,7 +8,57 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.18
+**Current Version**: v0.4.19
+
+---
+
+## [0.4.19] - 2026-01-23 - Documentation & CI Quality Improvements
+
+### **Added** ✨
+
+- **CI Documentation Validation** (`.github/workflows/ci.yml`)
+  - Added docs-validation job to CI pipeline
+  - Version consistency checks in CI
+  - Internal doc link validation
+  - Demo import validation
+
+- **Doc Link Checker Script** (`scripts/check_doc_links.py`)
+  - Automated broken link detection for markdown files
+  - Supports relative paths and cross-directory references
+  - Clear pass/fail output for CI integration
+
+- **Expanded README Files**
+  - `docs/capabilities/README.md` - Technical deep-dive navigation
+  - `docs/backends/README.md` - Hardware backend selection guide
+  - `docs/guides/README.md` - User guides navigation
+  - `docs/getting-started/README.md` - Onboarding hub
+  - `docs/archive/README.md` - Archive documentation
+  - `docs/validation-reports/README.md` - Validation reports index
+
+### **Fixed** 🐛
+
+- **Broken Documentation Links**
+  - Fixed 15+ broken internal documentation links
+  - Fixed underscore to kebab-case link inconsistencies in cloud-deployment
+  - Fixed cross-directory relative paths (troubleshooting, testing guide)
+  - Fixed references in backends, capabilities, and guides directories
+
+- **Version References in Documentation**
+  - Updated outdated v0.3.x references to v0.4.18+ across all docs
+  - Synced deployment guide docker tags to use `:latest`
+  - Updated headers in all major documentation files
+
+- **FutureWarnings in Distributed Scale Module**
+  - Removed FutureWarnings from communication_optimization.py
+  - Removed FutureWarnings from orchestration.py
+  - Removed FutureWarnings from hardware_adaptation.py
+  - Converted warnings to NOTE comments for backward compatibility modules
+
+### **Technical Debt** 🧹
+
+- Documentation now validated automatically in CI
+- All internal doc links verified working
+- Version strings consistent across codebase
 
 ---
 

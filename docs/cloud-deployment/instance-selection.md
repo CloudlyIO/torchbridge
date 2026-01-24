@@ -238,6 +238,6 @@ test_matrix = {
 
 ## Next Steps
 
-- [AWS Setup Guide](aws_setup.md)
-- [GCP Setup Guide](gcp_setup.md)
-- [Cost Optimization](cost_optimization.md)
+- [AWS Setup Guide](aws-setup.md)
+- [GCP Setup Guide](gcp-setup.md)
+- [Cost Optimization](cost-optimization.md)

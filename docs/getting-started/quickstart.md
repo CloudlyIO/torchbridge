@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide (v0.4.3)
+# 🚀 Quick Start Guide (v0.4.18)
 
 Get up and running with **KernelPyTorch** in under 5 minutes.
 
@@ -115,9 +115,9 @@ PYTHONPATH=src python3 demos/nvidia_configuration_demo.py --quick
 | NVIDIA backend | [NVIDIA Backend](../backends/nvidia.md) |
 | TPU backend | [TPU Backend](../backends/tpu.md) |
 | Architecture overview | [Architecture](../capabilities/architecture.md) |
-| Testing | [Testing Guide](testing_guide.md) |
+| Testing | [Testing Guide](../guides/testing_guide.md) |
 | API reference | [API.md](../../API.md) |
 
 ---
 
-**Need help?** See [Troubleshooting](troubleshooting.md) or check the [Testing Guide](testing_guide.md).
+**Need help?** See [Troubleshooting](troubleshooting.md) or check the [Testing Guide](../guides/testing_guide.md).

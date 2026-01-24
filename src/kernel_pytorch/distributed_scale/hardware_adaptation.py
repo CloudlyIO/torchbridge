@@ -46,14 +46,8 @@ from .hardware_adapter import (
     DeviceMeshOptimizer
 )
 
-# Backward compatibility warning
-warnings.warn(
-    "hardware_adaptation.py has been refactored into multiple focused modules. "
-    "Consider importing from the specific modules directly: "
-    "hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter",
-    FutureWarning,
-    stacklevel=2
-)
+# NOTE: This module provides backward compatibility for the refactored hardware adaptation system.
+# For new code, consider importing from: hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter
 
 # Re-export everything for backward compatibility
 __all__ = [
