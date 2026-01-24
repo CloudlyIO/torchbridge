@@ -155,6 +155,9 @@ markers = [
     "fp8: Requires FP8 hardware (H100+)",
     "slow: Long-running tests",
     "benchmark: Performance benchmarks",
+    "real_model: Tests that load real model weights from HuggingFace/torchvision",
+    "requires_transformers: Requires HuggingFace transformers library",
+    "requires_torchvision: Requires torchvision library",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

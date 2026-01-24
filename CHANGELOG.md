@@ -8,7 +8,43 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.19
+**Current Version**: v0.4.20-dev
+
+---
+
+## [0.4.20] - 2026-01-23 - Real Model Validation Foundation (In Progress)
+
+### **Added** ✨
+
+- **End-to-End Real Model Tests** (`tests/e2e/test_real_*.py`)
+  - `test_real_bert.py` - Real BERT validation with HuggingFace model
+  - `test_real_gpt2.py` - Real GPT-2 text generation validation
+  - `test_real_resnet.py` - Real ResNet-50 image classification validation
+  - `test_real_clip.py` - Real CLIP multimodal validation
+  - All tests measure actual speedup and verify output correctness
+
+- **E2E Test Infrastructure** (`tests/e2e/conftest.py`)
+  - `benchmark_function()` - Precise timing with warmup and statistics
+  - `assert_speedup()` - Speedup validation with configurable thresholds
+  - `assert_output_close()` - Output correctness validation
+  - Device fixtures for CPU/CUDA testing
+  - Real model loading fixtures
+
+- **New Pytest Markers**
+  - `@pytest.mark.real_model` - Tests loading real model weights
+  - `@pytest.mark.requires_transformers` - Tests requiring HuggingFace
+  - `@pytest.mark.requires_torchvision` - Tests requiring torchvision
+
+### **Changed** 🔄
+
+- Updated `pytest.ini` with new e2e test markers
+- Updated `pyproject.toml` with new marker definitions
+
+### **Note** 📋
+
+This is the first release in the v0.4.20-v0.4.25 "Real-World Readiness" series.
+Previous releases validated code with synthetic models; this release begins
+validation with actual HuggingFace models to prove optimizations work in practice.
 
 ---
 
