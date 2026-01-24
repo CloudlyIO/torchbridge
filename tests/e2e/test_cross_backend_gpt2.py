@@ -19,6 +19,7 @@ Success Criteria:
     - Speedup achieved on each backend
 """
 
+import copy
 import pytest
 import torch
 
@@ -185,7 +186,7 @@ class TestCrossBackendGPT2:
         inputs = gpt2_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -273,7 +274,7 @@ class TestCrossBackendGPT2:
         inputs = gpt2_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -365,7 +366,7 @@ class TestCrossBackendGPT2:
         inputs = gpt2_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -456,7 +457,7 @@ class TestCrossBackendGPT2:
         inputs = gpt2_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 

@@ -16,6 +16,7 @@ Success Criteria:
     - No significant accuracy degradation
 """
 
+import copy
 import pytest
 import torch
 import torch.nn.functional as F
@@ -111,14 +112,18 @@ class TestRealResNetOptimization:
         from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
 
         device = torch.device("cuda")
-        model = resnet50_model.to(device)
         images = sample_image_tensor.to(device)
+
+        # Create baseline model copy BEFORE optimization to avoid modification
+        baseline_model = copy.deepcopy(resnet50_model).to(device)
+        baseline_model.eval()
 
         def run_baseline():
             with torch.no_grad():
-                return model(images)
+                return baseline_model(images)
 
-        # Optimize model with full CUDA optimizations
+        # Optimize original model with full CUDA optimizations
+        model = resnet50_model.to(device)
         config = VisionOptimizationConfig(
             optimization_level=OptimizationLevel.O3,
             enable_cudnn_benchmark=True,
@@ -347,15 +352,18 @@ class TestResNetCUDAOptimizations:
         from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
 
         device = torch.device("cuda")
-        model = resnet50_model.to(device)
         images = sample_image_tensor.to(device)
 
-        # Baseline FP32
+        # Baseline FP32 model - use deepcopy BEFORE optimization
+        fp32_model = copy.deepcopy(resnet50_model).to(device)
+        fp32_model.eval()
+
         def run_fp32():
             with torch.no_grad():
-                return model(images)
+                return fp32_model(images)
 
-        # Optimize with FP16
+        # Optimize with FP16 (use original model)
+        model = resnet50_model.to(device)
         config = VisionOptimizationConfig(
             optimization_level=OptimizationLevel.O3,
             channels_last=True,

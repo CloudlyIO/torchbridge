@@ -372,8 +372,12 @@ def assert_output_close(
     Raises:
         AssertionError: If outputs differ beyond tolerance
     """
-    if not torch.allclose(baseline_output, optimized_output, atol=atol, rtol=rtol):
-        max_diff = (baseline_output - optimized_output).abs().max().item()
+    # Convert to same dtype and device for comparison
+    baseline = baseline_output.detach().float().cpu()
+    optimized = optimized_output.detach().float().cpu()
+
+    if not torch.allclose(baseline, optimized, atol=atol, rtol=rtol):
+        max_diff = (baseline - optimized).abs().max().item()
         raise AssertionError(
             f"{message}\n"
             f"Outputs differ beyond tolerance (atol={atol}, rtol={rtol})\n"

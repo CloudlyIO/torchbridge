@@ -19,6 +19,7 @@ Success Criteria:
     - Speedup achieved on each backend
 """
 
+import copy
 import pytest
 import torch
 
@@ -201,6 +202,7 @@ class TestCrossBackendBERT:
     @requires_nvidia
     def test_bert_nvidia_speedup(self, bert_baseline):
         """Test BERT speedup on NVIDIA backend."""
+        import copy
         from kernel_pytorch.backends.nvidia import NVIDIABackend
         from kernel_pytorch.backends.base_backend import OptimizationLevel
 
@@ -208,8 +210,8 @@ class TestCrossBackendBERT:
         model = bert_baseline["model"]
         inputs = bert_baseline["inputs"]
 
-        # CPU baseline benchmark
-        cpu_model = model.cpu()
+        # CPU baseline benchmark - use deepcopy to avoid device conflicts
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -288,7 +290,7 @@ class TestCrossBackendBERT:
         inputs = bert_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -369,7 +371,7 @@ class TestCrossBackendBERT:
         inputs = bert_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 
@@ -450,7 +452,7 @@ class TestCrossBackendBERT:
         inputs = bert_baseline["inputs"]
 
         # CPU baseline
-        cpu_model = model.cpu()
+        cpu_model = copy.deepcopy(model).cpu()
         cpu_model.eval()
         cpu_inputs = {k: v.cpu() for k, v in inputs.items()}
 

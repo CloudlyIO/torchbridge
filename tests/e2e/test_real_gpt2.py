@@ -16,6 +16,7 @@ Success Criteria:
     - No significant quality degradation
 """
 
+import copy
 import pytest
 import torch
 
@@ -236,8 +237,8 @@ class TestRealGPT2Optimization:
         prompt = "In the year 2050, technology will"
         inputs = tokenizer(prompt, return_tensors="pt").to(device)
 
-        # Baseline
-        baseline_model = model.to(device)
+        # Baseline - use deepcopy to avoid optimizer modifying it
+        baseline_model = copy.deepcopy(model).to(device)
         baseline_model.eval()
 
         def run_baseline():

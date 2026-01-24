@@ -16,6 +16,7 @@ Success Criteria:
     - Tests reproducible on CPU and CUDA
 """
 
+import copy
 import pytest
 import torch
 
@@ -78,8 +79,8 @@ class TestRealBERTOptimization:
         )
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        # Baseline model
-        baseline_model = model.to(device)
+        # Baseline model - use deepcopy to avoid optimizer modifying it
+        baseline_model = copy.deepcopy(model).to(device)
         baseline_model.eval()
 
         def run_baseline():
@@ -145,8 +146,8 @@ class TestRealBERTOptimization:
         )
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        # Baseline model
-        baseline_model = model.to(device)
+        # Baseline model - use deepcopy to avoid optimizer modifying it
+        baseline_model = copy.deepcopy(model).to(device)
         baseline_model.eval()
 
         def run_baseline():

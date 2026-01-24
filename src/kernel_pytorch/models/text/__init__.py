@@ -18,6 +18,8 @@ Version: 0.4.11
 
 from .text_model_optimizer import (
     TextModelOptimizer,
+    TextModelConfig,
+    OptimizationMode,
     OptimizedBERT,
     OptimizedGPT2,
     OptimizedDistilBERT,
@@ -26,6 +28,8 @@ from .text_model_optimizer import (
 
 __all__ = [
     "TextModelOptimizer",
+    "TextModelConfig",
+    "OptimizationMode",
     "OptimizedBERT",
     "OptimizedGPT2",
     "OptimizedDistilBERT",
