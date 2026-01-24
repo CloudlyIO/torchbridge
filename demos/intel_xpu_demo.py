@@ -74,7 +74,7 @@ def demo_device_info(backend):
     """Demonstrate device information retrieval."""
     print_section("3. Device Information")
 
-    info = backend.get_device_info()
+    info = backend.get_device_info_dict()
     for key, value in info.items():
         print(f"  {key}: {value}")
 

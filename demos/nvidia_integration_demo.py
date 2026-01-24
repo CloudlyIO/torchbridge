@@ -38,8 +38,8 @@ def demo_nvidia_backend():
     # Create backend
     backend = NVIDIABackend()
 
-    # Display device information
-    info = backend.get_device_info()
+    # Display device information (use dict format for display)
+    info = backend.get_device_info_dict()
     print(f"\n✅ Backend initialized successfully")
     print(f"   CUDA available: {info['cuda_available']}")
     print(f"   Device: {info['device']}")
@@ -86,21 +86,21 @@ def demo_nvidia_optimizer():
 
     # Conservative optimization
     print("\n🔧 Conservative Optimization:")
-    result_conservative = optimizer.optimize(model, optimization_level="conservative")
+    result_conservative = optimizer.optimize_legacy(model, optimization_level="conservative")
     print(f"   Optimizations applied: {', '.join(result_conservative.optimizations_applied)}")
     print(f"   Compilation time: {result_conservative.compilation_time:.4f}s")
     print(f"   Warnings: {len(result_conservative.warnings)}")
 
     # Balanced optimization
     print("\n⚖️  Balanced Optimization:")
-    result_balanced = optimizer.optimize(model, optimization_level="balanced")
+    result_balanced = optimizer.optimize_legacy(model, optimization_level="balanced")
     print(f"   Optimizations applied: {', '.join(result_balanced.optimizations_applied)}")
     print(f"   Compilation time: {result_balanced.compilation_time:.4f}s")
     print(f"   Warnings: {len(result_balanced.warnings)}")
 
     # Aggressive optimization
     print("\n⚡ Aggressive Optimization:")
-    result_aggressive = optimizer.optimize(model, optimization_level="aggressive")
+    result_aggressive = optimizer.optimize_legacy(model, optimization_level="aggressive")
     print(f"   Optimizations applied: {', '.join(result_aggressive.optimizations_applied)}")
     print(f"   Compilation time: {result_aggressive.compilation_time:.4f}s")
     print(f"   Warnings: {len(result_aggressive.warnings)}")
@@ -180,9 +180,11 @@ def demo_memory_manager():
 
     print("\n📊 Model Memory Analysis:")
     memory_results = manager.optimize_model_memory(model)
-    print(f"   Parameter memory: {memory_results['parameter_memory_mb']:.2f} MB")
-    print(f"   Buffer memory: {memory_results['buffer_memory_mb']:.2f} MB")
-    print(f"   Total memory: {memory_results['total_memory_mb']:.2f} MB")
+    param_mb = memory_results['parameter_bytes'] / (1024 ** 2)
+    buffer_mb = memory_results['buffer_bytes'] / (1024 ** 2)
+    print(f"   Parameter memory: {param_mb:.2f} MB")
+    print(f"   Buffer memory: {buffer_mb:.2f} MB")
+    print(f"   Total memory: {memory_results['total_mb']:.2f} MB")
 
     if memory_results['recommendations']:
         print(f"\n💡 Recommendations:")
@@ -304,12 +306,12 @@ def demo_integration():
     print(f"   Model prepared on device: {next(prepared_model.parameters()).device}")
 
     # Optimize model
-    result = optimizer.optimize(prepared_model, optimization_level="aggressive")
+    result = optimizer.optimize_legacy(prepared_model, optimization_level="aggressive")
     print(f"   Optimizations applied: {', '.join(result.optimizations_applied)}")
 
     # Memory analysis
     memory_analysis = memory_manager.optimize_model_memory(model)
-    print(f"   Total model memory: {memory_analysis['total_memory_mb']:.2f} MB")
+    print(f"   Total model memory: {memory_analysis['total_mb']:.2f} MB")
 
     print(f"\n✅ Full integration pipeline completed successfully")
 
