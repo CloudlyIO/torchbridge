@@ -23,6 +23,16 @@
   - `test_real_clip.py` - Real CLIP multimodal validation
   - All tests measure actual speedup and verify output correctness
 
+- **Cross-Backend Validation Tests** (`tests/e2e/test_cross_backend_*.py`)
+  - `test_cross_backend_bert.py` - BERT on NVIDIA/AMD/TPU/Intel
+  - `test_cross_backend_gpt2.py` - GPT-2 on all backends
+  - Validates consistent output across hardware platforms
+  - Measures speedup over CPU baseline on each backend
+
+- **Validation Reports Structure** (`docs/validation-reports/v0.4.20/`)
+  - README with test coverage and success criteria
+  - Template for per-backend validation results
+
 - **E2E Test Infrastructure** (`tests/e2e/conftest.py`)
   - `benchmark_function()` - Precise timing with warmup and statistics
   - `assert_speedup()` - Speedup validation with configurable thresholds
