@@ -1,388 +1,470 @@
 # 🚀 KernelPyTorch Unified Development Roadmap
 
-**Status**: v0.4.19 - Production-Ready with Complete Cleanup
-**Next**: v0.5.0 - Next Generation Features (Speculative Decoding, Advanced Quantization)
+**Status**: v0.4.19 - Repository Cleanup Complete
+**Next**: v0.4.20 - Real Model Validation & Production Readiness
 
 ---
 
 ## 📋 **Executive Summary**
 
-KernelPyTorch v0.4.x series is **COMPLETE**. The framework is production-ready with:
-- ✅ **4 Hardware Backends**: NVIDIA, AMD, TPU, Intel - all at 95%+ production readiness
-- ✅ **Advanced Features**: FlexAttention, FP8, MoE, Custom CUDA Kernels
-- ✅ **Model Support**: Text, Vision, Multi-modal (CLIP, LLaVA, Whisper)
-- ✅ **Production Infrastructure**: CI/CD, Docker, Kubernetes, Monitoring
-- ✅ **Quality**: 1346 tests, comprehensive documentation, automated validation
+KernelPyTorch v0.4.0-v0.4.19 established the framework infrastructure. However, **critical gaps exist for real-world model usage**:
 
-### **v0.4.x Series Summary**
+### Current State Analysis
 
-| Version Range | Theme | Status |
-|--------------|-------|--------|
-| v0.4.0-v0.4.3 | Production Release & Hardening | ✅ Complete |
-| v0.4.4-v0.4.7 | Feature Additions (FlexAttention, FP8, MoE, Intel) | ✅ Complete |
-| v0.4.8-v0.4.10 | Backend Unification & Documentation | ✅ Complete |
-| v0.4.11-v0.4.15 | Model Integration (Text, Vision, Multi-modal) | ✅ Complete |
-| v0.4.16-v0.4.19 | Repository Cleanup & Quality Standards | ✅ Complete |
+| Component | Code Status | Real-World Tested | Production Ready |
+|-----------|-------------|-------------------|------------------|
+| Text Models (BERT, GPT-2) | ✅ Implemented | ❌ Not validated | ❌ |
+| LLM Models (Llama, Mistral) | ✅ Implemented | ❌ Not validated | ❌ |
+| Vision Models (ResNet, ViT, SD) | 🟡 Partial | ❌ Not validated | ❌ |
+| Multimodal (CLIP, LLaVA, Whisper) | 🟡 Partial | ❌ Not validated | ❌ |
+| Distributed (70B+) | 🟡 Framework only | ❌ Not validated | ❌ |
+| Backend Integration | ✅ Implemented | ❌ Synthetic only | ❌ |
+| Production Serving | ❌ Missing | ❌ | ❌ |
 
----
+### Critical Gaps Identified
 
-## 🎯 **VERSION HISTORY (v0.4.x Complete)**
-
-### v0.4.16-v0.4.19 - Repository Cleanup & Quality Standards ✅ **COMPLETE**
-
-**Theme**: "Production Quality & Maintainability"
-
-| Version | Date | Focus | Key Changes |
-|---------|------|-------|-------------|
-| **v0.4.16** | Jan 22, 2026 | CI/CD Modernization | GitHub Actions, Ruff, mypy, pytest matrix |
-| **v0.4.17** | Jan 23, 2026 | Code Consolidation | FlashAttention consolidation, removed orphan code |
-| **v0.4.18** | Jan 23, 2026 | Quality Standards | Version consistency, quality gates document |
-| **v0.4.19** | Jan 23, 2026 | Documentation Quality | CI doc validation, link fixes, README expansion |
-
-**v0.4.16 - Repository Modernization & CI/CD**:
-- GitHub Actions CI/CD pipeline (lint, type-check, test matrix)
-- Ruff linting and formatting
-- mypy type checking with py.typed marker
-- pytest with coverage and markers (gpu, tpu, amd, intel, slow)
-- Automated releases on tags
-
-**v0.4.17 - Code Consolidation & Cleanup**:
-- Shared attention operations module (`attention/core/attention_ops.py`)
-- Consolidated 3 FlashAttention implementations into shared core
-- Removed orphaned `cuda_kernels/` directory (1,661 lines)
-- Fixed import paths and backward compatibility
-
-**v0.4.18 - Quality Standards & Version Consistency**:
-- Quality Standards Document (`QUALITY_STANDARDS.md`)
-- Enhanced version checking script
-- Fixed version inconsistencies across 7 files
-- Established quality gates for releases
-
-**v0.4.19 - Documentation & CI Quality Improvements**:
-- CI documentation validation job
-- Automated doc link checker (`scripts/check_doc_links.py`)
-- Fixed 15+ broken documentation links
-- Expanded 6 README navigation hubs
-- Removed FutureWarnings from distributed_scale module
+1. **No End-to-End Validation** - Tests use synthetic models, not real HuggingFace models
+2. **No Cross-Backend Validation** - Hardware demos only use synthetic models
+3. **No Production Serving** - No FastAPI/Triton/vLLM integration
+4. **No Quantization Quality Metrics** - Accuracy impact not measured
+5. **Placeholder Code** - ViT attention slicing, distributed schedulers incomplete
+6. **No Deployment Pipeline** - No ONNX/TensorRT real examples
 
 ---
 
-### v0.4.11-v0.4.15 - Model Integration Series ✅ **COMPLETE**
+## 🎯 **v0.4.x CONTINUATION ROADMAP**
 
-| Version | Models | Parameters | Use Cases |
-|---------|--------|------------|-----------|
-| **v0.4.11** | BERT, GPT-2, DistilBERT | 66-124M | Text classification, generation |
-| **v0.4.12** | Llama-2-7B, Mistral-7B, Phi-2 | 2.7-7B | LLM inference |
-| **v0.4.13** | Llama-70B, Mixtral-8x7B | 46-70B | Enterprise distributed |
-| **v0.4.14** | ResNet, ViT, Stable Diffusion | 25M-6.6B | Computer vision |
-| **v0.4.15** | CLIP, LLaVA, Whisper | 74M-13B | Multi-modal |
+### v0.4.20 - Real Model Validation Foundation 📋 **NEXT**
 
----
+**Theme**: "Validate That It Actually Works"
+**Goal**: Prove optimizations work on real HuggingFace models with measurable speedups
 
-### v0.4.4-v0.4.10 - Feature Additions & Backend Unification ✅ **COMPLETE**
+#### **Phase 1: End-to-End Model Tests**
 
-| Version | Feature | Key Additions |
-|---------|---------|---------------|
-| **v0.4.4** | FlexAttention | PyTorch 2.5+ FlexAttention, custom score_mod |
-| **v0.4.5** | Full FP8 | Native PyTorch FP8 types, 75% memory reduction |
-| **v0.4.6** | MoE Support | 5 MoE variants, 5 routers, load balancing |
-| **v0.4.7** | Intel XPU | Full Intel GPU support via IPEX |
-| **v0.4.8** | Backend Unification | BaseBackend, BackendFactory, OptimizationLevel |
-| **v0.4.9** | AMD Completion | Full AMD ROCm parity with NVIDIA |
-| **v0.4.10** | Intel Documentation | Complete Intel docs, DevCloud validation |
-
----
-
-### v0.4.0-v0.4.3 - Production Release & Hardening ✅ **COMPLETE**
-
-| Version | Focus | Status |
-|---------|-------|--------|
-| **v0.4.0** | Production-Ready Multi-Backend | All backends 90%+ ready |
-| **v0.4.1** | Cloud Validation | GCP L4, AWS A10G validated |
-| **v0.4.2** | torch_xla 2.9.0 Compatibility | TPU backend updated |
-| **v0.4.3** | Documentation Sync | All docs reference v0.4.3 |
-
----
-
-## 🚀 **v0.5.0 - NEXT GENERATION FEATURES**
-
-**Target Release**: Q1 2026
-**Theme**: "Advanced Inference & Quantization"
-
-### **Planned Features**
-
-#### 1. **Speculative Decoding** (HIGH PRIORITY)
-Enable 2-3x faster LLM inference through draft model speculation.
+Create tests that load and run REAL models (not mocked):
 
 ```python
-from kernel_pytorch.inference import SpeculativeDecoder
+# tests/e2e/test_real_bert.py
+@pytest.mark.slow
+@pytest.mark.requires_transformers
+def test_bert_optimization_real():
+    """Load real BERT, optimize, measure speedup."""
+    from transformers import AutoModel, AutoTokenizer
+    from kernel_pytorch.models.text import TextModelOptimizer
 
-decoder = SpeculativeDecoder(
-    target_model=llama_70b,
-    draft_model=llama_7b,  # or same model with lower precision
-    speculation_length=5,   # tokens to speculate
-    acceptance_threshold=0.8
-)
+    # Load REAL model
+    model = AutoModel.from_pretrained("bert-base-uncased")
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
-# 2-3x faster generation
-output = decoder.generate(prompt, max_tokens=100)
+    # Optimize
+    optimizer = TextModelOptimizer()
+    optimized = optimizer.optimize(model)
+
+    # Validate speedup is real
+    baseline_time = benchmark(model, inputs)
+    optimized_time = benchmark(optimized, inputs)
+
+    assert optimized_time < baseline_time * 0.8  # At least 20% faster
 ```
 
 **Deliverables**:
-- `src/kernel_pytorch/inference/speculative/` - Speculative decoding module
-- Draft model integration (same-family, distilled, quantized)
-- Token verification and acceptance tracking
-- Dynamic speculation depth based on acceptance rate
-- Integration with KV-cache optimization
+- `tests/e2e/test_real_bert.py` - BERT with real weights
+- `tests/e2e/test_real_gpt2.py` - GPT-2 with real weights
+- `tests/e2e/test_real_llama.py` - Llama-7B with real weights (requires auth)
+- `tests/e2e/test_real_resnet.py` - ResNet50 with real weights
+- `tests/e2e/test_real_clip.py` - CLIP with real weights
+- CI marker: `@pytest.mark.e2e` (run separately, not in fast CI)
 
 **Success Criteria**:
-- 2-3x inference speedup for autoregressive generation
-- <1% quality degradation vs greedy decoding
-- Works with all 4 backends
+- [ ] BERT optimization shows measurable speedup (>20%)
+- [ ] GPT-2 generation works correctly with optimization
+- [ ] No accuracy degradation from baseline
+- [ ] Tests reproducible on CPU and CUDA
 
 ---
 
-#### 2. **Advanced Quantization Suite** (HIGH PRIORITY)
-Production-ready quantization for deployment.
+#### **Phase 2: Cross-Backend Real Model Validation**
+
+Validate optimizations work across all 4 backends with real models:
 
 ```python
-from kernel_pytorch.quantization import AutoQuantize, QuantizationConfig
+# tests/e2e/test_cross_backend_bert.py
+@pytest.mark.parametrize("backend", ["nvidia", "amd", "tpu", "intel"])
+def test_bert_on_backend(backend):
+    """Validate BERT optimization on each backend."""
+    model = load_bert()
 
-config = QuantizationConfig(
-    method="awq",           # awq, gptq, smoothquant
-    bits=4,                 # 4, 8
-    group_size=128,
-    calibration_samples=512
-)
+    if backend == "nvidia" and torch.cuda.is_available():
+        optimized = optimize_for_nvidia(model)
+    elif backend == "tpu" and is_tpu_available():
+        optimized = optimize_for_tpu(model)
+    # ... etc
 
-quantizer = AutoQuantize(config)
-quantized_model = quantizer.quantize(model, calibration_data)
-
-# 75% memory reduction, <5% accuracy loss
-```
-
-**Methods**:
-| Method | Bits | Memory Reduction | Use Case |
-|--------|------|-----------------|----------|
-| **GPTQ** | 4 | 75% | Offline quantization |
-| **AWQ** | 4 | 75% | Activation-aware, better accuracy |
-| **SmoothQuant** | 8 | 50% | INT8 inference, minimal loss |
-
-**Deliverables**:
-- `src/kernel_pytorch/quantization/gptq.py` - GPTQ implementation
-- `src/kernel_pytorch/quantization/awq.py` - AWQ implementation
-- `src/kernel_pytorch/quantization/smoothquant.py` - SmoothQuant
-- Calibration data handling
-- Accuracy validation framework
-
-**Success Criteria**:
-- <5% perplexity increase for LLMs
-- 75% memory reduction with INT4
-- Compatible with HuggingFace models
-
----
-
-#### 3. **Distributed Training 2.0** (MEDIUM PRIORITY)
-Enhanced distributed training with FSDP 2.0 and tensor parallelism.
-
-```python
-from kernel_pytorch.distributed import DistributedConfig, setup_distributed
-
-config = DistributedConfig(
-    strategy="fsdp2",       # fsdp2, tensor_parallel, pipeline
-    sharding_strategy="full",
-    mixed_precision="bf16",
-    activation_checkpointing=True
-)
-
-model = setup_distributed(model, config)
+    # Validate output correctness
+    assert torch.allclose(baseline_output, optimized_output, atol=1e-3)
 ```
 
 **Deliverables**:
-- FSDP 2.0 integration with auto-wrapping
-- Tensor parallelism for large models
-- Pipeline parallelism support
-- Hybrid parallelism (TP + PP + DP)
-- Distributed checkpointing improvements
+- `tests/e2e/test_cross_backend_bert.py` - BERT on all backends
+- `tests/e2e/test_cross_backend_gpt2.py` - GPT-2 on all backends
+- `docs/validation-reports/v0.4.20/` - Results from each backend
 
 **Success Criteria**:
-- Linear scaling efficiency >90% (2-8 GPUs)
-- Support for 100B+ parameter models
-- Works across NVIDIA and AMD
+- [ ] BERT runs on NVIDIA, AMD, TPU, Intel with same output
+- [ ] Speedup validated on each backend
+- [ ] Documented performance matrix
 
 ---
 
-#### 4. **Performance Profiling Suite** (MEDIUM PRIORITY)
-Integrated profiling and bottleneck detection.
+### v0.4.21 - Quantization Quality Validation 📋 **PLANNED**
+
+**Theme**: "Prove Quality Doesn't Degrade"
+**Goal**: Validate quantization (INT4, INT8, FP8) preserves model quality
+
+#### **Phase 1: Accuracy Benchmarks**
 
 ```python
-from kernel_pytorch.profiling import Profiler, analyze_bottlenecks
+# benchmarks/quantization_accuracy.py
+def measure_quantization_impact():
+    """Measure perplexity/accuracy impact of quantization."""
 
-with Profiler(model) as prof:
-    for batch in dataloader:
-        output = model(batch)
+    # Baseline (FP32)
+    model = AutoModelForCausalLM.from_pretrained("gpt2")
+    baseline_perplexity = evaluate_perplexity(model, wikitext)
 
-report = prof.analyze()
-print(report.bottlenecks)      # Identified bottlenecks
-print(report.recommendations)  # Optimization suggestions
+    # INT8
+    model_int8 = quantize_to_int8(model)
+    int8_perplexity = evaluate_perplexity(model_int8, wikitext)
+
+    # INT4
+    model_int4 = quantize_to_int4(model)
+    int4_perplexity = evaluate_perplexity(model_int4, wikitext)
+
+    # Report degradation
+    print(f"INT8 degradation: {(int8_perplexity - baseline_perplexity) / baseline_perplexity * 100:.2f}%")
+    print(f"INT4 degradation: {(int4_perplexity - baseline_perplexity) / baseline_perplexity * 100:.2f}%")
 ```
 
 **Deliverables**:
-- Integration with torch.profiler
-- Automatic bottleneck detection (compute, memory, I/O)
-- Memory leak detection
-- Optimization recommendations
-- Export to TensorBoard, Chrome Trace
+- `benchmarks/quantization_accuracy.py` - Accuracy impact measurement
+- `tests/e2e/test_quantization_quality.py` - Quality validation tests
+- `docs/guides/quantization_guide.md` - When to use each mode
+
+**Quality Targets**:
+| Quantization | Perplexity Increase | Memory Reduction | Use Case |
+|--------------|--------------------|--------------------|----------|
+| INT8 | <2% | 50% | Balanced |
+| INT4 (GPTQ) | <5% | 75% | Memory-constrained |
+| INT4 (AWQ) | <3% | 75% | Higher quality |
+| FP8 | <1% | 50% | H100 training |
 
 **Success Criteria**:
-- <5% profiling overhead
-- Accurate bottleneck identification
-- Actionable recommendations
+- [ ] Perplexity measured on WikiText-2 for GPT-2
+- [ ] BERT accuracy measured on GLUE benchmark subset
+- [ ] Quality targets documented and validated
 
 ---
 
-### **v0.5.0 Release Criteria**
+### v0.4.22 - Production Inference Server 📋 **PLANNED**
 
-- [ ] Speculative decoding with 2x+ speedup validated
-- [ ] GPTQ/AWQ quantization with <5% accuracy loss
-- [ ] FSDP 2.0 integration tested on multi-GPU
-- [ ] Profiling suite with automatic recommendations
-- [ ] 1500+ tests passing
-- [ ] Complete documentation for all features
+**Theme**: "Ready for Deployment"
+**Goal**: Production-ready inference server with batching and concurrent requests
 
----
+#### **Phase 1: FastAPI Inference Server**
 
-## 🔮 **FUTURE VERSIONS (v0.6.0+)**
+```python
+# src/kernel_pytorch/serving/inference_server.py
+from fastapi import FastAPI
+from kernel_pytorch.models.llm import LLMOptimizer
 
-### v0.6.0 - Blackwell & Advanced Inference (Q2 2026)
+app = FastAPI()
+model = None
 
-**Planned Features**:
-1. **FP4/NVFP4 for Blackwell**
-   - Native Blackwell 5th-gen Tensor Core support
-   - 3.5x memory reduction vs FP8
-   - NVFP4 quantization pipeline
+@app.on_event("startup")
+async def load_model():
+    global model
+    optimizer = LLMOptimizer()
+    model = optimizer.load_optimized("meta-llama/Llama-2-7b-hf", quantization="int4")
 
-2. **AOTriton for AMD**
-   - ROCm 7.0 native Triton compilation
-   - MI300X/MI325X optimized kernels
+@app.post("/generate")
+async def generate(request: GenerateRequest):
+    return model.generate(request.prompt, max_tokens=request.max_tokens)
 
-3. **Inference Engine Integration**
-   - vLLM PagedAttention compatibility
-   - SGLang RadixAttention support
-   - TensorRT-LLM export pipeline
-
-4. **Advanced KV-Cache**
-   - PagedAttention implementation
-   - Continuous batching support
-   - Memory-efficient long context (128K+)
-
----
-
-### v0.7.0 - Enterprise & Cloud Native (Q3 2026)
-
-**Planned Features**:
-1. **Cloud-Native Infrastructure**
-   - AWS SageMaker integration
-   - GCP Vertex AI integration
-   - Azure ML integration
-   - Multi-cloud deployment automation
-
-2. **Enterprise Features**
-   - Model encryption and secure inference
-   - Audit logging for compliance
-   - Role-based access control hooks
-
-3. **Advanced Monitoring**
-   - Real-time inference analytics
-   - Cost optimization recommendations
-   - A/B testing framework integration
-
-4. **Model Hub Integration**
-   - HuggingFace Hub direct integration
-   - Automatic optimization on download
-   - Model versioning and lineage tracking
-
----
-
-### v0.8.0 - RecSys & Prediction Models (Q4 2026)
-
-**Planned Features** (Deferred from v0.4.x):
-1. **Sparse Embedding Optimization**
-   - Billion-parameter embedding tables
-   - Hybrid GPU/CPU placement
-
-2. **RecSys Models**
-   - Two-tower models
-   - Deep RecSys (Wide & Deep, DeepFM, DCN)
-   - Sequential RecSys (SASRec, BERT4Rec)
-   - Graph-based (LightGCN, PinSage)
-
-3. **Tabular Models**
-   - TabNet, FT-Transformer
-   - Time series (Temporal Fusion Transformer, N-BEATS)
-
-4. **Production RecSys Serving**
-   - Batch inference engine
-   - Candidate generation with FAISS
-   - Real-time ranking
-
----
-
-## 📊 **CURRENT STATUS DASHBOARD**
-
-### Test Coverage
-```
-Total Tests: 1346
-Passed: 1346 (100%)
-Skipped: 94 (platform-specific)
+@app.post("/batch_generate")
+async def batch_generate(requests: List[GenerateRequest]):
+    # Dynamic batching
+    return model.batch_generate([r.prompt for r in requests])
 ```
 
-### Backend Maturity
-| Backend | Functionality | Production Readiness | Cloud Validated |
-|---------|--------------|---------------------|-----------------|
-| **NVIDIA** | 100% | 95%+ | GCP L4, AWS A10G |
-| **AMD** | 100% | 95%+ | Local (MI300 pending) |
-| **TPU** | 100% | 95%+ | GCP v5litepod |
-| **Intel** | 100% | 90%+ | DevCloud ready |
+**Deliverables**:
+- `src/kernel_pytorch/serving/inference_server.py` - FastAPI server
+- `src/kernel_pytorch/serving/batch_manager.py` - Dynamic batching
+- `src/kernel_pytorch/serving/request_queue.py` - Async request handling
+- `examples/serving/run_inference_server.py` - Example deployment
+- `docker/Dockerfile.serving` - Production Docker image
 
-### Feature Completeness
-| Feature | Status | Version |
-|---------|--------|---------|
-| FlashAttention-3 | ✅ Complete | v0.3.0 |
-| FlexAttention | ✅ Complete | v0.4.4 |
-| Full FP8 | ✅ Complete | v0.4.5 |
-| MoE Support | ✅ Complete | v0.4.6 |
-| Intel XPU | ✅ Complete | v0.4.7 |
-| Backend Unification | ✅ Complete | v0.4.8 |
-| Model Integration | ✅ Complete | v0.4.11-15 |
-| CI/CD Pipeline | ✅ Complete | v0.4.16 |
-| Quality Standards | ✅ Complete | v0.4.18-19 |
+**Success Criteria**:
+- [ ] Server handles 100+ concurrent requests
+- [ ] Dynamic batching reduces latency by 2x
+- [ ] Health checks and metrics endpoints
+- [ ] Docker deployment working
 
 ---
 
-## 🎯 **IMMEDIATE NEXT ACTIONS**
+#### **Phase 2: Triton Inference Server Integration**
 
-### For v0.5.0 Development
+```python
+# src/kernel_pytorch/serving/triton_export.py
+def export_for_triton(model, output_path):
+    """Export optimized model for NVIDIA Triton."""
 
-1. **Week 1-2: Speculative Decoding Foundation**
-   - Design draft model integration API
-   - Implement token verification algorithm
-   - Create basic speculative decoder class
+    # Convert to TorchScript
+    scripted = torch.jit.trace(model, sample_input)
 
-2. **Week 3-4: Quantization Suite**
-   - Implement GPTQ core algorithm
-   - Add calibration data handling
-   - Create AWQ implementation
+    # Create Triton model config
+    config = create_triton_config(model)
 
-3. **Week 5-6: Distributed Training 2.0**
-   - FSDP 2.0 integration
-   - Tensor parallelism implementation
-   - Testing on multi-GPU setups
+    # Save
+    scripted.save(f"{output_path}/model.pt")
+    save_config(config, f"{output_path}/config.pbtxt")
+```
 
-4. **Week 7-8: Profiling & Polish**
-   - Profiling suite integration
-   - Documentation for all v0.5.0 features
-   - Release candidate testing
+**Deliverables**:
+- `src/kernel_pytorch/serving/triton_export.py` - Triton export
+- `src/kernel_pytorch/serving/triton_config.py` - Config generator
+- `examples/serving/triton_deployment/` - Complete example
+- `docs/guides/triton_deployment.md` - Deployment guide
+
+---
+
+### v0.4.23 - Complete Placeholder Implementations 📋 **PLANNED**
+
+**Theme**: "No More Stubs"
+**Goal**: Complete all placeholder/stub code identified in audit
+
+#### **Phase 1: Vision Model Completions**
+
+Current placeholders:
+```python
+# src/kernel_pytorch/models/vision/vit.py - LINE 234
+# TODO: Implement actual attention slicing
+def _apply_attention_slicing(self, model):
+    """Placeholder for attention slicing implementation."""
+    return model  # Currently no-op
+```
+
+**Deliverables**:
+- Complete `_apply_attention_slicing()` in ViT optimizer
+- Complete `_fuse_linear_activation()` in vision base
+- Add actual implementation tests
+
+---
+
+#### **Phase 2: Distributed Model Completions**
+
+Current placeholders:
+```python
+# src/kernel_pytorch/models/distributed/pipeline_parallel.py
+class InterleavedScheduler(PipelineScheduler):
+    def schedule(self, microbatches):
+        raise NotImplementedError("Interleaved 1F1B scheduling")
+```
+
+**Deliverables**:
+- Complete `InterleavedScheduler.schedule()`
+- Complete `ModelSharder.auto_shard()`
+- Test with actual multi-GPU setup
+
+**Success Criteria**:
+- [ ] No NotImplementedError in production code paths
+- [ ] All placeholder comments resolved
+- [ ] Tests cover previously stubbed functionality
+
+---
+
+### v0.4.24 - Distributed Training Validation 📋 **PLANNED**
+
+**Theme**: "Scale to 70B+"
+**Goal**: Validate distributed training works with real large models
+
+#### **Phase 1: Multi-GPU Validation**
+
+```python
+# tests/distributed/test_distributed_llama.py
+@pytest.mark.distributed
+@pytest.mark.requires_multi_gpu
+def test_llama_70b_tensor_parallel():
+    """Test Llama-70B with tensor parallelism on 4+ GPUs."""
+
+    config = TensorParallelConfig(world_size=4)
+    model = load_llama_70b_sharded(config)
+
+    # Validate forward pass
+    output = model.generate("Hello", max_tokens=10)
+
+    # Validate memory distribution
+    for rank in range(4):
+        assert get_gpu_memory(rank) < 24 * 1024  # <24GB per GPU
+```
+
+**Deliverables**:
+- `tests/distributed/test_distributed_llama.py` - Llama-70B validation
+- `tests/distributed/test_pipeline_parallel.py` - Pipeline parallel tests
+- `examples/distributed/train_llama_7b_fsdp.py` - FSDP training example
+- `docs/guides/distributed_training.md` - Complete guide
+
+**Success Criteria**:
+- [ ] Llama-70B runs on 4x A100 (40GB each)
+- [ ] Pipeline parallelism latency within 10% of ideal
+- [ ] FSDP training example works end-to-end
+
+---
+
+### v0.4.25 - Model Export & Deployment Pipeline 📋 **PLANNED**
+
+**Theme**: "Ship It"
+**Goal**: Complete deployment pipeline from training to production
+
+#### **Phase 1: ONNX Export**
+
+```python
+# src/kernel_pytorch/deployment/onnx_export.py
+def export_to_onnx(model, output_path, dynamic_axes=True):
+    """Export optimized model to ONNX format."""
+
+    # Prepare model
+    model.eval()
+
+    # Export
+    torch.onnx.export(
+        model,
+        sample_input,
+        output_path,
+        dynamic_axes={"input": {0: "batch"}} if dynamic_axes else None,
+        opset_version=17
+    )
+
+    # Validate
+    import onnxruntime as ort
+    session = ort.InferenceSession(output_path)
+    onnx_output = session.run(None, {"input": sample_input.numpy()})
+
+    assert np.allclose(pytorch_output, onnx_output[0], atol=1e-4)
+```
+
+**Deliverables**:
+- `src/kernel_pytorch/deployment/onnx_export.py` - ONNX export
+- `src/kernel_pytorch/deployment/tensorrt_export.py` - TensorRT export
+- `examples/deployment/export_bert_onnx.py` - BERT export example
+- `examples/deployment/export_llama_tensorrt.py` - Llama TensorRT example
+
+---
+
+#### **Phase 2: Edge Deployment**
+
+```python
+# src/kernel_pytorch/deployment/edge_optimizer.py
+def optimize_for_edge(model, target="mobile"):
+    """Optimize model for edge deployment."""
+
+    if target == "mobile":
+        # INT8 quantization + pruning
+        model = quantize_int8(model)
+        model = prune_model(model, sparsity=0.5)
+    elif target == "iot":
+        # INT4 quantization + aggressive pruning
+        model = quantize_int4(model)
+        model = prune_model(model, sparsity=0.7)
+
+    return model
+```
+
+**Deliverables**:
+- `src/kernel_pytorch/deployment/edge_optimizer.py` - Edge optimization
+- `examples/deployment/deploy_bert_mobile.py` - Mobile deployment
+- `docs/guides/edge_deployment.md` - Edge deployment guide
+
+---
+
+## 📊 **UPDATED VERSION ROADMAP**
+
+### v0.4.x Continuation - Real-World Readiness
+
+| Version | Theme | Focus | Priority |
+|---------|-------|-------|----------|
+| **v0.4.20** | Real Model Validation | E2E tests with real HuggingFace models | 🔴 HIGH |
+| **v0.4.21** | Quantization Quality | Accuracy benchmarks (perplexity, GLUE) | 🔴 HIGH |
+| **v0.4.22** | Production Serving | FastAPI + Triton integration | 🔴 HIGH |
+| **v0.4.23** | Complete Placeholders | ViT attention slicing, distributed schedulers | 🟡 MEDIUM |
+| **v0.4.24** | Distributed Validation | Multi-GPU testing with real 70B models | 🟡 MEDIUM |
+| **v0.4.25** | Deployment Pipeline | ONNX, TensorRT, edge deployment | 🟡 MEDIUM |
+
+### Estimated Timeline
+
+| Version | Estimated Effort | Dependencies |
+|---------|-----------------|--------------|
+| v0.4.20 | 1-2 weeks | None |
+| v0.4.21 | 1 week | v0.4.20 |
+| v0.4.22 | 2 weeks | v0.4.20 |
+| v0.4.23 | 1 week | None |
+| v0.4.24 | 2 weeks | v0.4.23, multi-GPU access |
+| v0.4.25 | 2 weeks | v0.4.20 |
+
+---
+
+## 🔍 **RESEARCH FINDINGS SUMMARY**
+
+### What We Have (Code Exists)
+
+✅ **Text Model Wrappers** - `TextModelOptimizer` with BERT, GPT-2, DistilBERT
+✅ **LLM Wrappers** - `LLMOptimizer` with Llama, Mistral, Phi quantization
+✅ **KV-Cache** - Standard, Paged, Sliding Window implementations
+✅ **Vision Wrappers** - ResNet, ViT, Stable Diffusion optimizers
+✅ **Multimodal Wrappers** - CLIP, LLaVA, Whisper optimizers
+✅ **Distributed Framework** - Tensor parallel, pipeline parallel skeleton
+✅ **Backend Integration** - NVIDIA, AMD, TPU, Intel backends
+
+### What's Missing (Critical Gaps)
+
+❌ **Real Model Validation** - All tests use synthetic `nn.Linear` models
+❌ **Quality Metrics** - No perplexity/accuracy measurement
+❌ **Production Serving** - No inference server integration
+❌ **Cross-Backend Validation** - Hardware demos are synthetic-only
+❌ **Placeholder Code** - ViT attention slicing, distributed schedulers
+❌ **Deployment Pipeline** - No ONNX/TensorRT real examples
+
+### Test Coverage Analysis
+
+| Test Category | Files | Tests | Uses Real Models |
+|---------------|-------|-------|------------------|
+| Unit Tests | 35 | ~800 | ❌ Synthetic |
+| Integration Tests | 12 | ~300 | ❌ Synthetic |
+| E2E Tests | 0 | 0 | ❌ Missing |
+| Benchmark Tests | 15 | ~200 | ❌ Synthetic |
+
+---
+
+## ✅ **SUCCESS CRITERIA FOR v0.4.x COMPLETION**
+
+Before declaring v0.4.x complete and moving to v0.5.0:
+
+### Must Have (v0.4.20-v0.4.22)
+- [ ] E2E tests with real BERT, GPT-2, Llama passing
+- [ ] Measured speedup >20% on real models
+- [ ] Quantization quality metrics documented
+- [ ] Production inference server working
+- [ ] Cross-backend validation matrix complete
+
+### Should Have (v0.4.23-v0.4.25)
+- [ ] All placeholder code completed
+- [ ] Distributed training validated at scale
+- [ ] ONNX export working for major models
+- [ ] Documentation for real-world usage
+
+### Nice to Have (Future)
+- [ ] TensorRT integration
+- [ ] Edge deployment examples
+- [ ] vLLM PagedAttention integration
 
 ---
 
@@ -395,7 +477,7 @@ Skipped: 94 (platform-specific)
 
 ---
 
-**🎯 KernelPyTorch v0.4.x is complete and production-ready. v0.5.0 will focus on advanced inference optimizations (speculative decoding, quantization) to further accelerate LLM deployments.**
+**🎯 v0.4.x is NOT complete until we validate that optimizations work on REAL models with MEASURABLE improvements. The framework exists, but production readiness requires the validation work outlined above.**
 
 ---
 
