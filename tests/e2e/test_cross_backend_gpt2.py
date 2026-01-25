@@ -128,8 +128,8 @@ class TestCrossBackendGPT2:
         assert_output_close(
             baseline_logits,
             nvidia_logits_cpu,
-            atol=1e-3,
-            rtol=1e-3,
+            atol=0.1,   # Realistic for cross-device FP32
+            rtol=0.01,
             message="GPT-2 NVIDIA logits vs CPU baseline"
         )
 

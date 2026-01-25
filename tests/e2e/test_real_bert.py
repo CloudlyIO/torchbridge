@@ -89,6 +89,7 @@ class TestRealBERTOptimization:
 
         # Optimize model - use fresh copy to avoid fixture contamination
         model_to_optimize = copy.deepcopy(model).cpu()
+        model_to_optimize.eval()
         config = TextModelConfig(
             optimization_mode=OptimizationMode.INFERENCE,
             use_torch_compile=False,  # Skip compile for faster test
@@ -97,6 +98,9 @@ class TestRealBERTOptimization:
         )
         optimizer = TextModelOptimizer(config)
         optimized_model = optimizer.optimize(model_to_optimize, task="feature-extraction")
+        # Ensure model stays on CPU after optimization
+        optimized_model = optimized_model.cpu()
+        optimized_model.eval()
 
         def run_optimized():
             with torch.no_grad():
