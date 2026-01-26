@@ -8,7 +8,48 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.24
+**Current Version**: v0.4.25
+
+---
+
+## [0.4.25] - 2026-01-26 - Model Export & Deployment Pipeline
+
+### **Added** ✨
+
+- **SafeTensors Export** (`src/kernel_pytorch/deployment/safetensors_exporter.py`)
+  - `SafeTensorsExporter` - Export models to SafeTensors format
+  - Memory-mapped loading for fast access
+  - FP16 precision support
+  - Metadata embedding
+  - Secure loading (no pickle execution)
+
+- **Production Readiness Validator** (`src/kernel_pytorch/deployment/production_validator.py`)
+  - `ProductionValidator` - Comprehensive deployment validation
+  - Forward pass and determinism checks
+  - Export format compatibility (ONNX, TorchScript, SafeTensors)
+  - Performance benchmarking (latency, throughput)
+  - Memory profiling
+  - Automatic recommendation generation
+
+- **Export CLI** (`src/kernel_pytorch/deployment/export_cli.py`)
+  - Command-line interface for model export
+  - `export` - Export to ONNX, TorchScript, or SafeTensors
+  - `validate` - Validate production readiness
+  - `info` - Show model information
+  - Support for shape parsing and sample input generation
+
+- **Export Pipeline Tests** (`tests/e2e/test_export_pipeline.py`)
+  - 28 comprehensive tests for export pipeline
+  - SafeTensors export tests
+  - Production validator tests
+  - CLI tests
+  - Integration tests
+
+### **Changed** 🔄
+
+- Updated `deployment/__init__.py` to export new components
+- Added SafeTensors, ProductionValidator to public API
+- Deployment module version updated to 0.4.25
 
 ---
 

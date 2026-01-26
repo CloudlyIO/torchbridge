@@ -72,7 +72,28 @@ from .torchscript_exporter import (
     load_torchscript,
 )
 
-__version__ = "0.4.2"
+# SafeTensors export (v0.4.25)
+from .safetensors_exporter import (
+    SafeTensorsExporter,
+    SafeTensorsExportConfig,
+    SafeTensorsExportResult,
+    export_to_safetensors,
+    load_safetensors,
+    load_model_safetensors,
+)
+
+# Production validation (v0.4.25)
+from .production_validator import (
+    ProductionValidator,
+    ProductionRequirements,
+    ProductionValidationResult,
+    ValidationCheck,
+    ValidationSeverity,
+    ValidationStatus,
+    validate_production_readiness,
+)
+
+__version__ = "0.4.25"
 
 # Serving module (v0.3.9)
 from .serving import (
@@ -116,6 +137,21 @@ __all__ = [
     "ExportMethod",
     "export_to_torchscript",
     "load_torchscript",
+    # SafeTensors (v0.4.25)
+    "SafeTensorsExporter",
+    "SafeTensorsExportConfig",
+    "SafeTensorsExportResult",
+    "export_to_safetensors",
+    "load_safetensors",
+    "load_model_safetensors",
+    # Production Validation (v0.4.25)
+    "ProductionValidator",
+    "ProductionRequirements",
+    "ProductionValidationResult",
+    "ValidationCheck",
+    "ValidationSeverity",
+    "ValidationStatus",
+    "validate_production_readiness",
     # Serving - TorchServe (v0.3.9)
     "KernelPyTorchHandler",
     "BaseHandler",
