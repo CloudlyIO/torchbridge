@@ -501,7 +501,9 @@ class InterleavedScheduler(PipelineScheduler):
         )
         num_1f1b_micro_batches = num_micro_batches - num_warmup_micro_batches
 
-        total_loss = torch.tensor(0.0, device="cuda")
+        # Use device from first micro-batch
+        device = micro_batches[0].device if micro_batches else "cpu"
+        total_loss = torch.tensor(0.0, device=device)
         input_tensors: List[torch.Tensor] = []
         output_tensors: List[torch.Tensor] = []
 
@@ -547,8 +549,13 @@ class InterleavedScheduler(PipelineScheduler):
                 loss = loss_fn(output_tensor)
                 total_loss += loss.detach()
 
-            # Backward pass
+            # Store output for backward pass
+            input_tensors.append(input_tensor)
+            output_tensors.append(output_tensor)
+
+            # Backward pass - use output we just computed if no warmup tensors available
             if stage.is_last_stage:
+                # For single-stage or last stage, use latest output
                 grad_output = torch.ones_like(output_tensors[backward_id])
             else:
                 grad_output = stage.recv_backward(
@@ -561,9 +568,6 @@ class InterleavedScheduler(PipelineScheduler):
 
             if not stage.is_first_stage and grad_input is not None:
                 stage.send_backward(grad_input)
-
-            input_tensors.append(input_tensor)
-            output_tensors.append(output_tensor)
 
         # Cooldown phase: only backward passes
         for i in range(num_warmup_micro_batches):

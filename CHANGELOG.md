@@ -8,7 +8,53 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.23
+**Current Version**: v0.4.24
+
+---
+
+## [0.4.24] - 2026-01-26 - Distributed Training Validation
+
+### **Added** ✨
+
+- **Distributed Training Tests** (`tests/distributed/`)
+  - `test_distributed_llama.py` - 29 tests for distributed Llama model validation
+  - `test_pipeline_parallel.py` - 27 tests for pipeline parallelism
+  - Tensor parallel configuration and layer tests
+  - Pipeline scheduler tests (GPipe, 1F1B Interleaved)
+  - Sharding strategy and model distribution tests
+  - Memory estimation validation
+
+- **Distributed Training Example** (`examples/distributed/train_llama_7b_fsdp.py`)
+  - Complete FSDP training example with Llama-7B
+  - MockLlamaForCausalLM for testing without HuggingFace auth
+  - Configurable sharding strategies (FULL_SHARD, SHARD_GRAD_OP, HYBRID_SHARD)
+  - Mixed precision training with BF16
+  - Activation checkpointing support
+  - CPU offloading for memory efficiency
+  - Checkpoint saving with FSDP state management
+
+- **Distributed Training Guide** (`docs/guides/distributed_training.md`)
+  - Comprehensive guide for tensor parallelism
+  - Pipeline parallelism with GPipe and 1F1B schedulers
+  - FSDP configuration and sharding strategies
+  - Hybrid parallelism for 70B+ models
+  - Memory optimization tips
+  - Debugging guide
+
+### **Fixed** 🔧
+
+- **Pipeline Parallel Device Handling** (`src/kernel_pytorch/models/distributed/pipeline_parallel.py`)
+  - Fixed hardcoded `device="cuda"` in `InterleavedScheduler.run_forward_backward()`
+  - Now correctly uses device from micro-batches for CPU compatibility
+  - Fixed IndexError in single-stage pipeline backward pass
+  - Moved output tensor storage before backward to prevent index errors
+
+- **Pytest Configuration** (`pytest.ini`)
+  - Added missing `quantization` marker
+
+### **Changed** 🔄
+
+- Updated version to 0.4.24
 
 ---
 
