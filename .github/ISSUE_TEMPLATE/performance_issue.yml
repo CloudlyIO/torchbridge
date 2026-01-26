@@ -1,0 +1,139 @@
+name: Performance Issue
+description: Report a performance regression or optimization opportunity
+title: "[Performance]: "
+labels: ["performance", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us understand and reproduce the performance issue you're experiencing.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Performance Issue Description
+      description: Describe the performance problem you're experiencing.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      options:
+        - Slower than expected
+        - Memory usage too high
+        - GPU utilization low
+        - Regression from previous version
+        - Comparison with other frameworks
+    validations:
+      required: true
+
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Benchmark Code
+      description: Provide code to reproduce and measure the performance issue.
+      render: python
+      placeholder: |
+        import torch
+        import kernel_pytorch as kpt
+        import time
+
+        # Setup
+        model = ...
+        input_data = ...
+
+        # Benchmark
+        start = time.perf_counter()
+        for _ in range(100):
+            output = model(input_data)
+        torch.cuda.synchronize()  # if using GPU
+        elapsed = time.perf_counter() - start
+
+        print(f"Time: {elapsed:.3f}s")
+    validations:
+      required: true
+
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Performance Measurements
+      description: |
+        Provide actual numbers. Include:
+        - Latency (ms per operation)
+        - Throughput (samples/second)
+        - Memory usage (GB)
+        - GPU utilization (%)
+      placeholder: |
+        Current: 150ms per batch, 6.7 batches/sec, 12GB VRAM
+        Expected: 100ms per batch, 10 batches/sec, 8GB VRAM
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: KernelPyTorch Version
+      placeholder: "0.4.26"
+    validations:
+      required: true
+
+  - type: input
+    id: previous-version
+    attributes:
+      label: Previous Version (if regression)
+      description: If this is a regression, which version worked correctly?
+      placeholder: "0.4.20"
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware Configuration
+      description: Provide detailed hardware information
+      placeholder: |
+        GPU: NVIDIA A100-80GB
+        CUDA: 12.1
+        CPU: AMD EPYC 7763
+        RAM: 512GB
+        Storage: NVMe SSD
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Attention
+        - Linear/MatMul
+        - Memory Management
+        - Data Loading
+        - Model Export
+        - Distributed Training
+        - Full Model Inference
+        - Full Model Training
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: profiling
+    attributes:
+      label: Profiling Results
+      description: If you have profiling data (torch.profiler, nsight, etc.), please include it.
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have verified this with torch.cuda.synchronize() for accurate GPU timing
+          required: false
+        - label: I have warmed up the model before benchmarking
+          required: false
+        - label: I have compared against baseline PyTorch
+          required: false

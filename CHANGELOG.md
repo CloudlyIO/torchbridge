@@ -8,7 +8,73 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.25
+**Current Version**: v0.4.26
+
+---
+
+## [0.4.26] - 2026-01-26 - CI/CD & Testing Infrastructure
+
+### **Added** ✨
+
+- **Security Scanning Workflow** (`.github/workflows/security.yml`)
+  - CodeQL analysis for Python code security
+  - Bandit static analysis for security vulnerabilities
+  - pip-audit for dependency vulnerability scanning
+  - truffleHog secret scanning
+  - Dependency review for PRs with license compliance checks
+
+- **Benchmark Regression Workflow** (`.github/workflows/benchmark.yml`)
+  - Automated CPU benchmark runs on PRs
+  - GPU benchmarks on self-hosted runners
+  - Performance regression detection (15% threshold)
+  - Benchmark results posted as PR comments
+  - Weekly comprehensive benchmark runs
+
+- **Docker Publishing Workflow** (`.github/workflows/docker.yml`)
+  - Automated Docker image builds (CPU, NVIDIA, production, serving)
+  - GitHub Container Registry (ghcr.io) publishing
+  - Multi-platform builds (linux/amd64, linux/arm64)
+  - Trivy vulnerability scanning for container images
+  - Automatic versioned tags on releases
+
+- **Dependabot Configuration** (`.github/dependabot.yml`)
+  - Automated Python dependency updates
+  - GitHub Actions version updates
+  - Docker base image updates
+  - Grouped minor/patch updates
+  - Weekly update schedule
+
+- **Issue Templates** (`.github/ISSUE_TEMPLATE/`)
+  - Bug report template with environment details
+  - Feature request template with priority levels
+  - Performance issue template with benchmark requirements
+  - Contact links for documentation and discussions
+
+- **Pull Request Template** (`.github/PULL_REQUEST_TEMPLATE.md`)
+  - Structured PR description format
+  - Testing checklist
+  - Performance impact assessment
+  - Documentation checklist
+
+- **Codecov Configuration** (`codecov.yml`)
+  - Component-level coverage tracking
+  - 60% minimum coverage threshold
+  - 80% patch coverage target
+  - Coverage flags for unit and integration tests
+
+- **Benchmark Report Generator** (`scripts/generate_benchmark_report.py`)
+  - Generates markdown reports from pytest-benchmark JSON
+  - Baseline comparison with change indicators
+  - Regression detection and alerting
+  - Summary statistics
+
+### **Changed** 🔄
+
+- Enhanced CI workflow with coverage requirements (60% minimum)
+- Added pytest-cov integration with XML reporting
+- Added pytest-benchmark to dev dependencies
+- Added bandit to dev dependencies for local security checks
+- Updated version to 0.4.26
 
 ---
 

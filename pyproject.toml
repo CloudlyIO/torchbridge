@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kernel-pytorch"
-version = "0.4.25"
+version = "0.4.26"
 description = "Production-grade PyTorch GPU optimization framework with custom CUDA kernels (FlashAttention-3, Fused ops) - 2-10x performance improvements"
 authors = [{name = "KernelPyTorch Team"}]
 readme = "README.md"
@@ -48,6 +48,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.0.0",
+    "pytest-benchmark>=4.0.0",
     "matplotlib>=3.5.0",
     "seaborn>=0.11.0",
     "jupyter>=1.0.0",
@@ -55,6 +56,7 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.0.0",
     "pre-commit>=3.5.0",
+    "bandit[toml]>=1.7.0",
 ]
 all = [
     "transformers>=4.35.0",

@@ -17,7 +17,7 @@ from importlib.metadata import version, PackageNotFoundError
 try:
     __version__ = version("kernel-pytorch")
 except PackageNotFoundError:
-    __version__ = "0.4.25"  # Fallback for development
+    __version__ = "0.4.26"  # Fallback for development
 
 # Unified Configuration System
 from .core.config import (

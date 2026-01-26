@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://kernel-pytorch.readthedocs.io
+    about: Check the documentation for guides and API reference
+  - name: Discussions
+    url: https://github.com/KernelPyTorch/kernel-pytorch/discussions
+    about: Ask questions and share ideas in GitHub Discussions
+  - name: Stack Overflow
+    url: https://stackoverflow.com/questions/tagged/kernel-pytorch
+    about: Search for answers or ask questions on Stack Overflow

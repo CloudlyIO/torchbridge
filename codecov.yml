@@ -1,0 +1,94 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        if_ci_failed: error
+        only_pulls: false
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+        if_ci_failed: error
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: true
+      loop: true
+      method: false
+      macro: false
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true
+  require_base: false
+  require_head: true
+  hide_project_coverage: false
+
+flags:
+  unittests:
+    paths:
+      - src/
+    carryforward: true
+  integration:
+    paths:
+      - src/
+    carryforward: true
+
+ignore:
+  - "tests/**/*"
+  - "benchmarks/**/*"
+  - "examples/**/*"
+  - "demos/**/*"
+  - "docs/**/*"
+  - "scripts/**/*"
+  - "**/__pycache__/**"
+  - "**/conftest.py"
+  - "setup.py"
+
+# Component configuration for granular coverage
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        threshold: 2%
+  individual_components:
+    - component_id: attention
+      name: Attention Module
+      paths:
+        - src/kernel_pytorch/attention/**
+    - component_id: precision
+      name: Precision Module
+      paths:
+        - src/kernel_pytorch/precision/**
+    - component_id: memory
+      name: Memory Module
+      paths:
+        - src/kernel_pytorch/advanced_memory/**
+    - component_id: hardware
+      name: Hardware Backends
+      paths:
+        - src/kernel_pytorch/hardware/**
+    - component_id: deployment
+      name: Deployment
+      paths:
+        - src/kernel_pytorch/deployment/**
+    - component_id: distributed
+      name: Distributed Training
+      paths:
+        - src/kernel_pytorch/models/distributed/**

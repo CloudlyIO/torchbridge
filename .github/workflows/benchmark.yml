@@ -1,0 +1,256 @@
+name: Benchmark
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/kernel_pytorch/**'
+      - 'benchmarks/**'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/kernel_pytorch/**'
+      - 'benchmarks/**'
+  workflow_dispatch:
+    inputs:
+      benchmark_suite:
+        description: 'Benchmark suite to run'
+        required: false
+        default: 'quick'
+        type: choice
+        options:
+          - quick
+          - comprehensive
+          - memory
+  schedule:
+    # Run comprehensive benchmarks weekly on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BENCHMARK_RESULTS_DIR: benchmark-results
+
+jobs:
+  benchmark-cpu:
+    name: CPU Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,benchmark]"
+
+      - name: Run CPU benchmarks
+        run: |
+          mkdir -p ${{ env.BENCHMARK_RESULTS_DIR }}
+          python -m pytest benchmarks/ \
+            -v \
+            --benchmark-only \
+            --benchmark-json=${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-cpu.json \
+            --benchmark-group-by=func \
+            --benchmark-warmup=on \
+            --benchmark-min-rounds=3 \
+            -m "not gpu and not slow" \
+            || true
+
+      - name: Generate benchmark report
+        run: |
+          python scripts/generate_benchmark_report.py \
+            --input ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-cpu.json \
+            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-report.md \
+            || echo "Benchmark report generation skipped"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-cpu
+          path: ${{ env.BENCHMARK_RESULTS_DIR }}/
+          retention-days: 90
+
+      - name: Comment benchmark results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-report.md';
+
+            let body = '## Benchmark Results (CPU)\n\n';
+            if (fs.existsSync(reportPath)) {
+              body += fs.readFileSync(reportPath, 'utf8');
+            } else {
+              body += 'Benchmark report not available. Check workflow logs for details.';
+            }
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('## Benchmark Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  benchmark-gpu:
+    name: GPU Benchmarks
+    runs-on: [self-hosted, gpu, linux]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run GPU benchmarks
+        run: |
+          mkdir -p ${{ env.BENCHMARK_RESULTS_DIR }}
+          pip install -e ".[dev,benchmark]"
+          python -m pytest benchmarks/ \
+            -v \
+            --benchmark-only \
+            --benchmark-json=${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-gpu.json \
+            --benchmark-group-by=func \
+            --benchmark-warmup=on \
+            -m "gpu and not slow" \
+            || true
+
+      - name: Upload GPU benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-gpu
+          path: ${{ env.BENCHMARK_RESULTS_DIR }}/
+          retention-days: 90
+
+  regression-check:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    needs: benchmark-cpu
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download current benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results-cpu
+          path: current-results/
+
+      - name: Download baseline benchmarks
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: benchmark.yml
+          branch: main
+          name: benchmark-results-cpu
+          path: baseline-results/
+        continue-on-error: true
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Check for regressions
+        id: regression
+        run: |
+          python -c "
+          import json
+          import sys
+          from pathlib import Path
+
+          # Load results
+          current_file = Path('current-results/benchmark-cpu.json')
+          baseline_file = Path('baseline-results/benchmark-cpu.json')
+
+          if not current_file.exists():
+              print('No current benchmark results found')
+              sys.exit(0)
+
+          if not baseline_file.exists():
+              print('No baseline to compare against (first run)')
+              sys.exit(0)
+
+          with open(current_file) as f:
+              current = json.load(f)
+          with open(baseline_file) as f:
+              baseline = json.load(f)
+
+          # Compare benchmarks
+          regressions = []
+          threshold = 0.15  # 15% regression threshold
+
+          current_benchmarks = {b['name']: b for b in current.get('benchmarks', [])}
+          baseline_benchmarks = {b['name']: b for b in baseline.get('benchmarks', [])}
+
+          for name, curr in current_benchmarks.items():
+              if name in baseline_benchmarks:
+                  base = baseline_benchmarks[name]
+                  curr_mean = curr['stats']['mean']
+                  base_mean = base['stats']['mean']
+
+                  if base_mean > 0:
+                      change = (curr_mean - base_mean) / base_mean
+                      if change > threshold:
+                          regressions.append({
+                              'name': name,
+                              'baseline': base_mean,
+                              'current': curr_mean,
+                              'change': change * 100
+                          })
+
+          if regressions:
+              print('Performance regressions detected:')
+              for r in regressions:
+                  print(f\"  - {r['name']}: {r['change']:.1f}% slower\")
+              print(f'::warning::Found {len(regressions)} performance regressions')
+          else:
+              print('No significant performance regressions detected')
+          "
+
+      - name: Post regression report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### Performance Regression Check
+
+            ${process.env.REGRESSION_STATUS || 'Check completed. See workflow logs for details.'}
+
+            > Threshold: 15% slowdown triggers a warning`;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });

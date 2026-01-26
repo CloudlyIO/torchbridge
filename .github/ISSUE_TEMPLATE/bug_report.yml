@@ -1,0 +1,174 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in KernelPyTorch
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        Please provide as much detail as possible to help us investigate.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Import module '...'
+        2. Call function '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include error messages if applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimal Reproducible Example
+      description: Please provide a minimal code example that reproduces the issue.
+      render: python
+      placeholder: |
+        import kernel_pytorch as kpt
+
+        # Your code here
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Attention (FlashAttention, MultiHead)
+        - Precision (FP16, BF16, FP8)
+        - Memory (Checkpointing, Optimizer States)
+        - Hardware Backend (NVIDIA, AMD, Intel, TPU)
+        - Distributed Training (FSDP, Pipeline, Tensor Parallel)
+        - Model Export (ONNX, TorchScript, SafeTensors)
+        - Deployment/Serving
+        - MoE (Mixture of Experts)
+        - CLI Tools
+        - Configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: KernelPyTorch Version
+      description: Output of `python -c "import kernel_pytorch; print(kernel_pytorch.__version__)"`
+      placeholder: "0.4.26"
+    validations:
+      required: true
+
+  - type: input
+    id: torch-version
+    attributes:
+      label: PyTorch Version
+      description: Output of `python -c "import torch; print(torch.__version__)"`
+      placeholder: "2.2.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Python Version
+      options:
+        - "3.10"
+        - "3.11"
+        - "3.12"
+        - "3.13"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Linux (Ubuntu/Debian)
+        - Linux (RHEL/CentOS/Fedora)
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Windows
+        - Docker Container
+        - Cloud VM (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Hardware
+      description: Select your primary compute hardware
+      options:
+        - CPU only
+        - NVIDIA GPU (Consumer - RTX series)
+        - NVIDIA GPU (Datacenter - A100/H100)
+        - NVIDIA GPU (Other)
+        - AMD GPU (ROCm)
+        - Intel GPU (XPU)
+        - Google TPU
+        - Apple Silicon (MPS)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Additional Environment Info
+      description: Any other relevant environment information (CUDA version, driver version, etc.)
+      placeholder: |
+        CUDA: 12.1
+        cuDNN: 8.9
+        GPU: NVIDIA A100-80GB
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and Stack Trace
+      description: Please paste any relevant log output or stack traces
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have tested with the latest version of KernelPyTorch
+          required: false
+        - label: I can provide a reproducible example
+          required: false
