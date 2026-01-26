@@ -72,6 +72,28 @@ class MockLLMModel(torch.nn.Module):
         return torch.cat([input_ids, new_tokens], dim=1)
 
 
+class TokenizerOutput:
+    """Mock tokenizer output with attribute access."""
+
+    def __init__(self, input_ids, attention_mask=None):
+        self.input_ids = input_ids
+        self.attention_mask = attention_mask if attention_mask is not None else torch.ones_like(input_ids)
+
+    def to(self, device):
+        """Move to device."""
+        self.input_ids = self.input_ids.to(device)
+        self.attention_mask = self.attention_mask.to(device)
+        return self
+
+    def __getitem__(self, key):
+        """Dict-like access for compatibility."""
+        if key == "input_ids":
+            return self.input_ids
+        elif key == "attention_mask":
+            return self.attention_mask
+        raise KeyError(key)
+
+
 class MockTokenizer:
     """Mock tokenizer for testing."""
 
@@ -90,7 +112,8 @@ class MockTokenizer:
             tokens = [2]  # At least one token
 
         if return_tensors == "pt":
-            return {"input_ids": torch.tensor([tokens])}
+            input_ids = torch.tensor([tokens])
+            return TokenizerOutput(input_ids)
         return {"input_ids": tokens}
 
     def encode(self, text):
