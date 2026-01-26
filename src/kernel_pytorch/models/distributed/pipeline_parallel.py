@@ -328,12 +328,156 @@ class InterleavedScheduler(PipelineScheduler):
 
     Interleaves forward and backward passes to reduce memory usage.
     One forward pass is followed by one backward pass in steady state.
+
+    The 1F1B schedule works as follows:
+    1. Warmup phase: Run forward passes to fill the pipeline
+    2. Steady state: Alternate 1 forward, 1 backward (1F1B)
+    3. Cooldown phase: Drain remaining backward passes
+
+    Memory advantage over GPipe:
+    - GPipe: Stores all N micro-batch activations
+    - 1F1B: Stores at most (num_stages) activations at any time
+
+    v0.4.23: Added run_forward() and run_backward() implementations
     """
 
     def __init__(self, stages: List[PipelineStage], config: PipelineParallelConfig):
         super().__init__(stages, config)
         self._forward_queue: deque = deque()
         self._backward_queue: deque = deque()
+        self._output_cache: Dict[int, torch.Tensor] = {}
+        self._input_cache: Dict[int, torch.Tensor] = {}
+
+    def run_forward(self, micro_batches: List[torch.Tensor]) -> List[torch.Tensor]:
+        """Run forward passes using 1F1B interleaved schedule.
+
+        This implements just the forward phase, storing activations for
+        later backward pass. Use run_backward() after computing gradients.
+
+        Args:
+            micro_batches: List of micro-batch inputs
+
+        Returns:
+            List of outputs for each micro-batch
+        """
+        stage = self.stages[0]
+        num_micro_batches = len(micro_batches)
+        outputs = []
+
+        # Calculate warmup and 1F1B phases
+        num_warmup = min(
+            self.config.num_stages - self.config.stage_id - 1,
+            num_micro_batches
+        )
+        num_1f1b = num_micro_batches - num_warmup
+
+        # Warmup phase: forward passes only
+        for i in range(num_warmup):
+            if stage.is_first_stage:
+                input_tensor = micro_batches[i]
+            else:
+                input_tensor = stage.recv_forward(
+                    micro_batches[i].shape,
+                    micro_batches[i].dtype
+                )
+                stage.wait_all()
+
+            output = stage.forward_step(input_tensor, i)
+
+            # Cache for backward
+            self._input_cache[i] = input_tensor
+            self._output_cache[i] = output
+
+            if not stage.is_last_stage:
+                stage.send_forward(output)
+            else:
+                outputs.append(output)
+
+        # 1F1B steady state: we only do forward here
+        # (backward is handled separately in run_backward)
+        for i in range(num_1f1b):
+            forward_id = num_warmup + i
+
+            if stage.is_first_stage:
+                input_tensor = micro_batches[forward_id]
+            else:
+                input_tensor = stage.recv_forward(
+                    micro_batches[forward_id].shape,
+                    micro_batches[forward_id].dtype
+                )
+                stage.wait_all()
+
+            output = stage.forward_step(input_tensor, forward_id)
+
+            self._input_cache[forward_id] = input_tensor
+            self._output_cache[forward_id] = output
+
+            if not stage.is_last_stage:
+                stage.send_forward(output)
+            else:
+                outputs.append(output)
+
+        stage.wait_all()
+        return outputs
+
+    def run_backward(self, gradients: List[Optional[torch.Tensor]]) -> None:
+        """Run backward passes using 1F1B interleaved schedule.
+
+        Must be called after run_forward() with gradients computed from
+        the forward outputs.
+
+        Args:
+            gradients: Gradients from loss (only meaningful for last stage)
+        """
+        stage = self.stages[0]
+        num_micro_batches = len(gradients)
+
+        # Calculate phases
+        num_warmup = min(
+            self.config.num_stages - self.config.stage_id - 1,
+            num_micro_batches
+        )
+        num_1f1b = num_micro_batches - num_warmup
+
+        # Process backward in 1F1B order
+        # First, process the 1F1B phase backwards
+        for i in range(num_1f1b):
+            backward_id = i
+
+            if stage.is_last_stage:
+                grad_output = gradients[backward_id]
+            else:
+                output_shape = self._output_cache[backward_id].shape
+                output_dtype = self._output_cache[backward_id].dtype
+                grad_output = stage.recv_backward(output_shape, output_dtype)
+                stage.wait_all()
+
+            grad_input = stage.backward_step(grad_output, backward_id)
+
+            if not stage.is_first_stage and grad_input is not None:
+                stage.send_backward(grad_input)
+
+        # Cooldown phase: remaining backward passes
+        for i in range(num_warmup):
+            backward_id = num_1f1b + i
+
+            if stage.is_last_stage:
+                grad_output = gradients[backward_id]
+            else:
+                output_shape = self._output_cache[backward_id].shape
+                output_dtype = self._output_cache[backward_id].dtype
+                grad_output = stage.recv_backward(output_shape, output_dtype)
+                stage.wait_all()
+
+            grad_input = stage.backward_step(grad_output, backward_id)
+
+            if not stage.is_first_stage and grad_input is not None:
+                stage.send_backward(grad_input)
+
+        # Wait for all communications and clear caches
+        stage.wait_all()
+        self._output_cache.clear()
+        self._input_cache.clear()
 
     def run_forward_backward(
         self,
