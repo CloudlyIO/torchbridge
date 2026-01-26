@@ -319,16 +319,51 @@ class TPUBackend(BaseBackend):
         return model
 
     def _enable_mixed_precision(self, model: nn.Module) -> nn.Module:
-        """Enable mixed precision training for TPU."""
+        """Enable mixed precision for TPU.
 
-        # Convert certain layers to bfloat16 (TPU's native precision)
+        TPU requires consistent precision across computation graphs.
+        Unlike CUDA's autocast which handles mixed precision automatically,
+        TPU/XLA requires explicit dtype management.
+        """
         if self.tpu_config.precision == "bfloat16":
-            # Only convert Linear and Conv layers, keep normalization in fp32
-            for module in model.modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d)):
-                    module.to(dtype=torch.bfloat16)
+            # Convert entire model to bfloat16 for TPU consistency
+            # This avoids mixed precision errors in XLA compilation
+            model = model.to(dtype=torch.bfloat16)
 
         return model
+
+    def prepare_data(self, data: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+        """
+        Prepare data for TPU execution.
+
+        Args:
+            data: Input data (tensor or dict of tensors)
+
+        Returns:
+            Data prepared for TPU (moved to device and dtype-converted if needed)
+        """
+        target_dtype = torch.bfloat16 if self.tpu_config.precision == "bfloat16" and self.tpu_config.mixed_precision else None
+
+        if isinstance(data, torch.Tensor):
+            result = data.to(self.device)
+            # Only convert float32 tensors to target dtype (not int tensors)
+            if target_dtype and result.is_floating_point() and result.dtype == torch.float32:
+                result = result.to(dtype=target_dtype)
+            return result
+        elif hasattr(data, 'items'):  # Dict-like objects (including BatchEncoding)
+            result = {}
+            for key, value in data.items():
+                if isinstance(value, torch.Tensor):
+                    moved = value.to(self.device)
+                    # Only convert float32 tensors (not int tensors like input_ids)
+                    if target_dtype and moved.is_floating_point() and moved.dtype == torch.float32:
+                        moved = moved.to(dtype=target_dtype)
+                    result[key] = moved
+                else:
+                    result[key] = value  # Keep non-tensor values as-is
+            return result
+        else:
+            raise ValueError(f"Unsupported data type: {type(data)}")
 
     def _apply_high_performance_optimizations(self, model: nn.Module) -> nn.Module:
         """Apply optimizations for high-performance TPUs (v5p+)."""
@@ -362,23 +397,6 @@ class TPUBackend(BaseBackend):
 
         except ImportError:
             warnings.warn("Distributed training setup failed - XLA backend not available")
-
-    def prepare_data(self, data: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
-        """
-        Prepare data for TPU execution.
-
-        Args:
-            data: Input data (tensor or dict of tensors)
-
-        Returns:
-            Data prepared for TPU
-        """
-        if isinstance(data, torch.Tensor):
-            return data.to(self.device)
-        elif isinstance(data, dict):
-            return {key: tensor.to(self.device) for key, tensor in data.items()}
-        else:
-            raise ValueError(f"Unsupported data type: {type(data)}")
 
     def synchronize(self) -> None:
         """Synchronize TPU operations."""

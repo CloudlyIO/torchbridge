@@ -336,7 +336,7 @@ class TestCrossBackendBERT:
 
         # Move inputs to TPU
         device = xm.xla_device()
-        tpu_inputs = {k: v.to(device) for k, v in inputs.items()}
+        tpu_inputs = backend.prepare_data(inputs)
 
         # Run inference
         with torch.no_grad():
@@ -346,12 +346,13 @@ class TestCrossBackendBERT:
         xm.mark_step()
         tpu_output_cpu = tpu_output.cpu()
 
-        # Assert outputs match (TPU may have slightly different precision)
+        # Assert outputs match (TPU uses BF16 which has lower precision than FP32)
+        # BF16 has ~3 decimal digits of precision vs ~7 for FP32
         assert_output_close(
             baseline_output,
             tpu_output_cpu,
-            atol=1e-2,  # Slightly looser tolerance for TPU
-            rtol=1e-2,
+            atol=0.2,   # Realistic tolerance for BF16 vs FP32
+            rtol=0.05,
             message="BERT TPU output vs CPU baseline"
         )
 
@@ -382,7 +383,7 @@ class TestCrossBackendBERT:
         # TPU optimized
         prepared_model = backend.prepare_model(model)
         device = xm.xla_device()
-        tpu_inputs = {k: v.to(device) for k, v in inputs.items()}
+        tpu_inputs = backend.prepare_data(inputs)
 
         def run_tpu():
             with torch.no_grad():
@@ -597,7 +598,7 @@ class TestCrossBackendBERTConsistency:
         # Run on TPU
         prepared_model = backend.prepare_model(model)
         device = xm.xla_device()
-        tpu_inputs = {k: v.to(device) for k, v in inputs.items()}
+        tpu_inputs = backend.prepare_data(inputs)
 
         with torch.no_grad():
             tpu_logits = prepared_model(**tpu_inputs).logits

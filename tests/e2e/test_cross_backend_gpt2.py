@@ -331,7 +331,7 @@ class TestCrossBackendGPT2:
 
         # Move inputs to TPU
         device = xm.xla_device()
-        tpu_inputs = {k: v.to(device) for k, v in inputs.items()}
+        tpu_inputs = backend.prepare_data(inputs)
 
         # Generate text
         with torch.no_grad():
@@ -382,7 +382,7 @@ class TestCrossBackendGPT2:
         # TPU optimized
         prepared_model = backend.prepare_model(model)
         device = xm.xla_device()
-        tpu_inputs = {k: v.to(device) for k, v in inputs.items()}
+        tpu_inputs = backend.prepare_data(inputs)
 
         def run_tpu():
             with torch.no_grad():
