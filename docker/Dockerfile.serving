@@ -1,0 +1,79 @@
+# Production Dockerfile for KernelPyTorch Inference Server
+# v0.4.22 - Production Serving
+#
+# Build:
+#   docker build -f docker/Dockerfile.serving -t kernelpytorch-serving:latest .
+#
+# Run:
+#   docker run -p 8000:8000 --gpus all kernelpytorch-serving:latest
+#
+# Run with specific model:
+#   docker run -p 8000:8000 --gpus all \
+#     -e MODEL_NAME=gpt2 \
+#     -e QUANTIZATION=int8 \
+#     kernelpytorch-serving:latest
+
+FROM nvidia/cuda:12.1-runtime-ubuntu22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python and system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3.10-venv \
+    python3-pip \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.10 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
+
+# Set working directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Install serving-specific dependencies
+RUN pip3 install --no-cache-dir \
+    fastapi>=0.100.0 \
+    uvicorn[standard]>=0.23.0 \
+    sse-starlette>=1.6.0 \
+    httpx>=0.24.0
+
+# Copy source code
+COPY src/ /app/src/
+COPY pyproject.toml /app/
+COPY examples/ /app/examples/
+
+# Install the package
+RUN pip3 install --no-cache-dir -e .
+
+# Environment variables for configuration
+ENV MODEL_NAME=gpt2
+ENV QUANTIZATION=none
+ENV HOST=0.0.0.0
+ENV PORT=8000
+ENV MAX_BATCH_SIZE=8
+ENV DEVICE=auto
+ENV WORKERS=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health/live || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Default command
+CMD ["python3", "-m", "examples.serving.run_llm_server", \
+     "--model", "${MODEL_NAME}", \
+     "--quantization", "${QUANTIZATION}", \
+     "--host", "${HOST}", \
+     "--port", "${PORT}", \
+     "--max-batch-size", "${MAX_BATCH_SIZE}", \
+     "--device", "${DEVICE}"]
