@@ -56,7 +56,63 @@ from .health_monitor import (
     create_health_monitor,
 )
 
-__version__ = "0.4.2"
+from .structured_logging import (
+    LogConfig,
+    LogLevel,
+    StructuredLogger,
+    CorrelationContext,
+    LogContext,
+    PerformanceLogger,
+    configure_logging,
+    get_logger,
+    correlation_context,
+    log_context,
+    get_correlation_id,
+    set_correlation_id,
+    log_function_call,
+    performance_log,
+)
+
+from .enhanced_health import (
+    ResourceType,
+    HealthTrend,
+    ResourceThresholds,
+    HealthHistoryEntry,
+    PredictiveHealthReport,
+    SystemResourceMonitor,
+    EnhancedHealthMonitor,
+    create_enhanced_health_monitor,
+)
+
+from .slo_framework import (
+    SLIType,
+    ComplianceStatus,
+    BudgetStatus,
+    SLOConfig,
+    SLIMeasurement,
+    SLOStatus,
+    ComplianceReport,
+    SLICollector,
+    SLOManager,
+    create_slo_manager,
+)
+
+from .grafana_alerts import (
+    AlertSeverity,
+    AlertState,
+    ComparisonOperator,
+    AlertCondition,
+    AlertAnnotation,
+    AlertLabel,
+    AlertRule,
+    AlertRuleGroup,
+    AlertRuleBuilder,
+    create_default_alert_rules,
+    export_alert_rules_json,
+    export_alert_rules_yaml,
+)
+
+__version__ = "0.4.34"
 
 __all__ = [
     # Prometheus
@@ -80,4 +136,52 @@ __all__ = [
     "HealthCheck",
     "ComponentHealth",
     "create_health_monitor",
+    # Structured Logging
+    "LogConfig",
+    "LogLevel",
+    "StructuredLogger",
+    "CorrelationContext",
+    "LogContext",
+    "PerformanceLogger",
+    "configure_logging",
+    "get_logger",
+    "correlation_context",
+    "log_context",
+    "get_correlation_id",
+    "set_correlation_id",
+    "log_function_call",
+    "performance_log",
+    # Enhanced Health Monitoring
+    "ResourceType",
+    "HealthTrend",
+    "ResourceThresholds",
+    "HealthHistoryEntry",
+    "PredictiveHealthReport",
+    "SystemResourceMonitor",
+    "EnhancedHealthMonitor",
+    "create_enhanced_health_monitor",
+    # SLO/SLI Framework
+    "SLIType",
+    "ComplianceStatus",
+    "BudgetStatus",
+    "SLOConfig",
+    "SLIMeasurement",
+    "SLOStatus",
+    "ComplianceReport",
+    "SLICollector",
+    "SLOManager",
+    "create_slo_manager",
+    # Grafana Alert Rules
+    "AlertSeverity",
+    "AlertState",
+    "ComparisonOperator",
+    "AlertCondition",
+    "AlertAnnotation",
+    "AlertLabel",
+    "AlertRule",
+    "AlertRuleGroup",
+    "AlertRuleBuilder",
+    "create_default_alert_rules",
+    "export_alert_rules_json",
+    "export_alert_rules_yaml",
 ]
