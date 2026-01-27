@@ -93,7 +93,7 @@ from .production_validator import (
     validate_production_readiness,
 )
 
-__version__ = "0.4.27"
+__version__ = "0.4.30"
 
 # Serving module (v0.3.9)
 from .serving import (

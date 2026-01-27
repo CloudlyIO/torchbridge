@@ -8,7 +8,70 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.27
+**Current Version**: v0.4.30 (Release Candidate)
+
+---
+
+## [0.4.30] - 2026-01-26 - Final Release Candidate
+
+### **Summary** 📋
+
+This release completes the v0.4.x production release series with comprehensive
+integration testing, performance validation, and documentation polish.
+
+**What's Included in v0.4.x:**
+- Complete multi-vendor GPU support (NVIDIA, AMD, Intel, TPU)
+- Model optimization with torch.compile, Triton kernels, Flash Attention
+- Distributed training (FSDP, Tensor Parallel, Pipeline Parallel)
+- Model export (ONNX, TorchScript, SafeTensors)
+- Production serving (FastAPI, TorchServe, Triton)
+- Mixture of Experts (MoE) with multiple routing strategies
+- Comprehensive CI/CD with security scanning and benchmarks
+- Full CLI toolkit (optimize, benchmark, export, profile, doctor)
+
+### **Added** ✨
+
+- **Full Pipeline Integration Tests** (`tests/integration/test_full_pipeline.py`)
+  - 38 comprehensive integration tests
+  - Tests for optimization pipeline, precision modes, backends
+  - CLI integration tests
+  - Deployment and serving integration tests
+  - Distributed training integration tests
+
+### **Fixed** 🔧
+
+- Fixed TorchScript tracing for attention layers with `check_trace=False`
+- Fixed CLI tests for optional dependencies (ONNX, SafeTensors)
+- Fixed integration test imports for correct class names
+
+### **Changed** 🔄
+
+- Version updated to 0.4.30 (Release Candidate)
+- All integration tests passing (38 tests)
+
+---
+
+## [0.4.29] - 2026-01-26 - Performance Validation
+
+### **Validated** ✅
+
+- CPU benchmark pipeline working
+- Memory profiling functional
+- torch.compile optimization validated
+- TorchScript export and reload validated
+- Multi-precision inference (FP32, FP16, BF16) validated
+
+---
+
+## [0.4.28] - 2026-01-26 - Integration Testing
+
+### **Added** ✨
+
+- Comprehensive integration test suite
+- Backend import validation tests
+- Distributed training import tests
+- Memory optimization import tests
+- Validation framework tests
 
 ---
 
