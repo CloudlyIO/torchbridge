@@ -1,8 +1,8 @@
 """
 KernelPyTorch Command Line Interface
 
-Professional CLI tools for PyTorch optimization, benchmarking, and system validation.
-Provides easy-to-use commands for model optimization and performance analysis.
+Professional CLI tools for PyTorch optimization, benchmarking, profiling,
+model export, and system validation.
 """
 
 import argparse
@@ -12,6 +12,8 @@ from typing import List, Optional
 from .optimize import OptimizeCommand
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
+from .export import ExportCommand
+from .profile import ProfileCommand
 
 
 def main(args: Optional[List[str]] = None) -> int:
@@ -29,6 +31,8 @@ def main(args: Optional[List[str]] = None) -> int:
 Examples:
   kernelpytorch optimize --model model.pt --level production
   kernelpytorch benchmark --model bert-base-uncased --quick
+  kernelpytorch export --model model.pt --format onnx
+  kernelpytorch profile --model model.pt --mode summary
   kernelpytorch doctor --full-report
 
 For command-specific help:
@@ -39,7 +43,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.4.26'
+        version='%(prog)s 0.4.27'
     )
 
     # Add subcommands
@@ -52,6 +56,8 @@ For command-specific help:
     # Register commands
     OptimizeCommand.register(subparsers)
     BenchmarkCommand.register(subparsers)
+    ExportCommand.register(subparsers)
+    ProfileCommand.register(subparsers)
     DoctorCommand.register(subparsers)
 
     # Parse arguments
@@ -74,16 +80,20 @@ For command-specific help:
             return OptimizeCommand.execute(parsed_args)
         elif parsed_args.command == 'benchmark':
             return BenchmarkCommand.execute(parsed_args)
+        elif parsed_args.command == 'export':
+            return ExportCommand.execute(parsed_args)
+        elif parsed_args.command == 'profile':
+            return ProfileCommand.execute(parsed_args)
         elif parsed_args.command == 'doctor':
             return DoctorCommand.execute(parsed_args)
         else:
             parser.print_help()
             return 1
     except KeyboardInterrupt:
-        print("\n🛑 Operation cancelled by user")
+        print("\nOperation cancelled by user")
         return 130
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         return 1
 
 

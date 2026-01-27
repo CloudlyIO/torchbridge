@@ -8,7 +8,49 @@
 
 ## 🎉 **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.26
+**Current Version**: v0.4.27
+
+---
+
+## [0.4.27] - 2026-01-26 - CLI & Documentation Polish
+
+### **Added** ✨
+
+- **Export CLI Command** (`src/kernel_pytorch/cli/export.py`)
+  - `kpt-export` - Export models to ONNX, TorchScript, SafeTensors
+  - Support for all formats at once (`--format all`)
+  - Dynamic axes configuration for ONNX
+  - Validation against original model
+  - FP16/BF16 precision export
+
+- **Profile CLI Command** (`src/kernel_pytorch/cli/profile.py`)
+  - `kpt-profile` - Profile model performance
+  - Summary mode for quick overview
+  - Detailed mode with operator-level analysis
+  - Memory mode for allocation tracking
+  - Trace mode for Chrome trace format export
+  - JSON output for CI integration
+
+- **Production Deployment Checklist** (`docs/guides/production_checklist.md`)
+  - Pre-deployment validation steps
+  - Export checklist by use case
+  - Infrastructure requirements
+  - Serving configuration guide
+  - Monitoring & observability setup
+  - Security checklist
+  - Deployment procedure with rollback plan
+  - Quick commands reference
+
+- **CLI Tests** (`tests/cli/`)
+  - `test_export.py` - Export command tests
+  - `test_profile.py` - Profile command tests
+
+### **Changed** 🔄
+
+- Updated CLI to include export and profile commands
+- Added `kpt-export` and `kpt-profile` entry points in pyproject.toml
+- Updated CLI help text with new command examples
+- Version updated to 0.4.27
 
 ---
 
