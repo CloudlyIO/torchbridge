@@ -230,11 +230,15 @@ def resnet50_model():
         pytest.skip("torchvision not available")
 
     from torchvision.models import resnet50, ResNet50_Weights
+    import urllib.error
+    import ssl
 
-    model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
-    model.eval()
-
-    return model
+    try:
+        model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+        model.eval()
+        return model
+    except (urllib.error.URLError, ssl.SSLError, OSError) as e:
+        pytest.skip(f"Cannot download ResNet-50 weights: {e}")
 
 
 @pytest.fixture

@@ -150,12 +150,39 @@ def calculate_perplexity_simple(
     return perplexity
 
 
+def _check_quantization_available() -> bool:
+    """Check if PyTorch quantization engine is available."""
+    try:
+        # Use a Sequential model to actually trigger quantization
+        # A single nn.Linear doesn't get quantized by quantize_dynamic
+        test_model = nn.Sequential(
+            nn.Linear(10, 10),
+            nn.ReLU(),
+            nn.Linear(10, 10)
+        )
+        torch.quantization.quantize_dynamic(test_model, {nn.Linear}, dtype=torch.qint8)
+        return True
+    except RuntimeError as e:
+        if "NoQEngine" in str(e) or "quantized" in str(e).lower():
+            return False
+        raise
+    except Exception:
+        return False
+
+
+# Check once at module load time
+QUANTIZATION_AVAILABLE = _check_quantization_available()
+
+
 def quantize_int8(model: nn.Module) -> nn.Module:
     """Apply INT8 dynamic quantization.
 
     Note: GPT-2 and some other HuggingFace models use Conv1D layers
     instead of nn.Linear. We need to quantize both.
     """
+    if not QUANTIZATION_AVAILABLE:
+        raise RuntimeError("PyTorch quantization engine not available")
+
     model_cpu = copy.deepcopy(model).cpu()
 
     # Collect layer types to quantize
@@ -189,6 +216,12 @@ def has_quantized_layers(model: nn.Module) -> bool:
 # INT8 Quantization Tests
 # =============================================================================
 
+requires_quantization = pytest.mark.skipif(
+    not QUANTIZATION_AVAILABLE,
+    reason="PyTorch quantization engine not available (NoQEngine)"
+)
+
+
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.quantization
@@ -196,6 +229,7 @@ def has_quantized_layers(model: nn.Module) -> bool:
 class TestINT8Quantization:
     """Test INT8 quantization quality."""
 
+    @requires_quantization
     def test_gpt2_int8_output_quality(self, gpt2_for_quantization, sample_texts):
         """Test GPT-2 output quality with INT8 dynamic quantization.
 
@@ -245,6 +279,7 @@ class TestINT8Quantization:
         # INT8 dynamic quantization should preserve output quality
         assert cosine_sim > 0.9, f"INT8 output similarity {cosine_sim:.4f} too low"
 
+    @requires_quantization
     def test_gpt2_int8_memory_reduction(self, gpt2_for_quantization):
         """Test GPT-2 dynamic INT8 quantization applies correctly.
 
@@ -285,6 +320,7 @@ class TestINT8Quantization:
             pytest.skip("GPT-2 uses Conv1D layers which PyTorch dynamic quantization doesn't support. "
                        "Use BERT or models with nn.Linear for dynamic quantization.")
 
+    @requires_quantization
     def test_bert_int8_output_similarity(self, bert_for_quantization, sample_texts):
         """Test BERT output similarity with INT8."""
         model, tokenizer = bert_for_quantization
@@ -474,6 +510,7 @@ class TestFP8Quantization:
 class TestQuantizationIntegration:
     """Test quantization integration with model optimizers."""
 
+    @requires_quantization
     def test_text_model_int8_optimization(self, gpt2_for_quantization, sample_texts):
         """Test INT8 quantization via TextModelOptimizer."""
         from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
@@ -523,6 +560,7 @@ class TestQuantizationIntegration:
         # The key is that the model still produces reasonable outputs
         assert max_diff < 20.0, f"Output difference {max_diff:.4f} too large"
 
+    @requires_quantization
     def test_quantization_preserves_generation(self, gpt2_for_quantization):
         """Test that quantized model can still generate text."""
         model, tokenizer = gpt2_for_quantization
@@ -564,6 +602,7 @@ class TestQuantizationIntegration:
 class TestQuantizationMemory:
     """Test quantization memory benefits."""
 
+    @requires_quantization
     def test_int8_memory_footprint(self, gpt2_for_quantization):
         """Test INT8 dynamic quantization behavior.
 
@@ -600,6 +639,7 @@ class TestQuantizationMemory:
         if not has_quant:
             pytest.skip("GPT-2 uses Conv1D layers which PyTorch dynamic quantization doesn't support")
 
+    @requires_quantization
     def test_quantization_inference_works(self, bert_for_quantization, sample_texts):
         """Test quantized model performs inference correctly."""
         model, tokenizer = bert_for_quantization

@@ -281,8 +281,13 @@ class TestResNetVariants:
         """Test ResNet-18 optimization (smaller model)."""
         from torchvision.models import resnet18, ResNet18_Weights
         from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        import urllib.error
+        import ssl
 
-        model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        try:
+            model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        except (urllib.error.URLError, ssl.SSLError, OSError) as e:
+            pytest.skip(f"Cannot download ResNet-18 weights: {e}")
         model.eval()
         model = model.to(e2e_device)
         images = sample_image_tensor.to(e2e_device)
@@ -319,8 +324,13 @@ class TestResNetVariants:
         """Test ResNet-101 optimization (larger model)."""
         from torchvision.models import resnet101, ResNet101_Weights
         from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        import urllib.error
+        import ssl
 
-        model = resnet101(weights=ResNet101_Weights.IMAGENET1K_V2)
+        try:
+            model = resnet101(weights=ResNet101_Weights.IMAGENET1K_V2)
+        except (urllib.error.URLError, ssl.SSLError, OSError) as e:
+            pytest.skip(f"Cannot download ResNet-101 weights: {e}")
         model.eval()
         model = model.to(e2e_device)
         images = sample_image_tensor.to(e2e_device)
