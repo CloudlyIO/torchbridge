@@ -6,14 +6,16 @@ Reference implementations of leading optimization frameworks for comparison
 with our optimization techniques.
 """
 
+import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from typing import Dict, Any, Optional
-import warnings
 
 from .benchmark_runner import BaseImplementation
+
 
 class PyTorchNativeBaseline(BaseImplementation):
     """
@@ -24,7 +26,7 @@ class PyTorchNativeBaseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("PyTorch Native", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Create a standard PyTorch transformer model"""
         return StandardTransformerModel(model_config).to(self.device)
 
@@ -61,7 +63,7 @@ class PyTorchOptimizedBaseline(BaseImplementation):
         super().__init__("PyTorch Optimized", device)
         self.enable_compile = enable_compile
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Create optimized PyTorch model"""
         model = OptimizedTransformerModel(model_config).to(self.device)
 
@@ -108,7 +110,7 @@ class FlashAttentionBaseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("Flash Attention", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Create model with Flash Attention"""
         return FlashAttentionModel(model_config).to(self.device)
 
@@ -143,10 +145,10 @@ class HuggingFaceBaseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("HuggingFace Transformers", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Create HuggingFace model"""
         try:
-            from transformers import GPT2LMHeadModel, GPT2Config
+            from transformers import GPT2Config, GPT2LMHeadModel
 
             config = GPT2Config(
                 vocab_size=model_config.get('vocab_size', 50257),
@@ -203,7 +205,7 @@ class HuggingFaceBaseline(BaseImplementation):
 class StandardTransformerModel(nn.Module):
     """Standard transformer implementation for baseline comparison"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -322,7 +324,7 @@ class StandardMLP(nn.Module):
 class OptimizedTransformerModel(nn.Module):
     """Optimized transformer using modern PyTorch features"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -437,7 +439,7 @@ class OptimizedMLP(nn.Module):
 class FlashAttentionModel(OptimizedTransformerModel):
     """Model using Flash Attention when available"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         # Use the optimized model as base with Flash Attention optimizations
 
@@ -453,7 +455,7 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
         def __init__(self, device: torch.device):
             super().__init__("Our Optimizations", device)
 
-        def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+        def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
             """Create model with our optimizations"""
             try:
                 # Import our optimized components
@@ -504,7 +506,7 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
 class OurOptimizedModel(nn.Module):
     """Our optimized model implementation"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -578,21 +580,11 @@ class OurOptimizedMLP(nn.Module):
         self.hidden_size = hidden_size
         self.intermediate_size = 4 * hidden_size
 
-        try:
-            from torchbridge.compiler_optimized import FusedLinearGELU
-            self.fused_linear_gelu = FusedLinearGELU(hidden_size, self.intermediate_size)
-            self.down_proj = nn.Linear(self.intermediate_size, hidden_size)
-            self.use_fused = True
-        except ImportError:
-            self.up_proj = nn.Linear(hidden_size, self.intermediate_size)
-            self.down_proj = nn.Linear(self.intermediate_size, hidden_size)
-            self.use_fused = False
+        self.up_proj = nn.Linear(hidden_size, self.intermediate_size)
+        self.down_proj = nn.Linear(self.intermediate_size, hidden_size)
+        self.use_fused = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.use_fused:
-            x = self.fused_linear_gelu(x)
-            x = self.down_proj(x)
-        else:
-            x = F.gelu(self.up_proj(x))
-            x = self.down_proj(x)
+        x = F.gelu(self.up_proj(x))
+        x = self.down_proj(x)
         return x

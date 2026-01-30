@@ -12,15 +12,16 @@ This script validates the current PyTorch optimization framework:
 Run this before committing to ensure everything works correctly.
 """
 
-import sys
 import os
-import importlib.util
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import traceback
+from pathlib import Path
 
 import torch
 import torch.nn as nn
-import traceback
-from pathlib import Path
 
 
 class ValidationSuite:
@@ -45,13 +46,13 @@ class ValidationSuite:
     def summary(self):
         """Print test summary."""
         total = self.passed + self.failed
-        print(f"\n📊 Validation Summary:")
+        print("\n📊 Validation Summary:")
         print(f"   Total tests: {total}")
         print(f"   Passed: {self.passed}")
         print(f"   Failed: {self.failed}")
 
         if self.errors:
-            print(f"\n❌ Errors encountered:")
+            print("\n❌ Errors encountered:")
             for error in self.errors:
                 print(f"   • {error}")
 
@@ -83,8 +84,8 @@ def test_compiler_integration():
 def test_next_gen_optimizations():
     """Test next-generation optimization features."""
     from torchbridge.optimizations.next_gen import (
-        CUDAGraphManager,
         AutoGraphCapture,
+        CUDAGraphManager,
         SelectiveCUDAGraphs,
         create_pygraph_optimizer,
     )
@@ -116,53 +117,49 @@ def test_next_gen_optimizations():
 
 
 def test_compiler_optimized_components():
-    """Test compiler-optimized components if they exist."""
-    try:
-        from torchbridge.compiler_optimized import (
-            CompilerOptimizedMultiHeadAttention,
-            FlashAttentionWrapper,
-            OptimizedLayerNorm
-        )
+    """Test core optimized components."""
+    from torchbridge.core import (
+        FusedGELU,
+        OptimizedLayerNorm,
+        OptimizedMultiHeadAttention,
+    )
 
-        # Test basic instantiation
-        embed_dim, num_heads = 256, 8
-        attn = CompilerOptimizedMultiHeadAttention(embed_dim, num_heads)
-        flash_attn = FlashAttentionWrapper(embed_dim, num_heads)
-        norm = OptimizedLayerNorm(embed_dim)
+    embed_dim, num_heads = 256, 8
+    attn = OptimizedMultiHeadAttention(embed_dim, num_heads)
+    norm = OptimizedLayerNorm(embed_dim)
+    gelu = FusedGELU(embed_dim)
 
-        assert isinstance(attn, nn.Module)
-        assert isinstance(flash_attn, nn.Module)
-        assert isinstance(norm, nn.Module)
+    assert isinstance(attn, nn.Module)
+    assert isinstance(norm, nn.Module)
+    assert isinstance(gelu, nn.Module)
 
-        print("   Compiler-optimized components working")
-
-    except ImportError as e:
-        print(f"   ⚠️ Compiler-optimized components not available: {e}")
+    print("   Core optimized components working")
 
 
 def test_attention_modules():
-    """Test advanced attention implementations."""
-    from torchbridge.advanced_attention import (
+    """Test attention implementations."""
+    from torchbridge.attention import (
+        AttentionModuleConfig,
+        FlashAttention2,
         FlashAttention3,
-        FlexAttentionAPI,
-        MemoryEfficientAttention
+        FlexAttentionLayer,
     )
 
-    embed_dim, num_heads = 128, 4
+    config = AttentionModuleConfig(embed_dim=128, num_heads=4)
 
     # Test FlashAttention3
-    flash_attn3 = FlashAttention3(embed_dim, num_heads)
+    flash_attn3 = FlashAttention3(config)
     assert isinstance(flash_attn3, nn.Module)
 
-    # Test FlexAttentionAPI
-    flex_attn = FlexAttentionAPI(embed_dim, num_heads)
+    # Test FlashAttention2
+    flash_attn2 = FlashAttention2(config)
+    assert isinstance(flash_attn2, nn.Module)
+
+    # Test FlexAttentionLayer
+    flex_attn = FlexAttentionLayer(config)
     assert isinstance(flex_attn, nn.Module)
 
-    # Test MemoryEfficientAttention
-    mem_attn = MemoryEfficientAttention(embed_dim, num_heads)
-    assert isinstance(mem_attn, nn.Module)
-
-    print("   Advanced attention modules working")
+    print("   Attention modules working")
 
 
 def test_documentation_exists():
@@ -217,7 +214,9 @@ def test_import_system():
     import torchbridge  # noqa: F401
 
     # Test core components
-    from torchbridge.optimizations.next_gen import create_pygraph_optimizer  # noqa: F401
+    from torchbridge.optimizations.next_gen import (
+        create_pygraph_optimizer,  # noqa: F401
+    )
 
     print("   Core import system working")
 
@@ -265,10 +264,10 @@ def main():
     success = suite.summary()
 
     if success:
-        print(f"\n🎉 All core validation tests passed! Framework is operational.")
+        print("\n🎉 All core validation tests passed! Framework is operational.")
         return 0
     else:
-        print(f"\n❌ Some validation tests failed. Review issues above.")
+        print("\n❌ Some validation tests failed. Review issues above.")
         return 1
 
 

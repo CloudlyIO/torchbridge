@@ -9,10 +9,10 @@ Usage:
     python run_all_demos.py --validate
 """
 
-import sys
+import argparse
 import os
 import subprocess
-import argparse
+import sys
 import time
 
 # Add src to path
@@ -69,11 +69,11 @@ def main():
 
     # Key demos to run in order of importance
     demos = [
-        ("🎯 Adaptive Precision", "precision/adaptive.py"),
-        ("🧠 Neural Operator Fusion", "attention/fusion.py"),
         ("💾 Deep Optimizer States", "memory/deep_states.py"),
         ("⚡ Dynamic Shapes", "compiler/shapes.py"),
-        ("🚀 Ultra Precision", "experimental/ultra_precision.py")
+        ("🔬 FP8 Precision", "precision/fp8.py"),
+        ("⚡ Flash Attention", "attention/flash.py"),
+        ("🧠 Memory Optimization", "memory/basic.py"),
     ]
 
     results = []

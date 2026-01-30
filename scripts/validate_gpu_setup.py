@@ -6,12 +6,12 @@ Comprehensive validation of CUDA, Triton, and framework setup.
 Tests both hardware simulation and real GPU functionality.
 """
 
-import sys
 import os
+import sys
 import time
-import torch
 import traceback
-from typing import Dict, List, Tuple
+
+import torch
 
 # Add source to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -24,7 +24,7 @@ class GPUSetupValidator:
         self.results = {}
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    def run_all_validations(self) -> Dict[str, bool]:
+    def run_all_validations(self) -> dict[str, bool]:
         """Run all validation checks"""
         print("🔧 GPU Setup Validation")
         print("=" * 40)
@@ -62,7 +62,7 @@ class GPUSetupValidator:
             assert y.shape == (10, 10)
 
             # Test device handling
-            x_device = x.to(self.device)
+            x.to(self.device)
             print(f"   Device: {self.device}")
 
             return True
@@ -91,7 +91,7 @@ class GPUSetupValidator:
                     x = torch.randn(100, 100, device='cuda')
                     y = torch.mm(x, x.t())
                     assert y.device.type == 'cuda'
-                    print(f"   CUDA operations: working")
+                    print("   CUDA operations: working")
             else:
                 print("   Note: Tests will run in CPU mode")
 
@@ -121,7 +121,9 @@ class GPUSetupValidator:
             print("   torchbridge package: ✅")
 
             # Test PyGraph optimizer from next_gen
-            from torchbridge.optimizations.next_gen import create_pygraph_optimizer  # noqa: F401
+            from torchbridge.optimizations.next_gen import (
+                create_pygraph_optimizer,  # noqa: F401
+            )
             print("   PyGraph optimizer: ✅")
 
             return True
@@ -133,19 +135,14 @@ class GPUSetupValidator:
             return False
 
     def validate_simulation(self) -> bool:
-        """Validate hardware simulation framework"""
+        """Validate hardware detection framework"""
         try:
-            from torchbridge.testing_framework import GPUSimulator, create_hardware_simulator
+            from torchbridge.core import HardwareDetector, detect_hardware
 
-            # Test hardware simulation
-            simulator = create_hardware_simulator(architecture='ampere', simulation_mode='performance')
-            print("   Hardware simulator: created")
-
-            # Test basic simulation - just check that it has expected methods
-            summary = simulator.get_simulation_summary()
-            print(f"   Simulation summary: {len(summary)} metrics")
-
-            print(f"   Simulation execution: completed")
+            HardwareDetector()
+            profile = detect_hardware()
+            print(f"   Hardware type: {profile.hardware_type}")
+            print("   Hardware detection: working")
             return True
 
         except ImportError as e:
@@ -156,30 +153,20 @@ class GPUSetupValidator:
             return False
 
     def validate_performance(self) -> bool:
-        """Validate performance testing framework"""
+        """Validate performance benchmarking"""
         try:
-            from torchbridge.testing_framework import PerformanceBenchmarkSuite, create_benchmark_suite
-
-            # Test benchmark suite
-            benchmark = create_benchmark_suite(warmup_iterations=5, measurement_iterations=10)
-            print("   Performance benchmarking: created")
-
-            # Test simple operation timing
             test_input = torch.randn(100, 100, device=self.device)
 
             # Time a simple operation
             start_time = time.time()
             for _ in range(10):
-                result = torch.mm(test_input, test_input.t())
+                result = torch.mm(test_input, test_input.t())  # noqa: F841
             end_time = time.time()
 
             avg_time = (end_time - start_time) / 10 * 1000  # Convert to ms
             print(f"   Simple benchmark: {avg_time:.2f}ms avg")
             return True
 
-        except ImportError as e:
-            print(f"   Import error: {e}")
-            return False
         except Exception as e:
             print(f"   Error: {e}")
             return False
@@ -206,7 +193,7 @@ class GPUSetupValidator:
             print("❌ Multiple validations failed. Review setup instructions.")
 
         # Provide next steps
-        print(f"\n🚀 Next Steps:")
+        print("\n🚀 Next Steps:")
         if passed_tests >= total_tests * 0.8:
             print("   1. python3 benchmarks/simple_benchmark_test.py")
             print("   2. python3 benchmarks/next_gen/demo_cutting_edge_benchmark.py --quick")
