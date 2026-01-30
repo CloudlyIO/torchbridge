@@ -139,7 +139,7 @@ def benchmark_sliced_attention(
     results = []
 
     try:
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
     except ImportError as e:
         print(f"Could not import SlicedMultiheadAttention: {e}")
         return results
@@ -174,11 +174,11 @@ def benchmark_sparse_attention(
     results = []
 
     try:
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.implementations.sparse import (
             BlockSparseAttention,
             StridedSparseAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
+        from torchbridge.attention.core.config import AttentionConfig
     except ImportError as e:
         print(f"Could not import sparse attention: {e}")
         return results
@@ -233,12 +233,12 @@ def benchmark_memory_efficient_attention(
     results = []
 
     try:
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
             ChunkedAttention,
             LongSequenceAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
+        from torchbridge.attention.core.config import AttentionConfig
     except ImportError as e:
         print(f"Could not import memory-efficient attention: {e}")
         return results

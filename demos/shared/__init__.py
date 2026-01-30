@@ -1,5 +1,5 @@
 """
-Shared utilities and models for KernelPyTorch demos.
+Shared utilities and models for TorchBridge demos.
 
 This module provides reusable components for demonstration scripts:
 - Printing and formatting utilities

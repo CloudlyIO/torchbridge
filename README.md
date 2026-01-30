@@ -1,12 +1,12 @@
-# ⚡ KernelPyTorch
+# ⚡ TorchBridge
 
 **Production-ready PyTorch GPU optimization framework for 2-5x performance improvements.**
 
 [![Version](https://img.shields.io/badge/version-0.4.18-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-235%20passed%2C%2016%20skipped-blue)](./BENCHMARKS.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
-## 🚀 What is KernelPyTorch?
+## 🚀 What is TorchBridge?
 
-KernelPyTorch is a **high-performance optimization framework** that accelerates PyTorch models through:
+TorchBridge is a **high-performance optimization framework** that accelerates PyTorch models through:
 
 - **🎯 Advanced Attention**: Million-token sequences, 90% compute reduction, multi-GPU coordination
 - **🔮 FlexAttention**: PyTorch 2.5+ native flexible attention patterns (causal, sliding window, ALiBi, custom)
@@ -23,26 +23,26 @@ KernelPyTorch is a **high-performance optimization framework** that accelerates 
 
 ### **Installation**
 ```bash
-git clone https://github.com/your-org/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/your-org/torchbridge.git
+cd torchbridge
 pip install -r requirements.txt
 
 # Verify installation
-python3 -c "import kernel_pytorch; print('✅ KernelPyTorch ready!')"
+python3 -c "import torchbridge; print('✅ TorchBridge ready!')"
 ```
 
 ### **Basic Usage**
 ```python
 import torch
-from kernel_pytorch.attention import create_ring_attention
-from kernel_pytorch.precision import create_fp8_trainer
+from torchbridge.attention import create_ring_attention
+from torchbridge.precision import create_fp8_trainer
 
 # Million-token sequences with linear memory
 attention = create_ring_attention(d_model=512, num_heads=8, max_sequence_length=1_000_000)
 output = attention(long_sequence)  # O(N) memory vs O(N²)
 
 # 3x faster variable inputs with dynamic shape bucketing
-from kernel_pytorch.optimization_patterns import DynamicShapeModule, create_optimal_bucketing_system
+from torchbridge.optimization_patterns import DynamicShapeModule, create_optimal_bucketing_system
 bucketing = create_optimal_bucketing_system(sample_inputs)
 optimized_model = DynamicShapeModule(model, bucketing)  # 3x speedup
 
@@ -52,15 +52,15 @@ with trainer:
     loss = trainer.training_step(inputs, targets)  # 2x speedup
 
 # 40-60% kernel overhead reduction with Neural Operator Fusion
-from kernel_pytorch.attention import create_unified_attention_fusion
+from torchbridge.attention import create_unified_attention_fusion
 fused_model = create_unified_attention_fusion(transformer_model)  # Single-kernel execution
 
 # 30% quality improvement with Adaptive Precision Allocation
-from kernel_pytorch.precision import create_ultra_precision_module
+from torchbridge.precision import create_ultra_precision_module
 adaptive_model = create_ultra_precision_module(model)  # Entropy-based precision
 
 # 🆕 Next-Gen Optimizations (2025)
-from kernel_pytorch.optimizations.next_gen import (
+from torchbridge.optimizations.next_gen import (
     create_advanced_flex_attention, FP4Quantizer, StructuredSparsity24
 )
 
@@ -153,7 +153,7 @@ fp8_model = convert_model_to_fp8(existing_model)
 
 #### **3x Variable Input Speedup**
 ```python
-from kernel_pytorch.optimization_patterns import (
+from torchbridge.optimization_patterns import (
     DynamicShapeBucketing, DynamicShapeModule,
     BucketingStrategy, create_optimal_bucketing_system
 )
@@ -195,9 +195,9 @@ optimized_model = hal.optimize_for_hardware(model)  # Auto-detects and optimizes
 devices = detect_available_devices()               # NVIDIA, AMD ROCm, TPU support
 
 # Backend-specific optimization
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.backends.tpu import TPUBackend
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.backends.tpu import TPUBackend
 
 # AMD ROCm backend (v0.3.5+)
 amd_backend = AMDBackend()
@@ -208,7 +208,7 @@ model = amd_backend.prepare_model(your_model)  # MI200/MI300 with Matrix Cores
 
 #### **Deep Optimizer States - 2.5x Speedup**
 ```python
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     DeepOptimizerStates, InterleaveOffloadingOptimizer, MemoryConfig
 )
 
@@ -238,7 +238,7 @@ interleave_optimizer = InterleaveOffloadingOptimizer(
 
 #### **Advanced Checkpointing - 60% Memory Reduction**
 ```python
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     SelectiveGradientCheckpointing, AdaptiveCheckpointing,
     DynamicActivationOffloading
 )
@@ -259,7 +259,7 @@ gpu_activations = offloader.reload_activations(cpu_activations, device)
 
 #### **Long Sequence Optimization - Million Token Support**
 ```python
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     LongSequenceOptimizer, SegmentedAttentionMemory
 )
 
@@ -350,7 +350,7 @@ for segment in segments:
 
 ### **Project Structure**
 ```
-src/kernel_pytorch/
+src/torchbridge/
 ├── core/                  # Unified core optimization components
 │   ├── compilers/        # Compiler integrations (FlashLight, PyGraph)
 │   ├── optimized_layers/ # Optimized layer implementations

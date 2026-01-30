@@ -1,6 +1,6 @@
 # GCP Cloud Testing Setup Guide
 
-This guide covers setting up Google Cloud Platform infrastructure for KernelPyTorch cloud testing, including both GPU instances and TPU pods.
+This guide covers setting up Google Cloud Platform infrastructure for TorchBridge cloud testing, including both GPU instances and TPU pods.
 
 ## Prerequisites
 
@@ -13,31 +13,31 @@ This guide covers setting up Google Cloud Platform infrastructure for KernelPyTo
 
 ```bash
 # Create service account
-gcloud iam service-accounts create kernelpytorch-testing \
-    --display-name="KernelPyTorch Testing"
+gcloud iam service-accounts create torchbridge-testing \
+    --display-name="TorchBridge Testing"
 
 # Grant necessary roles
 PROJECT_ID=$(gcloud config get-value project)
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:kernelpytorch-testing@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:torchbridge-testing@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/compute.instanceAdmin.v1"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:kernelpytorch-testing@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:torchbridge-testing@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/storage.objectAdmin"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:kernelpytorch-testing@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:torchbridge-testing@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/tpu.admin"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:kernelpytorch-testing@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:torchbridge-testing@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/monitoring.metricWriter"
 
 # Download credentials
 gcloud iam service-accounts keys create credentials.json \
-    --iam-account=kernelpytorch-testing@$PROJECT_ID.iam.gserviceaccount.com
+    --iam-account=torchbridge-testing@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 ## gcloud CLI Configuration
@@ -100,22 +100,22 @@ gcloud compute images list \
 
 ```bash
 # Create VPC network (optional, can use default)
-gcloud compute networks create kernelpytorch-vpc \
+gcloud compute networks create torchbridge-vpc \
     --subnet-mode=auto
 
 # Create firewall rule for SSH
 gcloud compute firewall-rules create allow-ssh \
-    --network=kernelpytorch-vpc \
+    --network=torchbridge-vpc \
     --allow=tcp:22 \
     --source-ranges=0.0.0.0/0 \
-    --target-tags=kernelpytorch-testing
+    --target-tags=torchbridge-testing
 ```
 
 ## GCS Bucket Setup
 
 ```bash
 # Create bucket for benchmark results
-gsutil mb -l us-central1 gs://kernelpytorch-benchmarks/
+gsutil mb -l us-central1 gs://torchbridge-benchmarks/
 
 # Set lifecycle policy
 cat > lifecycle.json << EOF
@@ -130,7 +130,7 @@ cat > lifecycle.json << EOF
   }
 }
 EOF
-gsutil lifecycle set lifecycle.json gs://kernelpytorch-benchmarks/
+gsutil lifecycle set lifecycle.json gs://torchbridge-benchmarks/
 ```
 
 ## Using the GCP Test Harness
@@ -203,7 +203,7 @@ finally:
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
 export GCP_PROJECT_ID="your-project-id"
 export GCP_ZONE="us-central1-a"
-export KERNELPYTORCH_GCS_BUCKET="kernelpytorch-benchmarks"
+export KERNELPYTORCH_GCS_BUCKET="torchbridge-benchmarks"
 ```
 
 ## TPU Setup Notes

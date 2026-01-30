@@ -1,5 +1,5 @@
 """
-Shared data generation utilities for KernelPyTorch demos.
+Shared data generation utilities for TorchBridge demos.
 
 This module provides common data generation functions used across demo scripts.
 

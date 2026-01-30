@@ -1,18 +1,18 @@
 """
 Test NVIDIA Configuration Integration
 
-Tests the new NVIDIA configuration system in KernelPyTorchConfig.
+Tests the new NVIDIA configuration system in TorchBridgeConfig.
 """
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from kernel_pytorch.core.config import (
+from torchbridge.core.config import (
     HardwareBackend,
-    KernelPyTorchConfig,
     NVIDIAArchitecture,
     NVIDIAConfig,
+    TorchBridgeConfig,
 )
 
 
@@ -91,12 +91,12 @@ class TestNVIDIAConfig:
         assert config.kernel_fusion_enabled is True
 
 
-class TestKernelPyTorchConfigNVIDIA:
+class TestTorchBridgeConfigNVIDIA:
     """Test NVIDIA integration in main configuration."""
 
-    def test_kernelpytorch_config_nvidia_integration(self):
+    def test_torchbridge_config_nvidia_integration(self):
         """Test NVIDIA config integration in main config."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         assert hasattr(config.hardware, 'nvidia')
         assert isinstance(config.hardware.nvidia, NVIDIAConfig)
 
@@ -109,14 +109,14 @@ class TestKernelPyTorchConfigNVIDIA:
         mock_device_props.total_memory = 85899345920  # 80GB in bytes
         mock_props.return_value = mock_device_props
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         assert config.hardware.backend == HardwareBackend.CUDA
         assert config.hardware.nvidia.enabled is True
 
     @patch('torch.cuda.is_available', return_value=False)
     def test_hardware_config_cpu_fallback(self, mock_cuda):
         """Test CPU fallback when CUDA is not available."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         # Should still create NVIDIA config but adapt for CPU
         assert hasattr(config.hardware, 'nvidia')
         assert config.device.type == "cpu"
@@ -124,20 +124,20 @@ class TestKernelPyTorchConfigNVIDIA:
     def test_config_modes_nvidia_settings(self):
         """Test different config modes preserve NVIDIA settings."""
         # Inference mode
-        inference_config = KernelPyTorchConfig.for_inference()
+        inference_config = TorchBridgeConfig.for_inference()
         assert hasattr(inference_config.hardware, 'nvidia')
 
         # Training mode
-        training_config = KernelPyTorchConfig.for_training()
+        training_config = TorchBridgeConfig.for_training()
         assert hasattr(training_config.hardware, 'nvidia')
 
         # Development mode
-        dev_config = KernelPyTorchConfig.for_development()
+        dev_config = TorchBridgeConfig.for_development()
         assert hasattr(dev_config.hardware, 'nvidia')
 
     def test_config_update_nvidia_settings(self):
         """Test updating NVIDIA settings through config update."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         # Should be able to access and modify NVIDIA settings
         config.hardware.nvidia.fp8_enabled = False
@@ -148,7 +148,7 @@ class TestKernelPyTorchConfigNVIDIA:
 
     def test_config_to_dict_includes_nvidia(self):
         """Test config serialization includes NVIDIA settings."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config_dict = config.to_dict()
 
         assert 'hardware' in config_dict

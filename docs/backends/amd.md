@@ -63,8 +63,8 @@ The AMD ROCm Backend provides production-ready support for AMD GPUs through the 
 ### Basic Usage
 
 ```python
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.core.config import AMDConfig
 import torch.nn as nn
 
 # Initialize backend (auto-detects architecture)
@@ -85,8 +85,8 @@ print(f"Device info: {backend.get_device_info()}")
 ### With AMD Optimizer
 
 ```python
-from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from torchbridge.backends.amd import AMDBackend, AMDOptimizer
+from torchbridge.core.config import AMDConfig, AMDArchitecture
 
 # Configure for MI300X (CDNA3)
 config = AMDConfig(
@@ -157,7 +157,7 @@ print(f"Device name: {torch.cuda.get_device_name(0)}")
 ### AMDConfig Options
 
 ```python
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from torchbridge.core.config import AMDConfig, AMDArchitecture
 
 config = AMDConfig(
     # Hardware
@@ -236,8 +236,8 @@ config = AMDConfig(
 Main orchestrator for AMD GPU operations.
 
 ```python
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.core.config import AMDConfig
 
 config = AMDConfig()
 backend = AMDBackend(config)
@@ -263,8 +263,8 @@ backend.cleanup()
 Multi-level optimization for AMD GPUs.
 
 ```python
-from kernel_pytorch.backends.amd import AMDOptimizer
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import AMDOptimizer
+from torchbridge.core.config import AMDConfig
 
 config = AMDConfig(optimization_level="balanced")
 optimizer = AMDOptimizer(config)
@@ -287,8 +287,8 @@ print(f"Applied optimizations: {summary['optimizations_applied']}")
 HIP kernel compilation with caching.
 
 ```python
-from kernel_pytorch.backends.amd import ROCmCompiler
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import ROCmCompiler
+from torchbridge.core.config import AMDConfig
 
 config = AMDConfig()
 compiler = ROCmCompiler(config)
@@ -313,8 +313,8 @@ compiler.clear_cache()
 GPU memory management and pooling.
 
 ```python
-from kernel_pytorch.backends.amd import AMDMemoryManager
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import AMDMemoryManager
+from torchbridge.core.config import AMDConfig
 
 config = AMDConfig(memory_pool_size_gb=8.0)
 manager = AMDMemoryManager(config)
@@ -334,8 +334,8 @@ summary = manager.get_allocation_summary()
 Device coordination and profiling.
 
 ```python
-from kernel_pytorch.backends.amd import HIPUtilities
-from kernel_pytorch.core.config import AMDConfig
+from torchbridge.backends.amd import HIPUtilities
+from torchbridge.core.config import AMDConfig
 
 config = AMDConfig(enable_profiling=True)
 utils = HIPUtilities(config)
@@ -363,8 +363,8 @@ utils.cleanup()
 ### Training Loop
 
 ```python
-from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from torchbridge.backends.amd import AMDBackend, AMDOptimizer
+from torchbridge.core.config import AMDConfig, AMDArchitecture
 import torch
 import torch.nn as nn
 
@@ -411,12 +411,12 @@ for epoch in range(10):
 ### Cross-Backend Portability
 
 ```python
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.core.config import AMDConfig, KernelPyTorchConfig
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.core.config import AMDConfig, TorchBridgeConfig
 
 # Train on NVIDIA
-nvidia_config = KernelPyTorchConfig()
+nvidia_config = TorchBridgeConfig()
 nvidia_backend = NVIDIABackend(nvidia_config)
 nvidia_model = nvidia_backend.prepare_model(model)
 
@@ -499,7 +499,7 @@ summary = utils.get_profiling_summary()
 ### Exception Hierarchy
 
 ```python
-from kernel_pytorch.backends.amd.amd_exceptions import (
+from torchbridge.backends.amd.amd_exceptions import (
     AMDBackendError,      # Base exception
     ROCmNotAvailableError,  # ROCm not installed
     AMDDeviceError,       # Device-related errors

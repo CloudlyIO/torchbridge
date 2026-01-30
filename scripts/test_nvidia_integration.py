@@ -25,8 +25,8 @@ repo_root = Path(__file__).parent.parent
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture, OptimizationLevel
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture, OptimizationLevel
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 
 class NVIDIAIntegrationTester:
@@ -64,9 +64,9 @@ class NVIDIAIntegrationTester:
                     props = torch.cuda.get_device_properties(i)
                     print(f"🔧 GPU {i}: {props.name} ({props.total_memory/1e9:.1f}GB)")
 
-            # Test KernelPyTorch imports
-            from kernel_pytorch import __version__
-            print(f"🔧 KernelPyTorch version: {__version__}")
+            # Test TorchBridge imports
+            from torchbridge import __version__
+            print(f"🔧 TorchBridge version: {__version__}")
 
             self.print_result("Environment setup", True, f"Using device: {self.device}")
             return True
@@ -81,15 +81,15 @@ class NVIDIAIntegrationTester:
 
         try:
             # Test basic configuration creation
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             self.print_result("Basic config creation", True, f"Architecture: {config.hardware.nvidia.architecture.value}")
 
             # Test all config modes
             configs = {
-                'default': KernelPyTorchConfig(),
-                'inference': KernelPyTorchConfig.for_inference(),
-                'training': KernelPyTorchConfig.for_training(),
-                'development': KernelPyTorchConfig.for_development()
+                'default': TorchBridgeConfig(),
+                'inference': TorchBridgeConfig.for_inference(),
+                'training': TorchBridgeConfig.for_training(),
+                'development': TorchBridgeConfig.for_development()
             }
 
             for mode, cfg in configs.items():
@@ -113,7 +113,7 @@ class NVIDIAIntegrationTester:
         self.print_header("NVIDIA Hardware Detection")
 
         try:
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             nvidia = config.hardware.nvidia
 
             # Test detection results
@@ -218,14 +218,14 @@ class NVIDIAIntegrationTester:
             # Test configuration creation performance
             start_time = time.perf_counter()
             for _ in range(100):
-                config = KernelPyTorchConfig()
+                config = TorchBridgeConfig()
             config_time = (time.perf_counter() - start_time) * 1000 / 100
 
             perf_good = config_time < 1.0  # Should be < 1ms
             self.print_result("Config creation speed", perf_good, f"{config_time:.2f}ms avg")
 
             # Test hardware detection performance
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             start_time = time.perf_counter()
             for _ in range(50):
                 arch = config.hardware.nvidia._detect_architecture()
@@ -244,7 +244,7 @@ class NVIDIAIntegrationTester:
             test_input = torch.randn(32, 256).to(self.device)
 
             for opt_level in [OptimizationLevel.CONSERVATIVE, OptimizationLevel.BALANCED, OptimizationLevel.AGGRESSIVE]:
-                config = KernelPyTorchConfig()
+                config = TorchBridgeConfig()
                 config.optimization_level = opt_level
 
                 # Quick inference test
@@ -267,7 +267,7 @@ class NVIDIAIntegrationTester:
             validator = UnifiedValidator()
 
             # Test configuration validation
-            config = KernelPyTorchConfig.for_training()
+            config = TorchBridgeConfig.for_training()
             config_results = validator.validate_configuration(config)
             self.print_result("Configuration validation", config_results.passed > 0,
                             f"{config_results.passed}/{config_results.total_tests} passed")

@@ -7,7 +7,7 @@ import os
 import tempfile
 from unittest.mock import MagicMock, patch
 
-from kernel_pytorch.cli.doctor import DiagnosticResult, DoctorCommand
+from torchbridge.cli.doctor import DiagnosticResult, DoctorCommand
 
 
 class TestDiagnosticResult:
@@ -91,11 +91,11 @@ class TestDoctorCommand:
         assert numpy_result is not None
         assert numpy_result.status == "pass"  # Should be available in test environment
 
-    def test_check_basic_requirements_kernelpytorch(self):
-        """Test KernelPyTorch installation check."""
+    def test_check_basic_requirements_torchbridge(self):
+        """Test TorchBridge installation check."""
         results = DoctorCommand._check_basic_requirements(verbose=False)
 
-        kpt_result = next((r for r in results if r.name == "KernelPyTorch Version"), None)
+        kpt_result = next((r for r in results if r.name == "TorchBridge Version"), None)
         assert kpt_result is not None
         # Should pass since we're running tests from the package
 
@@ -189,11 +189,11 @@ class TestDoctorCommand:
         assert jit_result is not None
         assert jit_result.status == "pass"  # Should always be available
 
-    def test_check_optimization_frameworks_kernelpytorch(self):
-        """Test KernelPyTorch optimization framework availability."""
+    def test_check_optimization_frameworks_torchbridge(self):
+        """Test TorchBridge optimization framework availability."""
         results = DoctorCommand._check_optimization_frameworks(verbose=False)
 
-        kpt_result = next((r for r in results if r.name == "KernelPyTorch Optimization"), None)
+        kpt_result = next((r for r in results if r.name == "TorchBridge Optimization"), None)
         assert kpt_result is not None
         # Should pass since we're running tests from the package
 

@@ -2,20 +2,20 @@
 
 > **Version**: v0.4.18 | **Status**: ✅ Current | **Last Updated**: Jan 22, 2026
 
-**KernelPyTorch** - Production-grade PyTorch GPU/TPU optimization framework
+**TorchBridge** - Production-grade PyTorch GPU/TPU optimization framework
 
 ## Development Installation (Current)
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/your-org/torchbridge.git
+cd torchbridge
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Verify installation
-PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{kernel_pytorch.__version__} ready!')"
+PYTHONPATH=src python3 -c "import torchbridge; print(f'✅ TorchBridge v{torchbridge.__version__} ready!')"
 ```
 
 ## System Requirements
@@ -27,8 +27,8 @@ PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ KernelPyTorch v{ke
 
 ### Unified Architecture with Multi-Backend Support (v0.4.18)
 
-KernelPyTorch v0.4.18 is a production-ready framework with:
-- **Single Configuration System**: `KernelPyTorchConfig`
+TorchBridge v0.4.18 is a production-ready framework with:
+- **Single Configuration System**: `TorchBridgeConfig`
 - **Unified Management**: `UnifiedManager`
 - **Comprehensive Validation**: `UnifiedValidator`
 - **NVIDIA Backend**: H100/Blackwell support with FP8 training (cloud validated)
@@ -42,13 +42,13 @@ KernelPyTorch v0.4.18 is a production-ready framework with:
 
 ```bash
 # Clone and install
-git clone https://github.com/your-org/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/your-org/torchbridge.git
+cd torchbridge
 pip install torch numpy
 
 # Verify core functionality
 PYTHONPATH=src python3 -c "
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 print('✅ Unified architecture ready!')
 "
 ```
@@ -68,10 +68,10 @@ PYTHONPATH=src python3 -m pytest tests/ --tb=short -q
 ```bash
 # Test unified architecture
 PYTHONPATH=src python3 -c "
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge import TorchBridgeConfig, UnifiedManager
+from torchbridge.validation import UnifiedValidator
 
-config = KernelPyTorchConfig.for_development()
+config = TorchBridgeConfig.for_development()
 manager = UnifiedManager(config)
 validator = UnifiedValidator()
 print('✅ v0.4.18 unified architecture verified!')
@@ -104,7 +104,7 @@ export PYTHONPATH=/path/to/shahmod/src
 **Version Mismatch**:
 ```bash
 # Check version consistency
-PYTHONPATH=src python3 -c "import kernel_pytorch; print(kernel_pytorch.__version__)"
+PYTHONPATH=src python3 -c "import torchbridge; print(torchbridge.__version__)"
 # Should output: 0.4.3
 ```
 
@@ -120,13 +120,13 @@ After installation, run the system diagnostics:
 
 ```bash
 # Quick system check
-kernelpytorch doctor
+torchbridge doctor
 
 # Comprehensive diagnostics
-kernelpytorch doctor --full-report
+torchbridge doctor --full-report
 
 # Save diagnostic report
-kernelpytorch doctor --full-report --output system_report.json
+torchbridge doctor --full-report --output system_report.json
 ```
 
 ## GPU Setup
@@ -147,10 +147,10 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 **Conda Environment:**
 ```bash
-conda create -n kernelpytorch python=3.10
-conda activate kernelpytorch
+conda create -n torchbridge python=3.10
+conda activate torchbridge
 conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install kernel-pytorch[all]
+pip install torchbridge[all]
 ```
 
 ### Apple Silicon (M1/M2/M3)
@@ -158,7 +158,7 @@ pip install kernel-pytorch[all]
 ```bash
 # Install with Metal Performance Shaders support
 pip install torch torchvision
-pip install kernel-pytorch[all]
+pip install torchbridge[all]
 
 # Verify MPS availability
 python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
@@ -169,7 +169,7 @@ python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available
 ### 1. Test Core Functionality
 
 ```python
-import kernel_pytorch as kpt
+import torchbridge as kpt
 import torch
 
 # Create optimized model
@@ -177,7 +177,7 @@ model = kpt.OptimizedLinear(512, 256)
 x = torch.randn(32, 512)
 y = model(x)
 
-print(f"✓ KernelPyTorch {kpt.__version__} working!")
+print(f"✓ TorchBridge {kpt.__version__} working!")
 print(f"  Input: {x.shape}")
 print(f"  Output: {y.shape}")
 ```
@@ -186,25 +186,25 @@ print(f"  Output: {y.shape}")
 
 ```bash
 # System diagnostics
-kernelpytorch doctor --verbose
+torchbridge doctor --verbose
 
 # Quick optimization
 echo "import torch; torch.save(torch.nn.Linear(32, 16), 'test_model.pt')" | python
-kernelpytorch optimize --model test_model.pt --level production
+torchbridge optimize --model test_model.pt --level production
 
 # Performance benchmark
-kernelpytorch benchmark --predefined optimization --quick
+torchbridge benchmark --predefined optimization --quick
 ```
 
 ### 3. Test Unified Architecture
 
 ```python
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge import TorchBridgeConfig, UnifiedManager
+from torchbridge.validation import UnifiedValidator
 import torch
 
 # Test unified optimization system
-config = KernelPyTorchConfig.for_production()
+config = TorchBridgeConfig.for_production()
 manager = UnifiedManager(config)
 
 model = torch.nn.Sequential(
@@ -229,8 +229,8 @@ print(f"✓ Validation: {results.passed}/{results.total_tests} tests passed")
 #### Import Errors
 ```bash
 # Fix: Reinstall with all dependencies
-pip uninstall kernel-pytorch
-pip install kernel-pytorch[all] --no-cache-dir
+pip uninstall torchbridge
+pip install torchbridge[all] --no-cache-dir
 ```
 
 #### CUDA Not Found
@@ -246,46 +246,46 @@ pip install torch --index-url https://download.pytorch.org/whl/cu118
 #### CLI Commands Not Found
 ```bash
 # Fix: Ensure package is installed correctly
-pip show kernel-pytorch
-which kernelpytorch
+pip show torchbridge
+which torchbridge
 
 # Alternative: Use module syntax
-python -m kernel_pytorch.cli doctor
+python -m torchbridge.cli doctor
 ```
 
 #### Performance Issues
 ```bash
 # Check system configuration
-kernelpytorch doctor --category hardware
+torchbridge doctor --category hardware
 
 # Run performance regression test
-kernelpytorch benchmark --type regression
+torchbridge benchmark --type regression
 ```
 
 ### Getting Help
 
-1. **System Diagnostics**: `kernelpytorch doctor --full-report`
-2. **Documentation**: [https://kernel-pytorch.readthedocs.io](https://kernel-pytorch.readthedocs.io)
-3. **Issues**: [GitHub Issues](https://github.com/KernelPyTorch/kernel-pytorch/issues)
-4. **CLI Help**: `kernelpytorch --help`
+1. **System Diagnostics**: `torchbridge doctor --full-report`
+2. **Documentation**: [https://torchbridge.readthedocs.io](https://torchbridge.readthedocs.io)
+3. **Issues**: [GitHub Issues](https://github.com/TorchBridge/torchbridge/issues)
+4. **CLI Help**: `torchbridge --help`
 
 ## Environment Setup Examples
 
 ### Research Environment
 ```bash
-pip install kernel-pytorch[all,dev]
+pip install torchbridge[all,dev]
 jupyter lab  # Pre-configured notebooks available
 ```
 
 ### Production Environment
 ```bash
-pip install kernel-pytorch[serving,monitoring]
+pip install torchbridge[serving,monitoring]
 # Use Docker for consistent deployment
 ```
 
 ### Cloud Deployment
 ```bash
-pip install kernel-pytorch[cloud,serving]
+pip install torchbridge[cloud,serving]
 # AWS/GCP/Azure integrations available
 ```
 
@@ -300,4 +300,4 @@ After installation:
 
 ---
 
-**Need help?** Run `kernelpytorch doctor` for automated system diagnostics.
+**Need help?** Run `torchbridge doctor` for automated system diagnostics.

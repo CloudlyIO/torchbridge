@@ -1,6 +1,6 @@
 # End-to-End Deployment Tutorial
 
-**KernelPyTorch v0.4.18** - Complete guide from model optimization to production deployment
+**TorchBridge v0.4.18** - Complete guide from model optimization to production deployment
 
 This tutorial walks through deploying an optimized PyTorch model from development to production, covering all stages of the deployment pipeline.
 
@@ -9,7 +9,7 @@ This tutorial walks through deploying an optimized PyTorch model from developmen
 ## Overview
 
 This tutorial covers:
-1. Model Optimization with KernelPyTorch
+1. Model Optimization with TorchBridge
 2. Model Export (ONNX, TorchScript)
 3. Inference Server Setup (FastAPI, TorchServe)
 4. Containerization with Docker
@@ -19,7 +19,7 @@ This tutorial covers:
 **Prerequisites**:
 - Python 3.8+
 - PyTorch 2.0+
-- KernelPyTorch installed (`pip install -e .`)
+- TorchBridge installed (`pip install -e .`)
 - Docker (for containerization)
 
 ---
@@ -31,7 +31,7 @@ This tutorial covers:
 ```python
 import torch
 import torch.nn as nn
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 
 # Define your model
 class TransformerModel(nn.Module):
@@ -51,7 +51,7 @@ class TransformerModel(nn.Module):
 model = TransformerModel()
 
 # Configure for production inference
-config = KernelPyTorchConfig.for_inference()
+config = TorchBridgeConfig.for_inference()
 manager = UnifiedManager(config)
 
 # Apply optimizations
@@ -62,7 +62,7 @@ print(f"Model optimized for {config.device}")
 ### 1.2 Validate Optimization
 
 ```python
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge.validation import UnifiedValidator
 
 # Validate optimized model
 validator = UnifiedValidator()
@@ -106,7 +106,7 @@ print(f"Throughput: {iterations/elapsed:.1f} inferences/sec")
 ### 2.1 Export to TorchScript
 
 ```python
-from kernel_pytorch.deployment import TorchScriptExporter
+from torchbridge.deployment import TorchScriptExporter
 
 # Export to TorchScript
 exporter = TorchScriptExporter()
@@ -133,7 +133,7 @@ print(f"Output shape: {output.shape}")
 ### 2.2 Export to ONNX
 
 ```python
-from kernel_pytorch.deployment import ONNXExporter
+from torchbridge.deployment import ONNXExporter
 
 # Export to ONNX with dynamic axes
 onnx_exporter = ONNXExporter()
@@ -172,7 +172,7 @@ import torch
 import uvicorn
 from typing import List
 
-app = FastAPI(title="KernelPyTorch Model Server", version="0.4.3")
+app = FastAPI(title="TorchBridge Model Server", version="0.4.3")
 
 # Load optimized model at startup
 model = None
@@ -324,10 +324,10 @@ uvicorn[standard]>=0.23.0
 Build and run:
 ```bash
 # Build image
-docker build -t kernelpytorch-model:latest .
+docker build -t torchbridge-model:latest .
 
 # Run container
-docker run -p 8000:8000 kernelpytorch-model:latest
+docker run -p 8000:8000 torchbridge-model:latest
 
 # Test
 curl http://localhost:8000/health
@@ -360,7 +360,7 @@ CMD ["python3", "server.py"]
 
 Run with GPU:
 ```bash
-docker run --gpus all -p 8000:8000 kernelpytorch-model:latest-gpu
+docker run --gpus all -p 8000:8000 torchbridge-model:latest-gpu
 ```
 
 ---
@@ -372,7 +372,7 @@ docker run --gpus all -p 8000:8000 kernelpytorch-model:latest-gpu
 Create task definition `ecs-task.json`:
 ```json
 {
-  "family": "kernelpytorch-inference",
+  "family": "torchbridge-inference",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "2048",
@@ -381,7 +381,7 @@ Create task definition `ecs-task.json`:
   "containerDefinitions": [
     {
       "name": "inference",
-      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest",
+      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/torchbridge-model:latest",
       "portMappings": [
         {"containerPort": 8000, "protocol": "tcp"}
       ],
@@ -394,7 +394,7 @@ Create task definition `ecs-task.json`:
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/kernelpytorch",
+          "awslogs-group": "/ecs/torchbridge",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "inference"
         }
@@ -408,8 +408,8 @@ Deploy:
 ```bash
 # Push to ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin ACCOUNT.dkr.ecr.REGION.amazonaws.com
-docker tag kernelpytorch-model:latest ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest
-docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/kernelpytorch-model:latest
+docker tag torchbridge-model:latest ACCOUNT.dkr.ecr.REGION.amazonaws.com/torchbridge-model:latest
+docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/torchbridge-model:latest
 
 # Register task definition
 aws ecs register-task-definition --cli-input-json file://ecs-task.json
@@ -417,8 +417,8 @@ aws ecs register-task-definition --cli-input-json file://ecs-task.json
 # Create service
 aws ecs create-service \
   --cluster my-cluster \
-  --service-name kernelpytorch-service \
-  --task-definition kernelpytorch-inference \
+  --service-name torchbridge-service \
+  --task-definition torchbridge-inference \
   --desired-count 2 \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
@@ -428,11 +428,11 @@ aws ecs create-service \
 
 ```bash
 # Build and push to Artifact Registry
-gcloud builds submit --tag gcr.io/PROJECT/kernelpytorch-model:latest
+gcloud builds submit --tag gcr.io/PROJECT/torchbridge-model:latest
 
 # Deploy to Cloud Run
-gcloud run deploy kernelpytorch-service \
-  --image gcr.io/PROJECT/kernelpytorch-model:latest \
+gcloud run deploy torchbridge-service \
+  --image gcr.io/PROJECT/torchbridge-model:latest \
   --platform managed \
   --region us-central1 \
   --memory 4Gi \
@@ -450,22 +450,22 @@ Create `k8s/deployment.yaml`:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kernelpytorch-inference
+  name: torchbridge-inference
   labels:
-    app: kernelpytorch
+    app: torchbridge
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: kernelpytorch
+      app: torchbridge
   template:
     metadata:
       labels:
-        app: kernelpytorch
+        app: torchbridge
     spec:
       containers:
       - name: inference
-        image: kernelpytorch-model:latest
+        image: torchbridge-model:latest
         ports:
         - containerPort: 8000
         resources:
@@ -491,10 +491,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kernelpytorch-service
+  name: torchbridge-service
 spec:
   selector:
-    app: kernelpytorch
+    app: torchbridge
   ports:
   - port: 80
     targetPort: 8000
@@ -504,8 +504,8 @@ spec:
 Deploy:
 ```bash
 kubectl apply -f k8s/deployment.yaml
-kubectl get pods -l app=kernelpytorch
-kubectl get svc kernelpytorch-service
+kubectl get pods -l app=torchbridge
+kubectl get svc torchbridge-service
 ```
 
 ---
@@ -591,7 +591,7 @@ async def live():
 
 ## Summary Checklist
 
-- [ ] Model optimized with KernelPyTorch
+- [ ] Model optimized with TorchBridge
 - [ ] Validation tests passed
 - [ ] Performance benchmarked
 - [ ] Model exported (TorchScript/ONNX)

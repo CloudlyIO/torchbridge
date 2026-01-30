@@ -4,13 +4,13 @@
 
 ## 📁 Kernel Locations
 
-KernelPyTorch includes custom CUDA kernels in:
-- `src/kernel_pytorch/cuda_kernels/` - Primary custom kernels
+TorchBridge includes custom CUDA kernels in:
+- `src/torchbridge/cuda_kernels/` - Primary custom kernels
   - `flash_attention_v3.cu` - FlashAttention-3 implementation
   - `fused_linear_activation.cu` - Fused linear + activation kernels
   - `fused_ops.cu` - General fused operations
   - `cuda_interface.cpp` - PyTorch C++ bindings
-- `src/kernel_pytorch/hardware/kernels/` - Hardware-specific kernels
+- `src/torchbridge/hardware/kernels/` - Hardware-specific kernels
 
 ## ⚡ **CUDA Programming Reference**
 
@@ -592,7 +592,7 @@ optimized_kernel(float* data, int n) {
 ```cmake
 # CMakeLists.txt for CUDA kernel compilation
 cmake_minimum_required(VERSION 3.18)
-project(kernel_pytorch_cuda LANGUAGES CXX CUDA)
+project(torchbridge_cuda LANGUAGES CXX CUDA)
 
 find_package(CUDA REQUIRED)
 find_package(Torch REQUIRED)
@@ -610,10 +610,10 @@ set(CUDA_SOURCES
 )
 
 # Create library
-add_library(kernel_pytorch_cuda SHARED ${CUDA_SOURCES})
+add_library(torchbridge_cuda SHARED ${CUDA_SOURCES})
 
 # Link PyTorch
-target_link_libraries(kernel_pytorch_cuda "${TORCH_LIBRARIES}")
+target_link_libraries(torchbridge_cuda "${TORCH_LIBRARIES}")
 ```
 
 ### **Python Integration with PyTorch**

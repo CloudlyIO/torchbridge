@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 KernelPyTorch Demo Runner
+🚀 TorchBridge Demo Runner
 
 Runs all demos with clean, organized structure.
 
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 def print_header():
     """Print demo suite header."""
-    print("🚀 KernelPyTorch Demo Suite")
+    print("🚀 TorchBridge Demo Suite")
     print("=" * 50)
     print("Running PyTorch optimization demonstrations")
     print()
@@ -56,7 +56,7 @@ def run_demo(demo_path, mode="quick"):
         return False, f"Error: {str(e)}"
 
 def main():
-    parser = argparse.ArgumentParser(description="Run KernelPyTorch demos")
+    parser = argparse.ArgumentParser(description="Run TorchBridge demos")
     parser.add_argument("--quick", action="store_true", help="Quick demo mode")
     parser.add_argument("--validate", action="store_true", help="Validation mode")
     args = parser.parse_args()

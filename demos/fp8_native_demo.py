@@ -41,7 +41,7 @@ except ImportError:
         print(f"  {title}")
         print('='*60)
 
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     # Native FP8
     FP8Dtype,
     NativeFP8Linear,
@@ -457,7 +457,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "=" * 60)
-    print("  Native FP8 Demo - KernelPyTorch v0.4.5")
+    print("  Native FP8 Demo - TorchBridge v0.4.5")
     print("  Full FP8 with Native PyTorch Types")
     print("=" * 60)
 

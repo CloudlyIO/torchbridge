@@ -239,7 +239,7 @@ def validate_environment():
     # Check our optimizations
     try:
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-        from kernel_pytorch.compiler_optimized import FusedGELU
+        from torchbridge.compiler_optimized import FusedGELU
         print(f"   Our Optimizations: Available ✅")
     except ImportError:
         print(f"   Our Optimizations: Limited (fallback mode) ⚠️")

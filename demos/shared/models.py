@@ -1,5 +1,5 @@
 """
-Shared model architectures for KernelPyTorch demos.
+Shared model architectures for TorchBridge demos.
 
 This module provides common model architectures used across demo scripts.
 

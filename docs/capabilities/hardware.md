@@ -26,10 +26,10 @@
 
 ### NVIDIA Hardware Auto-Detection (NEW in v0.4.18)
 ```python
-from kernel_pytorch import KernelPyTorchConfig
+from torchbridge import TorchBridgeConfig
 
 # NVIDIA hardware auto-detection and configuration
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 
 # Automatic architecture detection
 nvidia_config = config.hardware.nvidia
@@ -46,10 +46,10 @@ print(f"FlashAttention version: {nvidia_config.flash_attention_version}")
 
 ### TPU Hardware Auto-Detection (NEW in v0.4.18)
 ```python
-from kernel_pytorch import KernelPyTorchConfig
+from torchbridge import TorchBridgeConfig
 
 # TPU hardware auto-detection and configuration
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 
 # Automatic TPU detection and configuration
 tpu_config = config.hardware.tpu
@@ -66,10 +66,10 @@ print(f"Precision: {tpu_config.precision}")
 
 ### Unified Architecture
 ```python
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 
 # Automatic hardware detection and optimization
-config = KernelPyTorchConfig.for_production()
+config = TorchBridgeConfig.for_production()
 manager = UnifiedManager(config)
 
 # Hardware is automatically detected and optimized
@@ -93,11 +93,11 @@ optimization_strategy = manager.hardware_manager.get_optimization_strategy()
 
 ### NVIDIA GPUs (Enhanced v0.4.18)
 ```python
-from kernel_pytorch import KernelPyTorchConfig
-from kernel_pytorch.core.config import NVIDIAArchitecture
+from torchbridge import TorchBridgeConfig
+from torchbridge.core.config import NVIDIAArchitecture
 
 # Automatic detection and optimization for NVIDIA hardware
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 nvidia_config = config.hardware.nvidia
 
 # Architecture-specific features (auto-detected):

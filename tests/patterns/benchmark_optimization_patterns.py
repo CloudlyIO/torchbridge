@@ -24,19 +24,19 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.optimizations.patterns.compiler_friendly import (
+from torchbridge.optimizations.patterns.compiler_friendly import (
     OptimizedLinearGELU,
     OptimizedTransformerBlock,
     check_compilation_compatibility,
     optimize_for_torch_compile,
 )
-from kernel_pytorch.optimizations.patterns.compute_intensity import (
+from torchbridge.optimizations.patterns.compute_intensity import (
     analyze_compute_intensity_profile,
     calculate_arithmetic_intensity,
 )
 
 # Import optimization patterns
-from kernel_pytorch.optimizations.patterns.memory_efficiency import (
+from torchbridge.optimizations.patterns.memory_efficiency import (
     MemoryEfficientSequential,
     analyze_memory_access_patterns,
 )

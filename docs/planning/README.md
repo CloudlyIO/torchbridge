@@ -1,6 +1,6 @@
 # Project Planning & Strategy
 
-Internal planning documents for KernelPyTorch development.
+Internal planning documents for TorchBridge development.
 
 ⚠️ **Note**: These documents are for project maintainers and contributors. Users should refer to [User Guides](../guides/README.md).
 

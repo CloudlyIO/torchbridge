@@ -2,7 +2,7 @@
 ResNet Optimization Example
 
 This example demonstrates how to optimize ResNet models for efficient inference
-using KernelPyTorch vision model optimization.
+using TorchBridge vision model optimization.
 
 Demonstrates:
 - Loading pre-trained ResNet models
@@ -12,7 +12,7 @@ Demonstrates:
 """
 
 import torch
-from kernel_pytorch.models.vision import (
+from torchbridge.models.vision import (
     create_resnet50_optimized,
     create_resnet152_optimized,
     ResNetBenchmark,
@@ -220,7 +220,7 @@ def example_custom_config():
     print("Example 5: Custom Configuration")
     print("=" * 80)
 
-    from kernel_pytorch.models.vision import (
+    from torchbridge.models.vision import (
         VisionOptimizationConfig,
         VisionModelType,
         create_resnet_optimizer,
@@ -254,7 +254,7 @@ def example_custom_config():
     print(f"  Device: {config.device}")
 
     # Create model with custom config
-    from kernel_pytorch.models.vision import ResNetOptimizer
+    from torchbridge.models.vision import ResNetOptimizer
 
     model, optimizer_instance = create_resnet_optimizer(
         model_name="resnet50",

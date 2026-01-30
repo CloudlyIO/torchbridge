@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from kernel_pytorch.models.multimodal import (
+from torchbridge.models.multimodal import (
     # Base
     CLIPOptimizer,
     CrossModalAttention,
@@ -99,7 +99,7 @@ class TestModuleExports:
 
     def test_base_exports(self):
         """Test base module exports."""
-        from kernel_pytorch.models import multimodal
+        from torchbridge.models import multimodal
 
         assert hasattr(multimodal, "BaseMultiModalOptimizer")
         assert hasattr(multimodal, "MultiModalOptimizationConfig")
@@ -107,7 +107,7 @@ class TestModuleExports:
 
     def test_clip_exports(self):
         """Test CLIP exports."""
-        from kernel_pytorch.models import multimodal
+        from torchbridge.models import multimodal
 
         assert hasattr(multimodal, "CLIPOptimizer")
         assert hasattr(multimodal, "CLIPBenchmark")
@@ -115,7 +115,7 @@ class TestModuleExports:
 
     def test_llava_exports(self):
         """Test LLaVA exports."""
-        from kernel_pytorch.models import multimodal
+        from torchbridge.models import multimodal
 
         assert hasattr(multimodal, "LLaVAOptimizer")
         assert hasattr(multimodal, "LLaVABenchmark")
@@ -123,7 +123,7 @@ class TestModuleExports:
 
     def test_whisper_exports(self):
         """Test Whisper exports."""
-        from kernel_pytorch.models import multimodal
+        from torchbridge.models import multimodal
 
         assert hasattr(multimodal, "WhisperOptimizer")
         assert hasattr(multimodal, "WhisperBenchmark")

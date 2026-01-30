@@ -1,6 +1,6 @@
 # 🚀 Quick Start Guide (v0.4.18)
 
-Get up and running with **KernelPyTorch** in under 5 minutes.
+Get up and running with **TorchBridge** in under 5 minutes.
 
 > For detailed installation options, see [Installation Guide](installation.md).
 
@@ -8,19 +8,19 @@ Get up and running with **KernelPyTorch** in under 5 minutes.
 
 ```bash
 # Clone and install
-git clone https://github.com/your-org/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/your-org/torchbridge.git
+cd torchbridge
 pip install -r requirements.txt
 
 # Verify installation
-PYTHONPATH=src python3 -c "import kernel_pytorch; print(f'✅ v{kernel_pytorch.__version__} ready!')"
+PYTHONPATH=src python3 -c "import torchbridge; print(f'✅ v{torchbridge.__version__} ready!')"
 ```
 
 ## 2. Basic Usage
 
 ```python
 import torch
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 
 # Your PyTorch model
 model = torch.nn.Sequential(
@@ -30,7 +30,7 @@ model = torch.nn.Sequential(
 )
 
 # Optimize with unified manager
-config = KernelPyTorchConfig.for_development()
+config = TorchBridgeConfig.for_development()
 manager = UnifiedManager(config)
 optimized_model = manager.optimize(model)
 
@@ -43,28 +43,28 @@ print(f"✓ Output shape: {y.shape}")
 ## 3. Configuration Presets
 
 ```python
-from kernel_pytorch import KernelPyTorchConfig
+from torchbridge import TorchBridgeConfig
 
 # Development (debugging, verbose)
-config = KernelPyTorchConfig.for_development()
+config = TorchBridgeConfig.for_development()
 
 # Training (optimized for training loops)
-config = KernelPyTorchConfig.for_training()
+config = TorchBridgeConfig.for_training()
 
 # Inference (maximum performance)
-config = KernelPyTorchConfig.for_inference()
+config = TorchBridgeConfig.for_inference()
 
 # Production (balanced, production-ready)
-config = KernelPyTorchConfig.for_production()
+config = TorchBridgeConfig.for_production()
 ```
 
 ## 4. NVIDIA GPU Optimization
 
 ```python
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 
 # Auto-detects NVIDIA hardware
-config = KernelPyTorchConfig.for_training()
+config = TorchBridgeConfig.for_training()
 
 # Check detected configuration
 print(f"Architecture: {config.hardware.nvidia.architecture.value}")
@@ -80,7 +80,7 @@ optimized_model = manager.optimize(your_model)
 ## 5. Validation
 
 ```python
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge.validation import UnifiedValidator
 
 validator = UnifiedValidator()
 results = validator.validate_model(model, input_shape=(32, 128, 768))

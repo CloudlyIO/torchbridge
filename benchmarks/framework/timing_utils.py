@@ -1,5 +1,5 @@
 """
-Shared timing utilities for KernelPyTorch benchmarks.
+Shared timing utilities for TorchBridge benchmarks.
 
 This module provides standardized timing and measurement utilities
 for consistent benchmarking across all backends (NVIDIA, TPU, AMD).

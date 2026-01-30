@@ -1,4 +1,4 @@
-# 🤝 Contributing to KernelPyTorch
+# 🤝 Contributing to TorchBridge
 
 **Guide for developers contributing to the PyTorch GPU optimization framework.**
 
@@ -13,12 +13,12 @@
 ### **Development Setup**
 ```bash
 # Clone and setup
-git clone https://github.com/your-org/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/your-org/torchbridge.git
+cd torchbridge
 pip install -r requirements.txt
 
 # Validate setup
-python3 -c "import kernel_pytorch; print('✅ Setup successful')"
+python3 -c "import torchbridge; print('✅ Setup successful')"
 
 # Run tests
 PYTHONPATH=src python3 -m pytest tests/ -v
@@ -28,7 +28,7 @@ PYTHONPATH=src python3 -m pytest tests/ -v
 
 ### **Core Components**
 ```
-src/kernel_pytorch/
+src/torchbridge/
 ├── attention/              # Unified attention framework (Ring, Sparse, Context Parallel)
 ├── precision/              # FP8 training and quantization
 ├── hardware_abstraction/   # Multi-vendor GPU/CPU support
@@ -171,14 +171,14 @@ class TestRingAttention:
 ### **Useful Commands**
 ```bash
 # Test verified working imports
-PYTHONPATH=src python -c "from kernel_pytorch.advanced_memory import DeepOptimizerStates; print('✅ Advanced Memory available')"
-PYTHONPATH=src python -c "from kernel_pytorch.optimizations.next_gen import create_advanced_flex_attention; print('✅ Next-gen optimizations available')"
-PYTHONPATH=src python -c "from kernel_pytorch.precision import create_fp8_trainer; print('✅ FP8 Training available')"
+PYTHONPATH=src python -c "from torchbridge.advanced_memory import DeepOptimizerStates; print('✅ Advanced Memory available')"
+PYTHONPATH=src python -c "from torchbridge.optimizations.next_gen import create_advanced_flex_attention; print('✅ Next-gen optimizations available')"
+PYTHONPATH=src python -c "from torchbridge.precision import create_fp8_trainer; print('✅ FP8 Training available')"
 
 # Test import that may have issues
 PYTHONPATH=src python -c "
 try:
-    from kernel_pytorch.attention import create_attention
+    from torchbridge.attention import create_attention
     print('✅ Attention framework available')
 except ImportError as e:
     print(f'⚠️ Attention import issue: {e}')

@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 
 # Import Intel backend components
-from kernel_pytorch.backends.intel import (
+from torchbridge.backends.intel import (
     IPEX_AVAILABLE,
     XPU_AVAILABLE,
     IntelBackend,
@@ -30,7 +30,7 @@ from kernel_pytorch.backends.intel import (
     is_ipex_available,
     is_xpu_available,
 )
-from kernel_pytorch.backends.intel.intel_exceptions import (
+from torchbridge.backends.intel.intel_exceptions import (
     IPEXNotInstalledError,
     OneDNNError,
     XPUDeviceError,
@@ -38,12 +38,12 @@ from kernel_pytorch.backends.intel.intel_exceptions import (
     XPUOptimizationError,
     XPUOutOfMemoryError,
 )
-from kernel_pytorch.core.config import (
+from torchbridge.core.config import (
     HardwareBackend,
     HardwareConfig,
     IntelArchitecture,
     IntelConfig,
-    KernelPyTorchConfig,
+    TorchBridgeConfig,
 )
 
 # ============================================================================
@@ -326,7 +326,7 @@ class TestIntelBackend:
 
     def test_backend_with_config(self):
         """Test creating backend with config."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = IntelBackend(config=config)
         assert backend.config is not None
 
@@ -350,7 +350,7 @@ class TestIntelBackend:
 
     def test_get_device_info(self):
         """Test get_device_info."""
-        from kernel_pytorch.backends import DeviceInfo
+        from torchbridge.backends import DeviceInfo
         backend = IntelBackend()
         info = backend.get_device_info()
         assert isinstance(info, DeviceInfo)
@@ -560,7 +560,7 @@ class TestIntelBackendIntegration:
     def test_config_to_backend_workflow(self):
         """Test config -> backend workflow."""
         # Create config
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         # Create backend with config
         backend = IntelBackend(config=config)

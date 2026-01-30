@@ -14,8 +14,8 @@ from unittest.mock import Mock
 import pytest
 import torch
 
-from kernel_pytorch.core.config import PrecisionFormat
-from kernel_pytorch.core.kernel_registry import (
+from torchbridge.core.config import PrecisionFormat
+from torchbridge.core.kernel_registry import (
     KernelBackend,
     KernelMetadata,
     KernelRegistry,

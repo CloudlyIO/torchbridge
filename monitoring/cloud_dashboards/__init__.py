@@ -1,8 +1,8 @@
 """
-Cloud Monitoring Dashboards for KernelPyTorch.
+Cloud Monitoring Dashboards for TorchBridge.
 
 This module provides dashboard configurations and comparison tools
-for monitoring KernelPyTorch performance across cloud platforms.
+for monitoring TorchBridge performance across cloud platforms.
 
 Version: 0.3.7
 """

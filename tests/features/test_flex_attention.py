@@ -15,12 +15,12 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.attention import (
+from torchbridge.attention import (
     AttentionConfig,
     AttentionPatterns,
     create_attention,
 )
-from kernel_pytorch.attention.implementations.flex_attention import (
+from torchbridge.attention.implementations.flex_attention import (
     FLEX_ATTENTION_AVAILABLE,
     FlexAttentionCausal,
     FlexAttentionLayer,
@@ -291,7 +291,7 @@ class TestFlexAttentionRegistry:
 
     def test_registered_in_registry(self):
         """Test FlexAttention is registered"""
-        from kernel_pytorch.attention.core.registry import get_attention_registry
+        from torchbridge.attention.core.registry import get_attention_registry
         registry = get_attention_registry()
         assert 'flex_attention' in registry
         assert 'flex_attention_causal' in registry

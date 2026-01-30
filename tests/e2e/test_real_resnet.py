@@ -54,7 +54,7 @@ class TestRealResNetOptimization:
 
     def test_resnet50_optimization_speedup_cpu(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 optimization produces speedup on CPU."""
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -113,7 +113,7 @@ class TestRealResNetOptimization:
     @requires_cuda
     def test_resnet50_optimization_speedup_cuda(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 optimization produces speedup on CUDA."""
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -185,7 +185,7 @@ class TestRealResNetOptimization:
         due to different computation order. These differences are typically <0.01
         and don't affect classification predictions.
         """
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -239,7 +239,7 @@ class TestRealResNetOptimization:
 
     def test_resnet50_batch_throughput(self, resnet50_model, e2e_device):
         """Test ResNet-50 batch throughput optimization."""
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -300,7 +300,7 @@ class TestResNetVariants:
 
         from torchvision.models import ResNet18_Weights, resnet18
 
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -349,7 +349,7 @@ class TestResNetVariants:
 
         from torchvision.models import ResNet101_Weights, resnet101
 
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -402,7 +402,7 @@ class TestResNetCUDAOptimizations:
 
     def test_resnet50_fp16_optimization(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 FP16 optimization on CUDA."""
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,
@@ -453,7 +453,7 @@ class TestResNetCUDAOptimizations:
 
     def test_resnet50_torch_compile(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 with torch.compile."""
-        from kernel_pytorch.models.vision import (
+        from torchbridge.models.vision import (
             OptimizationLevel,
             ResNetOptimizer,
             VisionOptimizationConfig,

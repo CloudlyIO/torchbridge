@@ -2,7 +2,7 @@
 """
 BERT Optimization Example
 
-Demonstrates how to use KernelPyTorch to optimize BERT models for
+Demonstrates how to use TorchBridge to optimize BERT models for
 inference and training. Shows 2-3x speedup on various hardware backends.
 
 Models covered:
@@ -55,7 +55,7 @@ def check_dependencies() -> bool:
 def create_sample_data(tokenizer, batch_size: int = 8, seq_length: int = 128):
     """Create sample data for benchmarking."""
     texts = [
-        "KernelPyTorch provides production-grade GPU optimization for deep learning.",
+        "TorchBridge provides production-grade GPU optimization for deep learning.",
         "The quick brown fox jumps over the lazy dog.",
         "Machine learning is transforming industries worldwide.",
         "PyTorch is a popular deep learning framework.",
@@ -146,14 +146,14 @@ def run_baseline(model_name: str, task: str, batch_size: int, seq_length: int) -
 
 
 def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) -> Dict[str, Any]:
-    """Run KernelPyTorch optimized model."""
-    print_section(f"KernelPyTorch Optimized - {model_name}")
+    """Run TorchBridge optimized model."""
+    print_section(f"TorchBridge Optimized - {model_name}")
 
     from transformers import AutoTokenizer
 
-    # Import KernelPyTorch
+    # Import TorchBridge
     try:
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             TextModelOptimizer,
             TextModelConfig,
             OptimizationMode
@@ -182,7 +182,7 @@ def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) 
         print(f"torch.compile: {optimization_info['torch_compile']}")
 
     except ImportError as e:
-        logger.warning(f"KernelPyTorch not available: {e}")
+        logger.warning(f"TorchBridge not available: {e}")
         logger.info("Falling back to torch.compile only")
 
         from transformers import AutoModelForSequenceClassification
@@ -227,7 +227,7 @@ def run_text_classification_demo(model_name: str):
     from transformers import AutoTokenizer
 
     try:
-        from kernel_pytorch.models.text import OptimizedBERT
+        from torchbridge.models.text import OptimizedBERT
 
         # Create optimized model
         model = OptimizedBERT(
@@ -304,7 +304,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("BERT Optimization with KernelPyTorch")
+    print_section("BERT Optimization with TorchBridge")
 
     # Check dependencies
     if not check_dependencies():

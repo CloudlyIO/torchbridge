@@ -1,4 +1,4 @@
-# Getting Started with KernelPyTorch
+# Getting Started with TorchBridge
 
 > **Version**: v0.4.18 | Quick onboarding guides to get you productive in minutes
 
@@ -13,12 +13,12 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/KernelPyTorch/kernel-pytorch.git
-cd kernel-pytorch
+git clone https://github.com/TorchBridge/torchbridge.git
+cd torchbridge
 pip install -e .
 
 # Verify
-python -c "import kernel_pytorch; print(f'v{kernel_pytorch.__version__} ready!')"
+python -c "import torchbridge; print(f'v{torchbridge.__version__} ready!')"
 ```
 
 ## Having Issues?
@@ -38,4 +38,4 @@ After installation:
 
 ---
 
-**Need help?** Open an issue at [GitHub Issues](https://github.com/KernelPyTorch/kernel-pytorch/issues)
+**Need help?** Open an issue at [GitHub Issues](https://github.com/TorchBridge/torchbridge/issues)

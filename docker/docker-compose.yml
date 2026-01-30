@@ -1,4 +1,4 @@
-# KernelPyTorch Docker Compose Configuration
+# TorchBridge Docker Compose Configuration
 #
 # Deploy complete inference stack with monitoring
 #
@@ -6,7 +6,7 @@
 #   docker-compose -f docker/docker-compose.yml up -d
 #
 # Services:
-#   - inference: KernelPyTorch inference server
+#   - inference: TorchBridge inference server
 #   - prometheus: Metrics collection
 #   - grafana: Metrics visualization
 #
@@ -16,14 +16,14 @@ version: '3.8'
 
 services:
   # =============================================================================
-  # KernelPyTorch Inference Server
+  # TorchBridge Inference Server
   # =============================================================================
   inference:
     build:
       context: ..
       dockerfile: docker/Dockerfile.nvidia
-    image: kernelpytorch:nvidia
-    container_name: kernelpytorch-inference
+    image: torchbridge:nvidia
+    container_name: torchbridge-inference
     ports:
       - "8000:8000"
       - "9090:9090"
@@ -51,14 +51,14 @@ services:
       start_period: 30s
     restart: unless-stopped
     networks:
-      - kernelpytorch-net
+      - torchbridge-net
 
   # =============================================================================
   # Prometheus - Metrics Collection
   # =============================================================================
   prometheus:
     image: prom/prometheus:v2.48.0
-    container_name: kernelpytorch-prometheus
+    container_name: torchbridge-prometheus
     ports:
       - "9091:9090"
     volumes:
@@ -71,7 +71,7 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
-      - kernelpytorch-net
+      - torchbridge-net
     depends_on:
       - inference
 
@@ -80,7 +80,7 @@ services:
   # =============================================================================
   grafana:
     image: grafana/grafana:10.2.2
-    container_name: kernelpytorch-grafana
+    container_name: torchbridge-grafana
     ports:
       - "3000:3000"
     environment:
@@ -92,7 +92,7 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     restart: unless-stopped
     networks:
-      - kernelpytorch-net
+      - torchbridge-net
     depends_on:
       - prometheus
 
@@ -103,8 +103,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.cpu
-    image: kernelpytorch:cpu
-    container_name: kernelpytorch-inference-cpu
+    image: torchbridge:cpu
+    container_name: torchbridge-inference-cpu
     profiles:
       - cpu-only
     ports:
@@ -116,7 +116,7 @@ services:
       - ${MODEL_DIR:-./models}:/models:ro
     restart: unless-stopped
     networks:
-      - kernelpytorch-net
+      - torchbridge-net
 
 volumes:
   inference-logs:
@@ -124,5 +124,5 @@ volumes:
   grafana-data:
 
 networks:
-  kernelpytorch-net:
+  torchbridge-net:
     driver: bridge

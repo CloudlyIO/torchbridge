@@ -2,7 +2,7 @@
 """
 Llama-7B Optimization Example
 
-Demonstrates how to use KernelPyTorch to optimize Llama-2-7B and similar
+Demonstrates how to use TorchBridge to optimize Llama-2-7B and similar
 7B parameter LLMs for production inference.
 
 Models covered:
@@ -80,7 +80,7 @@ def check_dependencies() -> Dict[str, bool]:
 def estimate_memory(model_name: str, quantization: str = "none") -> Dict[str, float]:
     """Estimate memory requirements."""
     try:
-        from kernel_pytorch.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
+        from torchbridge.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
 
         quant_map = {
             "none": QuantizationMode.NONE,
@@ -114,17 +114,17 @@ def estimate_memory(model_name: str, quantization: str = "none") -> Dict[str, fl
         return {"model_memory_gb": base, "total_gb": base * 1.1}
 
 
-def run_with_kernelpytorch(
+def run_with_torchbridge(
     model_name: str,
     quantization: str,
     prompt: str,
     max_new_tokens: int
 ) -> Dict[str, Any]:
-    """Run optimized inference with KernelPyTorch."""
-    print_section(f"KernelPyTorch Optimized - {model_name}")
+    """Run optimized inference with TorchBridge."""
+    print_section(f"TorchBridge Optimized - {model_name}")
 
     try:
-        from kernel_pytorch.models.llm import (
+        from torchbridge.models.llm import (
             LLMOptimizer,
             LLMConfig,
             QuantizationMode
@@ -221,7 +221,7 @@ def run_with_kernelpytorch(
         }
 
     except ImportError as e:
-        logger.error(f"KernelPyTorch import failed: {e}")
+        logger.error(f"TorchBridge import failed: {e}")
         return {"error": str(e)}
     except Exception as e:
         logger.error(f"Generation failed: {e}")
@@ -321,7 +321,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("Llama Optimization with KernelPyTorch v0.4.12")
+    print_section("Llama Optimization with TorchBridge v0.4.12")
 
     # Check dependencies
     deps = check_dependencies()
@@ -344,7 +344,7 @@ def main():
         return
 
     # Run optimization
-    result = run_with_kernelpytorch(
+    result = run_with_torchbridge(
         args.model,
         args.quantization,
         args.prompt,

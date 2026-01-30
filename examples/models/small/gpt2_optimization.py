@@ -2,7 +2,7 @@
 """
 GPT-2 Optimization Example
 
-Demonstrates how to use KernelPyTorch to optimize GPT-2 for text generation.
+Demonstrates how to use TorchBridge to optimize GPT-2 for text generation.
 Shows optimized inference with KV-cache and autoregressive generation.
 
 Models covered:
@@ -152,14 +152,14 @@ def run_baseline(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str,
 
 
 def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str, Any]:
-    """Run KernelPyTorch optimized model."""
-    print_section(f"KernelPyTorch Optimized - {model_name}")
+    """Run TorchBridge optimized model."""
+    print_section(f"TorchBridge Optimized - {model_name}")
 
     from transformers import AutoTokenizer
 
-    # Import KernelPyTorch
+    # Import TorchBridge
     try:
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             TextModelOptimizer,
             TextModelConfig,
             OptimizationMode,
@@ -189,7 +189,7 @@ def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str
         print(f"torch.compile: {optimization_info['torch_compile']}")
 
     except ImportError as e:
-        logger.warning(f"KernelPyTorch not available: {e}")
+        logger.warning(f"TorchBridge not available: {e}")
         logger.info("Falling back to torch.compile only")
 
         from transformers import AutoModelForCausalLM
@@ -242,7 +242,7 @@ def run_interactive_demo(model_name: str):
     from transformers import AutoTokenizer
 
     try:
-        from kernel_pytorch.models.text import OptimizedGPT2
+        from torchbridge.models.text import OptimizedGPT2
 
         # Create optimized model
         model = OptimizedGPT2(model_name=model_name, task="causal-lm")
@@ -296,7 +296,7 @@ def run_batch_generation_demo(model_name: str):
     from transformers import AutoTokenizer
 
     try:
-        from kernel_pytorch.models.text import OptimizedGPT2
+        from torchbridge.models.text import OptimizedGPT2
 
         model = OptimizedGPT2(model_name=model_name, task="causal-lm")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -371,7 +371,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("GPT-2 Optimization with KernelPyTorch")
+    print_section("GPT-2 Optimization with TorchBridge")
 
     # Check dependencies
     if not check_dependencies():

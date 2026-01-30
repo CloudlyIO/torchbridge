@@ -1,5 +1,5 @@
 """
-CUDA Extension Build Script for KernelPyTorch
+CUDA Extension Build Script for TorchBridge
 
 This script handles building custom CUDA kernels only.
 Package metadata is defined in pyproject.toml (PEP 621).
@@ -37,10 +37,10 @@ def get_cuda_extension():
             cuda_home = '/usr/local/cuda'
 
     cuda_sources = [
-        'src/kernel_pytorch/cuda_kernels/fused_ops.cu',
-        'src/kernel_pytorch/cuda_kernels/flash_attention_v3.cu',
-        'src/kernel_pytorch/cuda_kernels/fused_linear_activation.cu',
-        'src/kernel_pytorch/cuda_kernels/cuda_interface.cpp',
+        'src/torchbridge/cuda_kernels/fused_ops.cu',
+        'src/torchbridge/cuda_kernels/flash_attention_v3.cu',
+        'src/torchbridge/cuda_kernels/fused_linear_activation.cu',
+        'src/torchbridge/cuda_kernels/cuda_interface.cpp',
     ]
 
     # Check which source files exist
@@ -69,13 +69,13 @@ def get_cuda_extension():
     cxx_flags = ['-O3', '-std=c++17']
 
     include_dirs = [
-        'src/kernel_pytorch/cuda_kernels',
-        'src/kernel_pytorch/hardware/kernels',
+        'src/torchbridge/cuda_kernels',
+        'src/torchbridge/hardware/kernels',
         f'{cuda_home}/include',
     ]
 
     ext = CUDAExtension(
-        name='kernel_pytorch_cuda',
+        name='torchbridge_cuda',
         sources=existing_sources,
         include_dirs=include_dirs,
         extra_compile_args={'cxx': cxx_flags, 'nvcc': nvcc_flags},

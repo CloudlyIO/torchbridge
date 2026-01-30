@@ -1,6 +1,6 @@
-# Building KernelPyTorch with Custom CUDA Kernels
+# Building TorchBridge with Custom CUDA Kernels
 
-This guide explains how to build KernelPyTorch with custom CUDA kernels (Phase 4A).
+This guide explains how to build TorchBridge with custom CUDA kernels (Phase 4A).
 
 ## 📋 Prerequisites
 
@@ -64,11 +64,11 @@ pip install .
 
 ```bash
 # Test basic import
-python3 -c "import kernel_pytorch; print(f'Version: {kernel_pytorch.__version__}')"
+python3 -c "import torchbridge; print(f'Version: {torchbridge.__version__}')"
 
 # Test CUDA kernel availability
 python3 -c "
-from kernel_pytorch.hardware.gpu.custom_kernels import FlashAttentionV3
+from torchbridge.hardware.gpu.custom_kernels import FlashAttentionV3
 print('✅ FlashAttention-3 available')
 "
 
@@ -108,9 +108,9 @@ The build process compiles these custom CUDA kernels:
 
 After successful build:
 
-- **Shared library**: `kernel_pytorch_cuda.so` (or `.pyd` on Windows)
-- **Location**: `src/kernel_pytorch/` or site-packages
-- **Import name**: Automatically available via `kernel_pytorch.hardware.gpu.custom_kernels`
+- **Shared library**: `torchbridge_cuda.so` (or `.pyd` on Windows)
+- **Location**: `src/torchbridge/` or site-packages
+- **Import name**: Automatically available via `torchbridge.hardware.gpu.custom_kernels`
 
 ## 🏗️ Build Configuration
 
@@ -220,14 +220,14 @@ gcc --version
 **Solutions**:
 ```bash
 # Verify build succeeded
-ls -la kernel_pytorch_cuda*.so
+ls -la torchbridge_cuda*.so
 
 # Reinstall in editable mode
-pip uninstall kernel-pytorch
+pip uninstall torchbridge
 pip install -e .
 
 # Check Python can find the module
-python3 -c "import kernel_pytorch_cuda; print('Module found')"
+python3 -c "import torchbridge_cuda; print('Module found')"
 ```
 
 ## 🧪 Testing the Build
@@ -305,7 +305,7 @@ Rebuild is needed when:
 ```bash
 # Remove all build artifacts
 python setup.py clean --all
-rm -rf build/ dist/ *.egg-info kernel_pytorch_cuda*.so
+rm -rf build/ dist/ *.egg-info torchbridge_cuda*.so
 
 # Rebuild from scratch
 python setup.py build_ext --inplace
@@ -322,9 +322,9 @@ python setup.py build_ext --inplace
 
 After building, verify:
 
-- [ ] `kernel_pytorch_cuda.so` exists in package directory
-- [ ] `import kernel_pytorch` succeeds
-- [ ] `import kernel_pytorch.hardware.gpu.custom_kernels` succeeds
+- [ ] `torchbridge_cuda.so` exists in package directory
+- [ ] `import torchbridge` succeeds
+- [ ] `import torchbridge.hardware.gpu.custom_kernels` succeeds
 - [ ] Demo runs without errors: `python demos/custom_kernel_demo.py --quick`
 - [ ] Tests pass: `pytest tests/test_kernel_integration.py -v`
 - [ ] Benchmarks run: `python benchmarks/custom_kernel_benchmark.py`
@@ -364,7 +364,7 @@ python setup.py build_ext --inplace
 - **CUDA Programming Guide**: https://docs.nvidia.com/cuda/
 - **PyTorch C++ Extension**: https://pytorch.org/tutorials/advanced/cpp_extension.html
 - **NVCC Compiler**: https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/
-- **KernelPyTorch Docs**: See `docs/` directory
+- **TorchBridge Docs**: See `docs/` directory
 - **Troubleshooting**: See GitHub Issues
 
 ## 🤝 Getting Help

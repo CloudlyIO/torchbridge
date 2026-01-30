@@ -15,13 +15,13 @@ import warnings
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
+from torchbridge.core.config import (
+    TorchBridgeConfig,
     NVIDIAArchitecture,
     OptimizationLevel,
     HardwareBackend
 )
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 
 class NVIDIAConfigurationDemo:
@@ -36,7 +36,7 @@ class NVIDIAConfigurationDemo:
         print("=" * 50)
 
         # Create configuration with auto-detection
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         print(f"✅ Device detected: {config.device}")
         print(f"✅ Hardware backend: {config.hardware.backend.value}")
@@ -66,7 +66,7 @@ class NVIDIAConfigurationDemo:
 
         # Inference configuration
         print("🏃 Inference Mode (Optimized for low latency):")
-        inference_config = KernelPyTorchConfig.for_inference()
+        inference_config = TorchBridgeConfig.for_inference()
         print(f"   Optimization level: {inference_config.optimization_level.value}")
         print(f"   Gradient checkpointing: {inference_config.memory.gradient_checkpointing}")
         print(f"   Deep optimizer states: {inference_config.memory.deep_optimizer_states}")
@@ -75,7 +75,7 @@ class NVIDIAConfigurationDemo:
 
         # Training configuration
         print("🎓 Training Mode (Optimized for memory and stability):")
-        training_config = KernelPyTorchConfig.for_training()
+        training_config = TorchBridgeConfig.for_training()
         print(f"   Optimization level: {training_config.optimization_level.value}")
         print(f"   Gradient checkpointing: {training_config.memory.gradient_checkpointing}")
         print(f"   Deep optimizer states: {training_config.memory.deep_optimizer_states}")
@@ -84,7 +84,7 @@ class NVIDIAConfigurationDemo:
 
         # Development configuration
         print("🔧 Development Mode (Optimized for debugging):")
-        dev_config = KernelPyTorchConfig.for_development()
+        dev_config = TorchBridgeConfig.for_development()
         print(f"   Optimization level: {dev_config.optimization_level.value}")
         print(f"   Debug mode: {dev_config.debug}")
         print(f"   Profile mode: {dev_config.profile}")
@@ -123,7 +123,7 @@ class NVIDIAConfigurationDemo:
             print(f"🔧 {opt_level.value.capitalize()} Mode: {description}")
 
             # Create config with specific optimization level
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             config.optimization_level = opt_level
 
             # Run a quick test
@@ -144,10 +144,10 @@ class NVIDIAConfigurationDemo:
 
         # Test different configurations
         configs_to_test = [
-            ("Default", KernelPyTorchConfig()),
-            ("Inference", KernelPyTorchConfig.for_inference()),
-            ("Training", KernelPyTorchConfig.for_training()),
-            ("Development", KernelPyTorchConfig.for_development())
+            ("Default", TorchBridgeConfig()),
+            ("Inference", TorchBridgeConfig.for_inference()),
+            ("Training", TorchBridgeConfig.for_training()),
+            ("Development", TorchBridgeConfig.for_development())
         ]
 
         for config_name, config in configs_to_test:
@@ -172,7 +172,7 @@ class NVIDIAConfigurationDemo:
         print("=" * 40)
 
         # Create a configuration
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         # Customize NVIDIA settings
         config.hardware.nvidia.fp8_enabled = True
@@ -222,7 +222,7 @@ class NVIDIAConfigurationDemo:
         print()
 
         for config_name, (opt_level, description) in configs.items():
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             config.optimization_level = opt_level
 
             # Warmup

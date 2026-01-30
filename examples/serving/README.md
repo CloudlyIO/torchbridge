@@ -1,10 +1,10 @@
-# KernelPyTorch Serving Examples
+# TorchBridge Serving Examples
 
-This directory contains examples for deploying KernelPyTorch models in production.
+This directory contains examples for deploying TorchBridge models in production.
 
 ## LLM Inference Server
 
-The `run_llm_server.py` script demonstrates how to serve large language models with KernelPyTorch optimizations.
+The `run_llm_server.py` script demonstrates how to serve large language models with TorchBridge optimizations.
 
 ### Features
 

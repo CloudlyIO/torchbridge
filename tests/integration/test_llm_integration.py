@@ -22,7 +22,7 @@ class TestLLMTypes:
 
     def test_llm_types_exist(self):
         """Verify all LLM types are defined."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMType
+        from torchbridge.models.llm.llm_optimizer import LLMType
 
         assert hasattr(LLMType, 'LLAMA')
         assert hasattr(LLMType, 'MISTRAL')
@@ -33,7 +33,7 @@ class TestLLMTypes:
 
     def test_llm_type_values(self):
         """Verify LLM type values."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMType
+        from torchbridge.models.llm.llm_optimizer import LLMType
 
         assert LLMType.LLAMA.value == "llama"
         assert LLMType.MISTRAL.value == "mistral"
@@ -45,7 +45,7 @@ class TestQuantizationMode:
 
     def test_quantization_modes_exist(self):
         """Verify all quantization modes are defined."""
-        from kernel_pytorch.models.llm.llm_optimizer import QuantizationMode
+        from torchbridge.models.llm.llm_optimizer import QuantizationMode
 
         assert hasattr(QuantizationMode, 'NONE')
         assert hasattr(QuantizationMode, 'INT8')
@@ -55,7 +55,7 @@ class TestQuantizationMode:
 
     def test_quantization_mode_values(self):
         """Verify quantization mode values."""
-        from kernel_pytorch.models.llm.llm_optimizer import QuantizationMode
+        from torchbridge.models.llm.llm_optimizer import QuantizationMode
 
         assert QuantizationMode.NONE.value == "none"
         assert QuantizationMode.INT8.value == "int8"
@@ -69,7 +69,7 @@ class TestGenerationConfig:
 
     def test_default_config(self):
         """Test default generation config values."""
-        from kernel_pytorch.models.llm.llm_optimizer import GenerationConfig
+        from torchbridge.models.llm.llm_optimizer import GenerationConfig
 
         config = GenerationConfig()
 
@@ -83,7 +83,7 @@ class TestGenerationConfig:
 
     def test_custom_config(self):
         """Test custom generation config."""
-        from kernel_pytorch.models.llm.llm_optimizer import GenerationConfig
+        from torchbridge.models.llm.llm_optimizer import GenerationConfig
 
         config = GenerationConfig(
             max_new_tokens=512,
@@ -101,7 +101,7 @@ class TestLLMConfig:
 
     def test_default_llm_config(self):
         """Test default LLM config values."""
-        from kernel_pytorch.models.llm.llm_optimizer import (
+        from torchbridge.models.llm.llm_optimizer import (
             LLMConfig,
             LLMType,
             QuantizationMode,
@@ -122,7 +122,7 @@ class TestLLMConfig:
 
     def test_custom_llm_config(self):
         """Test custom LLM config."""
-        from kernel_pytorch.models.llm.llm_optimizer import (
+        from torchbridge.models.llm.llm_optimizer import (
             LLMConfig,
             LLMType,
             QuantizationMode,
@@ -146,7 +146,7 @@ class TestLLMOptimizer:
 
     def test_optimizer_creation(self):
         """Test optimizer instantiation."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer
+        from torchbridge.models.llm.llm_optimizer import LLMOptimizer
 
         optimizer = LLMOptimizer()
 
@@ -156,7 +156,7 @@ class TestLLMOptimizer:
 
     def test_optimizer_with_custom_config(self):
         """Test optimizer with custom configuration."""
-        from kernel_pytorch.models.llm.llm_optimizer import (
+        from torchbridge.models.llm.llm_optimizer import (
             LLMConfig,
             LLMOptimizer,
             QuantizationMode,
@@ -174,7 +174,7 @@ class TestLLMOptimizer:
 
     def test_get_optimization_info(self):
         """Test optimization info retrieval."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer
+        from torchbridge.models.llm.llm_optimizer import LLMOptimizer
 
         optimizer = LLMOptimizer()
         info = optimizer.get_optimization_info()
@@ -189,7 +189,7 @@ class TestLLMOptimizer:
 
     def test_estimate_memory_7b(self):
         """Test memory estimation for 7B model."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMConfig, LLMOptimizer
+        from torchbridge.models.llm.llm_optimizer import LLMConfig, LLMOptimizer
 
         config = LLMConfig()
         optimizer = LLMOptimizer(config)
@@ -203,7 +203,7 @@ class TestLLMOptimizer:
 
     def test_estimate_memory_with_quantization(self):
         """Test memory estimation with quantization."""
-        from kernel_pytorch.models.llm.llm_optimizer import (
+        from torchbridge.models.llm.llm_optimizer import (
             LLMConfig,
             LLMOptimizer,
             QuantizationMode,
@@ -226,7 +226,7 @@ class TestLLMOptimizer:
 
     def test_model_type_detection_llama(self):
         """Test Llama model type detection."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer, LLMType
+        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
 
         optimizer = LLMOptimizer()
 
@@ -241,7 +241,7 @@ class TestLLMOptimizer:
 
     def test_model_type_detection_mistral(self):
         """Test Mistral model type detection."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer, LLMType
+        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
 
         optimizer = LLMOptimizer()
 
@@ -256,7 +256,7 @@ class TestLLMOptimizer:
 
     def test_model_type_detection_phi(self):
         """Test Phi model type detection."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer, LLMType
+        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
 
         optimizer = LLMOptimizer()
 
@@ -275,7 +275,7 @@ class TestKVCacheManager:
 
     def test_cache_manager_creation(self):
         """Test cache manager creation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=2048,
@@ -291,7 +291,7 @@ class TestKVCacheManager:
 
     def test_create_cache(self):
         """Test cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             num_layers=4,
@@ -310,7 +310,7 @@ class TestKVCacheManager:
 
     def test_update_cache(self):
         """Test cache update."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=100,
@@ -334,7 +334,7 @@ class TestKVCacheManager:
 
     def test_cache_truncation(self):
         """Test that cache truncates when exceeding max length."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=20,  # Small max length
@@ -358,7 +358,7 @@ class TestKVCacheManager:
 
     def test_get_cache_length(self):
         """Test cache length retrieval."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(num_layers=1, num_heads=2, head_dim=16, device="cpu")
         manager = KVCacheManager(config)
@@ -374,7 +374,7 @@ class TestKVCacheManager:
 
     def test_get_memory_usage(self):
         """Test memory usage calculation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
+        from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(num_layers=2, num_heads=4, head_dim=32, device="cpu")
         manager = KVCacheManager(config)
@@ -397,7 +397,7 @@ class TestPagedKVCache:
 
     def test_paged_cache_creation(self):
         """Test paged cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=16,
@@ -413,7 +413,7 @@ class TestPagedKVCache:
 
     def test_initialize_pages(self):
         """Test page initialization."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=8,
@@ -432,7 +432,7 @@ class TestPagedKVCache:
 
     def test_allocate_pages(self):
         """Test page allocation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=16,
@@ -451,7 +451,7 @@ class TestPagedKVCache:
 
     def test_get_memory_usage(self):
         """Test memory usage reporting."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=8,
@@ -481,7 +481,7 @@ class TestSlidingWindowCache:
 
     def test_sliding_window_creation(self):
         """Test sliding window cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=256,
@@ -496,7 +496,7 @@ class TestSlidingWindowCache:
 
     def test_create_cache(self):
         """Test cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=128,
@@ -514,7 +514,7 @@ class TestSlidingWindowCache:
 
     def test_update_within_window(self):
         """Test update within window size."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=100,
@@ -536,7 +536,7 @@ class TestSlidingWindowCache:
 
     def test_sliding_window_truncation(self):
         """Test that cache slides when exceeding window size."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=50,
@@ -560,7 +560,7 @@ class TestSlidingWindowCache:
 
     def test_get_window_mask(self):
         """Test window mask generation."""
-        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
+        from torchbridge.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(window_size=10, device="cpu")
         sw_cache = SlidingWindowCache(config)
@@ -575,13 +575,13 @@ class TestFactoryFunction:
 
     def test_factory_function_exists(self):
         """Test factory function is importable."""
-        from kernel_pytorch.models.llm import create_optimized_llm
+        from torchbridge.models.llm import create_optimized_llm
 
         assert callable(create_optimized_llm)
 
     def test_factory_quantization_mapping(self):
         """Test quantization string mapping."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMConfig, QuantizationMode
+        from torchbridge.models.llm.llm_optimizer import LLMConfig, QuantizationMode
 
         quant_map = {
             "none": QuantizationMode.NONE,
@@ -603,7 +603,7 @@ class TestModuleExports:
 
     def test_llm_module_exports(self):
         """Test LLM module exports all required classes."""
-        from kernel_pytorch.models.llm import (
+        from torchbridge.models.llm import (
             GenerationConfig,
             KVCacheManager,
             LLMConfig,
@@ -631,7 +631,7 @@ class TestModuleExports:
 
     def test_models_module_exports_llm(self):
         """Test models module exports LLM components."""
-        from kernel_pytorch.models import (
+        from torchbridge.models import (
             LLMConfig,
             LLMOptimizer,
             create_optimized_llm,

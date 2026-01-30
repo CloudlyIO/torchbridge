@@ -5,7 +5,7 @@
 
 ## Overview
 
-This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROCm, and TPU backends in KernelPyTorch.
+This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROCm, and TPU backends in TorchBridge.
 
 ## Table of Contents
 
@@ -60,7 +60,7 @@ This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROC
 3. **Check Dependencies**
    ```python
    # Verify installation
-   from kernel_pytorch.core.hardware_detector import HardwareDetector
+   from torchbridge.core.hardware_detector import HardwareDetector
 
    detector = HardwareDetector()
    profile = detector.detect()
@@ -73,7 +73,7 @@ This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROC
 
 **Symptoms:**
 - `ImportError: cannot import name 'NVIDIABackend'`
-- `ModuleNotFoundError: No module named 'kernel_pytorch'`
+- `ModuleNotFoundError: No module named 'torchbridge'`
 
 **Solutions:**
 
@@ -81,20 +81,20 @@ This guide helps you diagnose and resolve common issues with NVIDIA GPU, AMD ROC
    ```bash
    pip install -e .  # Development mode
    # or
-   pip install kernel-pytorch
+   pip install torchbridge
    ```
 
 2. **Verify PYTHONPATH**
    ```bash
-   export PYTHONPATH=/path/to/kernel-pytorch/src:$PYTHONPATH
+   export PYTHONPATH=/path/to/torchbridge/src:$PYTHONPATH
    ```
 
 3. **Check Import Path**
    ```python
    # Correct imports
-   from kernel_pytorch.backends.nvidia import NVIDIABackend
-   from kernel_pytorch.backends.amd import AMDBackend
-   from kernel_pytorch.backends.tpu import TPUBackend
+   from torchbridge.backends.nvidia import NVIDIABackend
+   from torchbridge.backends.amd import AMDBackend
+   from torchbridge.backends.tpu import TPUBackend
    ```
 
 ---
@@ -145,7 +145,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 1. **Monitor Memory Usage**
    ```python
-   from kernel_pytorch.backends.nvidia import NVIDIABackend
+   from torchbridge.backends.nvidia import NVIDIABackend
 
    backend = NVIDIABackend(config)
    stats = backend.get_memory_stats()
@@ -172,7 +172,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 4. **Enable Gradient Checkpointing**
    ```python
    # Trade computation for memory
-   from kernel_pytorch.advanced_memory import SelectiveGradientCheckpointing
+   from torchbridge.advanced_memory import SelectiveGradientCheckpointing
 
    checkpointing = SelectiveGradientCheckpointing(model)
    ```
@@ -196,7 +196,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 1. **Check Hardware Compatibility**
    ```python
    # FlashAttention-3 requires H100/Blackwell
-   from kernel_pytorch.core.hardware_detector import HardwareDetector
+   from torchbridge.core.hardware_detector import HardwareDetector
 
    detector = HardwareDetector()
    profile = detector.detect()
@@ -316,8 +316,8 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 2. **Clear Kernel Cache**
    ```python
-   from kernel_pytorch.backends.amd import ROCmCompiler
-   from kernel_pytorch.core.config import AMDConfig
+   from torchbridge.backends.amd import ROCmCompiler
+   from torchbridge.core.config import AMDConfig
 
    compiler = ROCmCompiler(AMDConfig())
    compiler.clear_cache()
@@ -343,7 +343,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 1. **Monitor Memory Usage**
    ```python
-   from kernel_pytorch.backends.amd import AMDBackend
+   from torchbridge.backends.amd import AMDBackend
 
    backend = AMDBackend()
    info = backend.get_device_info()
@@ -352,7 +352,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 2. **Configure Memory Pool**
    ```python
-   from kernel_pytorch.core.config import AMDConfig
+   from torchbridge.core.config import AMDConfig
 
    config = AMDConfig(
        memory_pool_size_gb=8.0,  # Reduce pool size
@@ -367,7 +367,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 4. **Use Gradient Checkpointing**
    ```python
-   from kernel_pytorch.advanced_memory import SelectiveGradientCheckpointing
+   from torchbridge.advanced_memory import SelectiveGradientCheckpointing
 
    checkpointing = SelectiveGradientCheckpointing(model)
    ```
@@ -384,7 +384,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 1. **Check Architecture Support**
    ```python
-   from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+   from torchbridge.core.config import AMDConfig, AMDArchitecture
 
    # Only CDNA2 (MI200) and CDNA3 (MI300) have Matrix Cores
    config = AMDConfig(
@@ -481,7 +481,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 1. **Monitor TPU Memory**
    ```python
-   from kernel_pytorch.backends.tpu import TPUBackend
+   from torchbridge.backends.tpu import TPUBackend
 
    backend = TPUBackend(config)
    stats = backend.get_memory_stats()
@@ -498,7 +498,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 3. **Clear Memory Pools**
    ```python
    # For custom memory pools
-   from kernel_pytorch.backends.tpu import TPUMemoryManager
+   from torchbridge.backends.tpu import TPUMemoryManager
 
    memory_mgr = TPUMemoryManager(config.hardware.tpu)
    memory_mgr.clear_memory_pools()
@@ -532,7 +532,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 2. **Check Backend Selection**
    ```python
    # Ensure using correct backend
-   from kernel_pytorch.core.hardware_detector import HardwareDetector
+   from torchbridge.core.hardware_detector import HardwareDetector
 
    detector = HardwareDetector()
    recommended = detector.get_optimal_backend()
@@ -564,7 +564,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 2. **Enable Gradient Checkpointing**
    ```python
-   from kernel_pytorch.advanced_memory import SelectiveGradientCheckpointing
+   from torchbridge.advanced_memory import SelectiveGradientCheckpointing
 
    checkpointing = SelectiveGradientCheckpointing(
        model,
@@ -574,7 +574,7 @@ TPU backend automatically converts models to bfloat16 for optimal performance.
 
 3. **Use CPU Offloading**
    ```python
-   from kernel_pytorch.advanced_memory import CPUGPUHybridOptimizer
+   from torchbridge.advanced_memory import CPUGPUHybridOptimizer
 
    hybrid_optimizer = CPUGPUHybridOptimizer(
        optimizer=optimizer,
@@ -595,15 +595,15 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # For specific modules
-logging.getLogger('kernel_pytorch.backends.nvidia').setLevel(logging.DEBUG)
-logging.getLogger('kernel_pytorch.backends.amd').setLevel(logging.DEBUG)
-logging.getLogger('kernel_pytorch.backends.tpu').setLevel(logging.DEBUG)
+logging.getLogger('torchbridge.backends.nvidia').setLevel(logging.DEBUG)
+logging.getLogger('torchbridge.backends.amd').setLevel(logging.DEBUG)
+logging.getLogger('torchbridge.backends.tpu').setLevel(logging.DEBUG)
 ```
 
 ### Use Validation Tools
 
 ```python
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 validator = UnifiedValidator(config)
 
@@ -624,7 +624,7 @@ for report in model_result.reports:
 ### Monitor Performance
 
 ```python
-from kernel_pytorch.core.performance_tracker import PerformanceTracker
+from torchbridge.core.performance_tracker import PerformanceTracker
 
 tracker = PerformanceTracker()
 
@@ -673,7 +673,7 @@ If you encounter a bug:
    print(f"CUDA: {torch.version.cuda}")
 
    # Hardware info
-   from kernel_pytorch.core.hardware_detector import HardwareDetector
+   from torchbridge.core.hardware_detector import HardwareDetector
    detector = HardwareDetector()
    profile = detector.detect()
    print(f"Hardware: {profile.hardware_type}")
@@ -682,7 +682,7 @@ If you encounter a bug:
 2. **Create Minimal Reproduction**
    ```python
    # Simplest code that reproduces the issue
-   from kernel_pytorch.backends.nvidia import NVIDIABackend
+   from torchbridge.backends.nvidia import NVIDIABackend
    backend = NVIDIABackend(config)
    # ...reproduce issue...
    ```

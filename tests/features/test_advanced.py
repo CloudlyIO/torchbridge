@@ -21,18 +21,18 @@ import torch.nn.functional as F
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,
     MemoryConfig,
 )
-from kernel_pytorch.attention import (
+from torchbridge.attention import (
     AttentionConfig,
     AttentionPatterns,
     FlashAttention3,
     FP8AttentionConfig,
 )
-from kernel_pytorch.mixture_of_experts import MoEConfig, MoELayer, create_moe_layer
+from torchbridge.mixture_of_experts import MoEConfig, MoELayer, create_moe_layer
 
 
 class TestFlashAttention3:
@@ -54,7 +54,7 @@ class TestFlashAttention3:
 
     def test_attention_initialization(self, device):
         """Test FlashAttention-3 can be initialized properly"""
-        from kernel_pytorch.attention import AttentionConfig
+        from torchbridge.attention import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=768,

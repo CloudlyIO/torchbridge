@@ -10,7 +10,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.backends.nvidia import (
+from torchbridge.backends.nvidia import (
     CUDADeviceManager,
     CUDAOptimizations,
     FlashAttention3,
@@ -21,13 +21,13 @@ from kernel_pytorch.backends.nvidia import (
     create_cuda_integration,
     create_flash_attention_3,
 )
-from kernel_pytorch.backends.nvidia.nvidia_exceptions import (
+from torchbridge.backends.nvidia.nvidia_exceptions import (
     MemoryAllocationError,
     OutOfMemoryError,
 )
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
+from torchbridge.core.config import (
     NVIDIAArchitecture,
+    TorchBridgeConfig,
 )
 
 # ============================================================================
@@ -78,7 +78,7 @@ class TestNVIDIABackend:
         mock_device_props.minor = 0
         mock_props.return_value = mock_device_props
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         backend = NVIDIABackend(config)
         assert backend.is_h100
@@ -94,7 +94,7 @@ class TestNVIDIABackend:
         mock_device_props.minor = 0
         mock_props.return_value = mock_device_props
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         backend = NVIDIABackend(config)
         assert backend.supports_fp8
@@ -143,7 +143,7 @@ class TestNVIDIABackend:
 
     def test_backend_with_custom_config(self):
         """Test backend with custom configuration."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.fp8_enabled = False
         config.hardware.nvidia.cudnn_benchmark = False
         backend = NVIDIABackend(config)
@@ -220,7 +220,7 @@ class TestNVIDIAOptimizer:
 
     def test_mixed_precision_enablement(self):
         """Test mixed precision enablement."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.precision.mixed_precision = True
         optimizer = NVIDIAOptimizer(config)
         model = nn.Linear(16, 16)
@@ -250,21 +250,21 @@ class TestFP8Compiler:
 
     def test_fp8_support_hopper(self):
         """Test FP8 support detection for Hopper."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         assert compiler._fp8_supported
 
     def test_fp8_support_ampere(self):
         """Test FP8 support detection for Ampere."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.AMPERE
         compiler = FP8Compiler(config)
         assert not compiler._fp8_supported
 
     def test_prepare_for_fp8_inference(self):
         """Test FP8 preparation for inference."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         model = nn.Linear(16, 16)
@@ -273,7 +273,7 @@ class TestFP8Compiler:
 
     def test_prepare_for_fp8_training(self):
         """Test FP8 preparation for training."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         model = nn.Linear(16, 16)
@@ -282,7 +282,7 @@ class TestFP8Compiler:
 
     def test_fp8_stats(self):
         """Test FP8 statistics."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         model = nn.Sequential(
@@ -297,7 +297,7 @@ class TestFP8Compiler:
 
     def test_estimate_speedup_hopper(self):
         """Test speedup estimation for Hopper."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         model = nn.Linear(16, 16)
@@ -308,7 +308,7 @@ class TestFP8Compiler:
 
     def test_compile_with_fp8(self):
         """Test full FP8 compilation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         compiler = FP8Compiler(config)
         model = nn.Linear(16, 16)
@@ -484,7 +484,7 @@ class TestCUDAUtilities:
 
     def test_get_cuda_env_info(self):
         """Test CUDA environment info."""
-        from kernel_pytorch.backends.nvidia.cuda_utilities import CUDAUtilities
+        from torchbridge.backends.nvidia.cuda_utilities import CUDAUtilities
         info = CUDAUtilities.get_cuda_env_info()
         assert 'cuda_available' in info
 
@@ -523,7 +523,7 @@ class TestNVIDIAIntegration:
 
     def test_end_to_end_inference_optimization(self):
         """Test end-to-end inference optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = NVIDIAOptimizer(config)
         model = nn.Linear(128, 128)
         sample_input = torch.randn(1, 128)
@@ -615,7 +615,7 @@ class TestNVIDIAErrorPaths:
     def test_fp8_compiler_metadata_only_warning(self):
         """Test that FP8 compiler issues metadata-only warning."""
         import warnings
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         config.hardware.nvidia.fp8_enabled = True
 
@@ -716,7 +716,7 @@ class TestNVIDIAErrorPaths:
 
     def test_fp8_unsupported_architecture(self):
         """Test FP8 compiler on unsupported architecture."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.AMPERE  # Not Hopper/Blackwell
         config.hardware.nvidia.fp8_enabled = True
 
@@ -729,7 +729,7 @@ class TestNVIDIAErrorPaths:
 
     def test_backend_kernel_registry_integration(self):
         """Test that backend properly integrates with kernel registry."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.kernel.enabled = True
 
         backend = NVIDIABackend(config)

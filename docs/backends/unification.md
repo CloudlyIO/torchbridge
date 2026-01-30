@@ -5,7 +5,7 @@
 
 ## Overview
 
-KernelPyTorch v0.4.8 introduces a unified backend architecture that provides a consistent interface across all hardware backends (NVIDIA, AMD, TPU, Intel, CPU). This guide covers the new abstractions, the BackendFactory for automatic hardware detection, and best practices for cross-platform development.
+TorchBridge v0.4.8 introduces a unified backend architecture that provides a consistent interface across all hardware backends (NVIDIA, AMD, TPU, Intel, CPU). This guide covers the new abstractions, the BackendFactory for automatic hardware detection, and best practices for cross-platform development.
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ KernelPyTorch v0.4.8 introduces a unified backend architecture that provides a c
 ### Automatic Backend Selection (Recommended)
 
 ```python
-from kernel_pytorch.backends import (
+from torchbridge.backends import (
     BackendFactory,
     BackendType,
     get_backend,
@@ -53,7 +53,7 @@ print(f"Device: {info.device_name} ({info.device_type})")
 ### Explicit Backend Selection
 
 ```python
-from kernel_pytorch.backends import BackendFactory, BackendType
+from torchbridge.backends import BackendFactory, BackendType
 
 # Create specific backend
 nvidia_backend = BackendFactory.create(BackendType.NVIDIA)
@@ -192,7 +192,7 @@ with backend as b:
 ### Creating Backends
 
 ```python
-from kernel_pytorch.backends import BackendFactory, BackendType
+from torchbridge.backends import BackendFactory, BackendType
 
 # Auto-select best available backend
 backend = BackendFactory.create(BackendType.AUTO)
@@ -208,15 +208,15 @@ cpu = BackendFactory.create(BackendType.CPU)
 backend = BackendFactory.create("nvidia")
 
 # Pass configuration
-from kernel_pytorch.core.config import KernelPyTorchConfig
-config = KernelPyTorchConfig()
+from torchbridge.core.config import TorchBridgeConfig
+config = TorchBridgeConfig()
 backend = BackendFactory.create(BackendType.NVIDIA, config=config)
 ```
 
 ### Querying Available Backends
 
 ```python
-from kernel_pytorch.backends import (
+from torchbridge.backends import (
     BackendFactory,
     detect_best_backend,
     list_available_backends,
@@ -256,7 +256,7 @@ The AUTO selection follows this priority:
 ### OptimizationLevel Enum
 
 ```python
-from kernel_pytorch.backends import OptimizationLevel
+from torchbridge.backends import OptimizationLevel
 
 class OptimizationLevel(Enum):
     O0 = "O0"  # No optimization (device placement only)
@@ -295,7 +295,7 @@ OptimizationLevel.from_string("BALANCED")  # Case insensitive
 ### Usage
 
 ```python
-from kernel_pytorch.backends import get_backend, OptimizationLevel
+from torchbridge.backends import get_backend, OptimizationLevel
 
 backend = get_backend()
 
@@ -351,7 +351,7 @@ class DeviceInfo:
 ### Example Usage
 
 ```python
-from kernel_pytorch.backends import get_backend, DeviceInfo
+from torchbridge.backends import get_backend, DeviceInfo
 
 backend = get_backend()
 info: DeviceInfo = backend.get_device_info()
@@ -377,7 +377,7 @@ elif info.backend == "tpu":
 ### Creating Optimizers
 
 ```python
-from kernel_pytorch.backends import get_optimizer, OptimizationLevel
+from torchbridge.backends import get_optimizer, OptimizationLevel
 
 # Get optimizer for auto-selected backend
 optimizer = get_optimizer()
@@ -435,10 +435,10 @@ for strategy in strategies:
 
 ```python
 # Old: Direct backend instantiation
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.core.config import TorchBridgeConfig
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 backend = NVIDIABackend(config)
 model = backend.prepare_model(model)
 
@@ -450,7 +450,7 @@ info = backend.get_device_info()  # Dict[str, Any]
 
 ```python
 # New: Use BackendFactory
-from kernel_pytorch.backends import (
+from torchbridge.backends import (
     BackendFactory,
     BackendType,
     get_backend,
@@ -494,7 +494,7 @@ Some methods were renamed for clarity (old methods still work but emit warnings)
 
 ```python
 # DO: Use factory for cross-platform code
-from kernel_pytorch.backends import get_backend
+from torchbridge.backends import get_backend
 
 backend = get_backend()  # Works on any hardware
 model = backend.prepare_model(model)
@@ -503,7 +503,7 @@ model = backend.prepare_model(model)
 ### 2. Check Availability Before Use
 
 ```python
-from kernel_pytorch.backends import BackendFactory, BackendType
+from torchbridge.backends import BackendFactory, BackendType
 
 # Check if specific backend is available
 if BackendFactory.is_available(BackendType.NVIDIA):
@@ -515,7 +515,7 @@ else:
 ### 3. Use Context Manager for Cleanup
 
 ```python
-from kernel_pytorch.backends import get_backend
+from torchbridge.backends import get_backend
 
 with get_backend() as backend:
     model = backend.prepare_model(model)
@@ -527,7 +527,7 @@ with get_backend() as backend:
 ### 4. Handle Fallback Gracefully
 
 ```python
-from kernel_pytorch.backends import get_backend
+from torchbridge.backends import get_backend
 
 backend = get_backend()
 
@@ -539,7 +539,7 @@ if backend.BACKEND_NAME == "cpu":
 ### 5. Use Standardized DeviceInfo
 
 ```python
-from kernel_pytorch.backends import get_backend
+from torchbridge.backends import get_backend
 
 backend = get_backend()
 info = backend.get_device_info()
@@ -561,7 +561,7 @@ if info.total_memory_bytes > 0:
 ### Cross-Platform Training Loop
 
 ```python
-from kernel_pytorch.backends import get_backend, OptimizationLevel
+from torchbridge.backends import get_backend, OptimizationLevel
 import torch
 
 # Auto-select backend
@@ -591,7 +591,7 @@ for epoch in range(num_epochs):
 ### Backend Comparison
 
 ```python
-from kernel_pytorch.backends import BackendFactory, BackendType, OptimizationLevel
+from torchbridge.backends import BackendFactory, BackendType, OptimizationLevel
 import time
 
 backends_to_test = [BackendType.CPU, BackendType.NVIDIA, BackendType.AMD]
@@ -630,7 +630,7 @@ for backend_type in backends_to_test:
 ### Inference Pipeline
 
 ```python
-from kernel_pytorch.backends import get_backend, OptimizationLevel
+from torchbridge.backends import get_backend, OptimizationLevel
 
 def create_inference_pipeline(model, sample_input=None):
     """Create optimized inference pipeline."""

@@ -26,8 +26,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
-from kernel_pytorch.backends.tpu import (
+from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion, TPUTopology
+from torchbridge.backends.tpu import (
     TPUBackend,
     TPUOptimizer,
     XLACompiler,
@@ -38,7 +38,7 @@ from kernel_pytorch.backends.tpu import (
     XLAUtilities,
     create_xla_integration
 )
-from kernel_pytorch.validation.unified_validator import (
+from torchbridge.validation.unified_validator import (
     validate_tpu_configuration,
     validate_tpu_model
 )
@@ -86,7 +86,7 @@ class TPUBenchmarkRunner:
         """
         self.device = device
         self.quick_mode = quick_mode
-        self.config = KernelPyTorchConfig()
+        self.config = TorchBridgeConfig()
 
         print(f"🚀 TPU Integration Benchmark Suite")
         print(f"   Device: {device}")
@@ -106,15 +106,15 @@ class TPUBenchmarkRunner:
 
             config_start = time.perf_counter()
             for i in range(iterations):
-                config = KernelPyTorchConfig()
+                config = TorchBridgeConfig()
                 configs.append(config)
             config_time = time.perf_counter() - config_start
 
             # Test configuration modes
             mode_configs = {
-                'inference': KernelPyTorchConfig.for_inference(),
-                'training': KernelPyTorchConfig.for_training(),
-                'development': KernelPyTorchConfig.for_development()
+                'inference': TorchBridgeConfig.for_inference(),
+                'training': TorchBridgeConfig.for_training(),
+                'development': TorchBridgeConfig.for_development()
             }
 
             # Test serialization performance

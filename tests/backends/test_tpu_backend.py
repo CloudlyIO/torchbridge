@@ -11,7 +11,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.backends.tpu import (
+from torchbridge.backends.tpu import (
     TPUBackend,
     TPUMemoryManager,
     TPUOptimizer,
@@ -22,12 +22,12 @@ from kernel_pytorch.backends.tpu import (
     XLAUtilities,
     create_xla_integration,
 )
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
+from torchbridge.core.config import (
+    TorchBridgeConfig,
     TPUConfig,
     TPUVersion,
 )
-from kernel_pytorch.validation.unified_validator import (
+from torchbridge.validation.unified_validator import (
     validate_tpu_configuration,
     validate_tpu_model,
 )
@@ -38,7 +38,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_creation(self):
         """Test basic TPU backend creation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         assert backend is not None
@@ -49,7 +49,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_model_preparation(self):
         """Test model preparation for TPU."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         model = nn.Sequential(
@@ -64,7 +64,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_data_preparation(self):
         """Test data preparation for TPU."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Test tensor preparation
@@ -80,7 +80,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_memory_stats(self):
         """Test TPU backend memory statistics."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         stats = backend.get_memory_stats()
@@ -91,7 +91,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_synchronization(self):
         """Test TPU synchronization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Should not raise an error
@@ -99,7 +99,7 @@ class TestTPUBackend:
 
     def test_tpu_backend_cache_management(self):
         """Test TPU cache management."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Should not raise an error
@@ -111,7 +111,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_creation(self):
         """Test TPU optimizer creation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         assert optimizer is not None
@@ -121,7 +121,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_conservative_optimization(self):
         """Test conservative optimization level."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -136,7 +136,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_balanced_optimization(self):
         """Test balanced optimization level."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -150,7 +150,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_aggressive_optimization(self):
         """Test aggressive optimization level."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -164,7 +164,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_inference_optimization(self):
         """Test inference-specific optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -178,7 +178,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_training_optimization(self):
         """Test training-specific optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -191,7 +191,7 @@ class TestTPUOptimizer:
 
     def test_tpu_optimizer_stats(self):
         """Test optimizer statistics."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         stats = optimizer.get_optimization_stats()
@@ -200,7 +200,7 @@ class TestTPUOptimizer:
 
     def test_invalid_optimization_level(self):
         """Test invalid optimization level handling."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -215,7 +215,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_creation(self):
         """Test XLA compiler creation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         assert compiler is not None
@@ -223,7 +223,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_model_compilation(self):
         """Test model compilation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -234,7 +234,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_inference_optimization(self):
         """Test inference optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -246,7 +246,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_training_optimization(self):
         """Test training optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -257,7 +257,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_stats(self):
         """Test compilation statistics."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         stats = compiler.get_compilation_stats()
@@ -269,7 +269,7 @@ class TestXLACompiler:
 
     def test_xla_compiler_benchmark(self):
         """Test compilation benchmarking."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         compiler = XLACompiler(config.hardware.tpu)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -286,7 +286,7 @@ class TestTPUMemoryManager:
 
     def test_memory_manager_creation(self):
         """Test memory manager creation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         assert memory_manager is not None
@@ -294,7 +294,7 @@ class TestTPUMemoryManager:
 
     def test_tensor_allocation(self):
         """Test tensor allocation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         tensor = memory_manager.allocate_tensor((8, 64), dtype=torch.float32)
@@ -303,7 +303,7 @@ class TestTPUMemoryManager:
 
     def test_tensor_layout_optimization(self):
         """Test tensor layout optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         # Test 2D tensor optimization
@@ -314,7 +314,7 @@ class TestTPUMemoryManager:
 
     def test_memory_pool_creation(self):
         """Test memory pool creation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         pool_id = memory_manager.create_memory_pool(5, (8, 64))
@@ -325,7 +325,7 @@ class TestTPUMemoryManager:
 
     def test_memory_pool_operations(self):
         """Test memory pool tensor get/return operations."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         pool_id = memory_manager.create_memory_pool(3, (8, 64))
@@ -341,7 +341,7 @@ class TestTPUMemoryManager:
 
     def test_memory_stats(self):
         """Test memory statistics."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         stats = memory_manager.get_memory_stats()
@@ -351,7 +351,7 @@ class TestTPUMemoryManager:
 
     def test_memory_optimization(self):
         """Test memory optimization."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         # Should not raise an error
@@ -363,7 +363,7 @@ class TestXLAIntegration:
 
     def test_xla_device_manager(self):
         """Test XLA device manager."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         device_manager = XLADeviceManager(config.hardware.tpu)
 
         assert device_manager is not None
@@ -373,7 +373,7 @@ class TestXLAIntegration:
 
     def test_xla_distributed_training(self):
         """Test XLA distributed training setup."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         device_manager = XLADeviceManager(config.hardware.tpu)
         distributed = XLADistributedTraining(device_manager)
 
@@ -382,7 +382,7 @@ class TestXLAIntegration:
 
     def test_xla_optimizations(self):
         """Test XLA-specific optimizations."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizations = XLAOptimizations(config.hardware.tpu)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
@@ -398,7 +398,7 @@ class TestXLAIntegration:
 
     def test_create_xla_integration(self):
         """Test XLA integration factory."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         device_mgr, dist_training, opts = create_xla_integration(config.hardware.tpu)
 
         assert device_mgr is not None
@@ -411,7 +411,7 @@ class TestTPUValidation:
 
     def test_tpu_configuration_validation(self):
         """Test TPU configuration validation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         results = validate_tpu_configuration(config)
 
         assert results is not None
@@ -420,7 +420,7 @@ class TestTPUValidation:
 
     def test_tpu_model_validation(self):
         """Test TPU model validation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = nn.Sequential(
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -436,7 +436,7 @@ class TestTPUValidation:
 
     def test_tpu_validation_with_warnings(self):
         """Test TPU validation that should produce warnings."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         # Model with non-optimal dimensions
         model = nn.Sequential(
             nn.Linear(63, 31),  # Not divisible by 8
@@ -456,28 +456,28 @@ class TestTPUConfigurationModes:
 
     def test_inference_mode_tpu(self):
         """Test TPU configuration in inference mode."""
-        config = KernelPyTorchConfig.for_inference()
+        config = TorchBridgeConfig.for_inference()
         assert hasattr(config.hardware, 'tpu')
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_training_mode_tpu(self):
         """Test TPU configuration in training mode."""
-        config = KernelPyTorchConfig.for_training()
+        config = TorchBridgeConfig.for_training()
         assert hasattr(config.hardware, 'tpu')
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_development_mode_tpu(self):
         """Test TPU configuration in development mode."""
-        config = KernelPyTorchConfig.for_development()
+        config = TorchBridgeConfig.for_development()
         assert hasattr(config.hardware, 'tpu')
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_tpu_config_serialization_modes(self):
         """Test TPU config serialization in different modes."""
         configs = [
-            KernelPyTorchConfig.for_inference(),
-            KernelPyTorchConfig.for_training(),
-            KernelPyTorchConfig.for_development()
+            TorchBridgeConfig.for_inference(),
+            TorchBridgeConfig.for_training(),
+            TorchBridgeConfig.for_development()
         ]
 
         for config in configs:
@@ -497,14 +497,14 @@ class TestTPUErrorHandling:
 
     def test_invalid_memory_fraction(self):
         """Test validation of memory fraction bounds."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         results = validate_tpu_configuration(config)
         # Should pass with valid memory fraction
         assert results.failed == 0 or any('memory fraction' in r.message for r in results.reports if r.status.value == 'failed')
 
     def test_missing_sample_inputs(self):
         """Test model validation without sample inputs."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
 
         results = validate_tpu_model(model, config.hardware.tpu, sample_inputs=None)
@@ -513,7 +513,7 @@ class TestTPUErrorHandling:
 
     def test_backend_without_xla(self):
         """Test backend operations without XLA available."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Should work with CPU fallback
@@ -526,7 +526,7 @@ class TestTPUErrorPaths:
     def test_lru_cache_eviction(self):
         """Test LRU cache eviction when max size is exceeded."""
         # Create config with small cache
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.cache_max_size = 3
         backend = TPUBackend(config)
 
@@ -542,7 +542,7 @@ class TestTPUErrorPaths:
 
     def test_compilation_cache_limits(self):
         """Test XLA compiler cache size limits."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.cache_max_size = 2
         compiler = XLACompiler(config.hardware.tpu)
 
@@ -557,10 +557,10 @@ class TestTPUErrorPaths:
 
     def test_strict_validation_mode(self):
         """Test strict validation mode raises exceptions."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.enable_strict_validation = True
 
-        from kernel_pytorch.backends.tpu.tpu_exceptions import TPUValidationError
+        from torchbridge.backends.tpu.tpu_exceptions import TPUValidationError
 
         optimizer = TPUOptimizer(config)
         model = nn.Linear(10, 10)
@@ -574,7 +574,7 @@ class TestTPUErrorPaths:
 
     def test_custom_exceptions_importable(self):
         """Test that custom TPU exceptions can be imported and used."""
-        from kernel_pytorch.backends.tpu.tpu_exceptions import (
+        from torchbridge.backends.tpu.tpu_exceptions import (
             TPUBackendError,
             TPUMemoryError,
             TPUNotAvailableError,
@@ -590,7 +590,7 @@ class TestTPUErrorPaths:
 
     def test_memory_stats_with_retention(self):
         """Test memory allocation history retention."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.allocation_history_retention_seconds = 1  # 1 second
         manager = TPUMemoryManager(config.hardware.tpu)
 
@@ -611,7 +611,7 @@ class TestTPUErrorPaths:
 
     def test_configurable_tpu_memory_capacity(self):
         """Test configurable TPU memory capacity overrides."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.version = TPUVersion.V6E
         config.hardware.tpu.v6e_memory_gb = 64.0  # Custom value
 
@@ -622,7 +622,7 @@ class TestTPUErrorPaths:
 
     def test_cache_utils_statistics(self):
         """Test LRU cache statistics tracking."""
-        from kernel_pytorch.backends.tpu.cache_utils import LRUCache
+        from torchbridge.backends.tpu.cache_utils import LRUCache
 
         cache = LRUCache(max_size=5)
 
@@ -646,7 +646,7 @@ class TestTPUErrorPaths:
 
     def test_cache_eviction_behavior(self):
         """Test LRU cache eviction behavior."""
-        from kernel_pytorch.backends.tpu.cache_utils import LRUCache
+        from torchbridge.backends.tpu.cache_utils import LRUCache
 
         cache = LRUCache(max_size=3)
 
@@ -669,7 +669,7 @@ class TestTPUErrorPaths:
 
     def test_optimizer_with_invalid_level(self):
         """Test optimizer handles invalid optimization level."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
         model = nn.Linear(10, 10)
 
@@ -679,7 +679,7 @@ class TestTPUErrorPaths:
 
     def test_memory_pool_operations(self):
         """Test memory pool creation and retrieval."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         manager = TPUMemoryManager(config.hardware.tpu)
 
         # Create pool
@@ -701,9 +701,9 @@ class TestTPUErrorPaths:
 
     def test_compilation_mode_configuration(self):
         """Test different XLA compilation modes."""
-        from kernel_pytorch.core.config import TPUCompilationMode
+        from torchbridge.core.config import TPUCompilationMode
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.compilation_mode = TPUCompilationMode.TORCH_XLA
 
         compiler = XLACompiler(config.hardware.tpu)
@@ -719,12 +719,12 @@ class TestTPUErrorPaths:
         handler = logging.StreamHandler(log_stream)
         handler.setLevel(logging.INFO)
 
-        logger = logging.getLogger('kernel_pytorch.backends.tpu')
+        logger = logging.getLogger('torchbridge.backends.tpu')
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
 
         # Create backend (should log, not print)
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         TPUBackend(config)
 
         # Check that logs were captured
@@ -736,7 +736,7 @@ class TestTPUErrorPaths:
 
     def test_xla_optimization_levels(self):
         """Test XLA optimization level configuration."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config.hardware.tpu.xla_optimization_level = 2
 
         compiler = XLACompiler(config.hardware.tpu)
@@ -744,7 +744,7 @@ class TestTPUErrorPaths:
 
     def test_cache_clear_operations(self):
         """Test cache clearing functionality."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Add items to cache

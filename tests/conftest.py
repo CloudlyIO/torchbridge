@@ -1,5 +1,5 @@
 """
-Shared pytest fixtures for KernelPyTorch test suite.
+Shared pytest fixtures for TorchBridge test suite.
 
 This module provides reusable fixtures for:
 - Device detection and availability
@@ -212,23 +212,23 @@ def sample_data():
 
 @pytest.fixture
 def kernel_config():
-    """Default KernelPyTorchConfig for testing."""
-    from kernel_pytorch.core.config import KernelPyTorchConfig
-    return KernelPyTorchConfig()
+    """Default TorchBridgeConfig for testing."""
+    from torchbridge.core.config import TorchBridgeConfig
+    return TorchBridgeConfig()
 
 
 @pytest.fixture
 def production_config():
-    """Production-optimized KernelPyTorchConfig."""
-    from kernel_pytorch.core.config import KernelPyTorchConfig
-    return KernelPyTorchConfig.for_production()
+    """Production-optimized TorchBridgeConfig."""
+    from torchbridge.core.config import TorchBridgeConfig
+    return TorchBridgeConfig.for_production()
 
 
 @pytest.fixture
 def development_config():
-    """Development-friendly KernelPyTorchConfig."""
-    from kernel_pytorch.core.config import KernelPyTorchConfig
-    return KernelPyTorchConfig.for_development()
+    """Development-friendly TorchBridgeConfig."""
+    from torchbridge.core.config import TorchBridgeConfig
+    return TorchBridgeConfig.for_development()
 
 
 # ============================================================================
@@ -238,21 +238,21 @@ def development_config():
 @pytest.fixture
 def nvidia_config():
     """Default NVIDIA configuration."""
-    from kernel_pytorch.core.config import NVIDIAConfig
+    from torchbridge.core.config import NVIDIAConfig
     return NVIDIAConfig()
 
 
 @pytest.fixture
 def tpu_config():
     """Default TPU configuration."""
-    from kernel_pytorch.core.config import TPUConfig
+    from torchbridge.core.config import TPUConfig
     return TPUConfig()
 
 
 @pytest.fixture
 def amd_config():
     """Default AMD configuration."""
-    from kernel_pytorch.core.config import AMDConfig
+    from torchbridge.core.config import AMDConfig
     return AMDConfig()
 
 

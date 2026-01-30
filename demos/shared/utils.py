@@ -1,5 +1,5 @@
 """
-Shared utility functions for KernelPyTorch demos.
+Shared utility functions for TorchBridge demos.
 
 This module provides common utility functions used across demo scripts.
 
@@ -180,7 +180,7 @@ def format_time(milliseconds: float) -> str:
 # ============================================================================
 
 def setup_demo_args(
-    description: str = "KernelPyTorch Demo",
+    description: str = "TorchBridge Demo",
     add_quick: bool = True,
     add_device: bool = True,
     add_verbose: bool = True,

@@ -1,4 +1,4 @@
-# 🚀 KernelPyTorch Demos
+# 🚀 TorchBridge Demos
 
 **PyTorch optimization demonstrations with 2-6x performance improvements.**
 

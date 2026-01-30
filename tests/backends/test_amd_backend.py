@@ -20,7 +20,7 @@ import pytest
 import torch
 
 # Import AMD backend components
-from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
+from torchbridge.core.config import AMDArchitecture, AMDConfig
 
 
 class TestAMDConfig:
@@ -114,42 +114,42 @@ class TestAMDExceptions:
 
     def test_amd_backend_error(self):
         """Test AMDBackendError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import AMDBackendError
+        from torchbridge.backends.amd.amd_exceptions import AMDBackendError
 
         error = AMDBackendError("Test error")
         assert "Test error" in str(error)
 
     def test_rocm_not_available_error(self):
         """Test ROCmNotAvailableError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import ROCmNotAvailableError
+        from torchbridge.backends.amd.amd_exceptions import ROCmNotAvailableError
 
         error = ROCmNotAvailableError("ROCm not found")
         assert "ROCm" in str(error)
 
     def test_hip_compilation_error(self):
         """Test HIPCompilationError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import HIPCompilationError
+        from torchbridge.backends.amd.amd_exceptions import HIPCompilationError
 
         error = HIPCompilationError("test_kernel", "Compilation failed")
         assert "test_kernel" in str(error)
 
     def test_rocm_memory_error(self):
         """Test ROCmMemoryError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import ROCmMemoryError
+        from torchbridge.backends.amd.amd_exceptions import ROCmMemoryError
 
         error = ROCmMemoryError("allocation", required_mb=1000, available_mb=500)
         assert "1000" in str(error) or "allocation" in str(error)
 
     def test_matrix_core_error(self):
         """Test MatrixCoreError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import MatrixCoreError
+        from torchbridge.backends.amd.amd_exceptions import MatrixCoreError
 
         error = MatrixCoreError("enable", "cdna3", "Not supported")
         assert "Matrix" in str(error) or "cdna3" in str(error)
 
     def test_amd_optimization_error(self):
         """Test AMDOptimizationError exception."""
-        from kernel_pytorch.backends.amd.amd_exceptions import AMDOptimizationError
+        from torchbridge.backends.amd.amd_exceptions import AMDOptimizationError
 
         error = AMDOptimizationError("balanced", "Optimization failed")
         assert "balanced" in str(error) or "Optimization" in str(error)
@@ -160,7 +160,7 @@ class TestAMDOptimizer:
 
     def test_optimizer_creation(self):
         """Test optimizer creation."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig()
         optimizer = AMDOptimizer(config)
@@ -169,7 +169,7 @@ class TestAMDOptimizer:
 
     def test_optimization_levels(self):
         """Test different optimization levels."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         for level in ["conservative", "balanced", "aggressive"]:
             config = AMDConfig(optimization_level=level)
@@ -182,7 +182,7 @@ class TestAMDOptimizer:
 
     def test_optimization_result(self):
         """Test optimization result structure."""
-        from kernel_pytorch.backends.amd.amd_optimizer import (
+        from torchbridge.backends.amd.amd_optimizer import (
             AMDOptimizer,
         )
 
@@ -198,7 +198,7 @@ class TestAMDOptimizer:
 
     def test_optimization_with_conv_model(self):
         """Test optimization with convolutional model."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig()
         optimizer = AMDOptimizer(config)
@@ -218,7 +218,7 @@ class TestROCmCompiler:
 
     def test_compiler_creation(self):
         """Test compiler creation."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -227,7 +227,7 @@ class TestROCmCompiler:
 
     def test_compile_kernel(self):
         """Test kernel compilation."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -240,7 +240,7 @@ class TestROCmCompiler:
 
     def test_compilation_cache(self):
         """Test compilation cache."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -258,7 +258,7 @@ class TestROCmCompiler:
 
     def test_compilation_stats(self):
         """Test compilation statistics."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -271,7 +271,7 @@ class TestROCmCompiler:
 
     def test_clear_cache(self):
         """Test cache clearing."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -289,14 +289,14 @@ class TestAMDMemoryManager:
     @pytest.fixture
     def memory_manager(self):
         """Create memory manager for tests."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig(memory_pool_size_gb=1.0)
         return AMDMemoryManager(config, device_id=0)
 
     def test_memory_manager_creation(self):
         """Test memory manager creation."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig()
         manager = AMDMemoryManager(config)
@@ -343,14 +343,14 @@ class TestHIPUtilities:
     @pytest.fixture
     def hip_utils(self):
         """Create HIP utilities for tests."""
-        from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+        from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
         config = AMDConfig(enable_profiling=True)
         return HIPUtilities(config)
 
     def test_utilities_creation(self):
         """Test utilities creation."""
-        from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+        from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
         config = AMDConfig()
         utils = HIPUtilities(config)
@@ -372,7 +372,7 @@ class TestHIPUtilities:
 
     def test_profiling_disabled(self):
         """Test profiling when disabled."""
-        from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+        from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
         config = AMDConfig(enable_profiling=False)
         utils = HIPUtilities(config)
@@ -442,8 +442,8 @@ class TestAMDBackendIntegration:
     )
     def test_full_pipeline(self):
         """Test full optimization pipeline."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
-        from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA2,
@@ -470,7 +470,7 @@ class TestAMDBackendIntegration:
 
     def test_config_integration(self):
         """Test configuration integration with optimizer."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
@@ -492,7 +492,7 @@ class TestLRUCache:
 
     def test_lru_cache_basic(self):
         """Test basic LRU cache operations."""
-        from kernel_pytorch.backends.amd.rocm_compiler import LRUCache
+        from torchbridge.backends.amd.rocm_compiler import LRUCache
 
         cache = LRUCache(max_size=3)
 
@@ -506,7 +506,7 @@ class TestLRUCache:
 
     def test_lru_cache_eviction(self):
         """Test LRU cache eviction."""
-        from kernel_pytorch.backends.amd.rocm_compiler import LRUCache
+        from torchbridge.backends.amd.rocm_compiler import LRUCache
 
         cache = LRUCache(max_size=2)
 
@@ -520,7 +520,7 @@ class TestLRUCache:
 
     def test_lru_cache_update(self):
         """Test LRU cache update behavior."""
-        from kernel_pytorch.backends.amd.rocm_compiler import LRUCache
+        from torchbridge.backends.amd.rocm_compiler import LRUCache
 
         cache = LRUCache(max_size=2)
 
@@ -535,7 +535,7 @@ class TestLRUCache:
 
     def test_lru_cache_clear(self):
         """Test LRU cache clear."""
-        from kernel_pytorch.backends.amd.rocm_compiler import LRUCache
+        from torchbridge.backends.amd.rocm_compiler import LRUCache
 
         cache = LRUCache(max_size=3)
         cache.set("a", 1)
@@ -552,7 +552,7 @@ class TestAMDOperatorFusion:
 
     def test_conv_bn_fusion_pattern_detection(self):
         """Test Conv+BatchNorm fusion pattern detection."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(enable_operator_fusion=True)
         optimizer = AMDOptimizer(config)
@@ -570,7 +570,7 @@ class TestAMDOperatorFusion:
 
     def test_linear_gelu_fusion_pattern(self):
         """Test Linear+GELU fusion pattern detection."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(enable_operator_fusion=True)
         optimizer = AMDOptimizer(config)
@@ -589,7 +589,7 @@ class TestAMDOperatorFusion:
 
     def test_aggressive_fusion_patterns(self):
         """Test aggressive fusion patterns."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
@@ -610,7 +610,7 @@ class TestAMDOperatorFusion:
 
     def test_memory_layout_optimization(self):
         """Test memory layout optimization for HBM."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig()
         optimizer = AMDOptimizer(config)
@@ -633,7 +633,7 @@ class TestHIPCompilationEnhanced:
 
     def test_simulated_compilation(self):
         """Test simulated compilation without ROCm."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -655,7 +655,7 @@ class TestHIPCompilationEnhanced:
 
     def test_compilation_with_different_opt_levels(self):
         """Test compilation with different optimization levels."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         for level in ["conservative", "balanced", "aggressive"]:
             config = AMDConfig(optimization_level=level)
@@ -669,7 +669,7 @@ class TestHIPCompilationEnhanced:
 
     def test_gpu_target_mapping(self):
         """Test GPU target mapping for different architectures."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         arch_targets = {
             AMDArchitecture.CDNA2: "gfx90a",
@@ -686,7 +686,7 @@ class TestHIPCompilationEnhanced:
 
     def test_precompile_standard_kernels(self):
         """Test precompilation of standard kernels."""
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig()
         compiler = ROCmCompiler(config)
@@ -703,7 +703,7 @@ class TestAMDBackendEnhanced:
 
     def test_backend_with_all_architectures(self):
         """Test backend initialization with all architectures."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.amd_backend import AMDBackend
 
         for arch in [AMDArchitecture.CDNA2, AMDArchitecture.CDNA3,
                      AMDArchitecture.RDNA2, AMDArchitecture.RDNA3]:
@@ -716,8 +716,8 @@ class TestAMDBackendEnhanced:
 
     def test_backend_get_device_info(self):
         """Test unified device info method."""
-        from kernel_pytorch.backends import DeviceInfo
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends import DeviceInfo
+        from torchbridge.backends.amd.amd_backend import AMDBackend
 
         config = AMDConfig()
         backend = AMDBackend(config)
@@ -731,7 +731,7 @@ class TestAMDBackendEnhanced:
 
     def test_backend_optimize_for_inference(self):
         """Test inference optimization."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.amd_backend import AMDBackend
 
         config = AMDConfig()
         backend = AMDBackend(config)
@@ -744,7 +744,7 @@ class TestAMDBackendEnhanced:
 
     def test_backend_optimize_for_training(self):
         """Test training optimization."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.amd_backend import AMDBackend
 
         config = AMDConfig()
         backend = AMDBackend(config)
@@ -757,7 +757,7 @@ class TestAMDBackendEnhanced:
 
     def test_backend_with_optimizer(self):
         """Test training optimization with optimizer."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.amd_backend import AMDBackend
 
         config = AMDConfig()
         backend = AMDBackend(config)
@@ -776,7 +776,7 @@ class TestAMDMemoryManagerEnhanced:
 
     def test_memory_manager_defragmentation(self):
         """Test memory defragmentation."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig(memory_pool_size_gb=1.0)
         manager = AMDMemoryManager(config)
@@ -789,7 +789,7 @@ class TestAMDMemoryManagerEnhanced:
 
     def test_memory_stats_dataclass(self):
         """Test AMD memory stats dataclass."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig()
         manager = AMDMemoryManager(config)
@@ -803,7 +803,7 @@ class TestAMDMemoryManagerEnhanced:
 
     def test_memory_manager_cleanup(self):
         """Test memory manager cleanup."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig()
         manager = AMDMemoryManager(config)
@@ -813,7 +813,7 @@ class TestAMDMemoryManagerEnhanced:
 
     def test_tensor_size_estimation(self):
         """Test tensor size estimation."""
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig()
         manager = AMDMemoryManager(config)
@@ -830,8 +830,8 @@ class TestAMDIntegrationV049:
 
     def test_full_optimization_pipeline(self):
         """Test complete optimization pipeline."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
@@ -864,8 +864,8 @@ class TestAMDIntegrationV049:
 
     def test_optimizer_and_compiler_integration(self):
         """Test optimizer and compiler work together."""
-        from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
-        from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig(optimization_level="balanced")
 
@@ -886,8 +886,8 @@ class TestAMDIntegrationV049:
 
     def test_memory_manager_and_backend_integration(self):
         """Test memory manager and backend work together."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
-        from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+        from torchbridge.backends.amd.amd_backend import AMDBackend
+        from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
         config = AMDConfig()
 

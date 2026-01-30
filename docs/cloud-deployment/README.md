@@ -1,6 +1,6 @@
 # Cloud Deployment Guide
 
-Deploy KernelPyTorch on AWS, GCP, or Azure cloud platforms.
+Deploy TorchBridge on AWS, GCP, or Azure cloud platforms.
 
 ## Getting Started
 - [Validated Testing Guide](validated-guide.md) - **START HERE** - Validated cloud procedures

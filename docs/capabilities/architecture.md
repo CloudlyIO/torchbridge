@@ -1,13 +1,13 @@
 # 🏗️ Technical Architecture (v0.4.18)
 
-**KernelPyTorch unified framework architecture with production-ready GPU/TPU backends.**
+**TorchBridge unified framework architecture with production-ready GPU/TPU backends.**
 
 ## 📁 Unified Framework Structure
 
 ```
-src/kernel_pytorch/
+src/torchbridge/
 ├── core/                           # 🎯 UNIFIED CORE SYSTEM
-│   ├── config.py                  # Single KernelPyTorchConfig class
+│   ├── config.py                  # Single TorchBridgeConfig class
 │   ├── management/                # Unified management system
 │   │   └── unified_manager.py     # UnifiedManager (replaces 38+ classes)
 │   ├── compilers/                 # Compiler integrations
@@ -33,16 +33,16 @@ src/kernel_pytorch/
 #### **1. Unified Configuration System**
 ```python
 # Single source of truth for all settings
-from kernel_pytorch import KernelPyTorchConfig
+from torchbridge import TorchBridgeConfig
 
-config = KernelPyTorchConfig.for_production()
+config = TorchBridgeConfig.for_production()
 # Automatically configures: precision, memory, attention, hardware, distributed, validation
 ```
 
 #### **2. Unified Management System**
 ```python
 # Single manager replaces 38+ specialized classes
-from kernel_pytorch import UnifiedManager
+from torchbridge import UnifiedManager
 
 manager = UnifiedManager(config)
 optimized_model = manager.optimize_model(model)
@@ -52,7 +52,7 @@ optimized_model = manager.optimize_model(model)
 #### **3. Unified Validation Framework**
 ```python
 # Comprehensive validation replacing 31+ scattered functions
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge.validation import UnifiedValidator
 
 validator = UnifiedValidator()
 results = validator.validate_model(model, input_shape)
@@ -92,7 +92,7 @@ results = validator.validate_model(model, input_shape)
 ### **Unified Configuration Design**
 ```python
 @dataclass
-class KernelPyTorchConfig:
+class TorchBridgeConfig:
     """Unified configuration system."""
     precision: PrecisionConfig = field(default_factory=PrecisionConfig)
     memory: MemoryConfig = field(default_factory=MemoryConfig)
@@ -102,11 +102,11 @@ class KernelPyTorchConfig:
     validation: ValidationConfig = field(default_factory=ValidationConfig)
 
     @classmethod
-    def for_production(cls) -> 'KernelPyTorchConfig':
+    def for_production(cls) -> 'TorchBridgeConfig':
         """Production-optimized configuration."""
 
     @classmethod
-    def for_development(cls) -> 'KernelPyTorchConfig':
+    def for_development(cls) -> 'TorchBridgeConfig':
         """Development-friendly configuration."""
 ```
 
@@ -114,7 +114,7 @@ class KernelPyTorchConfig:
 ```python
 class UnifiedManager:
     """Consolidated management system."""
-    def __init__(self, config: KernelPyTorchConfig):
+    def __init__(self, config: TorchBridgeConfig):
         self.config = config
         self.hardware_manager = HardwareManager(config)
         self.optimization_manager = OptimizationManager(config)
@@ -134,7 +134,7 @@ class UnifiedValidator:
     def validate_model(self, model: nn.Module, input_shape: Tuple[int, ...]) -> ValidationSummary:
         """Multi-level model validation."""
 
-    def validate_configuration(self, config: KernelPyTorchConfig) -> ValidationSummary:
+    def validate_configuration(self, config: TorchBridgeConfig) -> ValidationSummary:
         """Configuration validation."""
 
     def validate_hardware_compatibility(self, device: torch.device) -> ValidationSummary:
@@ -145,7 +145,7 @@ class UnifiedValidator:
 
 ### **Cleanup Achievements**
 - **96% Complexity Reduction**: 74+ classes → 3 unified systems
-- **Configuration Consolidation**: 36+ Config classes → 1 KernelPyTorchConfig
+- **Configuration Consolidation**: 36+ Config classes → 1 TorchBridgeConfig
 - **Management Unification**: 38+ Manager/Optimizer classes → 1 UnifiedManager
 - **Validation Consolidation**: 31+ validation functions → 1 UnifiedValidator
 - **100% Backward Compatibility**: All existing code continues to work

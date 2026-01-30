@@ -60,47 +60,54 @@ class ValidationSuite:
 
 def test_compiler_integration():
     """Test compiler integration components."""
-    from kernel_pytorch.compiler_integration import (
-        FlashLightKernelCompiler,
-        PyGraphCUDAOptimizer,
-        FusionBoundaryOptimizer
+    # compiler_integration module was removed along with scaffold modules.
+    # Test that core optimizations are still available instead.
+    from torchbridge.optimizations.next_gen import (
+        CUDAGraphManager,
+        create_pygraph_optimizer,
     )
 
-    # Test instantiation
-    compiler = FlashLightKernelCompiler()
-    optimizer = PyGraphCUDAOptimizer()
-    fusion = FusionBoundaryOptimizer()
+    device = torch.device('cpu')
+    test_model = nn.Linear(64, 32)
 
-    # Test that they are instances (basic functionality test)
-    assert compiler is not None
+    # Test instantiation
+    manager = CUDAGraphManager(device)
+    optimizer = create_pygraph_optimizer(test_model, device=device)
+
+    assert manager is not None
     assert optimizer is not None
-    assert fusion is not None
 
     print("   Compiler integration components working")
 
 
 def test_next_gen_optimizations():
     """Test next-generation optimization features."""
-    from kernel_pytorch.next_gen_optimizations import (
-        AdaptivePrecisionAllocator,
-        AdvancedFlexAttention,
-        StructuredSparsity24
+    from torchbridge.optimizations.next_gen import (
+        CUDAGraphManager,
+        AutoGraphCapture,
+        SelectiveCUDAGraphs,
+        create_pygraph_optimizer,
     )
 
     # Test with a simple model
     test_model = nn.Linear(64, 32)
+    device = torch.device('cpu')
 
-    # Test AdaptivePrecisionAllocator
-    precision = AdaptivePrecisionAllocator(test_model)
-    assert precision is not None
+    # Test PyGraph optimizer
+    optimizer = create_pygraph_optimizer(test_model, device=device)
+    assert optimizer is not None
 
-    # Test AdvancedFlexAttention
-    flex_attn = AdvancedFlexAttention(embed_dim=128, num_heads=8)
-    assert isinstance(flex_attn, nn.Module)
+    # Test CUDAGraphManager
+    manager = CUDAGraphManager(device)
+    assert manager is not None
 
-    # Test StructuredSparsity24
-    sparse_opt = StructuredSparsity24()
-    assert sparse_opt is not None
+    # Test AutoGraphCapture
+    auto_capture = AutoGraphCapture(device)
+    assert auto_capture is not None
+
+    # Test SelectiveCUDAGraphs
+    selective = SelectiveCUDAGraphs(test_model, device)
+    assert selective is not None
 
     print("   Next-generation optimizations working")
 
@@ -111,7 +118,7 @@ def test_next_gen_optimizations():
 def test_compiler_optimized_components():
     """Test compiler-optimized components if they exist."""
     try:
-        from kernel_pytorch.compiler_optimized import (
+        from torchbridge.compiler_optimized import (
             CompilerOptimizedMultiHeadAttention,
             FlashAttentionWrapper,
             OptimizedLayerNorm
@@ -135,7 +142,7 @@ def test_compiler_optimized_components():
 
 def test_attention_modules():
     """Test advanced attention implementations."""
-    from kernel_pytorch.advanced_attention import (
+    from torchbridge.advanced_attention import (
         FlashAttention3,
         FlexAttentionAPI,
         MemoryEfficientAttention
@@ -207,11 +214,10 @@ def test_demo_functionality():
 def test_import_system():
     """Test that the main package imports work correctly."""
     # Test main package
-    import kernel_pytorch
+    import torchbridge  # noqa: F401
 
     # Test core components
-    from kernel_pytorch.compiler_integration import FlashLightKernelCompiler
-    from kernel_pytorch.next_gen_optimizations import AdaptivePrecisionAllocator
+    from torchbridge.optimizations.next_gen import create_pygraph_optimizer  # noqa: F401
 
     print("   Core import system working")
 

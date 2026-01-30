@@ -145,7 +145,7 @@ def mock_tokenizer():
 @pytest.fixture
 def llm_server(mock_llm_model, mock_tokenizer):
     """Create LLM server for testing."""
-    from kernel_pytorch.deployment.serving.llm_server import (
+    from torchbridge.deployment.serving.llm_server import (
         LLMServerConfig,
         create_llm_server,
     )
@@ -195,7 +195,7 @@ class TestServerLifecycle:
 
     def test_server_health_status(self, llm_server):
         """Test server health status."""
-        from kernel_pytorch.deployment.serving.llm_server import HealthStatus
+        from torchbridge.deployment.serving.llm_server import HealthStatus
 
         assert llm_server.status == HealthStatus.HEALTHY
 

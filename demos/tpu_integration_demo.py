@@ -30,8 +30,8 @@ from typing import Dict, Any, List, Optional
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
-from kernel_pytorch.backends.tpu import (
+from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion, TPUTopology
+from torchbridge.backends.tpu import (
     TPUBackend,
     TPUOptimizer,
     XLACompiler,
@@ -42,7 +42,7 @@ from kernel_pytorch.backends.tpu import (
     XLAUtilities,
     create_xla_integration
 )
-from kernel_pytorch.validation.unified_validator import (
+from torchbridge.validation.unified_validator import (
     validate_tpu_configuration,
     validate_tpu_model
 )
@@ -137,10 +137,10 @@ class TPUIntegrationDemo:
 
         # Create different configuration modes
         configs = {
-            'default': KernelPyTorchConfig(),
-            'inference': KernelPyTorchConfig.for_inference(),
-            'training': KernelPyTorchConfig.for_training(),
-            'development': KernelPyTorchConfig.for_development()
+            'default': TorchBridgeConfig(),
+            'inference': TorchBridgeConfig.for_inference(),
+            'training': TorchBridgeConfig.for_training(),
+            'development': TorchBridgeConfig.for_development()
         }
 
         for mode, config in configs.items():
@@ -183,7 +183,7 @@ class TPUIntegrationDemo:
         results = {}
 
         # Initialize TPU backend
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         print(f"   🎮 Backend Information:")
@@ -272,7 +272,7 @@ class TPUIntegrationDemo:
         results = {}
 
         # Initialize optimizer and compiler
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         optimizer = TPUOptimizer(config)
         compiler = XLACompiler(config.hardware.tpu)
 
@@ -383,7 +383,7 @@ class TPUIntegrationDemo:
         results = {}
 
         # Initialize memory manager
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
         print(f"   🏗️ Memory Manager Information:")
@@ -482,7 +482,7 @@ class TPUIntegrationDemo:
         results = {}
 
         # Create XLA integration components
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         device_mgr, dist_training, optimizations = create_xla_integration(config.hardware.tpu)
 
         print(f"   🎮 XLA Device Manager:")
@@ -562,7 +562,7 @@ class TPUIntegrationDemo:
 
         results = {}
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         # Configuration validation
         print(f"   📋 Configuration Validation:")

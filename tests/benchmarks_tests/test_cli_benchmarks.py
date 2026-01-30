@@ -57,7 +57,7 @@ class TestCLIPerformanceBenchmark:
         mock_run.return_value = mock_result
 
         benchmark = CLIPerformanceBenchmark()
-        result = benchmark.benchmark_cli_command(['-m', 'kernel_pytorch.cli', '--version'])
+        result = benchmark.benchmark_cli_command(['-m', 'torchbridge.cli', '--version'])
 
         assert result.success is True
         assert result.exit_code == 0
@@ -95,8 +95,8 @@ class TestCLIPerformanceBenchmark:
         results = benchmark.benchmark_import_performance()
 
         # Should have results for main modules
-        assert 'kernel_pytorch' in results
-        assert 'kernel_pytorch.cli' in results
+        assert 'torchbridge' in results
+        assert 'torchbridge.cli' in results
 
         # Times should be reasonable (positive numbers)
         for _module, time_ms in results.items():
@@ -172,7 +172,7 @@ class TestCLIPerformanceBenchmark:
     def test_run_all_benchmarks(self, mock_doctor, mock_help, mock_import):
         """Test running all benchmarks."""
         # Mock return values
-        mock_import.return_value = {'kernel_pytorch': 100.0}
+        mock_import.return_value = {'torchbridge': 100.0}
         mock_help.return_value = [CLIBenchmarkResult(
             command='test', execution_time_ms=50.0, memory_usage_mb=10.0,
             exit_code=0, stdout_lines=5, stderr_lines=0, success=True
@@ -193,7 +193,7 @@ class TestCLIPerformanceBenchmark:
         """Test results display."""
         benchmark = CLIPerformanceBenchmark()
         results = {
-            'import_performance': {'kernel_pytorch': 100.0},
+            'import_performance': {'torchbridge': 100.0},
             'help_commands': [{
                 'command': 'test --help',
                 'execution_time_ms': 50.0,
@@ -318,11 +318,11 @@ class TestBenchmarkIntegration:
         results = benchmark.benchmark_import_performance()
 
         # Should successfully benchmark core imports
-        assert 'kernel_pytorch' in results
-        assert results['kernel_pytorch'] > 0  # Should take some time
+        assert 'torchbridge' in results
+        assert results['torchbridge'] > 0  # Should take some time
 
         # CLI imports should also work
-        assert 'kernel_pytorch.cli' in results
+        assert 'torchbridge.cli' in results
 
     @pytest.mark.slow
     def test_cli_command_availability(self):
@@ -330,7 +330,7 @@ class TestBenchmarkIntegration:
         benchmark = CLIPerformanceBenchmark()
 
         # Test that we can at least check version
-        result = benchmark.benchmark_cli_command(['-m', 'kernel_pytorch.cli', '--version'], timeout=30)
+        result = benchmark.benchmark_cli_command(['-m', 'torchbridge.cli', '--version'], timeout=30)
 
         # Command should exist and run (success or help exit code)
         assert result.exit_code in [0, 2, -1]  # 0=success, 2=help, -1=timeout

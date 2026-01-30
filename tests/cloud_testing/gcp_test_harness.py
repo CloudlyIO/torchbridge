@@ -1,5 +1,5 @@
 """
-GCP Test Harness for KernelPyTorch Cloud Testing.
+GCP Test Harness for TorchBridge Cloud Testing.
 
 This module provides infrastructure for running tests on GCP,
 including Compute Engine instances (NVIDIA A3/A2) and TPU v5e/v6e.
@@ -99,7 +99,7 @@ class GCPInstanceConfig:
     def __post_init__(self):
         """Set default labels."""
         default_labels = {
-            "project": "kernelpytorch",
+            "project": "torchbridge",
             "environment": "testing",
             "managed-by": "cloud-testing-harness",
         }
@@ -120,7 +120,7 @@ class TPUConfig:
     def __post_init__(self):
         """Set default labels."""
         default_labels = {
-            "project": "kernelpytorch",
+            "project": "torchbridge",
             "environment": "testing",
             "managed-by": "cloud-testing-harness",
         }
@@ -175,7 +175,7 @@ class GCPTestResult:
 
 class GCPTestHarness:
     """
-    GCP Test Harness for KernelPyTorch.
+    GCP Test Harness for TorchBridge.
 
     Manages Compute Engine and TPU lifecycle and test execution.
 
@@ -217,7 +217,7 @@ class GCPTestHarness:
         self,
         config: GCPInstanceConfig,
         gcs_bucket: str | None = None,
-        monitoring_namespace: str = "kernelpytorch-testing",
+        monitoring_namespace: str = "torchbridge-testing",
     ):
         """
         Initialize GCP Test Harness.
@@ -250,7 +250,7 @@ class GCPTestHarness:
         Returns:
             Instance name
         """
-        self.instance_name = f"kpt-test-{int(time.time())}"
+        self.instance_name = f"tb-test-{int(time.time())}"
         logger.info(f"Launching {self.config.machine_type.value} as {self.instance_name}")
 
         if not self._google_cloud_available:
@@ -431,7 +431,7 @@ class GCPTestHarness:
 
 class TPUTestHarness:
     """
-    TPU Test Harness for KernelPyTorch.
+    TPU Test Harness for TorchBridge.
 
     Manages TPU lifecycle and test execution on GCP TPUs.
 
@@ -467,7 +467,7 @@ class TPUTestHarness:
 
     def create_tpu(self) -> str:
         """Create a TPU for testing."""
-        self.tpu_name = f"kpt-tpu-{int(time.time())}"
+        self.tpu_name = f"tb-tpu-{int(time.time())}"
         logger.info(f"Creating TPU {self.config.tpu_type.value} as {self.tpu_name}")
 
         if not self._tpu_available:

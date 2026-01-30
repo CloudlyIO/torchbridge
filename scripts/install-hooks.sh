@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install Git Hooks for KernelPyTorch
+# Install Git Hooks for TorchBridge
 #
 # This script installs custom git hooks from .githooks/ to .git/hooks/
 #
@@ -23,7 +23,7 @@ if [[ "$1" == "--force" ]]; then
 fi
 
 echo "=================================================="
-echo "  Installing KernelPyTorch Git Hooks"
+echo "  Installing TorchBridge Git Hooks"
 echo "=================================================="
 echo ""
 

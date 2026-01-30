@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Intel XPU Backend Validation - Intel DevCloud
-# KernelPyTorch v0.4.10
+# TorchBridge v0.4.10
 #
 # Validates Intel backend on real Intel XPU hardware (PVC, Arc, Flex)
 # Run on Intel DevCloud or any system with Intel GPU + IPEX
@@ -12,7 +12,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../common/utils.sh" 2>/dev/null || true
 
-export WORK_DIR="${WORK_DIR:-$HOME/kernel_pytorch_test}"
+export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="intel"
 export PLATFORM="intel_devcloud"
@@ -36,7 +36,7 @@ print_header "Intel XPU Backend Validation v$VERSION"
 log_step "1/6" "Environment Setup"
 
 cd "$WORK_DIR"
-export PYTHONPATH="$WORK_DIR/kernel_pytorch:$PYTHONPATH"
+export PYTHONPATH="$WORK_DIR/torchbridge:$PYTHONPATH"
 
 # Source oneAPI environment if available
 if [ -f /opt/intel/oneapi/setvars.sh ]; then
@@ -241,7 +241,7 @@ results = {"version": "0.4.10", "features": {}}
 # 1. Test Backend Initialization
 print("\n1. Backend Initialization:")
 try:
-    from kernel_pytorch.backends.intel import IntelBackend
+    from torchbridge.backends.intel import IntelBackend
     backend = IntelBackend()
     print(f"  Backend device: {backend.device}")
     print(f"  XPU available: {backend.is_xpu_available}")
@@ -254,7 +254,7 @@ except Exception as e:
 # 2. Test DeviceInfo
 print("\n2. Device Info (Unified API):")
 try:
-    from kernel_pytorch.backends import DeviceInfo
+    from torchbridge.backends import DeviceInfo
     info = backend.get_device_info()
     print(f"  Backend: {info.backend}")
     print(f"  Device type: {info.device_type}")
@@ -267,10 +267,10 @@ except Exception as e:
 # 3. Test Optimizer
 print("\n3. Intel Optimizer:")
 try:
-    from kernel_pytorch.backends.intel import IntelOptimizer
-    from kernel_pytorch.core.config import KernelPyTorchConfig
+    from torchbridge.backends.intel import IntelOptimizer
+    from torchbridge.core.config import TorchBridgeConfig
 
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     optimizer = IntelOptimizer(config)
 
     model = torch.nn.Linear(256, 128)
@@ -286,7 +286,7 @@ except Exception as e:
 # 4. Test Memory Manager
 print("\n4. Memory Manager:")
 try:
-    from kernel_pytorch.backends.intel import IntelMemoryManager
+    from torchbridge.backends.intel import IntelMemoryManager
 
     mem_manager = IntelMemoryManager(config=None, device_id=0)
     stats = mem_manager.get_memory_stats()
@@ -378,7 +378,7 @@ except:
 report = f"""# Intel XPU Backend Validation Report - v{version}
 
 **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Version:** KernelPyTorch v{version}
+**Version:** TorchBridge v{version}
 **Platform:** Intel DevCloud
 **Backend:** Intel XPU (IPEX)
 

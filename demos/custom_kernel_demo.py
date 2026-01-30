@@ -20,9 +20,9 @@ import sys
 # Add src to path
 sys.path.insert(0, 'src')
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, PrecisionFormat
-from kernel_pytorch.backends.nvidia.nvidia_backend import NVIDIABackend
-from kernel_pytorch.core.kernel_registry import KernelType
+from torchbridge.core.config import TorchBridgeConfig, PrecisionFormat
+from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
+from torchbridge.core.kernel_registry import KernelType
 
 # Use shared utilities
 from demos.shared.utils import print_section
@@ -33,7 +33,7 @@ def demo_kernel_registry():
     print_section("1. Kernel Registry System")
 
     # Create config and backend
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -130,7 +130,7 @@ def demo_fused_linear_activation(backend: NVIDIABackend):
         print("   Running CPU version for illustration...")
 
     try:
-        from kernel_pytorch.hardware.gpu.custom_kernels import (
+        from torchbridge.hardware.gpu.custom_kernels import (
             FusedLinearGELU, FusedLinearSiLU, create_fused_ffn_layer
         )
 
@@ -244,9 +244,9 @@ def demo_validation():
     """Demonstrate kernel validation."""
     print_section("5. Kernel Validation")
 
-    from kernel_pytorch.validation.unified_validator import validate_custom_kernels
+    from torchbridge.validation.unified_validator import validate_custom_kernels
 
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
 
     print("Running kernel validation...")

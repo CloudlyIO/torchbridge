@@ -2,7 +2,7 @@
 
 ## Overview
 
-Dynamic Shape Bucketing is an advanced optimization technique in KernelPyTorch that provides **3x speedups on variable-size inputs** by intelligently grouping similar shapes into optimized buckets that minimize memory overhead while maximizing GPU utilization.
+Dynamic Shape Bucketing is an advanced optimization technique in TorchBridge that provides **3x speedups on variable-size inputs** by intelligently grouping similar shapes into optimized buckets that minimize memory overhead while maximizing GPU utilization.
 
 ## 🎯 Key Benefits
 
@@ -17,7 +17,7 @@ Dynamic Shape Bucketing is an advanced optimization technique in KernelPyTorch t
 ### Basic Usage
 
 ```python
-from kernel_pytorch.optimization_patterns import (
+from torchbridge.optimization_patterns import (
     DynamicShapeModule,
     create_optimal_bucketing_system,
     BucketingStrategy
@@ -56,7 +56,7 @@ for input_tensor in variable_inputs:
 ### Advanced Configuration
 
 ```python
-from kernel_pytorch.optimization_patterns import DynamicShapeBucketing
+from torchbridge.optimization_patterns import DynamicShapeBucketing
 
 # Custom bucketing configuration
 bucketing = DynamicShapeBucketing(
@@ -205,7 +205,7 @@ for bucket_info in analysis['bucket_details'][:5]:  # Top 5 buckets
 ### Benchmarking
 
 ```python
-from kernel_pytorch.optimization_patterns import benchmark_dynamic_shapes
+from torchbridge.optimization_patterns import benchmark_dynamic_shapes
 
 # Compare against baseline
 results = benchmark_dynamic_shapes(
@@ -426,12 +426,12 @@ class ProfiledDynamicModel(DynamicShapeModule):
 ## 📚 API Reference
 
 For detailed API documentation, see:
-- [`DynamicShapeBucketing`](../src/kernel_pytorch/optimization_patterns/dynamic_shapes.py)
-- [`DynamicShapeModule`](../src/kernel_pytorch/optimization_patterns/dynamic_shapes.py)
+- [`DynamicShapeBucketing`](../src/torchbridge/optimization_patterns/dynamic_shapes.py)
+- [`DynamicShapeModule`](../src/torchbridge/optimization_patterns/dynamic_shapes.py)
 - [Test examples](../tests/test_dynamic_shapes.py)
 - [Demo source](../demos/compiler/shapes.py)
 - [Benchmark suite](../benchmarks/dynamic_shapes_benchmark.py)
 
 ---
 
-*For more optimization patterns and advanced techniques, see the [main documentation](README.md) and explore other modules in the `kernel_pytorch.optimization_patterns` package.*
+*For more optimization patterns and advanced techniques, see the [main documentation](README.md) and explore other modules in the `torchbridge.optimization_patterns` package.*

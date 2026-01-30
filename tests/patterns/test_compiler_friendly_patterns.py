@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from kernel_pytorch.optimizations.patterns.compiler_friendly import (
+from torchbridge.optimizations.patterns.compiler_friendly import (
     COMPILER_BEST_PRACTICES,
     CompilationCompatibility,
     CompilerType,

@@ -2,7 +2,7 @@
 
 > **Version**: v0.4.27 | **Status**: Current | **Last Updated**: 2026-01-26
 
-Complete checklist for deploying KernelPyTorch models to production environments.
+Complete checklist for deploying TorchBridge models to production environments.
 
 ---
 
@@ -12,12 +12,12 @@ Complete checklist for deploying KernelPyTorch models to production environments
 
 - [ ] **Forward pass verification** - Model produces expected output
   ```bash
-  kpt-doctor --full-report
+  tb-doctor --full-report
   ```
 
 - [ ] **Determinism check** - Same input produces same output
   ```python
-  from kernel_pytorch.deployment import validate_production_readiness
+  from torchbridge.deployment import validate_production_readiness
   result = validate_production_readiness(model, sample_input)
   print(result.summary())
   ```
@@ -34,22 +34,22 @@ Complete checklist for deploying KernelPyTorch models to production environments
 
 - [ ] **Latency benchmark**
   ```bash
-  kpt-benchmark --model model.pt --quick
+  tb-benchmark --model model.pt --quick
   ```
 
 - [ ] **Memory profiling**
   ```bash
-  kpt-profile --model model.pt --mode memory
+  tb-profile --model model.pt --mode memory
   ```
 
 - [ ] **Throughput test** - Meets SLA requirements
   ```bash
-  kpt-benchmark --model model.pt --stress --batch-sizes 1,4,8,16,32
+  tb-benchmark --model model.pt --stress --batch-sizes 1,4,8,16,32
   ```
 
 - [ ] **GPU utilization** - Verify efficient GPU usage
   ```bash
-  kpt-profile --model model.pt --mode detailed --device cuda
+  tb-profile --model model.pt --mode detailed --device cuda
   ```
 
 ---
@@ -60,21 +60,21 @@ Complete checklist for deploying KernelPyTorch models to production environments
 
 | Use Case | Recommended Format | Command |
 |----------|-------------------|---------|
-| Cross-platform inference | ONNX | `kpt-export --format onnx` |
-| PyTorch ecosystem | TorchScript | `kpt-export --format torchscript` |
-| Secure weight storage | SafeTensors | `kpt-export --format safetensors` |
-| Multiple formats | All | `kpt-export --format all` |
+| Cross-platform inference | ONNX | `tb-export --format onnx` |
+| PyTorch ecosystem | TorchScript | `tb-export --format torchscript` |
+| Secure weight storage | SafeTensors | `tb-export --format safetensors` |
+| Multiple formats | All | `tb-export --format all` |
 
 ### Export Validation
 
 - [ ] **ONNX export**
   ```bash
-  kpt-export --model model.pt --format onnx --validate --output model.onnx
+  tb-export --model model.pt --format onnx --validate --output model.onnx
   ```
 
 - [ ] **TorchScript export**
   ```bash
-  kpt-export --model model.pt --format torchscript --validate --method trace
+  tb-export --model model.pt --format torchscript --validate --method trace
   ```
 
 - [ ] **Export file integrity** - Verify files can be loaded
@@ -86,7 +86,7 @@ Complete checklist for deploying KernelPyTorch models to production environments
 
 - [ ] **Dynamic axes configured** (if variable batch/sequence)
   ```bash
-  kpt-export --model model.pt --format onnx --dynamic-axes
+  tb-export --model model.pt --format onnx --dynamic-axes
   ```
 
 ---
@@ -98,7 +98,7 @@ Complete checklist for deploying KernelPyTorch models to production environments
 - [ ] **GPU memory** - Model + activations + overhead fit in VRAM
   ```python
   # Check model memory requirement
-  from kernel_pytorch import get_manager
+  from torchbridge import get_manager
   manager = get_manager()
   memory_estimate = manager.estimate_memory(model, batch_size=32)
   print(f"Estimated memory: {memory_estimate / 1024**3:.2f} GB")
@@ -110,9 +110,9 @@ Complete checklist for deploying KernelPyTorch models to production environments
 ### Container Setup
 
 - [ ] **Base image selected**
-  - CPU: `ghcr.io/kernelpytorch/kernel-pytorch:latest-cpu`
-  - NVIDIA: `ghcr.io/kernelpytorch/kernel-pytorch:latest-nvidia`
-  - Production: `ghcr.io/kernelpytorch/kernel-pytorch:latest-production`
+  - CPU: `ghcr.io/torchbridge/torchbridge:latest-cpu`
+  - NVIDIA: `ghcr.io/torchbridge/torchbridge:latest-nvidia`
+  - Production: `ghcr.io/torchbridge/torchbridge:latest-production`
 
 - [ ] **Dependencies pinned** - `requirements.txt` with exact versions
 
@@ -156,7 +156,7 @@ Complete checklist for deploying KernelPyTorch models to production environments
 - [ ] **Input validation** - Reject malformed requests
 - [ ] **Timeout configuration** - Prevent hanging requests
   ```python
-  from kernel_pytorch.deployment.serving import ServerConfig
+  from torchbridge.deployment.serving import ServerConfig
   config = ServerConfig(
       timeout_seconds=30,
       max_batch_size=32,
@@ -305,22 +305,22 @@ Complete checklist for deploying KernelPyTorch models to production environments
 
 ```bash
 # System validation
-kpt-doctor --full-report
+tb-doctor --full-report
 
 # Model optimization
-kpt-optimize --model model.pt --level production --output optimized.pt
+tb-optimize --model model.pt --level production --output optimized.pt
 
 # Benchmarking
-kpt-benchmark --model optimized.pt --comprehensive
+tb-benchmark --model optimized.pt --comprehensive
 
 # Profiling
-kpt-profile --model optimized.pt --mode summary
+tb-profile --model optimized.pt --mode summary
 
 # Export
-kpt-export --model optimized.pt --format all --validate --output-dir exports/
+tb-export --model optimized.pt --format all --validate --output-dir exports/
 
 # Serving (Python)
-from kernel_pytorch.deployment.serving import create_fastapi_server, run_server
+from torchbridge.deployment.serving import create_fastapi_server, run_server
 server = create_fastapi_server(model)
 run_server(server, host="0.0.0.0", port=8000)
 ```
@@ -349,4 +349,4 @@ run_server(server, host="0.0.0.0", port=8000)
 
 ---
 
-*Last verified with KernelPyTorch v0.4.27*
+*Last verified with TorchBridge v0.4.27*

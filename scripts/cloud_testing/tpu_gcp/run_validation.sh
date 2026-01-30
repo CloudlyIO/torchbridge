@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # TPU Backend Validation - GCP (v5e/v5p)
-# KernelPyTorch v0.3.7
+# TorchBridge v0.3.7
 # =============================================================================
 
 set -e
@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../common/utils.sh"
 
-export WORK_DIR="${WORK_DIR:-$HOME/kernel_pytorch_test}"
+export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="tpu"
 export PLATFORM="gcp"
@@ -24,7 +24,7 @@ print_header "TPU Backend Validation (GCP)"
 log_step "1/5" "Environment Setup"
 
 cd "$WORK_DIR"
-export PYTHONPATH="$WORK_DIR/kernel_pytorch:$PYTHONPATH"
+export PYTHONPATH="$WORK_DIR/torchbridge:$PYTHONPATH"
 
 # Install dependencies
 install_python_deps

@@ -2,7 +2,7 @@
 CLIP Optimization Example
 
 This example demonstrates how to optimize CLIP models for efficient
-vision-language embedding using KernelPyTorch multi-modal optimization.
+vision-language embedding using TorchBridge multi-modal optimization.
 
 Demonstrates:
 - Loading pre-trained CLIP models
@@ -12,7 +12,7 @@ Demonstrates:
 """
 
 import torch
-from kernel_pytorch.models.multimodal import (
+from torchbridge.models.multimodal import (
     create_clip_vit_b_optimized,
     create_clip_vit_l_optimized,
     CLIPBenchmark,

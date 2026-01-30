@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or enhancement for KernelPyTorch
+description: Suggest a new feature or enhancement for TorchBridge
 title: "[Feature]: "
 labels: ["enhancement", "triage"]
 assignees: []
@@ -40,7 +40,7 @@ body:
       description: How would you use this feature? Provide code examples if applicable.
       render: python
       placeholder: |
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         # How you'd like to use the feature
         result = kpt.new_feature(...)

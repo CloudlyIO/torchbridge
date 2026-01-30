@@ -15,20 +15,20 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.backends.nvidia.nvidia_backend import NVIDIABackend
-from kernel_pytorch.core.config import KernelPyTorchConfig, PrecisionFormat
-from kernel_pytorch.core.kernel_registry import (
+from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
+from torchbridge.core.config import PrecisionFormat, TorchBridgeConfig
+from torchbridge.core.kernel_registry import (
     KernelRegistry,
     KernelType,
 )
-from kernel_pytorch.validation.unified_validator import validate_custom_kernels
+from torchbridge.validation.unified_validator import validate_custom_kernels
 
 
 # Test fixtures
 @pytest.fixture
 def kernel_config():
     """Create a kernel-enabled configuration."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     config.kernel.flash_attention_enabled = True
     config.kernel.fuse_linear_activation = True
@@ -95,7 +95,7 @@ def test_kernel_config_creation(kernel_config):
 
 def test_kernel_config_auto_configuration():
     """Test auto-configuration based on hardware."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
 
     # Verify kernel config was auto-configured in __post_init__
     assert hasattr(config.kernel, 'flash_attention_version')
@@ -122,7 +122,7 @@ def test_backend_kernel_registry_initialization(nvidia_backend):
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_backend_registers_kernels_on_cuda():
     """Test that backend registers kernels when CUDA is available."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -153,7 +153,7 @@ def test_backend_optimal_kernel_selection_no_cuda(nvidia_backend):
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_backend_optimal_kernel_selection_with_cuda():
     """Test optimal kernel selection with CUDA."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -182,7 +182,7 @@ def test_model_preparation_without_cuda(nvidia_backend):
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_model_preparation_with_cuda():
     """Test model preparation with CUDA."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     config.kernel.fuse_linear_activation = True
     backend = NVIDIABackend(config)
@@ -198,7 +198,7 @@ def test_model_preparation_with_cuda():
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_model_fusion_replacement():
     """Test that Linear+GELU gets replaced with fused kernel."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     config.kernel.fuse_linear_activation = True
     config.kernel.fused_gelu_enabled = True
@@ -231,7 +231,7 @@ def test_precision_format_support(kernel_config):
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_mixed_precision_kernel_selection():
     """Test kernel selection with different precisions."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -256,7 +256,7 @@ def test_mixed_precision_kernel_selection():
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_e2e_transformer_forward_pass():
     """Test end-to-end transformer forward pass with custom kernels."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -284,7 +284,7 @@ def test_e2e_transformer_forward_pass():
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_e2e_transformer_backward_pass():
     """Test end-to-end transformer backward pass."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = True
     backend = NVIDIABackend(config)
 
@@ -316,7 +316,7 @@ def test_e2e_transformer_backward_pass():
 
 def test_fallback_when_kernels_disabled():
     """Test that system falls back gracefully when kernels disabled."""
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.kernel.enabled = False
     backend = NVIDIABackend(config)
 
@@ -345,10 +345,10 @@ def test_fallback_when_imports_fail(nvidia_backend, monkeypatch):
 @pytest.mark.benchmark
 def test_custom_kernels_maintain_correctness():
     """Test that custom kernels maintain numerical correctness."""
-    config_baseline = KernelPyTorchConfig()
+    config_baseline = TorchBridgeConfig()
     config_baseline.kernel.enabled = False
 
-    config_optimized = KernelPyTorchConfig()
+    config_optimized = TorchBridgeConfig()
     config_optimized.kernel.enabled = True
 
     backend_baseline = NVIDIABackend(config_baseline)

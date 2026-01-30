@@ -13,13 +13,10 @@ import torch.nn.functional as F
 
 # Import FP8 modules
 try:
-    from kernel_pytorch.precision import (
+    from torchbridge.precision import (
         FP8Config,
         FP8Format,
-        FP8LinearLayer,
-        FP8Optimizer,  # noqa: F401
         FP8TrainingEngine,
-        convert_model_to_fp8,
         create_fp8_trainer,
         validate_fp8_setup,
     )
@@ -130,48 +127,6 @@ class TestFP8Config:
 
 
 @pytest.mark.skipif(not FP8_AVAILABLE, reason="FP8 training not available")
-class TestFP8LinearLayer:
-    """Test FP8 Linear layer"""
-
-    def test_layer_creation(self, fp8_config):
-        """Test FP8 linear layer creation"""
-        layer = FP8LinearLayer(256, 128, bias=True, fp8_config=fp8_config)
-
-        assert layer.in_features == 256
-        assert layer.out_features == 128
-        assert layer.bias is not None
-
-    def test_forward_pass(self, fp8_config):
-        """Test forward pass through FP8 layer"""
-        layer = FP8LinearLayer(256, 128, fp8_config=fp8_config)
-        x = torch.randn(4, 256)
-
-        output = layer(x)
-
-        assert output.shape == (4, 128)
-        assert torch.isfinite(output).all()
-
-    def test_scale_updates(self, fp8_config):
-        """Test FP8 scale updates"""
-        layer = FP8LinearLayer(256, 128, fp8_config=fp8_config)
-        layer.train()
-
-        # Forward pass should update AMAX
-        x = torch.randn(4, 256)
-        layer(x)
-
-        initial_input_amax = layer.input_amax.item()
-        layer.weight_amax.item()
-
-        # Another forward pass
-        x2 = torch.randn(4, 256) * 10  # Larger input
-        layer(x2)
-
-        # AMAX should have updated
-        assert layer.input_amax.item() >= initial_input_amax
-
-
-@pytest.mark.skipif(not FP8_AVAILABLE, reason="FP8 training not available")
 class TestFP8TrainingEngine:
     """Test FP8 training engine"""
 
@@ -251,33 +206,6 @@ class TestFP8TrainingEngine:
 
 
 @pytest.mark.skipif(not FP8_AVAILABLE, reason="FP8 training not available")
-class TestFP8ModelConversion:
-    """Test model conversion to FP8"""
-
-    def test_convert_model(self, simple_model, fp8_config):
-        """Test converting model to FP8"""
-        original_linear_count = sum(1 for m in simple_model.modules() if isinstance(m, nn.Linear))
-
-        fp8_model = convert_model_to_fp8(simple_model, fp8_config, inplace=False)
-
-        fp8_linear_count = sum(1 for m in fp8_model.modules() if isinstance(m, FP8LinearLayer))
-
-        # Should have converted linear layers
-        assert fp8_linear_count > 0
-        assert original_linear_count >= fp8_linear_count
-
-    def test_converted_model_forward(self, simple_model, fp8_config, device):
-        """Test forward pass through converted model"""
-        fp8_model = convert_model_to_fp8(simple_model, fp8_config)
-
-        x = torch.randn(2, 16, 256, device=device)
-        output = fp8_model(x)
-
-        assert output.shape == (2, 16, 256)
-        assert torch.isfinite(output).all()
-
-
-@pytest.mark.skipif(not FP8_AVAILABLE, reason="FP8 training not available")
 class TestFP8Validation:
     """Test FP8 validation functions"""
 
@@ -314,12 +242,11 @@ class TestFP8Integration:
         inputs = torch.randn(batch_size, seq_len, d_model, device=device)
         targets = torch.randint(0, d_model, (batch_size,), device=device)  # Classification targets
 
-        # Convert model and create trainer
-        fp8_model = convert_model_to_fp8(simple_model, fp8_config)
-        engine = FP8TrainingEngine(fp8_model, fp8_config)
+        # Create trainer using simple_model directly
+        engine = FP8TrainingEngine(simple_model, fp8_config)
         engine.setup_fp8_training()
 
-        optimizer = torch.optim.AdamW(fp8_model.parameters(), lr=1e-4)
+        optimizer = torch.optim.AdamW(simple_model.parameters(), lr=1e-4)
 
         # Training steps
         losses = []
@@ -327,7 +254,7 @@ class TestFP8Integration:
             optimizer.zero_grad()
 
             # Forward pass
-            outputs = fp8_model(inputs)
+            outputs = simple_model(inputs)
             loss = F.cross_entropy(outputs.mean(dim=1), targets)  # Average pool for classification
 
             # Backward pass
@@ -365,44 +292,6 @@ class TestFP8Integration:
         assert 'overflows' in stats
         assert 'scale_info' in stats
         assert stats['steps'] == 3
-
-
-@pytest.mark.skipif(not FP8_AVAILABLE, reason="FP8 training not available")
-class TestFP8Performance:
-    """Test FP8 performance characteristics"""
-
-    def test_memory_efficiency(self, fp8_config):
-        """Test that FP8 layers use less memory than FP32"""
-        # This is a basic test - in practice, memory savings are more evident with Transformer Engine
-
-        # Create large layer for noticeable difference
-        large_fp8_layer = FP8LinearLayer(1024, 1024, fp8_config=fp8_config)
-        large_standard_layer = nn.Linear(1024, 1024)
-
-        # Both should work, but FP8 layer has additional scaling parameters
-        x = torch.randn(32, 1024)
-
-        fp8_output = large_fp8_layer(x)
-        standard_output = large_standard_layer(x)
-
-        assert fp8_output.shape == standard_output.shape
-
-    def test_numerical_stability(self, fp8_config):
-        """Test numerical stability of FP8 training"""
-        # Test with extreme values
-        layer = FP8LinearLayer(64, 64, fp8_config=fp8_config)
-
-        # Very large input
-        x_large = torch.randn(4, 64) * 100
-        output_large = layer(x_large)
-
-        # Very small input
-        x_small = torch.randn(4, 64) * 0.01
-        output_small = layer(x_small)
-
-        # Outputs should be finite
-        assert torch.isfinite(output_large).all()
-        assert torch.isfinite(output_small).all()
 
 
 # Test configuration for different scenarios

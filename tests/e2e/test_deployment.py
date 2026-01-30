@@ -15,7 +15,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.deployment import (
+from torchbridge.deployment import (
     FusionMetadata,
     HardwareMetadata,
     ONNXExportConfig,

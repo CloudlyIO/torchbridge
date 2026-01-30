@@ -379,7 +379,7 @@ class TestFP8Quantization:
 
     def test_fp8_availability(self):
         """Test FP8 support detection."""
-        from kernel_pytorch.precision.fp8_native import (
+        from torchbridge.precision.fp8_native import (
             FP8_DTYPES_AVAILABLE,
             FP8_NATIVE_AVAILABLE,
             get_fp8_info,
@@ -400,7 +400,7 @@ class TestFP8Quantization:
 
     def test_fp8_quantize_dequantize_accuracy(self):
         """Test FP8 quantization preserves values."""
-        from kernel_pytorch.precision.fp8_native import (
+        from torchbridge.precision.fp8_native import (
             FP8_NATIVE_AVAILABLE,
             FP8Dtype,
             compute_fp8_scale,
@@ -435,7 +435,7 @@ class TestFP8Quantization:
     @requires_cuda
     def test_fp8_linear_layer(self):
         """Test FP8 linear layer functionality."""
-        from kernel_pytorch.precision.fp8_native import (
+        from torchbridge.precision.fp8_native import (
             FP8_NATIVE_AVAILABLE,
             NativeFP8Linear,
         )
@@ -463,7 +463,7 @@ class TestFP8Quantization:
     @requires_cuda
     def test_gpt2_fp8_conversion(self, gpt2_for_quantization, sample_texts):
         """Test GPT-2 FP8 conversion and quality."""
-        from kernel_pytorch.precision.fp8_native import (
+        from torchbridge.precision.fp8_native import (
             FP8_NATIVE_AVAILABLE,
             convert_model_to_native_fp8,
         )
@@ -516,7 +516,7 @@ class TestQuantizationIntegration:
     @requires_quantization
     def test_text_model_int8_optimization(self, gpt2_for_quantization, sample_texts):
         """Test INT8 quantization via TextModelOptimizer."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,

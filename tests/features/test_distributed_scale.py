@@ -23,7 +23,7 @@ import torch.nn as nn
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from kernel_pytorch.distributed_scale import (
+from torchbridge.distributed_scale import (
     AdaptiveLoadBalancer,
     # Communication optimization
     AdvancedCollectiveOps,
@@ -50,24 +50,24 @@ from kernel_pytorch.distributed_scale import (
     create_inference_cluster,
     create_multi_node_trainer,
 )
-from kernel_pytorch.distributed_scale.communication_optimization import (
+from torchbridge.distributed_scale.communication_optimization import (
     CollectiveOpConfig,
     CommunicationPattern,
     CompressionMethod,
     NetworkTopology,
 )
-from kernel_pytorch.distributed_scale.hardware_discovery import HardwareVendor
-from kernel_pytorch.distributed_scale.large_scale_inference import (
+from torchbridge.distributed_scale.hardware_discovery import HardwareVendor
+from torchbridge.distributed_scale.large_scale_inference import (
     BatchingStrategy,
     InferenceServerConfig,
     LoadBalancingStrategy,
 )
-from kernel_pytorch.distributed_scale.multi_node_training import (
+from torchbridge.distributed_scale.multi_node_training import (
     ClusterConfig,
     FSDPConfig,
     TrainingConfig,
 )
-from kernel_pytorch.distributed_scale.orchestration import (
+from torchbridge.distributed_scale.orchestration import (
     FailureType,
     JobState,
     ResourceRequirement,
@@ -438,7 +438,7 @@ class TestHardwareAdaptation:
 
             # Mock optimal device placement to return device IDs
             with patch.object(topology_manager, 'get_optimal_device_placement', return_value=list(range(8))), \
-                 patch('kernel_pytorch.distributed_scale.hardware_adapter.DeviceMesh') as mock_mesh:
+                 patch('torchbridge.distributed_scale.hardware_adapter.DeviceMesh') as mock_mesh:
 
                 mock_mesh.return_value = Mock()
 

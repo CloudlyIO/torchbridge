@@ -53,7 +53,7 @@ The Intel XPU Backend provides production-ready support for Intel GPUs through I
 ### Basic Usage
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 import torch.nn as nn
 
 # Initialize backend (auto-detects hardware)
@@ -74,11 +74,11 @@ print(f"Device info: {backend.get_device_info()}")
 ### With Intel Optimizer
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend, IntelOptimizer
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.intel import IntelBackend, IntelOptimizer
+from torchbridge.core.config import TorchBridgeConfig
 
 # Initialize with configuration
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 backend = IntelBackend(config)
 
 # Initialize optimizer
@@ -97,7 +97,7 @@ print(f"oneDNN fusion: {summary['onednn_fusion']}")
 ### Inference Optimization with IPEX
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 import torch
 
 backend = IntelBackend()
@@ -138,8 +138,8 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 # 3. Install Intel Extension for PyTorch
 pip install intel-extension-for-pytorch
 
-# 4. Install KernelPyTorch
-pip install kernel-pytorch
+# 4. Install TorchBridge
+pip install torchbridge
 ```
 
 ### Verify Installation
@@ -153,10 +153,10 @@ print(f"XPU available: {torch.xpu.is_available()}")
 print(f"XPU device count: {torch.xpu.device_count()}")
 print(f"IPEX version: {ipex.__version__}")
 
-# Check KernelPyTorch Intel backend
-from kernel_pytorch.backends.intel import is_xpu_available, get_ipex_version
-print(f"KernelPyTorch XPU: {is_xpu_available()}")
-print(f"KernelPyTorch IPEX: {get_ipex_version()}")
+# Check TorchBridge Intel backend
+from torchbridge.backends.intel import is_xpu_available, get_ipex_version
+print(f"TorchBridge XPU: {is_xpu_available()}")
+print(f"TorchBridge IPEX: {get_ipex_version()}")
 ```
 
 ---
@@ -166,9 +166,9 @@ print(f"KernelPyTorch IPEX: {get_ipex_version()}")
 ### IntelConfig Options
 
 ```python
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.core.config import TorchBridgeConfig
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 
 # Intel-specific settings via hardware config
 config.hardware.intel = {
@@ -191,7 +191,7 @@ config.hardware.intel = {
 | **O3** | Aggressive | Maximum optimization, JIT | High performance |
 
 ```python
-from kernel_pytorch.backends.intel import IntelOptimizer
+from torchbridge.backends.intel import IntelOptimizer
 
 optimizer = IntelOptimizer(config)
 
@@ -210,7 +210,7 @@ model_o3 = optimizer.optimize(model, level="O3")  # Aggressive
 The main backend class for Intel XPU device management.
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 
 backend = IntelBackend()
 
@@ -238,7 +238,7 @@ backend.empty_cache()                     # Clear memory cache
 Advanced optimization using IPEX capabilities.
 
 ```python
-from kernel_pytorch.backends.intel import IntelOptimizer
+from torchbridge.backends.intel import IntelOptimizer
 
 optimizer = IntelOptimizer(config)
 
@@ -255,7 +255,7 @@ summary = optimizer.get_optimization_summary()
 XPU-specific memory management with pooling.
 
 ```python
-from kernel_pytorch.backends.intel import IntelMemoryManager
+from torchbridge.backends.intel import IntelMemoryManager
 
 mem_manager = IntelMemoryManager(config, device_id=0)
 
@@ -280,7 +280,7 @@ mem_manager.cleanup()
 Helper utilities for XPU operations.
 
 ```python
-from kernel_pytorch.backends.intel import (
+from torchbridge.backends.intel import (
     is_xpu_available,
     is_ipex_available,
     get_ipex_version,
@@ -304,7 +304,7 @@ print(f"Devices: {get_xpu_device_count()}")
 ```python
 import torch
 import torch.nn as nn
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 
 # Initialize
 backend = IntelBackend()
@@ -343,7 +343,7 @@ for epoch in range(10):
 ### Inference with TorchScript
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 import torch
 
 backend = IntelBackend()
@@ -385,7 +385,7 @@ print(f"Throughput: {iterations / elapsed:.2f} inferences/sec")
 ### Multi-GPU Training
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 import torch.distributed as dist
 
 backend = IntelBackend()
@@ -428,7 +428,7 @@ ipex.enable_onednn_fusion(True)
 For Sapphire Rapids CPUs and PVC GPUs with AMX support:
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 
 backend = IntelBackend()
 
@@ -445,7 +445,7 @@ if backend.supports_amx:
 model = model.to(memory_format=torch.channels_last)
 
 # Or use automatic optimization
-from kernel_pytorch.backends.intel import IntelOptimizer
+from torchbridge.backends.intel import IntelOptimizer
 optimizer = IntelOptimizer(config)
 model = optimizer.optimize(model, level="O2")  # Includes layout optimization
 ```
@@ -471,7 +471,7 @@ model = nn.Linear(100, 200)  # Warning: not optimal
 ### Memory Statistics
 
 ```python
-from kernel_pytorch.backends.intel import IntelBackend
+from torchbridge.backends.intel import IntelBackend
 
 backend = IntelBackend()
 
@@ -499,7 +499,7 @@ backend.synchronize()
 ### Memory Pooling
 
 ```python
-from kernel_pytorch.backends.intel import IntelMemoryManager
+from torchbridge.backends.intel import IntelMemoryManager
 
 # Initialize with custom pool size
 mem_manager = IntelMemoryManager(
@@ -528,7 +528,7 @@ mem_manager.cleanup()
 ### Exception Hierarchy
 
 ```python
-from kernel_pytorch.backends.intel.intel_exceptions import (
+from torchbridge.backends.intel.intel_exceptions import (
     IntelBackendError,      # Base exception
     XPUNotAvailableError,   # XPU not detected
     IPEXNotInstalledError,  # IPEX not installed
@@ -666,7 +666,7 @@ Intel DevCloud provides free access to Intel hardware for testing.
 
 ```bash
 # On DevCloud, run validation
-cd kernel_pytorch
+cd torchbridge
 bash scripts/cloud-deployment/intel_devcloud/run_validation.sh
 ```
 

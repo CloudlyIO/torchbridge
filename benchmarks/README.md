@@ -1,4 +1,4 @@
-# KernelPyTorch Benchmarks
+# TorchBridge Benchmarks
 
 Benchmarking suite for validating GPU optimizations.
 

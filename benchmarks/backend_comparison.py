@@ -132,7 +132,7 @@ def create_test_model(size: str = "medium") -> nn.Module:
 
 def benchmark_initialization(suite: BenchmarkSuite, backends: List[str], iterations: int = 5):
     """Benchmark backend initialization time."""
-    from kernel_pytorch.backends import BackendFactory, BackendType
+    from torchbridge.backends import BackendFactory, BackendType
 
     print("\n  Benchmarking initialization time...")
 
@@ -176,7 +176,7 @@ def benchmark_model_preparation(
     iterations: int = 5
 ):
     """Benchmark model preparation time."""
-    from kernel_pytorch.backends import BackendFactory, BackendType, OptimizationLevel
+    from torchbridge.backends import BackendFactory, BackendType, OptimizationLevel
 
     print("\n  Benchmarking model preparation...")
 
@@ -226,7 +226,7 @@ def benchmark_inference_latency(
     iterations: int = 10
 ):
     """Benchmark inference latency."""
-    from kernel_pytorch.backends import BackendFactory, BackendType
+    from torchbridge.backends import BackendFactory, BackendType
 
     print("\n  Benchmarking inference latency...")
 
@@ -292,7 +292,7 @@ def benchmark_optimization_overhead(
     iterations: int = 5
 ):
     """Benchmark optimization overhead for different levels."""
-    from kernel_pytorch.backends import BackendFactory, BackendType, OptimizationLevel
+    from torchbridge.backends import BackendFactory, BackendType, OptimizationLevel
 
     print("\n  Benchmarking optimization overhead...")
 
@@ -340,7 +340,7 @@ def benchmark_optimization_overhead(
 
 def benchmark_device_info_overhead(suite: BenchmarkSuite, backends: List[str], iterations: int = 100):
     """Benchmark device info retrieval overhead."""
-    from kernel_pytorch.backends import BackendFactory, BackendType
+    from torchbridge.backends import BackendFactory, BackendType
 
     print("\n  Benchmarking device info retrieval...")
 
@@ -382,7 +382,7 @@ def benchmark_throughput(
     duration_seconds: float = 2.0
 ):
     """Benchmark throughput (samples/second)."""
-    from kernel_pytorch.backends import BackendFactory, BackendType
+    from torchbridge.backends import BackendFactory, BackendType
 
     print("\n  Benchmarking throughput...")
 
@@ -449,7 +449,7 @@ def benchmark_throughput(
 
 def get_available_backends() -> List[str]:
     """Get list of available backends for benchmarking."""
-    from kernel_pytorch.backends import BackendFactory, BackendType
+    from torchbridge.backends import BackendFactory, BackendType
 
     available = ["cpu"]  # CPU is always available
 
@@ -490,7 +490,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("  Backend Comparison Benchmarks (v0.4.8)")
-    print("  KernelPyTorch - Unified Backend Performance")
+    print("  TorchBridge - Unified Backend Performance")
     print("=" * 60)
 
     # Detect available backends

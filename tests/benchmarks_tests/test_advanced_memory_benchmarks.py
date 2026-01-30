@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     AdaptiveCheckpointing,
     DeepOptimizerStates,
     DynamicMemoryPool,

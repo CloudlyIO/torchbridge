@@ -42,7 +42,7 @@ def quick_environment_check():
 
     # Our optimizations
     try:
-        from kernel_pytorch.compiler_optimized import FusedGELU
+        from torchbridge.compiler_optimized import FusedGELU
         print(f"   Our Optimizations: ✅ Available")
     except ImportError:
         print(f"   Our Optimizations: ⚠️  Limited")

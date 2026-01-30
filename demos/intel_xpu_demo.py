@@ -29,7 +29,7 @@ def demo_device_detection():
     """Demonstrate Intel XPU device detection."""
     print_section("1. Device Detection")
 
-    from kernel_pytorch.backends.intel import (
+    from torchbridge.backends.intel import (
         is_xpu_available,
         is_ipex_available,
         get_ipex_version,
@@ -52,8 +52,8 @@ def demo_backend_initialization():
     """Demonstrate Intel backend initialization."""
     print_section("2. Backend Initialization")
 
-    from kernel_pytorch.backends.intel import IntelBackend
-    from kernel_pytorch.core.config import KernelPyTorchConfig
+    from torchbridge.backends.intel import IntelBackend
+    from torchbridge.core.config import TorchBridgeConfig
 
     # Initialize without config
     backend = IntelBackend()
@@ -63,7 +63,7 @@ def demo_backend_initialization():
     print(f"Device type: {backend.device_type or 'N/A'}")
 
     # Initialize with config
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     backend_with_config = IntelBackend(config=config)
     print(f"\nBackend with config: {backend_with_config.device}")
 
@@ -100,7 +100,7 @@ def demo_model_preparation():
     """Demonstrate model preparation."""
     print_section("5. Model Preparation")
 
-    from kernel_pytorch.backends.intel import IntelBackend
+    from torchbridge.backends.intel import IntelBackend
 
     # Create a simple model
     class SimpleTransformer(nn.Module):
@@ -142,7 +142,7 @@ def demo_inference_optimization():
     """Demonstrate inference optimization."""
     print_section("6. Inference Optimization")
 
-    from kernel_pytorch.backends.intel import IntelBackend, XPU_AVAILABLE
+    from torchbridge.backends.intel import IntelBackend, XPU_AVAILABLE
 
     # Create model
     model = nn.Sequential(
@@ -182,7 +182,7 @@ def demo_optimizer():
     """Demonstrate Intel optimizer."""
     print_section("7. Intel Optimizer")
 
-    from kernel_pytorch.backends.intel import (
+    from torchbridge.backends.intel import (
         IntelOptimizer,
         IntelOptimizationLevel,
     )
@@ -213,7 +213,7 @@ def demo_kernel_optimizer():
     """Demonstrate kernel optimizer."""
     print_section("8. Kernel Optimizer")
 
-    from kernel_pytorch.backends.intel import IntelKernelOptimizer
+    from torchbridge.backends.intel import IntelKernelOptimizer
 
     optimizer = IntelKernelOptimizer(device_type="auto")
 
@@ -251,11 +251,11 @@ def demo_config():
     """Demonstrate Intel configuration."""
     print_section("9. Configuration")
 
-    from kernel_pytorch.core.config import (
+    from torchbridge.core.config import (
         IntelArchitecture,
         IntelConfig,
         HardwareConfig,
-        KernelPyTorchConfig,
+        TorchBridgeConfig,
     )
 
     # Intel architecture options
@@ -278,9 +278,9 @@ def demo_config():
     print(f"  AMX Enabled: {pvc_config.enable_amx}")
     print(f"  Allow BF16: {pvc_config.allow_bf16}")
 
-    # Full KernelPyTorch config
-    print("\nFull KernelPyTorch Config:")
-    full_config = KernelPyTorchConfig()
+    # Full TorchBridge config
+    print("\nFull TorchBridge Config:")
+    full_config = TorchBridgeConfig()
     print(f"  Device: {full_config.device}")
     print(f"  Hardware Backend: {full_config.hardware.backend}")
     print(f"  Intel Enabled: {full_config.hardware.intel.enabled}")
@@ -290,7 +290,7 @@ def demo_benchmark():
     """Run a simple benchmark."""
     print_section("10. Simple Benchmark")
 
-    from kernel_pytorch.backends.intel import IntelBackend, XPU_AVAILABLE
+    from torchbridge.backends.intel import IntelBackend, XPU_AVAILABLE
 
     # Create larger model for benchmarking
     model = nn.Sequential(

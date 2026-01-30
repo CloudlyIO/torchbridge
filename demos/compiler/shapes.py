@@ -39,7 +39,7 @@ from typing import List, Dict, Any, Tuple
 import psutil
 import gc
 
-from kernel_pytorch.optimizations.patterns.dynamic_shapes import (
+from torchbridge.optimizations.patterns.dynamic_shapes import (
     DynamicShapeBucketing,
     BucketingStrategy,
     PaddingStrategy,

@@ -3,7 +3,7 @@ LLaVA Optimization Example - Visual Instruction Following
 """
 
 import torch
-from kernel_pytorch.models.multimodal import (
+from torchbridge.models.multimodal import (
     create_llava_7b_optimized,
     LLaVABenchmark,
     OptimizationLevel,

@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# KernelPyTorch Docker Entrypoint Script
+# TorchBridge Docker Entrypoint Script
 # Provides flexible container startup options
 
 set -e
 
 # Function to print banner
 print_banner() {
-    echo "🚀 KernelPyTorch Production Container"
+    echo "🚀 TorchBridge Production Container"
     echo "======================================"
-    echo "Version: $(python -c 'import kernel_pytorch; print(kernel_pytorch.__version__)')"
+    echo "Version: $(python -c 'import torchbridge; print(torchbridge.__version__)')"
     echo "PyTorch: $(python -c 'import torch; print(torch.__version__)')"
     echo "CUDA Available: $(python -c 'import torch; print(torch.cuda.is_available())')"
     if python -c 'import torch; exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
@@ -21,13 +21,13 @@ print_banner() {
 # Function to run system diagnostics
 run_diagnostics() {
     echo "🩺 Running system diagnostics..."
-    python -m kernel_pytorch.cli.doctor --verbose
+    python -m torchbridge.cli.doctor --verbose
 }
 
 # Function to start optimization server
 start_server() {
-    echo "🌐 Starting KernelPyTorch optimization server..."
-    exec uvicorn kernel_pytorch.server:app \
+    echo "🌐 Starting TorchBridge optimization server..."
+    exec uvicorn torchbridge.server:app \
         --host 0.0.0.0 \
         --port ${PORT:-8000} \
         --workers ${WORKERS:-1}
@@ -36,7 +36,7 @@ start_server() {
 # Function to run benchmarks
 run_benchmarks() {
     echo "📊 Running performance benchmarks..."
-    python -m kernel_pytorch.cli.benchmark \
+    python -m torchbridge.cli.benchmark \
         --predefined ${BENCHMARK_SUITE:-optimization} \
         --quick \
         --output /app/logs/benchmark_results.json
@@ -59,7 +59,7 @@ main() {
         "optimize")
             shift
             echo "🔧 Running model optimization..."
-            exec python -m kernel_pytorch.cli.optimize "$@"
+            exec python -m torchbridge.cli.optimize "$@"
             ;;
         "bash"|"sh")
             echo "🛠️  Starting interactive shell..."

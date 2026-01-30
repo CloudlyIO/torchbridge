@@ -5,7 +5,7 @@
 
 ## Overview
 
-KernelPyTorch supports multiple hardware backends (NVIDIA GPU, AMD ROCm, TPU, CPU) with automatic detection and intelligent selection. This guide helps you choose the right backend for your workload and configure it optimally.
+TorchBridge supports multiple hardware backends (NVIDIA GPU, AMD ROCm, TPU, CPU) with automatic detection and intelligent selection. This guide helps you choose the right backend for your workload and configure it optimally.
 
 ## Table of Contents
 
@@ -23,11 +23,11 @@ KernelPyTorch supports multiple hardware backends (NVIDIA GPU, AMD ROCm, TPU, CP
 
 ### Automatic Selection (Recommended)
 
-Let KernelPyTorch automatically detect and select the best backend:
+Let TorchBridge automatically detect and select the best backend:
 
 ```python
-from kernel_pytorch.core.hardware_detector import HardwareDetector
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.core.hardware_detector import HardwareDetector
+from torchbridge.core.config import TorchBridgeConfig
 
 # Automatic detection
 detector = HardwareDetector()
@@ -35,7 +35,7 @@ backend_name = detector.get_optimal_backend()
 print(f"Selected backend: {backend_name}")
 
 # Use detected backend
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 # Backend will be automatically initialized based on detection
 ```
 
@@ -44,12 +44,12 @@ config = KernelPyTorchConfig()
 Explicitly choose a specific backend:
 
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.backends.tpu import TPUBackend
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.backends.tpu import TPUBackend
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.core.config import TorchBridgeConfig
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 
 # Use NVIDIA backend
 nvidia_backend = NVIDIABackend(config)
@@ -91,7 +91,7 @@ The `HardwareDetector` automatically:
 ### Detection Example
 
 ```python
-from kernel_pytorch.core.hardware_detector import HardwareDetector
+from torchbridge.core.hardware_detector import HardwareDetector
 
 detector = HardwareDetector()
 
@@ -143,14 +143,14 @@ Default priority order:
 **Configuration:**
 
 ```python
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAConfig, NVIDIAArchitecture
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER  # H100
 config.hardware.nvidia.fp8_enabled = True
 config.hardware.nvidia.flash_attention_version = "3"
 
-from kernel_pytorch.backends.nvidia import NVIDIABackend
+from torchbridge.backends.nvidia import NVIDIABackend
 backend = NVIDIABackend(config)
 
 # Prepare model
@@ -178,15 +178,15 @@ model_with_kernels = backend.prepare_model_with_custom_kernels(your_model)
 **Configuration:**
 
 ```python
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion
+from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.tpu.version = TPUVersion.V5E
 config.hardware.tpu.precision = "bfloat16"
 config.hardware.tpu.mixed_precision = True
 config.hardware.tpu.compilation_mode = "torch_xla"
 
-from kernel_pytorch.backends.tpu import TPUBackend
+from torchbridge.backends.tpu import TPUBackend
 backend = TPUBackend(config)
 
 # Prepare model
@@ -209,8 +209,8 @@ model = backend.prepare_model(your_model)
 **Configuration:**
 
 ```python
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
+from torchbridge.core.config import AMDConfig, AMDArchitecture
+from torchbridge.backends.amd import AMDBackend, AMDOptimizer
 
 config = AMDConfig(
     architecture=AMDArchitecture.CDNA3,  # MI300 series
@@ -290,7 +290,7 @@ Both NVIDIA and TPU backends automatically fall back to CPU when hardware is una
 ### NVIDIA Configuration
 
 ```python
-from kernel_pytorch.core.config import NVIDIAConfig, NVIDIAArchitecture
+from torchbridge.core.config import NVIDIAConfig, NVIDIAArchitecture
 
 nvidia_config = NVIDIAConfig(
     # Hardware
@@ -316,7 +316,7 @@ nvidia_config = NVIDIAConfig(
 ### TPU Configuration
 
 ```python
-from kernel_pytorch.core.config import TPUConfig, TPUVersion, TPUTopology
+from torchbridge.core.config import TPUConfig, TPUVersion, TPUTopology
 
 tpu_config = TPUConfig(
     # Hardware
@@ -345,7 +345,7 @@ tpu_config = TPUConfig(
 ### AMD Configuration
 
 ```python
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from torchbridge.core.config import AMDConfig, AMDArchitecture
 
 amd_config = AMDConfig(
     # Hardware
@@ -475,7 +475,7 @@ backend_name = detector.get_optimal_backend()
 ### 2. Validate Backend Compatibility
 
 ```python
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 validator = UnifiedValidator(config)
 

@@ -1,7 +1,7 @@
 """
-Cloud Testing Infrastructure for KernelPyTorch.
+Cloud Testing Infrastructure for TorchBridge.
 
-This module provides infrastructure for running KernelPyTorch tests and benchmarks
+This module provides infrastructure for running TorchBridge tests and benchmarks
 on cloud hardware (AWS EC2, GCP Compute Engine, GCP TPU).
 
 Components:

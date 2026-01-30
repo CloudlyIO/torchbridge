@@ -116,27 +116,13 @@ class GPUSetupValidator:
     def validate_framework(self) -> bool:
         """Validate our optimization framework components"""
         try:
-            # Test FlashLight compiler
-            from kernel_pytorch.compiler_integration import FlashLightKernelCompiler
-            compiler = FlashLightKernelCompiler()
-            print("   FlashLight compiler: ✅")
+            # Test core package import
+            import torchbridge  # noqa: F401
+            print("   torchbridge package: ✅")
 
-            # Test PyGraph optimizer
-            from kernel_pytorch.compiler_integration import PyGraphCUDAOptimizer
-            optimizer = PyGraphCUDAOptimizer()
+            # Test PyGraph optimizer from next_gen
+            from torchbridge.optimizations.next_gen import create_pygraph_optimizer  # noqa: F401
             print("   PyGraph optimizer: ✅")
-
-            # Test enhanced fusion
-            from kernel_pytorch.compiler_integration import FusionBoundaryOptimizer
-            fusion = FusionBoundaryOptimizer()
-            print("   Enhanced fusion: ✅")
-
-            # Test next-gen optimizations
-            from kernel_pytorch.next_gen_optimizations import AdaptivePrecisionAllocator
-            import torch.nn as nn
-            test_model = nn.Linear(10, 5)
-            precision = AdaptivePrecisionAllocator(test_model)
-            print("   Advanced optimizations: ✅")
 
             return True
         except ImportError as e:
@@ -149,7 +135,7 @@ class GPUSetupValidator:
     def validate_simulation(self) -> bool:
         """Validate hardware simulation framework"""
         try:
-            from kernel_pytorch.testing_framework import GPUSimulator, create_hardware_simulator
+            from torchbridge.testing_framework import GPUSimulator, create_hardware_simulator
 
             # Test hardware simulation
             simulator = create_hardware_simulator(architecture='ampere', simulation_mode='performance')
@@ -172,7 +158,7 @@ class GPUSetupValidator:
     def validate_performance(self) -> bool:
         """Validate performance testing framework"""
         try:
-            from kernel_pytorch.testing_framework import PerformanceBenchmarkSuite, create_benchmark_suite
+            from torchbridge.testing_framework import PerformanceBenchmarkSuite, create_benchmark_suite
 
             # Test benchmark suite
             benchmark = create_benchmark_suite(warmup_iterations=5, measurement_iterations=10)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Check version consistency across KernelPyTorch project files.
+Check version consistency across TorchBridge project files.
 Ensures version numbers match in all key locations.
 """
 
@@ -11,17 +11,17 @@ from pathlib import Path
 # Critical version files (MUST match for any release)
 CRITICAL_VERSION_FILES = {
     'pyproject.toml': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/kernel_pytorch/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/kernel_pytorch/cli/__init__.py': r"version='%\(prog\)s\s+(\d+\.\d+\.\d+)'",
+    'src/torchbridge/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/torchbridge/cli/__init__.py': r"version='%\(prog\)s\s+(\d+\.\d+\.\d+)'",
     'CHANGELOG.md': r'## \[(\d+\.\d+\.\d+)\]',
 }
 
 # Secondary version files (should match, but not blocking)
 SECONDARY_VERSION_FILES = {
-    'src/kernel_pytorch/backends/nvidia/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/kernel_pytorch/backends/tpu/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/kernel_pytorch/backends/amd/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/kernel_pytorch/backends/intel/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/torchbridge/backends/nvidia/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/torchbridge/backends/tpu/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/torchbridge/backends/amd/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
+    'src/torchbridge/backends/intel/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
 }
 
 def extract_version(file_path: Path, pattern: str) -> str:

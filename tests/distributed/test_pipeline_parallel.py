@@ -88,12 +88,12 @@ class TestPipelineConfig:
 
     def test_config_import(self):
         """Test importing pipeline config."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
         assert PipelineParallelConfig is not None
 
     def test_config_creation(self):
         """Test creating pipeline config."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
 
         config = PipelineParallelConfig(
             num_stages=4,
@@ -107,7 +107,7 @@ class TestPipelineConfig:
 
     def test_config_validation(self):
         """Test config validation."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
 
         # Valid config
         config = PipelineParallelConfig(
@@ -119,7 +119,7 @@ class TestPipelineConfig:
 
     def test_config_with_options(self):
         """Test config with optional parameters."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
 
         config = PipelineParallelConfig(
             num_stages=8,
@@ -141,12 +141,12 @@ class TestPipelineStage:
 
     def test_stage_import(self):
         """Test importing pipeline stage."""
-        from kernel_pytorch.models.distributed import PipelineStage
+        from torchbridge.models.distributed import PipelineStage
         assert PipelineStage is not None
 
     def test_stage_creation(self, device):
         """Test creating pipeline stage."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -164,7 +164,7 @@ class TestPipelineStage:
 
     def test_stage_properties(self, device):
         """Test stage first/last properties are computed correctly."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -183,7 +183,7 @@ class TestPipelineStage:
 
     def test_stage_forward(self, device):
         """Test stage forward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -205,7 +205,7 @@ class TestPipelineStage:
 
     def test_stage_backward(self, device):
         """Test stage backward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -240,12 +240,12 @@ class TestGPipeScheduler:
 
     def test_scheduler_import(self):
         """Test importing GPipe scheduler."""
-        from kernel_pytorch.models.distributed import GPipeScheduler
+        from torchbridge.models.distributed import GPipeScheduler
         assert GPipeScheduler is not None
 
     def test_scheduler_creation(self, device):
         """Test creating GPipe scheduler."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -265,7 +265,7 @@ class TestGPipeScheduler:
 
     def test_gpipe_forward(self, device):
         """Test GPipe forward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -296,7 +296,7 @@ class TestGPipeScheduler:
 
     def test_gpipe_backward(self, device):
         """Test GPipe backward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -337,12 +337,12 @@ class TestInterleavedScheduler:
 
     def test_scheduler_import(self):
         """Test importing interleaved scheduler."""
-        from kernel_pytorch.models.distributed import InterleavedScheduler
+        from torchbridge.models.distributed import InterleavedScheduler
         assert InterleavedScheduler is not None
 
     def test_scheduler_creation(self, device):
         """Test creating interleaved scheduler."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -362,7 +362,7 @@ class TestInterleavedScheduler:
 
     def test_interleaved_forward(self, device):
         """Test interleaved forward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -393,7 +393,7 @@ class TestInterleavedScheduler:
 
     def test_interleaved_backward(self, device):
         """Test interleaved backward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -426,7 +426,7 @@ class TestInterleavedScheduler:
 
     def test_run_forward_backward_combined(self, device):
         """Test combined forward-backward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -468,7 +468,7 @@ class TestPipelineMemoryEfficiency:
 
     def test_memory_estimation_function(self, device):
         """Test pipeline memory estimation."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             estimate_pipeline_memory,
         )
@@ -508,12 +508,12 @@ class TestPipelineStageCreation:
 
     def test_create_stages_import(self):
         """Test importing stage creation function."""
-        from kernel_pytorch.models.distributed import create_pipeline_stages
+        from torchbridge.models.distributed import create_pipeline_stages
         assert create_pipeline_stages is not None
 
     def test_create_stages_returns_list(self, device):
         """Test that create_pipeline_stages returns a list."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             create_pipeline_stages,
         )
@@ -545,14 +545,14 @@ class TestPipelineCommunication:
 
     def test_send_recv_forward_exists(self):
         """Test that send/recv methods exist."""
-        from kernel_pytorch.models.distributed import PipelineStage
+        from torchbridge.models.distributed import PipelineStage
 
         assert hasattr(PipelineStage, 'send_forward')
         assert hasattr(PipelineStage, 'recv_forward')
 
     def test_send_recv_backward_exists(self):
         """Test that backward send/recv methods exist."""
-        from kernel_pytorch.models.distributed import PipelineStage
+        from torchbridge.models.distributed import PipelineStage
 
         assert hasattr(PipelineStage, 'send_backward')
         assert hasattr(PipelineStage, 'recv_backward')
@@ -567,7 +567,7 @@ class TestPipelineIntegration:
 
     def test_full_training_step(self, device):
         """Test a full training step with pipeline."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -615,7 +615,7 @@ class TestPipelineIntegration:
 
     def test_gradient_accumulation(self, device):
         """Test gradient accumulation across micro-batches."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -659,7 +659,7 @@ class TestPipelineEdgeCases:
 
     def test_single_micro_batch(self, device):
         """Test with single micro-batch."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -683,7 +683,7 @@ class TestPipelineEdgeCases:
 
     def test_many_micro_batches(self, device):
         """Test with many micro-batches."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,

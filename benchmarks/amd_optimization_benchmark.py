@@ -29,11 +29,11 @@ import torch.nn as nn
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from kernel_pytorch.backends.amd.amd_backend import AMDBackend
-from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
-from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
-from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+from torchbridge.core.config import AMDConfig, AMDArchitecture
+from torchbridge.backends.amd.amd_backend import AMDBackend
+from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
+from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
 
 @dataclass

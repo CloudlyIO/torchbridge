@@ -2,7 +2,7 @@
 
 > **Version**: v0.4.18 | Deep technical documentation for advanced users and contributors
 
-KernelPyTorch provides comprehensive GPU optimization capabilities designed for production ML workloads.
+TorchBridge provides comprehensive GPU optimization capabilities designed for production ML workloads.
 
 ## Core Architecture
 

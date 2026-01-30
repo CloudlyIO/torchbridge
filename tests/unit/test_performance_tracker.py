@@ -12,7 +12,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.core.performance_tracker import (
+from torchbridge.core.performance_tracker import (
     MetricType,
     PerformanceMetrics,
     PerformanceTracker,

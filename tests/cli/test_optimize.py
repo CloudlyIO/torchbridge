@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 
-from kernel_pytorch.cli.optimize import OptimizeCommand
+from torchbridge.cli.optimize import OptimizeCommand
 
 
 class TestOptimizeCommand:
@@ -128,7 +128,7 @@ class TestOptimizeCommand:
         model = torch.nn.Linear(10, 1)
         sample_input = torch.randn(1, 10)
 
-        with patch('kernel_pytorch.utils.compiler_assistant.CompilerOptimizationAssistant') as mock_assistant:
+        with patch('torchbridge.utils.compiler_assistant.CompilerOptimizationAssistant') as mock_assistant:
             mock_result = MagicMock()
             mock_result.optimization_opportunities = []
             mock_assistant.return_value.optimize_model.return_value = mock_result

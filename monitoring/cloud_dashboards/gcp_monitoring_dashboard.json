@@ -1,5 +1,5 @@
 {
-  "displayName": "KernelPyTorch Cloud Testing - GCP",
+  "displayName": "TorchBridge Cloud Testing - GCP",
   "dashboardFilters": [],
   "mosaicLayout": {
     "columns": 12,
@@ -10,9 +10,9 @@
         "width": 12,
         "height": 1,
         "widget": {
-          "title": "KernelPyTorch Cloud Testing Dashboard - GCP",
+          "title": "TorchBridge Cloud Testing Dashboard - GCP",
           "text": {
-            "content": "# KernelPyTorch Cloud Testing Dashboard\n\nMonitoring NVIDIA A3/A2 instances and TPU v5e/v6e performance.",
+            "content": "# TorchBridge Cloud Testing Dashboard\n\nMonitoring NVIDIA A3/A2 instances and TPU v5e/v6e performance.",
             "format": "MARKDOWN"
           }
         }
@@ -29,7 +29,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/gpu_utilization\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/gpu_utilization\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -58,7 +58,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/gpu_memory_used\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/gpu_memory_used\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -85,7 +85,7 @@
           "scorecard": {
             "timeSeriesQuery": {
               "timeSeriesFilter": {
-                "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/test_pass_rate\"",
+                "filter": "metric.type=\"custom.googleapis.com/torchbridge/test_pass_rate\"",
                 "aggregation": {
                   "alignmentPeriod": "300s",
                   "perSeriesAligner": "ALIGN_MEAN"
@@ -128,7 +128,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/inference_latency_p50\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/inference_latency_p50\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -141,7 +141,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/inference_latency_p95\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/inference_latency_p95\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -154,7 +154,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/inference_latency_p99\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/inference_latency_p99\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -180,7 +180,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/throughput\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/throughput\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -205,7 +205,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/tpu_utilization\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/tpu_utilization\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -218,7 +218,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/tpu_hbm_usage\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/tpu_hbm_usage\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -248,7 +248,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/xla_compilation_time\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/xla_compilation_time\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -277,7 +277,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/cost_per_hour\" resource.label.\"machine_type\"=\"a2-highgpu-1g\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/cost_per_hour\" resource.label.\"machine_type\"=\"a2-highgpu-1g\"",
                     "aggregation": {
                       "alignmentPeriod": "3600s",
                       "perSeriesAligner": "ALIGN_SUM"
@@ -290,7 +290,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/cost_per_hour\" resource.label.\"machine_type\"=\"a3-highgpu-8g\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/cost_per_hour\" resource.label.\"machine_type\"=\"a3-highgpu-8g\"",
                     "aggregation": {
                       "alignmentPeriod": "3600s",
                       "perSeriesAligner": "ALIGN_SUM"
@@ -303,7 +303,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"custom.googleapis.com/kernelpytorch/cost_per_hour\" resource.label.\"accelerator_type\"=\"v5litepod-8\"",
+                    "filter": "metric.type=\"custom.googleapis.com/torchbridge/cost_per_hour\" resource.label.\"accelerator_type\"=\"v5litepod-8\"",
                     "aggregation": {
                       "alignmentPeriod": "3600s",
                       "perSeriesAligner": "ALIGN_SUM"

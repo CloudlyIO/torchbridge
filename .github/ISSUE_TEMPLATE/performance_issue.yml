@@ -39,7 +39,7 @@ body:
       render: python
       placeholder: |
         import torch
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
         import time
 
         # Setup
@@ -76,7 +76,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: KernelPyTorch Version
+      label: TorchBridge Version
       placeholder: "0.4.26"
     validations:
       required: true

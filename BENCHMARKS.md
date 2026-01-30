@@ -1,4 +1,4 @@
-# 📊 KernelPyTorch Benchmarks
+# 📊 TorchBridge Benchmarks
 
 **Performance validation and comparison framework for PyTorch GPU optimizations.**
 
@@ -105,7 +105,7 @@ cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick           # 
 2. **PyTorch Optimized**: torch.compile and SDPA enabled
 3. **Flash Attention**: FlashAttention optimizations when available
 4. **HuggingFace**: Transformers library implementations
-5. **Our Optimizations**: KernelPyTorch framework
+5. **Our Optimizations**: TorchBridge framework
 
 #### **Test Configurations**
 ```python

@@ -1,4 +1,4 @@
-# 📖 KernelPyTorch API Reference
+# 📖 TorchBridge API Reference
 
 **Complete API documentation for the PyTorch GPU optimization framework.**
 
@@ -6,7 +6,7 @@
 
 ```python
 # ✅ WORKING: Advanced Memory Optimization (Verified)
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,
     MemoryConfig,
@@ -16,20 +16,20 @@ from kernel_pytorch.advanced_memory import (
 )
 
 # ✅ WORKING: Next-Gen Optimizations (Verified)
-from kernel_pytorch.optimizations.next_gen import (
+from torchbridge.optimizations.next_gen import (
     create_advanced_flex_attention,
     FP4Quantizer,
     StructuredSparsity24
 )
 
 # ✅ WORKING: Basic FP8 Training (Verified)
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     create_fp8_trainer,
     FP8Format
 )
 
 # ✅ WORKING: Attention Framework (Partial)
-from kernel_pytorch.attention import (
+from torchbridge.attention import (
     AttentionConfig,
     AttentionPatterns,
     FP8AttentionConfig,
@@ -38,10 +38,10 @@ from kernel_pytorch.attention import (
 )
 
 # ✅ WORKING: Core Optimized Components (Partial)
-from kernel_pytorch.core import FusedGELU
+from torchbridge.core import FusedGELU
 
 # ✅ WORKING: Deployment Module (v0.3.8)
-from kernel_pytorch.deployment import (
+from torchbridge.deployment import (
     TorchScriptExporter,
     ONNXExporter,
     OptimizationMetadata,
@@ -315,7 +315,7 @@ class FusedGELU(nn.Module):
 
 #### `ComponentValidator`
 ```python
-from kernel_pytorch.utils.validation_framework import ComponentValidator
+from torchbridge.utils.validation_framework import ComponentValidator
 
 validator = ComponentValidator(device=torch.device('cpu'))
 
@@ -330,7 +330,7 @@ results = validator.validate_linear_component(linear_layer, in_features, out_fea
 
 #### `benchmark_attention_performance()`
 ```python
-from kernel_pytorch.utils.compiler_optimization_assistant import benchmark_attention_performance
+from torchbridge.utils.compiler_optimization_assistant import benchmark_attention_performance
 
 results = benchmark_attention_performance(
     model=attention_layer,
@@ -374,7 +374,7 @@ def create_unified_attention_fusion(
 
 **Example:**
 ```python
-from kernel_pytorch.attention.fusion import (
+from torchbridge.attention.fusion import (
     create_unified_attention_fusion,
     FusionStrategy,
     OptimizationLevel
@@ -415,7 +415,7 @@ def create_ultra_precision_module(
 
 **Example:**
 ```python
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     create_ultra_precision_module,
     PrecisionConfig,
     AllocationStrategy
@@ -544,7 +544,7 @@ except Exception as e:
 
 #### `TorchScriptExporter`
 ```python
-from kernel_pytorch.deployment import TorchScriptExporter, ExportMethod
+from torchbridge.deployment import TorchScriptExporter, ExportMethod
 
 exporter = TorchScriptExporter()
 result = exporter.export(
@@ -563,7 +563,7 @@ print(f"Export time: {result.export_time_ms:.2f}ms")
 
 #### `export_to_torchscript()` (Convenience Function)
 ```python
-from kernel_pytorch.deployment import export_to_torchscript
+from torchbridge.deployment import export_to_torchscript
 
 result = export_to_torchscript(model, "model.pt", sample_input)
 ```
@@ -572,7 +572,7 @@ result = export_to_torchscript(model, "model.pt", sample_input)
 
 #### `ONNXExporter`
 ```python
-from kernel_pytorch.deployment import ONNXExporter
+from torchbridge.deployment import ONNXExporter
 
 exporter = ONNXExporter()
 result = exporter.export(
@@ -589,7 +589,7 @@ print(f"ONNX Runtime validation: {result.validation_passed}")
 
 #### `export_to_onnx()` (Convenience Function)
 ```python
-from kernel_pytorch.deployment import export_to_onnx
+from torchbridge.deployment import export_to_onnx
 
 result = export_to_onnx(model, "model.onnx", sample_input)
 ```
@@ -598,7 +598,7 @@ result = export_to_onnx(model, "model.onnx", sample_input)
 
 #### `OptimizationMetadata`
 ```python
-from kernel_pytorch.deployment import OptimizationMetadata, create_metadata
+from torchbridge.deployment import OptimizationMetadata, create_metadata
 
 # Create metadata for export
 metadata = create_metadata(
@@ -616,7 +616,7 @@ loaded = OptimizationMetadata.from_json(metadata_json)
 
 **Metadata Schema:**
 - `schema_version`: Metadata format version
-- `kernel_pytorch_version`: Framework version used
+- `torchbridge_version`: Framework version used
 - `export_timestamp`: When the model was exported
 - `optimization_level`: Conservative/balanced/aggressive
 - `hardware`: Target hardware information (backend, compute capability)
@@ -648,13 +648,13 @@ loaded = OptimizationMetadata.from_json(metadata_json)
 ### **Recommended Usage**
 ```python
 # Use these verified working APIs:
-from kernel_pytorch.advanced_memory import DeepOptimizerStates, MemoryConfig
-from kernel_pytorch.optimizations.next_gen import create_advanced_flex_attention
-from kernel_pytorch.precision import create_fp8_trainer
+from torchbridge.advanced_memory import DeepOptimizerStates, MemoryConfig
+from torchbridge.optimizations.next_gen import create_advanced_flex_attention
+from torchbridge.precision import create_fp8_trainer
 
 # Test imports before using in production:
 try:
-    from kernel_pytorch.attention import create_attention
+    from torchbridge.attention import create_attention
     print("✅ Attention framework available")
 except ImportError as e:
     print(f"⚠️ Attention import issue: {e}")

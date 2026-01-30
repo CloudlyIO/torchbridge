@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # AMD Backend Validation - AMD Developer Cloud (MI300X)
-# KernelPyTorch v0.4.9
+# TorchBridge v0.4.9
 #
 # v0.4.9 Updates:
 # - New operator fusion tests (Conv+BN, Linear+GELU, aggressive fusion)
@@ -15,7 +15,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../common/utils.sh"
 
-export WORK_DIR="${WORK_DIR:-$HOME/kernel_pytorch_test}"
+export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="amd"
 export PLATFORM="amd_cloud"
@@ -31,7 +31,7 @@ print_header "AMD Backend Validation v$VERSION (MI300X)"
 log_step "1/5" "Environment Setup"
 
 cd "$WORK_DIR"
-export PYTHONPATH="$WORK_DIR/kernel_pytorch:$PYTHONPATH"
+export PYTHONPATH="$WORK_DIR/torchbridge:$PYTHONPATH"
 
 # Check for AMD GPU via ROCm
 if command_exists rocm-smi; then
@@ -195,8 +195,8 @@ results = {"version": "0.4.9", "features": {}}
 # 1. Test Operator Fusion
 print("\n1. Operator Fusion Tests:")
 try:
-    from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
-    from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.core.config import AMDConfig, AMDArchitecture
 
     config = AMDConfig(
         architecture=AMDArchitecture.CDNA3,
@@ -233,7 +233,7 @@ except Exception as e:
 # 2. Test HIP Compilation
 print("\n2. HIP Compilation Tests:")
 try:
-    from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+    from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
     config = AMDConfig(architecture=AMDArchitecture.CDNA3)
     compiler = ROCmCompiler(config)
@@ -359,7 +359,7 @@ except:
 report = f"""# AMD Backend Validation Report - v{version}
 
 **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Version:** KernelPyTorch v{version}
+**Version:** TorchBridge v{version}
 **Platform:** AMD Developer Cloud
 **Backend:** AMD ROCm
 

@@ -3,7 +3,7 @@
 Documentation Version Synchronization Script
 
 This script ensures all documentation files have consistent version references
-that match the version defined in src/kernel_pytorch/__init__.py.
+that match the version defined in src/torchbridge/__init__.py.
 
 Usage:
     python scripts/sync_doc_versions.py          # Check for mismatches
@@ -21,7 +21,7 @@ from typing import List, Tuple, Dict
 REPO_ROOT = Path(__file__).parent.parent
 
 # Source of truth for version
-VERSION_FILE = REPO_ROOT / "src" / "kernel_pytorch" / "__init__.py"
+VERSION_FILE = REPO_ROOT / "src" / "torchbridge" / "__init__.py"
 
 # Documentation files to sync
 DOC_PATTERNS = [
@@ -43,10 +43,10 @@ EXCLUDE_FILES = [
 VERSION_PATTERNS = [
     # Header patterns: "# Title (v0.3.3)" or "# Title (v0.2.4)"
     (r"^(#+ .+)\(v\d+\.\d+\.\d+\)", r"\1(v{version})"),
-    # Bold version: "**KernelPyTorch v0.3.3**"
-    (r"\*\*KernelPyTorch v\d+\.\d+\.\d+\*\*", "**KernelPyTorch v{version}**"),
-    # Plain version in text: "KernelPyTorch v0.3.3" (not in code blocks)
-    (r"KernelPyTorch v\d+\.\d+\.\d+(?!\*)", "KernelPyTorch v{version}"),
+    # Bold version: "**TorchBridge v0.3.3**"
+    (r"\*\*TorchBridge v\d+\.\d+\.\d+\*\*", "**TorchBridge v{version}**"),
+    # Plain version in text: "TorchBridge v0.3.3" (not in code blocks)
+    (r"TorchBridge v\d+\.\d+\.\d+(?!\*)", "TorchBridge v{version}"),
     # Version output comments: "# Should output: 0.3.3"
     (r"# Should output: \d+\.\d+\.\d+", "# Should output: {version}"),
     # Last Updated version: "**Version**: 0.3.3"

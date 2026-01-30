@@ -16,12 +16,12 @@ import sys
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
+from torchbridge.core.config import (
+    TorchBridgeConfig,
     NVIDIAArchitecture,
     OptimizationLevel
 )
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 
 class NVIDIAConfigBenchmark:
@@ -40,31 +40,31 @@ class NVIDIAConfigBenchmark:
         # Benchmark basic config creation
         start_time = time.perf_counter()
         for _ in range(100):
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
         basic_creation_time = (time.perf_counter() - start_time) / 100
         results['basic_config_creation_ms'] = basic_creation_time * 1000
 
         # Benchmark config modes
         start_time = time.perf_counter()
         for _ in range(100):
-            inference_config = KernelPyTorchConfig.for_inference()
+            inference_config = TorchBridgeConfig.for_inference()
         inference_creation_time = (time.perf_counter() - start_time) / 100
         results['inference_config_creation_ms'] = inference_creation_time * 1000
 
         start_time = time.perf_counter()
         for _ in range(100):
-            training_config = KernelPyTorchConfig.for_training()
+            training_config = TorchBridgeConfig.for_training()
         training_creation_time = (time.perf_counter() - start_time) / 100
         results['training_config_creation_ms'] = training_creation_time * 1000
 
         start_time = time.perf_counter()
         for _ in range(100):
-            dev_config = KernelPyTorchConfig.for_development()
+            dev_config = TorchBridgeConfig.for_development()
         dev_creation_time = (time.perf_counter() - start_time) / 100
         results['development_config_creation_ms'] = dev_creation_time * 1000
 
         # Benchmark hardware detection
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         start_time = time.perf_counter()
         for _ in range(50):
             architecture = config.hardware.nvidia._detect_architecture()
@@ -88,10 +88,10 @@ class NVIDIAConfigBenchmark:
 
         # Test different configurations
         configs = {
-            'default': KernelPyTorchConfig(),
-            'inference': KernelPyTorchConfig.for_inference(),
-            'training': KernelPyTorchConfig.for_training(),
-            'development': KernelPyTorchConfig.for_development()
+            'default': TorchBridgeConfig(),
+            'inference': TorchBridgeConfig.for_inference(),
+            'training': TorchBridgeConfig.for_training(),
+            'development': TorchBridgeConfig.for_development()
         }
 
         for config_name, config in configs.items():
@@ -141,7 +141,7 @@ class NVIDIAConfigBenchmark:
 
         for opt_level in optimization_levels:
             # Create config with specific optimization level
-            config = KernelPyTorchConfig()
+            config = TorchBridgeConfig()
             config.optimization_level = opt_level
 
             # Warmup
@@ -171,7 +171,7 @@ class NVIDIAConfigBenchmark:
         """Benchmark NVIDIA-specific configuration features."""
         print("🔧 Benchmarking NVIDIA-Specific Features...")
 
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         results = {}
 
         # Architecture detection benchmark

@@ -95,7 +95,7 @@ class TestRealCLIPOptimization:
 
     def test_clip_optimization_speedup(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP optimization produces speedup."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -159,7 +159,7 @@ class TestRealCLIPOptimization:
 
     def test_clip_embedding_correctness(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP embeddings match after optimization."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -215,7 +215,7 @@ class TestRealCLIPOptimization:
 
     def test_clip_similarity_ranking_preserved(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP similarity ranking is preserved after optimization."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -279,7 +279,7 @@ class TestCLIPEncoderOptimization:
 
     def test_clip_image_encoder_speedup(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP image encoder optimization speedup."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -328,7 +328,7 @@ class TestCLIPEncoderOptimization:
 
     def test_clip_text_encoder_speedup(self, clip_model_and_processor, e2e_device):
         """Test CLIP text encoder optimization speedup."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -394,7 +394,7 @@ class TestCLIPCUDAOptimizations:
 
     def test_clip_fp16_optimization(self, clip_model_and_processor, sample_pil_images):
         """Test CLIP FP16 optimization on CUDA."""
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,
@@ -459,7 +459,7 @@ class TestCLIPCUDAOptimizations:
         import numpy as np
         from PIL import Image
 
-        from kernel_pytorch.models.multimodal import (
+        from torchbridge.models.multimodal import (
             CLIPOptimizer,
             MultiModalOptimizationConfig,
             OptimizationLevel,

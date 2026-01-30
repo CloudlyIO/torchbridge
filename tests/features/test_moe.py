@@ -22,7 +22,7 @@ MOE_EXTENDED_AVAILABLE = False
 
 # Import MoE modules
 try:
-    from kernel_pytorch import (
+    from torchbridge import (
         FeedForwardExpert,
         GLaMStyleMoE,
         LoadBalancer,
@@ -41,18 +41,18 @@ except ImportError:
 
 # Extended imports - some may not be exported from main __init__
 try:
-    from kernel_pytorch.mixture_of_experts.expert_networks import (
+    from torchbridge.mixture_of_experts.expert_networks import (
         AttentionExpert,
         ConvolutionalExpert,
         ParameterEfficientExpert,
     )
-    from kernel_pytorch.mixture_of_experts.moe_layers import AdaptiveMoELayer
-    from kernel_pytorch.mixture_of_experts.optimization import (
+    from torchbridge.mixture_of_experts.moe_layers import AdaptiveMoELayer
+    from torchbridge.mixture_of_experts.optimization import (
         ExpertParallelism,
         ExpertScheduler,
         MemoryEfficientSwitching,
     )
-    from kernel_pytorch.mixture_of_experts.routing import (
+    from torchbridge.mixture_of_experts.routing import (
         DynamicCapacityRouter,
         HashRouter,
         LearnedRouter,  # noqa: F401

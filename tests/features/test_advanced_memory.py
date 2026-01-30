@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     AdaptiveCheckpointing,
     AdaptiveCompressionOptimizer,
     CPUGPUHybridOptimizer,
@@ -401,7 +401,7 @@ class TestLongSequenceOptimization:
     def test_streaming_sequence_processor(self, device):
         """Test streaming sequence processor"""
         try:
-            from kernel_pytorch.advanced_memory.long_sequence_optimization import (
+            from torchbridge.advanced_memory.long_sequence_optimization import (
                 StreamingSequenceProcessor,
             )
 

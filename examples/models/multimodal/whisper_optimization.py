@@ -3,7 +3,7 @@ Whisper Optimization Example - Speech Recognition
 """
 
 import torch
-from kernel_pytorch.models.multimodal import (
+from torchbridge.models.multimodal import (
     create_whisper_base_optimized,
     WhisperBenchmark,
     OptimizationLevel,

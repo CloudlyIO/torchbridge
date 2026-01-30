@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 
-from kernel_pytorch.monitoring.slo_framework import (
+from torchbridge.monitoring.slo_framework import (
     BudgetStatus,
     ComplianceReport,
     ComplianceStatus,

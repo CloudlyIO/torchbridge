@@ -65,7 +65,7 @@ class TestRealBERTOptimization:
 
     def test_bert_optimization_speedup_cpu(self, bert_model_and_tokenizer, sample_text_inputs):
         """Test BERT optimization produces speedup on CPU."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -150,7 +150,7 @@ class TestRealBERTOptimization:
     @requires_cuda
     def test_bert_optimization_speedup_cuda(self, bert_model_and_tokenizer, sample_text_inputs):
         """Test BERT optimization produces speedup on CUDA."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -230,7 +230,7 @@ class TestRealBERTOptimization:
         optimizations. Differences of 0.1-0.5 in hidden states are expected and
         acceptable for inference quality.
         """
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -282,7 +282,7 @@ class TestRealBERTOptimization:
         """Test BERT optimization for classification task."""
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -335,7 +335,7 @@ class TestRealBERTOptimization:
 
     def test_bert_batch_throughput(self, bert_model_and_tokenizer, e2e_device):
         """Test BERT optimization improves batch throughput."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -399,7 +399,7 @@ class TestRealDistilBERTOptimization:
         """Test DistilBERT optimization produces speedup."""
         from transformers import AutoModel, AutoTokenizer
 
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,

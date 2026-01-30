@@ -17,7 +17,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.monitoring.enhanced_health import (
+from torchbridge.monitoring.enhanced_health import (
     EnhancedHealthMonitor,
     HealthHistoryEntry,
     HealthTrend,
@@ -27,7 +27,7 @@ from kernel_pytorch.monitoring.enhanced_health import (
     SystemResourceMonitor,
     create_enhanced_health_monitor,
 )
-from kernel_pytorch.monitoring.health_monitor import HealthStatus
+from torchbridge.monitoring.health_monitor import HealthStatus
 
 
 class SimpleModel(nn.Module):

@@ -73,7 +73,7 @@ jobs:
           pip install mypy torch numpy
 
       - name: Run mypy
-        run: mypy src/kernel_pytorch --ignore-missing-imports
+        run: mypy src/torchbridge --ignore-missing-imports
 
   test:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -106,7 +106,7 @@ jobs:
           pytest tests/ -v --tb=short \
             -m "not gpu and not slow and not tpu and not amd and not intel" \
             --ignore=tests/cloud_testing \
-            --cov=src/kernel_pytorch \
+            --cov=src/torchbridge \
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-fail-under=60

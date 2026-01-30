@@ -19,10 +19,10 @@ Mixture of Experts (MoE) is a neural network architecture where different subnet
 
 ## Current Status: IMPLEMENTED
 
-MoE is fully implemented in KernelPyTorch v0.4.x:
+MoE is fully implemented in TorchBridge v0.4.x:
 
 ```python
-from kernel_pytorch.mixture_of_experts import (
+from torchbridge.mixture_of_experts import (
     MoELayer,
     SparseMoELayer,
     SwitchTransformerMoE,
@@ -69,7 +69,7 @@ from kernel_pytorch.mixture_of_experts import (
 
 ```python
 import torch
-from kernel_pytorch import create_moe
+from torchbridge import create_moe
 
 # Create MoE layer
 moe = create_moe(
@@ -87,7 +87,7 @@ output = moe(x)
 ### Configuration Options
 
 ```python
-from kernel_pytorch.mixture_of_experts import MoEConfig, create_moe_layer
+from torchbridge.mixture_of_experts import MoEConfig, create_moe_layer
 
 config = MoEConfig(
     num_experts=8,

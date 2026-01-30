@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KernelPyTorch v0.4.30 Master Validation Script
+TorchBridge v0.4.30 Master Validation Script
 
 Orchestrates all validation phases:
 - Phase 1: Static Analysis (Ruff, mypy, bandit, pip-audit)
@@ -133,7 +133,7 @@ class MasterValidator:
         print("\n[1.2] Running mypy type checking...")
         start = datetime.now()
         returncode, stdout, stderr = self.run_command(
-            ["mypy", "src/kernel_pytorch", "--ignore-missing-imports", "--no-error-summary"],
+            ["mypy", "src/torchbridge", "--ignore-missing-imports", "--no-error-summary"],
             output_file="mypy_report.txt"
         )
         duration = (datetime.now() - start).total_seconds()
@@ -250,7 +250,7 @@ class MasterValidator:
         returncode, stdout, stderr = self.run_command(
             [
                 "pytest", "tests/",
-                "--cov=src/kernel_pytorch",
+                "--cov=src/torchbridge",
                 "--cov-report=json:reports/coverage.json",
                 "--cov-report=term-missing",
                 "-v", "--tb=short",
@@ -455,7 +455,7 @@ class MasterValidator:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="KernelPyTorch v0.4.30 Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge v0.4.30 Validation")
     parser.add_argument(
         "--phase",
         choices=["all", "static", "local", "cloud", "reports"],

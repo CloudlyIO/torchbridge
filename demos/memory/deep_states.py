@@ -27,7 +27,7 @@ repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 src_path = os.path.join(repo_root, 'src')
 sys.path.insert(0, src_path)
 
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,
     MemoryConfig,

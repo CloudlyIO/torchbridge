@@ -10,11 +10,11 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.core.config import (
+from torchbridge.core.config import (
     NVIDIAArchitecture,
     TPUVersion,
 )
-from kernel_pytorch.core.hardware_detector import (
+from torchbridge.core.hardware_detector import (
     HardwareDetector,
     HardwareProfile,
     HardwareType,
@@ -22,7 +22,7 @@ from kernel_pytorch.core.hardware_detector import (
     detect_hardware,
     get_optimal_backend,
 )
-from kernel_pytorch.core.management import UnifiedManager, get_manager
+from torchbridge.core.management import UnifiedManager, get_manager
 
 
 # Test fixtures
@@ -96,7 +96,7 @@ class TestHardwareDetector:
         detector = HardwareDetector()
 
         with patch('torch.cuda.is_available', return_value=False):
-            with patch('kernel_pytorch.core.hardware_detector.HardwareDetector._detect_tpu', return_value=None):
+            with patch('torchbridge.core.hardware_detector.HardwareDetector._detect_tpu', return_value=None):
                 profile = detector.detect(force_redetect=True)
 
                 assert profile.hardware_type == HardwareType.CPU

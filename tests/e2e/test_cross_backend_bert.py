@@ -92,25 +92,25 @@ requires_intel = pytest.mark.skipif(
 
 def get_nvidia_backend():
     """Create and return NVIDIA backend."""
-    from kernel_pytorch.backends.nvidia import NVIDIABackend
+    from torchbridge.backends.nvidia import NVIDIABackend
     return NVIDIABackend()
 
 
 def get_amd_backend():
     """Create and return AMD backend."""
-    from kernel_pytorch.backends.amd import AMDBackend
+    from torchbridge.backends.amd import AMDBackend
     return AMDBackend()
 
 
 def get_tpu_backend():
     """Create and return TPU backend."""
-    from kernel_pytorch.backends.tpu import TPUBackend
+    from torchbridge.backends.tpu import TPUBackend
     return TPUBackend()
 
 
 def get_intel_backend():
     """Create and return Intel backend."""
-    from kernel_pytorch.backends.intel import IntelBackend
+    from torchbridge.backends.intel import IntelBackend
     return IntelBackend()
 
 
@@ -164,7 +164,7 @@ class TestCrossBackendBERT:
     @requires_nvidia
     def test_bert_nvidia_backend(self, bert_baseline):
         """Test BERT on NVIDIA backend matches baseline."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = bert_baseline["model"]
@@ -203,8 +203,8 @@ class TestCrossBackendBERT:
         """Test BERT speedup on NVIDIA backend."""
         import copy
 
-        from kernel_pytorch.backends.base_backend import OptimizationLevel
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.base_backend import OptimizationLevel
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = bert_baseline["model"]
@@ -244,7 +244,7 @@ class TestCrossBackendBERT:
     @requires_amd
     def test_bert_amd_backend(self, bert_baseline):
         """Test BERT on AMD backend matches baseline."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         model = bert_baseline["model"]
@@ -282,8 +282,8 @@ class TestCrossBackendBERT:
     @requires_amd
     def test_bert_amd_speedup(self, bert_baseline):
         """Test BERT speedup on AMD backend."""
-        from kernel_pytorch.backends.amd import AMDBackend
-        from kernel_pytorch.backends.base_backend import OptimizationLevel
+        from torchbridge.backends.amd import AMDBackend
+        from torchbridge.backends.base_backend import OptimizationLevel
 
         backend = AMDBackend()
         model = bert_baseline["model"]
@@ -325,7 +325,7 @@ class TestCrossBackendBERT:
         """Test BERT on TPU backend matches baseline."""
         import torch_xla.core.xla_model as xm
 
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = bert_baseline["model"]
@@ -367,7 +367,7 @@ class TestCrossBackendBERT:
         """Test BERT speedup on TPU backend."""
         import torch_xla.core.xla_model as xm
 
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = bert_baseline["model"]
@@ -409,7 +409,7 @@ class TestCrossBackendBERT:
     @requires_intel
     def test_bert_intel_backend(self, bert_baseline):
         """Test BERT on Intel backend matches baseline."""
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = bert_baseline["model"]
@@ -447,8 +447,8 @@ class TestCrossBackendBERT:
     @requires_intel
     def test_bert_intel_speedup(self, bert_baseline):
         """Test BERT speedup on Intel backend."""
-        from kernel_pytorch.backends.base_backend import OptimizationLevel
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.base_backend import OptimizationLevel
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = bert_baseline["model"]
@@ -535,7 +535,7 @@ class TestCrossBackendBERTConsistency:
     @requires_nvidia
     def test_classification_consistency_nvidia(self, classification_setup):
         """Test classification predictions match on NVIDIA."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = classification_setup["model"]
@@ -562,7 +562,7 @@ class TestCrossBackendBERTConsistency:
     @requires_amd
     def test_classification_consistency_amd(self, classification_setup):
         """Test classification predictions match on AMD."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         model = classification_setup["model"]
@@ -591,7 +591,7 @@ class TestCrossBackendBERTConsistency:
         """Test classification predictions match on TPU."""
         import torch_xla.core.xla_model as xm
 
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = classification_setup["model"]
@@ -619,7 +619,7 @@ class TestCrossBackendBERTConsistency:
     @requires_intel
     def test_classification_consistency_intel(self, classification_setup):
         """Test classification predictions match on Intel."""
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = classification_setup["model"]
@@ -653,7 +653,7 @@ class TestBackendAutoSelection:
 
     def test_auto_backend_selection(self):
         """Test that BackendFactory auto-selects best available backend."""
-        from kernel_pytorch.backends import (
+        from torchbridge.backends import (
             detect_best_backend,
             list_available_backends,
         )
@@ -673,7 +673,7 @@ class TestBackendAutoSelection:
         """Test BERT runs on auto-selected best backend."""
         from transformers import AutoModel, AutoTokenizer
 
-        from kernel_pytorch.backends import BackendFactory, detect_best_backend
+        from torchbridge.backends import BackendFactory, detect_best_backend
 
         # Load BERT
         model_name = "bert-base-uncased"

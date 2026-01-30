@@ -1,6 +1,6 @@
 # Vision Model Optimization Guide
 
-Complete guide to optimizing computer vision models using KernelPyTorch (v0.4.18).
+Complete guide to optimizing computer vision models using TorchBridge (v0.4.18).
 
 ## Table of Contents
 
@@ -41,7 +41,7 @@ This guide covers optimization strategies for three major types of computer visi
 ### Basic Usage
 
 ```python
-from kernel_pytorch.models.vision import create_resnet50_optimized, OptimizationLevel
+from torchbridge.models.vision import create_resnet50_optimized, OptimizationLevel
 
 # Create optimized ResNet-50
 model, optimizer = create_resnet50_optimized(
@@ -67,7 +67,7 @@ ResNet models benefit significantly from operator fusion:
 - ~15-20% speedup
 
 ```python
-from kernel_pytorch.models.vision import VisionOptimizationConfig, ResNetOptimizer
+from torchbridge.models.vision import VisionOptimizationConfig, ResNetOptimizer
 
 config = VisionOptimizationConfig(
     enable_fusion=True,  # Enable operator fusion
@@ -106,7 +106,7 @@ Performance impact:
 Optimize for different batch sizes:
 
 ```python
-from kernel_pytorch.models.vision import ResNetBenchmark
+from torchbridge.models.vision import ResNetBenchmark
 
 model, optimizer = create_resnet50_optimized(batch_size=32)
 benchmark = ResNetBenchmark(model, optimizer)
@@ -153,7 +153,7 @@ Precision comparison:
 ### Basic Usage
 
 ```python
-from kernel_pytorch.models.vision import create_vit_base_optimized
+from torchbridge.models.vision import create_vit_base_optimized
 
 model, optimizer = create_vit_base_optimized(
     optimization_level=OptimizationLevel.O2,
@@ -223,7 +223,7 @@ Default configurations:
 ### Benchmarking
 
 ```python
-from kernel_pytorch.models.vision import ViTBenchmark
+from torchbridge.models.vision import ViTBenchmark
 
 model, optimizer = create_vit_base_optimized()
 benchmark = ViTBenchmark(model, optimizer)
@@ -244,7 +244,7 @@ print(f"Latency: {results['time_per_image_ms']:.2f} ms")
 ### Basic Usage
 
 ```python
-from kernel_pytorch.models.vision import create_sd_1_5_optimized
+from torchbridge.models.vision import create_sd_1_5_optimized
 
 pipeline, optimizer = create_sd_1_5_optimized(
     optimization_level=OptimizationLevel.O2,
@@ -439,7 +439,7 @@ model, _ = create_resnet50_optimized(optimization_level=OptimizationLevel.O3)
 ### Custom Configuration
 
 ```python
-from kernel_pytorch.models.vision import VisionOptimizationConfig
+from torchbridge.models.vision import VisionOptimizationConfig
 
 config = VisionOptimizationConfig(
     model_type=VisionModelType.RESNET,
@@ -473,7 +473,7 @@ config = VisionOptimizationConfig(
 ### Benchmarking Best Practices
 
 ```python
-from kernel_pytorch.models.vision import ResNetBenchmark
+from torchbridge.models.vision import ResNetBenchmark
 
 model, optimizer = create_resnet50_optimized()
 benchmark = ResNetBenchmark(model, optimizer)
@@ -494,7 +494,7 @@ results = benchmark.benchmark_inference(
 ### Memory Profiling
 
 ```python
-from kernel_pytorch.models.vision import estimate_model_memory
+from torchbridge.models.vision import estimate_model_memory
 
 memory = estimate_model_memory(
     model,
@@ -536,7 +536,7 @@ print(f"Total inference: {memory['total_inference_mb']:.1f} MB")
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 # Install dependencies
-RUN pip install torch torchvision kernel-pytorch
+RUN pip install torch torchvision torchbridge
 
 # Copy model code
 COPY app.py /app/app.py
@@ -549,7 +549,7 @@ CMD ["python", "/app/app.py"]
 
 ```python
 from fastapi import FastAPI, File, UploadFile
-from kernel_pytorch.models.vision import create_resnet50_optimized
+from torchbridge.models.vision import create_resnet50_optimized
 import torch
 from PIL import Image
 import io
@@ -695,7 +695,7 @@ pip install xformers
 
 ## Additional Resources
 
-- [Vision Module README](../../src/kernel_pytorch/models/vision/README.md)
+- [Vision Module README](../../src/torchbridge/models/vision/README.md)
 - [ResNet Example](../../examples/models/vision/resnet_optimization.py)
 - [ViT Example](../../examples/models/vision/vit_optimization.py)
 - [Stable Diffusion Example](../../examples/models/vision/stable_diffusion_optimization.py)
@@ -703,5 +703,5 @@ pip install xformers
 
 ---
 
-**Version**: KernelPyTorch v0.4.18
+**Version**: TorchBridge v0.4.18
 **Last Updated**: January 22, 2026

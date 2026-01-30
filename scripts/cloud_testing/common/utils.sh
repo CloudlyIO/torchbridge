@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Common Utilities for Cloud Testing Scripts
-# KernelPyTorch v0.3.7
+# TorchBridge v0.3.7
 # =============================================================================
 
 # Colors for output
@@ -40,7 +40,7 @@ print_header() {
     local version="${2:-0.3.7}"
     echo "=============================================="
     echo "  $title"
-    echo "  KernelPyTorch v$version"
+    echo "  TorchBridge v$version"
     echo "  $(date)"
     echo "=============================================="
 }

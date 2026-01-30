@@ -28,8 +28,8 @@ import torch.nn as nn
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from kernel_pytorch.core.config import KernelPyTorchConfig
-from kernel_pytorch.backends.intel import (
+from torchbridge.core.config import TorchBridgeConfig
+from torchbridge.backends.intel import (
     IntelBackend,
     IntelOptimizer,
     IntelMemoryManager,
@@ -98,7 +98,7 @@ def benchmark_optimization_level(
 ) -> BenchmarkResult:
     """Benchmark a single optimization level."""
     try:
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = IntelBackend(config)
         optimizer = IntelOptimizer(config)
 
@@ -242,7 +242,7 @@ def benchmark_precision(
 def benchmark_memory_manager() -> Dict[str, Any]:
     """Benchmark memory management operations."""
     try:
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         manager = IntelMemoryManager(config=None, device_id=0)
 
         allocation_times = []

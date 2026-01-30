@@ -97,15 +97,15 @@ class CLIPerformanceBenchmark:
 
         # Test main package import
         start_time = time.time()
-        exec("import kernel_pytorch")
-        import_benchmarks['kernel_pytorch'] = (time.time() - start_time) * 1000
+        exec("import torchbridge")
+        import_benchmarks['torchbridge'] = (time.time() - start_time) * 1000
 
         # Test CLI module imports
         cli_modules = [
-            'kernel_pytorch.cli',
-            'kernel_pytorch.cli.optimize',
-            'kernel_pytorch.cli.benchmark',
-            'kernel_pytorch.cli.doctor'
+            'torchbridge.cli',
+            'torchbridge.cli.optimize',
+            'torchbridge.cli.benchmark',
+            'torchbridge.cli.doctor'
         ]
 
         for module in cli_modules:
@@ -121,11 +121,11 @@ class CLIPerformanceBenchmark:
     def benchmark_cli_help_commands(self) -> List[CLIBenchmarkResult]:
         """Benchmark CLI help commands."""
         help_commands = [
-            ['-m', 'kernel_pytorch.cli', '--help'],
-            ['-m', 'kernel_pytorch.cli', '--version'],
-            ['-m', 'kernel_pytorch.cli.optimize', '--help'],
-            ['-m', 'kernel_pytorch.cli.benchmark', '--help'],
-            ['-m', 'kernel_pytorch.cli.doctor', '--help'],
+            ['-m', 'torchbridge.cli', '--help'],
+            ['-m', 'torchbridge.cli', '--version'],
+            ['-m', 'torchbridge.cli.optimize', '--help'],
+            ['-m', 'torchbridge.cli.benchmark', '--help'],
+            ['-m', 'torchbridge.cli.doctor', '--help'],
         ]
 
         results = []
@@ -138,7 +138,7 @@ class CLIPerformanceBenchmark:
     def benchmark_doctor_command(self) -> CLIBenchmarkResult:
         """Benchmark doctor command performance."""
         return self.benchmark_cli_command([
-            '-m', 'kernel_pytorch.cli.doctor',
+            '-m', 'torchbridge.cli.doctor',
             '--category', 'basic'
         ], timeout=60)
 
@@ -153,7 +153,7 @@ class CLIPerformanceBenchmark:
 
                 # Benchmark optimization
                 result = self.benchmark_cli_command([
-                    '-m', 'kernel_pytorch.cli.optimize',
+                    '-m', 'torchbridge.cli.optimize',
                     '--model', f.name,
                     '--level', 'basic',
                     '--hardware', 'cpu'
@@ -169,7 +169,7 @@ class CLIPerformanceBenchmark:
     def benchmark_quick_benchmark_command(self) -> CLIBenchmarkResult:
         """Benchmark the benchmark command itself."""
         return self.benchmark_cli_command([
-            '-m', 'kernel_pytorch.cli.benchmark',
+            '-m', 'torchbridge.cli.benchmark',
             '--predefined', 'optimization',
             '--quick'
         ], timeout=180)

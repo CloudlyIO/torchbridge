@@ -24,7 +24,7 @@ class TestTextModelTypes:
 
     def test_model_types_exist(self):
         """Verify all model types are defined."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelType
+        from torchbridge.models.text.text_model_optimizer import TextModelType
 
         assert hasattr(TextModelType, 'BERT')
         assert hasattr(TextModelType, 'GPT2')
@@ -35,7 +35,7 @@ class TestTextModelTypes:
 
     def test_model_type_values(self):
         """Verify model type values."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelType
+        from torchbridge.models.text.text_model_optimizer import TextModelType
 
         assert TextModelType.BERT.value == "bert"
         assert TextModelType.GPT2.value == "gpt2"
@@ -47,7 +47,7 @@ class TestOptimizationMode:
 
     def test_optimization_modes_exist(self):
         """Verify all optimization modes are defined."""
-        from kernel_pytorch.models.text.text_model_optimizer import OptimizationMode
+        from torchbridge.models.text.text_model_optimizer import OptimizationMode
 
         assert hasattr(OptimizationMode, 'INFERENCE')
         assert hasattr(OptimizationMode, 'THROUGHPUT')
@@ -56,7 +56,7 @@ class TestOptimizationMode:
 
     def test_optimization_mode_values(self):
         """Verify optimization mode values."""
-        from kernel_pytorch.models.text.text_model_optimizer import OptimizationMode
+        from torchbridge.models.text.text_model_optimizer import OptimizationMode
 
         assert OptimizationMode.INFERENCE.value == "inference"
         assert OptimizationMode.THROUGHPUT.value == "throughput"
@@ -69,7 +69,7 @@ class TestTextModelConfig:
 
     def test_default_config(self):
         """Test default configuration values."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelType,
@@ -93,7 +93,7 @@ class TestTextModelConfig:
 
     def test_custom_config(self):
         """Test custom configuration."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelType,
@@ -121,7 +121,7 @@ class TestTextModelOptimizer:
 
     def test_optimizer_creation(self):
         """Test optimizer instantiation."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer
+        from torchbridge.models.text.text_model_optimizer import TextModelOptimizer
 
         optimizer = TextModelOptimizer()
 
@@ -131,7 +131,7 @@ class TestTextModelOptimizer:
 
     def test_optimizer_with_custom_config(self):
         """Test optimizer with custom configuration."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -149,7 +149,7 @@ class TestTextModelOptimizer:
 
     def test_device_detection_cpu(self):
         """Test CPU device detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -162,7 +162,7 @@ class TestTextModelOptimizer:
 
     def test_get_optimization_info(self):
         """Test optimization info retrieval."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer
+        from torchbridge.models.text.text_model_optimizer import TextModelOptimizer
 
         optimizer = TextModelOptimizer()
         info = optimizer.get_optimization_info()
@@ -177,7 +177,7 @@ class TestTextModelOptimizer:
 
     def test_optimize_with_mock_model(self):
         """Test optimization with a mock model."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -207,7 +207,7 @@ class TestModelTypeDetection:
 
     def test_detect_bert_model(self):
         """Test BERT model detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelOptimizer,
             TextModelType,
         )
@@ -226,7 +226,7 @@ class TestModelTypeDetection:
 
     def test_detect_gpt2_model(self):
         """Test GPT-2 model detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelOptimizer,
             TextModelType,
         )
@@ -244,7 +244,7 @@ class TestModelTypeDetection:
 
     def test_detect_distilbert_model(self):
         """Test DistilBERT model detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelOptimizer,
             TextModelType,
         )
@@ -262,7 +262,7 @@ class TestModelTypeDetection:
 
     def test_detect_custom_model(self):
         """Test custom/unknown model detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelOptimizer,
             TextModelType,
         )
@@ -283,7 +283,7 @@ class TestOptimizationModes:
 
     def test_inference_mode_disables_gradients(self):
         """Test that inference mode disables gradients."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -305,7 +305,7 @@ class TestOptimizationModes:
 
     def test_memory_mode(self):
         """Test memory optimization mode."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -338,7 +338,7 @@ class TestOptimizedBERT:
     def test_optimized_bert_device_property(self):
         """Test device property exists."""
         # Mock test
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer
+        from torchbridge.models.text.text_model_optimizer import TextModelOptimizer
 
         optimizer = TextModelOptimizer()
         assert hasattr(optimizer, 'device')
@@ -349,7 +349,7 @@ class TestOptimizedGPT2:
 
     def test_optimized_gpt2_config(self):
         """Test OptimizedGPT2 uses correct compile mode."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelType,
         )
@@ -369,7 +369,7 @@ class TestOptimizedDistilBERT:
 
     def test_optimized_distilbert_config(self):
         """Test OptimizedDistilBERT uses inference mode by default."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
             TextModelType,
@@ -389,13 +389,13 @@ class TestFactoryFunction:
 
     def test_factory_function_exists(self):
         """Test factory function is importable."""
-        from kernel_pytorch.models.text import create_optimized_text_model
+        from torchbridge.models.text import create_optimized_text_model
 
         assert callable(create_optimized_text_model)
 
     def test_factory_mode_mapping(self):
         """Test optimization mode string mapping."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             OptimizationMode,
             TextModelConfig,
         )
@@ -420,7 +420,7 @@ class TestDtypeHandling:
 
     def test_float16_conversion(self):
         """Test FP16 dtype conversion."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -440,7 +440,7 @@ class TestDtypeHandling:
 
     def test_bfloat16_conversion(self):
         """Test BF16 dtype conversion."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -463,7 +463,7 @@ class TestModuleExports:
 
     def test_text_module_exports(self):
         """Test text module exports all required classes."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizedBERT,
             OptimizedDistilBERT,
             OptimizedGPT2,
@@ -479,7 +479,7 @@ class TestModuleExports:
 
     def test_models_module_exports(self):
         """Test models module exports text components."""
-        from kernel_pytorch.models import (
+        from torchbridge.models import (
             TextModelOptimizer,
         )
 
@@ -491,7 +491,7 @@ class TestBackendIntegration:
 
     def test_optimizer_uses_backend_factory(self):
         """Test that optimizer attempts to use BackendFactory."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer
+        from torchbridge.models.text.text_model_optimizer import TextModelOptimizer
 
         # Create optimizer - it should try to use BackendFactory
         optimizer = TextModelOptimizer()
@@ -502,7 +502,7 @@ class TestBackendIntegration:
 
     def test_optimizer_fallback_to_pytorch(self):
         """Test optimizer falls back gracefully when backend unavailable."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -519,7 +519,7 @@ class TestWarmup:
 
     def test_warmup_runs(self):
         """Test warmup executes without error."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -539,7 +539,7 @@ class TestWarmup:
 
     def test_no_warmup(self):
         """Test with warmup disabled."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -561,7 +561,7 @@ class TestErrorHandling:
 
     def test_none_model_handling(self):
         """Test handling of None model."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )
@@ -586,7 +586,7 @@ class TestTransformersIntegration:
     @pytest.mark.skip(reason="Requires transformers library and model download")
     def test_load_bert_model(self):
         """Test loading BERT from HuggingFace."""
-        from kernel_pytorch.models.text.text_model_optimizer import (
+        from torchbridge.models.text.text_model_optimizer import (
             TextModelConfig,
             TextModelOptimizer,
         )

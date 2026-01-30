@@ -19,7 +19,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.optimizations.patterns.memory_efficiency import (
+from torchbridge.optimizations.patterns.memory_efficiency import (
     AdaptiveMemoryManager,
     MemoryAccessPattern,
     MemoryEfficientSequential,

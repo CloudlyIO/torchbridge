@@ -10,9 +10,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from kernel_pytorch.core.config import (
+from torchbridge.core.config import (
     HardwareBackend,
-    KernelPyTorchConfig,
+    TorchBridgeConfig,
     TPUCompilationMode,
     TPUConfig,
     TPUTopology,
@@ -68,7 +68,7 @@ class TestTPUConfig:
         assert config_dict['topology'] == TPUTopology.SINGLE
         assert config_dict['compilation_mode'] == TPUCompilationMode.PJIT
 
-    @patch('kernel_pytorch.core.config.torch_xla', create=True)
+    @patch('torchbridge.core.config.torch_xla', create=True)
     @patch('os.environ.get')
     def test_detect_tpu_version_v4(self, mock_env_get, mock_xla):
         """Test TPU v4 detection."""
@@ -85,7 +85,7 @@ class TestTPUConfig:
         # Should detect as v4 or fall back to v5e
         assert detected in [TPUVersion.V4, TPUVersion.V5E]
 
-    @patch('kernel_pytorch.core.config.torch_xla', create=True)
+    @patch('torchbridge.core.config.torch_xla', create=True)
     @patch('os.environ.get')
     def test_detect_tpu_version_v5p(self, mock_env_get, mock_xla):
         """Test TPU v5p detection."""
@@ -101,7 +101,7 @@ class TestTPUConfig:
 
         assert detected in [TPUVersion.V5P, TPUVersion.V5E]
 
-    @patch('kernel_pytorch.core.config.torch_xla', create=True)
+    @patch('torchbridge.core.config.torch_xla', create=True)
     def test_detect_tpu_topology_single(self, mock_xla):
         """Test single TPU topology detection."""
         # Mock single TPU topology
@@ -113,7 +113,7 @@ class TestTPUConfig:
 
         assert detected in [TPUTopology.SINGLE, TPUTopology.AUTO]
 
-    @patch('kernel_pytorch.core.config.torch_xla', create=True)
+    @patch('torchbridge.core.config.torch_xla', create=True)
     def test_detect_tpu_topology_pod(self, mock_xla):
         """Test TPU pod topology detection."""
         # Mock TPU pod topology (256 devices = pod)
@@ -142,12 +142,12 @@ class TestTPUConfig:
         assert detected == TPUTopology.SINGLE
 
 
-class TestKernelPyTorchConfigTPU:
+class TestTorchBridgeConfigTPU:
     """Test TPU integration in main configuration."""
 
     def test_config_with_tpu_backend(self):
         """Test configuration with TPU backend."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
 
         # Check TPU config is present
         assert hasattr(config.hardware, 'tpu')
@@ -157,7 +157,7 @@ class TestKernelPyTorchConfigTPU:
 
     def test_config_tpu_serialization(self):
         """Test configuration serialization with TPU."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         config_dict = config.to_dict()
 
         # Check TPU section exists
@@ -169,7 +169,7 @@ class TestKernelPyTorchConfigTPU:
         assert 'topology' in tpu_config
         assert 'compilation_mode' in tpu_config
 
-    @patch('kernel_pytorch.core.config.torch_xla', create=True)
+    @patch('torchbridge.core.config.torch_xla', create=True)
     def test_device_detection_tpu_available(self, mock_xla):
         """Test device detection when TPU is available."""
         # Mock TPU availability
@@ -180,7 +180,7 @@ class TestKernelPyTorchConfigTPU:
 
         # Mock CUDA not available
         with patch('torch.cuda.is_available', return_value=False):
-            device = KernelPyTorchConfig._detect_device()
+            device = TorchBridgeConfig._detect_device()
             # Should detect TPU or fallback gracefully
             assert device is not None
 
@@ -188,16 +188,16 @@ class TestKernelPyTorchConfigTPU:
     def test_device_detection_no_tpu(self, mock_cuda):
         """Test device detection when TPU is not available."""
         # Should fall back to CPU
-        device = KernelPyTorchConfig._detect_device()
+        device = TorchBridgeConfig._detect_device()
         assert device.type == 'cpu'
 
     def test_tpu_config_modes(self):
         """Test different configuration modes with TPU."""
         configs = {
-            'default': KernelPyTorchConfig(),
-            'inference': KernelPyTorchConfig.for_inference(),
-            'training': KernelPyTorchConfig.for_training(),
-            'development': KernelPyTorchConfig.for_development()
+            'default': TorchBridgeConfig(),
+            'inference': TorchBridgeConfig.for_inference(),
+            'training': TorchBridgeConfig.for_training(),
+            'development': TorchBridgeConfig.for_development()
         }
 
         for mode, config in configs.items():

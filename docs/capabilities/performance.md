@@ -138,7 +138,7 @@ def benchmark_with_statistics(func, trials=20):
 
 #### Memory Analysis
 ```python
-from kernel_pytorch.utils.profiler import MemoryProfiler
+from torchbridge.utils.profiler import MemoryProfiler
 
 profiler = MemoryProfiler()
 with profiler:

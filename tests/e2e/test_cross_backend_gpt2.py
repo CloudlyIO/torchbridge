@@ -99,7 +99,7 @@ class TestCrossBackendGPT2:
     @requires_nvidia
     def test_gpt2_nvidia_logits_match(self, gpt2_baseline):
         """Test GPT-2 logits match baseline on NVIDIA."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = gpt2_baseline["model"]
@@ -136,7 +136,7 @@ class TestCrossBackendGPT2:
     @requires_nvidia
     def test_gpt2_nvidia_generation_match(self, gpt2_baseline):
         """Test GPT-2 generation matches baseline on NVIDIA."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = gpt2_baseline["model"]
@@ -173,7 +173,7 @@ class TestCrossBackendGPT2:
     @requires_nvidia
     def test_gpt2_nvidia_speedup(self, gpt2_baseline):
         """Test GPT-2 speedup on NVIDIA backend."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = gpt2_baseline["model"]
@@ -223,7 +223,7 @@ class TestCrossBackendGPT2:
     @requires_amd
     def test_gpt2_amd_generation_match(self, gpt2_baseline):
         """Test GPT-2 generation matches baseline on AMD."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         model = gpt2_baseline["model"]
@@ -261,7 +261,7 @@ class TestCrossBackendGPT2:
     @requires_amd
     def test_gpt2_amd_speedup(self, gpt2_baseline):
         """Test GPT-2 speedup on AMD backend."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         model = gpt2_baseline["model"]
@@ -314,7 +314,7 @@ class TestCrossBackendGPT2:
         """Test GPT-2 generation matches baseline on TPU."""
         import torch_xla.core.xla_model as xm
 
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = gpt2_baseline["model"]
@@ -355,7 +355,7 @@ class TestCrossBackendGPT2:
         """Test GPT-2 speedup on TPU backend."""
         import torch_xla.core.xla_model as xm
 
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = gpt2_baseline["model"]
@@ -408,7 +408,7 @@ class TestCrossBackendGPT2:
     @requires_intel
     def test_gpt2_intel_generation_match(self, gpt2_baseline):
         """Test GPT-2 generation matches baseline on Intel."""
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = gpt2_baseline["model"]
@@ -446,7 +446,7 @@ class TestCrossBackendGPT2:
     @requires_intel
     def test_gpt2_intel_speedup(self, gpt2_baseline):
         """Test GPT-2 speedup on Intel backend."""
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = gpt2_baseline["model"]
@@ -535,7 +535,7 @@ class TestCrossBackendGPT2Perplexity:
     @requires_nvidia
     def test_gpt2_perplexity_nvidia(self, perplexity_setup):
         """Test GPT-2 perplexity matches on NVIDIA."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = perplexity_setup["model"]
@@ -564,7 +564,7 @@ class TestCrossBackendGPT2Perplexity:
     @requires_amd
     def test_gpt2_perplexity_amd(self, perplexity_setup):
         """Test GPT-2 perplexity matches on AMD."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         model = perplexity_setup["model"]

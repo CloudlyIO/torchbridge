@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0", "wheel", "pybind11>=2.10.0", "torch", "ninja"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kernel-pytorch"
-version = "0.4.35"
-description = "Production-grade PyTorch GPU optimization framework with custom CUDA kernels (FlashAttention-3, Fused ops) - 2-10x performance improvements"
-authors = [{name = "KernelPyTorch Team"}]
+name = "torchbridge"
+version = "0.4.40"
+description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Intel, and TPU backends"
+authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -32,18 +32,18 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/KernelPyTorch/kernel-pytorch"
-Documentation = "https://kernel-pytorch.readthedocs.io"
-Repository = "https://github.com/KernelPyTorch/kernel-pytorch"
-"Bug Tracker" = "https://github.com/KernelPyTorch/kernel-pytorch/issues"
+Homepage = "https://github.com/TorchBridge/torchbridge"
+Documentation = "https://torchbridge.readthedocs.io"
+Repository = "https://github.com/TorchBridge/torchbridge"
+"Bug Tracker" = "https://github.com/TorchBridge/torchbridge/issues"
 
 [project.scripts]
-kernelpytorch = "kernel_pytorch.cli:main"
-kpt-optimize = "kernel_pytorch.cli.optimize:main"
-kpt-benchmark = "kernel_pytorch.cli.benchmark:main"
-kpt-export = "kernel_pytorch.cli.export:main"
-kpt-profile = "kernel_pytorch.cli.profile:main"
-kpt-doctor = "kernel_pytorch.cli.doctor:main"
+torchbridge = "torchbridge.cli:main"
+tb-optimize = "torchbridge.cli.optimize:main"
+tb-benchmark = "torchbridge.cli.benchmark:main"
+tb-export = "torchbridge.cli.export:main"
+tb-profile = "torchbridge.cli.profile:main"
+tb-doctor = "torchbridge.cli.doctor:main"
 
 [project.optional-dependencies]
 dev = [
@@ -124,7 +124,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["kernel_pytorch"]
+known-first-party = ["torchbridge"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -171,13 +171,13 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = [
-    "kernel_pytorch.utils.*",
-    "kernel_pytorch.precision.*",
-    "kernel_pytorch.mixture_of_experts.*",
-    "kernel_pytorch.hardware.gpu.*",
-    "kernel_pytorch.backends.*",
-    "kernel_pytorch.deployment.serving.*",
-    "kernel_pytorch.optimizations.*",
+    "torchbridge.utils.*",
+    "torchbridge.precision.*",
+    "torchbridge.mixture_of_experts.*",
+    "torchbridge.hardware.gpu.*",
+    "torchbridge.backends.*",
+    "torchbridge.deployment.serving.*",
+    "torchbridge.optimizations.*",
 ]
 disallow_untyped_defs = false
 warn_return_any = false

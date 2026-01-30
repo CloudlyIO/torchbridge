@@ -16,14 +16,14 @@ This guide covers:
 ```bash
 # Test unified architecture v0.4.18 with production backends
 PYTHONPATH=src python3 -c "
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge import TorchBridgeConfig, UnifiedManager
+from torchbridge.validation import UnifiedValidator
 print('✅ Unified architecture v0.4.18 with production backends imports successful')
 "
 
 # Quick unified validation test
 PYTHONPATH=src python3 -c "
-from kernel_pytorch.validation import UnifiedValidator
+from torchbridge.validation import UnifiedValidator
 validator = UnifiedValidator()
 print('✅ Unified validation framework ready')
 "
@@ -220,7 +220,7 @@ def test_large_scale_attention():
 **Compare against industry leaders:**
 ```python
 # Benchmarking API
-from kernel_pytorch.benchmarking import CompetitiveBenchmark
+from torchbridge.benchmarking import CompetitiveBenchmark
 
 benchmark = CompetitiveBenchmark(
     baselines=['flash_attention_3', 'vllm', 'ring_attention', 'mamba'],
@@ -340,7 +340,7 @@ def data_config(request):
 @pytest.fixture
 def optimized_model(device, data_config):
     """Create optimized model for testing"""
-    from kernel_pytorch.components import create_optimized_model
+    from torchbridge.components import create_optimized_model
     return create_optimized_model(
         config=data_config,
         device=device,
@@ -435,7 +435,7 @@ jobs:
 import pytest
 import time
 import torch
-from kernel_pytorch.benchmarking import PerformanceTracker
+from torchbridge.benchmarking import PerformanceTracker
 
 class TestPerformanceRegression:
     """Detect performance regressions in optimizations"""
@@ -447,7 +447,7 @@ class TestPerformanceRegression:
     @pytest.mark.benchmark
     def test_attention_performance(self):
         """Ensure attention performance doesn't regress"""
-        from kernel_pytorch.components import AttentionLayer
+        from torchbridge.components import AttentionLayer
 
         # Standard configuration
         batch_size, seq_len, hidden_size = 8, 512, 768
@@ -523,7 +523,7 @@ python3 -m pytest tests/test_performance.py::test_attention_speed -v --profile
 ### Performance Profiling
 ```python
 # Profile specific components
-from kernel_pytorch.utils import ProfiledExecution
+from torchbridge.utils import ProfiledExecution
 
 with ProfiledExecution() as profiler:
     model = create_optimized_model()

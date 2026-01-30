@@ -5,7 +5,7 @@
 
 ## 🎉 **v0.4.3 RELEASED - PRODUCTION HARDENED**
 
-KernelPyTorch is now **production-ready** with:
+TorchBridge is now **production-ready** with:
 - **905 tests** passing (100% success rate)
 - **3 backends**: NVIDIA, AMD, TPU (all 95%+ production-ready)
 - **Full deployment infrastructure**: ONNX, TorchScript, TorchServe, Triton, FastAPI
@@ -54,7 +54,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 - [ ] Expert routing optimization kernels
 - [ ] Top-k gating with load balancing
 - [ ] Sparse expert attention patterns
-- [ ] MoE configuration in KernelPyTorchConfig
+- [ ] MoE configuration in TorchBridgeConfig
 - [ ] MoE documentation with examples
 - [ ] Benchmark with Mixtral-style architectures
 
@@ -314,7 +314,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
    - infrastructure_manager.py: Lifecycle/validation (117 lines)
    - unified_manager.py: Coordinator (375 lines)
 2. ✅ Created unified error handling framework (core/errors.py)
-3. ✅ Backend exceptions now inherit from KernelPyTorchError
+3. ✅ Backend exceptions now inherit from TorchBridgeError
 4. ✅ Final testing (905+ tests passing)
 5. ✅ Documentation updates
 
@@ -326,7 +326,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 
 ### **✅ MAJOR CLEANUP COMPLETED (v0.2.3)**
 - **🏗️ Architecture Unification**: 74+ classes consolidated into 3 unified systems (96% reduction)
-- **⚙️ Configuration System**: 36+ Config classes → single KernelPyTorchConfig
+- **⚙️ Configuration System**: 36+ Config classes → single TorchBridgeConfig
 - **🔧 Management Layer**: 38+ Manager/Optimizer classes → UnifiedManager
 - **✅ Validation Framework**: 31+ validation functions → UnifiedValidator
 - **🧪 Testing**: **504 tests passing, 59 skipped** (100% success rate)
@@ -388,7 +388,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 - **🎯 Production Readiness**: NVIDIA backend **70% → 90%+ production-ready**
 
 ### **🏆 UNIFIED ARCHITECTURE ACHIEVEMENTS**
-- **Configuration Management**: Single source of truth for all settings (`KernelPyTorchConfig`)
+- **Configuration Management**: Single source of truth for all settings (`TorchBridgeConfig`)
 - **Hardware Abstraction**: Unified interface across NVIDIA, AMD, Intel, TPU
 - **Optimization Pipeline**: Streamlined manager hierarchy with auto-optimization
 - **Validation System**: Comprehensive multi-level validation (`UnifiedValidator`)
@@ -425,7 +425,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 1. **AMD GPU Full Implementation**
    ```bash
    # Complete AMD ROCm backend
-   src/kernel_pytorch/backends/amd/
+   src/torchbridge/backends/amd/
    ├── amd_backend.py (extend placeholder)
    ├── rocm_optimizer.py (new)
    ├── hip_compiler.py (new)
@@ -438,7 +438,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 2. **Intel GPU Full Implementation**
    ```bash
    # Complete Intel XPU backend
-   src/kernel_pytorch/backends/intel/
+   src/torchbridge/backends/intel/
    ├── intel_backend.py (extend placeholder)
    ├── oneapi_optimizer.py (new)
    ├── dpcpp_compiler.py (new)
@@ -463,7 +463,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 1. **Model Export with Optimization Preservation**
    ```python
    # Add export capabilities
-   src/kernel_pytorch/deployment/
+   src/torchbridge/deployment/
    ├── onnx_exporter.py (new)
    ├── torchscript_exporter.py (new)
    └── optimization_metadata.py (new)
@@ -477,7 +477,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 2. **Inference Server Integration**
    ```python
    # Integration with serving platforms
-   src/kernel_pytorch/deployment/serving/
+   src/torchbridge/deployment/serving/
    ├── torchserve_integration.py (new)
    ├── triton_integration.py (new)
    └── fastapi_wrapper.py (new)
@@ -491,7 +491,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 3. **Production Monitoring Dashboard**
    ```python
    # Monitoring and observability
-   src/kernel_pytorch/monitoring/
+   src/torchbridge/monitoring/
    ├── prometheus_exporter.py (new)
    ├── grafana_dashboard.json (new)
    └── alerting_rules.yaml (new)
@@ -523,7 +523,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 1. **ML-Based Optimization Selection**
    ```python
    # Learn from performance history
-   src/kernel_pytorch/core/ml_optimizer_selector.py
+   src/torchbridge/core/ml_optimizer_selector.py
 
    class MLOptimizerSelector:
        def train_from_history(performance_data)
@@ -534,7 +534,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 2. **Dynamic Compiler Pattern Discovery**
    ```python
    # Auto-discover fusion patterns
-   src/kernel_pytorch/core/compilers/pattern_discovery.py
+   src/torchbridge/core/compilers/pattern_discovery.py
 
    - Linear + GELU fusion detection
    - Cache blocking opportunities
@@ -544,7 +544,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 3. **Kernel Fusion Registry**
    ```python
    # Central registry for all fusions
-   src/kernel_pytorch/core/fusion_registry.py
+   src/torchbridge/core/fusion_registry.py
 
    class FusionRegistry:
        def register_fusion_pattern(pattern, kernel)
@@ -566,7 +566,7 @@ Based on [planning/industry-landscape-2026.md](planning/industry-landscape-2026.
 
 ```bash
 # Remove old testing framework (replaced by validation/)
-rm -rf src/kernel_pytorch/testing_framework/
+rm -rf src/torchbridge/testing_framework/
 
 # Consolidate duplicate validators
 # Keep: validation/unified_validator.py
@@ -582,7 +582,7 @@ rm -rf src/kernel_pytorch/testing_framework/
 
 ```python
 # Split unified_manager.py (500+ lines) into composable managers
-src/kernel_pytorch/core/management/
+src/torchbridge/core/management/
 ├── unified_manager.py (coordinator, 100 lines)
 ├── hardware_manager.py (hardware detection/routing, 150 lines)
 ├── optimization_manager.py (optimization strategies, 150 lines)
@@ -611,16 +611,16 @@ src/kernel_pytorch/core/management/
 
 ```python
 # Consistent error handling
-src/kernel_pytorch/core/errors.py (new)
+src/torchbridge/core/errors.py (new)
 
-class KernelPyTorchError(Exception): pass
-class HardwareNotFoundError(KernelPyTorchError): pass
-class OptimizationError(KernelPyTorchError): pass
-class ValidationError(KernelPyTorchError): pass
+class TorchBridgeError(Exception): pass
+class HardwareNotFoundError(TorchBridgeError): pass
+class OptimizationError(TorchBridgeError): pass
+class ValidationError(TorchBridgeError): pass
 
 # Structured logging
 import logging
-logger = logging.getLogger('kernel_pytorch')
+logger = logging.getLogger('torchbridge')
 
 # Replace print() with logger.info/debug/warning
 ```

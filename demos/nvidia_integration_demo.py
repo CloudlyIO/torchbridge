@@ -14,8 +14,8 @@ import torch
 import torch.nn as nn
 import argparse
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
-from kernel_pytorch.backends.nvidia import (
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
+from torchbridge.backends.nvidia import (
     NVIDIABackend,
     NVIDIAOptimizer,
     FP8Compiler,
@@ -119,7 +119,7 @@ def demo_fp8_compiler():
     """Demonstrate FP8 compiler for H100/Blackwell."""
     print_section("3. FP8 Compiler - H100/Blackwell Optimization")
 
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
     compiler = FP8Compiler(config)
 
@@ -266,7 +266,7 @@ def demo_cuda_utilities():
 
     # Environment information
     print("\n🌍 CUDA Environment:")
-    from kernel_pytorch.backends.nvidia.cuda_utilities import CUDAUtilities
+    from torchbridge.backends.nvidia.cuda_utilities import CUDAUtilities
     env_info = CUDAUtilities.get_cuda_env_info()
     for key, value in env_info.items():
         if isinstance(value, dict):
@@ -282,7 +282,7 @@ def demo_integration():
     print_section("7. Full Integration Pipeline")
 
     print("\n🔧 Creating integrated setup:")
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.hardware.nvidia.fp8_enabled = True
     config.hardware.nvidia.flash_attention_enabled = True
 

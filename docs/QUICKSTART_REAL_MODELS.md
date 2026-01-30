@@ -1,6 +1,6 @@
-# KernelPyTorch: Real ML Model Workflow
+# TorchBridge: Real ML Model Workflow
 
-> Complete guide for developing, testing, deploying, and running real ML models with KernelPyTorch v0.4.34
+> Complete guide for developing, testing, deploying, and running real ML models with TorchBridge v0.4.34
 
 ---
 
@@ -21,20 +21,20 @@
 
 ```bash
 # Basic installation
-pip install kernel-pytorch
+pip install torchbridge
 
 # With all backends (CUDA, ROCm, XPU, TPU)
-pip install kernel-pytorch[all]
+pip install torchbridge[all]
 
 # For development
-pip install kernel-pytorch[dev]
+pip install torchbridge[dev]
 ```
 
 ### 1.2 Verify Installation
 
 ```python
-import kernel_pytorch as kpt
-from kernel_pytorch.hardware import get_optimal_backend, create_backend
+import torchbridge as kpt
+from torchbridge.hardware import get_optimal_backend, create_backend
 
 # Check version
 print(f"Version: {kpt.__version__}")  # 0.4.34
@@ -80,11 +80,11 @@ my_ml_project/
 # models/transformer.py
 import torch
 import torch.nn as nn
-from kernel_pytorch.attention import UnifiedAttentionFusion
-from kernel_pytorch.precision import MixedPrecisionConfig
+from torchbridge.attention import UnifiedAttentionFusion
+from torchbridge.precision import MixedPrecisionConfig
 
 class OptimizedTransformer(nn.Module):
-    """Transformer with KernelPyTorch optimizations."""
+    """Transformer with TorchBridge optimizations."""
 
     def __init__(
         self,
@@ -121,17 +121,17 @@ class OptimizedTransformer(nn.Module):
 ```python
 # training/train.py
 import torch
-from kernel_pytorch.hardware import get_optimal_backend, create_backend
-from kernel_pytorch.precision import MixedPrecisionTrainer, MixedPrecisionConfig
-from kernel_pytorch.memory import MemoryOptimizer
-from kernel_pytorch.monitoring import configure_logging, get_logger, create_slo_manager
+from torchbridge.hardware import get_optimal_backend, create_backend
+from torchbridge.precision import MixedPrecisionTrainer, MixedPrecisionConfig
+from torchbridge.memory import MemoryOptimizer
+from torchbridge.monitoring import configure_logging, get_logger, create_slo_manager
 
 # Setup logging
 configure_logging(json_format=True, level="INFO")
 logger = get_logger(__name__)
 
 def train_model(model, train_loader, config):
-    """Train with KernelPyTorch optimizations."""
+    """Train with TorchBridge optimizations."""
 
     # 1. Auto-detect optimal backend
     backend_name = get_optimal_backend()
@@ -290,7 +290,7 @@ class TestOptimizedTransformer:
 
     def test_mixed_precision(self, model):
         """Test with mixed precision."""
-        from kernel_pytorch.precision import MixedPrecisionConfig, MixedPrecisionTrainer
+        from torchbridge.precision import MixedPrecisionConfig, MixedPrecisionTrainer
 
         config = MixedPrecisionConfig(enabled=True, dtype=torch.float16)
         trainer = MixedPrecisionTrainer(model, config)
@@ -312,7 +312,7 @@ class TestOptimizedTransformer:
 import pytest
 import torch
 import time
-from kernel_pytorch.monitoring import get_performance_tracker
+from torchbridge.monitoring import get_performance_tracker
 
 class TestPerformance:
     """Performance regression tests."""
@@ -378,7 +378,7 @@ python scripts/validation/cost_optimized_validation.py --tier quick
 ```python
 # inference/export.py
 import torch
-from kernel_pytorch.deployment import ModelExporter, ExportConfig
+from torchbridge.deployment import ModelExporter, ExportConfig
 
 def export_model(model, output_dir):
     """Export model for production deployment."""
@@ -422,7 +422,7 @@ def export_model(model, output_dir):
 import torch
 from fastapi import FastAPI
 from pydantic import BaseModel
-from kernel_pytorch.monitoring import (
+from torchbridge.monitoring import (
     MetricsExporter,
     start_metrics_server,
     create_enhanced_health_monitor,
@@ -569,7 +569,7 @@ services:
 
 ```python
 # monitoring/setup.py
-from kernel_pytorch.monitoring import (
+from torchbridge.monitoring import (
     configure_logging,
     MetricsExporter,
     start_metrics_server,
@@ -651,7 +651,7 @@ scrape_configs:
 
 ```python
 # Generate Grafana dashboard
-from kernel_pytorch.monitoring import create_full_dashboard, export_dashboard_json
+from torchbridge.monitoring import create_full_dashboard, export_dashboard_json
 
 dashboard = create_full_dashboard(model_name="transformer")
 export_dashboard_json(dashboard, "grafana-dashboards/model-dashboard.json")
@@ -665,7 +665,7 @@ export_dashboard_json(dashboard, "grafana-dashboards/model-dashboard.json")
 
 ```python
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig
+from torchbridge.models.text import TextModelOptimizer, TextModelConfig
 
 # Load model
 model = GPT2LMHeadModel.from_pretrained("gpt2")
@@ -689,7 +689,7 @@ print(tokenizer.decode(outputs[0]))
 
 ```python
 from torchvision.models import resnet50, ResNet50_Weights
-from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig
+from torchbridge.models.vision import ResNetOptimizer, VisionOptimizationConfig
 
 # Load model
 model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
@@ -713,8 +713,8 @@ with torch.no_grad():
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from kernel_pytorch.precision import FP8TrainingEngine
-from kernel_pytorch.memory import MemoryOptimizer
+from torchbridge.precision import FP8TrainingEngine
+from torchbridge.memory import MemoryOptimizer
 
 # Load with memory optimization
 model = AutoModelForCausalLM.from_pretrained(
@@ -736,7 +736,7 @@ if torch.cuda.get_device_capability()[0] >= 9:
 ### 6.4 Mixture of Experts
 
 ```python
-from kernel_pytorch.moe import MixtureOfExperts, MoEConfig
+from torchbridge.moe import MixtureOfExperts, MoEConfig
 
 # Create MoE layer
 moe_config = MoEConfig(
@@ -768,16 +768,16 @@ class MoETransformer(nn.Module):
 
 ```bash
 # Optimize model
-kernelpytorch optimize model.pt --output optimized.pt --level O2
+torchbridge optimize model.pt --output optimized.pt --level O2
 
 # Export model
-kernelpytorch export model.pt --format onnx --output model.onnx
+torchbridge export model.pt --format onnx --output model.onnx
 
 # Profile model
-kernelpytorch profile model.pt --input-shape 1,128 --output profile.json
+torchbridge profile model.pt --input-shape 1,128 --output profile.json
 
 # Benchmark
-kernelpytorch benchmark model.pt --batch-sizes 1,8,32 --output benchmark.json
+torchbridge benchmark model.pt --batch-sizes 1,8,32 --output benchmark.json
 ```
 
 ### Environment Variables
@@ -798,6 +798,6 @@ export KERNELPYTORCH_DEFAULT_DTYPE=bfloat16
 
 ## Support
 
-- Documentation: https://kernelpytorch.readthedocs.io
-- Issues: https://github.com/kernelpytorch/kernelpytorch/issues
-- Discussions: https://github.com/kernelpytorch/kernelpytorch/discussions
+- Documentation: https://torchbridge.readthedocs.io
+- Issues: https://github.com/torchbridge/torchbridge/issues
+- Discussions: https://github.com/torchbridge/torchbridge/discussions

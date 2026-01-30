@@ -71,24 +71,24 @@ component_management:
     - component_id: attention
       name: Attention Module
       paths:
-        - src/kernel_pytorch/attention/**
+        - src/torchbridge/attention/**
     - component_id: precision
       name: Precision Module
       paths:
-        - src/kernel_pytorch/precision/**
+        - src/torchbridge/precision/**
     - component_id: memory
       name: Memory Module
       paths:
-        - src/kernel_pytorch/advanced_memory/**
+        - src/torchbridge/advanced_memory/**
     - component_id: hardware
       name: Hardware Backends
       paths:
-        - src/kernel_pytorch/hardware/**
+        - src/torchbridge/hardware/**
     - component_id: deployment
       name: Deployment
       paths:
-        - src/kernel_pytorch/deployment/**
+        - src/torchbridge/deployment/**
     - component_id: distributed
       name: Distributed Training
       paths:
-        - src/kernel_pytorch/models/distributed/**
+        - src/torchbridge/models/distributed/**

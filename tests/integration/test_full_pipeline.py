@@ -1,7 +1,7 @@
 """
 Full Pipeline Integration Tests
 
-These tests validate the complete KernelPyTorch workflow from model loading
+These tests validate the complete TorchBridge workflow from model loading
 through optimization, export, and inference. They ensure all components
 work together correctly.
 """
@@ -183,12 +183,12 @@ class TestPrecisionModes:
         assert output.shape == sample_input.shape
 
 
-class TestKernelPyTorchIntegration:
-    """Test KernelPyTorch-specific integrations."""
+class TestTorchBridgeIntegration:
+    """Test TorchBridge-specific integrations."""
 
     def test_config_system(self):
         """Test configuration system."""
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         # Get config
         config = kpt.get_config()
@@ -202,31 +202,21 @@ class TestKernelPyTorchIntegration:
 
     def test_manager_creation(self):
         """Test unified manager creation."""
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         manager = kpt.get_manager()
         assert manager is not None
 
     def test_attention_layer_import(self):
         """Test attention layer can be imported."""
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         # AttentionLayer is the base class
         assert kpt.AttentionLayer is not None
 
-        # UnifiedAttentionFusion is the main attention implementation
-        attention = kpt.UnifiedAttentionFusion(d_model=256, n_heads=4, d_ff=512)
-        assert attention is not None
-
-        # Test forward pass
-        x = torch.randn(2, 32, 256)
-        with torch.no_grad():
-            output = attention(x)
-        assert output.shape == x.shape
-
     def test_create_moe(self):
         """Test MoE layer creation."""
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         moe = kpt.create_moe(hidden_size=256, num_experts=4, top_k=2)
         assert moe is not None
@@ -239,7 +229,7 @@ class TestKernelPyTorchIntegration:
 
     def test_fused_gelu(self):
         """Test fused GELU activation."""
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         gelu = kpt.FusedGELU()
         x = torch.randn(2, 32, 256)
@@ -255,32 +245,32 @@ class TestCLIIntegration:
 
     def test_optimize_command_import(self):
         """Test optimize command can be imported."""
-        from kernel_pytorch.cli.optimize import OptimizeCommand
+        from torchbridge.cli.optimize import OptimizeCommand
         assert OptimizeCommand is not None
 
     def test_benchmark_command_import(self):
         """Test benchmark command can be imported."""
-        from kernel_pytorch.cli.benchmark import BenchmarkCommand
+        from torchbridge.cli.benchmark import BenchmarkCommand
         assert BenchmarkCommand is not None
 
     def test_doctor_command_import(self):
         """Test doctor command can be imported."""
-        from kernel_pytorch.cli.doctor import DoctorCommand
+        from torchbridge.cli.doctor import DoctorCommand
         assert DoctorCommand is not None
 
     def test_export_command_import(self):
         """Test export command can be imported."""
-        from kernel_pytorch.cli.export import ExportCommand
+        from torchbridge.cli.export import ExportCommand
         assert ExportCommand is not None
 
     def test_profile_command_import(self):
         """Test profile command can be imported."""
-        from kernel_pytorch.cli.profile import ProfileCommand
+        from torchbridge.cli.profile import ProfileCommand
         assert ProfileCommand is not None
 
     def test_main_cli_import(self):
         """Test main CLI can be imported."""
-        from kernel_pytorch.cli import main
+        from torchbridge.cli import main
         assert callable(main)
 
 
@@ -289,27 +279,27 @@ class TestDeploymentIntegration:
 
     def test_onnx_exporter_import(self):
         """Test ONNX exporter can be imported."""
-        from kernel_pytorch.deployment import ONNXExporter
+        from torchbridge.deployment import ONNXExporter
         assert ONNXExporter is not None
 
     def test_torchscript_exporter_import(self):
         """Test TorchScript exporter can be imported."""
-        from kernel_pytorch.deployment import TorchScriptExporter
+        from torchbridge.deployment import TorchScriptExporter
         assert TorchScriptExporter is not None
 
     def test_safetensors_exporter_import(self):
         """Test SafeTensors exporter can be imported."""
-        from kernel_pytorch.deployment import SafeTensorsExporter
+        from torchbridge.deployment import SafeTensorsExporter
         assert SafeTensorsExporter is not None
 
     def test_production_validator_import(self):
         """Test production validator can be imported."""
-        from kernel_pytorch.deployment import ProductionValidator
+        from torchbridge.deployment import ProductionValidator
         assert ProductionValidator is not None
 
     def test_serving_imports(self):
         """Test serving components can be imported."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ServerConfig,
             create_fastapi_server,
         )
@@ -322,31 +312,31 @@ class TestBackendIntegration:
 
     def test_nvidia_backend_import(self):
         """Test NVIDIA backend can be imported."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend, NVIDIAOptimizer
+        from torchbridge.backends.nvidia import NVIDIABackend, NVIDIAOptimizer
         assert NVIDIABackend is not None
         assert NVIDIAOptimizer is not None
 
     def test_amd_backend_import(self):
         """Test AMD backend can be imported."""
-        from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
+        from torchbridge.backends.amd import AMDBackend, AMDOptimizer
         assert AMDBackend is not None
         assert AMDOptimizer is not None
 
     def test_intel_backend_import(self):
         """Test Intel backend can be imported."""
-        from kernel_pytorch.backends.intel import IntelBackend, IntelOptimizer
+        from torchbridge.backends.intel import IntelBackend, IntelOptimizer
         assert IntelBackend is not None
         assert IntelOptimizer is not None
 
     def test_tpu_backend_import(self):
         """Test TPU backend can be imported."""
-        from kernel_pytorch.backends.tpu import TPUBackend, TPUOptimizer
+        from torchbridge.backends.tpu import TPUBackend, TPUOptimizer
         assert TPUBackend is not None
         assert TPUOptimizer is not None
 
     def test_hal_import(self):
         """Test Hardware Abstraction Layer can be imported."""
-        from kernel_pytorch.hardware.abstraction.hal_core import (
+        from torchbridge.hardware.abstraction.hal_core import (
             HardwareAbstractionLayer,
         )
         assert HardwareAbstractionLayer is not None
@@ -357,17 +347,17 @@ class TestDistributedIntegration:
 
     def test_distributed_config_import(self):
         """Test distributed config can be imported."""
-        from kernel_pytorch.models.distributed import DistributedConfig
+        from torchbridge.models.distributed import DistributedConfig
         assert DistributedConfig is not None
 
     def test_tensor_parallel_import(self):
         """Test tensor parallel can be imported."""
-        from kernel_pytorch.models.distributed import TensorParallelConfig
+        from torchbridge.models.distributed import TensorParallelConfig
         assert TensorParallelConfig is not None
 
     def test_pipeline_parallel_import(self):
         """Test pipeline parallel can be imported."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import (
+        from torchbridge.models.distributed.pipeline_parallel import (
             PipelineParallelConfig,
         )
         assert PipelineParallelConfig is not None
@@ -378,12 +368,12 @@ class TestMemoryOptimization:
 
     def test_gradient_checkpointing_import(self):
         """Test gradient checkpointing can be imported."""
-        from kernel_pytorch.advanced_memory import SelectiveGradientCheckpointing
+        from torchbridge.advanced_memory import SelectiveGradientCheckpointing
         assert SelectiveGradientCheckpointing is not None
 
     def test_deep_optimizer_states_import(self):
         """Test DeepOptimizerStates can be imported."""
-        from kernel_pytorch.advanced_memory import DeepOptimizerStates
+        from torchbridge.advanced_memory import DeepOptimizerStates
         assert DeepOptimizerStates is not None
 
 
@@ -392,12 +382,12 @@ class TestValidationFramework:
 
     def test_unified_validator_import(self):
         """Test unified validator can be imported."""
-        from kernel_pytorch.validation import UnifiedValidator
+        from torchbridge.validation import UnifiedValidator
         assert UnifiedValidator is not None
 
     def test_validator_basic_usage(self):
         """Test basic validator usage."""
-        from kernel_pytorch.validation import UnifiedValidator
+        from torchbridge.validation import UnifiedValidator
 
         nn.Linear(256, 128)
         validator = UnifiedValidator()

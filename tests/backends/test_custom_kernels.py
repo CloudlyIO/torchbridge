@@ -18,7 +18,7 @@ import torch.nn.functional as F
 
 # Import custom kernel modules
 try:
-    from kernel_pytorch.hardware.gpu.custom_kernels import (
+    from torchbridge.hardware.gpu.custom_kernels import (
         FlashAttentionV3,
         FusedLinearGELU,
         FusedLinearSiLU,
@@ -31,7 +31,7 @@ except ImportError:
 
 # Try to import compiled CUDA kernels
 try:
-    import kernel_pytorch_cuda  # noqa: F401
+    import torchbridge_cuda  # noqa: F401
     CUDA_KERNELS_AVAILABLE = torch.cuda.is_available()
 except ImportError:
     CUDA_KERNELS_AVAILABLE = False

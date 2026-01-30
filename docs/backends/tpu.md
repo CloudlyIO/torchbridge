@@ -48,12 +48,12 @@ The TPU Backend provides production-ready support for Google Cloud TPUs through 
 ## Quick Start
 
 ```python
-from kernel_pytorch.backends.tpu import TPUBackend, TPUOptimizer
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.tpu import TPUBackend, TPUOptimizer
+from torchbridge.core.config import TorchBridgeConfig
 import torch.nn as nn
 
 # Initialize TPU backend
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 backend = TPUBackend(config)
 
 # Prepare model for TPU
@@ -94,10 +94,10 @@ print(f"Optimized model ready for TPU execution")
 ### Verify Installation
 
 ```python
-from kernel_pytorch.backends.tpu import TPUBackend
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.tpu import TPUBackend
+from torchbridge.core.config import TorchBridgeConfig
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 backend = TPUBackend(config)
 
 print(f"TPU Device: {backend.device}")
@@ -111,9 +111,9 @@ print(f"World Size: {backend.world_size}")
 ### Basic Configuration
 
 ```python
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion
+from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 
 # TPU-specific configuration
 config.hardware.tpu.version = TPUVersion.V5P
@@ -146,14 +146,14 @@ config.hardware.tpu.monitoring_duration_seconds = 60.0
 
 #### Inference Mode
 ```python
-config = KernelPyTorchConfig(mode="inference")
+config = TorchBridgeConfig(mode="inference")
 config.hardware.tpu.gradient_checkpointing = False
 config.hardware.tpu.mixed_precision = True
 ```
 
 #### Training Mode
 ```python
-config = KernelPyTorchConfig(mode="training")
+config = TorchBridgeConfig(mode="training")
 config.hardware.tpu.gradient_checkpointing = True
 config.hardware.tpu.mixed_precision = True
 config.hardware.tpu.xla_optimization_level = 2
@@ -161,7 +161,7 @@ config.hardware.tpu.xla_optimization_level = 2
 
 #### Development Mode
 ```python
-config = KernelPyTorchConfig(mode="development")
+config = TorchBridgeConfig(mode="development")
 config.hardware.tpu.enable_strict_validation = True
 config.hardware.tpu.xla_optimization_level = 0  # Debug mode
 ```
@@ -175,7 +175,7 @@ config.hardware.tpu.xla_optimization_level = 0  # Debug mode
 Main interface for TPU device management:
 
 ```python
-from kernel_pytorch.backends.tpu import TPUBackend
+from torchbridge.backends.tpu import TPUBackend
 
 backend = TPUBackend(config)
 
@@ -204,7 +204,7 @@ print(f"Cache Stats: {stats['model_cache_stats']}")
 High-level model optimization:
 
 ```python
-from kernel_pytorch.backends.tpu import TPUOptimizer
+from torchbridge.backends.tpu import TPUOptimizer
 
 optimizer = TPUOptimizer(config)
 
@@ -228,7 +228,7 @@ print(f"Performance Metrics: {result.performance_metrics}")
 XLA compilation and caching:
 
 ```python
-from kernel_pytorch.backends.tpu import XLACompiler
+from torchbridge.backends.tpu import XLACompiler
 
 compiler = XLACompiler(config.hardware.tpu)
 
@@ -250,7 +250,7 @@ print(f"Evictions: {stats['compilation_cache']['evictions']}")
 TPU memory management and pooling:
 
 ```python
-from kernel_pytorch.backends.tpu import TPUMemoryManager
+from torchbridge.backends.tpu import TPUMemoryManager
 
 manager = TPUMemoryManager(config.hardware.tpu)
 
@@ -279,7 +279,7 @@ print(f"Allocated: {stats.allocated_memory / 1e9:.2f} GB")
 Distributed training and device management:
 
 ```python
-from kernel_pytorch.backends.tpu import create_xla_integration
+from torchbridge.backends.tpu import create_xla_integration
 
 device_manager, distributed, optimizations = create_xla_integration(config.hardware.tpu)
 
@@ -304,11 +304,11 @@ if distributed.is_distributed:
 ```python
 import torch
 import torch.nn as nn
-from kernel_pytorch.backends.tpu import TPUBackend
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.backends.tpu import TPUBackend
+from torchbridge.core.config import TorchBridgeConfig
 
 # Setup
-config = KernelPyTorchConfig(mode="training")
+config = TorchBridgeConfig(mode="training")
 backend = TPUBackend(config)
 
 # Model
@@ -337,7 +337,7 @@ for epoch in range(10):
 ### Example 2: Model Optimization
 
 ```python
-from kernel_pytorch.backends.tpu import TPUOptimizer
+from torchbridge.backends.tpu import TPUOptimizer
 
 optimizer = TPUOptimizer(config)
 
@@ -354,13 +354,13 @@ result = optimizer.optimize_for_training(model, sample_inputs)
 ### Example 3: Distributed Training
 
 ```python
-from kernel_pytorch.backends.tpu import TPUBackend, XLADistributedTraining
+from torchbridge.backends.tpu import TPUBackend, XLADistributedTraining
 
 backend = TPUBackend(config)
 
 if backend.is_distributed:
     # Initialize distributed training
-    from kernel_pytorch.backends.tpu import XLADeviceManager
+    from torchbridge.backends.tpu import XLADeviceManager
 
     device_manager = XLADeviceManager(config.hardware.tpu)
     distributed = XLADistributedTraining(device_manager)
@@ -381,7 +381,7 @@ if backend.is_distributed:
 ### Example 4: Memory Pool Usage
 
 ```python
-from kernel_pytorch.backends.tpu import TPUMemoryManager
+from torchbridge.backends.tpu import TPUMemoryManager
 
 manager = TPUMemoryManager(config.hardware.tpu)
 
@@ -454,7 +454,7 @@ print(f"Pool Utilization: {pool_stats['pool_details'][activation_pool]['utilizat
 ### Custom Exceptions (v0.4.18)
 
 ```python
-from kernel_pytorch.backends.tpu.tpu_exceptions import (
+from torchbridge.backends.tpu.tpu_exceptions import (
     TPUBackendError,           # Base exception
     TPUNotAvailableError,      # TPU/XLA not available
     XLACompilationError,       # Compilation failed
@@ -602,10 +602,10 @@ backend = TPUBackend(config)
 ```python
 # Use environment-specific configs
 if os.getenv("ENVIRONMENT") == "production":
-    config = KernelPyTorchConfig(mode="training")
+    config = TorchBridgeConfig(mode="training")
     config.hardware.tpu.enable_strict_validation = False
 else:
-    config = KernelPyTorchConfig(mode="development")
+    config = TorchBridgeConfig(mode="development")
     config.hardware.tpu.enable_strict_validation = True
 ```
 

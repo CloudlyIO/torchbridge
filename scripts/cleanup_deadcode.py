@@ -44,8 +44,8 @@ class DeadCodeCleaner:
     def _remove_legacy_files(self):
         """Remove clearly legacy/duplicate files"""
         legacy_files = [
-            "src/kernel_pytorch/distributed_scale/hardware_adaptation_original.py",
-            "src/kernel_pytorch/utils/compiler_assistant_legacy.py"
+            "src/torchbridge/distributed_scale/hardware_adaptation_original.py",
+            "src/torchbridge/utils/compiler_assistant_legacy.py"
         ]
 
         print(f"\n🗑️  Removing legacy files...")

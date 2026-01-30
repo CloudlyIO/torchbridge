@@ -1,10 +1,10 @@
-"""Tests for the kpt-export CLI command."""
+"""Tests for the tb-export CLI command."""
 
 
 import pytest
 import torch
 
-from kernel_pytorch.cli.export import ExportCommand
+from torchbridge.cli.export import ExportCommand
 
 
 def _onnx_available() -> bool:

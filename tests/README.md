@@ -1,4 +1,4 @@
-# KernelPyTorch Test Suite
+# TorchBridge Test Suite
 
 Comprehensive test suite for validating GPU optimizations.
 
@@ -130,7 +130,7 @@ pytest tests/features/test_distributed_scale.py -v
 ## Coverage
 
 ```bash
-pytest tests/ --cov=src/kernel_pytorch --cov-report=html
+pytest tests/ --cov=src/torchbridge --cov-report=html
 open htmlcov/index.html
 ```
 

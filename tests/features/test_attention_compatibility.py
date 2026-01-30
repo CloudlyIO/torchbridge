@@ -8,7 +8,7 @@ core functionality works before comprehensive test updates.
 import pytest
 import torch
 
-from kernel_pytorch.attention import (
+from torchbridge.attention import (
     AttentionConfig,
     AttentionPatterns,
     FlashAttention3,

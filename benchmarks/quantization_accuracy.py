@@ -251,7 +251,7 @@ def quantize_model_int8(model: nn.Module) -> nn.Module:
 def quantize_model_fp8(model: nn.Module, device: torch.device) -> nn.Module:
     """Apply FP8 quantization using our native implementation."""
     try:
-        from kernel_pytorch.precision.fp8_native import convert_model_to_native_fp8
+        from torchbridge.precision.fp8_native import convert_model_to_native_fp8
         return convert_model_to_native_fp8(model, device=device)
     except Exception as e:
         warnings.warn(f"FP8 conversion failed: {e}, returning original model")

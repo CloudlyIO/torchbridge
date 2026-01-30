@@ -44,7 +44,7 @@ def demo_backend_factory() -> Dict[str, Any]:
     """Demonstrate BackendFactory automatic backend selection."""
     print_section("BackendFactory Auto-Detection")
 
-    from kernel_pytorch.backends import (
+    from torchbridge.backends import (
         BackendFactory,
         BackendType,
         get_backend,
@@ -140,7 +140,7 @@ def demo_optimization_levels() -> Dict[str, Any]:
     """Demonstrate OptimizationLevel enum and aliases."""
     print_section("Optimization Levels")
 
-    from kernel_pytorch.backends import OptimizationLevel
+    from torchbridge.backends import OptimizationLevel
 
     results = {"passed": 0, "total": 0}
 
@@ -207,7 +207,7 @@ def demo_device_info() -> Dict[str, Any]:
     """Demonstrate standardized DeviceInfo format."""
     print_section("Standardized DeviceInfo")
 
-    from kernel_pytorch.backends import DeviceInfo, get_backend
+    from torchbridge.backends import DeviceInfo, get_backend
 
     results = {"passed": 0, "total": 0}
 
@@ -267,7 +267,7 @@ def demo_unified_interface() -> Dict[str, Any]:
     """Demonstrate unified interface across all backends."""
     print_section("Unified Backend Interface")
 
-    from kernel_pytorch.backends import get_backend, DeviceInfo
+    from torchbridge.backends import get_backend, DeviceInfo
 
     results = {"passed": 0, "total": 0}
 
@@ -282,7 +282,7 @@ def demo_unified_interface() -> Dict[str, Any]:
 
     # Check which backends are available
     try:
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
         backend = NVIDIABackend()
         if backend.is_available:
             backends_to_test.append("nvidia")
@@ -366,16 +366,16 @@ def demo_backend_inheritance() -> Dict[str, Any]:
     """Demonstrate that all backends inherit from BaseBackend."""
     print_section("Backend Inheritance")
 
-    from kernel_pytorch.backends import BaseBackend
+    from torchbridge.backends import BaseBackend
 
     results = {"passed": 0, "total": 0}
 
     # Test each backend
     backend_classes = [
-        ("NVIDIA", "kernel_pytorch.backends.nvidia.NVIDIABackend"),
-        ("AMD", "kernel_pytorch.backends.amd.AMDBackend"),
-        ("TPU", "kernel_pytorch.backends.tpu.TPUBackend"),
-        ("Intel", "kernel_pytorch.backends.intel.IntelBackend"),
+        ("NVIDIA", "torchbridge.backends.nvidia.NVIDIABackend"),
+        ("AMD", "torchbridge.backends.amd.AMDBackend"),
+        ("TPU", "torchbridge.backends.tpu.TPUBackend"),
+        ("Intel", "torchbridge.backends.intel.IntelBackend"),
     ]
 
     for name, class_path in backend_classes:
@@ -409,7 +409,7 @@ def demo_context_manager() -> Dict[str, Any]:
     """Demonstrate backend context manager usage."""
     print_section("Context Manager Usage")
 
-    from kernel_pytorch.backends import get_backend
+    from torchbridge.backends import get_backend
 
     results = {"passed": 0, "total": 0}
 
@@ -452,7 +452,7 @@ def demo_optimizer_integration() -> Dict[str, Any]:
     """Demonstrate unified optimizer interface."""
     print_section("Optimizer Integration")
 
-    from kernel_pytorch.backends import get_optimizer, OptimizationLevel
+    from torchbridge.backends import get_optimizer, OptimizationLevel
 
     results = {"passed": 0, "total": 0}
 
@@ -512,7 +512,7 @@ def demo_full_workflow(quick: bool = False) -> Dict[str, Any]:
     """Demonstrate complete unified backend workflow."""
     print_section("Complete Unified Workflow")
 
-    from kernel_pytorch.backends import (
+    from torchbridge.backends import (
         BackendFactory,
         BackendType,
         OptimizationLevel,
@@ -606,7 +606,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("  Unified Backend Demo (v0.4.8)")
-    print("  KernelPyTorch - Cross-Platform Backend Unification")
+    print("  TorchBridge - Cross-Platform Backend Unification")
     print("=" * 60)
 
     all_results = {

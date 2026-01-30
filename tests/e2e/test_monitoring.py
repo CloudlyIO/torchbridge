@@ -1,5 +1,5 @@
 """
-Tests for the KernelPyTorch Monitoring Module (v0.3.10)
+Tests for the TorchBridge Monitoring Module (v0.3.10)
 
 Tests cover:
 - Prometheus metrics exporter
@@ -56,16 +56,16 @@ class TestMetricsConfig:
 
     def test_default_config(self):
         """Test default configuration."""
-        from kernel_pytorch.monitoring import prometheus_exporter
+        from torchbridge.monitoring import prometheus_exporter
 
         config = prometheus_exporter.MetricsConfig()
         assert config.port == 9090
         assert config.model_name == "model"
-        assert config.namespace == "kernelpytorch"
+        assert config.namespace == "torchbridge"
 
     def test_custom_config(self):
         """Test custom configuration."""
-        from kernel_pytorch.monitoring import prometheus_exporter
+        from torchbridge.monitoring import prometheus_exporter
 
         config = prometheus_exporter.MetricsConfig(
             port=8080,
@@ -82,7 +82,7 @@ class TestMetricsExporter:
 
     def test_exporter_creation(self):
         """Test exporter instantiation."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
         assert exporter is not None
@@ -90,7 +90,7 @@ class TestMetricsExporter:
 
     def test_record_inference(self):
         """Test recording inference metrics."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
         exporter.record_inference(latency_ms=5.0, batch_size=32)
@@ -101,7 +101,7 @@ class TestMetricsExporter:
 
     def test_record_multiple_inferences(self):
         """Test recording multiple inferences."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
 
@@ -114,7 +114,7 @@ class TestMetricsExporter:
 
     def test_track_inference_context(self):
         """Test tracking inference with context manager."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
 
@@ -128,7 +128,7 @@ class TestMetricsExporter:
 
     def test_get_metrics_text(self):
         """Test getting metrics in Prometheus format."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
         exporter.record_inference(latency_ms=5.0, batch_size=8)
@@ -139,7 +139,7 @@ class TestMetricsExporter:
 
     def test_reset_metrics(self):
         """Test resetting metrics."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
         exporter.record_inference(latency_ms=5.0, batch_size=8)
@@ -151,7 +151,7 @@ class TestMetricsExporter:
 
     def test_system_metrics(self):
         """Test getting system metrics."""
-        from kernel_pytorch.monitoring import MetricsExporter
+        from torchbridge.monitoring import MetricsExporter
 
         exporter = MetricsExporter()
         metrics = exporter.get_system_metrics()
@@ -166,14 +166,14 @@ class TestCreateMetricsExporter:
 
     def test_create_with_defaults(self):
         """Test creating exporter with defaults."""
-        from kernel_pytorch.monitoring import create_metrics_exporter
+        from torchbridge.monitoring import create_metrics_exporter
 
         exporter = create_metrics_exporter()
         assert exporter.config.model_name == "model"
 
     def test_create_with_options(self):
         """Test creating exporter with options."""
-        from kernel_pytorch.monitoring import create_metrics_exporter
+        from torchbridge.monitoring import create_metrics_exporter
 
         exporter = create_metrics_exporter(
             model_name="my_model",
@@ -195,7 +195,7 @@ class TestDashboardPanel:
 
     def test_panel_creation(self):
         """Test panel instantiation."""
-        from kernel_pytorch.monitoring import DashboardPanel
+        from torchbridge.monitoring import DashboardPanel
 
         panel = DashboardPanel(title="Test Panel")
         assert panel.title == "Test Panel"
@@ -203,7 +203,7 @@ class TestDashboardPanel:
 
     def test_panel_to_dict(self):
         """Test panel serialization."""
-        from kernel_pytorch.monitoring import DashboardPanel
+        from torchbridge.monitoring import DashboardPanel
 
         panel = DashboardPanel(
             title="Latency",
@@ -222,7 +222,7 @@ class TestGrafanaDashboard:
 
     def test_dashboard_creation(self):
         """Test dashboard instantiation."""
-        from kernel_pytorch.monitoring import GrafanaDashboard
+        from torchbridge.monitoring import GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test Dashboard")
         assert dashboard.title == "Test Dashboard"
@@ -230,7 +230,7 @@ class TestGrafanaDashboard:
 
     def test_add_panel(self):
         """Test adding panels to dashboard."""
-        from kernel_pytorch.monitoring import DashboardPanel, GrafanaDashboard
+        from torchbridge.monitoring import DashboardPanel, GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test")
         dashboard.add_panel(DashboardPanel(title="Panel 1"))
@@ -240,7 +240,7 @@ class TestGrafanaDashboard:
 
     def test_dashboard_to_dict(self):
         """Test dashboard serialization."""
-        from kernel_pytorch.monitoring import DashboardPanel, GrafanaDashboard
+        from torchbridge.monitoring import DashboardPanel, GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test")
         dashboard.add_panel(DashboardPanel(title="Panel 1"))
@@ -252,7 +252,7 @@ class TestGrafanaDashboard:
 
     def test_dashboard_to_json(self):
         """Test dashboard JSON export."""
-        from kernel_pytorch.monitoring import GrafanaDashboard
+        from torchbridge.monitoring import GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test")
         json_str = dashboard.to_json()
@@ -266,7 +266,7 @@ class TestCreateDashboards:
 
     def test_create_inference_dashboard(self):
         """Test creating inference dashboard."""
-        from kernel_pytorch.monitoring import create_inference_dashboard
+        from torchbridge.monitoring import create_inference_dashboard
 
         dashboard = create_inference_dashboard(model_name="transformer")
 
@@ -275,7 +275,7 @@ class TestCreateDashboards:
 
     def test_create_system_dashboard(self):
         """Test creating system dashboard."""
-        from kernel_pytorch.monitoring import create_system_dashboard
+        from torchbridge.monitoring import create_system_dashboard
 
         dashboard = create_system_dashboard()
 
@@ -284,7 +284,7 @@ class TestCreateDashboards:
 
     def test_create_full_dashboard(self):
         """Test creating full dashboard."""
-        from kernel_pytorch.monitoring import create_full_dashboard
+        from torchbridge.monitoring import create_full_dashboard
 
         dashboard = create_full_dashboard(model_name="bert")
 
@@ -294,7 +294,7 @@ class TestCreateDashboards:
 
     def test_export_dashboard_json(self, temp_dir):
         """Test exporting dashboard to JSON file."""
-        from kernel_pytorch.monitoring import (
+        from torchbridge.monitoring import (
             create_inference_dashboard,
             export_dashboard_json,
         )
@@ -320,7 +320,7 @@ class TestHealthStatus:
 
     def test_status_values(self):
         """Test health status values."""
-        from kernel_pytorch.monitoring import HealthStatus
+        from torchbridge.monitoring import HealthStatus
 
         assert HealthStatus.HEALTHY.value == "healthy"
         assert HealthStatus.DEGRADED.value == "degraded"
@@ -332,7 +332,7 @@ class TestComponentHealth:
 
     def test_component_health_creation(self):
         """Test component health creation."""
-        from kernel_pytorch.monitoring import health_monitor
+        from torchbridge.monitoring import health_monitor
 
         health = health_monitor.ComponentHealth(
             name="test",
@@ -345,7 +345,7 @@ class TestComponentHealth:
 
     def test_component_health_to_dict(self):
         """Test component health serialization."""
-        from kernel_pytorch.monitoring import health_monitor
+        from torchbridge.monitoring import health_monitor
 
         health = health_monitor.ComponentHealth(
             name="test",
@@ -362,7 +362,7 @@ class TestHealthCheck:
 
     def test_health_check_creation(self):
         """Test health check creation."""
-        from kernel_pytorch.monitoring import health_monitor
+        from torchbridge.monitoring import health_monitor
 
         check = health_monitor.HealthCheck(
             overall_status=health_monitor.HealthStatus.HEALTHY,
@@ -374,7 +374,7 @@ class TestHealthCheck:
 
     def test_health_check_degraded(self):
         """Test degraded health check."""
-        from kernel_pytorch.monitoring import health_monitor
+        from torchbridge.monitoring import health_monitor
 
         check = health_monitor.HealthCheck(
             overall_status=health_monitor.HealthStatus.DEGRADED,
@@ -386,7 +386,7 @@ class TestHealthCheck:
 
     def test_health_check_to_dict(self):
         """Test health check serialization."""
-        from kernel_pytorch.monitoring import health_monitor
+        from torchbridge.monitoring import health_monitor
 
         check = health_monitor.HealthCheck(
             overall_status=health_monitor.HealthStatus.HEALTHY,
@@ -403,14 +403,14 @@ class TestHealthMonitor:
 
     def test_monitor_creation(self):
         """Test health monitor creation."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor()
         assert monitor is not None
 
     def test_monitor_with_model(self, simple_model):
         """Test health monitor with model."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor(model=simple_model, model_name="simple")
         assert monitor.model is not None
@@ -418,7 +418,7 @@ class TestHealthMonitor:
 
     def test_check_health(self, simple_model):
         """Test full health check."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor(model=simple_model)
         health = monitor.check_health()
@@ -428,14 +428,14 @@ class TestHealthMonitor:
 
     def test_liveness_probe(self):
         """Test liveness probe."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor()
         assert monitor.is_live() is True
 
     def test_readiness_probe(self, simple_model):
         """Test readiness probe."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor(model=simple_model)
         # Should be ready with a valid model
@@ -443,7 +443,7 @@ class TestHealthMonitor:
 
     def test_record_inference(self):
         """Test recording inference events."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor()
         monitor.record_inference(success=True)
@@ -458,7 +458,7 @@ class TestHealthMonitor:
 
     def test_uptime(self):
         """Test uptime tracking."""
-        from kernel_pytorch.monitoring import HealthMonitor
+        from torchbridge.monitoring import HealthMonitor
 
         monitor = HealthMonitor()
         time.sleep(0.1)
@@ -468,7 +468,7 @@ class TestHealthMonitor:
 
     def test_custom_health_check(self):
         """Test registering custom health check."""
-        from kernel_pytorch.monitoring import HealthMonitor, health_monitor
+        from torchbridge.monitoring import HealthMonitor, health_monitor
 
         monitor = HealthMonitor()
 
@@ -494,14 +494,14 @@ class TestCreateHealthMonitor:
 
     def test_create_without_model(self):
         """Test creating monitor without model."""
-        from kernel_pytorch.monitoring import create_health_monitor
+        from torchbridge.monitoring import create_health_monitor
 
         monitor = create_health_monitor()
         assert monitor is not None
 
     def test_create_with_model(self, simple_model):
         """Test creating monitor with model."""
-        from kernel_pytorch.monitoring import create_health_monitor
+        from torchbridge.monitoring import create_health_monitor
 
         monitor = create_health_monitor(model=simple_model, model_name="test")
         assert monitor.model is not None
@@ -518,7 +518,7 @@ class TestMonitoringIntegration:
 
     def test_import_all(self):
         """Test importing all monitoring components."""
-        from kernel_pytorch.monitoring import (
+        from torchbridge.monitoring import (
             GrafanaDashboard,
             # Health
             HealthMonitor,
@@ -531,7 +531,7 @@ class TestMonitoringIntegration:
 
     def test_full_monitoring_workflow(self, simple_model, temp_dir):
         """Test full monitoring workflow."""
-        from kernel_pytorch.monitoring import (
+        from torchbridge.monitoring import (
             HealthMonitor,
             MetricsExporter,
             create_inference_dashboard,

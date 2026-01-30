@@ -4,13 +4,13 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'src/kernel_pytorch/**'
+      - 'src/torchbridge/**'
       - 'benchmarks/**'
       - 'pyproject.toml'
   push:
     branches: [main]
     paths:
-      - 'src/kernel_pytorch/**'
+      - 'src/torchbridge/**'
       - 'benchmarks/**'
   workflow_dispatch:
     inputs:

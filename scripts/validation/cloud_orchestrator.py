@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KernelPyTorch v0.4.30 Cloud Orchestrator
+TorchBridge v0.4.30 Cloud Orchestrator
 
 Manages cloud instance deployment and test execution for hardware validation:
 - AWS: p5.48xlarge (H100), p4d.24xlarge (A100), g5.xlarge (A10G), AMD MI300X
@@ -197,7 +197,7 @@ class CloudOrchestrator:
         """Generate validation script for the instance."""
 
         script = f"""#!/bin/bash
-# KernelPyTorch v0.4.30 Cloud Validation Script
+# TorchBridge v0.4.30 Cloud Validation Script
 # Instance: {config.instance_type}
 # Backend: {config.backend.value}
 # Generated: {datetime.now().isoformat()}
@@ -205,19 +205,19 @@ class CloudOrchestrator:
 set -e
 
 echo "=============================================="
-echo "KernelPyTorch v0.4.30 Cloud Validation"
+echo "TorchBridge v0.4.30 Cloud Validation"
 echo "Instance: {config.instance_type}"
 echo "Backend: {config.backend.value}"
 echo "=============================================="
 
 # 1. Environment Setup
 echo "[1/6] Setting up environment..."
-pip install -q kernel-pytorch[all]
+pip install -q torchbridge[all]
 
 # 2. Hardware Detection
 echo "[2/6] Detecting hardware..."
 python -c "
-import kernel_pytorch as kpt
+import torchbridge as kpt
 print('Hardware detected:')
 print(kpt.detect_hardware())
 "
@@ -245,7 +245,7 @@ python benchmarks/backend_comparison.py \\
 echo "[5/6] Running memory tests..."
 python -c "
 import torch
-import kernel_pytorch as kpt
+import torchbridge as kpt
 
 # Test memory optimization
 model = torch.nn.TransformerEncoderLayer(d_model=512, nhead=8)
@@ -258,7 +258,7 @@ echo "[6/6] Running stress tests ({validation.stress_duration_minutes} minutes).
 timeout {validation.stress_duration_minutes * 60} python -c "
 import time
 import torch
-import kernel_pytorch as kpt
+import torchbridge as kpt
 
 start = time.time()
 iterations = 0
@@ -291,7 +291,7 @@ echo "=============================================="
             f"aws ec2 run-instances \\",
             f"  --instance-type {config.instance_type} \\",
             f"  --image-id ami-xxxxx \\",  # Deep Learning AMI
-            f"  --key-name kernelpytorch-validation \\",
+            f"  --key-name torchbridge-validation \\",
             f"  --security-group-ids sg-xxxxx \\",
             f"  --region {config.region}",
             "",
@@ -325,24 +325,24 @@ echo "=============================================="
         if config.backend == HardwareBackend.TPU_XLA:
             commands = [
                 f"# Create TPU VM",
-                f"gcloud compute tpus tpu-vm create kernelpytorch-validation \\",
+                f"gcloud compute tpus tpu-vm create torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --accelerator-type={config.instance_type} \\",
                 f"  --version=tpu-ubuntu2204-base",
                 "",
                 f"# SSH and run validation",
-                f"gcloud compute tpus tpu-vm ssh kernelpytorch-validation \\",
+                f"gcloud compute tpus tpu-vm ssh torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --command='bash /tmp/validation_script.sh'",
                 "",
                 f"# Delete TPU VM",
-                f"gcloud compute tpus tpu-vm delete kernelpytorch-validation \\",
+                f"gcloud compute tpus tpu-vm delete torchbridge-validation \\",
                 f"  --zone={config.region}-a",
             ]
         else:
             commands = [
                 f"# Create GPU VM",
-                f"gcloud compute instances create kernelpytorch-validation \\",
+                f"gcloud compute instances create torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --machine-type={config.instance_type} \\",
                 f"  --accelerator=type=nvidia-h100-80gb,count={config.gpu_count} \\",
@@ -350,12 +350,12 @@ echo "=============================================="
                 f"  --image-project=deeplearning-platform-release",
                 "",
                 f"# Run validation",
-                f"gcloud compute ssh kernelpytorch-validation \\",
+                f"gcloud compute ssh torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --command='bash /tmp/validation_script.sh'",
                 "",
                 f"# Delete instance",
-                f"gcloud compute instances delete kernelpytorch-validation \\",
+                f"gcloud compute instances delete torchbridge-validation \\",
                 f"  --zone={config.region}-a",
             ]
 
@@ -467,7 +467,7 @@ echo "=============================================="
 
 
 def main():
-    parser = argparse.ArgumentParser(description="KernelPyTorch Cloud Validation Orchestrator")
+    parser = argparse.ArgumentParser(description="TorchBridge Cloud Validation Orchestrator")
     parser.add_argument("--provider", choices=["aws", "gcp", "intel"], help="Cloud provider")
     parser.add_argument("--instance", help="Instance type")
     parser.add_argument("--tpu", help="TPU type (GCP only)")

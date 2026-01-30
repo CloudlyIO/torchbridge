@@ -75,9 +75,7 @@ class EnhancedBenchmarkRunner:
         optimizations = []
 
         try:
-            from kernel_pytorch.compiler_integration import FlashLightKernelCompiler
-            from kernel_pytorch.next_gen_optimizations import AdaptivePrecisionAllocator
-            from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm  # noqa: F401
 
             # Our implementations would be wrapped in baseline-compatible interface
             # For now, create placeholder implementations
@@ -448,7 +446,7 @@ class OurOptimizationsBaseline:
     def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
         """Setup our optimized model"""
         try:
-            from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
 
             # Create model with our optimizations
             hidden_size = model_config.get('hidden_size', 768)
@@ -477,7 +475,7 @@ class OptimizedTransformerModel(nn.Module):
         super().__init__()
 
         try:
-            from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
 
             self.layers = nn.ModuleList([
                 OptimizedTransformerBlock(hidden_size)
@@ -511,7 +509,7 @@ class OptimizedTransformerBlock(nn.Module):
         super().__init__()
 
         try:
-            from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
 
             self.attention = nn.MultiheadAttention(hidden_size, hidden_size // 64, batch_first=True)
             self.norm1 = OptimizedLayerNorm(hidden_size)

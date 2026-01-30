@@ -1,10 +1,10 @@
 # Industry Landscape Analysis - January 2026
 
-**KernelPyTorch v0.4.3** - Strategic Alignment with Industry Developments
+**TorchBridge v0.4.3** - Strategic Alignment with Industry Developments
 
 ## Executive Summary
 
-This document analyzes the current state of AI infrastructure in early 2026, positioning KernelPyTorch against industry developments in hardware, compilers, kernels, and inference systems.
+This document analyzes the current state of AI infrastructure in early 2026, positioning TorchBridge against industry developments in hardware, compilers, kernels, and inference systems.
 
 ---
 
@@ -16,7 +16,7 @@ This document analyzes the current state of AI infrastructure in early 2026, pos
 - **Memory**: Up to 288GB HBM3e with NVLink 5 (1.8TB/s)
 - **Key Innovation**: 3.5x memory reduction with FP4 vs FP8
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Current: FP8 hooks in metadata-only mode (v0.4.3)
 - Gap: Full FP4/NVFP4 support needed for Blackwell optimization
 - Priority: HIGH for v0.5.0
@@ -27,7 +27,7 @@ This document analyzes the current state of AI infrastructure in early 2026, pos
 - **ROCm 7.0**: Includes AOTriton (native Triton on AMD)
 - **Key Innovation**: Native PyTorch and Triton support without code changes
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Current: AMD backend 90%+ production-ready (v0.3.6)
 - Gap: AOTriton kernel compilation path needed
 - Priority: MEDIUM for v0.5.x
@@ -38,7 +38,7 @@ This document analyzes the current state of AI infrastructure in early 2026, pos
 - **PyTorch/XLA**: Full torch.compile() support
 - **Key Innovation**: Superior cost-efficiency for large batch inference
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Current: TPU backend 95%+ production-ready (v0.4.3)
 - Validated: torch_xla 2.9.0 compatibility confirmed
 - Priority: LOW (well-aligned)
@@ -61,7 +61,7 @@ from torch.nn.attention.flex_attention import flex_attention, create_block_mask
 @torch._dynamo.allow_graph_breaks(...)
 ```
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Current: Full torch.compile() integration
 - Gap: FlexAttention API integration needed
 - Priority: HIGH for v0.5.0
@@ -80,7 +80,7 @@ def document_mask(score, b, h, q_idx, kv_idx):
 output = flex_attention(q, k, v, score_mod=document_mask)
 ```
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Current: Custom FlashAttention-3 CUDA kernel
 - Opportunity: FlexAttention for non-standard patterns (MoE, sparse, etc.)
 - Priority: HIGH for v0.5.0
@@ -90,7 +90,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 - **Innovation**: Compile-time attention pattern specialization
 - **Status**: Research preview, integrated into PyTorch ecosystem
 
-**KernelPyTorch Alignment**:
+**TorchBridge Alignment**:
 - Monitor for integration opportunities
 - Priority: LOW (research stage)
 
@@ -105,7 +105,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 | FlashAttention-3 | FP8 support, Hopper-optimized | Production on H100+ |
 | FlexAttention | Arbitrary patterns via Triton | PyTorch 2.5+ native |
 
-**KernelPyTorch Status**:
+**TorchBridge Status**:
 - FlashAttention-3: Implemented (~480 CUDA lines)
 - FlexAttention: Not yet integrated
 - Fused Linear+Activation: Implemented (GELU, SiLU, ReLU)
@@ -115,7 +115,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 - **Key Patterns**: Expert routing, load balancing, sparse attention
 - **Performance**: Critical for models >100B parameters
 
-**KernelPyTorch Gap**: No MoE-specific documentation or optimizations
+**TorchBridge Gap**: No MoE-specific documentation or optimizations
 - Priority: HIGH for v0.5.0 (add MoE support)
 
 ### 3.3 Low-Precision Training (FP8/FP4)
@@ -125,7 +125,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 | MXFP8 | 2x vs FP16 | Blackwell | Production |
 | FP4/NVFP4 | 3.5x vs FP16 | Blackwell | Production 2025 |
 
-**KernelPyTorch Status**:
+**TorchBridge Status**:
 - FP8: Metadata-only hooks (full implementation in v0.5.0)
 - FP4: Not implemented
 - Priority: HIGH
@@ -145,8 +145,8 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 - **Frontend**: Python DSL for structured generation
 - **Performance**: Comparable to vLLM with better programmability
 
-### 4.3 Comparison with KernelPyTorch
-| Feature | vLLM | SGLang | KernelPyTorch |
+### 4.3 Comparison with TorchBridge
+| Feature | vLLM | SGLang | TorchBridge |
 |---------|------|--------|---------------|
 | PagedAttention | Yes | Via RadixAttention | No |
 | Continuous Batching | Yes | Yes | Via TorchServe |
@@ -154,7 +154,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 | Model Optimization | Limited | Limited | Comprehensive |
 | Multi-backend | NVIDIA/AMD | NVIDIA | NVIDIA/AMD/TPU |
 
-**Strategic Position**: KernelPyTorch focuses on model optimization and multi-backend support, complementary to dedicated inference engines.
+**Strategic Position**: TorchBridge focuses on model optimization and multi-backend support, complementary to dedicated inference engines.
 
 ---
 
@@ -215,7 +215,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 - **Performance tracking**: Built-in regression detection
 
 ### 6.2 Gaps to Address
-| Gap | Industry Standard | KernelPyTorch Status | Priority |
+| Gap | Industry Standard | TorchBridge Status | Priority |
 |-----|------------------|---------------------|----------|
 | FlexAttention | PyTorch 2.5+ native | Not integrated | HIGH |
 | Full FP8 | Transformer Engine | Metadata-only | HIGH |
@@ -258,7 +258,7 @@ output = flex_attention(q, k, v, score_mod=document_mask)
 
 ## 8. Conclusion
 
-KernelPyTorch is well-positioned in the industry with strong multi-backend support and production infrastructure. Key gaps to address in v0.5.0:
+TorchBridge is well-positioned in the industry with strong multi-backend support and production infrastructure. Key gaps to address in v0.5.0:
 
 1. **FlexAttention integration** - Adopt PyTorch's native flexible attention API
 2. **Full FP8 implementation** - Move beyond metadata-only hooks

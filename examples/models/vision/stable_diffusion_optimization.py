@@ -2,7 +2,7 @@
 Stable Diffusion Optimization Example
 
 This example demonstrates how to optimize Stable Diffusion models for efficient
-image generation using KernelPyTorch vision model optimization.
+image generation using TorchBridge vision model optimization.
 
 Demonstrates:
 - Loading pre-trained Stable Diffusion models
@@ -13,7 +13,7 @@ Demonstrates:
 """
 
 import torch
-from kernel_pytorch.models.vision import (
+from torchbridge.models.vision import (
     create_sd_1_5_optimized,
     create_sd_2_1_optimized,
     StableDiffusionBenchmark,
@@ -335,7 +335,7 @@ def example_custom_config():
     print("Example 7: Custom Configuration")
     print("=" * 80)
 
-    from kernel_pytorch.models.vision import (
+    from torchbridge.models.vision import (
         VisionOptimizationConfig,
         VisionModelType,
         StableDiffusionOptimizer,

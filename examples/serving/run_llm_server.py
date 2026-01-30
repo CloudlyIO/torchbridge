@@ -1,5 +1,5 @@
 """
-Example: Running LLM Inference Server with KernelPyTorch
+Example: Running LLM Inference Server with TorchBridge
 
 This example demonstrates how to:
 1. Load and optimize an LLM using LLMOptimizer
@@ -75,7 +75,7 @@ logger = logging.getLogger(__name__)
 def main():
     """Main function to run LLM server."""
     parser = argparse.ArgumentParser(
-        description="Run KernelPyTorch LLM Inference Server"
+        description="Run TorchBridge LLM Inference Server"
     )
     parser.add_argument(
         "--model",
@@ -129,8 +129,8 @@ def main():
 
     try:
         # Import required modules
-        from kernel_pytorch.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
-        from kernel_pytorch.deployment.serving.llm_server import (
+        from torchbridge.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
+        from torchbridge.deployment.serving.llm_server import (
             create_llm_server,
             run_llm_server,
         )

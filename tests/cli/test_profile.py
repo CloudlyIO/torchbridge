@@ -1,11 +1,11 @@
-"""Tests for the kpt-profile CLI command."""
+"""Tests for the tb-profile CLI command."""
 
 import json
 
 import pytest
 import torch
 
-from kernel_pytorch.cli.profile import ProfileCommand
+from torchbridge.cli.profile import ProfileCommand
 
 
 class TestProfileCommand:

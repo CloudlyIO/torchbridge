@@ -1,6 +1,6 @@
 # User Guides
 
-> **Version**: v0.4.18 | Comprehensive guides for deploying and optimizing models with KernelPyTorch
+> **Version**: v0.4.18 | Comprehensive guides for deploying and optimizing models with TorchBridge
 
 ## Deployment & Operations
 
@@ -21,7 +21,7 @@
 ## Quick Example
 
 ```python
-from kernel_pytorch import optimize_model, get_config
+from torchbridge import optimize_model, get_config
 
 # Configure for your hardware
 config = get_config()

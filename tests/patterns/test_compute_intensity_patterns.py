@@ -18,7 +18,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.optimizations.patterns.compute_intensity import (
+from torchbridge.optimizations.patterns.compute_intensity import (
     COMPUTE_INTENSITY_TARGETS,
     ComputeIntensityCategory,
     ComputeIntensityProfiler,
@@ -264,7 +264,7 @@ class TestComputeAnalysisUtilities:
 
     def test_compute_pattern_dataclass(self):
         """Test compute optimization pattern data structure."""
-        from kernel_pytorch.optimizations.patterns.compute_intensity import (
+        from torchbridge.optimizations.patterns.compute_intensity import (
             ComputeIntensityCategory,
         )
 

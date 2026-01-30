@@ -2,11 +2,11 @@
 
 > **Version**: v0.4.23 | **Status**: Production Ready | **Last Updated**: January 2026
 
-This guide covers the efficient attention implementations in KernelPyTorch, including memory-efficient, sparse, and sliced attention mechanisms for handling long sequences and reducing memory usage.
+This guide covers the efficient attention implementations in TorchBridge, including memory-efficient, sparse, and sliced attention mechanisms for handling long sequences and reducing memory usage.
 
 ## Overview
 
-KernelPyTorch provides several attention variants optimized for different use cases:
+TorchBridge provides several attention variants optimized for different use cases:
 
 | Attention Type | Memory Complexity | Best For |
 |----------------|-------------------|----------|
@@ -36,7 +36,7 @@ Where:
 ### Usage
 
 ```python
-from kernel_pytorch.models.vision.vit import (
+from torchbridge.models.vision.vit import (
     SlicedMultiheadAttention,
     SlicedAttentionWrapper,
 )
@@ -66,7 +66,7 @@ For a ViT-Large (seq_len=577 patches):
 ### Apply to Existing Model
 
 ```python
-from kernel_pytorch.models.vision.vit import ViTOptimizer, VisionOptimizationConfig
+from torchbridge.models.vision.vit import ViTOptimizer, VisionOptimizationConfig
 
 config = VisionOptimizationConfig(
     model_type=VisionModelType.VIT,
@@ -85,8 +85,8 @@ optimizer.apply_attention_slicing(model, slice_size=64)
 Combines local, global, and random attention patterns.
 
 ```python
-from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
-from kernel_pytorch.attention.core.config import AttentionConfig
+from torchbridge.attention.implementations.sparse import BlockSparseAttention
+from torchbridge.attention.core.config import AttentionConfig
 
 config = AttentionConfig(
     embed_dim=768,
@@ -111,7 +111,7 @@ output = attn(x)  # x: [batch, seq, embed]
 Local window + strided global pattern.
 
 ```python
-from kernel_pytorch.attention.implementations.sparse import StridedSparseAttention
+from torchbridge.attention.implementations.sparse import StridedSparseAttention
 
 attn = StridedSparseAttention(
     config,
@@ -125,7 +125,7 @@ attn = StridedSparseAttention(
 Learns which positions to attend to.
 
 ```python
-from kernel_pytorch.attention.implementations.sparse import DynamicSparseAttention
+from torchbridge.attention.implementations.sparse import DynamicSparseAttention
 
 attn = DynamicSparseAttention(config)
 # Automatically learns sparsity patterns during training
@@ -138,7 +138,7 @@ attn = DynamicSparseAttention(config)
 Processes queries in chunks to reduce peak memory.
 
 ```python
-from kernel_pytorch.attention.implementations.memory_efficient import (
+from torchbridge.attention.implementations.memory_efficient import (
     MemoryEfficientAttention,
 )
 
@@ -156,7 +156,7 @@ attn.enable_gradient_checkpointing()
 For extremely long sequences, chunk both Q and KV.
 
 ```python
-from kernel_pytorch.attention.implementations.memory_efficient import ChunkedAttention
+from torchbridge.attention.implementations.memory_efficient import ChunkedAttention
 
 attn = ChunkedAttention(
     config,
@@ -170,7 +170,7 @@ attn = ChunkedAttention(
 Combines local window + global strided for very long sequences.
 
 ```python
-from kernel_pytorch.attention.implementations.memory_efficient import (
+from torchbridge.attention.implementations.memory_efficient import (
     LongSequenceAttention,
 )
 
@@ -218,7 +218,7 @@ Typical results on NVIDIA A100 (batch=4, embed=768, heads=12):
 For distributed training with pipeline parallelism.
 
 ```python
-from kernel_pytorch.models.distributed.pipeline_parallel import (
+from torchbridge.models.distributed.pipeline_parallel import (
     InterleavedScheduler,
     PipelineStage,
     PipelineParallelConfig,

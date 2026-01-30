@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KernelPyTorch Cost-Optimized Cloud Validation
+TorchBridge Cost-Optimized Cloud Validation
 
 Reduces validation costs from ~$2,000 to ~$50-100 using:
 1. Free/low-cost cloud resources (Intel DevCloud, Colab, Kaggle)
@@ -232,7 +232,7 @@ class CostOptimizedValidator:
                     "cell_type": "markdown",
                     "metadata": {},
                     "source": [
-                        f"# KernelPyTorch v0.4.34 Validation\n",
+                        f"# TorchBridge v0.4.34 Validation\n",
                         f"**Platform**: {resource.name}\n",
                         f"**Backend**: {resource.backend}\n",
                         f"**Generated**: {datetime.now().isoformat()}\n"
@@ -242,8 +242,8 @@ class CostOptimizedValidator:
                     "cell_type": "code",
                     "metadata": {},
                     "source": [
-                        "# Install KernelPyTorch\n",
-                        "!pip install -q kernel-pytorch torch\n",
+                        "# Install TorchBridge\n",
+                        "!pip install -q torchbridge torch\n",
                         "\n",
                         "# For Intel XPU\n",
                         "# !pip install intel-extension-for-pytorch\n"
@@ -274,9 +274,7 @@ class CostOptimizedValidator:
                     "metadata": {},
                     "source": [
                         "# Basic validation\n",
-                        "from kernel_pytorch.hardware import get_optimal_backend, create_backend\n",
-                        "from kernel_pytorch.attention import UnifiedAttentionFusion\n",
-                        "from kernel_pytorch.precision import MixedPrecisionTrainer\n",
+                        "from torchbridge.hardware import get_optimal_backend, create_backend\n",
                         "\n",
                         "# Detect backend\n",
                         "backend_name = get_optimal_backend()\n",
@@ -293,20 +291,17 @@ class CostOptimizedValidator:
                     "metadata": {},
                     "source": [
                         "# Attention test\n",
+                        "import torch\n",
                         "import torch.nn as nn\n",
                         "\n",
-                        "attention = UnifiedAttentionFusion(\n",
-                        "    embed_dim=512,\n",
-                        "    num_heads=8,\n",
-                        "    backend=backend_name\n",
-                        ")\n",
-                        "\n",
                         "device = 'cuda' if torch.cuda.is_available() else 'cpu'\n",
-                        "attention = attention.to(device)\n",
+                        "\n",
+                        "# Test basic attention operation\n",
+                        "attention = nn.MultiheadAttention(512, 8, batch_first=True).to(device)\n",
                         "\n",
                         "# Test forward pass\n",
                         "x = torch.randn(2, 128, 512, device=device)\n",
-                        "out = attention(x, x, x)\n",
+                        "out, _ = attention(x, x, x)\n",
                         "print(f'Attention output shape: {out.shape}')\n",
                         "print('Attention test PASSED')\n"
                     ],
@@ -386,7 +381,7 @@ class CostOptimizedValidator:
 
 ```python
 # Cell 1: Install
-!pip install -q kernel-pytorch torch
+!pip install -q torchbridge torch
 
 # Cell 2: Validate
 import torch
@@ -394,15 +389,15 @@ print(f"CUDA: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-# Cell 3: Test KernelPyTorch
-from kernel_pytorch.hardware import get_optimal_backend, create_backend
+# Cell 3: Test TorchBridge
+from torchbridge.hardware import get_optimal_backend, create_backend
 backend = get_optimal_backend()
 print(f"Backend: {backend}")
 
-from kernel_pytorch.attention import UnifiedAttentionFusion
-attn = UnifiedAttentionFusion(512, 8).cuda()
+import torch.nn as nn
+attn = nn.MultiheadAttention(512, 8, batch_first=True).cuda()
 x = torch.randn(4, 128, 512).cuda()
-out = attn(x, x, x)
+out, _ = attn(x, x, x)
 print(f"Output: {out.shape} - PASSED")
 ```
 
@@ -423,11 +418,11 @@ print(f"Output: {out.shape} - PASSED")
 3. Paste and run:
 
 ```python
-!pip install -q kernel-pytorch
+!pip install -q torchbridge
 
 import torch
-from kernel_pytorch.hardware import get_optimal_backend
-from kernel_pytorch.attention import UnifiedAttentionFusion
+import torch.nn as nn
+from torchbridge.hardware import get_optimal_backend
 
 # Validate
 print(f"GPU: {torch.cuda.get_device_name(0)}")
@@ -435,9 +430,9 @@ backend = get_optimal_backend()
 print(f"Backend: {backend}")
 
 # Test
-attn = UnifiedAttentionFusion(512, 8).cuda()
+attn = nn.MultiheadAttention(512, 8, batch_first=True).cuda()
 x = torch.randn(4, 128, 512).cuda()
-out = attn(x, x, x)
+out, _ = attn(x, x, x)
 print(f"Shape: {out.shape} - PASSED")
 ```
 """
@@ -455,12 +450,12 @@ qsub -I -l nodes=1:gpu:ppn=2 -d .
 
 # 3. Once on node, run:
 source /opt/intel/oneapi/setvars.sh
-pip install --user kernel-pytorch intel-extension-for-pytorch
+pip install --user torchbridge intel-extension-for-pytorch
 
 python << 'EOF'
 import torch
 import intel_extension_for_pytorch as ipex
-from kernel_pytorch.hardware import get_optimal_backend
+from torchbridge.hardware import get_optimal_backend
 
 # Check XPU
 print(f"XPU available: {torch.xpu.is_available()}")
@@ -471,11 +466,11 @@ backend = get_optimal_backend()
 print(f"Backend: {backend}")
 
 # Test
-from kernel_pytorch.attention import UnifiedAttentionFusion
+import torch.nn as nn
 device = 'xpu' if torch.xpu.is_available() else 'cpu'
-attn = UnifiedAttentionFusion(512, 8).to(device)
+attn = nn.MultiheadAttention(512, 8, batch_first=True).to(device)
 x = torch.randn(4, 128, 512, device=device)
-out = attn(x, x, x)
+out, _ = attn(x, x, x)
 print(f"Output: {out.shape} - PASSED")
 EOF
 """
@@ -485,7 +480,7 @@ EOF
         plan = self.create_validation_plan(tier)
 
         print(f"\n{'='*60}")
-        print(f"KernelPyTorch Cost-Optimized Validation")
+        print(f"TorchBridge Cost-Optimized Validation")
         print(f"{'='*60}")
         print(f"Tier: {tier.value.upper()}")
         print(f"Estimated Cost: ${plan.estimated_cost}")

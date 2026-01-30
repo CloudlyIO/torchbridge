@@ -168,7 +168,7 @@ All optimization levels implement identical computational behavior:
 Use our profiling tools to compare optimization levels:
 
 ```python
-from kernel_pytorch.utils.profiling import compare_optimization_levels
+from torchbridge.utils.profiling import compare_optimization_levels
 
 # Compare attention implementations across levels
 implementations = {

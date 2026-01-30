@@ -13,7 +13,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.models.vision import (
+from torchbridge.models.vision import (
     # Base
     BaseVisionOptimizer,
     OptimizationLevel,
@@ -496,7 +496,7 @@ class TestModuleExports:
 
     def test_base_exports(self):
         """Test base module exports."""
-        from kernel_pytorch.models import vision
+        from torchbridge.models import vision
 
         assert hasattr(vision, "BaseVisionOptimizer")
         assert hasattr(vision, "VisionOptimizationConfig")
@@ -507,7 +507,7 @@ class TestModuleExports:
 
     def test_resnet_exports(self):
         """Test ResNet module exports."""
-        from kernel_pytorch.models import vision
+        from torchbridge.models import vision
 
         assert hasattr(vision, "ResNetOptimizer")
         assert hasattr(vision, "ResNetBenchmark")
@@ -517,7 +517,7 @@ class TestModuleExports:
 
     def test_vit_exports(self):
         """Test ViT module exports."""
-        from kernel_pytorch.models import vision
+        from torchbridge.models import vision
 
         assert hasattr(vision, "ViTOptimizer")
         assert hasattr(vision, "ViTBenchmark")
@@ -527,7 +527,7 @@ class TestModuleExports:
 
     def test_diffusion_exports(self):
         """Test Stable Diffusion module exports."""
-        from kernel_pytorch.models import vision
+        from torchbridge.models import vision
 
         assert hasattr(vision, "StableDiffusionOptimizer")
         assert hasattr(vision, "StableDiffusionBenchmark")

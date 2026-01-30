@@ -1,5 +1,5 @@
 """
-Cross-Platform Comparison Tool for KernelPyTorch.
+Cross-Platform Comparison Tool for TorchBridge.
 
 This module provides utilities for comparing benchmark results
 across different cloud platforms (AWS vs GCP) and hardware types.

@@ -18,7 +18,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.optimizations.patterns.dynamic_shapes import (
+from torchbridge.optimizations.patterns.dynamic_shapes import (
     BucketingStrategy,
     DynamicShapeBucketing,
     DynamicShapeModule,

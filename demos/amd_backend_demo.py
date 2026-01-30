@@ -2,7 +2,7 @@
 """
 AMD ROCm Backend Demo (v0.3.4)
 
-Demonstrates the AMD backend capabilities for KernelPyTorch,
+Demonstrates the AMD backend capabilities for TorchBridge,
 including configuration, optimization, and profiling features.
 
 This demo works in simulation mode without actual AMD hardware,
@@ -37,7 +37,7 @@ def demo_amd_configuration() -> Dict[str, Any]:
     """Demonstrate AMD configuration options."""
     print_section("AMD Configuration")
 
-    from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.core.config import AMDConfig, AMDArchitecture
 
     results = {"passed": 0, "total": 0}
 
@@ -113,8 +113,8 @@ def demo_amd_optimizer() -> Dict[str, Any]:
     """Demonstrate AMD optimizer functionality."""
     print_section("AMD Optimizer")
 
-    from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-    from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
     results = {"passed": 0, "total": 0}
 
@@ -202,8 +202,8 @@ def demo_rocm_compiler() -> Dict[str, Any]:
     """Demonstrate ROCm compiler functionality."""
     print_section("ROCm Compiler")
 
-    from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-    from kernel_pytorch.backends.amd.rocm_compiler import ROCmCompiler
+    from torchbridge.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
     results = {"passed": 0, "total": 0}
 
@@ -282,8 +282,8 @@ def demo_hip_utilities() -> Dict[str, Any]:
     """Demonstrate HIP utilities functionality."""
     print_section("HIP Utilities")
 
-    from kernel_pytorch.core.config import AMDConfig
-    from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+    from torchbridge.core.config import AMDConfig
+    from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
     results = {"passed": 0, "total": 0}
 
@@ -375,8 +375,8 @@ def demo_memory_manager() -> Dict[str, Any]:
     """Demonstrate memory manager functionality."""
     print_section("Memory Manager")
 
-    from kernel_pytorch.core.config import AMDConfig
-    from kernel_pytorch.backends.amd.memory_manager import AMDMemoryManager
+    from torchbridge.core.config import AMDConfig
+    from torchbridge.backends.amd.memory_manager import AMDMemoryManager
 
     results = {"passed": 0, "total": 0}
 
@@ -429,9 +429,9 @@ def demo_full_pipeline(quick: bool = False) -> Dict[str, Any]:
     """Demonstrate full AMD optimization pipeline."""
     print_section("Full Optimization Pipeline")
 
-    from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-    from kernel_pytorch.backends.amd.amd_optimizer import AMDOptimizer
-    from kernel_pytorch.backends.amd.hip_utilities import HIPUtilities
+    from torchbridge.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
     results = {"passed": 0, "total": 0}
 
@@ -521,7 +521,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("  AMD ROCm Backend Demo (v0.3.4)")
-    print("  KernelPyTorch - Production-Ready AMD GPU Support")
+    print("  TorchBridge - Production-Ready AMD GPU Support")
     print("=" * 60)
 
     all_results = {

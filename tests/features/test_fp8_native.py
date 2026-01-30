@@ -16,7 +16,7 @@ import torch.nn.functional as F
 
 # Import FP8 native modules
 try:
-    from kernel_pytorch.precision import (
+    from torchbridge.precision import (
         FP8_DTYPES_AVAILABLE,
         # Constants
         FP8_NATIVE_AVAILABLE,  # noqa: F401

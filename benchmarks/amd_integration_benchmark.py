@@ -27,8 +27,8 @@ from dataclasses import dataclass
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from kernel_pytorch.backends.amd import (
+from torchbridge.core.config import AMDConfig, AMDArchitecture
+from torchbridge.backends.amd import (
     AMDBackend,
     AMDOptimizer,
     ROCmCompiler,

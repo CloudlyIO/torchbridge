@@ -2,11 +2,11 @@
 
 > **Version**: v0.4.24 | **Status**: Production Ready | **Last Updated**: January 2026
 
-This guide covers distributed training strategies for large language models using KernelPyTorch, including tensor parallelism, pipeline parallelism, FSDP, and hybrid approaches.
+This guide covers distributed training strategies for large language models using TorchBridge, including tensor parallelism, pipeline parallelism, FSDP, and hybrid approaches.
 
 ## Overview
 
-KernelPyTorch provides multiple parallelism strategies for training models that don't fit on a single GPU:
+TorchBridge provides multiple parallelism strategies for training models that don't fit on a single GPU:
 
 | Strategy | Memory Efficiency | Communication | Best For |
 |----------|-------------------|---------------|----------|
@@ -20,7 +20,7 @@ KernelPyTorch provides multiple parallelism strategies for training models that 
 ### Automatic Strategy Selection
 
 ```python
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     DistributedLLMOptimizer,
     ParallelismStrategy,
 )
@@ -41,7 +41,7 @@ model = optimizer.load_model()
 Before loading a model, estimate GPU requirements:
 
 ```python
-from kernel_pytorch.models.distributed import estimate_gpu_requirements
+from torchbridge.models.distributed import estimate_gpu_requirements
 
 # Check if your hardware can handle it
 requirements = estimate_gpu_requirements(
@@ -73,7 +73,7 @@ Single GPU:                    Tensor Parallel (2 GPUs):
 ### Usage
 
 ```python
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     TensorParallelConfig,
     apply_tensor_parallelism,
     ColumnParallelLinear,
@@ -141,7 +141,7 @@ GPU 1:    [F1][F2][B1][F3][B2][F4][B3][B4]
 ### Usage
 
 ```python
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     PipelineParallelConfig,
     create_pipeline_stages,
     InterleavedScheduler,
@@ -172,7 +172,7 @@ total_loss = scheduler.run_forward_backward(micro_batches, loss_fn)
 ### Memory Estimation
 
 ```python
-from kernel_pytorch.models.distributed import estimate_pipeline_memory
+from torchbridge.models.distributed import estimate_pipeline_memory
 
 gpipe_mem, interleaved_mem = estimate_pipeline_memory(
     model_size_gb=140,  # 70B model
@@ -241,10 +241,10 @@ for batch in dataloader:
     optimizer.zero_grad()
 ```
 
-### With KernelPyTorch
+### With TorchBridge
 
 ```python
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     ModelSharder,
     ShardingStrategy,
 )
@@ -272,7 +272,7 @@ sharded_model = sharder.apply(model)
 For very large models (70B+), combine multiple strategies:
 
 ```python
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     DistributedLLMOptimizer,
     ParallelismStrategy,
 )

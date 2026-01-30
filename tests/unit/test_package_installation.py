@@ -13,13 +13,13 @@ import pytest
 class TestPackageInstallation:
     """Test package installation and basic functionality."""
 
-    def test_import_kernel_pytorch(self):
-        """Test that kernel_pytorch can be imported."""
-        import kernel_pytorch
-        assert hasattr(kernel_pytorch, '__version__')
+    def test_import_torchbridge(self):
+        """Test that torchbridge can be imported."""
+        import torchbridge
+        assert hasattr(torchbridge, '__version__')
 
         # Check version format instead of exact version
-        version = kernel_pytorch.__version__
+        version = torchbridge.__version__
         assert isinstance(version, str), f"Version should be string, got {type(version)}"
         assert '.' in version, f"Version should contain dots: {version}"
 
@@ -31,10 +31,10 @@ class TestPackageInstallation:
 
     def test_import_cli_modules(self):
         """Test that CLI modules can be imported."""
-        from kernel_pytorch.cli import main
-        from kernel_pytorch.cli.benchmark import BenchmarkCommand
-        from kernel_pytorch.cli.doctor import DoctorCommand
-        from kernel_pytorch.cli.optimize import OptimizeCommand
+        from torchbridge.cli import main
+        from torchbridge.cli.benchmark import BenchmarkCommand
+        from torchbridge.cli.doctor import DoctorCommand
+        from torchbridge.cli.optimize import OptimizeCommand
 
         assert callable(main)
         assert hasattr(OptimizeCommand, 'execute')
@@ -44,38 +44,38 @@ class TestPackageInstallation:
     def test_cli_entry_points_importable(self):
         """Test that CLI entry points are importable."""
         # Test main CLI
-        from kernel_pytorch.cli import main as cli_main
+        from torchbridge.cli import main as cli_main
         assert callable(cli_main)
 
         # Test individual commands
-        from kernel_pytorch.cli.benchmark import main as benchmark_main
-        from kernel_pytorch.cli.doctor import main as doctor_main
-        from kernel_pytorch.cli.optimize import main as optimize_main
+        from torchbridge.cli.benchmark import main as benchmark_main
+        from torchbridge.cli.doctor import main as doctor_main
+        from torchbridge.cli.optimize import main as optimize_main
 
         assert callable(optimize_main)
         assert callable(benchmark_main)
         assert callable(doctor_main)
 
     def test_core_modules_available(self):
-        """Test that core KernelPyTorch modules are available."""
+        """Test that core TorchBridge modules are available."""
         # Test core components
-        import kernel_pytorch.core
-        assert hasattr(kernel_pytorch.core, 'OptimizedLinear')
+        import torchbridge.core
+        assert hasattr(torchbridge.core, 'OptimizedLinear')
 
         # Test attention mechanisms
-        import kernel_pytorch.attention
-        assert hasattr(kernel_pytorch.attention, 'FlashAttention2')
+        import torchbridge.attention
+        assert hasattr(torchbridge.attention, 'FlashAttention2')
 
         # Test validation
-        import kernel_pytorch.validation
-        assert hasattr(kernel_pytorch.validation, 'UnifiedValidator')
+        import torchbridge.validation
+        assert hasattr(torchbridge.validation, 'UnifiedValidator')
 
     def test_package_metadata(self):
         """Test package metadata is correct."""
-        import kernel_pytorch
+        import torchbridge
 
         # Check version format
-        version = kernel_pytorch.__version__
+        version = torchbridge.__version__
         assert isinstance(version, str)
         assert '.' in version  # Should have version format like "0.1.55"
 
@@ -129,7 +129,7 @@ class TestPackageInstallation:
         try:
             # Test CLI help
             result = subprocess.run(
-                [sys.executable, '-m', 'kernel_pytorch.cli', '--help'],
+                [sys.executable, '-m', 'torchbridge.cli', '--help'],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -195,13 +195,13 @@ class TestInstallationRequirements:
         """Test that missing optional dependencies are handled gracefully."""
         # Test that the package loads even without optional dependencies
         try:
-            import kernel_pytorch
+            import torchbridge
 
             # Should be able to access basic functionality
-            assert hasattr(kernel_pytorch, '__version__')
+            assert hasattr(torchbridge, '__version__')
 
             # CLI should be importable
-            from kernel_pytorch.cli import main
+            from torchbridge.cli import main
             assert callable(main)
 
         except ImportError as e:
@@ -213,15 +213,15 @@ class TestDevelopmentInstallation:
 
     def test_editable_install_detection(self):
         """Test if this is an editable installation."""
-        import kernel_pytorch
+        import torchbridge
 
         # Check if we can access source files (indicating editable install)
-        module_file = kernel_pytorch.__file__
+        module_file = torchbridge.__file__
         if module_file and 'site-packages' not in module_file:
             # Likely an editable install
             src_dir = Path(module_file).parent.parent.parent / 'src'
             if src_dir.exists():
-                assert (src_dir / 'kernel_pytorch').exists()
+                assert (src_dir / 'torchbridge').exists()
 
     def test_test_dependencies_available(self):
         """Test that test dependencies are available (for dev installs)."""
@@ -245,7 +245,7 @@ class TestDevelopmentInstallation:
         """Test integration with development tools."""
         # Check if we can import development utilities
         try:
-            from kernel_pytorch.utils.validation_framework import ComponentValidator
+            from torchbridge.utils.validation_framework import ComponentValidator
             validator = ComponentValidator()
             assert hasattr(validator, 'validate_linear_component')
 
@@ -262,8 +262,8 @@ class TestImportPerformance:
         import time
 
         # Reload the module to measure import time
-        if 'kernel_pytorch' in sys.modules:
-            del sys.modules['kernel_pytorch']
+        if 'torchbridge' in sys.modules:
+            del sys.modules['torchbridge']
 
         start_time = time.time()
         import_time = time.time() - start_time
@@ -296,7 +296,7 @@ class TestImportPerformance:
         # Check which heavy modules are already loaded
         loaded_heavy = [mod for mod in heavy_modules if mod in sys.modules]
 
-        # Most heavy modules should not be loaded just from importing kernel_pytorch
+        # Most heavy modules should not be loaded just from importing torchbridge
         # (This is a soft assertion since some might be needed for basic functionality)
         assert len(loaded_heavy) < len(heavy_modules), \
             f"Too many heavy modules loaded on import: {loaded_heavy}"

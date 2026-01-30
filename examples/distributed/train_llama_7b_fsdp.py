@@ -2,14 +2,14 @@
 """
 Example: Training Llama-7B with FSDP (Fully Sharded Data Parallel)
 
-This example demonstrates how to use PyTorch FSDP with KernelPyTorch
+This example demonstrates how to use PyTorch FSDP with TorchBridge
 optimizations for memory-efficient training of large language models.
 
 Features demonstrated:
 - FSDP wrapping with mixed precision
 - Gradient checkpointing for memory efficiency
 - Hybrid sharding for multi-node training
-- Integration with KernelPyTorch optimizations
+- Integration with TorchBridge optimizations
 - Checkpoint saving and loading
 
 Requirements:

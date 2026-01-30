@@ -31,10 +31,10 @@ pip3 install -r requirements.txt
 # Test unified architecture with CUDA
 PYTHONPATH=src python3 -c "
 import torch
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
+from torchbridge import TorchBridgeConfig, UnifiedManager
 print(f'CUDA available: {torch.cuda.is_available()}')
 if torch.cuda.is_available():
-    config = KernelPyTorchConfig.for_production()
+    config = TorchBridgeConfig.for_production()
     manager = UnifiedManager(config)
     print('✅ Unified CUDA support ready!')
 "
@@ -214,8 +214,8 @@ print('✅ Triton kernel compilation successful')
 # Quick functionality test
 export PYTHONPATH=src:$PYTHONPATH
 python3 -c "
-from kernel_pytorch import KernelPyTorchConfig, UnifiedManager
-from kernel_pytorch.core.optimized_layers.activation_functions import FusedGELU
+from torchbridge import TorchBridgeConfig, UnifiedManager
+from torchbridge.core.optimized_layers.activation_functions import FusedGELU
 import torch
 
 print('✅ Framework imports successful')
@@ -228,7 +228,7 @@ if torch.cuda.is_available():
     print(f'✅ GPU optimization working: {y.shape}')
 
     # Test NVIDIA backend configuration
-    config = KernelPyTorchConfig.for_production()
+    config = TorchBridgeConfig.for_production()
     print(f'✅ NVIDIA architecture: {config.hardware.nvidia.architecture.value}')
     print(f'✅ FP8 enabled: {config.hardware.nvidia.fp8_enabled}')
 else:

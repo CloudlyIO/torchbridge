@@ -24,10 +24,10 @@ import statistics
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from kernel_pytorch.core.config import KernelPyTorchConfig
-from kernel_pytorch.core.hardware_detector import HardwareDetector
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.backends.tpu import TPUBackend
+from torchbridge.core.config import TorchBridgeConfig
+from torchbridge.core.hardware_detector import HardwareDetector
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.backends.tpu import TPUBackend
 
 
 # ============================================================================
@@ -98,7 +98,7 @@ class BackendComparisonBenchmark:
         self.warmup_iterations = 3 if quick_mode else 10
         self.benchmark_iterations = 5 if quick_mode else 50
 
-        self.config = KernelPyTorchConfig()
+        self.config = TorchBridgeConfig()
         self.nvidia_backend = NVIDIABackend(self.config)
         self.tpu_backend = TPUBackend(self.config)
 

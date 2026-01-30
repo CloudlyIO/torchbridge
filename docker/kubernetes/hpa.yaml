@@ -1,17 +1,17 @@
-# KernelPyTorch Horizontal Pod Autoscaler
+# TorchBridge Horizontal Pod Autoscaler
 # Version: 0.3.10
 
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: kernelpytorch-inference-hpa
+  name: torchbridge-inference-hpa
   labels:
-    app: kernelpytorch
+    app: torchbridge
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: kernelpytorch-inference
+    name: torchbridge-inference
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -30,7 +30,7 @@ spec:
     - type: Pods
       pods:
         metric:
-          name: kernelpytorch_inference_requests_per_second
+          name: torchbridge_inference_requests_per_second
         target:
           type: AverageValue
           averageValue: "100"

@@ -152,7 +152,7 @@ class TestSafeTensorsExport:
 
     def test_safetensors_import(self):
         """Test SafeTensors module can be imported."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             SafeTensorsExportConfig,
             SafeTensorsExporter,
         )
@@ -163,7 +163,7 @@ class TestSafeTensorsExport:
         """Test exporting simple model to SafeTensors."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors
+        from torchbridge.deployment import export_to_safetensors
 
         output_path = Path(temp_dir) / "model.safetensors"
         result = export_to_safetensors(simple_model, output_path)
@@ -177,7 +177,7 @@ class TestSafeTensorsExport:
         """Test export with custom metadata."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors
+        from torchbridge.deployment import export_to_safetensors
 
         output_path = Path(temp_dir) / "model.safetensors"
         metadata = {"description": "Test model", "version": "1.0"}
@@ -191,7 +191,7 @@ class TestSafeTensorsExport:
         """Test FP16 export."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors
+        from torchbridge.deployment import export_to_safetensors
 
         output_path = Path(temp_dir) / "model_fp16.safetensors"
         result = export_to_safetensors(simple_model, output_path, half_precision=True)
@@ -204,7 +204,7 @@ class TestSafeTensorsExport:
         """Test loading SafeTensors file."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors, load_safetensors
+        from torchbridge.deployment import export_to_safetensors, load_safetensors
 
         output_path = Path(temp_dir) / "model.safetensors"
         export_to_safetensors(simple_model, output_path)
@@ -218,7 +218,7 @@ class TestSafeTensorsExport:
         """Test loading SafeTensors into model."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             export_to_safetensors,
             load_model_safetensors,
         )
@@ -246,7 +246,7 @@ class TestProductionValidator:
 
     def test_validator_import(self):
         """Test production validator can be imported."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -255,7 +255,7 @@ class TestProductionValidator:
 
     def test_validate_simple_model(self, simple_model, sample_input):
         """Test validating simple model."""
-        from kernel_pytorch.deployment import validate_production_readiness
+        from torchbridge.deployment import validate_production_readiness
 
         result = validate_production_readiness(simple_model, sample_input)
 
@@ -266,7 +266,7 @@ class TestProductionValidator:
 
     def test_validate_forward_pass(self, simple_model, sample_input):
         """Test forward pass validation."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -282,7 +282,7 @@ class TestProductionValidator:
 
     def test_validate_determinism(self, simple_model, sample_input):
         """Test determinism validation."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -298,7 +298,7 @@ class TestProductionValidator:
 
     def test_validate_eval_mode(self, sample_input):
         """Test eval mode validation."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -319,7 +319,7 @@ class TestProductionValidator:
 
     def test_validate_torchscript_export(self, simple_model, sample_input):
         """Test TorchScript export validation."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -335,7 +335,7 @@ class TestProductionValidator:
 
     def test_validate_with_requirements(self, simple_model, sample_input):
         """Test validation with custom requirements."""
-        from kernel_pytorch.deployment import validate_production_readiness
+        from torchbridge.deployment import validate_production_readiness
 
         result = validate_production_readiness(
             simple_model,
@@ -353,7 +353,7 @@ class TestProductionValidator:
 
     def test_validate_latency_stats(self, simple_model, sample_input):
         """Test that latency stats are collected."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
         )
@@ -369,7 +369,7 @@ class TestProductionValidator:
 
     def test_validation_result_properties(self, simple_model, sample_input):
         """Test validation result properties."""
-        from kernel_pytorch.deployment import validate_production_readiness
+        from torchbridge.deployment import validate_production_readiness
 
         result = validate_production_readiness(simple_model, sample_input)
 
@@ -392,7 +392,7 @@ class TestONNXExport:
     )
     def test_onnx_export_simple(self, simple_model, sample_input, temp_dir):
         """Test basic ONNX export."""
-        from kernel_pytorch.deployment import export_to_onnx
+        from torchbridge.deployment import export_to_onnx
 
         output_path = Path(temp_dir) / "model.onnx"
         result = export_to_onnx(simple_model, output_path, sample_input)
@@ -406,7 +406,7 @@ class TestONNXExport:
     )
     def test_onnx_export_mlp(self, mlp_model, sample_input, temp_dir):
         """Test ONNX export of MLP."""
-        from kernel_pytorch.deployment import export_to_onnx
+        from torchbridge.deployment import export_to_onnx
 
         output_path = Path(temp_dir) / "mlp.onnx"
         result = export_to_onnx(mlp_model, output_path, sample_input)
@@ -423,7 +423,7 @@ class TestTorchScriptExport:
 
     def test_torchscript_trace(self, simple_model, sample_input, temp_dir):
         """Test TorchScript trace export."""
-        from kernel_pytorch.deployment import export_to_torchscript
+        from torchbridge.deployment import export_to_torchscript
 
         output_path = Path(temp_dir) / "model.pt"
         result = export_to_torchscript(
@@ -435,7 +435,7 @@ class TestTorchScriptExport:
 
     def test_torchscript_load(self, simple_model, sample_input, temp_dir):
         """Test loading TorchScript model."""
-        from kernel_pytorch.deployment import export_to_torchscript, load_torchscript
+        from torchbridge.deployment import export_to_torchscript, load_torchscript
 
         output_path = Path(temp_dir) / "model.pt"
         export_to_torchscript(simple_model, output_path, sample_input)
@@ -464,14 +464,14 @@ class TestExportCLI:
 
     def test_cli_parser(self):
         """Test CLI parser creation."""
-        from kernel_pytorch.deployment.export_cli import create_parser
+        from torchbridge.deployment.export_cli import create_parser
 
         parser = create_parser()
         assert parser is not None
 
     def test_parse_shape(self):
         """Test shape parsing."""
-        from kernel_pytorch.deployment.export_cli import parse_shape
+        from torchbridge.deployment.export_cli import parse_shape
 
         assert parse_shape("(1, 512)") == (1, 512)
         assert parse_shape("1, 512") == (1, 512)
@@ -479,7 +479,7 @@ class TestExportCLI:
 
     def test_create_sample_input(self):
         """Test sample input creation."""
-        from kernel_pytorch.deployment.export_cli import create_sample_input
+        from torchbridge.deployment.export_cli import create_sample_input
 
         tensor = create_sample_input((1, 512))
         assert tensor.shape == (1, 512)
@@ -498,7 +498,7 @@ class TestExportIntegration:
 
     def test_full_export_pipeline(self, mlp_model, sample_input, temp_dir):
         """Test complete export pipeline."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             ProductionRequirements,
             ProductionValidator,
             export_to_torchscript,
@@ -527,7 +527,7 @@ class TestExportIntegration:
     )
     def test_export_with_validation(self, simple_model, sample_input, temp_dir):
         """Test export with validation enabled."""
-        from kernel_pytorch.deployment import export_to_onnx
+        from torchbridge.deployment import export_to_onnx
 
         output_path = Path(temp_dir) / "validated.onnx"
         result = export_to_onnx(simple_model, output_path, sample_input)
@@ -536,7 +536,7 @@ class TestExportIntegration:
 
     def test_transformer_export(self, transformer_model, sequence_input, temp_dir):
         """Test exporting transformer-like model."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             export_to_torchscript,
             validate_production_readiness,
         )
@@ -565,7 +565,7 @@ class TestEdgeCases:
         """Test exporting model with no parameters."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors
+        from torchbridge.deployment import export_to_safetensors
 
         class EmptyModel(nn.Module):
             def forward(self, x):
@@ -581,7 +581,7 @@ class TestEdgeCases:
 
     def test_large_batch_validation(self, simple_model):
         """Test validation with large batch."""
-        from kernel_pytorch.deployment import validate_production_readiness
+        from torchbridge.deployment import validate_production_readiness
 
         large_input = torch.randn(64, 512)
         result = validate_production_readiness(simple_model, large_input)
@@ -589,7 +589,7 @@ class TestEdgeCases:
 
     def test_multiple_exports_same_dir(self, simple_model, sample_input, temp_dir):
         """Test multiple exports to same directory."""
-        from kernel_pytorch.deployment import export_to_torchscript
+        from torchbridge.deployment import export_to_torchscript
 
         # Export to TorchScript (always available)
         ts_result = export_to_torchscript(
@@ -601,7 +601,7 @@ class TestEdgeCases:
 
         # Export to ONNX if available
         if _onnx_available():
-            from kernel_pytorch.deployment import export_to_onnx
+            from torchbridge.deployment import export_to_onnx
             onnx_result = export_to_onnx(
                 simple_model, Path(temp_dir) / "model.onnx", sample_input
             )

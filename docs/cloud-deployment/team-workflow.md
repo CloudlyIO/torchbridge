@@ -146,13 +146,13 @@ TEAM_AWS_CONFIG = {
     "subnet_id": "subnet-shared-123",
     "security_group_ids": ["sg-team-456"],
     "key_name": "team-key",
-    "s3_bucket": "team-kernelpytorch-results",
+    "s3_bucket": "team-torchbridge-results",
 }
 
 TEAM_GCP_CONFIG = {
-    "project_id": "kernelpytorch-team",
+    "project_id": "torchbridge-team",
     "zone": "us-central1-a",
-    "gcs_bucket": "team-kernelpytorch-results",
+    "gcs_bucket": "team-torchbridge-results",
 }
 ```
 
@@ -201,7 +201,7 @@ result = {
 ### Result Upload Location
 
 ```
-s3://team-kernelpytorch-results/
+s3://team-torchbridge-results/
 ├── daily/
 │   ├── 2024-01-15/
 │   │   ├── aws-nvidia-abc123.json
@@ -219,17 +219,17 @@ s3://team-kernelpytorch-results/
 ### Slack/Teams Channel Structure
 
 ```
-#kernelpytorch-cloud-testing
+#torchbridge-cloud-testing
 ├── Daily standups on test status
 ├── Blocking issues
 └── Cost alerts
 
-#kernelpytorch-cloud-booking
+#torchbridge-cloud-booking
 ├── Slot reservations
 ├── Cancellations
 └── Availability questions
 
-#kernelpytorch-cloud-results
+#torchbridge-cloud-results
 ├── Automated result notifications
 ├── Regression alerts
 └── Performance comparisons
@@ -352,13 +352,13 @@ def check_budget_status(developer: str, current_spend: float):
 ```bash
 # Immediately terminate all instances
 aws ec2 describe-instances \
-    --filters "Name=tag:Team,Values=kernelpytorch" \
+    --filters "Name=tag:Team,Values=torchbridge" \
     --query "Reservations[].Instances[].InstanceId" | \
     xargs -I {} aws ec2 terminate-instances --instance-ids {}
 
 # GCP
 gcloud compute instances list \
-    --filter="labels.team=kernelpytorch" \
+    --filter="labels.team=torchbridge" \
     --format="value(name,zone)" | \
     while read name zone; do
         gcloud compute instances delete $name --zone=$zone --quiet

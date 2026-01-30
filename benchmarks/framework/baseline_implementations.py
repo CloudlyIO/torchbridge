@@ -457,9 +457,9 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
             """Create model with our optimizations"""
             try:
                 # Import our optimized components
-                from kernel_pytorch.compiler_optimized import FusedGELU, OptimizedLayerNorm
+                from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
                 # FlexAttention will be available in future version of unified attention framework
-                # from kernel_pytorch.attention.implementations.flex_attention import FlexAttention
+                # from torchbridge.attention.implementations.flex_attention import FlexAttention
                 warnings.warn("FlexAttention temporarily unavailable in benchmarks")
 
                 # Create model with our optimizations
@@ -521,7 +521,7 @@ class OurOptimizedModel(nn.Module):
         ])
 
         try:
-            from kernel_pytorch.compiler_optimized import OptimizedLayerNorm
+            from torchbridge.compiler_optimized import OptimizedLayerNorm
             self.ln_f = OptimizedLayerNorm(self.hidden_size)
         except ImportError:
             self.ln_f = nn.LayerNorm(self.hidden_size)
@@ -557,7 +557,7 @@ class OurOptimizedBlock(nn.Module):
         self.mlp = OurOptimizedMLP(hidden_size)
 
         try:
-            from kernel_pytorch.compiler_optimized import OptimizedLayerNorm
+            from torchbridge.compiler_optimized import OptimizedLayerNorm
             self.ln_1 = OptimizedLayerNorm(hidden_size)
             self.ln_2 = OptimizedLayerNorm(hidden_size)
         except ImportError:
@@ -579,7 +579,7 @@ class OurOptimizedMLP(nn.Module):
         self.intermediate_size = 4 * hidden_size
 
         try:
-            from kernel_pytorch.compiler_optimized import FusedLinearGELU
+            from torchbridge.compiler_optimized import FusedLinearGELU
             self.fused_linear_gelu = FusedLinearGELU(hidden_size, self.intermediate_size)
             self.down_proj = nn.Linear(self.intermediate_size, hidden_size)
             self.use_fused = True

@@ -9,7 +9,7 @@ Features:
 - Multiple attention patterns (causal, sliding window, ALiBi)
 - Custom score modifications
 - Performance comparison with standard attention
-- Integration with KernelPyTorch attention system
+- Integration with TorchBridge attention system
 """
 
 import sys
@@ -31,12 +31,12 @@ except ImportError:
         print(f"  {title}")
         print('='*60)
 
-from kernel_pytorch.attention import (
+from torchbridge.attention import (
     AttentionConfig,
     AttentionPatterns,
     create_attention,
 )
-from kernel_pytorch.attention.implementations.flex_attention import (
+from torchbridge.attention.implementations.flex_attention import (
     FlexAttentionLayer,
     FlexAttentionCausal,
     FlexAttentionSlidingWindow,
@@ -311,7 +311,7 @@ def demo_registry_integration():
     """Demo: Registry integration"""
     print_section("Registry Integration")
 
-    from kernel_pytorch.attention.core.registry import (
+    from torchbridge.attention.core.registry import (
         get_attention_registry,
         list_available_attention
     )
@@ -336,7 +336,7 @@ def demo_registry_integration():
 def main():
     """Run all demos"""
     print("\n" + "="*60)
-    print("  FlexAttention Demo - KernelPyTorch v0.4.4")
+    print("  FlexAttention Demo - TorchBridge v0.4.4")
     print("="*60)
 
     results = {}

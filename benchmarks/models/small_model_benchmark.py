@@ -3,7 +3,7 @@
 Small Model Benchmark Suite
 
 Comprehensive benchmarks for small text models (BERT, GPT-2, DistilBERT)
-comparing baseline PyTorch vs KernelPyTorch optimized performance.
+comparing baseline PyTorch vs TorchBridge optimized performance.
 
 Metrics measured:
 - Inference latency (ms)
@@ -275,7 +275,7 @@ class SmallModelBenchmark:
         logger.info(f"Optimized: {model_name} batch={batch_size} seq={seq_length}")
 
         try:
-            from kernel_pytorch.models.text import (
+            from torchbridge.models.text import (
                 TextModelOptimizer,
                 TextModelConfig,
                 OptimizationMode
@@ -323,7 +323,7 @@ class SmallModelBenchmark:
             return result
 
         except ImportError:
-            logger.warning("KernelPyTorch not available, using torch.compile fallback")
+            logger.warning("TorchBridge not available, using torch.compile fallback")
             return self._benchmark_torch_compile_encoder(model_name, batch_size, seq_length)
 
     def _benchmark_torch_compile_encoder(

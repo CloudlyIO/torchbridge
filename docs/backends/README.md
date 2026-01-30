@@ -1,6 +1,6 @@
 # Hardware Backend Selection
 
-> **Version**: v0.4.18 | KernelPyTorch supports 4 hardware backends with unified interfaces
+> **Version**: v0.4.18 | TorchBridge supports 4 hardware backends with unified interfaces
 
 All backends provide the same API with hardware-specific optimizations under the hood.
 
@@ -29,10 +29,10 @@ All backends provide the same API with hardware-specific optimizations under the
 ## Common Operations
 
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.backends.amd import AMDBackend
-from kernel_pytorch.backends.intel import IntelBackend
-from kernel_pytorch.backends.tpu import TPUBackend
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.backends.amd import AMDBackend
+from torchbridge.backends.intel import IntelBackend
+from torchbridge.backends.tpu import TPUBackend
 
 # All backends share the same API
 backend = NVIDIABackend()  # or AMDBackend(), IntelBackend(), TPUBackend()

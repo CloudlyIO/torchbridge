@@ -1,4 +1,4 @@
-# 📝 KernelPyTorch Changelog
+# 📝 TorchBridge Changelog
 
 **Version history and release notes for the PyTorch GPU optimization framework.**
 
@@ -8,7 +8,45 @@
 
 ## **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.35 (Production Hardening)
+**Current Version**: v0.4.40 (TorchBridge Rebrand)
+
+---
+
+## [0.4.40] - 2026-01-30 - TorchBridge Rebrand Release
+
+### **Summary**
+
+Rebranded from kernel-pytorch to **TorchBridge** — a hardware abstraction layer
+for PyTorch across NVIDIA, AMD, Intel, and TPU backends. Removed 11 scaffold
+modules (stub/fake implementations) and cleaned up all import sites.
+
+### **Breaking Changes**
+
+- **Package renamed**: `kernel-pytorch` → `torchbridge`
+- **Import path**: `from kernel_pytorch import ...` → `from torchbridge import ...`
+- **CLI commands**: `kpt-*` → `tb-*` (e.g., `tb-optimize`, `tb-benchmark`)
+- **Config class**: `KernelPyTorchConfig` → `TorchBridgeConfig`
+- **Error class**: `KernelPyTorchError` → `TorchBridgeError`
+- **Environment variables**: `KERNEL_PYTORCH_*` → `TORCHBRIDGE_*`
+
+### **Removed**
+
+- `core/compilers/` — FlashLightKernelCompiler, PyGraphCUDAOptimizer (scaffold), enhanced_fusion
+- `precision/fp8_optimizations.py` — FP8LinearLayer, FP8Optimizer stubs
+- `precision/ultra_precision.py` — UltraPrecisionModule, AdaptivePrecisionAllocator stubs
+- `attention/distributed/` — ring_attention, context_parallel scaffolds
+- `attention/fusion/` — neural_operator scaffold
+- `optimizations/next_gen/structured_sparsity.py` — stub
+- `optimizations/next_gen/fsdp2_integration.py` — stub
+- `optimizations/next_gen/advanced_flex_attention.py` — stub
+- Scaffold-only test files: test_compiler, test_neural_operator_fusion, test_ultra_precision, test_integration
+- Scaffold-only demos: fusion, ultra_precision, sparsity, flex_attention, adaptive precision
+
+### **Retained (Production-Ready)**
+
+- `precision/fp8_native.py` — Real FP8 quantization
+- `precision/fp8_training_engine.py` — Production FP8 training
+- `optimizations/next_gen/pygraph_optimizer.py` — CUDA Graph automation
 
 ---
 
@@ -136,15 +174,15 @@ integration testing, performance validation, and documentation polish.
 
 ### **Added** ✨
 
-- **Export CLI Command** (`src/kernel_pytorch/cli/export.py`)
-  - `kpt-export` - Export models to ONNX, TorchScript, SafeTensors
+- **Export CLI Command** (`src/torchbridge/cli/export.py`)
+  - `tb-export` - Export models to ONNX, TorchScript, SafeTensors
   - Support for all formats at once (`--format all`)
   - Dynamic axes configuration for ONNX
   - Validation against original model
   - FP16/BF16 precision export
 
-- **Profile CLI Command** (`src/kernel_pytorch/cli/profile.py`)
-  - `kpt-profile` - Profile model performance
+- **Profile CLI Command** (`src/torchbridge/cli/profile.py`)
+  - `tb-profile` - Profile model performance
   - Summary mode for quick overview
   - Detailed mode with operator-level analysis
   - Memory mode for allocation tracking
@@ -168,7 +206,7 @@ integration testing, performance validation, and documentation polish.
 ### **Changed** 🔄
 
 - Updated CLI to include export and profile commands
-- Added `kpt-export` and `kpt-profile` entry points in pyproject.toml
+- Added `tb-export` and `tb-profile` entry points in pyproject.toml
 - Updated CLI help text with new command examples
 - Version updated to 0.4.27
 
@@ -244,14 +282,14 @@ integration testing, performance validation, and documentation polish.
 
 ### **Added** ✨
 
-- **SafeTensors Export** (`src/kernel_pytorch/deployment/safetensors_exporter.py`)
+- **SafeTensors Export** (`src/torchbridge/deployment/safetensors_exporter.py`)
   - `SafeTensorsExporter` - Export models to SafeTensors format
   - Memory-mapped loading for fast access
   - FP16 precision support
   - Metadata embedding
   - Secure loading (no pickle execution)
 
-- **Production Readiness Validator** (`src/kernel_pytorch/deployment/production_validator.py`)
+- **Production Readiness Validator** (`src/torchbridge/deployment/production_validator.py`)
   - `ProductionValidator` - Comprehensive deployment validation
   - Forward pass and determinism checks
   - Export format compatibility (ONNX, TorchScript, SafeTensors)
@@ -259,7 +297,7 @@ integration testing, performance validation, and documentation polish.
   - Memory profiling
   - Automatic recommendation generation
 
-- **Export CLI** (`src/kernel_pytorch/deployment/export_cli.py`)
+- **Export CLI** (`src/torchbridge/deployment/export_cli.py`)
   - Command-line interface for model export
   - `export` - Export to ONNX, TorchScript, or SafeTensors
   - `validate` - Validate production readiness
@@ -312,7 +350,7 @@ integration testing, performance validation, and documentation polish.
 
 ### **Fixed** 🔧
 
-- **Pipeline Parallel Device Handling** (`src/kernel_pytorch/models/distributed/pipeline_parallel.py`)
+- **Pipeline Parallel Device Handling** (`src/torchbridge/models/distributed/pipeline_parallel.py`)
   - Fixed hardcoded `device="cuda"` in `InterleavedScheduler.run_forward_backward()`
   - Now correctly uses device from micro-batches for CPU compatibility
   - Fixed IndexError in single-stage pipeline backward pass
@@ -331,27 +369,27 @@ integration testing, performance validation, and documentation polish.
 
 ### **Added** ✨
 
-- **ViT Attention Slicing** (`src/kernel_pytorch/models/vision/vit.py`)
+- **ViT Attention Slicing** (`src/torchbridge/models/vision/vit.py`)
   - `SlicedMultiheadAttention` - Memory-efficient attention using query slicing
   - `SlicedAttentionWrapper` - Compatibility wrapper for existing models
   - `from_pretrained()` - Convert existing PyTorch MultiheadAttention
   - Memory reduction from O(N²) to O(N×S) where S is slice size
   - 9x memory reduction for ViT-Large inference
 
-- **Pipeline Parallel Scheduler** (`src/kernel_pytorch/models/distributed/pipeline_parallel.py`)
+- **Pipeline Parallel Scheduler** (`src/torchbridge/models/distributed/pipeline_parallel.py`)
   - `InterleavedScheduler.run_forward()` - 1F1B forward pass scheduling
   - `InterleavedScheduler.run_backward()` - 1F1B backward pass scheduling
   - Implements warmup, steady-state, and cooldown phases
   - ~4x memory reduction vs GPipe (all-forward-then-backward)
 
-- **Sparse Attention Implementations** (`src/kernel_pytorch/attention/implementations/sparse.py`)
+- **Sparse Attention Implementations** (`src/torchbridge/attention/implementations/sparse.py`)
   - `DynamicSparseAttention` - Learned sparsity patterns with predictor network
   - `BlockSparseAttention` - BigBird-style block sparse patterns
   - `StridedSparseAttention` - Sparse Transformer-style local + strided
   - `SparseAttentionPattern` - Configurable pattern combinations
   - 25%+ sparsity reduction in attention computation
 
-- **Memory-Efficient Attention** (`src/kernel_pytorch/attention/implementations/memory_efficient.py`)
+- **Memory-Efficient Attention** (`src/torchbridge/attention/implementations/memory_efficient.py`)
   - `MemoryEfficientAttention` - Chunked query processing
   - `ChunkedAttention` - Double-chunked for very long sequences (online softmax)
   - `LongSequenceAttention` - Local window + global strided attention
@@ -391,7 +429,7 @@ All attention implementations now have full functionality with tests and documen
 
 ### **Added** ✨
 
-- **LLM Inference Server** (`src/kernel_pytorch/deployment/serving/llm_server.py`)
+- **LLM Inference Server** (`src/torchbridge/deployment/serving/llm_server.py`)
   - FastAPI-based production server (902 lines)
   - POST `/generate` - Text generation with streaming
   - POST `/chat` - Chat completions (OpenAI-compatible)
@@ -630,7 +668,7 @@ validation with actual HuggingFace models to prove optimizations work in practic
   - pytest with coverage
 
 - **Type Checking Support**
-  - `src/kernel_pytorch/py.typed` - PEP 561 marker for type checkers
+  - `src/torchbridge/py.typed` - PEP 561 marker for type checkers
   - mypy configuration in pyproject.toml
 
 ### **Changed** 🔄
@@ -680,7 +718,7 @@ validation with actual HuggingFace models to prove optimizations work in practic
 
 ---
 
-KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
+TorchBridge is a **production-ready** PyTorch GPU optimization framework with:
 - **4 backends**: NVIDIA, AMD, TPU, Intel XPU (all 95%+ production-ready)
 - **Unified backend interface**: BaseBackend, BackendFactory, OptimizationLevel
 - **Real-world model integration**: BERT, GPT-2, Llama, Mistral, Phi, distributed LLMs, vision, multi-modal
@@ -707,7 +745,7 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 
 ### **Added** ✨
 
-- **Multi-modal Optimization Framework**: `src/kernel_pytorch/models/multimodal/`
+- **Multi-modal Optimization Framework**: `src/torchbridge/models/multimodal/`
   - `base.py` - Base classes, MultiModalOptimizationConfig, CrossModalAttention (410 lines)
   - `clip.py` - CLIP vision-language embedding optimization (480 lines)
   - `llava.py` - LLaVA visual instruction following optimization (260 lines)
@@ -783,7 +821,7 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
 
 ### **Added** ✨
 
-- **Vision Model Optimization Framework**: `src/kernel_pytorch/models/vision/`
+- **Vision Model Optimization Framework**: `src/torchbridge/models/vision/`
   - `base.py` - Base classes and configuration for vision models
     - `VisionModelType` - Enum for supported model types (ResNet, ViT, Stable Diffusion)
     - `OptimizationLevel` - O0-O3 optimization levels
@@ -860,7 +898,7 @@ KernelPyTorch is a **production-ready** PyTorch GPU optimization framework with:
   - Module export tests (4 tests)
 
 - **Documentation**
-  - `src/kernel_pytorch/models/vision/README.md` - Module documentation
+  - `src/torchbridge/models/vision/README.md` - Module documentation
   - `docs/guides/vision_model_guide.md` - Comprehensive optimization guide
 
 ### **Models Supported**
@@ -924,14 +962,14 @@ Measured on NVIDIA A100 40GB:
 
 ### **Added** ✨
 
-- **Tensor Parallelism**: `src/kernel_pytorch/models/distributed/tensor_parallel.py`
+- **Tensor Parallelism**: `src/torchbridge/models/distributed/tensor_parallel.py`
   - `TensorParallelConfig` - Configuration for tensor parallel training
   - `ColumnParallelLinear` - Column-wise parallel linear layers
   - `RowParallelLinear` - Row-wise parallel linear layers
   - `TensorParallelEmbedding` - Distributed embedding tables
   - `apply_tensor_parallelism()` - Automatic TP application
 
-- **Pipeline Parallelism**: `src/kernel_pytorch/models/distributed/pipeline_parallel.py`
+- **Pipeline Parallelism**: `src/torchbridge/models/distributed/pipeline_parallel.py`
   - `PipelineParallelConfig` - Configuration for pipeline training
   - `PipelineStage` - Individual pipeline stage wrapper
   - `GPipeScheduler` - GPipe-style micro-batch scheduling
@@ -939,14 +977,14 @@ Measured on NVIDIA A100 40GB:
   - `create_pipeline_stages()` - Automatic stage partitioning
   - `estimate_pipeline_memory()` - Memory estimation for pipelines
 
-- **Model Sharding**: `src/kernel_pytorch/models/distributed/model_sharding.py`
+- **Model Sharding**: `src/torchbridge/models/distributed/model_sharding.py`
   - `ShardingStrategy` - Enum for sharding strategies
   - `ShardingConfig` - Sharding configuration
   - `ModelSharder` - Automatic parameter sharding
   - `WeightDistributor` - Multi-device weight distribution
   - `automatic_sharding()` - Smart sharding based on model size
 
-- **Large Model Optimizer**: `src/kernel_pytorch/models/distributed/large_model_optimizer.py`
+- **Large Model Optimizer**: `src/torchbridge/models/distributed/large_model_optimizer.py`
   - `DistributedLLMOptimizer` - Optimizer for 70B+ models
   - `DistributedConfig` - Configuration with TP/PP/sharding
   - `LargeModelType` - Enum for supported large models
@@ -1006,7 +1044,7 @@ Measured on NVIDIA A100 40GB:
 
 ### **Added** ✨
 
-- **LLM Optimization Framework**: `src/kernel_pytorch/models/llm/`
+- **LLM Optimization Framework**: `src/torchbridge/models/llm/`
   - `LLMOptimizer` - Core optimizer for 7B+ parameter LLMs
   - `LLMConfig` - Configuration with quantization, KV-cache, Flash Attention
   - `OptimizedLlama` - Llama-2/3 wrapper with automatic optimization
@@ -1021,7 +1059,7 @@ Measured on NVIDIA A100 40GB:
   - `FP8` - FP8 for H100+ hardware
   - `BNBT4` - BitsAndBytes 4-bit NF4 quantization
 
-- **KV-Cache Optimization**: `src/kernel_pytorch/models/llm/kv_cache.py`
+- **KV-Cache Optimization**: `src/torchbridge/models/llm/kv_cache.py`
   - `KVCacheManager` - Standard KV-cache with automatic truncation
   - `PagedKVCache` - vLLM-style paged attention for memory efficiency
   - `SlidingWindowCache` - Sliding window for Mistral-style attention
@@ -1044,7 +1082,7 @@ Measured on NVIDIA A100 40GB:
 ### **Changed** 🔄
 
 - **Version**: 0.4.11 → 0.4.12
-- **Models module**: Added LLM exports to `kernel_pytorch.models`
+- **Models module**: Added LLM exports to `torchbridge.models`
 
 ### **Technical Notes** 📋
 
@@ -1061,7 +1099,7 @@ Measured on NVIDIA A100 40GB:
 
 ### **Added** ✨
 
-- **Text Model Optimization Framework**: `src/kernel_pytorch/models/text/`
+- **Text Model Optimization Framework**: `src/torchbridge/models/text/`
   - `TextModelOptimizer` - Core optimizer with automatic backend detection
   - `TextModelConfig` - Configuration dataclass for optimization settings
   - `OptimizedBERT` - Optimized BERT wrapper for classification tasks
@@ -1307,7 +1345,7 @@ Measured on NVIDIA A100 40GB:
 
 ### **Changed** 🔄
 
-- **Backend Exports**: `kernel_pytorch.backends` now exports all base classes
+- **Backend Exports**: `torchbridge.backends` now exports all base classes
   - BaseBackend, CPUBackend, OptimizationLevel, DeviceInfo, OptimizationResult
   - BaseOptimizer, CPUOptimizer, KernelConfig, OptimizationStrategy
   - BackendFactory, BackendType, get_backend, get_optimizer
@@ -1355,7 +1393,7 @@ Measured on NVIDIA A100 40GB:
 - **Configuration**:
   - `IntelArchitecture` enum: PVC, DG2, FLEX, INTEGRATED, AUTO
   - `IntelConfig` dataclass: IPEX settings, oneDNN, precision, memory
-  - Full integration with `HardwareConfig` and `KernelPyTorchConfig`
+  - Full integration with `HardwareConfig` and `TorchBridgeConfig`
 
 - **Exception Hierarchy**: Intel-specific exceptions
   - `XPUNotAvailableError`, `IPEXNotInstalledError`
@@ -1381,7 +1419,7 @@ Measured on NVIDIA A100 40GB:
 ### **Changed** 🔄
 
 - **HardwareConfig**: Added `intel` field for Intel XPU configuration
-- **KernelPyTorchConfig**: Added XPU device detection in auto-detection
+- **TorchBridgeConfig**: Added XPU device detection in auto-detection
 - **HardwareBackend**: Added `INTEL` enum value
 
 ---
@@ -1697,7 +1735,7 @@ The v0.3.x series hardened existing backends (NVIDIA, TPU) to 90%+ production-re
 
 ### **MAJOR MILESTONE RELEASE**
 
-This is a **production-ready release** marking the completion of the v0.3.x development series. KernelPyTorch is now a fully production-ready PyTorch GPU optimization framework with comprehensive multi-backend support.
+This is a **production-ready release** marking the completion of the v0.3.x development series. TorchBridge is now a fully production-ready PyTorch GPU optimization framework with comprehensive multi-backend support.
 
 **Test Coverage**: **905 tests passing** (100% success rate)
 
@@ -1763,24 +1801,24 @@ This is a **production-ready release** marking the completion of the v0.3.x deve
 - Thread-safe lifecycle management
 
 **Error Handling Framework**:
-- `KernelPyTorchError` unified base exception
+- `TorchBridgeError` unified base exception
 - Hierarchies: Validation, Hardware, Optimization, Deployment, Monitoring
 - All backend exceptions inherit from common base
 
 ### **Quick Start** 📚
 
 ```python
-from kernel_pytorch import auto_optimize
+from torchbridge import auto_optimize
 
 # Automatic hardware detection and optimization
 model = auto_optimize(model)
 
 # Export for production
-from kernel_pytorch.deployment import ONNXExporter
+from torchbridge.deployment import ONNXExporter
 ONNXExporter().export(model, "model.onnx", sample_input)
 
 # Serve with FastAPI
-from kernel_pytorch.deployment.serving import create_fastapi_server
+from torchbridge.deployment.serving import create_fastapi_server
 server = create_fastapi_server(model)
 ```
 
@@ -1804,7 +1842,7 @@ None. Full backward compatibility with v0.3.x maintained.
 
 ### **Changed** 🔄
 
-**Management Module Refactoring** (`src/kernel_pytorch/core/management/`):
+**Management Module Refactoring** (`src/torchbridge/core/management/`):
 
 The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused modules:
 
@@ -1838,9 +1876,9 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 
 ### **Added** ✨
 
-**Unified Error Handling Framework** (`src/kernel_pytorch/core/errors.py`, ~350 lines):
+**Unified Error Handling Framework** (`src/torchbridge/core/errors.py`, ~350 lines):
 
-- **`KernelPyTorchError`**: Base exception for all framework errors
+- **`TorchBridgeError`**: Base exception for all framework errors
   - Structured error details with `to_dict()` serialization
   - Cause chaining for debugging
   - Consistent error message formatting
@@ -1879,7 +1917,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
   - `format_error_chain()`: Format exception chains for logging
 
 **Backend Integration**:
-- `BackendError` now inherits from `KernelPyTorchError`
+- `BackendError` now inherits from `TorchBridgeError`
 - All backend exceptions (NVIDIA, AMD, TPU) unified under common hierarchy
 - Updated `base_exceptions.py` to v0.3.11
 
@@ -1913,7 +1951,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 
 ### **Added** ✨
 
-**Monitoring Module** (`src/kernel_pytorch/monitoring/`, ~900 lines):
+**Monitoring Module** (`src/torchbridge/monitoring/`, ~900 lines):
 
 - **`prometheus_exporter.py`** (~400 lines): Prometheus metrics integration
   - `MetricsExporter`: Full Prometheus metrics exporter
@@ -1976,10 +2014,10 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 
 ### **Added** ✨
 
-**Serving Module** (`src/kernel_pytorch/deployment/serving/`, ~1,200 lines):
+**Serving Module** (`src/torchbridge/deployment/serving/`, ~1,200 lines):
 
 - **`torchserve_handler.py`** (~400 lines): TorchServe integration
-  - `KernelPyTorchHandler`: Custom handler with KernelPyTorch optimizations
+  - `TorchBridgeHandler`: Custom handler with TorchBridge optimizations
   - `BaseHandler`: Abstract base class for custom handlers
   - `HandlerConfig`: Configuration for handler settings
   - `package_for_torchserve()`: Create .mar archives for deployment
@@ -2028,7 +2066,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 
 ### **Added** ✨
 
-**Deployment Module** (`src/kernel_pytorch/deployment/`, ~1,300 lines):
+**Deployment Module** (`src/torchbridge/deployment/`, ~1,300 lines):
 - **`optimization_metadata.py`** (~400 lines): Metadata schema for preserving optimizations
   - `OptimizationMetadata`: Top-level metadata class
   - `HardwareMetadata`: Hardware-specific optimization info
@@ -2211,7 +2249,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 
 ### **Refactored** 🔧
 
-**Backend Base Classes** (`src/kernel_pytorch/backends/`):
+**Backend Base Classes** (`src/torchbridge/backends/`):
 - `base_memory_manager.py` (~470 lines): Abstract base class for all backend memory managers
   - `BaseMemoryManager` with 7 abstract methods: `_get_device()`, `_get_optimal_alignment()`, `_get_total_memory_bytes()`, `_get_allocated_memory_bytes()`, `_get_reserved_memory_bytes()`, `_device_synchronize()`, `_empty_device_cache()`
   - Common implementations: `allocate_tensor()`, `return_to_pool()`, `clear_pool()`, `optimize_tensor_layout()`, `get_memory_stats()`, `optimize_model_memory()`
@@ -2226,7 +2264,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
   - `raise_or_warn()` utility function for flexible error handling
 - `__init__.py`: Module exports for base classes
 
-**NVIDIA Backend Refactoring** (`src/kernel_pytorch/backends/nvidia/`):
+**NVIDIA Backend Refactoring** (`src/torchbridge/backends/nvidia/`):
 - `memory_manager.py`: Now inherits from `BaseMemoryManager`
   - Implements abstract methods with CUDA-specific logic
   - Tensor Core alignment: 8 (Ampere) or 16 (Hopper/Blackwell)
@@ -2235,7 +2273,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
   - Multiple inheritance for backward compatibility
   - All exception classes now support details dict
 
-**AMD Backend Refactoring** (`src/kernel_pytorch/backends/amd/`):
+**AMD Backend Refactoring** (`src/torchbridge/backends/amd/`):
 - `memory_manager.py`: Now inherits from `BaseMemoryManager`
   - Implements abstract methods with ROCm-specific logic
   - Matrix Core alignment: 16 (CDNA2) or 32 (MI300 series)
@@ -2244,7 +2282,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 - `amd_exceptions.py`: Now inherits from base exceptions
   - `ROCmMemoryError`, `HIPCompilationError`, `MatrixCoreError` etc.
 
-**TPU Backend Refactoring** (`src/kernel_pytorch/backends/tpu/`):
+**TPU Backend Refactoring** (`src/torchbridge/backends/tpu/`):
 - `memory_manager.py`: Now inherits from `BaseMemoryManager`
   - Implements abstract methods with XLA-specific logic
   - TPU alignment: 8 (matrix units)
@@ -2265,7 +2303,7 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 - All demos working (NVIDIA, TPU, AMD, auto-optimization)
 - Benchmarks verified
 
-**Phase 3: Configuration Consolidation** (`src/kernel_pytorch/`):
+**Phase 3: Configuration Consolidation** (`src/torchbridge/`):
 - Centralized attention configs in `core/config.py`
   - `AttentionPatterns` enum (FULL, CAUSAL, SLIDING_WINDOW, SPARSE, RING, etc.)
   - `FP8AttentionConfig` dataclass for FP8 attention settings
@@ -2280,14 +2318,14 @@ The monolithic `unified_manager.py` (700+ lines) has been split into 5 focused m
 ### **Deprecated** ⚠️
 
 **Legacy Import Paths** (scheduled for removal in v0.4.0):
-- `kernel_pytorch.compiler_integration` → use `kernel_pytorch.core`
-- `kernel_pytorch.compiler_optimized` → use `kernel_pytorch.core`
-- `kernel_pytorch.components` → use `kernel_pytorch.core`
+- `torchbridge.compiler_integration` → use `torchbridge.core`
+- `torchbridge.compiler_optimized` → use `torchbridge.core`
+- `torchbridge.components` → use `torchbridge.core`
 
 These legacy import paths emit `DeprecationWarning` and will be removed in v0.4.0.
 See the migration guide in `docs/guides/migration.md` for update instructions.
 
-**Phase 4: Dead Code Cleanup** (`src/kernel_pytorch/`):
+**Phase 4: Dead Code Cleanup** (`src/torchbridge/`):
 - Fixed 8 bare `except:` handlers to use `except Exception:`:
   - `optimizations/__init__.py`
   - `utils/profiling.py`
@@ -2406,7 +2444,7 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
 
 ### **Changed** 🔄
 
-**AMD Backend CPU Fallback** (`src/kernel_pytorch/backends/amd/amd_backend.py`):
+**AMD Backend CPU Fallback** (`src/torchbridge/backends/amd/amd_backend.py`):
 - AMDBackend now gracefully falls back to CPU mode when ROCm unavailable
 - Added `device` property returning current device (GPU or CPU)
 - Added `synchronize()` method for operation synchronization
@@ -2429,7 +2467,7 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
 
 ### **Added** ✨
 
-**AMD Backend Core Infrastructure** (`src/kernel_pytorch/backends/amd/`):
+**AMD Backend Core Infrastructure** (`src/torchbridge/backends/amd/`):
 - **AMDBackend** (`amd_backend.py`, 400+ lines)
   - Main orchestrator for AMD ROCm/HIP operations
   - Automatic device detection and initialization
@@ -2470,7 +2508,7 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
   - Hierarchical error handling
   - raise_or_warn utility for flexible error handling
 
-**AMD Configuration** (`src/kernel_pytorch/core/config.py`):
+**AMD Configuration** (`src/torchbridge/core/config.py`):
 - `AMDArchitecture` enum (AUTO, CDNA, CDNA2, CDNA3, RDNA2, RDNA3)
 - `AMDConfig` dataclass with comprehensive settings:
   - ROCm/HIP settings (rocm_home, hip_version)
@@ -2784,12 +2822,12 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
 
 **New Files**:
 - `docs/backends/nvidia.md` - Comprehensive NVIDIA backend guide (450+ lines)
-- `src/kernel_pytorch/backends/nvidia/nvidia_exceptions.py` - Exception hierarchy (65 lines)
+- `src/torchbridge/backends/nvidia/nvidia_exceptions.py` - Exception hierarchy (65 lines)
 
 **Updated Files**:
 - All 6 NVIDIA backend files with structured logging
 - `tests/test_nvidia_backend.py` - 16 new error path tests
-- `src/kernel_pytorch/__init__.py` - Version bump to 0.3.1
+- `src/torchbridge/__init__.py` - Version bump to 0.3.1
 - `CHANGELOG.md` - This release
 
 ### **Known Limitations** ⚠️
@@ -2979,12 +3017,12 @@ See the migration guide in `docs/guides/migration.md` for update instructions.
 **Goal**: Complete AMD MI200/MI300 backend implementation
 
 **Planned Changes**:
-- `src/kernel_pytorch/backends/amd/__init__.py`
-- `src/kernel_pytorch/backends/amd/amd_backend.py` (~400 lines)
-- `src/kernel_pytorch/backends/amd/amd_optimizer.py` (~400 lines)
-- `src/kernel_pytorch/backends/amd/rocm_compiler.py` (~300 lines)
-- `src/kernel_pytorch/backends/amd/memory_manager.py` (~350 lines)
-- `src/kernel_pytorch/backends/amd/hip_utilities.py` (~300 lines)
+- `src/torchbridge/backends/amd/__init__.py`
+- `src/torchbridge/backends/amd/amd_backend.py` (~400 lines)
+- `src/torchbridge/backends/amd/amd_optimizer.py` (~400 lines)
+- `src/torchbridge/backends/amd/rocm_compiler.py` (~300 lines)
+- `src/torchbridge/backends/amd/memory_manager.py` (~350 lines)
+- `src/torchbridge/backends/amd/hip_utilities.py` (~300 lines)
 
 **Architecture Support**:
 - CDNA2 (MI200 series)
@@ -3112,48 +3150,48 @@ This major release implements a comprehensive custom CUDA kernel system with Fla
 
 ### 🆕 **New Components**
 
-**Core Kernel System** (`src/kernel_pytorch/core/kernel_registry.py`, ~400 lines):
+**Core Kernel System** (`src/torchbridge/core/kernel_registry.py`, ~400 lines):
 - `KernelRegistry` singleton for managing kernel versions and backends
 - `KernelMetadata` dataclass for kernel properties and requirements
 - Hardware/precision filtering with fallback chain (CUDA → Triton → PyTorch)
 - Integration with `HardwareDetector` for automatic capability detection
 - Version management and performance-based selection
 
-**FlashAttention-3 CUDA Kernel** (`src/kernel_pytorch/cuda_kernels/flash_attention_v3.cu`, ~517 lines):
+**FlashAttention-3 CUDA Kernel** (`src/torchbridge/cuda_kernels/flash_attention_v3.cu`, ~517 lines):
 - Online softmax algorithm for memory efficiency
 - Head dimension templates (64, 128) for optimal performance
 - Split-K optimization for long sequences (>2048)
 - FP8 accumulation support for H100/Blackwell GPUs
 - 2-5x speedup vs PyTorch SDPA (on appropriate hardware)
 
-**Fused Linear+Activation Kernels** (`src/kernel_pytorch/cuda_kernels/fused_linear_activation.cu`, ~378 lines):
+**Fused Linear+Activation Kernels** (`src/torchbridge/cuda_kernels/fused_linear_activation.cu`, ~378 lines):
 - Template-based activation functors (GELU, SiLU, ReLU)
 - Tiled matrix multiplication with in-kernel activation
 - Vectorized memory access for optimal bandwidth
 - 1.8-2.5x speedup vs separate operations (on GPU)
 
-**Python Wrappers** (`src/kernel_pytorch/hardware/gpu/custom_kernels.py`, +426 lines):
+**Python Wrappers** (`src/torchbridge/hardware/gpu/custom_kernels.py`, +426 lines):
 - `FlashAttentionV3(nn.Module)`: FlashAttention-3 with auto-fallback
 - `FusedLinearGELU(nn.Module)`: Fused Linear+GELU layer
 - `FusedLinearSiLU(nn.Module)`: Fused Linear+SiLU layer
 - `create_fused_ffn_layer()`: Factory function for complete FFN layers
 - Automatic CUDA kernel detection and graceful fallback
 
-**C++ Bindings** (`src/kernel_pytorch/hardware/kernels/cuda_interface.cpp`, +195 lines):
+**C++ Bindings** (`src/torchbridge/hardware/kernels/cuda_interface.cpp`, +195 lines):
 - FlashAttention-3 forward declarations and dispatch
 - Fused Linear+Activation forward declarations (GELU, SiLU, ReLU)
 - Input validation and error handling
 - CPU fallback implementations
 - PyBind11 module exports
 
-**Configuration Integration** (`src/kernel_pytorch/core/config.py`, +96 lines):
+**Configuration Integration** (`src/torchbridge/core/config.py`, +96 lines):
 - `KernelConfig` dataclass with comprehensive kernel settings
 - Auto-configuration based on GPU architecture
 - H100+ automatically enables FP8 and FlashAttention-3
 - Older GPUs default to FlashAttention-2 and FP16/BF16
 - Fine-grained control over kernel fusion and optimization
 
-**Validation System** (`src/kernel_pytorch/validation/unified_validator.py`, +230 lines):
+**Validation System** (`src/torchbridge/validation/unified_validator.py`, +230 lines):
 - `validate_custom_kernels()`: Main entry point for kernel validation
 - `_validate_cuda_available()`: CUDA compilation checks
 - `_validate_kernel_registry()`: Registry integrity validation
@@ -3161,7 +3199,7 @@ This major release implements a comprehensive custom CUDA kernel system with Fla
 - `_validate_fused_activation_kernels()`: Fused kernel validation
 - `_validate_fp8_kernels()`: FP8 kernel validation (H100+ only)
 
-**Backend Integration** (`src/kernel_pytorch/backends/nvidia/nvidia_backend.py`, +200 lines):
+**Backend Integration** (`src/torchbridge/backends/nvidia/nvidia_backend.py`, +200 lines):
 - `_register_default_kernels()`: Automatic kernel registration on init
 - `get_optimal_attention_kernel()`: Hardware-aware attention kernel selection
 - `prepare_model_with_custom_kernels()`: Automatic layer replacement
@@ -3215,11 +3253,11 @@ This major release implements a comprehensive custom CUDA kernel system with Fla
 **Build System** (Phase 4B - COMPLETED):
 - `setup.py` updated to version 0.3.0
 - Added new CUDA sources:
-  - `src/kernel_pytorch/cuda_kernels/flash_attention_v3.cu`
-  - `src/kernel_pytorch/cuda_kernels/fused_linear_activation.cu`
+  - `src/torchbridge/cuda_kernels/flash_attention_v3.cu`
+  - `src/torchbridge/cuda_kernels/fused_linear_activation.cu`
 - Added NVCC flags for H100 (sm_90) and FP8 support (`-DENABLE_FP8`)
 - Updated package list with all Phase 4A modules
-- Fixed `cuda_interface.cpp` path to `src/kernel_pytorch/hardware/kernels/`
+- Fixed `cuda_interface.cpp` path to `src/torchbridge/hardware/kernels/`
 - Added build instructions showing Phase 4A kernels
 
 **Documentation**:
@@ -3289,25 +3327,25 @@ This release focuses on removing legacy code, consolidating duplicative modules,
 - **🗑️ Removed Legacy Code**: Deleted `testing_framework/` directory (7 modules, ~3,000 LOC)
 - **🔧 Consolidation**: Removed duplicate validators and compatibility layers
 - **✅ Test Maintenance**: Updated 653 tests (all passing, 62 skipped)
-- **📦 Validation Module**: Created proper `kernel_pytorch.validation` package
+- **📦 Validation Module**: Created proper `torchbridge.validation` package
 - **🔄 Import Updates**: Updated all imports to use consolidated modules
 
 ### 🗑️ **Removed Components**
 
 **Testing Framework Directory** (replaced by existing validation/core modules):
-- `src/kernel_pytorch/testing_framework/__init__.py`
-- `src/kernel_pytorch/testing_framework/unified_validator.py` (duplicate of `validation.unified_validator`)
-- `src/kernel_pytorch/testing_framework/performance_benchmarks.py` (replaced by `core.performance_tracker`)
-- `src/kernel_pytorch/testing_framework/validation_tools.py`
-- `src/kernel_pytorch/testing_framework/hardware_simulator.py`
-- `src/kernel_pytorch/testing_framework/integration_tests.py`
-- `src/kernel_pytorch/testing_framework/ci_pipeline.py`
+- `src/torchbridge/testing_framework/__init__.py`
+- `src/torchbridge/testing_framework/unified_validator.py` (duplicate of `validation.unified_validator`)
+- `src/torchbridge/testing_framework/performance_benchmarks.py` (replaced by `core.performance_tracker`)
+- `src/torchbridge/testing_framework/validation_tools.py`
+- `src/torchbridge/testing_framework/hardware_simulator.py`
+- `src/torchbridge/testing_framework/integration_tests.py`
+- `src/torchbridge/testing_framework/ci_pipeline.py`
 - `tests/test_testing_framework.py` (obsolete tests)
 
 **Duplicate Utility Files**:
-- `src/kernel_pytorch/utils/validation_framework.py` (duplicate)
-- `src/kernel_pytorch/utils/type_validator.py` (duplicate)
-- `src/kernel_pytorch/utils/compiler_optimization_assistant.py` (compatibility layer)
+- `src/torchbridge/utils/validation_framework.py` (duplicate)
+- `src/torchbridge/utils/type_validator.py` (duplicate)
+- `src/torchbridge/utils/compiler_optimization_assistant.py` (compatibility layer)
 
 ### 🔄 **Updated Components**
 
@@ -3330,10 +3368,10 @@ This release focuses on removing legacy code, consolidating duplicative modules,
 
 ### 📦 **New Module**
 
-**Validation Package** (`src/kernel_pytorch/validation/__init__.py`):
+**Validation Package** (`src/torchbridge/validation/__init__.py`):
 - Created proper Python package for validation module
 - Exports `UnifiedValidator` at package level
-- Improves import ergonomics: `from kernel_pytorch.validation import UnifiedValidator`
+- Improves import ergonomics: `from torchbridge.validation import UnifiedValidator`
 
 ### ✅ **Testing & Validation**
 
@@ -3385,7 +3423,7 @@ Ready for Phase 4 implementation (see `unified_roadmap.md`):
 
 ### 📈 **Overview: Production-Ready Multi-Backend System**
 
-This release completes Phase 3 of the unified roadmap with comprehensive production integration features including automatic hardware detection, intelligent optimization selection, performance regression detection, and complete end-to-end production workflows. Combined with Phase 1 (NVIDIA) and Phase 2 (TPU), this makes KernelPyTorch production-ready for enterprise deployment.
+This release completes Phase 3 of the unified roadmap with comprehensive production integration features including automatic hardware detection, intelligent optimization selection, performance regression detection, and complete end-to-end production workflows. Combined with Phase 1 (NVIDIA) and Phase 2 (TPU), this makes TorchBridge production-ready for enterprise deployment.
 
 **Total Impact**:
 - **🎯 Auto-Optimization**: One-line `auto_optimize()` for any model on any hardware
@@ -3398,14 +3436,14 @@ This release completes Phase 3 of the unified roadmap with comprehensive product
 
 ### 🎯 **Phase 3A: Intelligent Optimization Selection**
 
-**Core Features** (`src/kernel_pytorch/core/hardware_detector.py`):
+**Core Features** (`src/torchbridge/core/hardware_detector.py`):
 - `HardwareDetector` class for automatic hardware detection
 - `HardwareProfile` with detailed capability analysis
 - Automatic backend selection (NVIDIA/TPU/CPU)
 - Recommended optimization level selection (conservative/balanced/aggressive)
 - Support for H100/Blackwell, TPU v4/v5/v6/v7, and CPU fallback
 
-**UnifiedManager Enhancements** (`src/kernel_pytorch/core/management/unified_manager.py`):
+**UnifiedManager Enhancements** (`src/torchbridge/core/management/unified_manager.py`):
 - `auto_optimize()` - One-line model optimization for any hardware
 - `get_hardware_profile()` - Get detected hardware information
 - `get_optimization_recommendations()` - Get recommendations for current hardware
@@ -3428,7 +3466,7 @@ This release completes Phase 3 of the unified roadmap with comprehensive product
 
 ### 📊 **Phase 3B: Performance Regression Detection**
 
-**Core Features** (`src/kernel_pytorch/core/performance_tracker.py`):
+**Core Features** (`src/torchbridge/core/performance_tracker.py`):
 - `PerformanceTracker` class with metrics recording and history
 - `PerformanceMetrics` dataclass for comprehensive metrics
 - `RegressionResult` with severity classification
@@ -3511,14 +3549,14 @@ This release completes Phase 3 of the unified roadmap with comprehensive product
 
 **Usage Example**:
 ```python
-from kernel_pytorch.core.management import get_manager
+from torchbridge.core.management import get_manager
 
 # One-line optimization - automatically detects hardware
 manager = get_manager()
 optimized_model = manager.auto_optimize(model, sample_inputs)
 
 # With regression detection
-from kernel_pytorch.core.performance_tracker import get_performance_tracker
+from torchbridge.core.performance_tracker import get_performance_tracker
 
 tracker = get_performance_tracker()
 metrics = tracker.record_performance(model, inputs, "my_model")
@@ -3551,7 +3589,7 @@ This release completes Phase 1 of the unified roadmap with comprehensive NVIDIA 
 
 ### 🚀 **NVIDIA Backend Features**
 
-**Core Modules** (`src/kernel_pytorch/backends/nvidia/`):
+**Core Modules** (`src/torchbridge/backends/nvidia/`):
 - `nvidia_backend.py` - Device management and model preparation
 - `nvidia_optimizer.py` - Multi-level optimization framework
 - `fp8_compiler.py` - FP8 training for H100/Blackwell
@@ -3725,7 +3763,7 @@ This release implements Phase 1 of the unified roadmap with comprehensive NVIDIA
 ### 🎯 **Architecture Documentation Updates**
 - **All guides updated** - Installation, quickstart, testing reflect unified architecture
 - **Capabilities enhanced** - Hardware, architecture docs show v0.2.3 state with NVIDIA features
-- **Examples corrected** - All code examples use KernelPyTorchConfig, UnifiedManager, UnifiedValidator
+- **Examples corrected** - All code examples use TorchBridgeConfig, UnifiedManager, UnifiedValidator
 - **Roadmap alignment** - Planning documents align with actual codebase state
 
 ### ✅ **Quality Assurance**
@@ -3831,7 +3869,7 @@ This release focuses on improving test suite stability, cross-platform compatibi
 ## [0.2.0] - 2025-12-16 - 🎯 MAJOR CLEANUP: Comprehensive Codebase Consolidation
 
 ### 📈 **Overview: Major Refactoring Release**
-This release represents the largest cleanup and consolidation effort in KernelPyTorch history, reducing complexity while maintaining full backward compatibility and improving maintainability.
+This release represents the largest cleanup and consolidation effort in TorchBridge history, reducing complexity while maintaining full backward compatibility and improving maintainability.
 
 **Total Impact**:
 - **74+ classes consolidated** into 3 unified systems
@@ -3840,22 +3878,22 @@ This release represents the largest cleanup and consolidation effort in KernelPy
 - **Enhanced maintainability** and developer experience
 
 ### 🔧 **Phase 1: Unified Configuration System (v0.1.69)**
-- **Configuration Consolidation**: Unified 36+ scattered Config classes into single `KernelPyTorchConfig`
-  - Created comprehensive nested configuration system in `src/kernel_pytorch/core/config.py`
+- **Configuration Consolidation**: Unified 36+ scattered Config classes into single `TorchBridgeConfig`
+  - Created comprehensive nested configuration system in `src/torchbridge/core/config.py`
   - Added specialized configs for precision, memory, attention, hardware, distributed, validation
   - Provides factory methods: `for_inference()`, `for_training()`, `for_development()`
   - Replaced duplicative configs throughout entire codebase
 
 ### 🧪 **Unified Validation Framework (v0.1.69)**
 - **Validation Consolidation**: Merged 31 validation functions from 14 files into `UnifiedValidator`
-  - Created `src/kernel_pytorch/validation/unified_validator.py`
+  - Created `src/torchbridge/validation/unified_validator.py`
   - Comprehensive validation for models, configurations, hardware compatibility, precision
   - Multi-level validation: MINIMAL, STANDARD, STRICT, COMPREHENSIVE
   - Replaced scattered validation logic with centralized, tested framework
 
 ### 🏗️ **Phase 2: Unified Management System (v0.1.70)**
 - **Manager Consolidation**: Unified 38+ scattered Manager/Optimizer classes into single system
-  - Created comprehensive `UnifiedManager` in `src/kernel_pytorch/core/management/`
+  - Created comprehensive `UnifiedManager` in `src/torchbridge/core/management/`
   - Consolidated hardware managers (11), optimization managers (18), infrastructure managers (9)
   - Provides single interface replacing: MemoryOptimizer, TensorCoreOptimizer, PyGraphCUDAOptimizer, etc.
   - Added hierarchical management with HardwareManager, OptimizationManager, InfrastructureManager
@@ -3873,7 +3911,7 @@ This release represents the largest cleanup and consolidation effort in KernelPy
   - Improved module discoverability and reduced circular import risks
 
 - **Main Package Integration**: Added unified systems to core package exports
-  - Direct access via `kernel_pytorch.get_manager()` and `kernel_pytorch.optimize_model()`
+  - Direct access via `torchbridge.get_manager()` and `torchbridge.optimize_model()`
   - Maintains backward compatibility with existing access patterns
   - Provides seamless upgrade path from individual systems to unified approach
 
@@ -3907,7 +3945,7 @@ This release represents the largest cleanup and consolidation effort in KernelPy
 
 ### 🏗️ **Unified Management System**
 - **Manager Consolidation**: Unified 38+ scattered Manager/Optimizer classes into single system
-  - Created comprehensive `UnifiedManager` in `src/kernel_pytorch/core/management/`
+  - Created comprehensive `UnifiedManager` in `src/torchbridge/core/management/`
   - Consolidated hardware managers (11), optimization managers (18), infrastructure managers (9)
   - Provides single interface replacing: MemoryOptimizer, TensorCoreOptimizer, PyGraphCUDAOptimizer, etc.
   - Added hierarchical management with HardwareManager, OptimizationManager, InfrastructureManager
@@ -3921,7 +3959,7 @@ This release represents the largest cleanup and consolidation effort in KernelPy
 
 ### 🔧 **Enhanced Integration**
 - **Main Package Integration**: Added unified management to core package exports
-  - Direct access via `kernel_pytorch.get_manager()` and `kernel_pytorch.optimize_model()`
+  - Direct access via `torchbridge.get_manager()` and `torchbridge.optimize_model()`
   - Maintains backward compatibility with existing manager access patterns
   - Provides seamless upgrade path from individual managers to unified system
 
@@ -3935,15 +3973,15 @@ This release represents the largest cleanup and consolidation effort in KernelPy
 ## [0.1.69] - 2025-12-16 - Phase 1: Core Infrastructure Cleanup
 
 ### 🔧 **Unified Configuration System**
-- **Configuration Consolidation**: Unified 36+ scattered Config classes into single `KernelPyTorchConfig`
-  - Created comprehensive nested configuration system in `src/kernel_pytorch/core/config.py`
+- **Configuration Consolidation**: Unified 36+ scattered Config classes into single `TorchBridgeConfig`
+  - Created comprehensive nested configuration system in `src/torchbridge/core/config.py`
   - Added specialized configs for precision, memory, attention, hardware, distributed, validation
   - Provides factory methods: `for_inference()`, `for_training()`, `for_development()`
   - Replaced duplicative configs throughout entire codebase
 
 ### 🧪 **Unified Validation Framework**
 - **Validation Consolidation**: Merged 31 validation functions from 14 files into `UnifiedValidator`
-  - Created `src/kernel_pytorch/validation/unified_validator.py`
+  - Created `src/torchbridge/validation/unified_validator.py`
   - Comprehensive validation for models, configurations, hardware compatibility, precision
   - Multi-level validation: MINIMAL, STANDARD, STRICT, COMPREHENSIVE
   - Replaced scattered validation logic with centralized, tested framework
@@ -4341,15 +4379,15 @@ production/    🏭 1 demo   (deployment.py)
 
 ### 🏗️ **Major Infrastructure Implementation**
 - **PyPI Package**: Enhanced pyproject.toml with comprehensive dependencies (dev, cloud, serving, monitoring, benchmark)
-- **CLI Tools**: Professional command-line interface with kernelpytorch, kpt-optimize, kpt-benchmark, kpt-doctor
+- **CLI Tools**: Professional command-line interface with torchbridge, tb-optimize, tb-benchmark, tb-doctor
 - **GitHub CI/CD**: Multi-platform testing, automated releases, performance regression detection
 - **Docker**: Production and development containers with GPU support and multi-arch builds
 
 ### 🛠️ **CLI Commands Implemented**
-- **kernelpytorch optimize**: Model optimization with 5 levels (basic → production)
-- **kernelpytorch benchmark**: Performance benchmarking with predefined suites
-- **kernelpytorch doctor**: System diagnostics and compatibility checking
-- **Standalone entry points**: kpt-optimize, kpt-benchmark, kpt-doctor
+- **torchbridge optimize**: Model optimization with 5 levels (basic → production)
+- **torchbridge benchmark**: Performance benchmarking with predefined suites
+- **torchbridge doctor**: System diagnostics and compatibility checking
+- **Standalone entry points**: tb-optimize, tb-benchmark, tb-doctor
 
 ### 🧪 **Comprehensive Testing & Validation**
 - CLI functionality tests (22 test cases)
@@ -4392,13 +4430,13 @@ production/    🏭 1 demo   (deployment.py)
 
 ### 📏 Standardization & Polish
 - **Version Consistency**: Standardized version references across all configuration files
-- **Author Attribution**: Unified all author references to "KernelPyTorch Team"
+- **Author Attribution**: Unified all author references to "TorchBridge Team"
 - **Educational Content**: Streamlined verbose 🎓 EDUCATIONAL sections to compact 💡 Key Concept format
 - **Date References**: Removed scattered 2024/2025/2026 dates for timeless content
 - **Professional Polish**: Consistent branding and messaging across 20+ files
 
 ### 🧹 Code Quality Improvements
-- **Package Naming**: Standardized to 'kernel-pytorch' across all configs
+- **Package Naming**: Standardized to 'torchbridge' across all configs
 - **Documentation**: Enhanced readability while preserving essential information
 - **Maintainability**: Established consistent standards for future development
 
@@ -4488,7 +4526,7 @@ production/    🏭 1 demo   (deployment.py)
 
 ### 🔧 Infrastructure Improvements
 - **Setup.py updates**: Corrected package list to match actual directory structure
-- **Import consolidation**: All moved modules accessible via `kernel_pytorch.utils` with backwards compatibility
+- **Import consolidation**: All moved modules accessible via `torchbridge.utils` with backwards compatibility
 - **Zero breaking changes**: All existing imports continue to work, all tests pass (260 passed, 39 skipped)
 
 ### 📁 New Structure

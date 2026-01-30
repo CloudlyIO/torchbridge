@@ -1,4 +1,4 @@
-# 🚀 KernelPyTorch Unified Development Roadmap
+# 🚀 TorchBridge Unified Development Roadmap
 
 **Status**: v0.4.23 - Complete Placeholders ✅
 **Next**: v0.4.24 - Distributed Training Validation
@@ -7,7 +7,7 @@
 
 ## 📋 **Executive Summary**
 
-KernelPyTorch v0.4.0-v0.4.19 established the framework infrastructure. However, **critical gaps exist for real-world model usage**:
+TorchBridge v0.4.0-v0.4.19 established the framework infrastructure. However, **critical gaps exist for real-world model usage**:
 
 ### Current State Analysis
 
@@ -55,7 +55,7 @@ Create tests that load and run REAL models (not mocked):
 def test_bert_optimization_real():
     """Load real BERT, optimize, measure speedup."""
     from transformers import AutoModel, AutoTokenizer
-    from kernel_pytorch.models.text import TextModelOptimizer
+    from torchbridge.models.text import TextModelOptimizer
 
     # Load REAL model
     model = AutoModel.from_pretrained("bert-base-uncased")
@@ -175,7 +175,7 @@ def test_bert_on_backend(backend):
 - 32 E2E tests passing
 
 **Deliverables** (Complete):
-- ✅ `src/kernel_pytorch/deployment/serving/llm_server.py` - LLM inference server
+- ✅ `src/torchbridge/deployment/serving/llm_server.py` - LLM inference server
 - ✅ `examples/serving/run_llm_server.py` - CLI for starting servers
 - ✅ `docker/Dockerfile.serving` - Production Docker image
 - ✅ `tests/e2e/test_llm_server.py` - 32 test cases
@@ -183,9 +183,9 @@ def test_bert_on_backend(backend):
 #### **Phase 1: FastAPI Inference Server** (Complete)
 
 ```python
-# src/kernel_pytorch/serving/inference_server.py
+# src/torchbridge/serving/inference_server.py
 from fastapi import FastAPI
-from kernel_pytorch.models.llm import LLMOptimizer
+from torchbridge.models.llm import LLMOptimizer
 
 app = FastAPI()
 model = None
@@ -207,9 +207,9 @@ async def batch_generate(requests: List[GenerateRequest]):
 ```
 
 **Deliverables**:
-- `src/kernel_pytorch/serving/inference_server.py` - FastAPI server
-- `src/kernel_pytorch/serving/batch_manager.py` - Dynamic batching
-- `src/kernel_pytorch/serving/request_queue.py` - Async request handling
+- `src/torchbridge/serving/inference_server.py` - FastAPI server
+- `src/torchbridge/serving/batch_manager.py` - Dynamic batching
+- `src/torchbridge/serving/request_queue.py` - Async request handling
 - `examples/serving/run_inference_server.py` - Example deployment
 - `docker/Dockerfile.serving` - Production Docker image
 
@@ -224,7 +224,7 @@ async def batch_generate(requests: List[GenerateRequest]):
 #### **Phase 2: Triton Inference Server Integration**
 
 ```python
-# src/kernel_pytorch/serving/triton_export.py
+# src/torchbridge/serving/triton_export.py
 def export_for_triton(model, output_path):
     """Export optimized model for NVIDIA Triton."""
 
@@ -240,8 +240,8 @@ def export_for_triton(model, output_path):
 ```
 
 **Deliverables**:
-- `src/kernel_pytorch/serving/triton_export.py` - Triton export
-- `src/kernel_pytorch/serving/triton_config.py` - Config generator
+- `src/torchbridge/serving/triton_export.py` - Triton export
+- `src/torchbridge/serving/triton_config.py` - Config generator
 - `examples/serving/triton_deployment/` - Complete example
 - `docs/guides/triton_deployment.md` - Deployment guide
 
@@ -273,7 +273,7 @@ Implementations completed:
 - `apply_attention_slicing()` method for ViT optimizer
 
 **Deliverables** (Complete):
-- ✅ `src/kernel_pytorch/models/vision/vit.py` - SlicedMultiheadAttention class
+- ✅ `src/torchbridge/models/vision/vit.py` - SlicedMultiheadAttention class
 - ✅ `tests/e2e/test_placeholder_completions.py` - ViT attention tests
 
 ---
@@ -286,7 +286,7 @@ Implementations completed:
 - Warmup, steady-state, and cooldown phase handling
 
 **Deliverables** (Complete):
-- ✅ `src/kernel_pytorch/models/distributed/pipeline_parallel.py` - InterleavedScheduler
+- ✅ `src/torchbridge/models/distributed/pipeline_parallel.py` - InterleavedScheduler
 
 ---
 
@@ -305,8 +305,8 @@ Memory-Efficient Attention:
 - `SlidingWindowAttention` - Linear memory complexity
 
 **Deliverables** (Complete):
-- ✅ `src/kernel_pytorch/attention/implementations/sparse.py`
-- ✅ `src/kernel_pytorch/attention/implementations/memory_efficient.py`
+- ✅ `src/torchbridge/attention/implementations/sparse.py`
+- ✅ `src/torchbridge/attention/implementations/memory_efficient.py`
 - ✅ `benchmarks/attention_efficiency.py`
 - ✅ `docs/guides/efficient_attention_guide.md`
 
@@ -365,7 +365,7 @@ def test_llama_70b_tensor_parallel():
 #### **Phase 1: ONNX Export**
 
 ```python
-# src/kernel_pytorch/deployment/onnx_export.py
+# src/torchbridge/deployment/onnx_export.py
 def export_to_onnx(model, output_path, dynamic_axes=True):
     """Export optimized model to ONNX format."""
 
@@ -390,8 +390,8 @@ def export_to_onnx(model, output_path, dynamic_axes=True):
 ```
 
 **Deliverables**:
-- `src/kernel_pytorch/deployment/onnx_export.py` - ONNX export
-- `src/kernel_pytorch/deployment/tensorrt_export.py` - TensorRT export
+- `src/torchbridge/deployment/onnx_export.py` - ONNX export
+- `src/torchbridge/deployment/tensorrt_export.py` - TensorRT export
 - `examples/deployment/export_bert_onnx.py` - BERT export example
 - `examples/deployment/export_llama_tensorrt.py` - Llama TensorRT example
 
@@ -400,7 +400,7 @@ def export_to_onnx(model, output_path, dynamic_axes=True):
 #### **Phase 2: Edge Deployment**
 
 ```python
-# src/kernel_pytorch/deployment/edge_optimizer.py
+# src/torchbridge/deployment/edge_optimizer.py
 def optimize_for_edge(model, target="mobile"):
     """Optimize model for edge deployment."""
 
@@ -417,7 +417,7 @@ def optimize_for_edge(model, target="mobile"):
 ```
 
 **Deliverables**:
-- `src/kernel_pytorch/deployment/edge_optimizer.py` - Edge optimization
+- `src/torchbridge/deployment/edge_optimizer.py` - Edge optimization
 - `examples/deployment/deploy_bert_mobile.py` - Mobile deployment
 - `docs/guides/edge_deployment.md` - Edge deployment guide
 

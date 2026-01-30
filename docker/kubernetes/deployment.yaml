@@ -1,4 +1,4 @@
-# KernelPyTorch Kubernetes Deployment
+# TorchBridge Kubernetes Deployment
 # 
 # Deploy with:
 #   kubectl apply -f docker/kubernetes/
@@ -8,20 +8,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kernelpytorch-inference
+  name: torchbridge-inference
   labels:
-    app: kernelpytorch
+    app: torchbridge
     component: inference
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kernelpytorch
+      app: torchbridge
       component: inference
   template:
     metadata:
       labels:
-        app: kernelpytorch
+        app: torchbridge
         component: inference
       annotations:
         prometheus.io/scrape: "true"
@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: inference
-          image: kernelpytorch:nvidia
+          image: torchbridge:nvidia
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -80,7 +80,7 @@ spec:
       volumes:
         - name: model-storage
           persistentVolumeClaim:
-            claimName: kernelpytorch-models
+            claimName: torchbridge-models
       tolerations:
         - key: "nvidia.com/gpu"
           operator: "Exists"
@@ -91,9 +91,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kernelpytorch-inference
+  name: torchbridge-inference
   labels:
-    app: kernelpytorch
+    app: torchbridge
     component: inference
 spec:
   type: ClusterIP
@@ -107,15 +107,15 @@ spec:
       targetPort: metrics
       protocol: TCP
   selector:
-    app: kernelpytorch
+    app: torchbridge
     component: inference
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kernelpytorch-models
+  name: torchbridge-models
   labels:
-    app: kernelpytorch
+    app: torchbridge
 spec:
   accessModes:
     - ReadOnlyMany

@@ -1,4 +1,4 @@
-# Pre-commit hooks for KernelPyTorch
+# Pre-commit hooks for TorchBridge
 # Ensures code quality and version consistency
 
 repos:
@@ -47,7 +47,7 @@ repos:
         name: Check documentation updated
         entry: python3 scripts/check_docs_updated.py
         language: system
-        files: ^src/kernel_pytorch/backends/
+        files: ^src/torchbridge/backends/
 
       # Check documentation versions match __version__
       - id: sync-doc-versions
@@ -55,7 +55,7 @@ repos:
         entry: python3 scripts/sync_doc_versions.py
         language: system
         pass_filenames: false
-        files: ^src/kernel_pytorch/__init__\.py$
+        files: ^src/torchbridge/__init__\.py$
 
       # Check documentation policy (no unauthorized .md files)
       - id: check-documentation-policy

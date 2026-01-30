@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug or unexpected behavior in KernelPyTorch
+description: Report a bug or unexpected behavior in TorchBridge
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees: []
@@ -55,7 +55,7 @@ body:
       description: Please provide a minimal code example that reproduces the issue.
       render: python
       placeholder: |
-        import kernel_pytorch as kpt
+        import torchbridge as kpt
 
         # Your code here
     validations:
@@ -85,8 +85,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: KernelPyTorch Version
-      description: Output of `python -c "import kernel_pytorch; print(kernel_pytorch.__version__)"`
+      label: TorchBridge Version
+      description: Output of `python -c "import torchbridge; print(torchbridge.__version__)"`
       placeholder: "0.4.26"
     validations:
       required: true
@@ -168,7 +168,7 @@ body:
       options:
         - label: I have searched existing issues to ensure this is not a duplicate
           required: true
-        - label: I have tested with the latest version of KernelPyTorch
+        - label: I have tested with the latest version of TorchBridge
           required: false
         - label: I can provide a reproducible example
           required: false

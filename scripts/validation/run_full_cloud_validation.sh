@@ -1,5 +1,5 @@
 #!/bin/bash
-# KernelPyTorch v0.4.34 Full Cloud Validation
+# TorchBridge v0.4.34 Full Cloud Validation
 #
 # This script orchestrates validation across all cloud providers and backends.
 # Prerequisites:
@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${BLUE}============================================================${NC}"
-echo -e "${BLUE}KernelPyTorch v0.4.34 Full Cloud Validation${NC}"
+echo -e "${BLUE}TorchBridge v0.4.34 Full Cloud Validation${NC}"
 echo -e "${BLUE}============================================================${NC}"
 echo -e "Mode: ${YELLOW}$MODE${NC}"
 echo -e "Reports: $REPORTS_DIR"
@@ -88,10 +88,10 @@ if command -v ssh &> /dev/null; then
         echo "  Submitting validation job..."
 
         # Copy validation script
-        scp "$REPORTS_DIR/validation_arc-a770.sh" devcloud:~/kernelpytorch_validation.sh 2>/dev/null || true
+        scp "$REPORTS_DIR/validation_arc-a770.sh" devcloud:~/torchbridge_validation.sh 2>/dev/null || true
 
         # Submit job
-        JOB_ID=$(ssh devcloud "qsub -l nodes=1:gpu:ppn=2 -d . ~/kernelpytorch_validation.sh" 2>/dev/null) || JOB_ID="failed"
+        JOB_ID=$(ssh devcloud "qsub -l nodes=1:gpu:ppn=2 -d . ~/torchbridge_validation.sh" 2>/dev/null) || JOB_ID="failed"
 
         if [[ "$JOB_ID" != "failed" ]]; then
             echo -e "  ${GREEN}✓ Job submitted: $JOB_ID${NC}"
@@ -164,7 +164,7 @@ if command -v aws &> /dev/null && aws sts get-caller-identity &> /dev/null; then
         --launch-specification '{
             "ImageId": "ami-0c55b159cbfafe1f0",
             "InstanceType": "g5.xlarge",
-            "KeyName": "kernelpytorch-validation"
+            "KeyName": "torchbridge-validation"
         }' \
         --query 'SpotInstanceRequests[0].SpotInstanceRequestId' \
         --output text 2>/dev/null) || SPOT_REQUEST="failed"
@@ -187,7 +187,7 @@ echo -e "\n${BLUE}[2/3] GCP g2-standard-4 Preemptible (L4)${NC}"
 if command -v gcloud &> /dev/null && gcloud auth list --filter=status:ACTIVE --format="value(account)" &> /dev/null; then
     echo "  GCP CLI configured, launching preemptible instance..."
 
-    INSTANCE_NAME="kernelpytorch-val-$(date +%s)"
+    INSTANCE_NAME="torchbridge-val-$(date +%s)"
     gcloud compute instances create "$INSTANCE_NAME" \
         --zone=us-central1-a \
         --machine-type=g2-standard-4 \

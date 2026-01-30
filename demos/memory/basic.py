@@ -21,7 +21,7 @@ import os
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from kernel_pytorch.advanced_memory import (
+from torchbridge.advanced_memory import (
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,
     MemoryConfig,

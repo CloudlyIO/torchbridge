@@ -50,7 +50,7 @@ gcloud compute instances create shahmod-nvidia-test \
 ### Upload Code and Run Tests
 ```bash
 # Upload code (from local machine)
-gcloud compute scp --recurse src/kernel_pytorch shahmod-nvidia-test:~/kernel_pytorch --zone=us-west1-a
+gcloud compute scp --recurse src/torchbridge shahmod-nvidia-test:~/torchbridge --zone=us-west1-a
 gcloud compute scp --recurse tests shahmod-nvidia-test:~/tests --zone=us-west1-a
 gcloud compute scp --recurse benchmarks shahmod-nvidia-test:~/benchmarks --zone=us-west1-a
 
@@ -156,7 +156,7 @@ sleep 30
 
 # Upload code
 scp -i ~/.ssh/shahmod-gpu-key.pem -o StrictHostKeyChecking=no -r \
-  src/kernel_pytorch tests benchmarks \
+  src/torchbridge tests benchmarks \
   ubuntu@$PUBLIC_IP:~/
 
 # Install dependencies and run tests
@@ -164,7 +164,7 @@ ssh -i ~/.ssh/shahmod-gpu-key.pem ubuntu@$PUBLIC_IP "
   pip install torch --index-url https://download.pytorch.org/whl/cu121 -q && \
   pip install pytest psutil numpy -q && \
   cd ~ && \
-  PYTHONPATH=kernel_pytorch python3 -m pytest tests/test_nvidia_backend.py -v --tb=short
+  PYTHONPATH=torchbridge python3 -m pytest tests/test_nvidia_backend.py -v --tb=short
 "
 
 # Run benchmarks
@@ -201,7 +201,7 @@ gcloud compute tpus tpu-vm create shahmod-tpu-test \
 ### Upload Code and Run Tests
 ```bash
 # Upload code
-gcloud compute tpus tpu-vm scp --recurse src/kernel_pytorch shahmod-tpu-test:~/kernel_pytorch --zone=us-central1-a
+gcloud compute tpus tpu-vm scp --recurse src/torchbridge shahmod-tpu-test:~/torchbridge --zone=us-central1-a
 gcloud compute tpus tpu-vm scp --recurse tests shahmod-tpu-test:~/tests --zone=us-central1-a
 
 # Install dependencies
@@ -213,7 +213,7 @@ gcloud compute tpus tpu-vm ssh shahmod-tpu-test --zone=us-central1-a --command="
 # Run tests
 gcloud compute tpus tpu-vm ssh shahmod-tpu-test --zone=us-central1-a --command="
   cd ~ && \
-  PYTHONPATH=kernel_pytorch python3 -m pytest tests/test_tpu_backend.py -v --tb=short
+  PYTHONPATH=torchbridge python3 -m pytest tests/test_tpu_backend.py -v --tb=short
 "
 ```
 
@@ -257,7 +257,7 @@ PYTHONPATH=src python3 benchmarks/amd_integration_benchmark.py --quick
 ### Full NVIDIA Test Suite
 ```bash
 # Tests
-PYTHONPATH=kernel_pytorch python3 -m pytest tests/test_nvidia_backend.py -v --tb=short
+PYTHONPATH=torchbridge python3 -m pytest tests/test_nvidia_backend.py -v --tb=short
 
 # Integration Benchmark
 PYTHONPATH=/home/$USER python3 benchmarks/nvidia_integration_benchmark.py
@@ -269,7 +269,7 @@ PYTHONPATH=/home/$USER python3 benchmarks/nvidia_config_benchmarks.py
 ### Full TPU Test Suite
 ```bash
 # Tests
-PYTHONPATH=kernel_pytorch python3 -m pytest tests/test_tpu_backend.py -v --tb=short
+PYTHONPATH=torchbridge python3 -m pytest tests/test_tpu_backend.py -v --tb=short
 
 # Benchmark
 PYTHONPATH=/home/$USER python3 benchmarks/tpu_integration_benchmark.py
@@ -278,7 +278,7 @@ PYTHONPATH=/home/$USER python3 benchmarks/tpu_integration_benchmark.py
 ### Full AMD Test Suite
 ```bash
 # Tests
-PYTHONPATH=kernel_pytorch python3 -m pytest tests/test_amd_backend.py -v --tb=short
+PYTHONPATH=torchbridge python3 -m pytest tests/test_amd_backend.py -v --tb=short
 
 # Benchmark
 PYTHONPATH=/home/$USER python3 benchmarks/amd_integration_benchmark.py

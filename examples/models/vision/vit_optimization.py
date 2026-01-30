@@ -2,7 +2,7 @@
 Vision Transformer (ViT) Optimization Example
 
 This example demonstrates how to optimize ViT models for efficient inference
-using KernelPyTorch vision model optimization.
+using TorchBridge vision model optimization.
 
 Demonstrates:
 - Loading pre-trained ViT models
@@ -12,7 +12,7 @@ Demonstrates:
 """
 
 import torch
-from kernel_pytorch.models.vision import (
+from torchbridge.models.vision import (
     create_vit_base_optimized,
     create_vit_large_optimized,
     ViTBenchmark,

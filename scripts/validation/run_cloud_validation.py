@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KernelPyTorch Cloud Validation Runner
+TorchBridge Cloud Validation Runner
 
 Runs comprehensive validation across AWS and GCP with proper region configuration.
 
@@ -135,7 +135,7 @@ class GCPConfig:
 def generate_validation_script(backend: str, instance_name: str) -> str:
     """Generate validation script to run on cloud instance."""
     return f'''#!/bin/bash
-# KernelPyTorch v0.4.34 Cloud Validation
+# TorchBridge v0.4.34 Cloud Validation
 # Instance: {instance_name}
 # Backend: {backend}
 # Generated: {datetime.now().isoformat()}
@@ -143,7 +143,7 @@ def generate_validation_script(backend: str, instance_name: str) -> str:
 set -e
 
 echo "=============================================="
-echo "KernelPyTorch Cloud Validation"
+echo "TorchBridge Cloud Validation"
 echo "Instance: {instance_name}"
 echo "Backend: {backend}"
 echo "=============================================="
@@ -151,8 +151,8 @@ echo "=============================================="
 # 1. Environment Setup
 echo "[1/7] Setting up environment..."
 cd /tmp
-git clone https://github.com/shahrahman/shahmod.git kernelpytorch 2>/dev/null || true
-cd kernelpytorch
+git clone https://github.com/shahrahman/shahmod.git torchbridge 2>/dev/null || true
+cd torchbridge
 pip install -e ".[dev]" -q
 
 # 2. Hardware Detection
@@ -169,8 +169,8 @@ if torch.cuda.is_available():
 # 3. Quick Backend Test
 echo "[3/7] Running quick backend test..."
 python3 -c "
-import kernel_pytorch as kpt
-print(f'KernelPyTorch: {{kpt.__version__}}')
+import torchbridge as kpt
+print(f'TorchBridge: {{kpt.__version__}}')
 manager = kpt.get_manager()
 print(f'Manager initialized: {{type(manager).__name__}}')
 "
@@ -262,7 +262,7 @@ def run_aws_validation(
 exec > >(tee /var/log/validation.log) 2>&1
 {script_content}
 # Upload results
-aws s3 cp /var/log/validation.log s3://kernelpytorch-validation/{instance_type}-$(date +%s).log || true
+aws s3 cp /var/log/validation.log s3://torchbridge-validation/{instance_type}-$(date +%s).log || true
 # Terminate self after validation
 shutdown -h now
 '''
@@ -277,7 +277,7 @@ shutdown -h now
         "--placement", f"AvailabilityZone={zone}",
         "--instance-initiated-shutdown-behavior", "terminate",
         "--tag-specifications",
-        f'ResourceType=instance,Tags=[{{Key=Name,Value=kpt-validation-{instance_type}}},{{Key=Project,Value=KernelPyTorch}}]',
+        f'ResourceType=instance,Tags=[{{Key=Name,Value=tb-validation-{instance_type}}},{{Key=Project,Value=TorchBridge}}]',
         "--user-data", user_data,
         "--query", "Instances[0].InstanceId",
         "--output", "text",
@@ -369,7 +369,7 @@ def run_gcp_validation(
     print(f"\nValidation script: {script_path}")
 
     # Launch instance
-    instance_name = f"kpt-val-{int(time.time())}"
+    instance_name = f"tb-val-{int(time.time())}"
     print(f"\nLaunching instance: {instance_name}...")
 
     launch_cmd = [
@@ -433,7 +433,7 @@ def run_gcp_validation(
 # ============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="KernelPyTorch Cloud Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge Cloud Validation")
     parser.add_argument("--provider", choices=["aws", "gcp", "all"], default="aws",
                        help="Cloud provider to use")
     parser.add_argument("--instance-type", default="g5.xlarge",

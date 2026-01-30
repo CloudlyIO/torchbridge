@@ -1,5 +1,5 @@
 """
-Benchmark Database for KernelPyTorch Cloud Testing.
+Benchmark Database for TorchBridge Cloud Testing.
 
 This module provides a lightweight database for storing and querying
 benchmark results across cloud platforms.

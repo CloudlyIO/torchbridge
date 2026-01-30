@@ -1,6 +1,6 @@
 # Cloud Testing Scripts
 
-Unified validation scripts for testing KernelPyTorch across cloud platforms.
+Unified validation scripts for testing TorchBridge across cloud platforms.
 
 ## Structure
 
@@ -32,8 +32,8 @@ Each backend has a single `run_validation.sh` script that performs:
 
 ```bash
 # Clone repository
-git clone https://github.com/shahmodthesecond/kernel_pytorch.git
-cd kernel_pytorch
+git clone https://github.com/shahmodthesecond/torchbridge.git
+cd torchbridge
 
 # Set work directory
 export WORK_DIR=$(pwd)
@@ -75,7 +75,7 @@ Additional files:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `WORK_DIR` | `$HOME/kernel_pytorch_test` | Working directory |
+| `WORK_DIR` | `$HOME/torchbridge_test` | Working directory |
 | `REPORT_DIR` | `$WORK_DIR/reports` | Output directory |
 
 ## Shared Utilities

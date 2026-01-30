@@ -7,7 +7,7 @@
       "width": 24,
       "height": 1,
       "properties": {
-        "markdown": "# KernelPyTorch Cloud Testing Dashboard - AWS"
+        "markdown": "# TorchBridge Cloud Testing Dashboard - AWS"
       }
     },
     {
@@ -21,7 +21,7 @@
         "view": "timeSeries",
         "stacked": false,
         "metrics": [
-          ["KernelPyTorch/Testing", "GPUUtilization", "InstanceType", "p4d.24xlarge"],
+          ["TorchBridge/Testing", "GPUUtilization", "InstanceType", "p4d.24xlarge"],
           ["...", "p5.48xlarge"]
         ],
         "region": "us-west-2",
@@ -40,7 +40,7 @@
         "view": "timeSeries",
         "stacked": false,
         "metrics": [
-          ["KernelPyTorch/Testing", "GPUMemoryUsed", "InstanceType", "p4d.24xlarge"],
+          ["TorchBridge/Testing", "GPUMemoryUsed", "InstanceType", "p4d.24xlarge"],
           ["...", "p5.48xlarge"]
         ],
         "region": "us-west-2",
@@ -58,7 +58,7 @@
         "title": "Test Pass Rate",
         "view": "gauge",
         "metrics": [
-          ["KernelPyTorch/Testing", "TestPassRate"]
+          ["TorchBridge/Testing", "TestPassRate"]
         ],
         "region": "us-west-2",
         "period": 300,
@@ -82,7 +82,7 @@
         "view": "timeSeries",
         "stacked": false,
         "metrics": [
-          ["KernelPyTorch/Testing", "InferenceLatencyP50"],
+          ["TorchBridge/Testing", "InferenceLatencyP50"],
           [".", "InferenceLatencyP95"],
           [".", "InferenceLatencyP99"]
         ],
@@ -102,7 +102,7 @@
         "view": "timeSeries",
         "stacked": false,
         "metrics": [
-          ["KernelPyTorch/Testing", "Throughput", "InstanceType", "p4d.24xlarge"],
+          ["TorchBridge/Testing", "Throughput", "InstanceType", "p4d.24xlarge"],
           ["...", "p5.48xlarge"]
         ],
         "region": "us-west-2",
@@ -121,7 +121,7 @@
         "view": "timeSeries",
         "stacked": true,
         "metrics": [
-          ["KernelPyTorch/Testing", "TestsPassed", {"color": "#2ca02c"}],
+          ["TorchBridge/Testing", "TestsPassed", {"color": "#2ca02c"}],
           [".", "TestsFailed", {"color": "#d62728"}],
           [".", "TestsSkipped", {"color": "#ff7f0e"}]
         ],
@@ -141,7 +141,7 @@
         "view": "timeSeries",
         "stacked": false,
         "metrics": [
-          ["KernelPyTorch/Testing", "CostPerHour", "InstanceType", "p4d.24xlarge"],
+          ["TorchBridge/Testing", "CostPerHour", "InstanceType", "p4d.24xlarge"],
           ["...", "p5.48xlarge"],
           ["...", "g5.xlarge"]
         ],
@@ -160,7 +160,7 @@
         "title": "Benchmark Performance Comparison",
         "view": "bar",
         "metrics": [
-          ["KernelPyTorch/Testing", "FlashAttentionLatency"],
+          ["TorchBridge/Testing", "FlashAttentionLatency"],
           [".", "FusedLinearGELULatency"],
           [".", "TransformerForwardLatency"],
           [".", "PyTorchSDPALatency"]
@@ -171,6 +171,6 @@
       }
     }
   ],
-  "dashboardName": "KernelPyTorch-AWS-Testing",
+  "dashboardName": "TorchBridge-AWS-Testing",
   "periodOverride": "auto"
 }

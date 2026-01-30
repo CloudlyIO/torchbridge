@@ -1,4 +1,4 @@
-# KernelPyTorch Documentation
+# TorchBridge Documentation
 
 > Production-ready PyTorch GPU optimization framework
 > Current Version: v0.4.18

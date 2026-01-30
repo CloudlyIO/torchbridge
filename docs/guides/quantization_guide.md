@@ -1,6 +1,6 @@
 # Quantization Guide
 
-This guide covers how to use KernelPyTorch's quantization features to reduce model size and improve inference performance while maintaining quality.
+This guide covers how to use TorchBridge's quantization features to reduce model size and improve inference performance while maintaining quality.
 
 ## Overview
 
@@ -46,13 +46,13 @@ outputs = quantized_model(**inputs)
 Best for: NVIDIA H100/Blackwell GPUs
 
 ```python
-from kernel_pytorch.precision import convert_model_to_native_fp8
+from torchbridge.precision import convert_model_to_native_fp8
 
 # Convert to FP8
 fp8_model = convert_model_to_native_fp8(model, device="cuda")
 
 # Prepare inputs (also converts to FP8)
-from kernel_pytorch.precision import FP8InferenceEngine
+from torchbridge.precision import FP8InferenceEngine
 
 engine = FP8InferenceEngine(fp8_model)
 outputs = engine.forward(inputs)
@@ -84,7 +84,7 @@ model = AutoModelForCausalLM.from_pretrained(
 ### LLM Optimizer
 
 ```python
-from kernel_pytorch.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
+from torchbridge.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
 
 config = LLMConfig(
     quantization=QuantizationMode.INT8,  # or INT4, FP8
@@ -98,7 +98,7 @@ model = optimizer.load_model("gpt2")
 ### Text Model Optimizer
 
 ```python
-from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig
+from torchbridge.models.text import TextModelOptimizer, TextModelConfig
 
 config = TextModelConfig(
     optimization_mode=OptimizationMode.MEMORY,
@@ -186,7 +186,7 @@ Benchmarking fp8...
 For optimal quality/size trade-off, use adaptive precision:
 
 ```python
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     UltraPrecisionModule,
     PrecisionConfig,
     AllocationStrategy
@@ -220,7 +220,7 @@ FP8 requires:
 
 Check availability:
 ```python
-from kernel_pytorch.precision import is_fp8_available, get_fp8_info
+from torchbridge.precision import is_fp8_available, get_fp8_info
 print(is_fp8_available())
 print(get_fp8_info())
 ```
@@ -249,7 +249,7 @@ If INT4 still causes OOM:
 torch.quantization.quantize_dynamic(model, {nn.Linear}, torch.qint8)
 
 # FP8
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     quantize_to_fp8,
     dequantize_from_fp8,
     convert_model_to_native_fp8,
@@ -258,7 +258,7 @@ from kernel_pytorch.precision import (
 )
 
 # Ultra Precision
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     UltraPrecisionModule,
     PrecisionConfig,
     InformationEntropyAnalyzer,
@@ -269,7 +269,7 @@ from kernel_pytorch.precision import (
 ### Configuration Classes
 
 ```python
-from kernel_pytorch.precision import (
+from torchbridge.precision import (
     FP8Config,
     FP8Format,  # E4M3, E5M2
     PrecisionFormat,  # FP32, FP16, BF16, INT8, INT4, FP8, etc.

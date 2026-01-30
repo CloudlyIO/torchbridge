@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import torch
 
-from kernel_pytorch.cli.benchmark import BenchmarkCommand, BenchmarkResult
+from torchbridge.cli.benchmark import BenchmarkCommand, BenchmarkResult
 
 
 class TestBenchmarkResult:

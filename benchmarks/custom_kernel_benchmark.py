@@ -26,8 +26,8 @@ import sys
 if __name__ == "__main__":
     sys.path.insert(0, 'src')
 
-from kernel_pytorch.core.config import KernelPyTorchConfig
-from kernel_pytorch.backends.nvidia.nvidia_backend import NVIDIABackend
+from torchbridge.core.config import TorchBridgeConfig
+from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
 
 
 @dataclass
@@ -212,7 +212,7 @@ def benchmark_flash_attention(
     results = {"baseline": baseline_result}
 
     try:
-        from kernel_pytorch.hardware.gpu.custom_kernels import FlashAttentionV3
+        from torchbridge.hardware.gpu.custom_kernels import FlashAttentionV3
 
         fa3 = FlashAttentionV3(scale=scale).to(device)
 
@@ -301,10 +301,10 @@ def benchmark_fused_linear_activation(
 
     try:
         if activation == "gelu":
-            from kernel_pytorch.hardware.gpu.custom_kernels import FusedLinearGELU
+            from torchbridge.hardware.gpu.custom_kernels import FusedLinearGELU
             fused_layer = FusedLinearGELU(in_features, out_features).to(device)
         else:  # silu
-            from kernel_pytorch.hardware.gpu.custom_kernels import FusedLinearSiLU
+            from torchbridge.hardware.gpu.custom_kernels import FusedLinearSiLU
             fused_layer = FusedLinearSiLU(in_features, out_features).to(device)
 
         # Copy weights for fair comparison

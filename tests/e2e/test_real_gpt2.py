@@ -68,7 +68,7 @@ class TestRealGPT2Optimization:
 
     def test_gpt2_forward_pass_optimization(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 forward pass optimization speedup."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -144,7 +144,7 @@ class TestRealGPT2Optimization:
         1. Both outputs are coherent (extend the prompt)
         2. At least 50% of prompts produce identical outputs
         """
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -232,7 +232,7 @@ class TestRealGPT2Optimization:
         GPT-2 logits can differ by 1-2 points with BF16, which is acceptable
         as it typically doesn't change the argmax predictions significantly.
         """
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -295,7 +295,7 @@ class TestRealGPT2Optimization:
     @requires_cuda
     def test_gpt2_cuda_generation_speedup(self, gpt2_model_and_tokenizer):
         """Test GPT-2 generation speedup on CUDA."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -368,7 +368,7 @@ class TestRealGPT2Optimization:
 
     def test_gpt2_batch_generation(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 batch generation works correctly."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,
@@ -429,7 +429,7 @@ class TestGPT2MemoryOptimization:
 
     def test_gpt2_memory_efficient_mode(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 memory-efficient optimization."""
-        from kernel_pytorch.models.text import (
+        from torchbridge.models.text import (
             OptimizationMode,
             TextModelConfig,
             TextModelOptimizer,

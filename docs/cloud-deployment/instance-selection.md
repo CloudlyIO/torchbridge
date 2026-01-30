@@ -1,6 +1,6 @@
 # Instance Selection Guide
 
-This guide helps you choose the right cloud instances for KernelPyTorch testing based on your requirements.
+This guide helps you choose the right cloud instances for TorchBridge testing based on your requirements.
 
 ## Quick Reference
 

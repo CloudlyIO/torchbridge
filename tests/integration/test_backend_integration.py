@@ -13,12 +13,12 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
-from kernel_pytorch.backends.nvidia import NVIDIABackend
-from kernel_pytorch.backends.tpu import TPUBackend
-from kernel_pytorch.core.config import AMDConfig, KernelPyTorchConfig
-from kernel_pytorch.core.hardware_detector import HardwareDetector, HardwareProfile
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
+from torchbridge.backends.amd import AMDBackend, AMDOptimizer
+from torchbridge.backends.nvidia import NVIDIABackend
+from torchbridge.backends.tpu import TPUBackend
+from torchbridge.core.config import AMDConfig, TorchBridgeConfig
+from torchbridge.core.hardware_detector import HardwareDetector, HardwareProfile
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class TestBackendInitialization:
 
     def test_nvidia_backend_initializes(self):
         """Test NVIDIA backend can be initialized."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = NVIDIABackend(config)
 
         assert backend is not None
@@ -93,7 +93,7 @@ class TestBackendInitialization:
 
     def test_tpu_backend_initializes(self):
         """Test TPU backend can be initialized."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         assert backend is not None
@@ -103,7 +103,7 @@ class TestBackendInitialization:
 
     def test_nvidia_backend_prepares_model(self):
         """Test NVIDIA backend can prepare models."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = NVIDIABackend(config)
         model = SimpleModel()
 
@@ -113,7 +113,7 @@ class TestBackendInitialization:
 
     def test_tpu_backend_prepares_model(self):
         """Test TPU backend can prepare models."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
         model = SimpleModel()
 
@@ -170,7 +170,7 @@ class TestCrossBackendConsistency:
 
     def test_model_parameters_consistent(self):
         """Test model parameters remain consistent across backends."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         amd_config = AMDConfig()
         model = SimpleModel()
 
@@ -194,7 +194,7 @@ class TestCrossBackendConsistency:
 
     def test_amd_nvidia_parameter_consistency(self):
         """Test AMD and NVIDIA backends produce consistent parameter counts."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         amd_config = AMDConfig()
         model = SimpleModel()
 
@@ -211,7 +211,7 @@ class TestCrossBackendConsistency:
     @pytest.mark.skip(reason="TPU backend uses bfloat16 which causes dtype mismatch - expected behavior")
     def test_forward_pass_shapes_consistent(self):
         """Test forward pass output shapes are consistent."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = SimpleModel()
         input_data = torch.randn(4, 64)
 
@@ -236,7 +236,7 @@ class TestCrossBackendConsistency:
 
     def test_state_dict_transfer(self):
         """Test state dict can be transferred between backends."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = SimpleModel()
 
         # Prepare with NVIDIA
@@ -264,7 +264,7 @@ class TestBackendCapabilities:
 
     def test_nvidia_memory_stats(self):
         """Test NVIDIA backend provides memory stats."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = NVIDIABackend(config)
 
         stats = backend.get_memory_stats()
@@ -272,7 +272,7 @@ class TestBackendCapabilities:
 
     def test_tpu_memory_stats(self):
         """Test TPU backend provides memory stats."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         stats = backend.get_memory_stats()
@@ -280,7 +280,7 @@ class TestBackendCapabilities:
 
     def test_nvidia_synchronization(self):
         """Test NVIDIA backend can synchronize."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = NVIDIABackend(config)
 
         # Should complete without error
@@ -288,7 +288,7 @@ class TestBackendCapabilities:
 
     def test_tpu_synchronization(self):
         """Test TPU backend can synchronize."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
         # Should complete without error
@@ -296,7 +296,7 @@ class TestBackendCapabilities:
 
     def test_amd_backend_device_info(self):
         """Test AMD backend provides device info."""
-        from kernel_pytorch.backends import DeviceInfo
+        from torchbridge.backends import DeviceInfo
         config = AMDConfig()
         backend = AMDBackend(config)
 
@@ -335,7 +335,7 @@ class TestValidationIntegration:
 
     def test_validator_with_nvidia(self):
         """Test validator works with NVIDIA backend."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         validator = UnifiedValidator(config)
         model = SimpleModel()
 
@@ -345,7 +345,7 @@ class TestValidationIntegration:
 
     def test_validator_with_tpu(self):
         """Test validator works with TPU backend."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         validator = UnifiedValidator(config)
         model = SimpleModel()
 
@@ -356,7 +356,7 @@ class TestValidationIntegration:
     @pytest.mark.skip(reason="Requires model.hardware attribute not present in test model")
     def test_nvidia_compatibility_validation(self):
         """Test NVIDIA compatibility validation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         validator = UnifiedValidator(config)
         model = SimpleModel()
 
@@ -367,7 +367,7 @@ class TestValidationIntegration:
     @pytest.mark.skip(reason="Requires model.hardware attribute not present in test model")
     def test_tpu_compatibility_validation(self):
         """Test TPU compatibility validation."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         validator = UnifiedValidator(config)
         model = SimpleModel()
 
@@ -386,7 +386,7 @@ class TestMultiBackendWorkflows:
     @pytest.mark.skip(reason="TPU backend uses bfloat16 which causes dtype mismatch - expected behavior")
     def test_train_nvidia_infer_tpu(self):
         """Test training on NVIDIA and inference on TPU."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = SimpleModel()
 
         # Prepare on NVIDIA
@@ -416,7 +416,7 @@ class TestMultiBackendWorkflows:
 
     def test_checkpoint_portability(self):
         """Test checkpoints work across backends."""
-        config = KernelPyTorchConfig()
+        config = TorchBridgeConfig()
         model = SimpleModel()
 
         # Create checkpoint from NVIDIA
@@ -455,7 +455,7 @@ def test_integration_summary():
     assert backend_name in ['nvidia', 'tpu', 'amd', 'cpu']
 
     # 3. Backends initialize
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     amd_config = AMDConfig()
     nvidia_backend = NVIDIABackend(config)
     tpu_backend = TPUBackend(config)

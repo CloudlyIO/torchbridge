@@ -9,8 +9,8 @@ import torch.nn as nn
 import time
 from typing import Dict, Any
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
-from kernel_pytorch.backends.nvidia import (
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
+from torchbridge.backends.nvidia import (
     NVIDIABackend,
     NVIDIAOptimizer,
     FP8Compiler,
@@ -140,7 +140,7 @@ def benchmark_fp8_compiler() -> Dict[str, Any]:
     iterations = 100
     results = {}
 
-    config = KernelPyTorchConfig()
+    config = TorchBridgeConfig()
     config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
     compiler = FP8Compiler(config)
 

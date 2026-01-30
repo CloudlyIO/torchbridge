@@ -2,7 +2,7 @@
 """
 Example: Distributed Llama-70B Optimization
 
-This example demonstrates how to use KernelPyTorch's distributed module
+This example demonstrates how to use TorchBridge's distributed module
 to run Llama-70B and other large models across multiple GPUs.
 
 Features demonstrated:
@@ -31,7 +31,7 @@ import time
 import torch
 import torch.distributed as dist
 
-from kernel_pytorch.models.distributed import (
+from torchbridge.models.distributed import (
     # Main optimizer classes
     DistributedLLMOptimizer,
     DistributedConfig,
@@ -307,7 +307,7 @@ def example_different_models():
     print(f"  Tensor parallel: {llama.config.tensor_parallel_size}")
 
     # Custom configuration for smaller setup
-    from kernel_pytorch.models.distributed import DistributedConfig
+    from torchbridge.models.distributed import DistributedConfig
 
     config = DistributedConfig(
         world_size=4,
@@ -334,7 +334,7 @@ def main():
 
     if rank == 0:
         print("=" * 60)
-        print("KernelPyTorch Distributed Model Examples")
+        print("TorchBridge Distributed Model Examples")
         print(f"Running on {world_size} GPU(s)")
         print("=" * 60)
 

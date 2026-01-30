@@ -17,8 +17,8 @@ import torch.nn as nn
 import time
 from typing import Dict, Any
 
-from kernel_pytorch.core.management import get_manager
-from kernel_pytorch.core.hardware_detector import detect_hardware, get_optimal_backend
+from torchbridge.core.management import get_manager
+from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
 
 # Use shared utilities
 from demos.shared.utils import print_section

@@ -26,7 +26,7 @@ The NVIDIA backend provides production-grade GPU acceleration for PyTorch models
 ### Basic Usage
 
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIABackend
+from torchbridge.backends.nvidia import NVIDIABackend
 import torch.nn as nn
 
 # Initialize backend
@@ -43,11 +43,11 @@ print(f"Compute capability: {backend.compute_capability}")
 ### With Custom Configuration
 
 ```python
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
-from kernel_pytorch.backends.nvidia import NVIDIABackend
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
+from torchbridge.backends.nvidia import NVIDIABackend
 
 # Configure for H100
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
 config.hardware.nvidia.fp8_enabled = True
 config.hardware.nvidia.cudnn_benchmark = True
@@ -94,7 +94,7 @@ Advanced memory management with pooling and OOM protection.
 
 **Example**:
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIAMemoryManager
+from torchbridge.backends.nvidia import NVIDIAMemoryManager
 
 memory_manager = NVIDIAMemoryManager()
 
@@ -122,7 +122,7 @@ High-level optimizer with multiple optimization levels.
 
 **Example**:
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIAOptimizer
+from torchbridge.backends.nvidia import NVIDIAOptimizer
 
 optimizer = NVIDIAOptimizer()
 model = nn.Sequential(
@@ -154,10 +154,10 @@ The FP8Compiler provides FP8 METADATA marking only. Layers are identified and ma
 
 **Example**:
 ```python
-from kernel_pytorch.backends.nvidia import FP8Compiler
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
+from torchbridge.backends.nvidia import FP8Compiler
+from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
 
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
 config.hardware.nvidia.fp8_enabled = True
 
@@ -184,7 +184,7 @@ Memory-efficient attention for H100/Blackwell with causal masking support.
 
 **Example**:
 ```python
-from kernel_pytorch.backends.nvidia import FlashAttention3
+from torchbridge.backends.nvidia import FlashAttention3
 
 # Standard attention
 attention = FlashAttention3(
@@ -214,7 +214,7 @@ Low-level CUDA device coordination and profiling.
 
 **Example**:
 ```python
-from kernel_pytorch.backends.nvidia import CUDADeviceManager
+from torchbridge.backends.nvidia import CUDADeviceManager
 
 manager = CUDADeviceManager()
 print(f"Available devices: {manager.device_count}")
@@ -251,8 +251,8 @@ NVIDIABackendError (base)
 ### Handling Errors
 
 ```python
-from kernel_pytorch.backends.nvidia import NVIDIAMemoryManager
-from kernel_pytorch.backends.nvidia.nvidia_exceptions import OutOfMemoryError
+from torchbridge.backends.nvidia import NVIDIAMemoryManager
+from torchbridge.backends.nvidia.nvidia_exceptions import OutOfMemoryError
 
 memory_manager = NVIDIAMemoryManager()
 
@@ -321,14 +321,14 @@ torch.cuda.empty_cache()
 **Diagnostics**:
 ```python
 # Check GPU utilization
-from kernel_pytorch.backends.nvidia import CUDADeviceManager
+from torchbridge.backends.nvidia import CUDADeviceManager
 
 manager = CUDADeviceManager()
 util = manager.get_gpu_utilization()
 print(f"GPU Utilization: {util.get('gpu_utilization_percent', 'N/A')}%")
 
 # Enable cuDNN benchmark
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.nvidia.cudnn_benchmark = True
 
 # Use aggressive optimization
@@ -367,7 +367,7 @@ import logging
 
 # Enable debug logs for NVIDIA backend
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('kernel_pytorch.backends.nvidia')
+logger = logging.getLogger('torchbridge.backends.nvidia')
 logger.setLevel(logging.DEBUG)
 
 # Now all backend operations will log detailed information
@@ -377,11 +377,11 @@ backend = NVIDIABackend()
 ### Log Output Examples
 
 ```
-INFO:kernel_pytorch.backends.nvidia.nvidia_backend:NVIDIA Backend initialized: device=NVIDIA H100 80GB, compute_capability=(9, 0), num_devices=8, architecture=hopper, fp8_enabled=True
+INFO:torchbridge.backends.nvidia.nvidia_backend:NVIDIA Backend initialized: device=NVIDIA H100 80GB, compute_capability=(9, 0), num_devices=8, architecture=hopper, fp8_enabled=True
 
-DEBUG:kernel_pytorch.backends.nvidia.memory_manager:Memory check: required=1024.0 MB, available=75000.0 MB (total=80000.0 MB, reserved=5000.0 MB)
+DEBUG:torchbridge.backends.nvidia.memory_manager:Memory check: required=1024.0 MB, available=75000.0 MB (total=80000.0 MB, reserved=5000.0 MB)
 
-DEBUG:kernel_pytorch.backends.nvidia.memory_manager:Allocating tensor: shape=(1024, 1024, 1024), dtype=torch.float32, size=4096.0 MB (with margin: 4915.2 MB)
+DEBUG:torchbridge.backends.nvidia.memory_manager:Allocating tensor: shape=(1024, 1024, 1024), dtype=torch.float32, size=4096.0 MB (with margin: 4915.2 MB)
 ```
 
 ---
@@ -411,7 +411,7 @@ DEBUG:kernel_pytorch.backends.nvidia.memory_manager:Allocating tensor: shape=(10
 ### 1. Enable cuDNN Benchmark
 
 ```python
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.hardware.nvidia.cudnn_benchmark = True
 ```
 
@@ -447,7 +447,7 @@ model = model.to(memory_format=torch.channels_last)
 ### 4. Use Custom Kernels
 
 ```python
-config = KernelPyTorchConfig()
+config = TorchBridgeConfig()
 config.kernel.enabled = True
 
 backend = NVIDIABackend(config)
@@ -505,7 +505,7 @@ util = manager.get_gpu_utilization()
 
 ## Additional Resources
 
-- [NVIDIA Backend Source Code](../../src/kernel_pytorch/backends/nvidia/)
+- [NVIDIA Backend Source Code](../../src/torchbridge/backends/nvidia/)
 - [NVIDIA Backend Tests](../../tests/test_nvidia_backend.py)
 - [Unified Roadmap](../planning/unified-roadmap.md)
 - [Hardware Capabilities Guide](../capabilities/hardware.md)

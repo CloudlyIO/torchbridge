@@ -1,4 +1,4 @@
-# Prometheus Configuration for KernelPyTorch
+# Prometheus Configuration for TorchBridge
 # Version: 0.3.10
 
 global:
@@ -18,8 +18,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # KernelPyTorch inference server metrics
-  - job_name: 'kernelpytorch-inference'
+  # TorchBridge inference server metrics
+  - job_name: 'torchbridge-inference'
     static_configs:
       - targets: ['inference:9090']
     metrics_path: '/metrics'

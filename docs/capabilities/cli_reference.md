@@ -1,12 +1,12 @@
 # 🛠️ CLI Reference (v0.4.18)
 
-**KernelPyTorch** provides professional command-line tools for PyTorch optimization, benchmarking, and system diagnostics using the unified architecture with TPU support.
+**TorchBridge** provides professional command-line tools for PyTorch optimization, benchmarking, and system diagnostics using the unified architecture with TPU support.
 
 ## Overview
 
 ```bash
-kernelpytorch --help     # Main CLI help
-kernelpytorch --version  # Show version information
+torchbridge --help     # Main CLI help
+torchbridge --version  # Show version information
 ```
 
 ## Commands
@@ -16,19 +16,19 @@ kernelpytorch --version  # Show version information
 Optimize PyTorch models for production deployment with various optimization levels.
 
 ```bash
-kernelpytorch optimize [OPTIONS]
+torchbridge optimize [OPTIONS]
 ```
 
 **Basic Usage:**
 ```bash
 # Optimize a saved model
-kernelpytorch optimize --model model.pt --level production
+torchbridge optimize --model model.pt --level production
 
 # Optimize with specific hardware target
-kernelpytorch optimize --model resnet50 --level compile --hardware cuda
+torchbridge optimize --model resnet50 --level compile --hardware cuda
 
 # Optimize with validation and benchmarking
-kernelpytorch optimize --model model.pt --level triton --validate --benchmark
+torchbridge optimize --model model.pt --level triton --validate --benchmark
 ```
 
 **Options:**
@@ -55,10 +55,10 @@ kernelpytorch optimize --model model.pt --level triton --validate --benchmark
 **Examples:**
 ```bash
 # Quick optimization for inference
-kernelpytorch optimize --model model.pt --level compile
+torchbridge optimize --model model.pt --level compile
 
 # Production optimization with validation
-kernelpytorch optimize \
+torchbridge optimize \
     --model transformer_model.pt \
     --level production \
     --input-shape "8,512,768" \
@@ -67,7 +67,7 @@ kernelpytorch optimize \
     --verbose
 
 # Optimize for specific GPU architecture
-kernelpytorch optimize \
+torchbridge optimize \
     --model resnet50 \
     --level triton \
     --hardware cuda \
@@ -79,19 +79,19 @@ kernelpytorch optimize \
 Run comprehensive performance benchmarks for models and optimizations.
 
 ```bash
-kernelpytorch benchmark [OPTIONS]
+torchbridge benchmark [OPTIONS]
 ```
 
 **Basic Usage:**
 ```bash
 # Quick benchmark suite
-kernelpytorch benchmark --predefined optimization --quick
+torchbridge benchmark --predefined optimization --quick
 
 # Benchmark a specific model
-kernelpytorch benchmark --model resnet50 --type model
+torchbridge benchmark --model resnet50 --type model
 
 # Compare optimization levels
-kernelpytorch benchmark --model bert --type compare --levels basic,compile,triton
+torchbridge benchmark --model bert --type compare --levels basic,compile,triton
 ```
 
 **Options:**
@@ -119,31 +119,31 @@ kernelpytorch benchmark --model bert --type compare --levels basic,compile,trito
 
 **Predefined Suites:**
 
-- **`optimization`**: Core KernelPyTorch optimization benchmarks
+- **`optimization`**: Core TorchBridge optimization benchmarks
 - **`transformers`**: Transformer model benchmarks (BERT-like)
 - **`vision`**: Computer vision model benchmarks (ResNet-like)
 
 **Examples:**
 ```bash
 # Comprehensive optimization benchmarks
-kernelpytorch benchmark --predefined optimization --output results.json
+torchbridge benchmark --predefined optimization --output results.json
 
 # Compare optimization levels for a model
-kernelpytorch benchmark \
+torchbridge benchmark \
     --model transformer.pt \
     --type compare \
     --levels basic,jit,compile,triton \
     --verbose
 
 # Stress test with multiple batch sizes
-kernelpytorch benchmark \
+torchbridge benchmark \
     --model resnet50 \
     --type stress \
     --batch-sizes "1,4,8,16,32" \
     --quick
 
 # Vision model benchmarks
-kernelpytorch benchmark --predefined vision --output vision_results.json
+torchbridge benchmark --predefined vision --output vision_results.json
 ```
 
 ### 🩺 doctor - System Diagnostics
@@ -151,19 +151,19 @@ kernelpytorch benchmark --predefined vision --output vision_results.json
 Diagnose system compatibility and optimization readiness.
 
 ```bash
-kernelpytorch doctor [OPTIONS]
+torchbridge doctor [OPTIONS]
 ```
 
 **Basic Usage:**
 ```bash
 # Quick system check
-kernelpytorch doctor
+torchbridge doctor
 
 # Comprehensive diagnostics
-kernelpytorch doctor --full-report
+torchbridge doctor --full-report
 
 # Check specific category
-kernelpytorch doctor --category hardware
+torchbridge doctor --category hardware
 ```
 
 **Options:**
@@ -186,16 +186,16 @@ kernelpytorch doctor --category hardware
 **Examples:**
 ```bash
 # Quick health check
-kernelpytorch doctor
+torchbridge doctor
 
 # Detailed hardware analysis
-kernelpytorch doctor --category hardware --verbose
+torchbridge doctor --category hardware --verbose
 
 # Full system report with fix attempts
-kernelpytorch doctor --full-report --fix --output system_report.json
+torchbridge doctor --full-report --fix --output system_report.json
 
 # Check optimization capabilities
-kernelpytorch doctor --category optimization
+torchbridge doctor --category optimization
 ```
 
 ## Standalone Commands
@@ -203,9 +203,9 @@ kernelpytorch doctor --category optimization
 Individual commands are also available as separate entry points:
 
 ```bash
-kpt-optimize --model model.pt --level production
-kpt-benchmark --predefined optimization --quick
-kpt-doctor --full-report
+tb-optimize --model model.pt --level production
+tb-benchmark --predefined optimization --quick
+tb-doctor --full-report
 ```
 
 ## Environment Variables
@@ -213,12 +213,12 @@ kpt-doctor --full-report
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `KERNELPYTORCH_DEVICE` | Default device for operations | `auto` |
-| `KERNELPYTORCH_CACHE_DIR` | Cache directory for models | `~/.cache/kernelpytorch` |
+| `KERNELPYTORCH_CACHE_DIR` | Cache directory for models | `~/.cache/torchbridge` |
 | `KERNELPYTORCH_LOG_LEVEL` | Logging level | `INFO` |
 
 ## Configuration File
 
-Create `~/.kernelpytorch/config.yaml` for default settings:
+Create `~/.torchbridge/config.yaml` for default settings:
 
 ```yaml
 # Default optimization settings
@@ -237,7 +237,7 @@ benchmark:
 output:
   verbose: false
   save_logs: true
-  log_directory: "~/.kernelpytorch/logs"
+  log_directory: "~/.torchbridge/logs"
 ```
 
 ## Exit Codes
@@ -254,19 +254,19 @@ output:
 ### Research & Development
 ```bash
 # System setup check
-kernelpytorch doctor --full-report
+torchbridge doctor --full-report
 
 # Quick model optimization
-kernelpytorch optimize --model research_model.pt --level compile --validate
+torchbridge optimize --model research_model.pt --level compile --validate
 
 # Performance analysis
-kernelpytorch benchmark --model research_model.pt --type compare --verbose
+torchbridge benchmark --model research_model.pt --type compare --verbose
 ```
 
 ### Production Deployment
 ```bash
 # Production optimization with validation
-kernelpytorch optimize \
+torchbridge optimize \
     --model production_model.pt \
     --level production \
     --validate \
@@ -274,28 +274,28 @@ kernelpytorch optimize \
     --output optimized_production_model.pt
 
 # Deployment readiness check
-kernelpytorch doctor --category optimization --verbose
+torchbridge doctor --category optimization --verbose
 ```
 
 ### CI/CD Integration
 ```bash
 # Automated testing in CI
-kernelpytorch benchmark --type regression --quick --output ci_results.json
+torchbridge benchmark --type regression --quick --output ci_results.json
 
 # System validation
-kernelpytorch doctor --output ci_system_report.json
+torchbridge doctor --output ci_system_report.json
 if [ $? -ne 0 ]; then echo "System check failed"; exit 1; fi
 ```
 
 ### Performance Monitoring
 ```bash
 # Regular performance monitoring
-kernelpytorch benchmark \
+torchbridge benchmark \
     --predefined optimization \
     --output "performance_$(date +%Y%m%d).json"
 
 # Compare with baseline
-kernelpytorch benchmark \
+torchbridge benchmark \
     --type regression \
     --output current_performance.json
 ```
@@ -310,4 +310,4 @@ kernelpytorch benchmark \
 
 ---
 
-**Need help with a specific command?** Use `kernelpytorch <command> --help` for detailed usage information.
+**Need help with a specific command?** Use `torchbridge <command> --help` for detailed usage information.

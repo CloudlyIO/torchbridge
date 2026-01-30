@@ -1,6 +1,6 @@
 # Cloud Testing Troubleshooting Guide
 
-This guide covers common issues and solutions for KernelPyTorch cloud testing.
+This guide covers common issues and solutions for TorchBridge cloud testing.
 
 ## Quick Diagnostics
 
@@ -319,13 +319,13 @@ sudo reboot
 ```bash
 # Terminate all test instances
 aws ec2 describe-instances \
-    --filters "Name=tag:Purpose,Values=kernelpytorch-testing" \
+    --filters "Name=tag:Purpose,Values=torchbridge-testing" \
     --query "Reservations[].Instances[].InstanceId" \
     --output text | xargs -r aws ec2 terminate-instances --instance-ids
 
 # GCP
 gcloud compute instances list \
-    --filter="labels.purpose=kernelpytorch-testing" \
+    --filter="labels.purpose=torchbridge-testing" \
     --format="value(name,zone)" | \
     while read name zone; do
         gcloud compute instances delete $name --zone=$zone --quiet
@@ -451,7 +451,7 @@ aws s3 cp debug-logs.tar.gz s3://bucket/debug/$(date +%Y%m%d-%H%M%S).tar.gz
 
 ### Contact Points
 
-1. **Internal Issues**: Post in #kernelpytorch-cloud-testing
+1. **Internal Issues**: Post in #torchbridge-cloud-testing
 2. **AWS Support**: Open support case for quota/capacity issues
 3. **GCP Support**: Use Cloud Console support
 4. **PyTorch/XLA Issues**: Check GitHub issues or forums

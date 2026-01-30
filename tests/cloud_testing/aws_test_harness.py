@@ -1,5 +1,5 @@
 """
-AWS Test Harness for KernelPyTorch Cloud Testing.
+AWS Test Harness for TorchBridge Cloud Testing.
 
 This module provides infrastructure for running tests on AWS EC2 instances,
 including NVIDIA GPU instances (P5/P4d) and AMD ROCm instances.
@@ -77,7 +77,7 @@ class AWSInstanceConfig:
     def __post_init__(self):
         """Set default tags."""
         default_tags = {
-            "Project": "KernelPyTorch",
+            "Project": "TorchBridge",
             "Environment": "Testing",
             "ManagedBy": "cloud-testing-harness",
         }
@@ -143,7 +143,7 @@ class AWSTestResult:
 
 class AWSTestHarness:
     """
-    AWS EC2 Test Harness for KernelPyTorch.
+    AWS EC2 Test Harness for TorchBridge.
 
     Manages instance lifecycle and test execution on AWS.
 
@@ -172,7 +172,7 @@ class AWSTestHarness:
         self,
         config: AWSInstanceConfig,
         s3_bucket: str | None = None,
-        cloudwatch_namespace: str = "KernelPyTorch/Testing",
+        cloudwatch_namespace: str = "TorchBridge/Testing",
     ):
         """
         Initialize AWS Test Harness.

@@ -19,11 +19,11 @@ import warnings
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from kernel_pytorch.core.management import get_manager
-from kernel_pytorch.core.hardware_detector import detect_hardware, get_optimal_backend
-from kernel_pytorch.core.performance_tracker import get_performance_tracker
-from kernel_pytorch.validation.unified_validator import UnifiedValidator
-from kernel_pytorch.core.config import KernelPyTorchConfig
+from torchbridge.core.management import get_manager
+from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
+from torchbridge.core.performance_tracker import get_performance_tracker
+from torchbridge.validation.unified_validator import UnifiedValidator
+from torchbridge.core.config import TorchBridgeConfig
 
 # Use shared utilities
 from demos.shared.utils import print_section
@@ -85,7 +85,7 @@ class ProductionPipeline:
     """
     Complete production pipeline integrating all optimization features.
 
-    This class demonstrates best practices for using KernelPyTorch in production.
+    This class demonstrates best practices for using TorchBridge in production.
     """
 
     def __init__(

@@ -1,6 +1,6 @@
 # AWS Cloud Testing Setup Guide
 
-This guide covers setting up AWS infrastructure for KernelPyTorch cloud testing.
+This guide covers setting up AWS infrastructure for TorchBridge cloud testing.
 
 ## Prerequisites
 
@@ -41,8 +41,8 @@ Create an IAM role with the following permissions:
                 "s3:DeleteObject"
             ],
             "Resource": [
-                "arn:aws:s3:::kernelpytorch-benchmarks",
-                "arn:aws:s3:::kernelpytorch-benchmarks/*"
+                "arn:aws:s3:::torchbridge-benchmarks",
+                "arn:aws:s3:::torchbridge-benchmarks/*"
             ]
         },
         {
@@ -113,12 +113,12 @@ aws ec2 describe-images \
 ```bash
 # Create security group
 aws ec2 create-security-group \
-    --group-name kernelpytorch-testing \
-    --description "Security group for KernelPyTorch testing"
+    --group-name torchbridge-testing \
+    --description "Security group for TorchBridge testing"
 
 # Allow SSH access
 aws ec2 authorize-security-group-ingress \
-    --group-name kernelpytorch-testing \
+    --group-name torchbridge-testing \
     --protocol tcp \
     --port 22 \
     --cidr 0.0.0.0/0
@@ -128,16 +128,16 @@ aws ec2 authorize-security-group-ingress \
 
 ```bash
 # Create benchmark results bucket
-aws s3 mb s3://kernelpytorch-benchmarks --region us-west-2
+aws s3 mb s3://torchbridge-benchmarks --region us-west-2
 
 # Enable versioning
 aws s3api put-bucket-versioning \
-    --bucket kernelpytorch-benchmarks \
+    --bucket torchbridge-benchmarks \
     --versioning-configuration Status=Enabled
 
 # Set lifecycle policy for old results
 aws s3api put-bucket-lifecycle-configuration \
-    --bucket kernelpytorch-benchmarks \
+    --bucket torchbridge-benchmarks \
     --lifecycle-configuration file://lifecycle.json
 ```
 
@@ -203,7 +203,7 @@ Set these environment variables for automated testing:
 export AWS_ACCESS_KEY_ID="your-access-key"
 export AWS_SECRET_ACCESS_KEY="your-secret-key"
 export AWS_DEFAULT_REGION="us-west-2"
-export KERNELPYTORCH_S3_BUCKET="kernelpytorch-benchmarks"
+export KERNELPYTORCH_S3_BUCKET="torchbridge-benchmarks"
 export KERNELPYTORCH_KEY_NAME="your-key-pair"
 export KERNELPYTORCH_SECURITY_GROUP="sg-0123456789abcdef0"
 export KERNELPYTORCH_SUBNET="subnet-0123456789abcdef0"
@@ -215,7 +215,7 @@ Import the provided dashboard configuration:
 
 ```bash
 aws cloudwatch put-dashboard \
-    --dashboard-name KernelPyTorch-Testing \
+    --dashboard-name TorchBridge-Testing \
     --dashboard-body file://monitoring/cloud_dashboards/aws_cloudwatch_dashboard.json
 ```
 

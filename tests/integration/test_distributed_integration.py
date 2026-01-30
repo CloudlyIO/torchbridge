@@ -21,7 +21,7 @@ class TestTensorParallelConfig:
 
     def test_default_config(self):
         """Test default configuration values."""
-        from kernel_pytorch.models.distributed import TensorParallelConfig
+        from torchbridge.models.distributed import TensorParallelConfig
 
         config = TensorParallelConfig()
         assert config.world_size == 1
@@ -30,14 +30,14 @@ class TestTensorParallelConfig:
 
     def test_config_validation(self):
         """Test configuration validation."""
-        from kernel_pytorch.models.distributed import TensorParallelConfig
+        from torchbridge.models.distributed import TensorParallelConfig
 
         with pytest.raises(ValueError):
             TensorParallelConfig(world_size=4, rank=5)  # rank >= world_size
 
     def test_multi_gpu_config(self):
         """Test multi-GPU configuration."""
-        from kernel_pytorch.models.distributed import TensorParallelConfig
+        from torchbridge.models.distributed import TensorParallelConfig
 
         config = TensorParallelConfig(
             world_size=8,
@@ -55,7 +55,7 @@ class TestColumnParallelLinear:
 
     def test_initialization(self):
         """Test layer initialization."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             ColumnParallelLinear,
             TensorParallelConfig,
         )
@@ -73,7 +73,7 @@ class TestColumnParallelLinear:
 
     def test_forward_pass(self):
         """Test forward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             ColumnParallelLinear,
             TensorParallelConfig,
         )
@@ -98,7 +98,7 @@ class TestRowParallelLinear:
 
     def test_initialization(self):
         """Test layer initialization."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             RowParallelLinear,
             TensorParallelConfig,
         )
@@ -116,7 +116,7 @@ class TestRowParallelLinear:
 
     def test_forward_with_parallel_input(self):
         """Test forward pass with parallel input."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             RowParallelLinear,
             TensorParallelConfig,
         )
@@ -141,7 +141,7 @@ class TestTensorParallelEmbedding:
 
     def test_initialization(self):
         """Test embedding initialization."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             TensorParallelConfig,
             TensorParallelEmbedding,
         )
@@ -158,7 +158,7 @@ class TestTensorParallelEmbedding:
 
     def test_forward_pass(self):
         """Test embedding forward pass."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             TensorParallelConfig,
             TensorParallelEmbedding,
         )
@@ -183,7 +183,7 @@ class TestApplyTensorParallelism:
 
     def test_skip_for_single_gpu(self):
         """Test that parallelism is skipped for world_size=1."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             TensorParallelConfig,
             apply_tensor_parallelism,
         )
@@ -211,7 +211,7 @@ class TestPipelineParallelConfig:
 
     def test_default_config(self):
         """Test default configuration."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
 
         config = PipelineParallelConfig()
         assert config.num_stages == 1
@@ -220,7 +220,7 @@ class TestPipelineParallelConfig:
 
     def test_config_validation(self):
         """Test configuration validation."""
-        from kernel_pytorch.models.distributed import PipelineParallelConfig
+        from torchbridge.models.distributed import PipelineParallelConfig
 
         with pytest.raises(ValueError):
             PipelineParallelConfig(num_stages=4, stage_id=5)
@@ -231,7 +231,7 @@ class TestPipelineStage:
 
     def test_stage_creation(self):
         """Test creating a pipeline stage."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -249,7 +249,7 @@ class TestPipelineStage:
 
     def test_forward_step(self):
         """Test forward step execution."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
         )
@@ -269,7 +269,7 @@ class TestGPipeScheduler:
 
     def test_scheduler_creation(self):
         """Test scheduler creation."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
@@ -288,7 +288,7 @@ class TestEstimatePipelineMemory:
 
     def test_memory_estimation(self):
         """Test memory estimation for pipeline."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             PipelineParallelConfig,
             estimate_pipeline_memory,
         )
@@ -318,7 +318,7 @@ class TestShardingConfig:
 
     def test_default_config(self):
         """Test default sharding configuration."""
-        from kernel_pytorch.models.distributed import ShardingConfig, ShardingStrategy
+        from torchbridge.models.distributed import ShardingConfig, ShardingStrategy
 
         config = ShardingConfig()
         assert config.strategy == ShardingStrategy.FULL_SHARD
@@ -331,7 +331,7 @@ class TestModelSharder:
 
     def test_analyze_model(self):
         """Test model analysis for sharding."""
-        from kernel_pytorch.models.distributed import ModelSharder, ShardingConfig
+        from torchbridge.models.distributed import ModelSharder, ShardingConfig
 
         model = nn.Sequential(
             nn.Embedding(10000, 512),
@@ -348,7 +348,7 @@ class TestModelSharder:
 
     def test_shard_model(self):
         """Test model sharding."""
-        from kernel_pytorch.models.distributed import ModelSharder, ShardingConfig
+        from torchbridge.models.distributed import ModelSharder, ShardingConfig
 
         model = nn.Sequential(
             nn.Linear(1024, 2048),
@@ -370,7 +370,7 @@ class TestWeightDistributor:
 
     def test_create_device_map(self):
         """Test device map creation."""
-        from kernel_pytorch.models.distributed import ShardingConfig, WeightDistributor
+        from torchbridge.models.distributed import ShardingConfig, WeightDistributor
 
         model = nn.Sequential(
             nn.Linear(512, 512),
@@ -394,7 +394,7 @@ class TestAutomaticSharding:
 
     def test_automatic_sharding_small_model(self):
         """Test that small models aren't sharded."""
-        from kernel_pytorch.models.distributed import ShardingConfig, automatic_sharding
+        from torchbridge.models.distributed import ShardingConfig, automatic_sharding
 
         model = nn.Linear(256, 256)  # Small model
         config = ShardingConfig(world_size=2, rank=0)
@@ -415,7 +415,7 @@ class TestDistributedConfig:
 
     def test_default_config(self):
         """Test default distributed configuration."""
-        from kernel_pytorch.models.distributed import DistributedConfig
+        from torchbridge.models.distributed import DistributedConfig
 
         config = DistributedConfig()
         assert config.world_size == 1
@@ -424,7 +424,7 @@ class TestDistributedConfig:
 
     def test_auto_adjust_parallelism(self):
         """Test automatic parallelism adjustment."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             DistributedConfig,
             ParallelismStrategy,
         )
@@ -445,7 +445,7 @@ class TestDistributedLLMOptimizer:
 
     def test_model_type_detection(self):
         """Test automatic model type detection."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             DistributedLLMOptimizer,
             LargeModelType,
         )
@@ -458,7 +458,7 @@ class TestDistributedLLMOptimizer:
 
     def test_memory_estimation(self):
         """Test memory estimation for large models."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             DistributedConfig,
             DistributedLLMOptimizer,
         )
@@ -476,7 +476,7 @@ class TestDistributedLLMOptimizer:
 
     def test_mock_model_loading(self):
         """Test loading mock model (without transformers)."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             DistributedConfig,
             DistributedLLMOptimizer,
         )
@@ -499,7 +499,7 @@ class TestConvenienceWrappers:
 
     def test_distributed_llama70b(self):
         """Test DistributedLlama70B wrapper."""
-        from kernel_pytorch.models.distributed import DistributedLlama70B
+        from torchbridge.models.distributed import DistributedLlama70B
 
         optimizer = DistributedLlama70B()
         assert optimizer.config.world_size == 8
@@ -507,7 +507,7 @@ class TestConvenienceWrappers:
 
     def test_distributed_mixtral(self):
         """Test DistributedMixtral wrapper."""
-        from kernel_pytorch.models.distributed import DistributedMixtral
+        from torchbridge.models.distributed import DistributedMixtral
 
         optimizer = DistributedMixtral()
         assert optimizer.config.world_size == 8
@@ -518,7 +518,7 @@ class TestCreateDistributedLLM:
 
     def test_create_with_defaults(self):
         """Test creating distributed LLM with defaults."""
-        from kernel_pytorch.models.distributed import create_distributed_llm
+        from torchbridge.models.distributed import create_distributed_llm
 
         optimizer = create_distributed_llm("meta-llama/Llama-2-70b-hf")
 
@@ -527,7 +527,7 @@ class TestCreateDistributedLLM:
 
     def test_create_with_custom_config(self):
         """Test creating with custom configuration."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             ParallelismStrategy,
             create_distributed_llm,
         )
@@ -550,7 +550,7 @@ class TestEstimateGPURequirements:
 
     def test_estimate_requirements(self):
         """Test estimating GPU requirements."""
-        from kernel_pytorch.models.distributed import estimate_gpu_requirements
+        from torchbridge.models.distributed import estimate_gpu_requirements
 
         requirements = estimate_gpu_requirements(
             "meta-llama/Llama-2-70b-hf",
@@ -565,7 +565,7 @@ class TestEstimateGPURequirements:
 
     def test_quantization_effect(self):
         """Test that quantization reduces GPU requirements."""
-        from kernel_pytorch.models.distributed import estimate_gpu_requirements
+        from torchbridge.models.distributed import estimate_gpu_requirements
 
         req_fp16 = estimate_gpu_requirements(
             "meta-llama/Llama-2-70b-hf",
@@ -594,7 +594,7 @@ class TestEndToEndDistributed:
 
     def test_single_gpu_pipeline(self):
         """Test a complete single-GPU pipeline."""
-        from kernel_pytorch.models.distributed import (
+        from torchbridge.models.distributed import (
             ParallelismStrategy,
             create_distributed_llm,
         )
@@ -620,7 +620,7 @@ class TestEndToEndDistributed:
 
     def test_memory_estimation_all_models(self):
         """Test memory estimation for all supported model types."""
-        from kernel_pytorch.models.distributed import estimate_gpu_requirements
+        from torchbridge.models.distributed import estimate_gpu_requirements
 
         models = [
             "meta-llama/Llama-2-70b-hf",

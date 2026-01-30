@@ -1,6 +1,6 @@
 # Small Model Optimization Guide
 
-**KernelPyTorch v0.4.18 - Text Model Integration**
+**TorchBridge v0.4.18 - Text Model Integration**
 
 This guide covers optimization of small text models (50-150M parameters) including BERT, GPT-2, and DistilBERT. These models are ideal for single-GPU deployment with <8GB VRAM requirements.
 
@@ -19,13 +19,13 @@ This guide covers optimization of small text models (50-150M parameters) includi
 ### 1. Install Dependencies
 
 ```bash
-pip install kernel-pytorch transformers
+pip install torchbridge transformers
 ```
 
 ### 2. Optimize BERT for Classification
 
 ```python
-from kernel_pytorch.models.text import OptimizedBERT
+from torchbridge.models.text import OptimizedBERT
 
 # Create optimized BERT model
 model = OptimizedBERT(
@@ -42,7 +42,7 @@ logits = outputs.logits
 ### 3. Optimize GPT-2 for Generation
 
 ```python
-from kernel_pytorch.models.text import OptimizedGPT2
+from torchbridge.models.text import OptimizedGPT2
 
 # Create optimized GPT-2 model
 model = OptimizedGPT2(model_name="gpt2", task="causal-lm")
@@ -54,7 +54,7 @@ outputs = model.generate(input_ids, max_length=100)
 ### 4. Using the Factory Function
 
 ```python
-from kernel_pytorch.models.text import create_optimized_text_model
+from torchbridge.models.text import create_optimized_text_model
 
 # Create any text model with automatic optimization
 model = create_optimized_text_model(
@@ -71,7 +71,7 @@ model = create_optimized_text_model(
 Best for low-latency single-request inference.
 
 ```python
-from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+from torchbridge.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
 
 config = TextModelConfig(
     optimization_mode=OptimizationMode.INFERENCE,
@@ -149,7 +149,7 @@ model = create_optimized_text_model(
 ### AMD GPUs (ROCm)
 
 ```python
-from kernel_pytorch.models.text import TextModelConfig
+from torchbridge.models.text import TextModelConfig
 
 config = TextModelConfig(
     device="hip",  # Or "auto" for detection
@@ -182,7 +182,7 @@ config = TextModelConfig(
 ```python
 import torch
 from transformers import AutoTokenizer
-from kernel_pytorch.models.text import OptimizedBERT
+from torchbridge.models.text import OptimizedBERT
 
 # Initialize
 model = OptimizedBERT("bert-base-uncased", task="sequence-classification", num_labels=2)
@@ -207,7 +207,7 @@ for text, pred in zip(texts, predictions):
 
 ```python
 from transformers import AutoTokenizer, AutoModelForTokenClassification
-from kernel_pytorch.models.text import TextModelOptimizer
+from torchbridge.models.text import TextModelOptimizer
 
 # Load NER model
 tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
@@ -231,7 +231,7 @@ with torch.no_grad():
 
 ```python
 from transformers import AutoTokenizer
-from kernel_pytorch.models.text import OptimizedGPT2
+from torchbridge.models.text import OptimizedGPT2
 
 # Initialize
 model = OptimizedGPT2("gpt2", task="causal-lm")
@@ -258,7 +258,7 @@ print(generated)
 ### Batch Processing
 
 ```python
-from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+from torchbridge.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
 
 # Configure for throughput
 config = TextModelConfig(

@@ -1,6 +1,6 @@
 # 🐳 Docker Guide
 
-**KernelPyTorch** provides production-ready Docker containers for consistent development and deployment environments.
+**TorchBridge** provides production-ready Docker containers for consistent development and deployment environments.
 
 ## Quick Start
 
@@ -8,13 +8,13 @@
 
 ```bash
 # Pull latest production image
-docker pull ghcr.io/kernelpytorch/kernel-pytorch:latest
+docker pull ghcr.io/torchbridge/torchbridge:latest
 
 # Run system diagnostics
-docker run --rm ghcr.io/kernelpytorch/kernel-pytorch:latest doctor --verbose
+docker run --rm ghcr.io/torchbridge/torchbridge:latest doctor --verbose
 
 # Run with GPU access
-docker run --rm --gpus all ghcr.io/kernelpytorch/kernel-pytorch:latest doctor --full-report
+docker run --rm --gpus all ghcr.io/torchbridge/torchbridge:latest doctor --full-report
 ```
 
 ### Development Environment
@@ -24,18 +24,18 @@ docker run --rm --gpus all ghcr.io/kernelpytorch/kernel-pytorch:latest doctor --
 docker run -it --rm \
   -v $(pwd):/workspace \
   --gpus all \
-  ghcr.io/kernelpytorch/kernel-pytorch:dev
+  ghcr.io/torchbridge/torchbridge:dev
 ```
 
 ## Available Images
 
-### Production Image (`kernelpytorch:latest`)
+### Production Image (`torchbridge:latest`)
 
 **Purpose**: Optimized for production deployment and model serving
 
 **Features**:
 - Minimal Ubuntu 22.04 base with CUDA 11.8 runtime
-- KernelPyTorch with core dependencies
+- TorchBridge with core dependencies
 - Multi-arch support (x86_64, ARM64)
 - Non-root user for security
 - Health checks and proper signal handling
@@ -44,15 +44,15 @@ docker run -it --rm \
 
 ```bash
 # Basic usage
-docker run ghcr.io/kernelpytorch/kernel-pytorch:latest
+docker run ghcr.io/torchbridge/torchbridge:latest
 
 # Available commands
-docker run ghcr.io/kernelpytorch/kernel-pytorch:latest doctor
-docker run ghcr.io/kernelpytorch/kernel-pytorch:latest server
-docker run ghcr.io/kernelpytorch/kernel-pytorch:latest benchmark
+docker run ghcr.io/torchbridge/torchbridge:latest doctor
+docker run ghcr.io/torchbridge/torchbridge:latest server
+docker run ghcr.io/torchbridge/torchbridge:latest benchmark
 ```
 
-### Development Image (`kernelpytorch:dev`)
+### Development Image (`torchbridge:dev`)
 
 **Purpose**: Complete development environment with all tools
 
@@ -66,10 +66,10 @@ docker run ghcr.io/kernelpytorch/kernel-pytorch:latest benchmark
 
 ```bash
 # Interactive development
-docker run -it --gpus all ghcr.io/kernelpytorch/kernel-pytorch:dev bash
+docker run -it --gpus all ghcr.io/torchbridge/torchbridge:dev bash
 
 # Jupyter Lab server
-docker run -p 8888:8888 --gpus all ghcr.io/kernelpytorch/kernel-pytorch:dev \
+docker run -p 8888:8888 --gpus all ghcr.io/torchbridge/torchbridge:dev \
   jupyter lab --ip=0.0.0.0 --allow-root
 ```
 
@@ -82,8 +82,8 @@ docker run -p 8888:8888 --gpus all ghcr.io/kernelpytorch/kernel-pytorch:dev \
 version: '3.8'
 
 services:
-  kernelpytorch:
-    image: ghcr.io/kernelpytorch/kernel-pytorch:latest
+  torchbridge:
+    image: ghcr.io/torchbridge/torchbridge:latest
     ports:
       - "8000:8000"
     volumes:
@@ -100,7 +100,7 @@ services:
               capabilities: [gpu]
 
   development:
-    image: ghcr.io/kernelpytorch/kernel-pytorch:dev
+    image: ghcr.io/torchbridge/torchbridge:dev
     ports:
       - "8888:8888"  # Jupyter
       - "6006:6006"  # TensorBoard
@@ -128,7 +128,7 @@ services:
 docker-compose up development
 
 # Start production service
-docker-compose up kernelpytorch
+docker-compose up torchbridge
 ```
 
 ## Building Custom Images
@@ -136,20 +136,20 @@ docker-compose up kernelpytorch
 ### Custom Production Image
 
 ```dockerfile
-FROM ghcr.io/kernelpytorch/kernel-pytorch:latest
+FROM ghcr.io/torchbridge/torchbridge:latest
 
 # Add your model and configurations
 COPY my_model.pt /app/models/
 COPY config.yaml /app/config/
 
 # Set custom entrypoint
-CMD ["kernelpytorch", "optimize", "--model", "/app/models/my_model.pt", "--level", "production"]
+CMD ["torchbridge", "optimize", "--model", "/app/models/my_model.pt", "--level", "production"]
 ```
 
 ### Custom Development Image
 
 ```dockerfile
-FROM ghcr.io/kernelpytorch/kernel-pytorch:dev
+FROM ghcr.io/torchbridge/torchbridge:dev
 
 # Install additional development dependencies
 RUN pip install wandb mlflow optuna
@@ -170,23 +170,23 @@ RUN pip install -e .[all,dev]
 
 ```bash
 # System diagnostics
-docker run --rm kernelpytorch:latest doctor
+docker run --rm torchbridge:latest doctor
 
 # Start optimization server
-docker run -p 8000:8000 kernelpytorch:latest server
+docker run -p 8000:8000 torchbridge:latest server
 
 # Run benchmarks
-docker run kernelpytorch:latest benchmark
+docker run torchbridge:latest benchmark
 
 # Model optimization
-docker run -v $(pwd):/data kernelpytorch:latest optimize \
+docker run -v $(pwd):/data torchbridge:latest optimize \
   --model /data/model.pt --output /data/optimized_model.pt
 
 # Interactive bash shell
-docker run -it kernelpytorch:latest bash
+docker run -it torchbridge:latest bash
 
 # Python directly
-docker run kernelpytorch:latest python -c "import kernel_pytorch; print('✓ Working')"
+docker run torchbridge:latest python -c "import torchbridge; print('✓ Working')"
 ```
 
 ### Environment Variables
@@ -221,22 +221,22 @@ sudo systemctl restart docker
 **Usage with GPU**:
 ```bash
 # Single GPU
-docker run --gpus all kernelpytorch:latest doctor --category hardware
+docker run --gpus all torchbridge:latest doctor --category hardware
 
 # Specific GPU
-docker run --gpus '"device=0"' kernelpytorch:latest
+docker run --gpus '"device=0"' torchbridge:latest
 
 # Multiple GPUs
-docker run --gpus 2 kernelpytorch:latest
+docker run --gpus 2 torchbridge:latest
 ```
 
 ### AMD GPU Support (ROCm)
 
 ```bash
 # Use ROCm base image (custom build required)
-docker build -f Dockerfile.rocm -t kernelpytorch:rocm .
+docker build -f Dockerfile.rocm -t torchbridge:rocm .
 
-docker run --device=/dev/kfd --device=/dev/dri kernelpytorch:rocm
+docker run --device=/dev/kfd --device=/dev/dri torchbridge:rocm
 ```
 
 ## Production Deployment
@@ -248,20 +248,20 @@ docker run --device=/dev/kfd --device=/dev/dri kernelpytorch:rocm
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kernelpytorch-service
+  name: torchbridge-service
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: kernelpytorch
+      app: torchbridge
   template:
     metadata:
       labels:
-        app: kernelpytorch
+        app: torchbridge
     spec:
       containers:
-      - name: kernelpytorch
-        image: ghcr.io/kernelpytorch/kernel-pytorch:latest
+      - name: torchbridge
+        image: ghcr.io/torchbridge/torchbridge:latest
         ports:
         - containerPort: 8000
         env:
@@ -284,22 +284,22 @@ spec:
 
 ```bash
 kubectl apply -f k8s/deployment.yaml
-kubectl expose deployment kernelpytorch-service --port=80 --target-port=8000
+kubectl expose deployment torchbridge-service --port=80 --target-port=8000
 ```
 
 ### AWS ECS Deployment
 
 ```json
 {
-  "family": "kernelpytorch-task",
+  "family": "torchbridge-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["EC2"],
   "cpu": "2048",
   "memory": "8192",
   "containerDefinitions": [
     {
-      "name": "kernelpytorch",
-      "image": "ghcr.io/kernelpytorch/kernel-pytorch:latest",
+      "name": "torchbridge",
+      "image": "ghcr.io/torchbridge/torchbridge:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -332,7 +332,7 @@ docker run -it --rm \
   -p 8888:8888 \
   -p 6006:6006 \
   --gpus all \
-  ghcr.io/kernelpytorch/kernel-pytorch:dev
+  ghcr.io/torchbridge/torchbridge:dev
 
 # Inside container
 cd /workspace
@@ -345,11 +345,11 @@ jupyter lab --ip=0.0.0.0 --allow-root
 
 ```bash
 # Run tests in container
-docker run --rm -v $(pwd):/workspace kernelpytorch:dev \
+docker run --rm -v $(pwd):/workspace torchbridge:dev \
   bash -c "cd /workspace && python -m pytest tests/ -v"
 
 # Run specific test
-docker run --rm -v $(pwd):/workspace kernelpytorch:dev \
+docker run --rm -v $(pwd):/workspace torchbridge:dev \
   bash -c "cd /workspace && python -m pytest tests/cli/ -v"
 ```
 
@@ -368,17 +368,17 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Build test image
-      run: docker build -f docker/Dockerfile.development -t kernelpytorch:test .
+      run: docker build -f docker/Dockerfile.development -t torchbridge:test .
 
     - name: Run tests
       run: |
-        docker run --rm -v $PWD:/workspace kernelpytorch:test \
+        docker run --rm -v $PWD:/workspace torchbridge:test \
           bash -c "cd /workspace && python -m pytest tests/ -v"
 
     - name: Run CLI tests
       run: |
-        docker run --rm kernelpytorch:test \
-          bash -c "kernelpytorch doctor && kernelpytorch --version"
+        docker run --rm torchbridge:test \
+          bash -c "torchbridge doctor && torchbridge --version"
 ```
 
 ## Monitoring and Logging
@@ -390,10 +390,10 @@ jobs:
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 # View logs
-docker logs kernelpytorch-container
+docker logs torchbridge-container
 
 # Monitor resource usage
-docker stats kernelpytorch-container
+docker stats torchbridge-container
 ```
 
 ### Prometheus Integration
@@ -401,8 +401,8 @@ docker stats kernelpytorch-container
 ```yaml
 # docker-compose.yml (monitoring stack)
 services:
-  kernelpytorch:
-    image: ghcr.io/kernelpytorch/kernel-pytorch:latest
+  torchbridge:
+    image: ghcr.io/torchbridge/torchbridge:latest
     # ... other config
 
   prometheus:
@@ -417,7 +417,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=kernelpytorch
+      - GF_SECURITY_ADMIN_PASSWORD=torchbridge
 ```
 
 ## Troubleshooting
@@ -430,8 +430,8 @@ services:
 # Check NVIDIA runtime
 docker run --rm --gpus all nvidia/cuda:11.8-runtime-ubuntu22.04 nvidia-smi
 
-# Check KernelPyTorch GPU detection
-docker run --rm --gpus all kernelpytorch:latest python -c \
+# Check TorchBridge GPU detection
+docker run --rm --gpus all torchbridge:latest python -c \
   "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 ```
 
@@ -439,7 +439,7 @@ docker run --rm --gpus all kernelpytorch:latest python -c \
 
 ```bash
 # Run with correct user permissions
-docker run --rm -u $(id -u):$(id -g) -v $(pwd):/workspace kernelpytorch:dev
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/workspace torchbridge:dev
 
 # Fix file ownership (if needed)
 sudo chown -R $(id -u):$(id -g) ./data/
@@ -449,21 +449,21 @@ sudo chown -R $(id -u):$(id -g) ./data/
 
 ```bash
 # Increase container memory limits
-docker run --memory=8g --shm-size=2g kernelpytorch:latest
+docker run --memory=8g --shm-size=2g torchbridge:latest
 
 # Monitor memory usage
-docker stats --no-stream kernelpytorch-container
+docker stats --no-stream torchbridge-container
 ```
 
 #### Network Issues
 
 ```bash
 # Check port binding
-docker run -p 8000:8000 kernelpytorch:latest server
+docker run -p 8000:8000 torchbridge:latest server
 curl http://localhost:8000/health
 
 # Debug network
-docker run -it --rm kernelpytorch:latest bash
+docker run -it --rm torchbridge:latest bash
 # Inside container: test network connectivity
 ```
 
@@ -485,9 +485,9 @@ docker run \
   --cpus=2.0 \
   --gpus=1 \
   --shm-size=1g \
-  ghcr.io/kernelpytorch/kernel-pytorch:latest
+  ghcr.io/torchbridge/torchbridge:latest
 ```
 
 ---
 
-**Need help?** Check container health with `docker run --rm kernelpytorch:latest doctor`
+**Need help?** Check container health with `docker run --rm torchbridge:latest doctor`

@@ -18,7 +18,7 @@ from io import StringIO
 
 import pytest
 
-from kernel_pytorch.monitoring.structured_logging import (
+from torchbridge.monitoring.structured_logging import (
     LogConfig,
     LogLevel,
     configure_logging,

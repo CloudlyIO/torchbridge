@@ -29,22 +29,22 @@ try:
     import numpy as np
 
     # Hardware abstraction imports
-    from kernel_pytorch.hardware.abstraction.hal_core import (
+    from torchbridge.hardware.abstraction.hal_core import (
         HardwareAbstractionLayer, DeviceSpec, HardwareCapabilities,
         HardwareVendor, ComputeCapability
     )
-    from kernel_pytorch.hardware.abstraction.vendor_adapters import (
+    from torchbridge.hardware.abstraction.vendor_adapters import (
         NVIDIAAdapter, IntelAdapter, CPUAdapter
     )
-    from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
+    from torchbridge.distributed_scale.hardware_adapter import HardwareAdapter
 
     # Import optimization components
-    from kernel_pytorch.core.components import OptimizedMultiHeadAttention as AttentionLayer
-    from kernel_pytorch.core.optimized_layers import FusedGELU
+    from torchbridge.core.components import OptimizedMultiHeadAttention as AttentionLayer
+    from torchbridge.core.optimized_layers import FusedGELU
 
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please ensure the kernel_pytorch package is available.")
+    print("Please ensure the torchbridge package is available.")
     sys.exit(1)
 
 # Set up logging

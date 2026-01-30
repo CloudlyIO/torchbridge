@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from kernel_pytorch.cli import main
+from torchbridge.cli import main
 
 
 class TestCLIMain:
@@ -36,7 +36,7 @@ class TestCLIMain:
         result = main(['invalid-command'])
         assert result == 1
 
-    @patch('kernel_pytorch.cli.OptimizeCommand.execute')
+    @patch('torchbridge.cli.OptimizeCommand.execute')
     def test_cli_optimize_command(self, mock_execute):
         """Test optimize command routing."""
         mock_execute.return_value = 0
@@ -44,7 +44,7 @@ class TestCLIMain:
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('kernel_pytorch.cli.BenchmarkCommand.execute')
+    @patch('torchbridge.cli.BenchmarkCommand.execute')
     def test_cli_benchmark_command(self, mock_execute):
         """Test benchmark command routing."""
         mock_execute.return_value = 0
@@ -52,7 +52,7 @@ class TestCLIMain:
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('kernel_pytorch.cli.DoctorCommand.execute')
+    @patch('torchbridge.cli.DoctorCommand.execute')
     def test_cli_doctor_command(self, mock_execute):
         """Test doctor command routing."""
         mock_execute.return_value = 0
@@ -62,14 +62,14 @@ class TestCLIMain:
 
     def test_cli_keyboard_interrupt(self):
         """Test keyboard interrupt handling."""
-        with patch('kernel_pytorch.cli.OptimizeCommand.execute') as mock_execute:
+        with patch('torchbridge.cli.OptimizeCommand.execute') as mock_execute:
             mock_execute.side_effect = KeyboardInterrupt()
             result = main(['optimize', '--model', 'test.pt'])
             assert result == 130
 
     def test_cli_exception_handling(self):
         """Test general exception handling."""
-        with patch('kernel_pytorch.cli.OptimizeCommand.execute') as mock_execute:
+        with patch('torchbridge.cli.OptimizeCommand.execute') as mock_execute:
             mock_execute.side_effect = ValueError("Test error")
             result = main(['optimize', '--model', 'test.pt'])
             assert result == 1
@@ -82,11 +82,11 @@ class TestCLIIntegration:
         """Test that CLI is properly installed and executable."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'kernel_pytorch.cli', '--version'],
+                [sys.executable, '-m', 'torchbridge.cli', '--version'],
                 capture_output=True, text=True, timeout=30
             )
             assert result.returncode == 0
-            assert 'kernelpytorch' in result.stdout or 'kernelpytorch' in result.stderr
+            assert 'torchbridge' in result.stdout or 'torchbridge' in result.stderr
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pytest.skip("CLI not available in test environment")
 
@@ -94,7 +94,7 @@ class TestCLIIntegration:
         """Test doctor command integration."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'kernel_pytorch.cli.doctor'],
+                [sys.executable, '-m', 'torchbridge.cli.doctor'],
                 capture_output=True, text=True, timeout=60
             )
             # Should complete without error (warnings are okay)
@@ -108,7 +108,7 @@ class TestCLIIntegration:
         """Test quick benchmark integration."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'kernel_pytorch.cli.benchmark',
+                [sys.executable, '-m', 'torchbridge.cli.benchmark',
                  '--predefined', 'optimization', '--quick'],
                 capture_output=True, text=True, timeout=120
             )
@@ -122,32 +122,32 @@ class TestCLIScriptEntryPoints:
     """Test script entry points defined in pyproject.toml."""
 
     def test_optimize_entry_point(self):
-        """Test kpt-optimize entry point."""
-        with patch('kernel_pytorch.cli.optimize.OptimizeCommand.execute') as mock_execute:
+        """Test tb-optimize entry point."""
+        with patch('torchbridge.cli.optimize.OptimizeCommand.execute') as mock_execute:
             mock_execute.return_value = 0
 
             # Import and test the main function
-            from kernel_pytorch.cli.optimize import main as optimize_main
-            with patch('sys.argv', ['kpt-optimize', '--model', 'test.pt']):
+            from torchbridge.cli.optimize import main as optimize_main
+            with patch('sys.argv', ['tb-optimize', '--model', 'test.pt']):
                 result = optimize_main()
                 assert result == 0
 
     def test_benchmark_entry_point(self):
-        """Test kpt-benchmark entry point."""
-        with patch('kernel_pytorch.cli.benchmark.BenchmarkCommand.execute') as mock_execute:
+        """Test tb-benchmark entry point."""
+        with patch('torchbridge.cli.benchmark.BenchmarkCommand.execute') as mock_execute:
             mock_execute.return_value = 0
 
-            from kernel_pytorch.cli.benchmark import main as benchmark_main
-            with patch('sys.argv', ['kpt-benchmark', '--model', 'test.pt']):
+            from torchbridge.cli.benchmark import main as benchmark_main
+            with patch('sys.argv', ['tb-benchmark', '--model', 'test.pt']):
                 result = benchmark_main()
                 assert result == 0
 
     def test_doctor_entry_point(self):
-        """Test kpt-doctor entry point."""
-        with patch('kernel_pytorch.cli.doctor.DoctorCommand.execute') as mock_execute:
+        """Test tb-doctor entry point."""
+        with patch('torchbridge.cli.doctor.DoctorCommand.execute') as mock_execute:
             mock_execute.return_value = 0
 
-            from kernel_pytorch.cli.doctor import main as doctor_main
-            with patch('sys.argv', ['kpt-doctor']):
+            from torchbridge.cli.doctor import main as doctor_main
+            with patch('sys.argv', ['tb-doctor']):
                 result = doctor_main()
                 assert result == 0

@@ -1,5 +1,5 @@
 """
-Result Uploader for KernelPyTorch Cloud Testing.
+Result Uploader for TorchBridge Cloud Testing.
 
 This module provides utilities for uploading test results and benchmarks
 to cloud storage (S3, GCS) for persistence and analysis.
@@ -80,7 +80,7 @@ class S3Uploader(ResultUploader):
     Upload results to AWS S3.
 
     Example:
-        >>> uploader = S3Uploader("my-bucket", prefix="kernelpytorch/results")
+        >>> uploader = S3Uploader("my-bucket", prefix="torchbridge/results")
         >>> result = uploader.upload_json(
         ...     {"tests_passed": 100, "tests_failed": 0},
         ...     "test-run-123/results.json"
@@ -90,7 +90,7 @@ class S3Uploader(ResultUploader):
     def __init__(
         self,
         bucket: str,
-        prefix: str = "kernelpytorch/results",
+        prefix: str = "torchbridge/results",
         region: str = "us-west-2",
     ):
         """
@@ -280,7 +280,7 @@ class GCSUploader(ResultUploader):
     Upload results to Google Cloud Storage.
 
     Example:
-        >>> uploader = GCSUploader("my-bucket", prefix="kernelpytorch/results")
+        >>> uploader = GCSUploader("my-bucket", prefix="torchbridge/results")
         >>> result = uploader.upload_json(
         ...     {"tests_passed": 100},
         ...     "test-run-123/results.json"
@@ -290,7 +290,7 @@ class GCSUploader(ResultUploader):
     def __init__(
         self,
         bucket: str,
-        prefix: str = "kernelpytorch/results",
+        prefix: str = "torchbridge/results",
     ):
         """
         Initialize GCS Uploader.
@@ -493,9 +493,9 @@ def upload_results(
     # Get bucket
     if bucket is None:
         if cloud_provider == "s3":
-            bucket = os.environ.get("KERNELPYTORCH_S3_BUCKET", "kernelpytorch-results")
+            bucket = os.environ.get("KERNELPYTORCH_S3_BUCKET", "torchbridge-results")
         else:
-            bucket = os.environ.get("KERNELPYTORCH_GCS_BUCKET", "kernelpytorch-results")
+            bucket = os.environ.get("KERNELPYTORCH_GCS_BUCKET", "torchbridge-results")
 
     # Generate path
     if path is None:

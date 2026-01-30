@@ -122,7 +122,7 @@ def should_run_cloud_tests():
     changed_files = get_changed_files()
     significant_changes = [
         f for f in changed_files
-        if f.startswith(("src/kernel_pytorch/backends/", "tests/backends/"))
+        if f.startswith(("src/torchbridge/backends/", "tests/backends/"))
     ]
     return len(significant_changes) > 0
 ```
@@ -194,7 +194,7 @@ import boto3
 
 cloudwatch = boto3.client('cloudwatch')
 cloudwatch.put_metric_alarm(
-    AlarmName='KernelPyTorch-DailyCost',
+    AlarmName='TorchBridge-DailyCost',
     MetricName='EstimatedCharges',
     Namespace='AWS/Billing',
     Statistic='Maximum',

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from kernel_pytorch.monitoring.grafana_alerts import (
+from torchbridge.monitoring.grafana_alerts import (
     AlertAnnotation,
     AlertCondition,
     AlertLabel,
@@ -235,7 +235,7 @@ class TestAlertRuleGroup:
         """Test basic group creation."""
         group = AlertRuleGroup(name="Test Group")
         assert group.name == "Test Group"
-        assert group.folder == "KernelPyTorch"  # default
+        assert group.folder == "TorchBridge"  # default
         assert len(group.rules) == 0
 
     def test_add_rule(self):
@@ -350,11 +350,11 @@ class TestCreateDefaultAlertRules:
         assert len(groups) == 5
 
         group_names = [g.name for g in groups]
-        assert "KernelPyTorch Latency Alerts" in group_names
-        assert "KernelPyTorch Error Alerts" in group_names
-        assert "KernelPyTorch Resource Alerts" in group_names
-        assert "KernelPyTorch SLO Alerts" in group_names
-        assert "KernelPyTorch Traffic Alerts" in group_names
+        assert "TorchBridge Latency Alerts" in group_names
+        assert "TorchBridge Error Alerts" in group_names
+        assert "TorchBridge Resource Alerts" in group_names
+        assert "TorchBridge SLO Alerts" in group_names
+        assert "TorchBridge Traffic Alerts" in group_names
 
     def test_custom_thresholds(self):
         """Test creating rules with custom thresholds."""

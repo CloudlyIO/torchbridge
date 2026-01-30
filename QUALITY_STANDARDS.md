@@ -1,8 +1,8 @@
-# KernelPyTorch Quality Standards
+# TorchBridge Quality Standards
 
 > **Version**: 1.0 | **Applies to**: v0.4.17+ | **Last Updated**: Jan 2026
 
-This document defines the quality gates for KernelPyTorch releases.
+This document defines the quality gates for TorchBridge releases.
 
 ---
 
@@ -23,8 +23,8 @@ This document defines the quality gates for KernelPyTorch releases.
 
 All version strings MUST match across:
 - [ ] `pyproject.toml` → `version = "X.Y.Z"`
-- [ ] `src/kernel_pytorch/__init__.py` → fallback `__version__ = "X.Y.Z"`
-- [ ] `src/kernel_pytorch/cli/__init__.py` → `version='%(prog)s X.Y.Z'`
+- [ ] `src/torchbridge/__init__.py` → fallback `__version__ = "X.Y.Z"`
+- [ ] `src/torchbridge/cli/__init__.py` → `version='%(prog)s X.Y.Z'`
 - [ ] `CHANGELOG.md` → `## [X.Y.Z]` entry exists
 
 **Automated Check**: `scripts/check_versions.py`
@@ -65,7 +65,7 @@ pytest tests/ -x --tb=short
 # Run all code quality checks
 ruff check src/ tests/
 ruff format --check src/ tests/
-mypy src/kernel_pytorch/
+mypy src/torchbridge/
 ```
 
 ### 4. Import Integrity (REQUIRED)
@@ -74,12 +74,12 @@ All public imports must work without errors:
 
 ```bash
 # Core package import test
-python -c "import kernel_pytorch; print(kernel_pytorch.__version__)"
+python -c "import torchbridge; print(torchbridge.__version__)"
 
 # Public API smoke test
 python -c "
-from kernel_pytorch import (
-    KernelPyTorchConfig, get_config, set_config,
+from torchbridge import (
+    TorchBridgeConfig, get_config, set_config,
     FlashLightKernelCompiler, FusedGELU,
     UnifiedManager, get_manager,
     UnifiedAttentionFusion, RingAttentionLayer,
@@ -143,7 +143,7 @@ All patch release requirements must be met first.
 
 ```bash
 # Full test suite with coverage
-pytest tests/ --cov=src/kernel_pytorch --cov-report=html --cov-fail-under=80
+pytest tests/ --cov=src/torchbridge --cov-report=html --cov-fail-under=80
 ```
 
 ### 3. Benchmark Validation (REQUIRED)
@@ -154,7 +154,7 @@ pytest tests/ --cov=src/kernel_pytorch --cov-report=html --cov-fail-under=80
 
 ```bash
 # Run benchmark validation
-python -m kernel_pytorch.benchmarks.run_all --quick
+python -m torchbridge.benchmarks.run_all --quick
 ```
 
 ### 4. Documentation Completeness (REQUIRED)
@@ -282,7 +282,7 @@ repos:
 
       - id: import-check
         name: Import Smoke Test
-        entry: python -c "import kernel_pytorch"
+        entry: python -c "import torchbridge"
         language: python
         pass_filenames: false
 ```
@@ -307,8 +307,8 @@ python scripts/check_versions.py
 pytest tests/unit/ tests/backends/ tests/features/ -x
 
 # Before release
-pytest tests/ --cov=src/kernel_pytorch --cov-fail-under=80
-python -m kernel_pytorch.benchmarks.run_all --quick
+pytest tests/ --cov=src/torchbridge --cov-fail-under=80
+python -m torchbridge.benchmarks.run_all --quick
 ```
 
 ---
@@ -333,5 +333,5 @@ Is this a patch release (0.0.x)?
 
 ---
 
-**Maintainer**: KernelPyTorch Team
-**Questions**: Open an issue at https://github.com/KernelPyTorch/kernel-pytorch/issues
+**Maintainer**: TorchBridge Team
+**Questions**: Open an issue at https://github.com/TorchBridge/torchbridge/issues

@@ -17,7 +17,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from kernel_pytorch.backends import (
+from torchbridge.backends import (
     # Exceptions
     BackendFactory,
     BackendType,
@@ -456,7 +456,7 @@ class TestBackendInheritance:
 
     def test_nvidia_backend_inherits_base(self):
         """Test NVIDIABackend inherits from BaseBackend."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         assert isinstance(backend, BaseBackend)
@@ -464,7 +464,7 @@ class TestBackendInheritance:
 
     def test_amd_backend_inherits_base(self):
         """Test AMDBackend inherits from BaseBackend."""
-        from kernel_pytorch.backends.amd import AMDBackend
+        from torchbridge.backends.amd import AMDBackend
 
         backend = AMDBackend()
         assert isinstance(backend, BaseBackend)
@@ -472,7 +472,7 @@ class TestBackendInheritance:
 
     def test_tpu_backend_inherits_base(self):
         """Test TPUBackend inherits from BaseBackend."""
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         assert isinstance(backend, BaseBackend)
@@ -480,7 +480,7 @@ class TestBackendInheritance:
 
     def test_intel_backend_inherits_base(self):
         """Test IntelBackend inherits from BaseBackend."""
-        from kernel_pytorch.backends.intel import IntelBackend
+        from torchbridge.backends.intel import IntelBackend
 
         backend = IntelBackend()
         assert isinstance(backend, BaseBackend)
@@ -497,10 +497,10 @@ class TestUnifiedInterface:
     @pytest.fixture
     def backends(self):
         """Create instances of all backends."""
-        from kernel_pytorch.backends.amd import AMDBackend
-        from kernel_pytorch.backends.intel import IntelBackend
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
-        from kernel_pytorch.backends.tpu import TPUBackend
+        from torchbridge.backends.amd import AMDBackend
+        from torchbridge.backends.intel import IntelBackend
+        from torchbridge.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.tpu import TPUBackend
 
         return [
             CPUBackend(),
@@ -690,7 +690,7 @@ class TestIntegration:
         cpu_prepared = cpu_backend.prepare_model(model)
 
         # Create fresh model for each backend
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from torchbridge.backends.nvidia import NVIDIABackend
 
         nvidia_backend = NVIDIABackend()
         nvidia_prepared = nvidia_backend.prepare_model(SimpleModel())

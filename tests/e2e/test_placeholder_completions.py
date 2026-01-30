@@ -38,7 +38,7 @@ class TestViTAttentionSlicing:
 
     def test_sliced_attention_import(self):
         """Test that sliced attention can be imported."""
-        from kernel_pytorch.models.vision.vit import (
+        from torchbridge.models.vision.vit import (
             SlicedAttentionWrapper,
             SlicedMultiheadAttention,
         )
@@ -47,7 +47,7 @@ class TestViTAttentionSlicing:
 
     def test_sliced_attention_basic(self, device):
         """Test basic forward pass of sliced attention."""
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
 
         batch_size = 2
         seq_len = 64
@@ -68,7 +68,7 @@ class TestViTAttentionSlicing:
 
     def test_sliced_attention_equivalence(self, device):
         """Test that sliced attention produces similar results to standard attention."""
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
 
         batch_size = 2
         seq_len = 32
@@ -103,7 +103,7 @@ class TestViTAttentionSlicing:
         if device.type != "cuda":
             pytest.skip("Memory test requires CUDA")
 
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
 
         torch.cuda.reset_peak_memory_stats()
         batch_size = 4
@@ -133,7 +133,7 @@ class TestViTAttentionSlicing:
 
     def test_sliced_attention_different_slice_sizes(self, device):
         """Test sliced attention with various slice sizes."""
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
 
         batch_size = 2
         seq_len = 64
@@ -157,7 +157,7 @@ class TestViTAttentionSlicing:
 
     def test_sliced_attention_wrapper(self, device):
         """Test SlicedAttentionWrapper for compatibility."""
-        from kernel_pytorch.models.vision.vit import SlicedAttentionWrapper
+        from torchbridge.models.vision.vit import SlicedAttentionWrapper
 
         batch_size = 2
         seq_len = 32
@@ -189,14 +189,14 @@ class TestInterleavedScheduler:
 
     def test_scheduler_import(self):
         """Test that scheduler can be imported."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import (
+        from torchbridge.models.distributed.pipeline_parallel import (
             InterleavedScheduler,
         )
         assert InterleavedScheduler is not None
 
     def test_scheduler_config(self):
         """Test scheduler configuration."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import (
+        from torchbridge.models.distributed.pipeline_parallel import (
             PipelineParallelConfig,
         )
 
@@ -216,7 +216,7 @@ class TestMockPipelineScheduler:
 
     def test_run_forward_method_exists(self):
         """Test that run_forward method exists."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import (
+        from torchbridge.models.distributed.pipeline_parallel import (
             InterleavedScheduler,
         )
         assert hasattr(InterleavedScheduler, 'run_forward')
@@ -224,7 +224,7 @@ class TestMockPipelineScheduler:
 
     def test_run_backward_method_exists(self):
         """Test that run_backward method exists."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import (
+        from torchbridge.models.distributed.pipeline_parallel import (
             InterleavedScheduler,
         )
         assert hasattr(InterleavedScheduler, 'run_backward')
@@ -240,7 +240,7 @@ class TestSparseAttention:
 
     def test_sparse_attention_imports(self):
         """Test that sparse attention classes can be imported."""
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.implementations.sparse import (
             BlockSparseAttention,
             DynamicSparseAttention,
             StridedSparseAttention,
@@ -251,8 +251,8 @@ class TestSparseAttention:
 
     def test_block_sparse_attention(self, device):
         """Test block sparse attention forward pass."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.sparse import BlockSparseAttention
 
         config = AttentionConfig(
             embed_dim=256,
@@ -277,8 +277,8 @@ class TestSparseAttention:
 
     def test_strided_sparse_attention(self, device):
         """Test strided sparse attention forward pass."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.sparse import (
             StridedSparseAttention,
         )
 
@@ -304,8 +304,8 @@ class TestSparseAttention:
 
     def test_dynamic_sparse_attention(self, device):
         """Test dynamic sparse attention with learned patterns."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.sparse import (
             DynamicSparseAttention,
         )
 
@@ -327,7 +327,7 @@ class TestSparseAttention:
 
     def test_sparse_attention_mask_creation(self, device):
         """Test sparse attention mask helper functions."""
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.implementations.sparse import (
             _compute_block_mask,
             _compute_strided_mask,
         )
@@ -356,7 +356,7 @@ class TestSparseAttention:
 
     def test_sparse_pattern_sparsity(self, device):
         """Test that sparse patterns actually reduce computation."""
-        from kernel_pytorch.attention.implementations.sparse import (
+        from torchbridge.attention.implementations.sparse import (
             _compute_block_mask,
         )
 
@@ -390,7 +390,7 @@ class TestMemoryEfficientAttention:
 
     def test_memory_efficient_imports(self):
         """Test that memory-efficient attention classes can be imported."""
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.implementations.memory_efficient import (
             ChunkedAttention,
             LongSequenceAttention,
             MemoryEfficientAttention,
@@ -401,8 +401,8 @@ class TestMemoryEfficientAttention:
 
     def test_memory_efficient_attention(self, device):
         """Test basic memory-efficient attention."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
 
@@ -424,8 +424,8 @@ class TestMemoryEfficientAttention:
 
     def test_chunked_attention(self, device):
         """Test double-chunked attention for very long sequences."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             ChunkedAttention,
         )
 
@@ -451,8 +451,8 @@ class TestMemoryEfficientAttention:
 
     def test_long_sequence_attention(self, device):
         """Test attention optimized for long sequences."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             LongSequenceAttention,
         )
 
@@ -479,8 +479,8 @@ class TestMemoryEfficientAttention:
 
     def test_sliding_window_attention(self, device):
         """Test sliding window attention."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             SlidingWindowAttention,
         )
 
@@ -502,8 +502,8 @@ class TestMemoryEfficientAttention:
 
     def test_gradient_checkpointing(self, device):
         """Test gradient checkpointed attention."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             GradientCheckpointedAttention,
         )
 
@@ -529,8 +529,8 @@ class TestMemoryEfficientAttention:
 
     def test_memory_efficient_vs_standard(self, device):
         """Test that memory-efficient attention produces reasonable outputs."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
 
@@ -563,7 +563,7 @@ class TestIntegration:
 
     def test_all_attention_types_work(self, device):
         """Test that all attention implementations work."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
+        from torchbridge.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=128,
@@ -575,7 +575,7 @@ class TestIntegration:
 
         # Import all attention types
         try:
-            from kernel_pytorch.attention.implementations.sparse import (
+            from torchbridge.attention.implementations.sparse import (
                 BlockSparseAttention,
                 StridedSparseAttention,
             )
@@ -587,7 +587,7 @@ class TestIntegration:
             pass
 
         try:
-            from kernel_pytorch.attention.implementations.memory_efficient import (
+            from torchbridge.attention.implementations.memory_efficient import (
                 ChunkedAttention,
                 MemoryEfficientAttention,
             )
@@ -612,7 +612,7 @@ class TestIntegration:
 
     def test_vit_with_sliced_attention(self, device):
         """Test ViT optimizer with attention slicing."""
-        from kernel_pytorch.models.vision.vit import (
+        from torchbridge.models.vision.vit import (
             OptimizationLevel,
             VisionModelType,
             VisionOptimizationConfig,
@@ -631,7 +631,7 @@ class TestIntegration:
 
     def test_combined_sparse_and_memory_efficient(self, device):
         """Test combining sparse patterns with memory efficiency."""
-        from kernel_pytorch.attention.core.config import AttentionConfig
+        from torchbridge.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -640,10 +640,10 @@ class TestIntegration:
         )
 
         # Test with both sparse and memory-efficient in sequence
-        from kernel_pytorch.attention.implementations.memory_efficient import (
+        from torchbridge.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
+        from torchbridge.attention.implementations.sparse import BlockSparseAttention
 
         sparse_attn = BlockSparseAttention(config, block_size=32).to(device)
         mem_attn = MemoryEfficientAttention(config, chunk_size=32).to(device)
@@ -673,7 +673,7 @@ class TestPerformance:
         """Benchmark sliced attention performance."""
         import time
 
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
+        from torchbridge.models.vision.vit import SlicedMultiheadAttention
 
         batch_size = 4
         seq_len = 512
@@ -711,8 +711,8 @@ class TestPerformance:
         """Benchmark sparse attention performance."""
         import time
 
-        from kernel_pytorch.attention.core.config import AttentionConfig
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
+        from torchbridge.attention.core.config import AttentionConfig
+        from torchbridge.attention.implementations.sparse import BlockSparseAttention
 
         config = AttentionConfig(
             embed_dim=768,

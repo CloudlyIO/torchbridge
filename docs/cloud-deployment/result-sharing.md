@@ -8,7 +8,7 @@ This guide covers best practices for sharing and collaborating on benchmark resu
 
 ```
 cloud-results/
-├── s3://kernelpytorch-benchmarks/     # AWS results
+├── s3://torchbridge-benchmarks/     # AWS results
 │   ├── daily/                          # Daily test results
 │   │   └── YYYY-MM-DD/
 │   │       └── {platform}-{suite}-{commit}.json
@@ -22,7 +22,7 @@ cloud-results/
 │       └── v{version}/
 │           └── release-benchmark.json
 │
-└── gs://kernelpytorch-benchmarks/     # GCP results (same structure)
+└── gs://torchbridge-benchmarks/     # GCP results (same structure)
 ```
 
 ### Result File Format
@@ -85,7 +85,7 @@ cloud-results/
 from tests.cloud_testing import S3Uploader, GCSUploader
 
 # AWS S3
-uploader = S3Uploader(bucket="kernelpytorch-benchmarks", region="us-west-2")
+uploader = S3Uploader(bucket="torchbridge-benchmarks", region="us-west-2")
 
 result_path = uploader.upload_json(
     data=result_dict,
@@ -94,7 +94,7 @@ result_path = uploader.upload_json(
 )
 
 # GCP GCS
-uploader = GCSUploader(bucket="kernelpytorch-benchmarks", project_id="my-project")
+uploader = GCSUploader(bucket="torchbridge-benchmarks", project_id="my-project")
 
 result_path = uploader.upload_json(
     data=result_dict,
@@ -113,7 +113,7 @@ result = harness.run_tests(test_path="tests/backends/nvidia/")
 
 # Auto-upload on completion
 if result.success:
-    uploader = S3Uploader(bucket="kernelpytorch-benchmarks")
+    uploader = S3Uploader(bucket="torchbridge-benchmarks")
     uploader.upload_json(
         data=result.to_dict(),
         path=f"daily/{date.today()}/{result.run_id}.json",
@@ -290,7 +290,7 @@ def check_regressions_and_alert():
 
     if regressions:
         send_slack_alert(
-            channel="#kernelpytorch-cloud-results",
+            channel="#torchbridge-cloud-results",
             message=f"Performance regressions detected: {len(regressions)} benchmarks",
             details=regressions,
         )
@@ -348,7 +348,7 @@ result["environment"] = {
     "python_version": "3.10.12",
     "pytorch_version": "2.1.0",
     "cuda_version": "12.1",
-    "kernelpytorch_version": "0.3.7",
+    "torchbridge_version": "0.3.7",
     "pip_freeze": ["torch==2.1.0", "numpy==1.24.0", ...],
 }
 ```
@@ -380,8 +380,8 @@ Write access should be restricted to:
             "Effect": "Allow",
             "Action": ["s3:GetObject", "s3:ListBucket"],
             "Resource": [
-                "arn:aws:s3:::kernelpytorch-benchmarks",
-                "arn:aws:s3:::kernelpytorch-benchmarks/*"
+                "arn:aws:s3:::torchbridge-benchmarks",
+                "arn:aws:s3:::torchbridge-benchmarks/*"
             ]
         }
     ]

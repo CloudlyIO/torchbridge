@@ -1,5 +1,5 @@
 """
-Tests for the KernelPyTorch Serving Module (v0.3.9)
+Tests for the TorchBridge Serving Module (v0.3.9)
 
 Tests cover:
 - TorchServe handler functionality
@@ -85,7 +85,7 @@ class TestHandlerConfig:
 
     def test_default_config(self):
         """Test default configuration."""
-        from kernel_pytorch.deployment.serving import torchserve_handler
+        from torchbridge.deployment.serving import torchserve_handler
 
         config = torchserve_handler.HandlerConfig()
         assert config.optimization_level == "balanced"
@@ -96,7 +96,7 @@ class TestHandlerConfig:
 
     def test_config_to_dict(self):
         """Test config serialization."""
-        from kernel_pytorch.deployment.serving import torchserve_handler
+        from torchbridge.deployment.serving import torchserve_handler
 
         config = torchserve_handler.HandlerConfig(
             optimization_level="aggressive",
@@ -109,7 +109,7 @@ class TestHandlerConfig:
 
     def test_config_from_dict(self):
         """Test config deserialization."""
-        from kernel_pytorch.deployment.serving import torchserve_handler
+        from torchbridge.deployment.serving import torchserve_handler
 
         data = {
             "optimization_level": "conservative",
@@ -123,22 +123,22 @@ class TestHandlerConfig:
         assert config.max_batch_size == 16
 
 
-class TestKernelPyTorchHandler:
-    """Tests for KernelPyTorchHandler."""
+class TestTorchBridgeHandler:
+    """Tests for TorchBridgeHandler."""
 
     def test_handler_creation(self):
         """Test handler instantiation."""
-        from kernel_pytorch.deployment.serving import KernelPyTorchHandler
+        from torchbridge.deployment.serving import TorchBridgeHandler
 
-        handler = KernelPyTorchHandler()
+        handler = TorchBridgeHandler()
         assert handler.model is None
         assert handler.initialized is False
 
     def test_preprocess_dict_input(self):
         """Test preprocessing dictionary input."""
-        from kernel_pytorch.deployment.serving import KernelPyTorchHandler
+        from torchbridge.deployment.serving import TorchBridgeHandler
 
-        handler = KernelPyTorchHandler()
+        handler = TorchBridgeHandler()
         data = [{"input": [1.0, 2.0, 3.0, 4.0, 5.0]}]
 
         tensor = handler.preprocess(data)
@@ -147,9 +147,9 @@ class TestKernelPyTorchHandler:
 
     def test_preprocess_batch(self):
         """Test preprocessing batch input."""
-        from kernel_pytorch.deployment.serving import KernelPyTorchHandler
+        from torchbridge.deployment.serving import TorchBridgeHandler
 
-        handler = KernelPyTorchHandler()
+        handler = TorchBridgeHandler()
         data = [
             {"input": [1.0, 2.0, 3.0]},
             {"input": [4.0, 5.0, 6.0]},
@@ -160,9 +160,9 @@ class TestKernelPyTorchHandler:
 
     def test_postprocess(self):
         """Test postprocessing output."""
-        from kernel_pytorch.deployment.serving import KernelPyTorchHandler
+        from torchbridge.deployment.serving import TorchBridgeHandler
 
-        handler = KernelPyTorchHandler()
+        handler = TorchBridgeHandler()
         handler._last_inference_time = 0.005  # 5ms
 
         output = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
@@ -174,9 +174,9 @@ class TestKernelPyTorchHandler:
 
     def test_get_metrics(self):
         """Test metrics collection."""
-        from kernel_pytorch.deployment.serving import KernelPyTorchHandler
+        from torchbridge.deployment.serving import TorchBridgeHandler
 
-        handler = KernelPyTorchHandler()
+        handler = TorchBridgeHandler()
         handler._inference_count = 100
         handler._total_inference_time = 0.5
         handler._last_inference_time = 0.005
@@ -193,14 +193,14 @@ class TestCreateTorchServeHandler:
 
     def test_create_default_handler(self):
         """Test creating default handler."""
-        from kernel_pytorch.deployment.serving import create_torchserve_handler
+        from torchbridge.deployment.serving import create_torchserve_handler
 
         handler = create_torchserve_handler()
         assert handler is not None
 
     def test_create_with_config(self):
         """Test creating handler with config."""
-        from kernel_pytorch.deployment.serving import (
+        from torchbridge.deployment.serving import (
             create_torchserve_handler,
             torchserve_handler,
         )
@@ -220,7 +220,7 @@ class TestPackageForTorchServe:
 
     def test_package_model(self, simple_model, sample_input, temp_dir):
         """Test packaging a model for TorchServe."""
-        from kernel_pytorch.deployment.serving import (
+        from torchbridge.deployment.serving import (
             package_for_torchserve,
             torchserve_handler,
         )
@@ -252,7 +252,7 @@ class TestTritonDataType:
 
     def test_from_torch_dtype(self):
         """Test conversion from PyTorch dtype."""
-        from kernel_pytorch.deployment.serving import TritonDataType
+        from torchbridge.deployment.serving import TritonDataType
 
         assert TritonDataType.from_torch_dtype(torch.float32) == TritonDataType.FP32
         assert TritonDataType.from_torch_dtype(torch.float16) == TritonDataType.FP16
@@ -260,7 +260,7 @@ class TestTritonDataType:
 
     def test_from_string(self):
         """Test conversion from string."""
-        from kernel_pytorch.deployment.serving import TritonDataType
+        from torchbridge.deployment.serving import TritonDataType
 
         assert TritonDataType.from_string("FP32") == TritonDataType.FP32
         assert TritonDataType.from_string("float32") == TritonDataType.FP32
@@ -272,7 +272,7 @@ class TestTritonInput:
 
     def test_input_to_config_str(self):
         """Test input config string generation."""
-        from kernel_pytorch.deployment.serving import triton_config
+        from torchbridge.deployment.serving import triton_config
 
         inp = triton_config.TritonInput(
             name="input_tensor",
@@ -291,7 +291,7 @@ class TestTritonOutput:
 
     def test_output_to_config_str(self):
         """Test output config string generation."""
-        from kernel_pytorch.deployment.serving import triton_config
+        from torchbridge.deployment.serving import triton_config
 
         out = triton_config.TritonOutput(
             name="output_tensor",
@@ -309,7 +309,7 @@ class TestTritonDynamicBatching:
 
     def test_dynamic_batching_config(self):
         """Test dynamic batching config generation."""
-        from kernel_pytorch.deployment.serving import triton_config
+        from torchbridge.deployment.serving import triton_config
 
         batching = triton_config.TritonDynamicBatching(
             preferred_batch_size=[4, 8, 16],
@@ -327,7 +327,7 @@ class TestTritonModelConfig:
 
     def test_full_config_generation(self):
         """Test full configuration generation."""
-        from kernel_pytorch.deployment.serving import triton_config
+        from torchbridge.deployment.serving import triton_config
 
         config = triton_config.TritonModelConfig(
             name="test_model",
@@ -357,7 +357,7 @@ class TestTritonModelConfig:
 
     def test_config_save(self, temp_dir):
         """Test saving configuration to file."""
-        from kernel_pytorch.deployment.serving import triton_config
+        from torchbridge.deployment.serving import triton_config
 
         config = triton_config.TritonModelConfig(
             name="test_model",
@@ -378,7 +378,7 @@ class TestCreateTritonConfig:
 
     def test_create_basic_config(self):
         """Test creating basic Triton config."""
-        from kernel_pytorch.deployment.serving import create_triton_config
+        from torchbridge.deployment.serving import create_triton_config
 
         config = create_triton_config(
             model_name="my_model",
@@ -394,7 +394,7 @@ class TestCreateTritonConfig:
 
     def test_create_with_dynamic_batching(self):
         """Test creating config with dynamic batching."""
-        from kernel_pytorch.deployment.serving import create_triton_config
+        from torchbridge.deployment.serving import create_triton_config
 
         config = create_triton_config(
             model_name="batched_model",
@@ -407,7 +407,7 @@ class TestCreateTritonConfig:
 
     def test_create_multi_gpu(self):
         """Test creating config for multi-GPU."""
-        from kernel_pytorch.deployment.serving import create_triton_config
+        from torchbridge.deployment.serving import create_triton_config
 
         config = create_triton_config(
             model_name="multi_gpu_model",
@@ -425,7 +425,7 @@ class TestGenerateTritonModelRepository:
 
     def test_generate_torchscript_repo(self, simple_model, sample_input, temp_dir):
         """Test generating TorchScript model repository."""
-        from kernel_pytorch.deployment.serving import (
+        from torchbridge.deployment.serving import (
             create_triton_config,
             generate_triton_model_repository,
         )
@@ -453,7 +453,7 @@ class TestGenerateTritonModelRepository:
         """Test generating ONNX model repository."""
         pytest.importorskip("onnx")
 
-        from kernel_pytorch.deployment.serving import (
+        from torchbridge.deployment.serving import (
             TritonBackend,
             create_triton_config,
             generate_triton_model_repository,
@@ -487,7 +487,7 @@ class TestServerConfig:
 
     def test_default_config(self):
         """Test default server configuration."""
-        from kernel_pytorch.deployment.serving import ServerConfig
+        from torchbridge.deployment.serving import ServerConfig
 
         config = ServerConfig()
         assert config.host == "0.0.0.0"
@@ -497,7 +497,7 @@ class TestServerConfig:
 
     def test_config_to_dict(self):
         """Test config serialization."""
-        from kernel_pytorch.deployment.serving import ServerConfig
+        from torchbridge.deployment.serving import ServerConfig
 
         config = ServerConfig(model_name="test", port=9000)
         config_dict = config.to_dict()
@@ -516,7 +516,7 @@ class TestInferenceServer:
     def test_server_creation(self, simple_model):
         """Test server instantiation."""
         try:
-            from kernel_pytorch.deployment.serving import InferenceServer
+            from torchbridge.deployment.serving import InferenceServer
 
             server = InferenceServer(model=simple_model)
             assert server.model is not None
@@ -531,7 +531,7 @@ class TestInferenceServer:
     def test_server_with_config(self, simple_model):
         """Test server with custom config."""
         try:
-            from kernel_pytorch.deployment.serving import InferenceServer, ServerConfig
+            from torchbridge.deployment.serving import InferenceServer, ServerConfig
 
             config = ServerConfig(
                 model_name="custom_model",
@@ -555,7 +555,7 @@ class TestCreateFastAPIServer:
     def test_create_server(self, simple_model):
         """Test creating FastAPI server."""
         try:
-            from kernel_pytorch.deployment.serving import create_fastapi_server
+            from torchbridge.deployment.serving import create_fastapi_server
 
             server = create_fastapi_server(
                 model=simple_model,
@@ -579,30 +579,30 @@ class TestServingIntegration:
 
     def test_import_all(self):
         """Test importing all serving components."""
-        from kernel_pytorch.deployment.serving import (
-            KernelPyTorchHandler,
+        from torchbridge.deployment.serving import (
+            TorchBridgeHandler,
             TritonModelConfig,
             create_triton_config,
         )
 
-        assert KernelPyTorchHandler is not None
+        assert TorchBridgeHandler is not None
         assert TritonModelConfig is not None
         assert create_triton_config is not None
 
     def test_deployment_module_imports(self):
         """Test importing from parent deployment module."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             # Serving components
-            KernelPyTorchHandler,
+            TorchBridgeHandler,
             create_triton_config,
         )
 
-        assert KernelPyTorchHandler is not None
+        assert TorchBridgeHandler is not None
         assert create_triton_config is not None
 
     def test_full_workflow_torchscript(self, simple_model, sample_input, temp_dir):
         """Test full workflow: export -> configure -> package."""
-        from kernel_pytorch.deployment import (
+        from torchbridge.deployment import (
             create_triton_config,
             export_to_torchscript,
         )

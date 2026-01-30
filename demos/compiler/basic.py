@@ -26,7 +26,7 @@ from typing import Dict, List, Tuple
 
 # Import optimization components
 try:
-    from kernel_pytorch.core.optimized_layers import FusedGELU, OptimizedLayerNorm
+    from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
     OPTIMIZATIONS_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Import warning: {e}")

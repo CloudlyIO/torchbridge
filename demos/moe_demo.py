@@ -21,7 +21,7 @@ def demo_basic_moe():
     print("Demo 1: Basic MoE Layer")
     print("=" * 60)
 
-    from kernel_pytorch import MoEConfig, MoELayer, create_moe
+    from torchbridge import MoEConfig, MoELayer, create_moe
 
     # Create configuration
     config = MoEConfig(
@@ -56,11 +56,11 @@ def demo_moe_types():
     print("Demo 2: Different MoE Layer Types")
     print("=" * 60)
 
-    from kernel_pytorch import (
+    from torchbridge import (
         MoEConfig, MoELayer, SparseMoELayer,
         SwitchTransformerMoE, GLaMStyleMoE, create_moe_layer
     )
-    from kernel_pytorch.mixture_of_experts.moe_layers import AdaptiveMoELayer
+    from torchbridge.mixture_of_experts.moe_layers import AdaptiveMoELayer
 
     config = MoEConfig(num_experts=8, top_k=2)
     hidden_size = 256
@@ -109,8 +109,8 @@ def demo_routing_strategies():
     print("Demo 3: Routing Strategies")
     print("=" * 60)
 
-    from kernel_pytorch import TopKRouter, SwitchRouter
-    from kernel_pytorch.mixture_of_experts.routing import (
+    from torchbridge import TopKRouter, SwitchRouter
+    from torchbridge.mixture_of_experts.routing import (
         HashRouter, LearnedRouter, DynamicCapacityRouter, create_router
     )
 
@@ -171,8 +171,8 @@ def demo_expert_networks():
     print("Demo 4: Expert Network Architectures")
     print("=" * 60)
 
-    from kernel_pytorch import FeedForwardExpert
-    from kernel_pytorch.mixture_of_experts.expert_networks import (
+    from torchbridge import FeedForwardExpert
+    from torchbridge.mixture_of_experts.expert_networks import (
         ConvolutionalExpert, AttentionExpert, ParameterEfficientExpert
     )
 
@@ -230,7 +230,7 @@ def demo_load_balancing():
     print("Demo 5: Load Balancing")
     print("=" * 60)
 
-    from kernel_pytorch import LoadBalancer, MoEConfig, MoELayer
+    from torchbridge import LoadBalancer, MoEConfig, MoELayer
 
     # Create load balancer
     num_experts = 8
@@ -277,7 +277,7 @@ def demo_training():
     print("Demo 6: Training MoE Models")
     print("=" * 60)
 
-    from kernel_pytorch import MoEConfig, MoELayer
+    from torchbridge import MoEConfig, MoELayer
 
     # Simple MoE model
     class MoEModel(nn.Module):
@@ -349,7 +349,7 @@ def demo_transformer_integration():
     print("Demo 7: MoE in Transformer")
     print("=" * 60)
 
-    from kernel_pytorch import MoEConfig, MoELayer
+    from torchbridge import MoEConfig, MoELayer
 
     class MoETransformerBlock(nn.Module):
         """Transformer block with MoE FFN"""
@@ -448,7 +448,7 @@ def demo_performance():
     print("Demo 8: Performance Comparison")
     print("=" * 60)
 
-    from kernel_pytorch import MoEConfig, MoELayer
+    from torchbridge import MoEConfig, MoELayer
 
     hidden_size = 512
     batch_size = 8
@@ -512,7 +512,7 @@ def main():
     """Run all demos"""
     print("=" * 60)
     print("Mixture of Experts (MoE) Demonstrations")
-    print("kernel_pytorch v0.4.6")
+    print("torchbridge v0.4.6")
     print("=" * 60)
 
     demos = [

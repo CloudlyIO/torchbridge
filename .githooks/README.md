@@ -1,4 +1,4 @@
-# Git Hooks for KernelPyTorch
+# Git Hooks for TorchBridge
 
 This directory contains custom git hooks to maintain code quality and commit message standards.
 
