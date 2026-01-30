@@ -7,16 +7,17 @@ degrade performance instead of improving it.
 Stage 3B: Performance Regression Detection
 """
 
-import torch
-import torch.nn as nn
-import time
 import json
+import time
 import warnings
-from typing import Dict, Any, Optional, List, Tuple
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 
 class MetricType(Enum):
@@ -56,15 +57,15 @@ class PerformanceMetrics:
     batch_size: int
 
     # Optional metadata
-    accuracy: Optional[float] = None
-    additional_metrics: Dict[str, Any] = field(default_factory=dict)
+    accuracy: float | None = None
+    additional_metrics: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PerformanceMetrics':
+    def from_dict(cls, data: dict[str, Any]) -> 'PerformanceMetrics':
         """Create from dictionary."""
         return cls(**data)
 
@@ -81,7 +82,7 @@ class RegressionResult:
     change_percent: float
     message: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'has_regression': self.has_regression,
@@ -102,7 +103,7 @@ class PerformanceTracker:
     against them to detect when optimizations degrade performance.
     """
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         """
         Initialize performance tracker.
 
@@ -116,7 +117,7 @@ class PerformanceTracker:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing metrics
-        self.metrics_history: Dict[str, List[PerformanceMetrics]] = {}
+        self.metrics_history: dict[str, list[PerformanceMetrics]] = {}
         self._load_metrics()
 
         # Regression thresholds (as fractions)
@@ -127,7 +128,7 @@ class PerformanceTracker:
         """Load metrics from storage."""
         if self.storage_path.exists():
             try:
-                with open(self.storage_path, 'r') as f:
+                with open(self.storage_path) as f:
                     data = json.load(f)
 
                 for model_hash, metrics_list in data.items():
@@ -135,7 +136,7 @@ class PerformanceTracker:
                         PerformanceMetrics.from_dict(m) for m in metrics_list
                     ]
             except Exception as e:
-                warnings.warn(f"Failed to load metrics: {e}")
+                warnings.warn(f"Failed to load metrics: {e}", stacklevel=2)
                 self.metrics_history = {}
 
     def _save_metrics(self):
@@ -150,7 +151,7 @@ class PerformanceTracker:
                 json.dump(data, f, indent=2)
 
         except Exception as e:
-            warnings.warn(f"Failed to save metrics: {e}")
+            warnings.warn(f"Failed to save metrics: {e}", stacklevel=2)
 
     def _compute_model_hash(self, model: nn.Module) -> str:
         """Compute unique hash for model architecture."""
@@ -164,7 +165,7 @@ class PerformanceTracker:
         sample_inputs: torch.Tensor,
         num_iterations: int = 100,
         warmup_iterations: int = 10
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """
         Benchmark model performance.
 
@@ -224,8 +225,8 @@ class PerformanceTracker:
         model_name: str,
         backend: str = "cpu",
         optimization_level: str = "conservative",
-        accuracy: Optional[float] = None,
-        additional_metrics: Optional[Dict[str, Any]] = None
+        accuracy: float | None = None,
+        additional_metrics: dict[str, Any] | None = None
     ) -> PerformanceMetrics:
         """
         Record performance metrics for a model.
@@ -283,9 +284,9 @@ class PerformanceTracker:
     def get_baseline(
         self,
         model: nn.Module,
-        backend: Optional[str] = None,
-        optimization_level: Optional[str] = None
-    ) -> Optional[PerformanceMetrics]:
+        backend: str | None = None,
+        optimization_level: str | None = None
+    ) -> PerformanceMetrics | None:
         """
         Get baseline performance metrics for a model.
 
@@ -320,8 +321,8 @@ class PerformanceTracker:
         self,
         model: nn.Module,
         current_metrics: PerformanceMetrics,
-        baseline: Optional[PerformanceMetrics] = None
-    ) -> List[RegressionResult]:
+        baseline: PerformanceMetrics | None = None
+    ) -> list[RegressionResult]:
         """
         Detect performance regressions.
 
@@ -410,7 +411,7 @@ class PerformanceTracker:
         self,
         model: nn.Module,
         current_metrics: PerformanceMetrics,
-        baseline: Optional[PerformanceMetrics] = None
+        baseline: PerformanceMetrics | None = None
     ):
         """
         Warn if performance regression is detected.
@@ -424,17 +425,17 @@ class PerformanceTracker:
 
         for regression in regressions:
             if regression.severity == RegressionSeverity.SEVERE:
-                warnings.warn(f"⚠️  SEVERE REGRESSION: {regression.message}", UserWarning)
+                warnings.warn(f"  SEVERE REGRESSION: {regression.message}", UserWarning, stacklevel=2)
             elif regression.severity == RegressionSeverity.MODERATE:
-                warnings.warn(f"⚠️  MODERATE REGRESSION: {regression.message}", UserWarning)
+                warnings.warn(f"  MODERATE REGRESSION: {regression.message}", UserWarning, stacklevel=2)
             else:
-                warnings.warn(f"ℹ️  Minor regression: {regression.message}", UserWarning)
+                warnings.warn(f"ℹ  Minor regression: {regression.message}", UserWarning, stacklevel=2)
 
     def get_performance_history(
         self,
         model: nn.Module,
         limit: int = 10
-    ) -> List[PerformanceMetrics]:
+    ) -> list[PerformanceMetrics]:
         """
         Get performance history for a model.
 
@@ -453,7 +454,7 @@ class PerformanceTracker:
         history = self.metrics_history[model_hash]
         return list(reversed(history[-limit:]))
 
-    def clear_history(self, model: Optional[nn.Module] = None):
+    def clear_history(self, model: nn.Module | None = None):
         """
         Clear performance history.
 
@@ -471,7 +472,7 @@ class PerformanceTracker:
 
 
 # Global tracker instance
-_global_tracker: Optional[PerformanceTracker] = None
+_global_tracker: PerformanceTracker | None = None
 
 
 def get_performance_tracker() -> PerformanceTracker:
@@ -498,7 +499,7 @@ def detect_regression(
     model: nn.Module,
     current_metrics: PerformanceMetrics,
     **kwargs
-) -> List[RegressionResult]:
+) -> list[RegressionResult]:
     """Convenience function to detect regression."""
     return get_performance_tracker().detect_regression(
         model, current_metrics, **kwargs

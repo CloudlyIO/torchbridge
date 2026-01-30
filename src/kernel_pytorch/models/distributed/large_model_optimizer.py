@@ -12,27 +12,26 @@ Features:
 """
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
 
-from .tensor_parallel import TensorParallelConfig, apply_tensor_parallelism
+from .model_sharding import (
+    ModelSharder,
+    ShardingConfig,
+    ShardingStrategy,
+    WeightDistributor,
+    automatic_sharding,
+)
 from .pipeline_parallel import (
     PipelineParallelConfig,
     ScheduleType,
     create_pipeline_stages,
-    estimate_pipeline_memory,
 )
-from .model_sharding import (
-    ShardingStrategy,
-    ShardingConfig,
-    ModelSharder,
-    WeightDistributor,
-    automatic_sharding,
-)
+from .tensor_parallel import TensorParallelConfig, apply_tensor_parallelism
 
 logger = logging.getLogger(__name__)
 
@@ -152,8 +151,8 @@ class DistributedLLMOptimizer:
     def __init__(
         self,
         model_name: str,
-        config: Optional[DistributedConfig] = None,
-        model_type: Optional[LargeModelType] = None,
+        config: DistributedConfig | None = None,
+        model_type: LargeModelType | None = None,
     ):
         """Initialize distributed LLM optimizer.
 
@@ -166,15 +165,15 @@ class DistributedLLMOptimizer:
         self.config = config or DistributedConfig()
         self.model_type = model_type or self._detect_model_type(model_name)
 
-        self._model: Optional[nn.Module] = None
-        self._tokenizer: Optional[Any] = None
-        self._device_map: Optional[Dict[str, str]] = None
+        self._model: nn.Module | None = None
+        self._tokenizer: Any | None = None
+        self._device_map: dict[str, str] | None = None
 
         # Initialize sub-components
-        self._tp_config: Optional[TensorParallelConfig] = None
-        self._pp_config: Optional[PipelineParallelConfig] = None
-        self._sharder: Optional[ModelSharder] = None
-        self._distributor: Optional[WeightDistributor] = None
+        self._tp_config: TensorParallelConfig | None = None
+        self._pp_config: PipelineParallelConfig | None = None
+        self._sharder: ModelSharder | None = None
+        self._distributor: WeightDistributor | None = None
 
         # Select parallelism strategy
         self._select_strategy()
@@ -513,7 +512,7 @@ class DistributedLLMOptimizer:
 
         return generated
 
-    def estimate_memory(self) -> Dict[str, float]:
+    def estimate_memory(self) -> dict[str, float]:
         """Estimate memory requirements per GPU.
 
         Returns:
@@ -582,7 +581,7 @@ class DistributedLlama70B(DistributedLLMOptimizer):
     def __init__(
         self,
         model_name: str = "meta-llama/Llama-2-70b-hf",
-        config: Optional[DistributedConfig] = None,
+        config: DistributedConfig | None = None,
     ):
         if config is None:
             config = DistributedConfig(
@@ -600,7 +599,7 @@ class DistributedFalcon(DistributedLLMOptimizer):
     def __init__(
         self,
         model_name: str = "tiiuae/falcon-40b",
-        config: Optional[DistributedConfig] = None,
+        config: DistributedConfig | None = None,
     ):
         model_type = LargeModelType.FALCON_180B if "180b" in model_name.lower() else LargeModelType.FALCON_40B
         if config is None:
@@ -619,7 +618,7 @@ class DistributedMixtral(DistributedLLMOptimizer):
     def __init__(
         self,
         model_name: str = "mistralai/Mixtral-8x7B-v0.1",
-        config: Optional[DistributedConfig] = None,
+        config: DistributedConfig | None = None,
     ):
         model_type = LargeModelType.MIXTRAL_8X22B if "22b" in model_name.lower() else LargeModelType.MIXTRAL
         if config is None:
@@ -670,7 +669,7 @@ def estimate_gpu_requirements(
     max_batch_size: int = 1,
     quantization: str = "none",
     gpu_memory_gb: float = 80.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Estimate GPU requirements for a large model.
 
     Args:

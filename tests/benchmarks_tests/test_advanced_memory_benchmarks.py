@@ -8,28 +8,24 @@ Comprehensive benchmarking suite for advanced memory optimizations:
 - Production readiness assessment
 """
 
+import gc
+import statistics
+import time
+from typing import Any
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import gc
-from typing import Dict, Any, List, Tuple
-import statistics
 
 from kernel_pytorch.advanced_memory import (
-    DeepOptimizerStates,
-    InterleaveOffloadingOptimizer,
-    CPUGPUHybridOptimizer,
-    MemoryConfig,
-    SelectiveGradientCheckpointing,
     AdaptiveCheckpointing,
-    DynamicActivationOffloading,
+    DeepOptimizerStates,
     DynamicMemoryPool,
+    InterleaveOffloadingOptimizer,
     LossyGradientCompression,
-    QuantizedGradientAccumulation,
-    LongSequenceOptimizer,
-    SegmentedAttentionMemory
+    MemoryConfig,
+    SegmentedAttentionMemory,
 )
 
 
@@ -150,7 +146,7 @@ class TestAdvancedMemoryBenchmarks:
         return inputs, targets
 
     def benchmark_optimizer_performance(self, model: nn.Module, optimizer_factory,
-                                      device: torch.device, num_steps: int = 5) -> Dict[str, Any]:
+                                      device: torch.device, num_steps: int = 5) -> dict[str, Any]:
         """Benchmark optimizer performance"""
         timer = PerformanceTimer(device)
         profiler = MemoryProfiler(device)
@@ -161,7 +157,7 @@ class TestAdvancedMemoryBenchmarks:
         step_times = []
         memory_usage = []
 
-        for step in range(num_steps):
+        for _step in range(num_steps):
             profiler.start_profiling()
 
             with timer:
@@ -178,9 +174,9 @@ class TestAdvancedMemoryBenchmarks:
                 loss.backward()
 
                 if hasattr(optimizer, 'step'):
-                    step_result = optimizer.step()
+                    optimizer.step()
                 else:
-                    step_result = optimizer.optimizer.step() if hasattr(optimizer, 'optimizer') else None
+                    optimizer.optimizer.step() if hasattr(optimizer, 'optimizer') else None
 
             step_times.append(timer.elapsed_time)
             memory_usage.append(profiler.get_peak_memory_gb())
@@ -199,7 +195,7 @@ class TestAdvancedMemoryBenchmarks:
         results = {}
 
         for model_size, model in benchmark_models.items():
-            print(f"\n🔄 Benchmarking Deep Optimizer States - {model_size} model")
+            print(f"\n Benchmarking Deep Optimizer States - {model_size} model")
 
             # Standard optimizer baseline
             def standard_optimizer_factory(model):
@@ -259,7 +255,7 @@ class TestAdvancedMemoryBenchmarks:
             if model_size == 'large':
                 continue  # Skip large model to avoid timeout
 
-            print(f"\n⚡ Benchmarking Interleave Offloading - {model_size} model")
+            print(f"\n Benchmarking Interleave Offloading - {model_size} model")
 
             # Standard optimizer baseline
             def standard_optimizer_factory(model):
@@ -309,7 +305,7 @@ class TestAdvancedMemoryBenchmarks:
         results = {}
 
         for model_size, model in benchmark_models.items():
-            print(f"\n💾 Benchmarking Checkpointing - {model_size} model")
+            print(f"\n Benchmarking Checkpointing - {model_size} model")
 
             # Ensure model parameters require gradients
             model.train()
@@ -335,13 +331,13 @@ class TestAdvancedMemoryBenchmarks:
                 torch.cuda.empty_cache()
 
             # With adaptive checkpointing
-            adaptive_checkpoint = AdaptiveCheckpointing()
+            AdaptiveCheckpointing()
 
             profiler.start_profiling()
             inputs, targets = self.create_training_data(device)
 
             def checkpoint_forward():
-                return model(inputs)
+                return model(inputs)  # noqa: B023
 
             outputs = torch.utils.checkpoint.checkpoint(checkpoint_forward)
             loss = F.cross_entropy(outputs.view(-1, outputs.size(-1)), targets.view(-1))
@@ -384,8 +380,8 @@ class TestAdvancedMemoryBenchmarks:
 
         results = {}
 
-        for i, (rows, cols) in enumerate(gradient_sizes):
-            print(f"\n🗜️ Benchmarking Gradient Compression - {rows}x{cols}")
+        for _i, (rows, cols) in enumerate(gradient_sizes):
+            print(f"\n Benchmarking Gradient Compression - {rows}x{cols}")
 
             gradients = torch.randn(rows, cols, device=device)
             original_size = gradients.numel() * 4  # 4 bytes per float32
@@ -454,7 +450,7 @@ class TestAdvancedMemoryBenchmarks:
         num_cycles = 3  # Multiple cycles to show reuse benefits (reduced for faster testing)
 
         for i, base_pattern in enumerate(test_patterns):
-            print(f"\n🏊 Benchmarking Memory Pool - Pattern {i+1}")
+            print(f"\n Benchmarking Memory Pool - Pattern {i+1}")
 
             # Repeat pattern multiple times to show reuse
             pattern = base_pattern * num_cycles
@@ -475,7 +471,7 @@ class TestAdvancedMemoryBenchmarks:
             # With pool - demonstrating reuse
             with timer:
                 all_tensors = []
-                for cycle in range(num_cycles):
+                for _cycle in range(num_cycles):
                     cycle_tensors = []
                     # Allocate for this cycle
                     for shape in base_pattern:
@@ -522,7 +518,7 @@ class TestAdvancedMemoryBenchmarks:
         results = {}
 
         for seq_len in sequence_lengths:
-            print(f"\n📏 Benchmarking Long Sequence - Length {seq_len}")
+            print(f"\n Benchmarking Long Sequence - Length {seq_len}")
 
             # Standard attention
             standard_attention = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True).to(device)
@@ -560,7 +556,7 @@ class TestAdvancedMemoryBenchmarks:
 
             with timer:
                 with torch.no_grad():
-                    segmented_output = segmented_attention(x)
+                    segmented_attention(x)
             segmented_time = timer.elapsed_time
             segmented_memory = profiler.get_peak_memory_gb()
 
@@ -592,7 +588,7 @@ class TestAdvancedMemoryBenchmarks:
     @pytest.mark.benchmark
     def test_performance_regression_detection(self, benchmark_models, device):
         """Comprehensive performance regression test"""
-        print("\n🎯 Performance Regression Detection")
+        print("\n Performance Regression Detection")
 
         # Expected minimum performance thresholds
         performance_thresholds = {
@@ -608,7 +604,7 @@ class TestAdvancedMemoryBenchmarks:
 
         # Test Deep Optimizer States
         model = benchmark_models['medium']
-        base_optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+        torch.optim.AdamW(model.parameters(), lr=1e-4)
 
         # Standard baseline
         standard_results = self.benchmark_optimizer_performance(
@@ -669,17 +665,17 @@ class TestAdvancedMemoryBenchmarks:
         print(f"Compression Ratio: {compression_ratio:.2f}x (threshold: {performance_thresholds['compression_ratio']}x)")
 
         if regression_detected:
-            print("\n❌ PERFORMANCE REGRESSION DETECTED:")
+            print("\n PERFORMANCE REGRESSION DETECTED:")
             for detail in regression_details:
                 print(f"  • {detail}")
             pytest.fail(f"Performance regression detected: {', '.join(regression_details)}")
         else:
-            print("\n✅ No performance regressions detected")
+            print("\n No performance regressions detected")
 
     @pytest.mark.benchmark
     def test_production_readiness_assessment(self, device):
         """Assess production readiness of advanced memory optimizations"""
-        print("\n🏭 Production Readiness Assessment")
+        print("\n Production Readiness Assessment")
 
         readiness_criteria = {
             'initialization_success': False,
@@ -704,20 +700,20 @@ class TestAdvancedMemoryBenchmarks:
             )
 
             # Other components
-            interleave_optimizer = InterleaveOffloadingOptimizer(
+            InterleaveOffloadingOptimizer(
                 optimizer=torch.optim.AdamW(model.parameters(), lr=1e-3),
                 model=model,
                 memory_limit_gb=1.0
             )
 
-            adaptive_checkpoint = AdaptiveCheckpointing()
-            compressor = LossyGradientCompression(bits=8)
+            AdaptiveCheckpointing()
+            LossyGradientCompression(bits=8)
 
             readiness_criteria['initialization_success'] = True
-            print("✅ All components initialize successfully")
+            print(" All components initialize successfully")
 
         except Exception as e:
-            print(f"❌ Initialization failed: {e}")
+            print(f" Initialization failed: {e}")
             readiness_criteria['initialization_success'] = False
 
         try:
@@ -736,10 +732,10 @@ class TestAdvancedMemoryBenchmarks:
             assert isinstance(metrics, dict)
 
             readiness_criteria['basic_functionality'] = True
-            print("✅ Basic functionality working")
+            print(" Basic functionality working")
 
         except Exception as e:
-            print(f"❌ Basic functionality failed: {e}")
+            print(f" Basic functionality failed: {e}")
             readiness_criteria['basic_functionality'] = False
 
         # Performance and memory checks are based on previous benchmarks
@@ -747,9 +743,9 @@ class TestAdvancedMemoryBenchmarks:
         readiness_criteria['memory_efficiency'] = True
         readiness_criteria['stability'] = True
 
-        print("✅ Performance acceptable")
-        print("✅ Memory efficiency verified")
-        print("✅ Stability confirmed")
+        print(" Performance acceptable")
+        print(" Memory efficiency verified")
+        print(" Stability confirmed")
 
         # Overall assessment
         passing_criteria = sum(readiness_criteria.values())
@@ -760,11 +756,11 @@ class TestAdvancedMemoryBenchmarks:
         print(f"\nProduction Readiness Score: {readiness_score:.1f}% ({passing_criteria}/{total_criteria})")
 
         if readiness_score >= 80:
-            print("🟢 PRODUCTION READY")
+            print(" PRODUCTION READY")
         elif readiness_score >= 60:
-            print("🟡 MOSTLY READY - Some issues to address")
+            print(" MOSTLY READY - Some issues to address")
         else:
-            print("🔴 NOT READY - Significant issues detected")
+            print(" NOT READY - Significant issues detected")
 
         # Should pass for production readiness
         assert readiness_score >= 60, f"Production readiness score {readiness_score:.1f}% too low"

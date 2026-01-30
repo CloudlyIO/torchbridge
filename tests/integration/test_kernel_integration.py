@@ -10,14 +10,17 @@ Tests end-to-end integration of:
 - Config/backend integration
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-from typing import Optional
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, PrecisionFormat
-from kernel_pytorch.core.kernel_registry import KernelRegistry, KernelType, KernelBackend
 from kernel_pytorch.backends.nvidia.nvidia_backend import NVIDIABackend
+from kernel_pytorch.core.config import KernelPyTorchConfig, PrecisionFormat
+from kernel_pytorch.core.kernel_registry import (
+    KernelRegistry,
+    KernelType,
+)
 from kernel_pytorch.validation.unified_validator import validate_custom_kernels
 
 
@@ -203,7 +206,7 @@ def test_model_fusion_replacement():
 
     # Create a model with fusible pattern
     model = SimpleTransformerBlock()
-    original_ffn_type = type(model.ffn)
+    type(model.ffn)
 
     prepared = backend.prepare_model_with_custom_kernels(model)
 
@@ -318,7 +321,7 @@ def test_fallback_when_kernels_disabled():
     backend = NVIDIABackend(config)
 
     # Should not register any kernels
-    kernels = backend.kernel_registry.list_kernels()
+    backend.kernel_registry.list_kernels()
     # Empty registry is OK when disabled
 
     # Model preparation should still work

@@ -1,10 +1,8 @@
 """Tests for the kpt-export CLI command."""
 
-import json
+
 import pytest
-import tempfile
 import torch
-from pathlib import Path
 
 from kernel_pytorch.cli.export import ExportCommand
 
@@ -12,7 +10,7 @@ from kernel_pytorch.cli.export import ExportCommand
 def _onnx_available() -> bool:
     """Check if ONNX export dependencies are available."""
     try:
-        import onnxscript
+        import onnxscript  # noqa: F401
         return True
     except ImportError:
         return False
@@ -21,7 +19,7 @@ def _onnx_available() -> bool:
 def _safetensors_available() -> bool:
     """Check if SafeTensors is available."""
     try:
-        import safetensors
+        import safetensors  # noqa: F401
         return True
     except ImportError:
         return False

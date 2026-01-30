@@ -7,38 +7,38 @@ This script provides systematic benchmarking of all three optimization patterns:
 - Compute Intensity Patterns
 - Compiler-Friendly Patterns
 
-🎯 BENCHMARKING GOALS:
+ BENCHMARKING GOALS:
 - Measure performance improvements
 - Validate optimization effectiveness
 - Compare baseline vs optimized implementations
 - Generate performance reports
 """
 
-import torch
-import torch.nn as nn
-import time
+import argparse
 import json
 import os
+import time
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
-import argparse
+from typing import Any
+
+import torch
+import torch.nn as nn
+
+from kernel_pytorch.optimizations.patterns.compiler_friendly import (
+    OptimizedLinearGELU,
+    OptimizedTransformerBlock,
+    check_compilation_compatibility,
+    optimize_for_torch_compile,
+)
+from kernel_pytorch.optimizations.patterns.compute_intensity import (
+    analyze_compute_intensity_profile,
+    calculate_arithmetic_intensity,
+)
 
 # Import optimization patterns
 from kernel_pytorch.optimizations.patterns.memory_efficiency import (
     MemoryEfficientSequential,
-    benchmark_memory_optimizations,
-    analyze_memory_access_patterns
-)
-from kernel_pytorch.optimizations.patterns.compute_intensity import (
-    analyze_compute_intensity_profile,
-    calculate_arithmetic_intensity
-)
-from kernel_pytorch.optimizations.patterns.compiler_friendly import (
-    OptimizedTransformerBlock,
-    OptimizedLinearGELU,
-    benchmark_compilation_impact,
-    check_compilation_compatibility,
-    optimize_for_torch_compile
+    analyze_memory_access_patterns,
 )
 
 
@@ -64,7 +64,7 @@ class OptimizationPatternBenchmark:
 
         self.results = {}
 
-    def time_execution(self, func, *args, num_runs: int = None) -> Dict[str, float]:
+    def time_execution(self, func, *args, num_runs: int = None) -> dict[str, float]:
         """Time function execution with proper warmup."""
         num_runs = num_runs or self.num_runs
 
@@ -80,7 +80,7 @@ class OptimizationPatternBenchmark:
         times = []
         for _ in range(num_runs):
             start_time = time.perf_counter()
-            result = func(*args)
+            func(*args)
             if self.device.type == "cuda":
                 torch.cuda.synchronize()
             end_time = time.perf_counter()
@@ -93,9 +93,9 @@ class OptimizationPatternBenchmark:
             "std_time_ms": (sum((t - sum(times)/len(times))**2 for t in times) / len(times))**0.5
         }
 
-    def benchmark_memory_efficiency(self) -> Dict[str, Any]:
+    def benchmark_memory_efficiency(self) -> dict[str, Any]:
         """Benchmark memory efficiency patterns."""
-        print("\n🧠 Benchmarking Memory Efficiency Patterns")
+        print("\n Benchmarking Memory Efficiency Patterns")
         print("-" * 50)
 
         results = {}
@@ -159,9 +159,9 @@ class OptimizationPatternBenchmark:
 
         return results
 
-    def benchmark_compute_intensity(self) -> Dict[str, Any]:
+    def benchmark_compute_intensity(self) -> dict[str, Any]:
         """Benchmark compute intensity patterns."""
-        print("\n⚡ Benchmarking Compute Intensity Patterns")
+        print("\n Benchmarking Compute Intensity Patterns")
         print("-" * 50)
 
         results = {}
@@ -240,9 +240,9 @@ class OptimizationPatternBenchmark:
 
         return results
 
-    def benchmark_compiler_friendly(self) -> Dict[str, Any]:
+    def benchmark_compiler_friendly(self) -> dict[str, Any]:
         """Benchmark compiler-friendly patterns."""
-        print("\n🔧 Benchmarking Compiler-Friendly Patterns")
+        print("\n Benchmarking Compiler-Friendly Patterns")
         print("-" * 50)
 
         results = {}
@@ -289,7 +289,7 @@ class OptimizationPatternBenchmark:
             "improvement_percent": (lg_speedup - 1) * 100
         }
 
-        print(f"  Linear+GELU:")
+        print("  Linear+GELU:")
         print(f"    Standard: {standard_lg_times['mean_time_ms']:.2f}ms")
         print(f"    Optimized: {optimized_lg_times['mean_time_ms']:.2f}ms")
         print(f"    Speedup: {lg_speedup:.2f}x ({(lg_speedup-1)*100:+.1f}%)")
@@ -307,7 +307,7 @@ class OptimizationPatternBenchmark:
             "improvement_percent": (tf_speedup - 1) * 100
         }
 
-        print(f"  Transformer Block:")
+        print("  Transformer Block:")
         print(f"    Standard: {standard_tf_times['mean_time_ms']:.2f}ms")
         print(f"    Optimized: {optimized_tf_times['mean_time_ms']:.2f}ms")
         print(f"    Speedup: {tf_speedup:.2f}x ({(tf_speedup-1)*100:+.1f}%)")
@@ -388,13 +388,13 @@ class OptimizationPatternBenchmark:
 
         return results
 
-    def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """Run comprehensive benchmark of all patterns."""
-        print("📊 Comprehensive Optimization Patterns Benchmark")
+        print(" Comprehensive Optimization Patterns Benchmark")
         print("=" * 60)
-        print(f"🔧 Device: {self.device}")
-        print(f"⚡ Mode: {'Quick' if self.quick else 'Full'}")
-        print(f"🔄 Runs per test: {self.num_runs}")
+        print(f" Device: {self.device}")
+        print(f" Mode: {'Quick' if self.quick else 'Full'}")
+        print(f" Runs per test: {self.num_runs}")
 
         start_time = time.time()
 
@@ -415,7 +415,7 @@ class OptimizationPatternBenchmark:
             "pytorch_version": torch.__version__
         }
 
-        print(f"\n✅ Benchmark completed in {total_time:.1f}s")
+        print(f"\n Benchmark completed in {total_time:.1f}s")
         return self.results
 
     def save_results(self, filename: str = None):
@@ -433,7 +433,7 @@ class OptimizationPatternBenchmark:
         with open(filepath, 'w') as f:
             json.dump(self.results, f, indent=2)
 
-        print(f"📁 Results saved to: {filepath}")
+        print(f" Results saved to: {filepath}")
         return filepath
 
     def print_summary(self):
@@ -442,7 +442,7 @@ class OptimizationPatternBenchmark:
             print("No benchmark results available")
             return
 
-        print("\n📈 BENCHMARK SUMMARY")
+        print("\n BENCHMARK SUMMARY")
         print("=" * 40)
 
         # Memory efficiency summary
@@ -450,25 +450,25 @@ class OptimizationPatternBenchmark:
             mem_results = self.results["memory_efficiency"]
             if "memory_efficient_sequential" in mem_results:
                 speedup = mem_results["memory_efficient_sequential"]["speedup"]
-                print(f"🧠 Memory Efficiency: {speedup:.2f}x speedup")
+                print(f" Memory Efficiency: {speedup:.2f}x speedup")
 
         # Compute intensity summary
         if "compute_intensity" in self.results:
             comp_results = self.results["compute_intensity"]
             if "model_profile" in comp_results and comp_results["model_profile"]["success"]:
                 intensity = comp_results["model_profile"]["overall_intensity"]
-                print(f"⚡ Compute Intensity: {intensity:.2f} FLOP/byte")
+                print(f" Compute Intensity: {intensity:.2f} FLOP/byte")
 
         # Compiler friendly summary
         if "compiler_friendly" in self.results:
             cf_results = self.results["compiler_friendly"]
             if "linear_gelu" in cf_results:
                 lg_speedup = cf_results["linear_gelu"]["speedup"]
-                print(f"🔧 Compiler Optimization: {lg_speedup:.2f}x speedup")
+                print(f" Compiler Optimization: {lg_speedup:.2f}x speedup")
 
         benchmark_info = self.results.get("benchmark_info", {})
         total_time = benchmark_info.get("total_time_seconds", 0)
-        print(f"⏱️  Total benchmark time: {total_time:.1f}s")
+        print(f"⏱  Total benchmark time: {total_time:.1f}s")
 
 
 def main():
@@ -485,7 +485,7 @@ def main():
 
     # Run benchmark
     benchmark = OptimizationPatternBenchmark(device=args.device, quick=args.quick)
-    results = benchmark.run_comprehensive_benchmark()
+    benchmark.run_comprehensive_benchmark()
 
     # Print summary
     benchmark.print_summary()

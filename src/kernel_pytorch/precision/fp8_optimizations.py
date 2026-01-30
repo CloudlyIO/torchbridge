@@ -17,21 +17,21 @@ References:
 """
 
 import copy
+import math
+import warnings
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, List, Union, Type, Tuple
-import warnings
-import math
 
 try:
     import transformer_engine.pytorch as te
     TRANSFORMER_ENGINE_AVAILABLE = True
 except ImportError:
     TRANSFORMER_ENGINE_AVAILABLE = False
-    warnings.warn("Transformer Engine not available - using fallback FP8 implementations")
+    warnings.warn("Transformer Engine not available - using fallback FP8 implementations", stacklevel=2)
 
-from .fp8_training_engine import FP8Format, FP8Config
+from .fp8_training_engine import FP8Config, FP8Format
 
 
 class FP8LinearLayer(nn.Module):
@@ -57,8 +57,8 @@ class FP8LinearLayer(nn.Module):
         in_features: int,
         out_features: int,
         bias: bool = True,
-        fp8_config: Optional[FP8Config] = None,
-        device: Optional[torch.device] = None
+        fp8_config: FP8Config | None = None,
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -263,7 +263,7 @@ class FP8Optimizer:
 
         # Perform optimizer step
         if closure is not None:
-            loss = self.optimizer.step(closure)
+            self.optimizer.step(closure)
         else:
             self.optimizer.step()
 
@@ -454,7 +454,7 @@ class FP8LossScaler:
 
 def convert_model_to_fp8(
     model: nn.Module,
-    fp8_config: Optional[FP8Config] = None,
+    fp8_config: FP8Config | None = None,
     convert_linear: bool = True,
     convert_attention: bool = True,
     inplace: bool = False
@@ -522,8 +522,8 @@ def convert_model_to_fp8(
 
 def create_fp8_optimizer(
     model: nn.Module,
-    optimizer_class: Type[torch.optim.Optimizer] = torch.optim.AdamW,
-    fp8_config: Optional[FP8Config] = None,
+    optimizer_class: type[torch.optim.Optimizer] = torch.optim.AdamW,
+    fp8_config: FP8Config | None = None,
     **optimizer_kwargs
 ) -> FP8Optimizer:
     """
@@ -552,9 +552,9 @@ def create_fp8_optimizer(
 # Utility functions
 def estimate_fp8_speedup(
     model: nn.Module,
-    input_shape: Tuple[int, ...],
-    device: Optional[torch.device] = None
-) -> Dict[str, float]:
+    input_shape: tuple[int, ...],
+    device: torch.device | None = None
+) -> dict[str, float]:
     """
     Estimate FP8 training speedup for a model
 

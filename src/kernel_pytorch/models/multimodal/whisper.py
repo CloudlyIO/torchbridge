@@ -7,15 +7,16 @@ This module provides optimizations for Whisper models including:
 - Real-time transcription support
 """
 
-from typing import Optional, Dict, Any, List, Union
+from typing import Any
+
 import torch
-import torch.nn as nn
+
 from .base import (
     BaseMultiModalOptimizer,
+    ModalityType,
     MultiModalOptimizationConfig,
     MultiModalType,
     OptimizationLevel,
-    ModalityType,
     count_parameters,
 )
 
@@ -23,7 +24,7 @@ from .base import (
 class WhisperOptimizer(BaseMultiModalOptimizer):
     """Optimizer for Whisper models."""
 
-    def __init__(self, config: Optional[MultiModalOptimizationConfig] = None):
+    def __init__(self, config: MultiModalOptimizationConfig | None = None):
         """Initialize Whisper optimizer.
 
         Args:
@@ -83,12 +84,12 @@ class WhisperOptimizer(BaseMultiModalOptimizer):
     def transcribe(
         self,
         model: Any,
-        audio: Union[torch.Tensor, str],
-        language: Optional[str] = None,
+        audio: torch.Tensor | str,
+        language: str | None = None,
         task: str = "transcribe",
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         **kwargs
-    ) -> Union[str, List[str]]:
+    ) -> str | list[str]:
         """Transcribe audio to text.
 
         Args:
@@ -114,7 +115,7 @@ class WhisperOptimizer(BaseMultiModalOptimizer):
                     resampler = torchaudio.transforms.Resample(sample_rate, 16000)
                     audio = resampler(audio)
             except ImportError:
-                raise ImportError("torchaudio required for audio loading")
+                raise ImportError("torchaudio required for audio loading") from None
 
         # Ensure correct device
         audio = audio.to(self.device)
@@ -186,7 +187,7 @@ def create_whisper_optimizer(
             raise ImportError(
                 "Either transformers or whisper is required for Whisper models. "
                 "Install with: pip install transformers or pip install openai-whisper"
-            )
+            ) from None
 
     # Create config
     config = MultiModalOptimizationConfig.from_optimization_level(
@@ -226,7 +227,7 @@ class WhisperBenchmark:
         num_iterations: int = 10,
         audio_duration_seconds: int = 30,
         sample_rate: int = 16000,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark transcription performance.
 
         Args:
@@ -282,7 +283,7 @@ class WhisperBenchmark:
             "is_real_time": rtf < 1.0,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:

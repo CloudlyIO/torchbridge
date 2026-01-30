@@ -8,16 +8,14 @@ Tests cover:
 - Integration between components
 """
 
+import json
+import os
+import tempfile
+import time
+
 import pytest
 import torch
 import torch.nn as nn
-import tempfile
-import json
-import time
-import os
-from pathlib import Path
-from typing import Dict, Any
-
 
 # ============================================================================
 # Test Fixtures
@@ -232,7 +230,7 @@ class TestGrafanaDashboard:
 
     def test_add_panel(self):
         """Test adding panels to dashboard."""
-        from kernel_pytorch.monitoring import GrafanaDashboard, DashboardPanel
+        from kernel_pytorch.monitoring import DashboardPanel, GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test")
         dashboard.add_panel(DashboardPanel(title="Panel 1"))
@@ -242,7 +240,7 @@ class TestGrafanaDashboard:
 
     def test_dashboard_to_dict(self):
         """Test dashboard serialization."""
-        from kernel_pytorch.monitoring import GrafanaDashboard, DashboardPanel
+        from kernel_pytorch.monitoring import DashboardPanel, GrafanaDashboard
 
         dashboard = GrafanaDashboard(title="Test")
         dashboard.add_panel(DashboardPanel(title="Panel 1"))
@@ -521,19 +519,10 @@ class TestMonitoringIntegration:
     def test_import_all(self):
         """Test importing all monitoring components."""
         from kernel_pytorch.monitoring import (
-            # Prometheus
-            MetricsExporter,
-            MetricsConfig,
-            create_metrics_exporter,
-            # Grafana
             GrafanaDashboard,
-            DashboardPanel,
-            create_inference_dashboard,
-            create_full_dashboard,
             # Health
             HealthMonitor,
-            HealthStatus,
-            create_health_monitor,
+            MetricsExporter,
         )
 
         assert MetricsExporter is not None
@@ -543,8 +532,8 @@ class TestMonitoringIntegration:
     def test_full_monitoring_workflow(self, simple_model, temp_dir):
         """Test full monitoring workflow."""
         from kernel_pytorch.monitoring import (
-            MetricsExporter,
             HealthMonitor,
+            MetricsExporter,
             create_inference_dashboard,
             export_dashboard_json,
         )

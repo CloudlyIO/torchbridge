@@ -19,12 +19,10 @@ Example:
     ```
 """
 
-import json
 import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
 
 import torch
 import torch.nn as nn
@@ -50,7 +48,7 @@ class SafeTensorsExportConfig:
     output_path: str = "model.safetensors"
     include_optimizer: bool = False
     half_precision: bool = False
-    metadata: Dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, str] = field(default_factory=dict)
     strict: bool = True
 
 
@@ -70,8 +68,8 @@ class SafeTensorsExportResult:
     output_path: str
     file_size_mb: float = 0.0
     num_tensors: int = 0
-    metadata: Dict[str, str] = field(default_factory=dict)
-    error_message: Optional[str] = None
+    metadata: dict[str, str] = field(default_factory=dict)
+    error_message: str | None = None
 
 
 # =============================================================================
@@ -108,7 +106,7 @@ class SafeTensorsExporter:
     def _check_safetensors_available(self) -> bool:
         """Check if safetensors library is available."""
         try:
-            import safetensors
+            import safetensors  # noqa: F401
             return True
         except ImportError:
             logger.warning(
@@ -120,9 +118,9 @@ class SafeTensorsExporter:
     def export(
         self,
         model: nn.Module,
-        output_path: Union[str, Path],
-        config: Optional[SafeTensorsExportConfig] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        output_path: str | Path,
+        config: SafeTensorsExportConfig | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> SafeTensorsExportResult:
         """Export model to SafeTensors format.
 
@@ -211,8 +209,8 @@ class SafeTensorsExporter:
 
     def _convert_to_half(
         self,
-        state_dict: Dict[str, torch.Tensor]
-    ) -> Dict[str, torch.Tensor]:
+        state_dict: dict[str, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
         """Convert state dict tensors to FP16.
 
         Args:
@@ -231,9 +229,9 @@ class SafeTensorsExporter:
 
     def load(
         self,
-        path: Union[str, Path],
-        device: Union[str, torch.device] = "cpu",
-    ) -> Dict[str, torch.Tensor]:
+        path: str | Path,
+        device: str | torch.device = "cpu",
+    ) -> dict[str, torch.Tensor]:
         """Load tensors from SafeTensors file.
 
         Args:
@@ -249,15 +247,15 @@ class SafeTensorsExporter:
             raise ImportError(
                 "safetensors library not installed. "
                 "Install with: pip install safetensors"
-            )
+            ) from None
 
         return load_file(str(path), device=str(device))
 
     def load_model(
         self,
         model: nn.Module,
-        path: Union[str, Path],
-        device: Union[str, torch.device] = "cpu",
+        path: str | Path,
+        device: str | torch.device = "cpu",
         strict: bool = True,
     ) -> nn.Module:
         """Load weights from SafeTensors file into model.
@@ -275,7 +273,7 @@ class SafeTensorsExporter:
         model.load_state_dict(state_dict, strict=strict)
         return model
 
-    def get_metadata(self, path: Union[str, Path]) -> Dict[str, str]:
+    def get_metadata(self, path: str | Path) -> dict[str, str]:
         """Get metadata from SafeTensors file without loading tensors.
 
         Args:
@@ -290,7 +288,7 @@ class SafeTensorsExporter:
             raise ImportError(
                 "safetensors library not installed. "
                 "Install with: pip install safetensors"
-            )
+            ) from None
 
         with safe_open(str(path), framework="pt") as f:
             return dict(f.metadata()) if f.metadata() else {}
@@ -302,8 +300,8 @@ class SafeTensorsExporter:
 
 def export_to_safetensors(
     model: nn.Module,
-    output_path: Union[str, Path],
-    metadata: Optional[Dict[str, str]] = None,
+    output_path: str | Path,
+    metadata: dict[str, str] | None = None,
     half_precision: bool = False,
 ) -> SafeTensorsExportResult:
     """Export model to SafeTensors format.
@@ -340,9 +338,9 @@ def export_to_safetensors(
 
 
 def load_safetensors(
-    path: Union[str, Path],
-    device: Union[str, torch.device] = "cpu",
-) -> Dict[str, torch.Tensor]:
+    path: str | Path,
+    device: str | torch.device = "cpu",
+) -> dict[str, torch.Tensor]:
     """Load tensors from SafeTensors file.
 
     Args:
@@ -358,8 +356,8 @@ def load_safetensors(
 
 def load_model_safetensors(
     model: nn.Module,
-    path: Union[str, Path],
-    device: Union[str, torch.device] = "cpu",
+    path: str | Path,
+    device: str | torch.device = "cpu",
     strict: bool = True,
 ) -> nn.Module:
     """Load weights from SafeTensors file into model.

@@ -5,12 +5,14 @@ General CUDA utilities and helper functions for NVIDIA GPU optimization.
 """
 
 import logging
-import warnings
-import torch
-import torch.nn as nn
-from typing import Dict, Any, Optional, List, Tuple
 import os
 import subprocess
+import warnings
+from collections.abc import Callable
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
 
@@ -25,7 +27,7 @@ class CUDADeviceManager:
     CUDA environment setup.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize CUDA device manager.
 
@@ -44,7 +46,7 @@ class CUDADeviceManager:
     def _setup_cuda_devices(self) -> None:
         """Set up CUDA devices."""
         if not torch.cuda.is_available():
-            warnings.warn("CUDA not available")
+            warnings.warn("CUDA not available", stacklevel=2)
             self._current_device = torch.device("cpu")
             return
 
@@ -53,7 +55,7 @@ class CUDADeviceManager:
         self._current_device = self._devices[0] if self._devices else torch.device("cpu")
 
         # Collect device properties
-        for i, device in enumerate(self._devices):
+        for i, _device in enumerate(self._devices):
             props = torch.cuda.get_device_properties(i)
             self._device_properties[i] = {
                 'name': props.name,
@@ -77,7 +79,7 @@ class CUDADeviceManager:
         return self._current_device
 
     @property
-    def devices(self) -> List[torch.device]:
+    def devices(self) -> list[torch.device]:
         """Get all available CUDA devices."""
         return self._devices
 
@@ -86,11 +88,11 @@ class CUDADeviceManager:
         """Get number of available CUDA devices."""
         return len(self._devices)
 
-    def get_device_properties(self, device_id: int = 0) -> Dict[str, Any]:
+    def get_device_properties(self, device_id: int = 0) -> dict[str, Any]:
         """Get properties for specific device."""
         return self._device_properties.get(device_id, {})
 
-    def get_all_device_properties(self) -> Dict[int, Dict[str, Any]]:
+    def get_all_device_properties(self) -> dict[int, dict[str, Any]]:
         """Get properties for all devices."""
         return self._device_properties
 
@@ -100,7 +102,7 @@ class CUDADeviceManager:
             self._current_device = self._devices[device_id]
             torch.cuda.set_device(device_id)
         else:
-            warnings.warn(f"Device {device_id} not available")
+            warnings.warn(f"Device {device_id} not available", stacklevel=2)
 
     def synchronize_all(self) -> None:
         """Synchronize all CUDA devices."""
@@ -117,7 +119,7 @@ class CUDAOptimizations:
     and performance tuning for CUDA execution.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize CUDA optimizations.
 
@@ -159,7 +161,8 @@ class CUDAOptimizations:
                 if in_f % optimal_div != 0 or out_f % optimal_div != 0:
                     warnings.warn(
                         f"Layer {name} dimensions ({in_f}x{out_f}) not optimal for "
-                        f"Tensor Cores. Consider padding to multiples of {optimal_div}."
+                        f"Tensor Cores. Consider padding to multiples of {optimal_div}.",
+                    stacklevel=2,
                     )
 
         return model
@@ -168,8 +171,8 @@ class CUDAOptimizations:
         """Add hints for CUDA kernel fusion."""
         for module in model.modules():
             if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv3d)):
-                setattr(module, '_cuda_fusible', True)
-                setattr(module, '_cuda_fusion_priority', 1)
+                module._cuda_fusible = True
+                module._cuda_fusion_priority = 1
 
         return model
 
@@ -186,7 +189,7 @@ class CUDAOptimizations:
 
         return model
 
-    def get_cuda_optimization_config(self) -> Dict[str, Any]:
+    def get_cuda_optimization_config(self) -> dict[str, Any]:
         """Get recommended CUDA optimization configuration."""
         config = {
             'cudnn_benchmark': self.nvidia_config.cudnn_benchmark,
@@ -214,7 +217,7 @@ class CUDAUtilities:
     """
 
     @staticmethod
-    def get_cuda_env_info() -> Dict[str, Any]:
+    def get_cuda_env_info() -> dict[str, Any]:
         """Get CUDA environment information."""
         env_info = {
             'cuda_available': torch.cuda.is_available(),
@@ -243,12 +246,12 @@ class CUDAUtilities:
 
     @staticmethod
     def profile_cuda_kernel(
-        func: callable,
+        func: Callable,  # type: ignore[type-arg]
         *args,
         num_warmup: int = 5,
         num_iterations: int = 100,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Profile CUDA kernel performance.
 
@@ -265,7 +268,6 @@ class CUDAUtilities:
         if not torch.cuda.is_available():
             return {'error': 'CUDA not available'}
 
-        import time
 
         # Warmup
         for _ in range(num_warmup):
@@ -296,7 +298,7 @@ class CUDAUtilities:
         }
 
     @staticmethod
-    def get_gpu_utilization() -> Dict[str, Any]:
+    def get_gpu_utilization() -> dict[str, Any]:
         """Get current GPU utilization."""
         if not torch.cuda.is_available():
             return {'error': 'CUDA not available'}
@@ -332,7 +334,7 @@ class CUDAUtilities:
         }
 
     @staticmethod
-    def optimize_cuda_flags(architecture: NVIDIAArchitecture) -> Dict[str, str]:
+    def optimize_cuda_flags(architecture: NVIDIAArchitecture) -> dict[str, str]:
         """Get optimized CUDA flags for specific architecture."""
         flags = {
             'CUDA_LAUNCH_BLOCKING': '0',  # Async kernel launches
@@ -355,8 +357,8 @@ class CUDAUtilities:
 
 # Integration factory function
 def create_cuda_integration(
-    config: Optional[KernelPyTorchConfig] = None
-) -> Tuple[CUDADeviceManager, CUDAOptimizations]:
+    config: KernelPyTorchConfig | None = None
+) -> tuple[CUDADeviceManager, CUDAOptimizations]:
     """
     Create complete CUDA integration setup.
 

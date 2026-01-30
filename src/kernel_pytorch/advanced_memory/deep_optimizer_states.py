@@ -13,24 +13,22 @@ Key Features:
 - Adaptive memory management based on training dynamics
 """
 
+import time
+import warnings
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Dict, List, Optional, Tuple, Any, Union
-import threading
-import time
-import math
-import os
-from dataclasses import dataclass
-from enum import Enum
-import warnings
 
 try:
     import psutil
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
-    warnings.warn("psutil not available. Some memory monitoring features will be disabled.")
+    warnings.warn("psutil not available. Some memory monitoring features will be disabled.", stacklevel=2)
 
 
 class DeviceType(Enum):
@@ -75,7 +73,7 @@ class OptimizerStateGroup:
     def __init__(
         self,
         group_id: int,
-        parameter_groups: List[Dict],
+        parameter_groups: list[dict],
         device: DeviceType = DeviceType.GPU,
         compression_enabled: bool = True
     ):
@@ -129,8 +127,8 @@ class DeepOptimizerStates:
         self,
         optimizer: optim.Optimizer,
         model: nn.Module,
-        memory_config: Optional[MemoryConfig] = None,
-        performance_model: Optional[PerformanceModel] = None,
+        memory_config: MemoryConfig | None = None,
+        performance_model: PerformanceModel | None = None,
         num_groups: int = 4,
         enable_profiling: bool = True
     ):
@@ -167,7 +165,7 @@ class DeepOptimizerStates:
         self.state_cache = {}
         self.cache_size_limit = self.memory_config.cpu_memory_limit_gb * 0.3  # 30% of CPU limit
 
-    def _create_state_groups(self) -> List[OptimizerStateGroup]:
+    def _create_state_groups(self) -> list[OptimizerStateGroup]:
         """Create state groups for interleaved processing"""
         param_groups = self.optimizer.param_groups
         total_groups = len(param_groups)
@@ -192,7 +190,7 @@ class DeepOptimizerStates:
 
         return state_groups
 
-    def step(self, closure=None) -> Dict[str, Any]:
+    def step(self, closure=None) -> dict[str, Any]:
         """
         Optimized step with interleaved offloading
 
@@ -219,7 +217,7 @@ class DeepOptimizerStates:
 
         return step_metrics
 
-    def _compute_optimal_schedule(self) -> Dict[str, Any]:
+    def _compute_optimal_schedule(self) -> dict[str, Any]:
         """
         Compute optimal scheduling based on performance model
 
@@ -276,7 +274,7 @@ class DeepOptimizerStates:
 
         return schedule
 
-    def _execute_scheduled_step(self, schedule: Dict[str, Any], closure) -> Dict[str, Any]:
+    def _execute_scheduled_step(self, schedule: dict[str, Any], closure) -> dict[str, Any]:
         """Execute the scheduled optimizer step"""
         metrics = {
             'gpu_processing_time': 0.0,
@@ -316,13 +314,13 @@ class DeepOptimizerStates:
 
         # Execute the actual optimizer step
         if closure is not None:
-            loss = self.optimizer.step(closure)
+            self.optimizer.step(closure)
         else:
-            loss = self.optimizer.step()
+            self.optimizer.step()
 
         return metrics
 
-    def _process_gpu_groups(self, group_ids: List[int]):
+    def _process_gpu_groups(self, group_ids: list[int]):
         """Process optimizer states on GPU"""
         for group_id in group_ids:
             group = self.state_groups[group_id]
@@ -335,7 +333,7 @@ class DeepOptimizerStates:
             # Process the group's parameter updates
             self._update_group_parameters(group)
 
-    def _process_cpu_groups(self, group_ids: List[int]):
+    def _process_cpu_groups(self, group_ids: list[int]):
         """Process optimizer states on CPU"""
         for group_id in group_ids:
             group = self.state_groups[group_id]
@@ -351,7 +349,7 @@ class DeepOptimizerStates:
             # Transfer results back to GPU
             self._transfer_results_to_gpu(group)
 
-    def _process_offloaded_groups(self, group_ids: List[int]):
+    def _process_offloaded_groups(self, group_ids: list[int]):
         """Process offloaded optimizer states"""
         for group_id in group_ids:
             group = self.state_groups[group_id]
@@ -437,7 +435,7 @@ class DeepOptimizerStates:
 
         return recent_access or frequent_access
 
-    def _plan_prefetching(self, current_schedule: Dict[str, Any]) -> List[int]:
+    def _plan_prefetching(self, current_schedule: dict[str, Any]) -> list[int]:
         """Plan prefetching for next iteration"""
         # Predict which groups will be needed next
         # This is a simplified heuristic
@@ -450,7 +448,7 @@ class DeepOptimizerStates:
 
         return prefetch_candidates[:2]  # Limit prefetching
 
-    def _start_prefetching(self, group_ids: List[int]):
+    def _start_prefetching(self, group_ids: list[int]):
         """Start prefetching groups from disk"""
         if not self.transfer_executor:
             return
@@ -500,7 +498,7 @@ class DeepOptimizerStates:
             return process.memory_info().rss
         return 0.0
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get comprehensive memory usage statistics"""
         return {
             'gpu_memory_gb': self._get_gpu_memory_usage() / 1e9,
@@ -509,7 +507,7 @@ class DeepOptimizerStates:
             'cpu_utilization': self._get_cpu_memory_usage() / (self.memory_config.cpu_memory_limit_gb * 1e9)
         }
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get detailed performance statistics"""
         total_time = self.total_compute_time + self.total_offload_time + self.total_load_time
 
@@ -631,7 +629,7 @@ class InterleaveOffloadingOptimizer:
         """Load optimizer state dict"""
         return self.base_optimizer.load_state_dict(state_dict)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get optimization statistics"""
         return self.deep_optimizer.get_performance_stats()
 
@@ -670,7 +668,7 @@ class CPUGPUHybridOptimizer:
         self.cpu_step_times = []
         self.rebalance_interval = 50
 
-    def _split_parameters(self) -> Tuple[List, List]:
+    def _split_parameters(self) -> tuple[list, list]:
         """Split model parameters between CPU and GPU processing"""
         all_params = list(self.model.parameters())
         total_params = len(all_params)

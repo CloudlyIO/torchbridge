@@ -5,18 +5,20 @@ This module provides comprehensive tools for integrating and optimizing custom
 CUDA kernels within PyTorch workflows, including Triton kernel optimization
 and CUDA kernel building utilities.
 
-💡 Key Concept: Custom kernels achieve 10-100x speedups through direct GPU programming
+ Key Concept: Custom kernels achieve 10-100x speedups through direct GPU programming
 - Triton: Python-like kernel development with automatic optimization
 - CUDA: Maximum control over GPU threads, blocks, and memory hierarchy
 - Kernel fusion: Eliminate memory bandwidth bottlenecks
 """
 
+import math
+import warnings
+from collections.abc import Callable
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable
-import warnings
-import math
 
 # Try to import Triton for kernel development
 try:
@@ -31,19 +33,19 @@ class CustomKernelWrapper(nn.Module):
     """
     Wrapper for custom GPU kernels with PyTorch integration.
 
-    💡 Tip: Custom kernel integration patterns
+     Tip: Custom kernel integration patterns
     This class demonstrates how to properly integrate custom GPU kernels
     into PyTorch computational graphs while maintaining autograd compatibility
     and ensuring correct memory management.
 
-    🔧 INTEGRATION FEATURES:
+     INTEGRATION FEATURES:
     - Autograd compatibility through Function interface
     - Memory management and device synchronization
     - Error handling and fallback mechanisms
     - Performance measurement and validation
     """
 
-    def __init__(self, kernel_function: Callable, fallback_function: Optional[Callable] = None):
+    def __init__(self, kernel_function: Callable, fallback_function: Callable | None = None):
         """
         Initialize custom kernel wrapper.
 
@@ -70,7 +72,7 @@ class CustomKernelWrapper(nn.Module):
             return result
 
         except Exception as e:
-            warnings.warn(f"Custom kernel execution failed: {e}")
+            warnings.warn(f"Custom kernel execution failed: {e}", stacklevel=2)
 
             # Fall back to PyTorch implementation if available
             if self.fallback_function:
@@ -84,13 +86,13 @@ class CustomKernelWrapper(nn.Module):
 
         # Check shape compatibility
         if kernel_result.shape != fallback_result.shape:
-            warnings.warn("Custom kernel output shape mismatch")
+            warnings.warn("Custom kernel output shape mismatch", stacklevel=2)
             return
 
         # Check numerical accuracy
         max_diff = torch.abs(kernel_result - fallback_result).max().item()
         if max_diff > 1e-5:  # Tolerance for fp32 operations
-            warnings.warn(f"Custom kernel numerical accuracy issue: max_diff={max_diff}")
+            warnings.warn(f"Custom kernel numerical accuracy issue: max_diff={max_diff}", stacklevel=2)
 
 
 if TRITON_AVAILABLE:
@@ -104,11 +106,11 @@ if TRITON_AVAILABLE:
         """
         Triton kernel for fused Linear + GELU operation.
 
-        💡 Note: Triton kernel development
+         Note: Triton kernel development
         This demonstrates how to write efficient GPU kernels using Triton's
         Python-like syntax while achieving performance comparable to hand-tuned CUDA.
 
-        🔧 OPTIMIZATION TECHNIQUES:
+         OPTIMIZATION TECHNIQUES:
         - Tiled computation for cache efficiency
         - Fused operations to eliminate memory bandwidth
         - Vectorized loads for optimal memory throughput
@@ -172,11 +174,11 @@ class TritonKernelOptimizer:
     """
     Optimizer for Triton kernels with automatic tuning and validation.
 
-    💡 Feature: Automatic kernel optimization
+     Feature: Automatic kernel optimization
     This class demonstrates how to systematically optimize GPU kernels
     by exploring different parameter configurations and measuring performance.
 
-    🔧 OPTIMIZATION STRATEGIES:
+     OPTIMIZATION STRATEGIES:
     - Block size tuning for optimal occupancy
     - Memory access pattern optimization
     - Register usage optimization
@@ -189,21 +191,21 @@ class TritonKernelOptimizer:
 
     def optimize_fused_linear_gelu(
         self,
-        input_shape: Tuple[int, ...],
-        weight_shape: Tuple[int, int],
+        input_shape: tuple[int, ...],
+        weight_shape: tuple[int, int],
         device: torch.device
     ) -> Callable:
         """
         Optimize fused Linear + GELU kernel for specific input dimensions.
 
-        🔧 OPTIMIZATION PROCESS:
+         OPTIMIZATION PROCESS:
         - Analyze input dimensions for optimal block sizing
         - Test different block configurations
         - Measure kernel performance and occupancy
         - Select optimal configuration and return optimized kernel
         """
         if not TRITON_AVAILABLE:
-            warnings.warn("Triton not available, falling back to PyTorch implementation")
+            warnings.warn("Triton not available, falling back to PyTorch implementation", stacklevel=2)
             return self._pytorch_linear_gelu
 
         M, K = input_shape[-2], input_shape[-1]
@@ -240,12 +242,12 @@ class TritonKernelOptimizer:
                     best_time = execution_time
                     best_config = (block_m, block_n, block_k)
 
-            except Exception as e:
+            except Exception:
                 # Configuration not suitable, skip
                 continue
 
         if best_config is None:
-            warnings.warn("No suitable Triton kernel configuration found")
+            warnings.warn("No suitable Triton kernel configuration found", stacklevel=2)
             return self._pytorch_linear_gelu
 
         # Create optimized kernel with best configuration
@@ -259,7 +261,7 @@ class TritonKernelOptimizer:
         if not TRITON_AVAILABLE:
             return self._pytorch_linear_gelu
 
-        def optimized_linear_gelu(input_tensor: torch.Tensor, weight: torch.Tensor, bias: Optional[torch.Tensor] = None):
+        def optimized_linear_gelu(input_tensor: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None):
             M, K = input_tensor.shape[-2], input_tensor.shape[-1]
             N = weight.shape[1]
 
@@ -306,7 +308,7 @@ class TritonKernelOptimizer:
 
         return start_event.elapsed_time(end_event) / 100  # Average time per execution
 
-    def _pytorch_linear_gelu(self, input_tensor: torch.Tensor, weight: torch.Tensor, bias: Optional[torch.Tensor] = None):
+    def _pytorch_linear_gelu(self, input_tensor: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None):
         """Fallback PyTorch implementation."""
         linear_output = F.linear(input_tensor, weight.t(), bias)
         return F.gelu(linear_output)
@@ -316,7 +318,7 @@ class CUDAKernelBuilder:
     """
     Builder for CUDA kernels with automatic compilation and integration.
 
-    💡 Advanced: CUDA kernel integration
+     Advanced: CUDA kernel integration
     This class demonstrates how to integrate hand-written CUDA kernels
     into PyTorch workflows with proper compilation and memory management.
 
@@ -327,11 +329,11 @@ class CUDAKernelBuilder:
     def __init__(self):
         self.compiled_kernels = {}
 
-    def build_fused_activation_kernel(self, activation_type: str = "gelu") -> Optional[Callable]:
+    def build_fused_activation_kernel(self, activation_type: str = "gelu") -> Callable | None:
         """
         Build CUDA kernel for fused activation function.
 
-        🔧 CUDA KERNEL FEATURES:
+         CUDA KERNEL FEATURES:
         - Memory coalescing optimization
         - Shared memory utilization
         - Optimal thread block configuration
@@ -347,10 +349,10 @@ class CUDAKernelBuilder:
         # integration, and architecture-specific PTX generation. Educational version
         # demonstrates the pattern; production use should leverage Triton or
         # torch.compile() for kernel generation.
-        warnings.warn("CUDA kernel compilation not implemented in educational version")
+        warnings.warn("CUDA kernel compilation not implemented in educational version", stacklevel=2)
         return None
 
-    def validate_cuda_kernel(self, kernel: Callable, test_inputs: List[torch.Tensor]) -> bool:
+    def validate_cuda_kernel(self, kernel: Callable, test_inputs: list[torch.Tensor]) -> bool:
         """Validate CUDA kernel correctness against PyTorch implementation."""
         # Educational placeholder for kernel validation
         return True
@@ -358,17 +360,16 @@ class CUDAKernelBuilder:
 
 def optimize_with_custom_kernels(
     model: nn.Module,
-    optimization_targets: List[str] = ["linear_gelu", "attention"],
+    optimization_targets: list[str] = ["linear_gelu", "attention"],  # noqa: B006
     validation_mode: bool = True
 ) -> nn.Module:
     """
     Optimize model by replacing standard operations with custom kernels.
 
-    🎓 EDUCATIONAL: Systematic custom kernel optimization
     This function demonstrates how to systematically replace standard PyTorch
     operations with optimized custom kernels while maintaining model correctness.
 
-    🔧 OPTIMIZATION PROCESS:
+     OPTIMIZATION PROCESS:
     - Identify optimization targets in model architecture
     - Replace with custom kernel implementations
     - Validate numerical correctness
@@ -401,7 +402,7 @@ def _replace_linear_gelu_with_custom(model: nn.Module, validation_mode: bool) ->
     triton_optimizer = TritonKernelOptimizer(enable_validation=validation_mode)
 
     # Scan model for Linear + GELU patterns
-    for name, module in model.named_modules():
+    for _name, module in model.named_modules():
         if isinstance(module, nn.Sequential):
             # Check for Linear + GELU pattern in sequential modules
             modules_list = list(module.children())
@@ -422,9 +423,9 @@ def _replace_linear_gelu_with_custom(model: nn.Module, validation_mode: bool) ->
                     )
 
                     # Create wrapper module
-                    kernel_wrapper = CustomKernelWrapper(
+                    CustomKernelWrapper(
                         optimized_kernel,
-                        lambda x: F.gelu(linear_layer(x)) if validation_mode else None
+                        lambda x: F.gelu(linear_layer(x)) if validation_mode else None  # noqa: B023
                     )
 
                     # DESIGN_NOTE: Module replacement pattern requires maintaining state dict
@@ -445,18 +446,17 @@ def _replace_attention_with_custom(model: nn.Module, validation_mode: bool) -> n
 def validate_kernel_correctness(
     custom_kernel: Callable,
     pytorch_reference: Callable,
-    test_inputs: List[torch.Tensor],
+    test_inputs: list[torch.Tensor],
     tolerance: float = 1e-5
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate custom kernel correctness against PyTorch reference implementation.
 
-    🎓 EDUCATIONAL: Kernel validation methodology
     Custom kernels must maintain numerical correctness while improving performance.
     This function provides comprehensive validation to ensure optimization
     doesn't compromise accuracy.
 
-    🔧 VALIDATION TECHNIQUES:
+     VALIDATION TECHNIQUES:
     - Numerical accuracy comparison
     - Shape and dtype verification
     - Edge case testing
@@ -522,13 +522,13 @@ def validate_kernel_correctness(
     return validation_results
 
 
-# 🎓 EDUCATIONAL: Example custom kernel implementations
+#  EDUCATIONAL: Example custom kernel implementations
 
 class FusedLinearGELUKernel(nn.Module):
     """
     Example implementation of fused Linear + GELU using custom kernels.
 
-    🔧 EDUCATIONAL DEMONSTRATION:
+     EDUCATIONAL DEMONSTRATION:
     This shows how to structure a PyTorch module that uses custom kernels
     while maintaining autograd compatibility and proper error handling.
     """
@@ -567,7 +567,7 @@ class FusedLinearGELUKernel(nn.Module):
             return F.gelu(F.linear(x, self.weight, self.bias))
 
 
-# 🔧 OPTIMIZATION: Factory function for creating kernel-optimized modules
+#  OPTIMIZATION: Factory function for creating kernel-optimized modules
 def create_kernel_optimized_module(module_type: str, **kwargs) -> nn.Module:
     """
     Factory function for creating modules with custom kernel optimizations.
@@ -585,45 +585,44 @@ def create_kernel_optimized_module(module_type: str, **kwargs) -> nn.Module:
         raise ValueError(f"Unknown kernel-optimized module type: {module_type}")
 
 
-# 🎓 EDUCATIONAL: Utility functions
-def print_kernel_optimization_results(results: Dict[str, Any]) -> None:
+#  EDUCATIONAL: Utility functions
+def print_kernel_optimization_results(results: dict[str, Any]) -> None:
     """Print kernel optimization results in a readable format."""
-    print("🚀 Custom Kernel Optimization Results\n")
+    print(" Custom Kernel Optimization Results\n")
 
     if results.get("correctness_passed", False):
-        print("✅ Kernel correctness validation PASSED")
+        print(" Kernel correctness validation PASSED")
     else:
-        print("❌ Kernel correctness validation FAILED")
+        print(" Kernel correctness validation FAILED")
 
-    print(f"📊 Validation Statistics:")
+    print(" Validation Statistics:")
     print(f"   Tests passed: {results.get('test_cases_passed', 0)}/{results.get('test_cases_total', 0)}")
     print(f"   Max error: {results.get('max_error', 0):.2e}")
     print(f"   Mean error: {results.get('mean_error', 0):.2e}")
 
     perf = results.get("performance_comparison", {})
     if perf:
-        print(f"\n🏃 Performance Comparison:")
+        print("\n Performance Comparison:")
         print(f"   Speedup: {perf.get('custom_kernel_speedup', 'N/A')}x")
         print(f"   Memory efficiency gain: {perf.get('memory_efficiency_gain', 0)*100:.1f}%")
 
     errors = results.get("errors", [])
     if errors:
-        print(f"\n⚠️  Issues found ({len(errors)} items):")
+        print(f"\n  Issues found ({len(errors)} items):")
         for error in errors[:5]:  # Show first 5 errors
             print(f"   • {error}")
         if len(errors) > 5:
             print(f"   ... and {len(errors) - 5} more")
 
 
-# 🚀 FLASHATTENTION-3: Production-grade attention kernel with H100 optimizations
+#  FLASHATTENTION-3: Production-grade attention kernel with H100 optimizations
 # Uses shared attention operations from kernel_pytorch.attention.core.attention_ops
 
 # Import shared attention operations
-from kernel_pytorch.attention.core.attention_ops import (
+from kernel_pytorch.attention.core.attention_ops import (  # noqa: E402
     check_cuda_kernel_available,
-    validate_attention_inputs,
-    compute_attention_scale,
     flash_attention_forward,
+    validate_attention_inputs,
 )
 
 
@@ -641,7 +640,7 @@ class FlashAttentionV3(nn.Module):
     Uses shared attention operations from kernel_pytorch.attention.core.attention_ops
     for the core computation, eliminating code duplication.
 
-    🔧 PERFORMANCE IMPROVEMENTS OVER FA-2:
+     PERFORMANCE IMPROVEMENTS OVER FA-2:
     - 2-5x speedup over PyTorch SDPA
     - 30% faster than FlashAttention-2 on H100
     - Reduced memory bandwidth through optimized tiling
@@ -664,7 +663,7 @@ class FlashAttentionV3(nn.Module):
         self,
         causal: bool = False,
         dropout: float = 0.0,
-        scale: Optional[float] = None
+        scale: float | None = None
     ):
         super().__init__()
         self.causal = causal
@@ -676,7 +675,8 @@ class FlashAttentionV3(nn.Module):
             warnings.warn(
                 "FlashAttention-3 CUDA kernel not available. "
                 "Falling back to PyTorch implementation. "
-                "For optimal performance, compile CUDA kernels with setup.py"
+                "For optimal performance, compile CUDA kernels with setup.py",
+            stacklevel=2,
             )
 
     def forward(
@@ -684,7 +684,7 @@ class FlashAttentionV3(nn.Module):
         Q: torch.Tensor,
         K: torch.Tensor,
         V: torch.Tensor,
-        attn_mask: Optional[torch.Tensor] = None
+        attn_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Forward pass using FlashAttention-3 kernel.
@@ -706,14 +706,16 @@ class FlashAttentionV3(nn.Module):
         if head_dim not in [64, 128]:
             warnings.warn(
                 f"Head dimension {head_dim} not optimized. "
-                f"For best performance, use head_dim=64 or 128"
+                f"For best performance, use head_dim=64 or 128",
+            stacklevel=2,
             )
 
         # Dtype validation (FP16, BF16 supported)
         if Q.dtype not in [torch.float16, torch.bfloat16, torch.float32]:
             warnings.warn(
                 f"Data type {Q.dtype} may not be optimal. "
-                f"Recommend torch.float16 or torch.bfloat16 for best performance"
+                f"Recommend torch.float16 or torch.bfloat16 for best performance",
+            stacklevel=2,
             )
 
         # Use shared flash attention forward (handles CUDA kernel and fallback)
@@ -741,7 +743,7 @@ class FlashAttentionV3(nn.Module):
 def create_flash_attention_v3(
     causal: bool = False,
     dropout: float = 0.0,
-    scale: Optional[float] = None
+    scale: float | None = None
 ) -> FlashAttentionV3:
     """
     Factory function to create FlashAttention-3 module.
@@ -761,7 +763,7 @@ def create_flash_attention_v3(
     return FlashAttentionV3(causal=causal, dropout=dropout, scale=scale)
 
 
-# 🚀 FUSED LINEAR + ACTIVATION: Optimized FFN layers
+#  FUSED LINEAR + ACTIVATION: Optimized FFN layers
 
 class FusedLinearGELU(nn.Module):
     """
@@ -771,7 +773,7 @@ class FusedLinearGELU(nn.Module):
     CUDA kernel, eliminating intermediate memory writes and providing
     1.8-2.5x speedup for FFN layers in transformers.
 
-    🔧 PERFORMANCE BENEFITS:
+     PERFORMANCE BENEFITS:
     - 1.8-2.5x speedup over separate Linear + GELU
     - 40% reduction in memory bandwidth
     - Particularly effective for large FFN dimensions
@@ -841,7 +843,7 @@ class FusedLinearGELU(nn.Module):
                     x_2d, self.weight, self.bias
                 )
             except Exception as e:
-                warnings.warn(f"Fused kernel failed: {e}. Using fallback.")
+                warnings.warn(f"Fused kernel failed: {e}. Using fallback.", stacklevel=2)
                 output = self._pytorch_fallback(x_2d)
         else:
             output = self._pytorch_fallback(x_2d)
@@ -870,7 +872,7 @@ class FusedLinearSiLU(nn.Module):
     Similar to FusedLinearGELU but uses SiLU activation, which is popular
     in models like LLaMA and other recent architectures.
 
-    🔧 PERFORMANCE BENEFITS:
+     PERFORMANCE BENEFITS:
     - 1.8-2.5x speedup over separate Linear + SiLU
     - Lower memory bandwidth usage
     - Optimized for transformer FFN layers
@@ -928,7 +930,7 @@ class FusedLinearSiLU(nn.Module):
                     x_2d, self.weight, self.bias
                 )
             except Exception as e:
-                warnings.warn(f"Fused kernel failed: {e}. Using fallback.")
+                warnings.warn(f"Fused kernel failed: {e}. Using fallback.", stacklevel=2)
                 output = self._pytorch_fallback(x_2d)
         else:
             output = self._pytorch_fallback(x_2d)
@@ -952,7 +954,7 @@ class FusedLinearSiLU(nn.Module):
 def create_fused_ffn_layer(
     in_features: int,
     hidden_features: int,
-    out_features: Optional[int] = None,
+    out_features: int | None = None,
     activation: str = "gelu",
     bias: bool = True
 ) -> nn.Sequential:

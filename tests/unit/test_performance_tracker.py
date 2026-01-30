@@ -4,22 +4,23 @@ Tests for performance tracking and regression detection.
 Tests Stage 3B: Performance Regression Detection
 """
 
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 import torch
 import torch.nn as nn
-import tempfile
-import shutil
-from pathlib import Path
 
 from kernel_pytorch.core.performance_tracker import (
-    PerformanceTracker,
-    PerformanceMetrics,
-    RegressionResult,
     MetricType,
+    PerformanceMetrics,
+    PerformanceTracker,
+    RegressionResult,
     RegressionSeverity,
+    detect_regression,
     get_performance_tracker,
     track_performance,
-    detect_regression,
 )
 
 
@@ -105,7 +106,7 @@ class TestPerformanceTracker:
     def test_record_multiple_performance(self, tracker, simple_model, sample_inputs):
         """Test recording multiple performance metrics."""
         # Record baseline
-        metrics1 = tracker.record_performance(
+        tracker.record_performance(
             model=simple_model,
             sample_inputs=sample_inputs,
             model_name="test_model",
@@ -114,7 +115,7 @@ class TestPerformanceTracker:
         )
 
         # Record optimized
-        metrics2 = tracker.record_performance(
+        tracker.record_performance(
             model=simple_model,
             sample_inputs=sample_inputs,
             model_name="test_model",
@@ -133,7 +134,7 @@ class TestPerformanceTracker:
         assert baseline is None
 
         # Record performance
-        metrics = tracker.record_performance(
+        tracker.record_performance(
             model=simple_model,
             sample_inputs=sample_inputs,
             model_name="test_model"

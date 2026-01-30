@@ -33,28 +33,28 @@ Example:
 Version: 0.3.10
 """
 
-import torch
-import time
-import threading
-import logging
-from typing import Dict, List, Any, Optional, Callable
-from dataclasses import dataclass, field
-from contextlib import contextmanager
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+import logging
+import threading
+import time
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import torch
 
 logger = logging.getLogger(__name__)
 
 # Try to import prometheus_client
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,  # noqa: F401
+        CollectorRegistry,
         Counter,
         Gauge,
         Histogram,
-        Summary,
-        CollectorRegistry,
+        Summary,  # noqa: F401
         generate_latest,
-        CONTENT_TYPE_LATEST,
     )
     PROMETHEUS_AVAILABLE = True
 except ImportError:
@@ -82,7 +82,7 @@ class MetricsConfig:
     collection_interval_seconds: float = 15.0
 
     # Histogram buckets (in milliseconds)
-    latency_buckets: List[float] = field(
+    latency_buckets: list[float] = field(
         default_factory=lambda: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
     )
 
@@ -131,7 +131,7 @@ class MetricsExporter:
     Exports metrics in Prometheus format for scraping and visualization.
     """
 
-    def __init__(self, config: Optional[MetricsConfig] = None):
+    def __init__(self, config: MetricsConfig | None = None):
         """
         Initialize the metrics exporter.
 
@@ -143,7 +143,7 @@ class MetricsExporter:
         self._lock = threading.Lock()
 
         # Internal tracking
-        self._latencies: List[float] = []
+        self._latencies: list[float] = []
         self._start_time = time.time()
         self._total_requests = 0
         self._total_samples = 0
@@ -162,7 +162,6 @@ class MetricsExporter:
         """Initialize Prometheus metric objects."""
         ns = self.config.namespace
         sub = self.config.subsystem
-        model = self.config.model_name
 
         # Counters
         self._request_counter = Counter(
@@ -373,11 +372,11 @@ class MetricsExporter:
             # Return basic metrics as text
             metrics = self.get_inference_metrics()
             lines = [
-                f"# HELP kernelpytorch_inference_requests_total Total requests",
-                f"# TYPE kernelpytorch_inference_requests_total counter",
+                "# HELP kernelpytorch_inference_requests_total Total requests",
+                "# TYPE kernelpytorch_inference_requests_total counter",
                 f"kernelpytorch_inference_requests_total {metrics.total_requests}",
-                f"# HELP kernelpytorch_inference_latency_ms Average latency",
-                f"# TYPE kernelpytorch_inference_latency_ms gauge",
+                "# HELP kernelpytorch_inference_latency_ms Average latency",
+                "# TYPE kernelpytorch_inference_latency_ms gauge",
                 f"kernelpytorch_inference_latency_ms {metrics.average_latency_ms:.2f}",
             ]
             return "\n".join(lines)
@@ -395,7 +394,7 @@ class MetricsExporter:
 class MetricsHTTPHandler(BaseHTTPRequestHandler):
     """HTTP handler for Prometheus metrics endpoint."""
 
-    exporter: Optional[MetricsExporter] = None
+    exporter: MetricsExporter | None = None
 
     def do_GET(self):
         """Handle GET requests."""
@@ -432,10 +431,10 @@ class MetricsHTTPHandler(BaseHTTPRequestHandler):
 
 def start_metrics_server(
     exporter: MetricsExporter,
-    port: Optional[int] = None,
+    port: int | None = None,
     host: str = "0.0.0.0",
     background: bool = True,
-) -> Optional[HTTPServer]:
+) -> HTTPServer | None:
     """
     Start an HTTP server for Prometheus metrics scraping.
 

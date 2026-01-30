@@ -18,13 +18,14 @@ References:
     - NVIDIA FP8 Training: https://developer.nvidia.com/blog/nvidia-h100-transformer-engine/
 """
 
+import warnings
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, Tuple, Union
-import warnings
-from enum import Enum
-from dataclasses import dataclass
 
 # Check PyTorch version for FP8 support
 PYTORCH_VERSION = tuple(int(x) for x in torch.__version__.split('.')[:2])
@@ -42,7 +43,8 @@ except AttributeError:
     warnings.warn(
         f"PyTorch {torch.__version__} does not support native FP8 types. "
         "FP8 operations will use simulated quantization. "
-        "Upgrade to PyTorch 2.1+ for native FP8 support."
+        "Upgrade to PyTorch 2.1+ for native FP8 support.",
+    stacklevel=2,
     )
 
 # Check for scaled_mm availability (PyTorch 2.4+)
@@ -71,7 +73,7 @@ class FP8TensorSpec:
             return 57344.0  # Max for E5M2
 
 
-def get_fp8_dtype(format: FP8Dtype) -> Optional[torch.dtype]:
+def get_fp8_dtype(format: FP8Dtype) -> torch.dtype | None:
     """Get PyTorch FP8 dtype for format"""
     if not FP8_DTYPES_AVAILABLE:
         return None
@@ -118,7 +120,7 @@ def quantize_to_fp8(
     tensor: torch.Tensor,
     scale: torch.Tensor,
     format: FP8Dtype
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Quantize tensor to FP8 format.
 
@@ -141,10 +143,8 @@ def quantize_to_fp8(
         # Simulate FP8 quantization via clamping and rounding
         if format == FP8Dtype.E4M3:
             max_val = 448.0
-            min_val = 1.0 / 256.0  # Smallest normal E4M3 value
         else:
             max_val = 57344.0
-            min_val = 1.0 / 16384.0  # Smallest normal E5M2 value
 
         # Clamp to FP8 range
         quantized = scaled_tensor.clamp(-max_val, max_val)
@@ -207,7 +207,7 @@ class FP8QuantizedTensor:
         cls,
         tensor: torch.Tensor,
         format: FP8Dtype = FP8Dtype.E4M3,
-        scale: Optional[torch.Tensor] = None
+        scale: torch.Tensor | None = None
     ) -> 'FP8QuantizedTensor':
         """Create FP8 quantized tensor from float tensor"""
         if scale is None:
@@ -264,7 +264,7 @@ class NativeFP8Linear(nn.Module):
         bias: bool = True,
         weight_format: FP8Dtype = FP8Dtype.E4M3,
         activation_format: FP8Dtype = FP8Dtype.E4M3,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -482,7 +482,7 @@ class NativeFP8Linear(nn.Module):
         """Sync FP8 weights from master weights (call after optimizer step)"""
         self._quantize_weights()
 
-    def get_fp8_info(self) -> Dict[str, Any]:
+    def get_fp8_info(self) -> dict[str, Any]:
         """Get FP8 layer information"""
         return {
             'in_features': self.in_features,
@@ -534,7 +534,7 @@ class FP8InferenceEngine:
         model: nn.Module,
         weight_format: FP8Dtype = FP8Dtype.E4M3,
         activation_format: FP8Dtype = FP8Dtype.E4M3,
-        calibration_data: Optional[torch.Tensor] = None
+        calibration_data: torch.Tensor | None = None
     ):
         self.model = model
         self.weight_format = weight_format
@@ -545,7 +545,7 @@ class FP8InferenceEngine:
         self._fp8_layers = {}
         self._layer_scales = {}
 
-    def prepare(self, device: Optional[torch.device] = None) -> 'FP8InferenceEngine':
+    def prepare(self, device: torch.device | None = None) -> 'FP8InferenceEngine':
         """
         Prepare model for FP8 inference.
 
@@ -620,12 +620,12 @@ class FP8InferenceEngine:
 
         return self.model(inputs)
 
-    def get_memory_savings(self) -> Dict[str, Any]:
+    def get_memory_savings(self) -> dict[str, Any]:
         """Estimate memory savings from FP8"""
         fp8_bytes = 0
         fp32_bytes = 0
 
-        for name, layer in self._fp8_layers.items():
+        for _name, layer in self._fp8_layers.items():
             # FP8: 1 byte per element
             fp8_bytes += layer.in_features * layer.out_features * 1
             # FP32: 4 bytes per element
@@ -641,7 +641,7 @@ class FP8InferenceEngine:
             'fp8_layers_count': len(self._fp8_layers)
         }
 
-    def get_layer_info(self) -> Dict[str, Dict[str, Any]]:
+    def get_layer_info(self) -> dict[str, dict[str, Any]]:
         """Get info for all FP8 layers"""
         return {name: layer.get_fp8_info() for name, layer in self._fp8_layers.items()}
 
@@ -653,7 +653,7 @@ def is_fp8_available() -> bool:
     return FP8_DTYPES_AVAILABLE
 
 
-def get_fp8_info() -> Dict[str, Any]:
+def get_fp8_info() -> dict[str, Any]:
     """Get FP8 support information"""
     return {
         'pytorch_version': torch.__version__,
@@ -735,8 +735,8 @@ def benchmark_fp8_layer(
     out_features: int = 1024,
     batch_size: int = 32,
     num_iterations: int = 100,
-    device: Optional[torch.device] = None
-) -> Dict[str, float]:
+    device: torch.device | None = None
+) -> dict[str, float]:
     """
     Benchmark FP8 vs standard linear layer performance.
 

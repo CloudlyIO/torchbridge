@@ -4,7 +4,7 @@ Tests for Memory Efficiency Optimization Patterns
 Comprehensive test suite validating memory efficiency implementations
 and ensuring optimal GPU memory utilization patterns.
 
-🎯 TEST COVERAGE:
+ TEST COVERAGE:
 - Memory access pattern analysis
 - Memory-efficient sequential modules
 - Adaptive memory management
@@ -13,24 +13,21 @@ and ensuring optimal GPU memory utilization patterns.
 - Cache-friendly memory layouts
 """
 
+import math
+
 import pytest
 import torch
 import torch.nn as nn
-import time
-import math
-from typing import Dict, List, Any
-from unittest.mock import patch
 
 from kernel_pytorch.optimizations.patterns.memory_efficiency import (
-    MemoryEfficientSequential,
     AdaptiveMemoryManager,
     MemoryAccessPattern,
-    MemoryOptimizationStrategy,
+    MemoryEfficientSequential,
     analyze_memory_access_patterns,
     benchmark_memory_optimizations,
     minimize_memory_allocations,
     optimize_tensor_layouts,
-    print_memory_analysis
+    print_memory_analysis,
 )
 
 
@@ -136,7 +133,7 @@ class TestAdaptiveMemoryManager:
         manager = AdaptiveMemoryManager()
 
         # Test with available methods from the API
-        x = torch.randn(64, 256)
+        torch.randn(64, 256)
 
         # Test analyze_memory_pressure method
         memory_pressure = manager.analyze_memory_pressure()
@@ -190,7 +187,7 @@ class TestMemoryOptimizationBenchmarks:
 
         assert isinstance(results, dict)
         # Results should be numeric and reasonable
-        for key, value in results.items():
+        for _key, value in results.items():
             if isinstance(value, (int, float)):
                 assert not math.isnan(value)
                 assert math.isfinite(value)
@@ -244,7 +241,7 @@ class TestMemoryAnalysisUtilities:
 
     def test_memory_pattern_enum(self):
         """Test memory access pattern enumeration."""
-        patterns = list(MemoryAccessPattern)
+        list(MemoryAccessPattern)
 
         expected_patterns = ['COALESCED', 'STRIDED', 'RANDOM', 'BROADCAST', 'REDUCTION']
         for pattern in expected_patterns:

@@ -21,15 +21,15 @@ from kernel_pytorch.attention import (
     create_attention,
 )
 from kernel_pytorch.attention.implementations.flex_attention import (
-    FlexAttentionLayer,
-    FlexAttentionCausal,
-    FlexAttentionSlidingWindow,
-    FlexAttentionScoreMods,
-    FlexAttentionMaskGenerators,
-    create_flex_attention,
-    is_flex_attention_available,
-    get_flex_attention_info,
     FLEX_ATTENTION_AVAILABLE,
+    FlexAttentionCausal,
+    FlexAttentionLayer,
+    FlexAttentionMaskGenerators,
+    FlexAttentionScoreMods,
+    FlexAttentionSlidingWindow,
+    create_flex_attention,
+    get_flex_attention_info,
+    is_flex_attention_available,
 )
 
 

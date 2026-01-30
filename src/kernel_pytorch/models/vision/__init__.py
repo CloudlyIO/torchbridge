@@ -18,39 +18,39 @@ Features:
 # Base classes and configuration
 from .base import (
     BaseVisionOptimizer,
-    VisionOptimizationConfig,
-    VisionModelType,
     OptimizationLevel,
+    VisionModelType,
+    VisionOptimizationConfig,
     count_parameters,
     estimate_model_memory,
 )
 
+# Stable Diffusion optimization
+from .diffusion import (
+    StableDiffusionBenchmark,
+    StableDiffusionOptimizer,
+    create_sd_1_5_optimized,
+    create_sd_2_1_optimized,
+    create_sdxl_optimized,
+    create_stable_diffusion_optimizer,
+)
+
 # ResNet optimization
 from .resnet import (
-    ResNetOptimizer,
     ResNetBenchmark,
-    create_resnet_optimizer,
+    ResNetOptimizer,
     create_resnet50_optimized,
     create_resnet152_optimized,
+    create_resnet_optimizer,
 )
 
 # Vision Transformer optimization
 from .vit import (
-    ViTOptimizer,
     ViTBenchmark,
-    create_vit_optimizer,
+    ViTOptimizer,
     create_vit_base_optimized,
     create_vit_large_optimized,
-)
-
-# Stable Diffusion optimization
-from .diffusion import (
-    StableDiffusionOptimizer,
-    StableDiffusionBenchmark,
-    create_stable_diffusion_optimizer,
-    create_sd_1_5_optimized,
-    create_sd_2_1_optimized,
-    create_sdxl_optimized,
+    create_vit_optimizer,
 )
 
 __all__ = [

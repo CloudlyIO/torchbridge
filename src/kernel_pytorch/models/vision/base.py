@@ -8,7 +8,8 @@ including ResNet, ViT, and Stable Diffusion.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -46,7 +47,7 @@ class VisionOptimizationConfig:
     # Memory optimization
     enable_gradient_checkpointing: bool = False
     enable_attention_slicing: bool = False
-    attention_slice_size: Optional[int] = None
+    attention_slice_size: int | None = None
     enable_vae_tiling: bool = False
     vae_tile_size: int = 512
 
@@ -114,7 +115,7 @@ class VisionOptimizationConfig:
 class BaseVisionOptimizer(ABC):
     """Abstract base class for vision model optimizers."""
 
-    def __init__(self, config: Optional[VisionOptimizationConfig] = None):
+    def __init__(self, config: VisionOptimizationConfig | None = None):
         """Initialize vision optimizer.
 
         Args:
@@ -122,7 +123,7 @@ class BaseVisionOptimizer(ABC):
         """
         self.config = config or VisionOptimizationConfig()
         self.device = torch.device(self.config.device)
-        self.optimizations_applied: List[str] = []
+        self.optimizations_applied: list[str] = []
 
     @abstractmethod
     def optimize(self, model: nn.Module) -> nn.Module:
@@ -272,7 +273,7 @@ class BaseVisionOptimizer(ABC):
 
         return model
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """Get summary of applied optimizations.
 
         Returns:
@@ -299,7 +300,7 @@ class BaseVisionOptimizer(ABC):
             return "fp32"
 
 
-def count_parameters(model: nn.Module) -> Tuple[int, int]:
+def count_parameters(model: nn.Module) -> tuple[int, int]:
     """Count total and trainable parameters.
 
     Args:
@@ -316,9 +317,9 @@ def count_parameters(model: nn.Module) -> Tuple[int, int]:
 def estimate_model_memory(
     model: nn.Module,
     batch_size: int = 1,
-    input_size: Tuple[int, ...] = (3, 224, 224),
+    input_size: tuple[int, ...] = (3, 224, 224),
     precision: str = "fp32"
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Estimate model memory requirements.
 
     Args:

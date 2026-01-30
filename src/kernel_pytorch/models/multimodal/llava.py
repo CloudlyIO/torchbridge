@@ -7,15 +7,16 @@ This module provides optimizations for LLaVA models including:
 - Memory-efficient inference
 """
 
-from typing import Optional, Dict, Any, List, Union
+from typing import Any
+
 import torch
-import torch.nn as nn
+
 from .base import (
     BaseMultiModalOptimizer,
+    ModalityType,
     MultiModalOptimizationConfig,
     MultiModalType,
     OptimizationLevel,
-    ModalityType,
     count_parameters,
 )
 
@@ -23,7 +24,7 @@ from .base import (
 class LLaVAOptimizer(BaseMultiModalOptimizer):
     """Optimizer for LLaVA models."""
 
-    def __init__(self, config: Optional[MultiModalOptimizationConfig] = None):
+    def __init__(self, config: MultiModalOptimizationConfig | None = None):
         """Initialize LLaVA optimizer.
 
         Args:
@@ -88,12 +89,12 @@ class LLaVAOptimizer(BaseMultiModalOptimizer):
         self,
         model: Any,
         images: torch.Tensor,
-        prompts: List[str],
+        prompts: list[str],
         max_new_tokens: int = 512,
         temperature: float = 0.7,
         top_p: float = 0.9,
         **kwargs
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate text responses from images and prompts.
 
         Args:
@@ -162,7 +163,7 @@ def create_llava_optimizer(
         raise ImportError(
             "transformers is required for LLaVA models. "
             "Install with: pip install transformers"
-        )
+        ) from None
 
     # Load model
     model = LlavaForConditionalGeneration.from_pretrained(
@@ -208,7 +209,7 @@ class LLaVABenchmark:
         num_iterations: int = 10,
         max_new_tokens: int = 256,
         image_size: int = 336,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark generation performance.
 
         Args:
@@ -273,7 +274,7 @@ class LLaVABenchmark:
             "generations_per_minute": 60 / time_per_generation,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:

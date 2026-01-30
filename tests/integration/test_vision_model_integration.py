@@ -16,32 +16,18 @@ import torch.nn as nn
 from kernel_pytorch.models.vision import (
     # Base
     BaseVisionOptimizer,
-    VisionOptimizationConfig,
-    VisionModelType,
     OptimizationLevel,
-    count_parameters,
-    estimate_model_memory,
+    ResNetBenchmark,
     # ResNet
     ResNetOptimizer,
-    ResNetBenchmark,
-    create_resnet_optimizer,
-    create_resnet50_optimized,
-    create_resnet152_optimized,
-    # ViT
-    ViTOptimizer,
-    ViTBenchmark,
-    create_vit_optimizer,
-    create_vit_base_optimized,
-    create_vit_large_optimized,
-    # Stable Diffusion
     StableDiffusionOptimizer,
-    StableDiffusionBenchmark,
-    create_stable_diffusion_optimizer,
-    create_sd_1_5_optimized,
-    create_sd_2_1_optimized,
-    create_sdxl_optimized,
+    VisionModelType,
+    VisionOptimizationConfig,
+    ViTOptimizer,
+    count_parameters,
+    create_resnet50_optimized,
+    estimate_model_memory,
 )
-
 
 # ============================================================================
 # Configuration Tests
@@ -251,7 +237,7 @@ class TestResNetOptimizer:
         )
         optimizer = ResNetOptimizer(config)
 
-        model = optimizer.optimize(simple_resnet)
+        optimizer.optimize(simple_resnet)
 
         assert "operator_fusion" in optimizer.optimizations_applied
 
@@ -315,7 +301,7 @@ class TestResNetFactory:
     def test_create_resnet50_optimized(self):
         """Test creating optimized ResNet-50."""
         try:
-            import torchvision
+            import torchvision  # noqa: F401
         except ImportError:
             pytest.skip("torchvision not installed")
 
@@ -386,7 +372,7 @@ class TestViTOptimizer:
         )
         optimizer = ViTOptimizer(config)
 
-        model = optimizer.optimize(simple_vit)
+        optimizer.optimize(simple_vit)
 
         # Check if any optimization starts with "attention_slicing"
         # (may include status info like "attention_slicing(0 layers - no compatible attention found)")
@@ -465,7 +451,7 @@ class TestEndToEndIntegration:
 
     def test_optimization_level_progression(self):
         """Test that higher optimization levels apply more optimizations."""
-        model = nn.Sequential(
+        nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=3),
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)),

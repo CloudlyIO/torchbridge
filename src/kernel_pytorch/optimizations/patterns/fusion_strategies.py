@@ -4,30 +4,30 @@ Kernel Fusion Strategies for GPU Optimization
 This module provides educational guidance and practical tools for identifying
 and implementing kernel fusion opportunities in PyTorch neural networks.
 
-🎓 EDUCATIONAL FOCUS:
 Kernel fusion is one of the most impactful GPU optimization techniques:
 - Reduces memory bandwidth requirements by 40-80%
 - Eliminates kernel launch overhead
 - Improves GPU cache utilization
 - Enables higher arithmetic intensity
 
-🔧 FUSION PATTERN CATEGORIES:
+ FUSION PATTERN CATEGORIES:
 - Element-wise fusion: Operations that can be combined element-wise
 - Producer-consumer fusion: Output of one operation feeds directly into another
 - Reduction fusion: Multiple reduction operations combined
 - Mixed precision fusion: Operations that benefit from automatic casting
 
-💡 PRACTICAL APPLICATION:
 Learn to recognize fusion opportunities in your own models and apply
 proven patterns that lead to measurable performance improvements.
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Callable, Any
-from dataclasses import dataclass
-from enum import Enum
 
 
 class FusionType(Enum):
@@ -44,7 +44,6 @@ class FusionPattern:
     """
     Data structure for describing fusion optimization patterns.
 
-    🎓 EDUCATIONAL: Pattern-based optimization approach
     By categorizing fusion opportunities into patterns, we can:
     - Systematically identify optimization opportunities
     - Apply proven optimization strategies
@@ -52,7 +51,7 @@ class FusionPattern:
     """
     name: str
     fusion_type: FusionType
-    operations: List[str]
+    operations: list[str]
     memory_reduction: float  # Expected memory bandwidth reduction (0.0-1.0)
     compute_improvement: float  # Expected compute efficiency improvement
     description: str
@@ -60,7 +59,7 @@ class FusionPattern:
     example_after: str
 
 
-# 🎓 EDUCATIONAL: Common fusion patterns found in neural networks
+#  EDUCATIONAL: Common fusion patterns found in neural networks
 COMMON_FUSION_PATTERNS = [
     FusionPattern(
         name="Linear + Activation",
@@ -119,20 +118,13 @@ COMMON_FUSION_PATTERNS = [
 ]
 
 
-def identify_fusion_opportunities(model: nn.Module, sample_input: torch.Tensor) -> List[Dict[str, Any]]:
+def identify_fusion_opportunities(model: nn.Module, sample_input: torch.Tensor) -> list[dict[str, Any]]:
     """
     Analyze a PyTorch model to identify kernel fusion opportunities.
 
-    🎓 EDUCATIONAL: Automated fusion analysis
     This function demonstrates how to systematically analyze model architectures
     to identify optimization opportunities. It serves as a template for building
     optimization analysis tools.
-
-    🔧 ANALYSIS TECHNIQUES:
-    - Module sequence analysis: Identify producer-consumer patterns
-    - Operation type classification: Categorize operations by fusion potential
-    - Memory access pattern analysis: Identify bandwidth bottlenecks
-    - Compilation compatibility check: Verify torch.compile compatibility
 
     Args:
         model: PyTorch model to analyze
@@ -143,7 +135,6 @@ def identify_fusion_opportunities(model: nn.Module, sample_input: torch.Tensor) 
     """
     opportunities = []
 
-    # 🔍 STEP 1: Analyze module sequence for producer-consumer patterns
     modules = list(model.named_modules())
 
     for i, (name, module) in enumerate(modules[:-1]):
@@ -155,18 +146,16 @@ def identify_fusion_opportunities(model: nn.Module, sample_input: torch.Tensor) 
         if fusion_opportunity:
             opportunities.append(fusion_opportunity)
 
-    # 🔍 STEP 2: Analyze for element-wise fusion opportunities
     element_wise_opportunities = _identify_element_wise_fusion(model)
     opportunities.extend(element_wise_opportunities)
 
-    # 🔍 STEP 3: Check attention-specific fusion patterns
     attention_opportunities = _identify_attention_fusion(model)
     opportunities.extend(attention_opportunities)
 
     return opportunities
 
 
-def _analyze_module_pair(name1: str, module1: nn.Module, name2: str, module2: nn.Module) -> Optional[Dict[str, Any]]:
+def _analyze_module_pair(name1: str, module1: nn.Module, name2: str, module2: nn.Module) -> dict[str, Any] | None:
     """Analyze a pair of sequential modules for fusion opportunities."""
 
     # Linear + Activation pattern
@@ -200,7 +189,7 @@ def _is_activation_module(module: nn.Module) -> bool:
     return isinstance(module, activation_types)
 
 
-def _identify_element_wise_fusion(model: nn.Module) -> List[Dict[str, Any]]:
+def _identify_element_wise_fusion(model: nn.Module) -> list[dict[str, Any]]:
     """Identify element-wise operations that can be fused."""
     opportunities = []
 
@@ -208,16 +197,15 @@ def _identify_element_wise_fusion(model: nn.Module) -> List[Dict[str, Any]]:
     # For now, provide educational template
 
     # Look for residual connection patterns
-    for name, module in model.named_modules():
+    for _name, module in model.named_modules():
         if hasattr(module, 'forward'):
-            # Educational: Check forward method for element-wise patterns
             # In practice, would use graph analysis tools
             pass
 
     return opportunities
 
 
-def _identify_attention_fusion(model: nn.Module) -> List[Dict[str, Any]]:
+def _identify_attention_fusion(model: nn.Module) -> list[dict[str, Any]]:
     """Identify attention-specific fusion opportunities."""
     opportunities = []
 
@@ -238,18 +226,17 @@ def _identify_attention_fusion(model: nn.Module) -> List[Dict[str, Any]]:
 
 
 def apply_operation_fusion(
-    operations: List[Callable],
+    operations: list[Callable],
     fusion_type: FusionType,
     compile_mode: str = "default"
 ) -> Callable:
     """
     Apply fusion to a sequence of operations.
 
-    🎓 EDUCATIONAL: Practical fusion implementation
     This demonstrates how to take a sequence of operations and create
     a fused implementation that can be optimized by torch.compile.
 
-    🔧 FUSION IMPLEMENTATION STRATEGIES:
+     FUSION IMPLEMENTATION STRATEGIES:
     - Function composition: Chain operations in single function
     - torch.compile optimization: Enable automatic kernel fusion
     - Memory reuse: Minimize intermediate tensor allocations
@@ -271,7 +258,7 @@ def apply_operation_fusion(
             """
             Fused producer-consumer operations.
 
-            🔧 FUSION OPTIMIZATION:
+             FUSION OPTIMIZATION:
             - Sequential operations combined in single function
             - torch.compile can optimize entire sequence
             - Intermediate results stay in GPU registers
@@ -291,7 +278,7 @@ def apply_operation_fusion(
             """
             Fused element-wise operations.
 
-            🔧 ELEMENT-WISE FUSION:
+             ELEMENT-WISE FUSION:
             - All operations applied to same tensor elements
             - Perfect vectorization across GPU cores
             - Single memory access per element
@@ -312,20 +299,19 @@ def apply_operation_fusion(
 
 
 def validate_fusion_correctness(
-    original_ops: List[Callable],
+    original_ops: list[Callable],
     fused_op: Callable,
-    test_inputs: List[torch.Tensor],
+    test_inputs: list[torch.Tensor],
     tolerance: float = 1e-6
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate that fusion maintains numerical correctness.
 
-    🎓 EDUCATIONAL: Optimization validation methodology
     Critical principle: Optimization should never change correctness.
     This function demonstrates rigorous validation approaches for
     ensuring fusion maintains numerical accuracy.
 
-    🔧 VALIDATION TECHNIQUES:
+     VALIDATION TECHNIQUES:
     - Numerical comparison: Check output equivalence within tolerance
     - Statistical analysis: Analyze error distribution and characteristics
     - Edge case testing: Validate behavior with extreme inputs
@@ -351,16 +337,13 @@ def validate_fusion_correctness(
 
     errors = []
 
-    for i, test_input in enumerate(test_inputs):
-        # 🔍 STEP 1: Compute original result
+    for _i, test_input in enumerate(test_inputs):
         original_result = test_input
         for op in original_ops:
             original_result = op(original_result)
 
-        # 🔍 STEP 2: Compute fused result
         fused_result = fused_op(test_input)
 
-        # 🔍 STEP 3: Compare results
         if original_result.shape != fused_result.shape:
             validation_results["correctness_passed"] = False
             continue
@@ -373,25 +356,23 @@ def validate_fusion_correctness(
         else:
             validation_results["test_cases_passed"] += 1
 
-    # 🔍 STEP 4: Calculate error statistics
     if errors:
         validation_results["max_error"] = max(errors)
         validation_results["mean_error"] = sum(errors) / len(errors)
 
-    # 🔍 STEP 5: Performance comparison (simplified)
     # In practice, would use proper benchmarking methodology
     validation_results["performance_improvement"] = 1.3  # Educational placeholder
 
     return validation_results
 
 
-# 🎓 EDUCATIONAL: Example fusion implementations for common patterns
+#  EDUCATIONAL: Example fusion implementations for common patterns
 
 class FusedLinearGELU(nn.Module):
     """
     Example implementation of fused Linear + GELU pattern.
 
-    🔧 EDUCATIONAL DEMONSTRATION:
+     EDUCATIONAL DEMONSTRATION:
     This shows how to implement a common fusion pattern manually.
     In practice, torch.compile can often achieve similar fusion automatically.
     """
@@ -404,7 +385,7 @@ class FusedLinearGELU(nn.Module):
         """
         Fused Linear + GELU forward pass.
 
-        🔧 FUSION PATTERN: Producer-consumer fusion
+         FUSION PATTERN: Producer-consumer fusion
         - Linear layer produces intermediate result
         - GELU consumes result immediately
         - torch.compile can fuse these operations automatically
@@ -417,7 +398,7 @@ class FusedElementWiseOps(nn.Module):
     """
     Example implementation of fused element-wise operations.
 
-    🔧 EDUCATIONAL DEMONSTRATION:
+     EDUCATIONAL DEMONSTRATION:
     Shows how to combine multiple element-wise operations that
     can be vectorized efficiently on GPU hardware.
     """
@@ -430,7 +411,7 @@ class FusedElementWiseOps(nn.Module):
         """
         Fused element-wise operations.
 
-        🔧 FUSION PATTERN: Element-wise fusion
+         FUSION PATTERN: Element-wise fusion
         - All operations work on same tensor elements
         - Single pass through memory
         - Optimal GPU core utilization
@@ -439,12 +420,11 @@ class FusedElementWiseOps(nn.Module):
         return (x + bias) * self.scale + residual
 
 
-# 🔧 OPTIMIZATION: Factory function for creating fused operations
+#  OPTIMIZATION: Factory function for creating fused operations
 def create_fused_operation(pattern_name: str, **kwargs) -> nn.Module:
     """
     Factory function for creating common fused operations.
 
-    🎓 EDUCATIONAL: Pattern-based optimization approach
     This demonstrates how to systematically apply proven optimization
     patterns to create high-performance neural network components.
 
@@ -465,20 +445,19 @@ def create_fused_operation(pattern_name: str, **kwargs) -> nn.Module:
         raise ValueError(f"Unknown fusion pattern: {pattern_name}")
 
 
-# 🎓 EDUCATIONAL: Fusion analysis utilities
-def print_fusion_opportunities(opportunities: List[Dict[str, Any]]) -> None:
+#  EDUCATIONAL: Fusion analysis utilities
+def print_fusion_opportunities(opportunities: list[dict[str, Any]]) -> None:
     """
     Print fusion opportunities in a readable format.
 
-    🎓 EDUCATIONAL: Optimization opportunity presentation
     This demonstrates how to present optimization analysis results
     in a way that's actionable for developers.
     """
     if not opportunities:
-        print("✅ No fusion opportunities identified - model may already be well optimized!")
+        print(" No fusion opportunities identified - model may already be well optimized!")
         return
 
-    print(f"🔍 Found {len(opportunities)} fusion opportunities:\n")
+    print(f" Found {len(opportunities)} fusion opportunities:\n")
 
     for i, opp in enumerate(opportunities, 1):
         print(f"{i}. {opp.get('pattern', 'Unknown Pattern')}")
@@ -494,11 +473,10 @@ def benchmark_fusion_impact(
     optimized_model: nn.Module,
     sample_input: torch.Tensor,
     num_iterations: int = 100
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Benchmark the performance impact of fusion optimizations.
 
-    🎓 EDUCATIONAL: Optimization validation methodology
     Always measure optimization impact to verify that theoretical
     improvements translate to real performance gains.
     """

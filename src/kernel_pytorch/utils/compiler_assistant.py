@@ -8,20 +8,18 @@ Main orchestrator for the compiler optimization workflow:
 - Offers educational content and tutorials
 """
 
+import textwrap
+import time
+from typing import Any
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Tuple, Optional, Any, Union, Callable, Type
-import textwrap
-from dataclasses import dataclass, asdict
-import time
-import numpy as np
 
 from .model_analyzer import CodeAnalyzer, ModelAnalysisResult
 from .optimization_recommendations import (
+    OptimizationImplementer,
     OptimizationRecommendation,
     OptimizationRecommendationEngine,
-    OptimizationImplementer
 )
 
 
@@ -33,7 +31,7 @@ class CompilerOptimizationAssistant:
     combining analysis, recommendations, and implementation.
     """
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self, device: torch.device | None = None):
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.analyzer = CodeAnalyzer()
         self.recommendation_engine = OptimizationRecommendationEngine()
@@ -41,7 +39,7 @@ class CompilerOptimizationAssistant:
 
     def optimize_model(self,
                       model: nn.Module,
-                      sample_input: Optional[torch.Tensor] = None,
+                      sample_input: torch.Tensor | None = None,
                       optimization_level: str = 'balanced',
                       interactive: bool = False) -> ModelAnalysisResult:
         """
@@ -56,15 +54,15 @@ class CompilerOptimizationAssistant:
         Returns:
             ModelAnalysisResult with optimization analysis and recommendations
         """
-        print("🚀 Compiler Optimization Assistant")
+        print(" Compiler Optimization Assistant")
         print("=" * 50)
 
         # Step 1: Analyze model
-        print("\n📊 Analyzing model architecture...")
+        print("\n Analyzing model architecture...")
         analysis = self.analyzer.analyze_model(model)
 
         # Step 2: Generate recommendations
-        print("💡 Generating optimization recommendations...")
+        print(" Generating optimization recommendations...")
         recommendations = self.recommendation_engine.generate_recommendations(analysis)
 
         # Filter recommendations by optimization level
@@ -75,7 +73,7 @@ class CompilerOptimizationAssistant:
 
         # Step 4: Interactive optimization if requested
         if interactive:
-            print("\n🔧 Interactive Optimization Mode")
+            print("\n Interactive Optimization Mode")
             selected_recommendations = self._interactive_recommendation_selection(filtered_recommendations)
         else:
             selected_recommendations = filtered_recommendations
@@ -101,8 +99,8 @@ class CompilerOptimizationAssistant:
 
     def apply_recommendations(self,
                             model: nn.Module,
-                            recommendations: List[OptimizationRecommendation],
-                            auto_implement: bool = False) -> Dict[str, Any]:
+                            recommendations: list[OptimizationRecommendation],
+                            auto_implement: bool = False) -> dict[str, Any]:
         """
         Apply optimization recommendations to a model.
 
@@ -122,23 +120,23 @@ class CompilerOptimizationAssistant:
         }
 
         for rec in recommendations:
-            print(f"\n🔧 Implementing: {rec.description}")
+            print(f"\n Implementing: {rec.description}")
 
             try:
                 if auto_implement:
                     optimized_model, code = self.implementer.implement_optimization(model, rec)
                     results['optimized_models'][rec.optimization_type] = optimized_model
                     results['implementation_code'][rec.optimization_type] = code
-                    print(f"✅ Successfully implemented {rec.optimization_type}")
+                    print(f" Successfully implemented {rec.optimization_type}")
                 else:
-                    print(f"📋 Implementation steps for {rec.optimization_type}:")
+                    print(f" Implementation steps for {rec.optimization_type}:")
                     for i, step in enumerate(rec.implementation_steps, 1):
                         print(f"    {i}. {step}")
-                    print(f"\n💻 Code example:")
+                    print("\n Code example:")
                     print(textwrap.indent(rec.code_example, "    "))
 
             except Exception as e:
-                print(f"❌ Failed to implement {rec.optimization_type}: {str(e)}")
+                print(f" Failed to implement {rec.optimization_type}: {str(e)}")
 
         return results
 
@@ -154,7 +152,7 @@ class CompilerOptimizationAssistant:
         """
         tutorials = {
             'torch_compile': """
-🎯 torch.compile Tutorial
+ torch.compile Tutorial
 
 torch.compile is PyTorch's modern compilation system that automatically optimizes
 your models for better performance.
@@ -191,7 +189,7 @@ optimized_model = torch.compile(model)
 ```
 """,
             'operation_fusion': """
-🎯 Operation Fusion Tutorial
+ Operation Fusion Tutorial
 
 Operation fusion combines multiple operations into single kernels to reduce
 memory access overhead and improve GPU utilization.
@@ -227,7 +225,7 @@ def forward(self, x):
 ```
 """,
             'attention_optimization': """
-🎯 Attention Optimization Tutorial
+ Attention Optimization Tutorial
 
 Attention mechanisms often dominate compute and memory in transformer models.
 Optimization can provide dramatic improvements.
@@ -261,7 +259,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
 
         return tutorials.get(optimization_type, f"Tutorial for {optimization_type} not available yet.")
 
-    def _filter_by_optimization_level(self, recommendations: List[OptimizationRecommendation], level: str) -> List[OptimizationRecommendation]:
+    def _filter_by_optimization_level(self, recommendations: list[OptimizationRecommendation], level: str) -> list[OptimizationRecommendation]:
         """Filter recommendations based on optimization level."""
         if level == 'conservative':
             return [r for r in recommendations if r.difficulty == 'easy' and r.priority in ['high', 'medium']]
@@ -272,7 +270,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
         else:
             return recommendations
 
-    def _interactive_recommendation_selection(self, recommendations: List[OptimizationRecommendation]) -> List[OptimizationRecommendation]:
+    def _interactive_recommendation_selection(self, recommendations: list[OptimizationRecommendation]) -> list[OptimizationRecommendation]:
         """Interactive selection of recommendations."""
         for i, rec in enumerate(recommendations):
             print(f"  {i+1}. [{rec.priority}] {rec.description}")
@@ -290,7 +288,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
             print("Invalid selection, using all recommendations")
             return recommendations
 
-    def _calculate_optimization_score(self, analysis: Dict[str, Any], recommendations: List[OptimizationRecommendation]) -> float:
+    def _calculate_optimization_score(self, analysis: dict[str, Any], recommendations: list[OptimizationRecommendation]) -> float:
         """Calculate overall optimization score."""
         # Base score from current optimizations
         base_score = 0.5
@@ -309,7 +307,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
 
         return max(0.0, min(1.0, base_score))
 
-    def _identify_bottlenecks(self, analysis: Dict[str, Any]) -> List[str]:
+    def _identify_bottlenecks(self, analysis: dict[str, Any]) -> list[str]:
         """Identify performance bottlenecks."""
         bottlenecks = []
 
@@ -324,7 +322,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
 
         return bottlenecks
 
-    def _identify_current_optimizations(self, analysis: Dict[str, Any]) -> List[str]:
+    def _identify_current_optimizations(self, analysis: dict[str, Any]) -> list[str]:
         """Identify currently applied optimizations."""
         current_opts = []
 
@@ -336,13 +334,13 @@ if hasattr(F, 'scaled_dot_product_attention'):
 
         return current_opts
 
-    def _estimate_improvement_potential(self, recommendations: List[OptimizationRecommendation]) -> str:
+    def _estimate_improvement_potential(self, recommendations: list[OptimizationRecommendation]) -> str:
         """Estimate overall improvement potential."""
         if not recommendations:
             return "Minimal - model appears well optimized"
 
         high_priority = sum(1 for r in recommendations if r.priority == 'high')
-        total = len(recommendations)
+        len(recommendations)
 
         if high_priority >= 3:
             return "Significant - multiple high-impact optimizations available"
@@ -352,35 +350,35 @@ if hasattr(F, 'scaled_dot_product_attention'):
             return "Minor - mostly incremental improvements available"
 
     def _display_analysis_results(self,
-                                analysis: Dict[str, Any],
-                                recommendations: List[OptimizationRecommendation],
+                                analysis: dict[str, Any],
+                                recommendations: list[OptimizationRecommendation],
                                 optimization_score: float):
         """Display comprehensive analysis results."""
-        print(f"\n📈 Analysis Results:")
+        print("\n Analysis Results:")
         print(f"  Model Size: {analysis['parameters']['model_size_mb']:.1f} MB")
         print(f"  Parameters: {analysis['parameters']['total_parameters']:,}")
         print(f"  Tensor Core Compatibility: {analysis['parameters']['tensor_core_compatibility']:.1%}")
         print(f"  Compilation Readiness: {analysis['compilation_readiness']['compilation_compatibility_score']:.1%}")
         print(f"  Overall Optimization Score: {optimization_score:.1%}")
 
-        print(f"\n💡 Optimization Recommendations ({len(recommendations)} found):")
+        print(f"\n Optimization Recommendations ({len(recommendations)} found):")
         for i, rec in enumerate(recommendations, 1):
-            priority_emoji = {'high': '🔴', 'medium': '🟡', 'low': '🟢'}[rec.priority]
-            difficulty_emoji = {'easy': '✅', 'medium': '⚠️', 'hard': '🔥'}[rec.difficulty]
+            priority_emoji = {'high': '', 'medium': '', 'low': ''}[rec.priority]
+            difficulty_emoji = {'easy': '', 'medium': '', 'hard': ''}[rec.difficulty]
 
             print(f"  {i}. {priority_emoji} {difficulty_emoji} {rec.description}")
             print(f"     Expected: {rec.expected_improvement}")
             print(f"     Difficulty: {rec.difficulty.title()}")
 
         if not recommendations:
-            print("  🎉 Model appears well-optimized! Consider advanced techniques or hardware-specific optimizations.")
+            print("   Model appears well-optimized! Consider advanced techniques or hardware-specific optimizations.")
 
 
 def demonstrate_optimization_assistant():
     """
     Comprehensive demonstration of the Compiler Optimization Assistant.
     """
-    print("🤖 Compiler Optimization Assistant Demonstration")
+    print(" Compiler Optimization Assistant Demonstration")
     print("=" * 60)
 
     # Create a sample model for demonstration
@@ -429,7 +427,7 @@ def demonstrate_optimization_assistant():
     assistant = CompilerOptimizationAssistant(device=device)
     model = DemoTransformerModel().to(device)
 
-    print(f"📊 Demo Model Information:")
+    print(" Demo Model Information:")
     print(f"  Device: {device}")
     print(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"  Model size: {sum(p.numel() for p in model.parameters()) * 4 / 1024**2:.1f} MB")
@@ -438,7 +436,7 @@ def demonstrate_optimization_assistant():
     sample_input = torch.randint(0, 10000, (4, 128), device=device)
 
     # Run comprehensive optimization analysis
-    print(f"\n🔍 Running Comprehensive Analysis...")
+    print("\n Running Comprehensive Analysis...")
     result = assistant.optimize_model(
         model,
         sample_input=sample_input,
@@ -447,33 +445,33 @@ def demonstrate_optimization_assistant():
     )
 
     # Display detailed recommendations
-    print(f"\n📋 Detailed Optimization Recommendations:")
+    print("\n Detailed Optimization Recommendations:")
     for i, rec in enumerate(result.optimization_opportunities[:3], 1):  # Show top 3
         print(f"\n{i}. {rec.description} ({rec.priority} priority)")
         print(f"   Expected improvement: {rec.expected_improvement}")
-        print(f"   Implementation steps:")
+        print("   Implementation steps:")
         for j, step in enumerate(rec.implementation_steps, 1):
             print(f"     {j}. {step}")
 
-        print(f"   Educational notes:")
+        print("   Educational notes:")
         for note in rec.educational_notes[:2]:  # Show first 2 notes
             print(f"     • {note}")
 
     # Apply some optimizations
-    print(f"\n⚙️ Applying Optimizations...")
-    implementation_results = assistant.apply_recommendations(
+    print("\n Applying Optimizations...")
+    assistant.apply_recommendations(
         model,
         result.optimization_opportunities[:2],  # Apply first 2 recommendations
         auto_implement=False  # Set to True for automatic implementation
     )
 
     # Show tutorial for a specific optimization
-    print(f"\n📚 Tutorial Example - torch.compile:")
+    print("\n Tutorial Example - torch.compile:")
     tutorial = assistant.get_optimization_tutorial('torch_compile')
     print(tutorial[:500] + "..." if len(tutorial) > 500 else tutorial)
 
     # Performance comparison demo
-    print(f"\n⚡ Performance Comparison Demo:")
+    print("\n Performance Comparison Demo:")
 
     # Original model timing
     model.eval()
@@ -487,7 +485,7 @@ def demonstrate_optimization_assistant():
         start_time = time.time()
 
         for _ in range(10):
-            outputs = model(sample_input)
+            model(sample_input)
 
         torch.cuda.synchronize() if device.type == 'cuda' else None
         original_time = (time.time() - start_time) / 10 * 1000  # ms per run
@@ -504,7 +502,7 @@ def demonstrate_optimization_assistant():
         start_time = time.time()
 
         for _ in range(10):
-            outputs = compiled_model(sample_input)
+            compiled_model(sample_input)
 
         torch.cuda.synchronize() if device.type == 'cuda' else None
         compiled_time = (time.time() - start_time) / 10 * 1000  # ms per run
@@ -516,13 +514,13 @@ def demonstrate_optimization_assistant():
     print(f"  Speedup: {speedup:.2f}x")
 
     # Summary
-    print(f"\n✅ Optimization Assistant Demo Complete!")
-    print(f"Key capabilities demonstrated:")
-    print(f"  • Automated model analysis and bottleneck identification")
-    print(f"  • Intelligent optimization recommendation generation")
-    print(f"  • Educational explanations and implementation guidance")
-    print(f"  • Performance impact prediction and measurement")
-    print(f"  • Interactive optimization workflow")
+    print("\n Optimization Assistant Demo Complete!")
+    print("Key capabilities demonstrated:")
+    print("  • Automated model analysis and bottleneck identification")
+    print("  • Intelligent optimization recommendation generation")
+    print("  • Educational explanations and implementation guidance")
+    print("  • Performance impact prediction and measurement")
+    print("  • Interactive optimization workflow")
 
 
 if __name__ == "__main__":

@@ -8,14 +8,15 @@ Implements GPipe and Interleaved schedules for micro-batch pipelining.
 """
 
 import logging
-from dataclasses import dataclass, field
+from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
-import torch.nn as nn
 import torch.distributed as dist
-from collections import deque
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class PipelineParallelConfig:
     num_stages: int = 1
     num_micro_batches: int = 1
     stage_id: int = 0
-    process_group: Optional[Any] = None
+    process_group: Any | None = None
     schedule: ScheduleType = ScheduleType.GPIPE
     chunks: int = 1
     activation_checkpointing: bool = True
@@ -73,7 +74,7 @@ class PipelineStage(nn.Module):
         self,
         module: nn.Module,
         config: PipelineParallelConfig,
-        stage_layers: Optional[List[int]] = None,
+        stage_layers: list[int] | None = None,
     ):
         super().__init__()
         self.module = module
@@ -81,15 +82,15 @@ class PipelineStage(nn.Module):
         self.stage_layers = stage_layers or []
 
         # Communication buffers
-        self._input_tensors: List[Optional[torch.Tensor]] = []
-        self._output_tensors: List[Optional[torch.Tensor]] = []
+        self._input_tensors: list[torch.Tensor | None] = []
+        self._output_tensors: list[torch.Tensor | None] = []
 
         # Activation storage for backward pass
-        self._saved_activations: Dict[int, torch.Tensor] = {}
+        self._saved_activations: dict[int, torch.Tensor] = {}
 
         # Async handles
-        self._send_handles: List[Any] = []
-        self._recv_handles: List[Any] = []
+        self._send_handles: list[Any] = []
+        self._recv_handles: list[Any] = []
 
     @property
     def is_first_stage(self) -> bool:
@@ -107,7 +108,7 @@ class PipelineStage(nn.Module):
         """Get rank of next stage."""
         return self.config.stage_id + 1
 
-    def recv_forward(self, tensor_shape: Tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
+    def recv_forward(self, tensor_shape: tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
         """Receive activation from previous stage."""
         if self.is_first_stage:
             return None
@@ -135,7 +136,7 @@ class PipelineStage(nn.Module):
             else:
                 dist.send(tensor, dst=self._get_next_rank())
 
-    def recv_backward(self, tensor_shape: Tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
+    def recv_backward(self, tensor_shape: tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
         """Receive gradient from next stage."""
         if self.is_last_stage:
             return None
@@ -172,7 +173,7 @@ class PipelineStage(nn.Module):
 
     def forward_step(
         self,
-        input_tensor: Optional[torch.Tensor],
+        input_tensor: torch.Tensor | None,
         micro_batch_id: int,
     ) -> torch.Tensor:
         """Execute forward pass for one micro-batch.
@@ -196,7 +197,7 @@ class PipelineStage(nn.Module):
 
     def backward_step(
         self,
-        grad_output: Optional[torch.Tensor],
+        grad_output: torch.Tensor | None,
         micro_batch_id: int,
     ) -> torch.Tensor:
         """Execute backward pass for one micro-batch.
@@ -229,16 +230,16 @@ class PipelineStage(nn.Module):
 class PipelineScheduler:
     """Base class for pipeline schedules."""
 
-    def __init__(self, stages: List[PipelineStage], config: PipelineParallelConfig):
+    def __init__(self, stages: list[PipelineStage], config: PipelineParallelConfig):
         self.stages = stages
         self.config = config
         self.num_micro_batches = config.num_micro_batches
 
-    def run_forward(self, micro_batches: List[torch.Tensor]) -> List[torch.Tensor]:
+    def run_forward(self, micro_batches: list[torch.Tensor]) -> list[torch.Tensor]:
         """Run forward passes for all micro-batches."""
         raise NotImplementedError
 
-    def run_backward(self, gradients: List[torch.Tensor]) -> None:
+    def run_backward(self, gradients: list[torch.Tensor]) -> None:
         """Run backward passes for all micro-batches."""
         raise NotImplementedError
 
@@ -250,11 +251,11 @@ class GPipeScheduler(PipelineScheduler):
     Simple but has higher memory usage due to storing all activations.
     """
 
-    def __init__(self, stages: List[PipelineStage], config: PipelineParallelConfig):
+    def __init__(self, stages: list[PipelineStage], config: PipelineParallelConfig):
         super().__init__(stages, config)
-        self._output_cache: Dict[int, torch.Tensor] = {}
+        self._output_cache: dict[int, torch.Tensor] = {}
 
-    def run_forward(self, micro_batches: List[torch.Tensor]) -> List[torch.Tensor]:
+    def run_forward(self, micro_batches: list[torch.Tensor]) -> list[torch.Tensor]:
         """Run forward passes using GPipe schedule.
 
         Args:
@@ -291,7 +292,7 @@ class GPipeScheduler(PipelineScheduler):
 
         return outputs
 
-    def run_backward(self, gradients: List[Optional[torch.Tensor]]) -> None:
+    def run_backward(self, gradients: list[torch.Tensor | None]) -> None:
         """Run backward passes using GPipe schedule.
 
         Args:
@@ -341,14 +342,14 @@ class InterleavedScheduler(PipelineScheduler):
     v0.4.23: Added run_forward() and run_backward() implementations
     """
 
-    def __init__(self, stages: List[PipelineStage], config: PipelineParallelConfig):
+    def __init__(self, stages: list[PipelineStage], config: PipelineParallelConfig):
         super().__init__(stages, config)
         self._forward_queue: deque = deque()
         self._backward_queue: deque = deque()
-        self._output_cache: Dict[int, torch.Tensor] = {}
-        self._input_cache: Dict[int, torch.Tensor] = {}
+        self._output_cache: dict[int, torch.Tensor] = {}
+        self._input_cache: dict[int, torch.Tensor] = {}
 
-    def run_forward(self, micro_batches: List[torch.Tensor]) -> List[torch.Tensor]:
+    def run_forward(self, micro_batches: list[torch.Tensor]) -> list[torch.Tensor]:
         """Run forward passes using 1F1B interleaved schedule.
 
         This implements just the forward phase, storing activations for
@@ -420,7 +421,7 @@ class InterleavedScheduler(PipelineScheduler):
         stage.wait_all()
         return outputs
 
-    def run_backward(self, gradients: List[Optional[torch.Tensor]]) -> None:
+    def run_backward(self, gradients: list[torch.Tensor | None]) -> None:
         """Run backward passes using 1F1B interleaved schedule.
 
         Must be called after run_forward() with gradients computed from
@@ -481,7 +482,7 @@ class InterleavedScheduler(PipelineScheduler):
 
     def run_forward_backward(
         self,
-        micro_batches: List[torch.Tensor],
+        micro_batches: list[torch.Tensor],
         loss_fn: Callable[[torch.Tensor], torch.Tensor],
     ) -> torch.Tensor:
         """Run interleaved forward and backward passes.
@@ -504,8 +505,8 @@ class InterleavedScheduler(PipelineScheduler):
         # Use device from first micro-batch
         device = micro_batches[0].device if micro_batches else "cpu"
         total_loss = torch.tensor(0.0, device=device)
-        input_tensors: List[torch.Tensor] = []
-        output_tensors: List[torch.Tensor] = []
+        input_tensors: list[torch.Tensor] = []
+        output_tensors: list[torch.Tensor] = []
 
         # Warmup phase: only forward passes
         for i in range(num_warmup_micro_batches):
@@ -596,8 +597,8 @@ class InterleavedScheduler(PipelineScheduler):
 def create_pipeline_stages(
     model: nn.Module,
     config: PipelineParallelConfig,
-    split_points: Optional[List[str]] = None,
-) -> List[PipelineStage]:
+    split_points: list[str] | None = None,
+) -> list[PipelineStage]:
     """Create pipeline stages from a model.
 
     Args:
@@ -648,7 +649,7 @@ def create_pipeline_stages(
     return stages
 
 
-def _auto_split_model(model: nn.Module, num_stages: int) -> List[str]:
+def _auto_split_model(model: nn.Module, num_stages: int) -> list[str]:
     """Automatically determine split points for a model.
 
     Args:
@@ -687,7 +688,7 @@ def estimate_pipeline_memory(
     config: PipelineParallelConfig,
     micro_batch_size: int,
     sequence_length: int,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Estimate memory usage per stage in a pipeline.
 
     Args:

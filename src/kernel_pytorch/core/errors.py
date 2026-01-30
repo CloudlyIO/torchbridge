@@ -16,7 +16,7 @@ Version: 0.3.11
 """
 
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,8 @@ class KernelPyTorchError(Exception):
     def __init__(
         self,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         """
         Initialize KernelPyTorch error.
@@ -64,7 +64,7 @@ class KernelPyTorchError(Exception):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r}, details={self.details!r})"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary for serialization."""
         return {
             "error_type": self.__class__.__name__,
@@ -129,7 +129,7 @@ class ModelValidationError(ValidationError):
     def __init__(
         self,
         model_name: str,
-        issues: List[str]
+        issues: list[str]
     ):
         issues_str = "; ".join(issues)
         message = f"Model '{model_name}' validation failed: {issues_str}"
@@ -162,7 +162,7 @@ class HardwareDetectionError(HardwareError):
 class HardwareNotFoundError(HardwareError):
     """Raised when required hardware is not available."""
 
-    def __init__(self, hardware_type: str, requirements: Optional[List[str]] = None):
+    def __init__(self, hardware_type: str, requirements: list[str] | None = None):
         message = f"Required hardware not found: {hardware_type}"
         if requirements:
             message = f"{message}. Requirements: {', '.join(requirements)}"
@@ -179,7 +179,7 @@ class HardwareCapabilityError(HardwareError):
         self,
         hardware_name: str,
         required_capability: str,
-        available_capabilities: List[str]
+        available_capabilities: list[str]
     ):
         message = f"Hardware '{hardware_name}' lacks capability: {required_capability}"
         super().__init__(message, {
@@ -324,7 +324,7 @@ def raise_or_warn(
     exception_class: type,
     message: str,
     strict_mode: bool = False,
-    log: Optional[logging.Logger] = None,
+    log: logging.Logger | None = None,
     **kwargs
 ) -> None:
     """

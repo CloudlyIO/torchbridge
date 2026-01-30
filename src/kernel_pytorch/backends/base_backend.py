@@ -14,13 +14,13 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Any, Optional, List, Tuple, Union, TypeVar
+from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn
 
+from .base_exceptions import BackendError
 from .base_memory_manager import BaseMemoryManager, BaseMemoryStats
-from .base_exceptions import BackendError, DeviceNotAvailableError
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +87,11 @@ class DeviceInfo:
     device_type: str  # Device string (e.g., "cuda:0", "xpu:0", "xla:0")
     device_id: int
     device_name: str
-    compute_capability: Optional[str] = None  # Architecture-specific version
+    compute_capability: str | None = None  # Architecture-specific version
     total_memory_bytes: int = 0
-    driver_version: Optional[str] = None
+    driver_version: str | None = None
     is_available: bool = True
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
 
     @property
     def total_memory_gb(self) -> float:
@@ -103,7 +103,7 @@ class DeviceInfo:
         """Total memory in MB."""
         return self.total_memory_bytes / (1024 ** 2)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'backend': self.backend,
@@ -128,17 +128,17 @@ class OptimizationResult:
     success: bool
     model: nn.Module
     level: OptimizationLevel
-    optimizations_applied: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    optimizations_applied: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    metrics: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         # Ensure level is OptimizationLevel enum
         if isinstance(self.level, str):
             self.level = OptimizationLevel.from_string(self.level)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'success': self.success,
@@ -184,9 +184,9 @@ class BaseBackend(ABC):
         """
         self.config = config
         self._initialized = False
-        self._device: Optional[torch.device] = None
-        self._memory_manager: Optional[BaseMemoryManager] = None
-        self._device_cache: Dict[int, DeviceInfo] = {}
+        self._device: torch.device | None = None
+        self._memory_manager: BaseMemoryManager | None = None
+        self._device_cache: dict[int, DeviceInfo] = {}
 
         # Setup environment
         try:
@@ -251,7 +251,7 @@ class BaseBackend(ABC):
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """
         Prepare a model for this backend.
@@ -274,8 +274,8 @@ class BaseBackend(ABC):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize a model for inference.
@@ -294,9 +294,9 @@ class BaseBackend(ABC):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize a model for training.
 
@@ -327,7 +327,7 @@ class BaseBackend(ABC):
         return self._initialized and self._check_availability()
 
     @property
-    def memory_manager(self) -> Optional[BaseMemoryManager]:
+    def memory_manager(self) -> BaseMemoryManager | None:
         """Get the memory manager for this backend."""
         return self._memory_manager
 
@@ -345,7 +345,7 @@ class BaseBackend(ABC):
             self._device_cache[device_id] = self._get_device_info(device_id)
         return self._device_cache[device_id]
 
-    def get_all_devices(self) -> List[DeviceInfo]:
+    def get_all_devices(self) -> list[DeviceInfo]:
         """
         Get information about all available devices.
 
@@ -382,7 +382,7 @@ class BaseBackend(ABC):
         # Subclasses should override to set actual device
         logger.info(f"Setting device to {device_id}")
 
-    def synchronize(self) -> None:
+    def synchronize(self) -> None:  # noqa: B027
         """
         Synchronize all pending operations.
 
@@ -401,7 +401,7 @@ class BaseBackend(ABC):
         if self._memory_manager:
             self._memory_manager.empty_cache()
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """
         Get memory statistics.
 
@@ -448,7 +448,7 @@ class BaseBackend(ABC):
 
         return "\n".join(lines)
 
-    def to_device(self, tensor_or_model: Union[torch.Tensor, nn.Module]) -> Union[torch.Tensor, nn.Module]:
+    def to_device(self, tensor_or_model: torch.Tensor | nn.Module) -> torch.Tensor | nn.Module:
         """
         Move tensor or model to this backend's device.
 
@@ -462,10 +462,10 @@ class BaseBackend(ABC):
 
     def allocate_tensor(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
-        pool_id: Optional[str] = None
+        pool_id: str | None = None
     ) -> torch.Tensor:
         """
         Allocate a tensor on this backend's device.
@@ -566,7 +566,7 @@ class CPUBackend(BaseBackend):
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """Prepare model for CPU."""
         return model.to('cpu')
@@ -574,8 +574,8 @@ class CPUBackend(BaseBackend):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """Optimize for CPU inference."""
         model = model.eval()
@@ -592,9 +592,9 @@ class CPUBackend(BaseBackend):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """Optimize for CPU training."""
         model = model.train()
 

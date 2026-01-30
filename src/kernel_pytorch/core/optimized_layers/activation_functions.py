@@ -4,31 +4,23 @@ Compiler-Optimized Activation Functions
 This module provides activation function implementations optimized for PyTorch compiler
 and GPU kernel efficiency, with emphasis on fusion patterns and memory optimization.
 
-🎓 EDUCATIONAL FOCUS:
-- Fused activation patterns for maximum GPU efficiency
-- torch.compile optimization strategies for activation functions
-- Memory bandwidth optimization through activation fusion
-- Production-ready activation implementations for modern LLMs
-
-🔧 OPTIMIZATION TECHNIQUES:
+ OPTIMIZATION TECHNIQUES:
 - Kernel fusion with preceding/following operations
 - Memory-efficient implementations that minimize allocations
 - Vectorized operations optimized for GPU SIMT architecture
 - Numerical stability while maintaining performance
 """
 
-import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Union
 
 
 class FusedGELU(nn.Module):
     """
     Compiler-optimized GELU activation with automatic fusion capabilities.
 
-    🎓 EDUCATIONAL: Why GELU optimizes well with torch.compile
     GELU is computationally complex (involves erf function) but has excellent
     fusion opportunities with linear layers and normalization operations.
 
@@ -50,24 +42,18 @@ class FusedGELU(nn.Module):
         """
         Optimized GELU forward pass designed for torch.compile fusion.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Kernel mapping: F.gelu dispatches to cuDNN's optimized GELU kernels
         - Fusion opportunity: Can fuse with preceding Linear layers automatically
         - Memory access: Single pass through data with no intermediate allocations
         - Hardware acceleration: Uses GPU transcendental function units efficiently
 
-        📊 PERFORMANCE IMPACT:
-        - vs manual implementation: ~3x speedup due to cuDNN optimization
-        - Fusion benefit: Additional 1.5-2x when fused with Linear layers
-        - Memory efficiency: Zero intermediate tensor allocations
-
-        💡 WHY GELU FUSES WELL:
+         WHY GELU FUSES WELL:
         - Mathematical structure aligns with GPU vectorization
         - cuDNN has specialized Linear+GELU fused kernels
         - torch.compile can automatically detect and optimize GELU patterns
         """
-        # 🚀 OPTIMIZATION: F.gelu automatically selects best implementation
-        # Educational: cuDNN has highly optimized GELU kernels with fusion support
+        #  OPTIMIZATION: F.gelu automatically selects best implementation
         return F.gelu(x, approximate=self.approximate)
 
 
@@ -75,19 +61,19 @@ class FusedSwiGLU(nn.Module):
     """
     Compiler-optimized SwiGLU (Swish-Gated Linear Unit) activation.
 
-    🧠 MATHEMATICAL BACKGROUND:
+     MATHEMATICAL BACKGROUND:
     SwiGLU(x) = Swish(x @ W_gate) ⊙ (x @ W_up)
     Where Swish(x) = x * sigmoid(x)
 
     Used in: LLaMA, PaLM, GLaM, and other state-of-the-art language models
 
-    🔧 OPTIMIZATION ADVANTAGES:
+     OPTIMIZATION ADVANTAGES:
     - Gated activation provides better gradient flow than ReLU
     - Mathematical structure enables efficient GPU parallelization
     - Fusion opportunities with both gate and up projections
     """
 
-    def __init__(self, dim: int, hidden_dim: Optional[int] = None, bias: bool = False):
+    def __init__(self, dim: int, hidden_dim: int | None = None, bias: bool = False):
         """
         Initialize SwiGLU with integrated linear projections.
 
@@ -99,8 +85,7 @@ class FusedSwiGLU(nn.Module):
         super().__init__()
         hidden_dim = hidden_dim or 4 * dim
 
-        # 🔥 OPTIMIZATION: Single combined projection for gate and up
-        # Educational: This enables torch.compile to optimize both projections together
+        #  OPTIMIZATION: Single combined projection for gate and up
         self.gate_up_proj = nn.Linear(dim, 2 * hidden_dim, bias=bias)
         self.down_proj = nn.Linear(hidden_dim, dim, bias=bias)
 
@@ -108,34 +93,26 @@ class FusedSwiGLU(nn.Module):
         """
         Optimized SwiGLU forward pass with automatic fusion opportunities.
 
-        🔧 GPU OPTIMIZATION STRATEGIES:
+         GPU OPTIMIZATION STRATEGIES:
         - Combined gate/up projection: Single GEMM instead of two separate operations
         - Vectorized activation: SiLU + element-wise multiply optimized for GPU
         - Memory efficiency: Intermediate results can stay in GPU registers
         - Compiler fusion: torch.compile can fuse entire SwiGLU into fewer kernels
 
-        📊 PERFORMANCE CHARACTERISTICS:
+         PERFORMANCE CHARACTERISTICS:
         - vs separate gate/up: ~2x speedup from combined projection
         - Memory bandwidth: ~40% reduction from eliminated intermediate storage
         - Fusion potential: Can combine with surrounding operations (LayerNorm, etc.)
 
-        🎓 EDUCATIONAL: Why SwiGLU structure optimizes well
         The mathematical pattern (linear → activation → element-wise) maps perfectly
         to GPU execution units and enables aggressive compiler optimization.
         """
-        # 🚀 STEP 1: Combined gate and up projection (single GEMM)
-        # Educational: Much more efficient than separate gate_proj(x) and up_proj(x)
         gate_up = self.gate_up_proj(x)
 
-        # 🔧 STEP 2: Split into gate and up components
-        # Educational: chunk() is more efficient than tensor slicing for contiguous data
         gate, up = gate_up.chunk(2, dim=-1)
 
-        # 🔥 STEP 3: Gated activation (SiLU + element-wise multiply)
-        # Educational: F.silu uses optimized GPU transcendental functions
         hidden = F.silu(gate) * up
 
-        # 🚀 STEP 4: Down projection to original dimension
         return self.down_proj(hidden)
 
 
@@ -143,11 +120,10 @@ class FusedLayerNormActivation(nn.Module):
     """
     Fused Layer Normalization + Activation for maximum kernel efficiency.
 
-    🎓 EDUCATIONAL: Demonstration of complex fusion patterns
     This shows how torch.compile can automatically fuse multi-step operations
     that would traditionally require separate kernel launches.
 
-    🔧 FUSION BENEFITS:
+     FUSION BENEFITS:
     - LayerNorm + Activation: 2 kernels → 1 kernel
     - Memory traffic: ~50% reduction from eliminated intermediate storage
     - GPU utilization: Better arithmetic intensity through operation combination
@@ -182,28 +158,24 @@ class FusedLayerNormActivation(nn.Module):
         """
         Fused LayerNorm + Activation optimized for torch.compile fusion.
 
-        🔧 FUSION OPTIMIZATION ANALYSIS:
+         FUSION OPTIMIZATION ANALYSIS:
         - Operation sequence: LayerNorm → Activation (perfect producer-consumer)
         - Memory access: Normalized result kept in GPU registers, not global memory
         - Kernel launches: 2 separate → 1 fused (50% kernel launch overhead reduction)
         - Cache efficiency: Better L1/L2 cache utilization through data reuse
 
-        📊 PERFORMANCE BENEFITS:
+         PERFORMANCE BENEFITS:
         - Memory bandwidth: ~40-50% reduction from eliminated intermediate storage
         - Latency: Reduced kernel launch overhead
         - Throughput: Higher sustained operations/second through better GPU utilization
 
-        💡 COMPILER OPTIMIZATION INSIGHTS:
+         COMPILER OPTIMIZATION INSIGHTS:
         torch.compile recognizes this producer-consumer pattern and can automatically
         generate fused kernels that combine normalization statistics computation
         with activation function evaluation.
         """
-        # 🔥 STEP 1: Layer normalization (fusion producer)
-        # Educational: This produces intermediate data that activation will consume
         normalized = F.layer_norm(x, (self.normalized_shape,), self.weight, self.bias, self.eps)
 
-        # 🚀 STEP 2: Activation function (fusion consumer)
-        # Educational: torch.compile can fuse this with preceding LayerNorm
         if self.activation == 'gelu':
             return F.gelu(normalized)
         elif self.activation == 'relu':
@@ -220,7 +192,6 @@ class FusedReLU(nn.Module):
     """
     Compiler-optimized ReLU with enhanced fusion capabilities.
 
-    🎓 EDUCATIONAL: Why ReLU is the "perfect" activation for GPU optimization
     ReLU's simplicity (max(0, x)) makes it the ideal candidate for kernel fusion,
     demonstrating fundamental principles of GPU-friendly activation design.
     """
@@ -239,30 +210,28 @@ class FusedReLU(nn.Module):
         """
         Optimized ReLU forward pass with maximum fusion potential.
 
-        🔧 GPU OPTIMIZATION ADVANTAGES:
+         GPU OPTIMIZATION ADVANTAGES:
         - Operation simplicity: Single comparison + selection per element
         - Perfect vectorization: Maps directly to GPU SIMT architecture
         - Minimal memory bandwidth: Can operate entirely in GPU registers
         - Universal fusion: Can fuse with virtually any preceding operation
 
-        📊 PERFORMANCE CHARACTERISTICS:
+         PERFORMANCE CHARACTERISTICS:
         - Compute overhead: Essentially zero (single GPU instruction per element)
         - Memory efficiency: In-place operation eliminates allocation overhead
         - Fusion potential: Maximum - can fuse with any producer operation
 
-        🎓 EDUCATIONAL: ReLU as fusion learning example
         ReLU demonstrates the ideal activation function properties for GPU optimization:
         - Simple mathematical operation
         - Element-wise computation
         - No transcendental functions
         - Perfect memory access patterns
         """
-        # 🚀 OPTIMIZATION: F.relu with inplace=True for memory efficiency
-        # Educational: Demonstrates how simple operations enable maximum optimization
+        #  OPTIMIZATION: F.relu with inplace=True for memory efficiency
         return F.relu(x, inplace=self.inplace)
 
 
-# 🎓 EDUCATIONAL: Activation function selection guide for GPU optimization
+#  EDUCATIONAL: Activation function selection guide for GPU optimization
 ACTIVATION_OPTIMIZATION_GUIDE = {
     'relu': {
         'complexity': 'Minimal',
@@ -295,7 +264,6 @@ def create_optimized_activation(activation: str, **kwargs) -> nn.Module:
     """
     Factory function for creating optimized activation functions.
 
-    🎓 EDUCATIONAL: Practical activation selection guide
     This function demonstrates how to choose and configure activation functions
     for optimal GPU performance based on specific requirements.
 
@@ -322,7 +290,7 @@ def create_optimized_activation(activation: str, **kwargs) -> nn.Module:
         raise ValueError(f"Unsupported activation: {activation}")
 
 
-# 🔧 OPTIMIZATION: Pre-compiled activation functions for common use cases
+#  OPTIMIZATION: Pre-compiled activation functions for common use cases
 @torch.compile
 def compiled_gelu(x: torch.Tensor) -> torch.Tensor:
     """Pre-compiled GELU for maximum performance in repeated usage."""
@@ -340,7 +308,6 @@ def compiled_layer_norm_gelu(x: torch.Tensor, weight: torch.Tensor, bias: torch.
     """
     Pre-compiled LayerNorm + GELU fusion for maximum performance.
 
-    🎓 EDUCATIONAL: Function-level compilation demonstration
     This shows how to create pre-compiled functions for common operation sequences
     that appear frequently in transformer architectures.
     """

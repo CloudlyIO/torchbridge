@@ -17,27 +17,27 @@ import torch.nn.functional as F
 # Import FP8 native modules
 try:
     from kernel_pytorch.precision import (
+        FP8_DTYPES_AVAILABLE,
+        # Constants
+        FP8_NATIVE_AVAILABLE,  # noqa: F401
+        FP8_SCALED_MM_AVAILABLE,  # noqa: F401
         # Types
         FP8Dtype,
-        FP8TensorSpec,
-        FP8QuantizedTensor,
-        # Layer
-        NativeFP8Linear,
         # Inference
         FP8InferenceEngine,
+        FP8QuantizedTensor,
+        FP8TensorSpec,  # noqa: F401
+        # Layer
+        NativeFP8Linear,
+        benchmark_fp8_layer,
+        compute_fp8_scale,
+        convert_model_to_native_fp8,
+        dequantize_from_fp8,
+        get_fp8_dtype,
+        get_fp8_info,
         # Functions
         is_fp8_available,
-        get_fp8_info,
-        get_fp8_dtype,
-        compute_fp8_scale,
         quantize_to_fp8,
-        dequantize_from_fp8,
-        convert_model_to_native_fp8,
-        benchmark_fp8_layer,
-        # Constants
-        FP8_NATIVE_AVAILABLE,
-        FP8_DTYPES_AVAILABLE,
-        FP8_SCALED_MM_AVAILABLE,
     )
     FP8_NATIVE_IMPORT_SUCCESS = True
 except ImportError as e:
@@ -435,7 +435,7 @@ class TestFP8InferenceEngine:
         layer_info = engine.get_layer_info()
 
         assert len(layer_info) > 0
-        for name, info in layer_info.items():
+        for _name, info in layer_info.items():
             assert 'weight_scale' in info
             assert 'activation_scale' in info
 

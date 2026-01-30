@@ -38,16 +38,15 @@ Example:
 Version: 0.3.9
 """
 
+import json
+import logging
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-import logging
-import json
-import os
-import shutil
-from typing import Dict, List, Any, Optional, Union, Tuple
-from dataclasses import dataclass, field
-from pathlib import Path
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +114,9 @@ class TritonInput:
 
     name: str
     data_type: TritonDataType
-    dims: List[int]
+    dims: list[int]
     optional: bool = False
-    reshape: Optional[List[int]] = None
+    reshape: list[int] | None = None
 
     def to_config_str(self) -> str:
         """Convert to config.pbtxt format."""
@@ -144,9 +143,9 @@ class TritonOutput:
 
     name: str
     data_type: TritonDataType
-    dims: List[int]
-    reshape: Optional[List[int]] = None
-    label_filename: Optional[str] = None
+    dims: list[int]
+    reshape: list[int] | None = None
+    label_filename: str | None = None
 
     def to_config_str(self) -> str:
         """Convert to config.pbtxt format."""
@@ -173,7 +172,7 @@ class TritonInstanceGroup:
 
     count: int = 1
     kind: str = "KIND_GPU"  # KIND_GPU, KIND_CPU, KIND_MODEL
-    gpus: List[int] = field(default_factory=list)
+    gpus: list[int] = field(default_factory=list)
 
     def to_config_str(self) -> str:
         """Convert to config.pbtxt format."""
@@ -194,7 +193,7 @@ class TritonInstanceGroup:
 class TritonDynamicBatching:
     """Triton dynamic batching configuration."""
 
-    preferred_batch_size: List[int] = field(default_factory=lambda: [4, 8, 16, 32])
+    preferred_batch_size: list[int] = field(default_factory=lambda: [4, 8, 16, 32])
     max_queue_delay_microseconds: int = 100000  # 100ms
     preserve_ordering: bool = False
     priority_levels: int = 0
@@ -230,18 +229,18 @@ class TritonModelConfig:
     platform: str = ""  # Empty for backend specification
     backend: TritonBackend = TritonBackend.PYTORCH
     max_batch_size: int = 32
-    inputs: List[TritonInput] = field(default_factory=list)
-    outputs: List[TritonOutput] = field(default_factory=list)
-    instance_groups: List[TritonInstanceGroup] = field(default_factory=list)
-    dynamic_batching: Optional[TritonDynamicBatching] = None
+    inputs: list[TritonInput] = field(default_factory=list)
+    outputs: list[TritonOutput] = field(default_factory=list)
+    instance_groups: list[TritonInstanceGroup] = field(default_factory=list)
+    dynamic_batching: TritonDynamicBatching | None = None
     version_policy: str = "latest"  # latest, all, specific
     default_model_filename: str = "model.pt"
 
     # Optimization settings
-    optimization: Optional[Dict[str, Any]] = None
+    optimization: dict[str, Any] | None = None
 
     # Parameters for Python backend
-    parameters: Dict[str, str] = field(default_factory=dict)
+    parameters: dict[str, str] = field(default_factory=dict)
 
     def to_config_str(self) -> str:
         """Generate config.pbtxt content."""
@@ -310,10 +309,10 @@ class TritonModelConfig:
 
 def create_triton_config(
     model_name: str,
-    inputs: List[Tuple[str, str, List[int]]],
-    outputs: List[Tuple[str, str, List[int]]],
+    inputs: list[tuple[str, str, list[int]]],
+    outputs: list[tuple[str, str, list[int]]],
     max_batch_size: int = 32,
-    backend: Union[str, TritonBackend] = TritonBackend.PYTORCH,
+    backend: str | TritonBackend = TritonBackend.PYTORCH,
     enable_dynamic_batching: bool = True,
     gpu_count: int = 1,
     instances_per_gpu: int = 1,
@@ -391,7 +390,7 @@ def generate_triton_model_repository(
     model: nn.Module,
     output_dir: str,
     config: TritonModelConfig,
-    sample_input: Optional[torch.Tensor] = None,
+    sample_input: torch.Tensor | None = None,
     version: str = "1",
     export_format: str = "torchscript",  # torchscript, onnx
 ) -> str:

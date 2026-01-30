@@ -6,14 +6,19 @@ device management, distributed training, and XLA-specific optimizations.
 """
 
 import logging
-import warnings
-import torch
-import torch.nn as nn
-from typing import Dict, Any, Optional, Union, List, Callable, Tuple
 import os
 import time
+import warnings
+from typing import Any
 
-from kernel_pytorch.core.config import TPUConfig, TPUVersion, TPUTopology, TPUCompilationMode
+import torch
+import torch.nn as nn
+
+from kernel_pytorch.core.config import (
+    TPUConfig,
+    TPUVersion,
+)
+
 from . import xla_compat
 
 logger = logging.getLogger(__name__)
@@ -45,7 +50,7 @@ class XLADeviceManager:
     def _setup_xla_devices(self) -> None:
         """Set up XLA devices for TPU."""
         try:
-            import torch_xla
+            import torch_xla  # noqa: F401
 
             # Get current device using compatibility layer
             self._current_device = xla_compat.get_xla_device()
@@ -66,7 +71,7 @@ class XLADeviceManager:
             )
 
         except ImportError:
-            warnings.warn("PyTorch/XLA not available. Using CPU fallback.")
+            warnings.warn("PyTorch/XLA not available. Using CPU fallback.", stacklevel=2)
             self._current_device = torch.device("cpu")
 
     @property
@@ -75,7 +80,7 @@ class XLADeviceManager:
         return self._current_device
 
     @property
-    def devices(self) -> List[torch.device]:
+    def devices(self) -> list[torch.device]:
         """Get all available XLA devices."""
         return self._devices
 
@@ -94,7 +99,7 @@ class XLADeviceManager:
         if device_id < len(self._devices):
             self._current_device = self._devices[device_id]
         else:
-            warnings.warn(f"Device {device_id} not available, using default device")
+            warnings.warn(f"Device {device_id} not available, using default device", stacklevel=2)
 
     def sync_all_devices(self) -> None:
         """Synchronize all XLA devices."""
@@ -105,7 +110,7 @@ class XLADeviceManager:
         except Exception:
             pass
 
-    def get_device_stats(self) -> Dict[str, Any]:
+    def get_device_stats(self) -> dict[str, Any]:
         """Get device statistics."""
         stats = {
             'current_device': str(self._current_device),
@@ -149,7 +154,7 @@ class XLADistributedTraining:
     def _setup_distributed(self) -> None:
         """Set up distributed training environment."""
         try:
-            import torch_xla.distributed.xla_backend as xla_backend
+            import torch_xla.distributed.xla_backend as xla_backend  # noqa: F401
 
             if not torch.distributed.is_initialized():
                 # Initialize process group
@@ -167,7 +172,7 @@ class XLADistributedTraining:
                 )
 
         except ImportError:
-            warnings.warn("XLA distributed backend not available")
+            warnings.warn("XLA distributed backend not available", stacklevel=2)
 
     @property
     def is_distributed(self) -> bool:
@@ -189,7 +194,7 @@ class XLADistributedTraining:
 
         try:
             # Use XLA's parallel wrapper if available
-            import torch_xla.distributed.parallel_loader as pl
+            import torch_xla.distributed.parallel_loader as pl  # noqa: F401
 
             # For now, just move model to device and return
             # Full DDP implementation would require more XLA-specific code
@@ -197,7 +202,7 @@ class XLADistributedTraining:
             return model
 
         except ImportError:
-            warnings.warn("XLA parallel loader not available")
+            warnings.warn("XLA parallel loader not available", stacklevel=2)
             return model
 
     def all_reduce(self, tensor: torch.Tensor, op: str = "sum") -> torch.Tensor:
@@ -232,7 +237,7 @@ class XLADistributedTraining:
         except ImportError:
             return tensor
 
-    def all_gather(self, tensor: torch.Tensor) -> List[torch.Tensor]:
+    def all_gather(self, tensor: torch.Tensor) -> list[torch.Tensor]:
         """
         Gather tensors from all processes.
 
@@ -305,7 +310,8 @@ class XLAOptimizations:
                 if in_features % 8 != 0 or out_features % 8 != 0:
                     warnings.warn(
                         f"Linear layer {name} dimensions ({in_features}x{out_features}) "
-                        "not optimal for TPU. Consider padding to multiples of 8."
+                        "not optimal for TPU. Consider padding to multiples of 8.",
+                    stacklevel=2,
                     )
 
         return model
@@ -315,13 +321,13 @@ class XLAOptimizations:
         for name, module in model.named_modules():
             # Look for attention patterns
             if hasattr(module, 'num_attention_heads'):
-                heads = module.num_attention_heads
                 head_dim = getattr(module, 'attention_head_size', None)
 
                 if head_dim and head_dim % 8 != 0:
                     warnings.warn(
                         f"Attention layer {name} head dimension {head_dim} "
-                        "not optimal for TPU. Consider using dimensions divisible by 8."
+                        "not optimal for TPU. Consider using dimensions divisible by 8.",
+                    stacklevel=2,
                     )
 
         return model
@@ -329,7 +335,7 @@ class XLAOptimizations:
     def _optimize_activation_functions(self, model: nn.Module) -> nn.Module:
         """Optimize activation functions for XLA."""
         # XLA has optimized implementations for certain activations
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if isinstance(module, nn.ReLU):
                 # ReLU is well-optimized in XLA
                 continue
@@ -350,7 +356,7 @@ class XLAOptimizations:
             # Mark modules that have static shapes
             if hasattr(module, 'forward'):
                 # Add metadata for XLA compiler
-                setattr(module, '_xla_static_shapes', True)
+                module._xla_static_shapes = True
 
         return model
 
@@ -375,7 +381,7 @@ class XLAUtilities:
     """
 
     @staticmethod
-    def get_xla_env_info() -> Dict[str, Any]:
+    def get_xla_env_info() -> dict[str, Any]:
         """Get XLA environment information."""
         env_info = {
             'XLA_FLAGS': os.environ.get('XLA_FLAGS', ''),
@@ -402,7 +408,7 @@ class XLAUtilities:
 
     @staticmethod
     def profile_xla_compilation(model: nn.Module,
-                              sample_input: torch.Tensor) -> Dict[str, Any]:
+                              sample_input: torch.Tensor) -> dict[str, Any]:
         """Profile XLA compilation performance."""
 
         try:
@@ -456,7 +462,7 @@ class XLAUtilities:
 
             # Run model to generate graph
             with torch.no_grad():
-                output = model(sample_input)
+                model(sample_input)
                 xla_compat.sync()
 
             # Get metrics report
@@ -467,7 +473,7 @@ class XLAUtilities:
             return "PyTorch/XLA debug utilities not available"
 
     @staticmethod
-    def optimize_xla_flags(tpu_version: TPUVersion) -> Dict[str, str]:
+    def optimize_xla_flags(tpu_version: TPUVersion) -> dict[str, str]:
         """Get optimized XLA flags for specific TPU versions."""
 
         base_flags = {
@@ -492,7 +498,7 @@ class XLAUtilities:
 
 
 # Integration factory function
-def create_xla_integration(config: TPUConfig) -> Tuple[XLADeviceManager, XLADistributedTraining, XLAOptimizations]:
+def create_xla_integration(config: TPUConfig) -> tuple[XLADeviceManager, XLADistributedTraining, XLAOptimizations]:
     """
     Create complete XLA integration setup.
 

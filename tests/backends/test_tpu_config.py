@@ -6,18 +6,17 @@ Comprehensive tests for TPU integration in the unified configuration system.
 Tests TPU hardware detection, configuration validation, and integration.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-import torch
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
 
 from kernel_pytorch.core.config import (
+    HardwareBackend,
     KernelPyTorchConfig,
-    TPUConfig,
-    TPUVersion,
-    TPUTopology,
     TPUCompilationMode,
-    HardwareBackend
+    TPUConfig,
+    TPUTopology,
+    TPUVersion,
 )
 
 

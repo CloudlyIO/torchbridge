@@ -8,12 +8,12 @@ Core job management components for distributed training orchestration:
 - Resource types and failure classifications
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Any
+import time
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,8 @@ class ResourceRequirement:
     memory_gb: int
     storage_gb: int = 100
     network_bandwidth_gbps: int = 10
-    required_gpu_types: Optional[List[str]] = None
-    node_selector: Optional[Dict[str, str]] = None
+    required_gpu_types: list[str] | None = None
+    node_selector: dict[str, str] | None = None
 
 
 @dataclass
@@ -66,14 +66,14 @@ class TrainingJobSpec:
     job_id: str
     name: str
     image: str
-    command: List[str]
+    command: list[str]
     resources: ResourceRequirement
 
     # Training-specific parameters
     world_size: int
     tensor_parallel_size: int = 1
     pipeline_parallel_size: int = 1
-    data_parallel_size: Optional[int] = None
+    data_parallel_size: int | None = None
 
     # Job management
     priority: int = 0
@@ -82,14 +82,14 @@ class TrainingJobSpec:
     checkpoint_interval_minutes: int = 30
 
     # Environment
-    env_vars: Dict[str, str] = field(default_factory=dict)
-    volumes: List[Dict[str, Any]] = field(default_factory=list)
+    env_vars: dict[str, str] = field(default_factory=dict)
+    volumes: list[dict[str, Any]] = field(default_factory=list)
 
     # Fault tolerance
     max_retries: int = 3
     enable_auto_scaling: bool = False
     min_replicas: int = 1
-    max_replicas: Optional[int] = None
+    max_replicas: int | None = None
 
 
 @dataclass
@@ -97,17 +97,17 @@ class JobStatus:
     """Current status of a training job"""
     job_id: str
     state: JobState
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    allocated_nodes: List[str] = field(default_factory=list)
-    allocated_gpus: List[int] = field(default_factory=list)
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    allocated_nodes: list[str] = field(default_factory=list)
+    allocated_gpus: list[int] = field(default_factory=list)
     current_epoch: int = 0
     total_epochs: int = 0
-    loss: Optional[float] = None
-    throughput_samples_per_sec: Optional[float] = None
-    error_message: Optional[str] = None
+    loss: float | None = None
+    throughput_samples_per_sec: float | None = None
+    error_message: str | None = None
     restart_count: int = 0
-    last_checkpoint: Optional[str] = None
+    last_checkpoint: str | None = None
 
 
 @dataclass
@@ -121,6 +121,6 @@ class ClusterNode:
     available_memory_gb: int
     total_cpu_cores: int
     available_cpu_cores: int
-    labels: Dict[str, str] = field(default_factory=dict)
-    taints: List[Dict[str, Any]] = field(default_factory=list)
+    labels: dict[str, str] = field(default_factory=dict)
+    taints: list[dict[str, Any]] = field(default_factory=list)
     last_seen: float = field(default_factory=time.time)

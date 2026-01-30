@@ -5,56 +5,27 @@ This module provides comprehensive tools for profiling kernel performance,
 memory usage, and computational efficiency with extensive educational guidance
 for understanding GPU optimization impact.
 
-🎓 EDUCATIONAL FOCUS:
-- Learn how to measure GPU optimization effectiveness
-- Understand performance bottleneck identification
-- Master GPU profiling best practices for PyTorch
-- Interpret optimization results for production decisions
-
-🔧 PROFILING TECHNIQUES COVERED:
-- Kernel execution timing with proper GPU synchronization
-- Memory bandwidth analysis and peak usage tracking
-- Statistical analysis of performance variance
-- Comparative benchmarking between optimization levels
-- Production-ready performance monitoring workflows
 """
 
-import torch
 import time
-import psutil
-import gc
-from typing import Dict, List, Optional, Callable, Any, Tuple
+from collections import defaultdict
+from collections.abc import Callable
 from contextlib import contextmanager
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import defaultdict
-import os
+import psutil
+import torch
 
 
 class KernelProfiler:
     """
     Educational GPU Kernel Profiler for Learning Optimization Impact.
 
-    🎓 EDUCATIONAL PURPOSE:
     This profiler teaches you how to properly measure GPU optimization effectiveness
     by providing detailed insights into performance characteristics and bottlenecks.
 
-    🔧 PROFILING METHODOLOGY:
-    - GPU synchronization: Ensures accurate timing by waiting for kernel completion
-    - Memory tracking: Monitors GPU memory allocation patterns and peak usage
-    - Statistical analysis: Provides variance analysis for stable measurements
-    - Comparative benchmarking: Enables side-by-side optimization comparisons
-
-    📊 METRICS COLLECTED:
-    - Kernel execution time: Wall-clock time with proper GPU synchronization
-    - Memory bandwidth utilization: Peak and average memory usage patterns
-    - GPU occupancy: Efficiency of GPU compute unit utilization
-    - Performance variance: Statistical stability of optimization benefits
-
-    💡 USAGE PATTERNS:
-    - Development: Identify optimization opportunities during development
-    - Validation: Verify optimization effectiveness before production deployment
-    - Production monitoring: Track performance regression in deployed models
     """
 
     def __init__(self, device: str = "cuda"):
@@ -67,8 +38,6 @@ class KernelProfiler:
     def profile(self, operation_name: str):
         """
         Educational GPU profiling context manager with proper timing methodology.
-
-        🎓 GPU PROFILING EDUCATION:
 
         1. WHY GPU SYNCHRONIZATION IS CRITICAL:
            - GPU operations are asynchronous by default
@@ -87,41 +56,31 @@ class KernelProfiler:
            - Pre/post synchronization: Ensures accurate GPU timing
            - Multiple iterations: Reduces variance from GPU thermal throttling
 
-        🔧 PROFILING PITFALLS TO AVOID:
-        ❌ No sync: time.time() without synchronization (measures dispatch, not execution)
-        ❌ Cold cache: First run always slower (include warmup iterations)
-        ❌ Single measurement: GPU performance varies (use statistical analysis)
-        ❌ Memory leaks: Accumulated allocations skew memory measurements
+         No sync: time.time() without synchronization (measures dispatch, not execution)
+         Cold cache: First run always slower (include warmup iterations)
+         Single measurement: GPU performance varies (use statistical analysis)
+         Memory leaks: Accumulated allocations skew memory measurements
         """
-        # 🔧 STEP 1: Clean slate for accurate measurement
-        # Educational: This prevents previous operations from affecting measurements
         if self.device == "cuda" and torch.cuda.is_available():
             torch.cuda.empty_cache()  # Clear memory fragmentation
             torch.cuda.synchronize()  # Wait for any pending operations
 
-        # 📊 STEP 2: Baseline memory measurement
-        # Educational: Captures initial state before operation execution
         if self.device == "cuda" and torch.cuda.is_available():
             memory_before = torch.cuda.memory_allocated()  # Active GPU memory
             torch.cuda.reset_peak_memory_stats()  # Reset peak tracker
         else:
             memory_before = psutil.virtual_memory().used
 
-        # ⏱️ STEP 3: Start high-precision timing
-        # Educational: perf_counter() provides nanosecond resolution
+        # ⏱ STEP 3: Start high-precision timing
         start_time = time.perf_counter()
 
         try:
             yield  # Execute the profiled operation
         finally:
-            # 🔄 STEP 4: Ensure GPU operation completion
-            # Educational: Critical for accurate GPU timing!
             if self.device == "cuda" and torch.cuda.is_available():
                 torch.cuda.synchronize()  # Wait for GPU kernels to finish
             end_time = time.perf_counter()
 
-            # 📊 STEP 5: Measure memory impact
-            # Educational: Captures actual memory footprint of the operation
             if self.device == "cuda" and torch.cuda.is_available():
                 memory_after = torch.cuda.memory_allocated()
                 peak_memory = torch.cuda.max_memory_allocated()
@@ -129,8 +88,6 @@ class KernelProfiler:
                 memory_after = psutil.virtual_memory().used
                 peak_memory = memory_after
 
-            # 📝 STEP 6: Record comprehensive metrics
-            # Educational: Structured data for statistical analysis
             self.results[operation_name].append({
                 "time": end_time - start_time,  # Wall-clock execution time
                 "memory_used": memory_after - memory_before,  # Net memory allocation
@@ -141,16 +98,14 @@ class KernelProfiler:
     def benchmark_function(
         self,
         func: Callable,
-        args: Tuple = (),
-        kwargs: Dict = {},
+        args: tuple = (),
+        kwargs: dict | None = None,
         num_iterations: int = 100,
         warmup_iterations: int = 10,
         name: str = "operation"
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Educational GPU benchmarking with statistical rigor and best practices.
-
-        🎓 BENCHMARKING METHODOLOGY EDUCATION:
 
         1. WHY WARMUP IS ESSENTIAL:
            - GPU kernels: First execution includes compilation overhead (~10-100ms)
@@ -170,39 +125,25 @@ class KernelProfiler:
            - Production: 100+ iterations (high statistical confidence)
            - CI/CD: 5-10 iterations (balance speed vs accuracy)
 
-        📊 STATISTICAL METRICS EXPLAINED:
-        - Mean: Average performance (most commonly reported)
-        - Median: Robust to outliers (better for skewed distributions)
-        - Std dev: Performance consistency (lower = more predictable)
-        - Min/Max: Performance bounds (important for real-time systems)
-
-        💡 PERFORMANCE INTERPRETATION GUIDE:
-        - <5% variance: Excellent optimization stability
-        - 5-15% variance: Normal for complex operations
-        - >15% variance: Investigate system interference or thermal issues
         """
-        # 🔥 STEP 1: Warmup phase - Critical for accurate measurements
-        # Educational: Eliminates cold-start effects that skew first measurements
-        print(f"🔄 Warming up {name} with {warmup_iterations} iterations...")
+        if kwargs is None:
+            kwargs = {}
+        print(f" Warming up {name} with {warmup_iterations} iterations...")
         for _ in range(warmup_iterations):
             with self.profile(f"{name}_warmup"):
-                result = func(*args, **kwargs)
+                func(*args, **kwargs)
 
-        # 📊 STEP 2: Production measurement phase
-        # Educational: Real performance data collection with proper statistical sampling
-        print(f"📊 Benchmarking {name} with {num_iterations} iterations...")
+        print(f" Benchmarking {name} with {num_iterations} iterations...")
         measurement_data = []
 
         for i in range(num_iterations):
             with self.profile(f"{name}_iter_{i}"):
-                result = func(*args, **kwargs)
+                func(*args, **kwargs)
 
             # Extract data from this specific iteration
             if f"{name}_iter_{i}" in self.results:
                 measurement_data.extend(self.results[f"{name}_iter_{i}"])
 
-        # 📈 STEP 3: Statistical analysis with educational insights
-        # Educational: Comprehensive metrics for understanding performance characteristics
         if measurement_data:
             times = [m["time"] for m in measurement_data]
             memories = [m["memory_used"] for m in measurement_data]
@@ -226,7 +167,6 @@ class KernelProfiler:
                 "efficiency_score": (1.0 / np.mean(times)) * (1.0 - np.std(times) / np.mean(times))  # Performance × consistency
             }
 
-            # 🎓 Educational: Performance interpretation
             if stats["cv_time"] < 5.0:
                 stats["stability"] = "Excellent (<5% variance)"
             elif stats["cv_time"] < 15.0:
@@ -241,14 +181,16 @@ class KernelProfiler:
 
     def compare_implementations(
         self,
-        implementations: Dict[str, Callable],
-        args: Tuple = (),
-        kwargs: Dict = {},
+        implementations: dict[str, Callable],
+        args: tuple = (),
+        kwargs: dict | None = None,
         num_iterations: int = 50
-    ) -> Dict[str, Dict[str, float]]:
+    ) -> dict[str, dict[str, float]]:
         """
         Compare multiple implementations of the same operation.
         """
+        if kwargs is None:
+            kwargs = {}
         comparison_results = {}
 
         for name, impl in implementations.items():
@@ -262,7 +204,7 @@ class KernelProfiler:
 
     def plot_comparison(
         self,
-        comparison_results: Dict[str, Dict[str, float]],
+        comparison_results: dict[str, dict[str, float]],
         metric: str = "mean_time",
         title: str = "Performance Comparison"
     ):
@@ -291,7 +233,7 @@ class KernelProfiler:
         model: torch.nn.Module,
         input_data: torch.Tensor,
         num_iterations: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Profile detailed memory usage patterns during model execution.
         """
@@ -310,7 +252,7 @@ class KernelProfiler:
 
         # Register hooks on all modules
         hooks = []
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if len(list(module.children())) == 0:  # Leaf modules only
                 hook = module.register_forward_hook(memory_hook)
                 hooks.append(hook)
@@ -343,9 +285,9 @@ class KernelProfiler:
     def analyze_kernel_efficiency(
         self,
         operation: Callable,
-        input_sizes: List[Tuple],
+        input_sizes: list[tuple],
         operation_name: str = "kernel_analysis"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze how kernel performance scales with input size.
         """
@@ -389,7 +331,7 @@ class KernelProfiler:
             "analysis": self._analyze_scaling_pattern(scaling_results)
         }
 
-    def _analyze_scaling_pattern(self, scaling_results: List[Dict]) -> Dict[str, str]:
+    def _analyze_scaling_pattern(self, scaling_results: list[dict]) -> dict[str, str]:
         """
         Analyze scaling patterns to identify performance characteristics.
         """
@@ -438,7 +380,7 @@ class KernelProfiler:
             "throughput_trend": "increasing" if throughputs[-1] > throughputs[0] else "decreasing"
         }
 
-    def generate_report(self, save_path: Optional[str] = None) -> str:
+    def generate_report(self, save_path: str | None = None) -> str:
         """
         Generate a comprehensive performance report.
         """
@@ -459,18 +401,18 @@ class KernelProfiler:
                     report.append(f"  Average Memory: {np.mean(memories) / (1024*1024):.2f} MB")
 
         # Device information
-        report.append(f"\nDEVICE INFORMATION:")
+        report.append("\nDEVICE INFORMATION:")
         report.append(f"  Device: {self.device}")
         if self.device == "cuda" and torch.cuda.is_available():
             report.append(f"  GPU: {torch.cuda.get_device_name()}")
             report.append(f"  Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
         elif self.device == "cuda":
-            report.append(f"  GPU: Not available (CUDA not compiled)")
+            report.append("  GPU: Not available (CUDA not compiled)")
         else:
             report.append(f"  CPU: {self.device}")
 
         # Recommendations
-        report.append(f"\nOPTIMIZATION RECOMMENDATIONS:")
+        report.append("\nOPTIMIZATION RECOMMENDATIONS:")
         report.extend(self._generate_recommendations())
 
         report_text = "\n".join(report)
@@ -482,7 +424,7 @@ class KernelProfiler:
 
         return report_text
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """
         Generate optimization recommendations based on profiling results.
         """
@@ -537,11 +479,13 @@ class ComparisonSuite:
         self,
         model_factory: Callable,
         input_data: torch.Tensor,
-        optimization_levels: List[str] = ["basic", "jit", "triton", "cuda"]
-    ) -> Dict[str, Any]:
+        optimization_levels: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Compare different optimization levels systematically.
         """
+        if optimization_levels is None:
+            optimization_levels = ["basic", "jit", "triton", "cuda"]
         results = {}
 
         for level in optimization_levels:
@@ -572,12 +516,16 @@ class ComparisonSuite:
     def memory_scaling_analysis(
         self,
         model_factory: Callable,
-        batch_sizes: List[int] = [1, 2, 4, 8, 16, 32],
-        sequence_lengths: List[int] = [128, 256, 512, 1024]
-    ) -> Dict[str, Any]:
+        batch_sizes: list[int] | None = None,
+        sequence_lengths: list[int] | None = None
+    ) -> dict[str, Any]:
         """
         Analyze memory scaling characteristics across different input sizes.
         """
+        if batch_sizes is None:
+            batch_sizes = [1, 2, 4, 8, 16, 32]
+        if sequence_lengths is None:
+            sequence_lengths = [128, 256, 512, 1024]
         scaling_data = []
 
         for batch_size in batch_sizes:
@@ -604,7 +552,7 @@ class ComparisonSuite:
 
 
 # Utility functions for common profiling tasks
-def quick_benchmark(func: Callable, *args, **kwargs) -> Dict[str, float]:
+def quick_benchmark(func: Callable, *args, **kwargs) -> dict[str, float]:
     """
     Quick benchmark of a single function.
     """
@@ -612,7 +560,7 @@ def quick_benchmark(func: Callable, *args, **kwargs) -> Dict[str, float]:
     return profiler.benchmark_function(func, args, kwargs, num_iterations=20)
 
 
-def compare_functions(functions: Dict[str, Callable], *args, **kwargs):
+def compare_functions(functions: dict[str, Callable], *args, **kwargs):
     """
     Quick comparison of multiple function implementations.
     """
@@ -625,8 +573,8 @@ def profile_model_inference(model: torch.nn.Module, input_data: torch.Tensor) ->
     Quick profiling of model inference.
     """
     profiler = KernelProfiler()
-    memory_stats = profiler.profile_memory_usage(model, input_data)
-    timing_stats = profiler.benchmark_function(
+    profiler.profile_memory_usage(model, input_data)
+    profiler.benchmark_function(
         model, args=(input_data,), num_iterations=10
     )
 

@@ -9,54 +9,45 @@ Tests for all the latest optimization techniques:
 - Structured sparsity (2:4 patterns)
 """
 
+import os
+import sys
+
 import pytest
 import torch
 import torch.nn as nn
-import torch.distributed as dist
-import numpy as np
-from typing import Dict, Any, Tuple
-import warnings
-import sys
-import os
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from kernel_pytorch.optimizations.next_gen import (
-    # Advanced FlexAttention
-    FlashLightCompiler,
+    AcceleratedSparseOps,
+    AdaptivePrecisionAllocator,
     AdvancedFlexAttention,
-    GQAOptimizedAttention,
-    PagedAttentionDecoder,
-    create_advanced_flex_attention,
-
+    AdvancedPrefetching,
+    AutoGraphCapture,
     # PyGraph optimization
     CUDAGraphManager,
-    SelectiveCUDAGraphs,
-    AutoGraphCapture,
-    PyGraphOptimizer,
-    create_pygraph_optimizer,
-
+    DTensorSharding,
+    DynamicSparsityOptimizer,
+    # Advanced FlexAttention
+    FlashLightCompiler,
     # Ultra-precision
     FP4Quantizer,
-    MXFPOptimizer,
-    InformationEntropyPrecision,
-    AdaptivePrecisionAllocator,
-
-    # FSDP2 integration
-    FSDP2Manager,
-    DTensorSharding,
-    AdvancedPrefetching,
-    HybridShardingOptimizer,
     FSDP2Config,
-    create_fsdp2_manager,
-
+    # FSDP2 integration
+    GQAOptimizedAttention,
+    HybridShardingOptimizer,
+    InformationEntropyPrecision,
+    MXFPOptimizer,
+    PagedAttentionDecoder,
+    SelectiveCUDAGraphs,
+    SparsityPatternGenerator,
     # Structured sparsity
     StructuredSparsity24,
-    DynamicSparsityOptimizer,
-    SparsityPatternGenerator,
-    AcceleratedSparseOps,
-    create_structured_sparsity_optimizer
+    create_advanced_flex_attention,
+    create_fsdp2_manager,
+    create_pygraph_optimizer,
+    create_structured_sparsity_optimizer,
 )
 
 
@@ -234,7 +225,7 @@ class TestPyGraphOptimization:
             return simple_model(inp)
 
         try:
-            graph = manager.capture_graph(test_func, (x,), "test_graph")
+            manager.capture_graph(test_func, (x,), "test_graph")
             assert "test_graph" in manager.graphs
 
             # Test graph execution
@@ -707,7 +698,7 @@ class TestIntegration:
         )
 
         # Apply quantization
-        quantizer = FP4Quantizer()
+        FP4Quantizer()
 
         # Test combined forward pass
         x = torch.randn(2, 64, 256, device=device)

@@ -8,14 +8,14 @@ now centralized in kernel_pytorch.core.config.
 Backward compatibility is maintained through re-exports.
 """
 
-from typing import Dict, Optional, Tuple, Any
 from dataclasses import dataclass
+from typing import Any
 
 # Import shared configs from core (centralized in Phase 3)
 from kernel_pytorch.core.config import (
     AttentionPatterns,
-    FP8AttentionConfig,
     DynamicSparseConfig,
+    FP8AttentionConfig,
     RingAttentionConfig,
 )
 
@@ -36,7 +36,7 @@ class AttentionModuleConfig:
     # Core parameters
     embed_dim: int
     num_heads: int
-    head_dim: Optional[int] = None
+    head_dim: int | None = None
 
     # Pattern and behavior
     pattern: AttentionPatterns = AttentionPatterns.FULL
@@ -51,24 +51,24 @@ class AttentionModuleConfig:
     # Precision settings
     precision: str = "float32"  # float32, float16, bfloat16, fp8
     use_fp8: bool = False
-    fp8_config: Optional[FP8AttentionConfig] = None
+    fp8_config: FP8AttentionConfig | None = None
 
     # Advanced configurations
-    sparse_config: Optional[DynamicSparseConfig] = None
-    ring_config: Optional[RingAttentionConfig] = None
+    sparse_config: DynamicSparseConfig | None = None
+    ring_config: RingAttentionConfig | None = None
 
     # Hardware optimization
     enable_hopper_optimization: bool = True
     warp_specialization: bool = True
-    device_mesh: Optional[Tuple[int, ...]] = None
+    device_mesh: tuple[int, ...] | None = None
 
     # Sequence length handling
     max_sequence_length: int = 8192
-    sliding_window_size: Optional[int] = None
+    sliding_window_size: int | None = None
 
     # Memory optimization
     memory_efficient_backend: str = "auto"  # "auto", "triton", "flash_attn", "pytorch"
-    chunk_size: Optional[int] = None
+    chunk_size: int | None = None
 
     # Dropout and regularization
     attention_dropout: float = 0.0
@@ -101,7 +101,7 @@ class AttentionModuleConfig:
         if self.pattern == AttentionPatterns.SLIDING_WINDOW and self.sliding_window_size is None:
             self.sliding_window_size = min(1024, self.max_sequence_length // 4)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             'embed_dim': self.embed_dim,
@@ -117,7 +117,7 @@ class AttentionModuleConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'AttentionModuleConfig':
+    def from_dict(cls, config_dict: dict[str, Any]) -> 'AttentionModuleConfig':
         """Create from dictionary"""
         if 'pattern' in config_dict:
             config_dict['pattern'] = AttentionPatterns(config_dict['pattern'])

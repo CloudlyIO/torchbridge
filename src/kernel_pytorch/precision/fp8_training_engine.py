@@ -17,13 +17,13 @@ References:
     - NVIDIA FP8 Training: https://developer.nvidia.com/blog/nvidia-h100-transformer-engine/
 """
 
+import warnings
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, List, Union, Tuple
-import warnings
-from enum import Enum
-import math
 
 try:
     import transformer_engine.pytorch as te
@@ -31,7 +31,7 @@ try:
     TRANSFORMER_ENGINE_AVAILABLE = True
 except ImportError:
     TRANSFORMER_ENGINE_AVAILABLE = False
-    warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations")
+    warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations", stacklevel=2)
 
 try:
     from ..hardware.abstraction.hal_core import HardwareAbstractionLayer
@@ -205,7 +205,7 @@ class FP8ScaleManager:
 
         # Calculate recent AMAX statistics
         recent_amax = self.amax_history[-100:]
-        avg_amax = sum(recent_amax) / len(recent_amax)
+        sum(recent_amax) / len(recent_amax)
         max_amax = max(recent_amax)
 
         # Determine if we can safely increase scale
@@ -236,7 +236,7 @@ class FP8ScaleManager:
 
         return False
 
-    def get_scale_info(self) -> Dict[str, Any]:
+    def get_scale_info(self) -> dict[str, Any]:
         """Get current scaling information"""
         return {
             'scale': float(self.scale.item()),
@@ -273,7 +273,7 @@ class FP8TrainingEngine:
         self,
         model: nn.Module,
         config: FP8Config,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         self.model = model
         self.config = config
@@ -310,14 +310,14 @@ class FP8TrainingEngine:
             True if setup was successful
         """
         if self.is_setup:
-            warnings.warn("FP8 training already setup")
+            warnings.warn("FP8 training already setup", stacklevel=2)
             return True
 
         print("Setting up FP8 training...")
 
         # Check hardware compatibility
         if not self._check_hardware_compatibility():
-            warnings.warn("Hardware may not support FP8 training optimally")
+            warnings.warn("Hardware may not support FP8 training optimally", stacklevel=2)
 
         # Replace linear layers with FP8 versions if Transformer Engine is available
         if TRANSFORMER_ENGINE_AVAILABLE and self.config.use_te_linear:
@@ -330,11 +330,11 @@ class FP8TrainingEngine:
         self.fp8_enabled = True
         self.is_setup = True
 
-        print(f"✅ FP8 training setup complete")
+        print(" FP8 training setup complete")
         print(f"   Forward format: {self.config.forward_format.value}")
         print(f"   Backward format: {self.config.backward_format.value}")
-        print(f"   Transformer Engine: {'✅' if TRANSFORMER_ENGINE_AVAILABLE else '❌'}")
-        print(f"   Hardware optimization: {'✅' if self.hal else '❌'}")
+        print(f"   Transformer Engine: {'' if TRANSFORMER_ENGINE_AVAILABLE else ''}")
+        print(f"   Hardware optimization: {'' if self.hal else ''}")
 
         return True
 
@@ -386,7 +386,7 @@ class FP8TrainingEngine:
 
         # Recursively replace linear layers
         replaced_count = 0
-        for name, module in self.model.named_modules():
+        for _name, module in self.model.named_modules():
             for child_name, child in module.named_children():
                 if replace_layer(module, child_name, child):
                     replaced_count += 1
@@ -398,7 +398,7 @@ class FP8TrainingEngine:
         inputs: torch.Tensor,
         targets: torch.Tensor,
         return_loss: bool = True
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, Dict[str, Any]]]:
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, Any]]:
         """
         Single FP8 training step with automatic scaling
 
@@ -456,7 +456,7 @@ class FP8TrainingEngine:
             }
             return loss, metadata
 
-    def optimizer_step(self, optimizer: torch.optim.Optimizer, grad_scaler: Optional[Any] = None) -> bool:
+    def optimizer_step(self, optimizer: torch.optim.Optimizer, grad_scaler: Any | None = None) -> bool:
         """
         Optimizer step with FP8 scaling and overflow handling
 
@@ -516,7 +516,7 @@ class FP8TrainingEngine:
                 if param.grad is not None:
                     param.grad.data.mul_(inv_scale)
 
-    def get_training_statistics(self) -> Dict[str, Any]:
+    def get_training_statistics(self) -> dict[str, Any]:
         """Get comprehensive training statistics"""
         stats = self.training_stats.copy()
         stats.update({
@@ -589,7 +589,7 @@ class FP8TrainingEngine:
 # Factory function
 def create_fp8_trainer(
     model: nn.Module,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     forward_format: FP8Format = FP8Format.E4M3,
     backward_format: FP8Format = FP8Format.E5M2,
     **kwargs
@@ -629,8 +629,8 @@ def create_fp8_trainer(
 # Validation function
 def validate_fp8_setup(
     model: nn.Module,
-    device: Optional[torch.device] = None
-) -> Dict[str, Any]:
+    device: torch.device | None = None
+) -> dict[str, Any]:
     """
     Validate FP8 training setup and provide recommendations
 

@@ -4,18 +4,17 @@ Tests for ThresholdManager functionality
 """
 
 import os
-import json
+import sys
 import tempfile
-import pytest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
-import sys
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from benchmarks.regression.threshold_manager import ThresholdManager, ThresholdConfig
 from benchmarks.regression.baseline_manager import BaselineMetrics
+from benchmarks.regression.threshold_manager import ThresholdConfig, ThresholdManager
 
 
 class TestThresholdConfig:
@@ -126,7 +125,7 @@ class TestThresholdManager:
         )
 
         assert updated_config.model_name == "test_model"
-        assert updated_config.auto_tuned == True
+        assert updated_config.auto_tuned is True
         assert updated_config.minor_threshold_percent > 0
         assert updated_config.major_threshold_percent > updated_config.minor_threshold_percent
         assert updated_config.critical_threshold_percent > updated_config.major_threshold_percent
@@ -140,7 +139,7 @@ class TestThresholdManager:
         )
 
         assert updated_config.model_name == "test_model"
-        assert updated_config.auto_tuned == True
+        assert updated_config.auto_tuned is True
         assert updated_config.minor_threshold_percent >= 2.0  # At least minimum
         assert updated_config.major_threshold_percent >= 5.0
         assert updated_config.critical_threshold_percent >= 10.0
@@ -156,7 +155,7 @@ class TestThresholdManager:
 
         # Should return default config
         assert config.model_name == "test_model"
-        assert config.auto_tuned == False
+        assert config.auto_tuned is False
 
     def test_validate_threshold_sensitivity(self):
         """Test threshold sensitivity validation"""
@@ -178,8 +177,8 @@ class TestThresholdManager:
         assert validation["thresholds"]["minor"] == 2.0
         assert validation["thresholds"]["major"] == 5.0
         assert validation["thresholds"]["critical"] == 10.0
-        assert validation["validation"]["reasonable_spacing"] == True
-        assert validation["validation"]["reasonable_values"] == True
+        assert validation["validation"]["reasonable_spacing"] is True
+        assert validation["validation"]["reasonable_values"] is True
 
     def test_validate_threshold_poor_configuration(self):
         """Test validation of poorly configured thresholds"""
@@ -195,7 +194,7 @@ class TestThresholdManager:
 
         validation = self.manager.validate_threshold_sensitivity("test_model", "default")
 
-        assert validation["validation"]["reasonable_spacing"] == False
+        assert validation["validation"]["reasonable_spacing"] is False
         assert len(validation["recommendations"]) > 0
         assert any("threshold gaps" in rec for rec in validation["recommendations"])
 
@@ -276,7 +275,7 @@ class TestThresholdManager:
         new_manager = ThresholdManager(thresholds_dir=tempfile.mkdtemp())
         success = new_manager.import_threshold_config(exported)
 
-        assert success == True
+        assert success is True
         assert len(new_manager.model_configs) == 2
         assert "model1_default" in new_manager.model_configs
         assert "model2_default" in new_manager.model_configs
@@ -362,7 +361,7 @@ class TestThresholdManager:
         restored_config = new_manager.model_configs["persistent_model_default"]
         assert restored_config.model_name == "persistent_model"
         assert restored_config.latency_threshold_percent == 3.5
-        assert restored_config.auto_tuned == True
+        assert restored_config.auto_tuned is True
 
     def test_handle_invalid_configuration_file(self):
         """Test handling of corrupted configuration file"""

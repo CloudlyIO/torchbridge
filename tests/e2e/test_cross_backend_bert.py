@@ -20,15 +20,15 @@ Success Criteria:
 """
 
 import copy
+
 import pytest
 import torch
 
 from .conftest import (
-    requires_transformers,
-    benchmark_function,
     assert_output_close,
+    benchmark_function,
+    requires_transformers,
 )
-
 
 # =============================================================================
 # Backend Availability Checks
@@ -47,7 +47,6 @@ def is_amd_available():
 def is_tpu_available():
     """Check if TPU/XLA backend is available."""
     try:
-        import torch_xla
         import torch_xla.core.xla_model as xm
         _ = xm.xla_device()
         return True
@@ -194,17 +193,18 @@ class TestCrossBackendBERT:
             message="BERT NVIDIA output vs CPU baseline"
         )
 
-        print(f"\nBERT NVIDIA Backend Test:")
+        print("\nBERT NVIDIA Backend Test:")
         print(f"  Device: {backend.device}")
         print(f"  Output shape: {nvidia_output.shape}")
-        print(f"  Output matches baseline: PASS")
+        print("  Output matches baseline: PASS")
 
     @requires_nvidia
     def test_bert_nvidia_speedup(self, bert_baseline):
         """Test BERT speedup on NVIDIA backend."""
         import copy
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
+
         from kernel_pytorch.backends.base_backend import OptimizationLevel
+        from kernel_pytorch.backends.nvidia import NVIDIABackend
 
         backend = NVIDIABackend()
         model = bert_baseline["model"]
@@ -233,7 +233,7 @@ class TestCrossBackendBERT:
 
         speedup = cpu_result.mean_time_ms / nvidia_result.mean_time_ms
 
-        print(f"\nBERT NVIDIA Speedup:")
+        print("\nBERT NVIDIA Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  NVIDIA: {nvidia_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -274,10 +274,10 @@ class TestCrossBackendBERT:
             message="BERT AMD output vs CPU baseline"
         )
 
-        print(f"\nBERT AMD Backend Test:")
+        print("\nBERT AMD Backend Test:")
         print(f"  Device: {backend.device}")
         print(f"  Output shape: {amd_output.shape}")
-        print(f"  Output matches baseline: PASS")
+        print("  Output matches baseline: PASS")
 
     @requires_amd
     def test_bert_amd_speedup(self, bert_baseline):
@@ -313,7 +313,7 @@ class TestCrossBackendBERT:
 
         speedup = cpu_result.mean_time_ms / amd_result.mean_time_ms
 
-        print(f"\nBERT AMD Speedup:")
+        print("\nBERT AMD Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  AMD: {amd_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -323,8 +323,9 @@ class TestCrossBackendBERT:
     @requires_tpu
     def test_bert_tpu_backend(self, bert_baseline):
         """Test BERT on TPU backend matches baseline."""
-        from kernel_pytorch.backends.tpu import TPUBackend
         import torch_xla.core.xla_model as xm
+
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = bert_baseline["model"]
@@ -356,16 +357,17 @@ class TestCrossBackendBERT:
             message="BERT TPU output vs CPU baseline"
         )
 
-        print(f"\nBERT TPU Backend Test:")
+        print("\nBERT TPU Backend Test:")
         print(f"  Device: {device}")
         print(f"  Output shape: {tpu_output.shape}")
-        print(f"  Output matches baseline: PASS")
+        print("  Output matches baseline: PASS")
 
     @requires_tpu
     def test_bert_tpu_speedup(self, bert_baseline):
         """Test BERT speedup on TPU backend."""
-        from kernel_pytorch.backends.tpu import TPUBackend
         import torch_xla.core.xla_model as xm
+
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = bert_baseline["model"]
@@ -382,7 +384,7 @@ class TestCrossBackendBERT:
 
         # TPU optimized
         prepared_model = backend.prepare_model(model)
-        device = xm.xla_device()
+        xm.xla_device()
         tpu_inputs = backend.prepare_data(inputs)
 
         def run_tpu():
@@ -397,7 +399,7 @@ class TestCrossBackendBERT:
 
         speedup = cpu_result.mean_time_ms / tpu_result.mean_time_ms
 
-        print(f"\nBERT TPU Speedup:")
+        print("\nBERT TPU Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  TPU: {tpu_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -437,16 +439,16 @@ class TestCrossBackendBERT:
             message="BERT Intel output vs CPU baseline"
         )
 
-        print(f"\nBERT Intel Backend Test:")
+        print("\nBERT Intel Backend Test:")
         print(f"  Device: {backend.device}")
         print(f"  Output shape: {intel_output.shape}")
-        print(f"  Output matches baseline: PASS")
+        print("  Output matches baseline: PASS")
 
     @requires_intel
     def test_bert_intel_speedup(self, bert_baseline):
         """Test BERT speedup on Intel backend."""
-        from kernel_pytorch.backends.intel import IntelBackend
         from kernel_pytorch.backends.base_backend import OptimizationLevel
+        from kernel_pytorch.backends.intel import IntelBackend
 
         backend = IntelBackend()
         model = bert_baseline["model"]
@@ -476,7 +478,7 @@ class TestCrossBackendBERT:
 
         speedup = cpu_result.mean_time_ms / intel_result.mean_time_ms
 
-        print(f"\nBERT Intel Speedup:")
+        print("\nBERT Intel Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  Intel XPU: {intel_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -552,10 +554,10 @@ class TestCrossBackendBERTConsistency:
         assert torch.equal(baseline_predictions, nvidia_predictions), \
             f"NVIDIA predictions {nvidia_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
 
-        print(f"\nBERT Classification Consistency (NVIDIA):")
+        print("\nBERT Classification Consistency (NVIDIA):")
         print(f"  Baseline predictions: {baseline_predictions.tolist()}")
         print(f"  NVIDIA predictions: {nvidia_predictions.tolist()}")
-        print(f"  Match: PASS")
+        print("  Match: PASS")
 
     @requires_amd
     def test_classification_consistency_amd(self, classification_setup):
@@ -579,16 +581,17 @@ class TestCrossBackendBERTConsistency:
         assert torch.equal(baseline_predictions, amd_predictions), \
             f"AMD predictions {amd_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
 
-        print(f"\nBERT Classification Consistency (AMD):")
+        print("\nBERT Classification Consistency (AMD):")
         print(f"  Baseline predictions: {baseline_predictions.tolist()}")
         print(f"  AMD predictions: {amd_predictions.tolist()}")
-        print(f"  Match: PASS")
+        print("  Match: PASS")
 
     @requires_tpu
     def test_classification_consistency_tpu(self, classification_setup):
         """Test classification predictions match on TPU."""
-        from kernel_pytorch.backends.tpu import TPUBackend
         import torch_xla.core.xla_model as xm
+
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = classification_setup["model"]
@@ -597,7 +600,7 @@ class TestCrossBackendBERTConsistency:
 
         # Run on TPU
         prepared_model = backend.prepare_model(model)
-        device = xm.xla_device()
+        xm.xla_device()
         tpu_inputs = backend.prepare_data(inputs)
 
         with torch.no_grad():
@@ -608,10 +611,10 @@ class TestCrossBackendBERTConsistency:
         assert torch.equal(baseline_predictions, tpu_predictions), \
             f"TPU predictions {tpu_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
 
-        print(f"\nBERT Classification Consistency (TPU):")
+        print("\nBERT Classification Consistency (TPU):")
         print(f"  Baseline predictions: {baseline_predictions.tolist()}")
         print(f"  TPU predictions: {tpu_predictions.tolist()}")
-        print(f"  Match: PASS")
+        print("  Match: PASS")
 
     @requires_intel
     def test_classification_consistency_intel(self, classification_setup):
@@ -635,10 +638,10 @@ class TestCrossBackendBERTConsistency:
         assert torch.equal(baseline_predictions, intel_predictions), \
             f"Intel predictions {intel_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
 
-        print(f"\nBERT Classification Consistency (Intel):")
+        print("\nBERT Classification Consistency (Intel):")
         print(f"  Baseline predictions: {baseline_predictions.tolist()}")
         print(f"  Intel predictions: {intel_predictions.tolist()}")
-        print(f"  Match: PASS")
+        print("  Match: PASS")
 
 
 @pytest.mark.e2e
@@ -650,12 +653,15 @@ class TestBackendAutoSelection:
 
     def test_auto_backend_selection(self):
         """Test that BackendFactory auto-selects best available backend."""
-        from kernel_pytorch.backends import BackendFactory, list_available_backends, detect_best_backend
+        from kernel_pytorch.backends import (
+            detect_best_backend,
+            list_available_backends,
+        )
 
         available = list_available_backends()
         best = detect_best_backend()
 
-        print(f"\nBackend Auto-Selection:")
+        print("\nBackend Auto-Selection:")
         print(f"  Available backends: {available}")
         print(f"  Best backend: {best}")
 
@@ -666,6 +672,7 @@ class TestBackendAutoSelection:
     def test_bert_on_best_backend(self):
         """Test BERT runs on auto-selected best backend."""
         from transformers import AutoModel, AutoTokenizer
+
         from kernel_pytorch.backends import BackendFactory, detect_best_backend
 
         # Load BERT
@@ -678,7 +685,7 @@ class TestBackendAutoSelection:
         best_backend_type = detect_best_backend()
         backend = BackendFactory.create(best_backend_type)
 
-        print(f"\nBERT on Best Backend:")
+        print("\nBERT on Best Backend:")
         print(f"  Selected backend: {best_backend_type}")
         print(f"  Device: {backend.device}")
 

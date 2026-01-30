@@ -5,13 +5,13 @@ Provides comprehensive performance benchmarking and validation tools.
 """
 
 import argparse
-import sys
-import torch
-import time
 import json
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+import sys
+import time
 from dataclasses import dataclass
+from pathlib import Path
+
+import torch
 
 import kernel_pytorch as kpt
 
@@ -127,7 +127,7 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the benchmark command."""
-        print("📊 KernelPyTorch Performance Benchmarking")
+        print(" KernelPyTorch Performance Benchmarking")
         print("=" * 50)
 
         try:
@@ -159,11 +159,11 @@ Examples:
             if args.output:
                 BenchmarkCommand._save_results(results, args.output, args.verbose)
 
-            print("\n✅ Benchmarking completed successfully!")
+            print("\n Benchmarking completed successfully!")
             return 0
 
         except Exception as e:
-            print(f"❌ Benchmarking failed: {e}")
+            print(f" Benchmarking failed: {e}")
             if args.verbose:
                 import traceback
                 traceback.print_exc()
@@ -175,24 +175,24 @@ Examples:
         if torch.cuda.is_available():
             device = torch.device('cuda')
             if verbose:
-                print(f"🖥️  GPU: {torch.cuda.get_device_name()}")
+                print(f"  GPU: {torch.cuda.get_device_name()}")
                 print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
         elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
             device = torch.device('mps')
             if verbose:
-                print("🖥️  Apple Silicon GPU")
+                print("  Apple Silicon GPU")
         else:
             device = torch.device('cpu')
             if verbose:
-                print("🖥️  CPU")
+                print("  CPU")
 
         return device
 
     @staticmethod
-    def _run_predefined_benchmarks(args, device: torch.device) -> List[BenchmarkResult]:
+    def _run_predefined_benchmarks(args, device: torch.device) -> list[BenchmarkResult]:
         """Run predefined benchmark suites."""
         if args.verbose:
-            print(f"🎯 Running predefined benchmark: {args.predefined}")
+            print(f" Running predefined benchmark: {args.predefined}")
 
         results = []
 
@@ -244,18 +244,18 @@ Examples:
                     )
                     results.append(result)
             except ImportError:
-                print("⚠️  torchvision not available, skipping vision benchmarks")
+                print("  torchvision not available, skipping vision benchmarks")
 
         return results
 
     @staticmethod
-    def _benchmark_single_model(args, device: torch.device) -> List[BenchmarkResult]:
+    def _benchmark_single_model(args, device: torch.device) -> list[BenchmarkResult]:
         """Benchmark a single model."""
         if not args.model:
             raise ValueError("Model path required for single model benchmark")
 
         if args.verbose:
-            print(f"🎯 Benchmarking model: {args.model}")
+            print(f" Benchmarking model: {args.model}")
 
         # Load or create model
         model = BenchmarkCommand._load_model(args.model, device)
@@ -266,13 +266,13 @@ Examples:
         return [result]
 
     @staticmethod
-    def _compare_optimization_levels(args, device: torch.device) -> List[BenchmarkResult]:
+    def _compare_optimization_levels(args, device: torch.device) -> list[BenchmarkResult]:
         """Compare different optimization levels."""
         if not args.model:
             raise ValueError("Model path required for optimization comparison")
 
         if args.verbose:
-            print(f"🎯 Comparing optimization levels: {args.levels}")
+            print(f" Comparing optimization levels: {args.levels}")
 
         levels = args.levels.split(',')
         results = []
@@ -293,10 +293,10 @@ Examples:
         return results
 
     @staticmethod
-    def _regression_benchmark(args, device: torch.device) -> List[BenchmarkResult]:
+    def _regression_benchmark(args, device: torch.device) -> list[BenchmarkResult]:
         """Run regression benchmarks to detect performance changes."""
         if args.verbose:
-            print("🎯 Running regression benchmarks")
+            print(" Running regression benchmarks")
 
         # Use a standard set of models and optimizations
         standard_benchmarks = [
@@ -313,14 +313,14 @@ Examples:
         return results
 
     @staticmethod
-    def _stress_test(args, device: torch.device) -> List[BenchmarkResult]:
+    def _stress_test(args, device: torch.device) -> list[BenchmarkResult]:
         """Run stress tests with varying batch sizes."""
         if not args.model:
             # Use default model for stress test
             args.model = "linear_stress_test"
 
         if args.verbose:
-            print(f"🎯 Stress testing with batch sizes: {args.batch_sizes}")
+            print(f" Stress testing with batch sizes: {args.batch_sizes}")
 
         batch_sizes = [int(b.strip()) for b in args.batch_sizes.split(',')]
         results = []
@@ -366,7 +366,7 @@ Examples:
                 return torch.nn.Linear(512, 512).to(device).eval()
 
     @staticmethod
-    def _parse_input_shape(input_shape_str: Optional[str], model_name: str) -> tuple:
+    def _parse_input_shape(input_shape_str: str | None, model_name: str) -> tuple:
         """Parse input shape string or infer from model name."""
         if input_shape_str:
             return tuple(map(int, input_shape_str.split(',')))
@@ -450,9 +450,9 @@ Examples:
         )
 
     @staticmethod
-    def _display_results(results: List[BenchmarkResult], verbose: bool) -> None:
+    def _display_results(results: list[BenchmarkResult], verbose: bool) -> None:
         """Display benchmark results in a formatted table."""
-        print("\n📊 Benchmark Results:")
+        print("\n Benchmark Results:")
         print("-" * 80)
 
         if verbose:
@@ -468,10 +468,10 @@ Examples:
                 print(f"{result.name:<30} {result.mean_time_ms:<12.2f} {result.throughput_ops_per_sec:<20.1f}")
 
     @staticmethod
-    def _save_results(results: List[BenchmarkResult], output_path: str, verbose: bool) -> None:
+    def _save_results(results: list[BenchmarkResult], output_path: str, verbose: bool) -> None:
         """Save results to JSON file."""
         if verbose:
-            print(f"💾 Saving results to: {output_path}")
+            print(f" Saving results to: {output_path}")
 
         # Convert results to serializable format
         results_dict = {

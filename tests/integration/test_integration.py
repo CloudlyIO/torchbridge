@@ -11,24 +11,22 @@ Test Categories:
 - @pytest.mark.gpu: GPU-dependent comprehensive tests
 """
 
+import os
+import sys
+import time
+
+import numpy as np
 import pytest
 import torch
-import torch.nn as nn
-import numpy as np
-import time
-import sys
-import os
-from typing import Dict, List, Tuple, Any
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+from tests.unit.test_configs import TEST_CONFIGS
+
 from kernel_pytorch.core.compilers import (
     FlashLightKernelCompiler,
-    AttentionPattern,
-    PyGraphCUDAOptimizer
 )
-from tests.unit.test_configs import TEST_CONFIGS, TestDataConfig
 
 
 class TestRealisticScaleCompilation:
@@ -116,7 +114,7 @@ class TestRealisticScaleCompilation:
                 }
             }
 
-            print(f"    ✅ {pattern}: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
+            print(f"     {pattern}: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
 
         # Cross-pattern validation: Different patterns should produce different outputs
         causal_kernel = compiler.compile_attention_kernel("causal", seq_len, head_dim)
@@ -132,7 +130,7 @@ class TestRealisticScaleCompilation:
         causal_vs_dilated = torch.norm(causal_out - dilated_out).item()
         sliding_vs_dilated = torch.norm(sliding_out - dilated_out).item()
 
-        print(f"\\nPattern difference analysis:")
+        print("\\nPattern difference analysis:")
         print(f"  Causal vs Sliding Window: {causal_vs_sliding:.3f}")
         print(f"  Causal vs Dilated: {causal_vs_dilated:.3f}")
         print(f"  Sliding vs Dilated: {sliding_vs_dilated:.3f}")
@@ -145,7 +143,7 @@ class TestRealisticScaleCompilation:
         # Performance requirements for realistic scale
         assert total_compilation_time < 60.0, f"Total compilation too slow: {total_compilation_time:.3f}s"
 
-        print(f"\\n🎯 Realistic scale test completed successfully!")
+        print("\\n Realistic scale test completed successfully!")
         print(f"   Total compilation time: {total_compilation_time:.3f}s")
         print(f"   Patterns tested: {len(patterns)}")
         print(f"   Data scale: {q.shape} ({q.numel() * 4 / 1024 / 1024:.1f}MB per tensor)")
@@ -201,23 +199,23 @@ class TestRealisticScaleCompilation:
                     # Reset peak memory counter
                     torch.cuda.reset_peak_memory_stats()
 
-                print(f"    ✅ {pattern} stress test: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
+                print(f"     {pattern} stress test: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
 
                 # Performance bounds for stress test
                 assert compilation_time < 120.0, f"Compilation too slow for stress test: {compilation_time:.3f}s"
                 assert execution_time < 30.0, f"Execution too slow for stress test: {execution_time:.3f}s"
 
             except torch.cuda.OutOfMemoryError:
-                print(f"    ⚠️ {pattern} pattern exceeded GPU memory limits")
+                print(f"     {pattern} pattern exceeded GPU memory limits")
                 pytest.skip(f"GPU memory insufficient for {pattern} pattern at scale {q.shape}")
             except RuntimeError as e:
                 if "out of memory" in str(e).lower():
-                    print(f"    ⚠️ {pattern} pattern hit memory limits: {e}")
+                    print(f"     {pattern} pattern hit memory limits: {e}")
                     pytest.skip(f"Memory insufficient for {pattern} pattern at scale {q.shape}")
                 else:
                     raise
 
-        print(f"\\n💪 Stress test completed successfully!")
+        print("\\n Stress test completed successfully!")
 
     @pytest.mark.integration
     def test_specialized_configurations(self, compiler):
@@ -250,7 +248,7 @@ class TestRealisticScaleCompilation:
                 assert not torch.isnan(output).any()
                 assert torch.isfinite(output).all()
 
-                print(f"  ✅ {config_name}: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
+                print(f"   {config_name}: compile={compilation_time:.3f}s, exec={execution_time:.3f}s")
 
                 # Configuration-specific validation
                 if config_name == 'long_sequence':
@@ -267,7 +265,7 @@ class TestRealisticScaleCompilation:
 
             except Exception as e:
                 if "memory" in str(e).lower():
-                    print(f"  ⚠️ {config_name} configuration hit memory limits")
+                    print(f"   {config_name} configuration hit memory limits")
                     pytest.skip(f"Memory insufficient for {config_name}: {e}")
                 else:
                     raise
@@ -279,7 +277,7 @@ class TestEnd2EndIntegration:
     @pytest.mark.integration
     def test_full_pipeline_integration(self):
         """Test complete pipeline from compilation through execution with realistic data"""
-        print("\\n🔄 Testing complete compiler pipeline integration...")
+        print("\\n Testing complete compiler pipeline integration...")
 
         # Use realistic configuration
         config = TEST_CONFIGS['realistic']
@@ -301,7 +299,7 @@ class TestEnd2EndIntegration:
             assert kernel.kernel_fn is not None
 
             # Stage 2: Cache verification
-            cache_key = f"{pattern}_{q.shape[2]}_{q.shape[3]}"
+            f"{pattern}_{q.shape[2]}_{q.shape[3]}"
             assert len(compiler.kernel_cache.cache) > 0
 
             # Stage 3: Execution
@@ -313,7 +311,7 @@ class TestEnd2EndIntegration:
             assert torch.isfinite(output).all()
 
         pipeline_time = time.time() - pipeline_start
-        print(f"  ✅ Full pipeline completed in {pipeline_time:.3f}s")
+        print(f"   Full pipeline completed in {pipeline_time:.3f}s")
 
         # Integration requirements
         assert pipeline_time < 120.0, f"Full pipeline too slow: {pipeline_time:.3f}s"

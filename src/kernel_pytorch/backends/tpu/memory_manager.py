@@ -9,18 +9,20 @@ Inherits from BaseMemoryManager for shared functionality.
 Version: 0.3.7
 """
 
-import logging
-import warnings
-import torch
-import torch.nn as nn
-from typing import Dict, Any, Optional, Union, List, Tuple
-from dataclasses import dataclass
-import time
 import gc
+import logging
+import time
+import warnings
+from dataclasses import dataclass
+from typing import Any
 
+import torch
+
+from kernel_pytorch.backends.base_memory_manager import (
+    BaseMemoryManager,
+)
 from kernel_pytorch.core.config import TPUConfig, TPUVersion
-from kernel_pytorch.backends.base_memory_manager import BaseMemoryManager, BaseMemoryStats
-from .tpu_exceptions import TPUMemoryError, TPUOutOfMemoryError, raise_or_warn
+
 from . import xla_compat
 
 logger = logging.getLogger(__name__)
@@ -58,7 +60,7 @@ class TPUMemoryManager(BaseMemoryManager):
         self._tpu_config = config
 
         # TPU-specific memory pool tracking
-        self._tpu_memory_pool: Dict[str, Dict] = {}
+        self._tpu_memory_pool: dict[str, dict] = {}
         self._tpu_peak_memory = 0
 
         # Initialize base class
@@ -76,7 +78,7 @@ class TPUMemoryManager(BaseMemoryManager):
         try:
             return xla_compat.get_xla_device()
         except Exception:
-            warnings.warn("PyTorch/XLA not available. Using CPU fallback.")
+            warnings.warn("PyTorch/XLA not available. Using CPU fallback.", stacklevel=2)
             return torch.device("cpu")
 
     def _get_optimal_alignment(self) -> int:
@@ -137,7 +139,7 @@ class TPUMemoryManager(BaseMemoryManager):
     def _setup_memory_management(self) -> None:
         """Set up TPU memory management."""
         try:
-            import torch_xla
+            import torch_xla  # noqa: F401
 
             # Set memory fraction
             self._apply_memory_fraction()
@@ -149,7 +151,7 @@ class TPUMemoryManager(BaseMemoryManager):
             )
 
         except ImportError:
-            warnings.warn("PyTorch/XLA not available. Memory manager will use CPU fallback.")
+            warnings.warn("PyTorch/XLA not available. Memory manager will use CPU fallback.", stacklevel=2)
 
     def _apply_memory_fraction(self) -> None:
         """Apply memory fraction limits for TPU."""
@@ -175,10 +177,10 @@ class TPUMemoryManager(BaseMemoryManager):
 
     def allocate_tensor(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
-        pool_id: Optional[str] = None,
+        pool_id: str | None = None,
         purpose: str = "unknown"
     ) -> torch.Tensor:
         """
@@ -244,7 +246,7 @@ class TPUMemoryManager(BaseMemoryManager):
     def create_memory_pool(
         self,
         pool_size: int,
-        tensor_size: Tuple[int, ...],
+        tensor_size: tuple[int, ...],
         dtype: torch.dtype = torch.float32
     ) -> str:
         """
@@ -277,7 +279,7 @@ class TPUMemoryManager(BaseMemoryManager):
                      pool_id, pool_size, tensor_size)
         return pool_id
 
-    def get_tensor_from_pool(self, pool_id: str) -> Optional[torch.Tensor]:
+    def get_tensor_from_pool(self, pool_id: str) -> torch.Tensor | None:
         """
         Get tensor from memory pool.
 
@@ -391,7 +393,7 @@ class TPUMemoryManager(BaseMemoryManager):
         self._tpu_memory_pool.clear()
         logger.debug("TPU memory pools cleared")
 
-    def get_pool_stats(self, pool_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_pool_stats(self, pool_id: str | None = None) -> dict[str, Any]:
         """
         Get TPU memory pool statistics.
 
@@ -429,9 +431,9 @@ class TPUMemoryManager(BaseMemoryManager):
 
     def monitor_memory(
         self,
-        interval: Optional[float] = None,
-        duration: Optional[float] = None
-    ) -> List[TPUMemoryStats]:
+        interval: float | None = None,
+        duration: float | None = None
+    ) -> list[TPUMemoryStats]:
         """
         Monitor memory usage over time.
 

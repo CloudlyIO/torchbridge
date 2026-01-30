@@ -6,19 +6,18 @@ hardware configurations with statistical rigor and real-time analysis.
 """
 
 import asyncio
+import logging
+import threading
 import time
 import uuid
-import logging
-from typing import Dict, List, Optional, Any, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
 import numpy as np
 from scipy import stats
-import torch
-import threading
-from contextlib import asynccontextmanager
 
-from ..hardware.abstraction.hal_core import DeviceSpec, HardwareVendor
+from ..hardware.abstraction.hal_core import DeviceSpec
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +43,8 @@ class TrafficAllocationStrategy(Enum):
 class HardwareConfig:
     """Hardware configuration for experiments"""
     config_id: str
-    devices: List[DeviceSpec]
-    optimization_flags: Dict[str, Any] = field(default_factory=dict)
+    devices: list[DeviceSpec]
+    optimization_flags: dict[str, Any] = field(default_factory=dict)
     memory_allocation_gb: float = 0.0
     expected_latency_ms: float = 0.0
     cost_per_hour: float = 0.0
@@ -54,14 +53,14 @@ class HardwareConfig:
 @dataclass
 class ExperimentMetrics:
     """Metrics collected during experiment"""
-    latency_ms: List[float] = field(default_factory=list)
-    throughput_rps: List[float] = field(default_factory=list)
-    gpu_utilization: List[float] = field(default_factory=list)
-    memory_usage_gb: List[float] = field(default_factory=list)
-    error_rate: List[float] = field(default_factory=list)
-    cost_per_request: List[float] = field(default_factory=list)
-    accuracy_metrics: Dict[str, List[float]] = field(default_factory=dict)
-    custom_metrics: Dict[str, List[float]] = field(default_factory=dict)
+    latency_ms: list[float] = field(default_factory=list)
+    throughput_rps: list[float] = field(default_factory=list)
+    gpu_utilization: list[float] = field(default_factory=list)
+    memory_usage_gb: list[float] = field(default_factory=list)
+    error_rate: list[float] = field(default_factory=list)
+    cost_per_request: list[float] = field(default_factory=list)
+    accuracy_metrics: dict[str, list[float]] = field(default_factory=dict)
+    custom_metrics: dict[str, list[float]] = field(default_factory=dict)
 
 
 @dataclass
@@ -72,7 +71,7 @@ class StatisticalSignificance:
     treatment_mean: float
     relative_difference: float
     p_value: float
-    confidence_interval_95: Tuple[float, float]
+    confidence_interval_95: tuple[float, float]
     is_significant: bool
     sample_size_control: int
     sample_size_treatment: int
@@ -91,8 +90,8 @@ class ABExperiment:
     def __init__(self,
                  experiment_id: str,
                  control_config: HardwareConfig,
-                 treatment_configs: List[HardwareConfig],
-                 traffic_allocation: Dict[str, float],
+                 treatment_configs: list[HardwareConfig],
+                 traffic_allocation: dict[str, float],
                  duration_hours: float = 24.0,
                  min_samples_per_variant: int = 1000):
         self.experiment_id = experiment_id
@@ -104,18 +103,18 @@ class ABExperiment:
 
         # Experiment state
         self.status = ExperimentStatus.CREATED
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
         # Metrics storage
-        self.metrics: Dict[str, ExperimentMetrics] = {
+        self.metrics: dict[str, ExperimentMetrics] = {
             control_config.config_id: ExperimentMetrics()
         }
         for config in treatment_configs:
             self.metrics[config.config_id] = ExperimentMetrics()
 
         # Statistical analysis
-        self.significance_results: Dict[str, List[StatisticalSignificance]] = {}
+        self.significance_results: dict[str, list[StatisticalSignificance]] = {}
         self._metrics_lock = threading.Lock()
 
     async def start(self) -> None:
@@ -138,8 +137,8 @@ class ABExperiment:
                       memory_usage_gb: float,
                       error_rate: float = 0.0,
                       cost_per_request: float = 0.0,
-                      accuracy_metrics: Optional[Dict[str, float]] = None,
-                      custom_metrics: Optional[Dict[str, float]] = None) -> None:
+                      accuracy_metrics: dict[str, float] | None = None,
+                      custom_metrics: dict[str, float] | None = None) -> None:
         """Record metrics for a specific configuration"""
         if config_id not in self.metrics:
             return
@@ -165,7 +164,7 @@ class ABExperiment:
                         metrics.custom_metrics[key] = []
                     metrics.custom_metrics[key].append(value)
 
-    def analyze_significance(self, metric_name: str = "latency_ms", alpha: float = 0.05) -> List[StatisticalSignificance]:
+    def analyze_significance(self, metric_name: str = "latency_ms", alpha: float = 0.05) -> list[StatisticalSignificance]:
         """Analyze statistical significance for a specific metric"""
         if metric_name not in ["latency_ms", "throughput_rps", "gpu_utilization", "memory_usage_gb", "error_rate", "cost_per_request"]:
             raise ValueError(f"Unsupported metric: {metric_name}")
@@ -173,7 +172,7 @@ class ABExperiment:
         results = []
         control_data = getattr(self.metrics[self.control_config.config_id], metric_name)
 
-        for config_id, treatment_config in self.treatment_configs.items():
+        for config_id, _treatment_config in self.treatment_configs.items():
             treatment_data = getattr(self.metrics[config_id], metric_name)
 
             if len(control_data) < self.min_samples_per_variant or len(treatment_data) < self.min_samples_per_variant:
@@ -189,8 +188,8 @@ class ABExperiment:
         return results
 
     def _calculate_statistical_significance(self,
-                                          control_data: List[float],
-                                          treatment_data: List[float],
+                                          control_data: list[float],
+                                          treatment_data: list[float],
                                           metric_name: str,
                                           alpha: float = 0.05) -> StatisticalSignificance:
         """Calculate statistical significance between control and treatment"""
@@ -237,7 +236,7 @@ class ABExperiment:
             statistical_power=statistical_power
         )
 
-    def get_experiment_summary(self) -> Dict[str, Any]:
+    def get_experiment_summary(self) -> dict[str, Any]:
         """Get comprehensive experiment summary"""
         if self.start_time is None:
             duration_hours = 0.0
@@ -298,7 +297,7 @@ class ABExperiment:
                 return config_id
         return "unknown"
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate actionable recommendations based on experiment results"""
         recommendations = []
 
@@ -331,8 +330,8 @@ class TrafficSplitter:
 
     def __init__(self, strategy: TrafficAllocationStrategy = TrafficAllocationStrategy.FIXED_SPLIT):
         self.strategy = strategy
-        self.experiments: Dict[str, ABExperiment] = {}
-        self.allocation_cache: Dict[str, str] = {}  # request_id -> config_id
+        self.experiments: dict[str, ABExperiment] = {}
+        self.allocation_cache: dict[str, str] = {}  # request_id -> config_id
         self._lock = threading.Lock()
 
     def register_experiment(self, experiment: ABExperiment) -> None:
@@ -340,7 +339,7 @@ class TrafficSplitter:
         with self._lock:
             self.experiments[experiment.experiment_id] = experiment
 
-    def get_configuration_for_request(self, request_id: str, experiment_id: str) -> Optional[str]:
+    def get_configuration_for_request(self, request_id: str, experiment_id: str) -> str | None:
         """Get hardware configuration for specific request"""
         if experiment_id not in self.experiments:
             return None
@@ -369,7 +368,7 @@ class TrafficSplitter:
                              experiment_id: str,
                              latency_ms: float,
                              success: bool,
-                             additional_metrics: Optional[Dict[str, float]] = None) -> None:
+                             additional_metrics: dict[str, float] | None = None) -> None:
         """Record outcome of request for experiment tracking"""
         if experiment_id not in self.experiments:
             return
@@ -398,18 +397,18 @@ class HardwareABTestingFramework:
     """
 
     def __init__(self):
-        self.experiments: Dict[str, ABExperiment] = {}
+        self.experiments: dict[str, ABExperiment] = {}
         self.traffic_splitter = TrafficSplitter()
         self.analysis_scheduler = None
-        self._background_tasks: List[asyncio.Task] = []
+        self._background_tasks: list[asyncio.Task] = []
 
     def create_experiment(self,
                          control_hardware: HardwareConfig,
-                         treatment_hardware: List[HardwareConfig],
-                         traffic_allocation: Optional[Dict[str, float]] = None,
+                         treatment_hardware: list[HardwareConfig],
+                         traffic_allocation: dict[str, float] | None = None,
                          duration_hours: float = 24.0,
                          min_samples: int = 1000,
-                         experiment_name: Optional[str] = None) -> ABExperiment:
+                         experiment_name: str | None = None) -> ABExperiment:
         """Create new A/B experiment"""
         experiment_id = experiment_name or f"hw_ab_test_{uuid.uuid4().hex[:8]}"
 
@@ -491,7 +490,7 @@ class HardwareABTestingFramework:
         except asyncio.CancelledError:
             logger.info(f"Monitoring cancelled for experiment {experiment_id}")
 
-    def analyze_all_experiments(self) -> Dict[str, Dict[str, Any]]:
+    def analyze_all_experiments(self) -> dict[str, dict[str, Any]]:
         """Analyze all running experiments"""
         results = {}
 
@@ -509,7 +508,7 @@ class HardwareABTestingFramework:
 
         return results
 
-    def get_experiment_recommendations(self, experiment_id: str) -> List[str]:
+    def get_experiment_recommendations(self, experiment_id: str) -> list[str]:
         """Get recommendations for specific experiment"""
         if experiment_id not in self.experiments:
             return ["Experiment not found"]

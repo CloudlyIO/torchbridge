@@ -9,16 +9,14 @@ Advanced MoE layer implementations based on 2025-2026 research:
 - Load balancing and capacity factor optimization
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Dict, Any, Tuple, Union, List
-import math
 from dataclasses import dataclass
 
+import torch
+import torch.nn as nn
+
 from .expert_networks import FeedForwardExpert, ParameterEfficientExpert
-from .routing import TopKRouter, SwitchRouter, DynamicCapacityRouter
-from .optimization import LoadBalancer, ExpertParallelism
+from .optimization import ExpertParallelism, LoadBalancer
+from .routing import DynamicCapacityRouter, SwitchRouter, TopKRouter
 
 
 @dataclass
@@ -53,11 +51,11 @@ class MoELayer(nn.Module):
         self,
         config: MoEConfig,
         hidden_size: int,
-        expert_hidden_size: Optional[int] = None,
+        expert_hidden_size: int | None = None,
         expert_class: type = FeedForwardExpert,
         router_class: type = TopKRouter,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -120,9 +118,9 @@ class MoELayer(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None,
+        expert_mask: torch.Tensor | None = None,
         return_router_logits: bool = False
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, Dict[str, torch.Tensor]]]:
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass through MoE layer
 
@@ -186,7 +184,7 @@ class MoELayer(nn.Module):
         x: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Process tokens through experts locally (non-distributed)"""
         num_tokens, hidden_size = x.shape
@@ -231,8 +229,8 @@ class MoELayer(nn.Module):
         router_logits: torch.Tensor,
         router_probs: torch.Tensor,
         expert_indices: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
-    ) -> Dict[str, torch.Tensor]:
+        capacity_info: dict[str, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
         """Compute auxiliary losses for training"""
         aux_losses = {}
 
@@ -264,7 +262,7 @@ class MoELayer(nn.Module):
 
             self.total_tokens_processed += num_tokens
 
-    def get_expert_utilization_stats(self) -> Dict[str, float]:
+    def get_expert_utilization_stats(self) -> dict[str, float]:
         """Get expert utilization statistics"""
         if self.total_tokens_processed == 0:
             return {'expert_balance': 1.0, 'expert_efficiency': 1.0}

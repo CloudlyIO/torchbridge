@@ -15,13 +15,12 @@ Note: Tests are designed to work without actual AMD hardware by using
 mocks and CPU fallbacks where appropriate.
 """
 
+
 import pytest
 import torch
-from unittest.mock import Mock, patch, MagicMock
-from dataclasses import dataclass
 
 # Import AMD backend components
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
 
 
 class TestAMDConfig:
@@ -185,7 +184,6 @@ class TestAMDOptimizer:
         """Test optimization result structure."""
         from kernel_pytorch.backends.amd.amd_optimizer import (
             AMDOptimizer,
-            OptimizationResult,
         )
 
         config = AMDConfig()
@@ -250,10 +248,10 @@ class TestROCmCompiler:
         source = "__global__ void cached_kernel() {}"
 
         # First compilation
-        kernel1 = compiler.compile_kernel(source, "cached_kernel")
+        compiler.compile_kernel(source, "cached_kernel")
 
         # Second compilation should hit cache
-        kernel2 = compiler.compile_kernel(source, "cached_kernel")
+        compiler.compile_kernel(source, "cached_kernel")
 
         stats = compiler.get_compilation_stats()
         assert stats["cache_hits"] >= 1
@@ -625,7 +623,7 @@ class TestAMDOperatorFusion:
         )
 
         optimized = optimizer.optimize(model, level="conservative")
-        summary = optimizer.get_optimization_summary()
+        optimizer.get_optimization_summary()
 
         assert optimized is not None
 
@@ -718,8 +716,8 @@ class TestAMDBackendEnhanced:
 
     def test_backend_get_device_info(self):
         """Test unified device info method."""
-        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
         from kernel_pytorch.backends import DeviceInfo
+        from kernel_pytorch.backends.amd.amd_backend import AMDBackend
 
         config = AMDConfig()
         backend = AMDBackend(config)

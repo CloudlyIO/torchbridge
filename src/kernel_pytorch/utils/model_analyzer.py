@@ -8,21 +8,21 @@ Advanced analysis engine for PyTorch models to identify optimization opportuniti
 - Compilation readiness assessment
 """
 
-import torch
-import torch.nn as nn
-from typing import Dict, List, Optional, Any
 import inspect
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any
+
+import torch.nn as nn
 
 
 @dataclass
 class ModelAnalysisResult:
     """Result of comprehensive model analysis."""
-    model_info: Dict[str, Any]
-    performance_bottlenecks: List[str]
-    optimization_opportunities: List[Any]  # Will be OptimizationRecommendation
-    current_optimizations: List[str]
+    model_info: dict[str, Any]
+    performance_bottlenecks: list[str]
+    optimization_opportunities: list[Any]  # Will be OptimizationRecommendation
+    current_optimizations: list[str]
     overall_optimization_score: float
     improvement_potential: str
 
@@ -38,7 +38,7 @@ class CodeAnalyzer:
     def __init__(self):
         self.optimization_patterns = self._load_optimization_patterns()
 
-    def analyze_model(self, model: nn.Module) -> Dict[str, Any]:
+    def analyze_model(self, model: nn.Module) -> dict[str, Any]:
         """
         Comprehensive model analysis for optimization opportunities.
 
@@ -58,7 +58,7 @@ class CodeAnalyzer:
 
         return analysis
 
-    def _analyze_architecture(self, model: nn.Module) -> Dict[str, Any]:
+    def _analyze_architecture(self, model: nn.Module) -> dict[str, Any]:
         """Analyze model architecture for optimization patterns."""
         module_types = defaultdict(int)
         fusion_opportunities = []
@@ -75,7 +75,7 @@ class CodeAnalyzer:
                 fusion_opportunities.append({
                     'location': name,
                     'type': 'linear_activation_fusion',
-                    'description': f'Linear layer followed by activation function'
+                    'description': 'Linear layer followed by activation function'
                 })
 
         # Detect sequential patterns
@@ -95,7 +95,7 @@ class CodeAnalyzer:
             'sequential_patterns': sequential_patterns
         }
 
-    def _analyze_parameters(self, model: nn.Module) -> Dict[str, Any]:
+    def _analyze_parameters(self, model: nn.Module) -> dict[str, Any]:
         """Analyze model parameters for optimization insights."""
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -118,7 +118,7 @@ class CodeAnalyzer:
             'memory_footprint': self._estimate_memory_footprint(model)
         }
 
-    def _analyze_operations(self, model: nn.Module) -> Dict[str, Any]:
+    def _analyze_operations(self, model: nn.Module) -> dict[str, Any]:
         """Analyze operations for optimization patterns."""
         operations = []
         activation_functions = []
@@ -145,7 +145,7 @@ class CodeAnalyzer:
             'operations_count': len(operations)
         }
 
-    def _analyze_memory_patterns(self, model: nn.Module) -> Dict[str, Any]:
+    def _analyze_memory_patterns(self, model: nn.Module) -> dict[str, Any]:
         """Analyze memory usage patterns."""
         # This is a simplified analysis - real implementation would be more sophisticated
         estimated_forward_memory = 0
@@ -165,7 +165,7 @@ class CodeAnalyzer:
             'memory_efficiency_score': min(1.0, 100 / (estimated_forward_memory / 1024**2 + 1))
         }
 
-    def _analyze_compilation_readiness(self, model: nn.Module) -> Dict[str, Any]:
+    def _analyze_compilation_readiness(self, model: nn.Module) -> dict[str, Any]:
         """Analyze model readiness for torch.compile."""
         compilation_issues = []
         compatibility_score = 1.0
@@ -193,7 +193,7 @@ class CodeAnalyzer:
             'recommended_compile_mode': 'default' if compatibility_score > 0.8 else 'reduce-overhead'
         }
 
-    def _analyze_sequential_pattern(self, sequential: nn.Sequential) -> Optional[str]:
+    def _analyze_sequential_pattern(self, sequential: nn.Sequential) -> str | None:
         """Analyze sequential module for common patterns."""
         modules = list(sequential.children())
         if len(modules) < 2:
@@ -224,7 +224,7 @@ class CodeAnalyzer:
                    module.out_channels % 8 == 0)
         return False
 
-    def _estimate_memory_footprint(self, model: nn.Module) -> Dict[str, float]:
+    def _estimate_memory_footprint(self, model: nn.Module) -> dict[str, float]:
         """Estimate memory footprint of the model."""
         param_memory = sum(p.numel() * 4 for p in model.parameters()) / 1024**2  # MB
         buffer_memory = sum(b.numel() * 4 for b in model.buffers()) / 1024**2  # MB
@@ -235,7 +235,7 @@ class CodeAnalyzer:
             'total_mb': param_memory + buffer_memory
         }
 
-    def _load_optimization_patterns(self) -> Dict[str, Any]:
+    def _load_optimization_patterns(self) -> dict[str, Any]:
         """Load common optimization patterns."""
         return {
             'linear_activation_fusion': {
@@ -264,7 +264,7 @@ class PerformanceBottleneckDetector:
     def __init__(self):
         self.bottleneck_patterns = self._load_bottleneck_patterns()
 
-    def detect_bottlenecks(self, model: nn.Module, analysis: Dict[str, Any]) -> List[str]:
+    def detect_bottlenecks(self, model: nn.Module, analysis: dict[str, Any]) -> list[str]:
         """
         Detect performance bottlenecks based on model analysis.
 
@@ -296,7 +296,7 @@ class PerformanceBottleneckDetector:
 
         return bottlenecks
 
-    def _load_bottleneck_patterns(self) -> Dict[str, Any]:
+    def _load_bottleneck_patterns(self) -> dict[str, Any]:
         """Load known bottleneck patterns."""
         return {
             'large_model': {

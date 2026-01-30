@@ -12,46 +12,45 @@ Implementation of the absolute latest optimization techniques discovered through
 These implementations represent the cutting edge of 2025 optimization research.
 """
 
-from .advanced_flex_attention import (
-    FlashLightCompiler,
-    AdvancedFlexAttention,
-    GQAOptimizedAttention,
-    PagedAttentionDecoder,
-    create_advanced_flex_attention
-)
-
-from .pygraph_optimizer import (
-    PyGraphOptimizer,
-    CUDAGraphManager,
-    AutoGraphCapture,
-    SelectiveCUDAGraphs,
-    create_pygraph_optimizer
-)
-
 # Ultra-precision imports from consolidated module
 from kernel_pytorch.precision.ultra_precision import (
     FP4Quantizer,
-    MXFPOptimizer,
     InformationEntropyPrecision,
+    MXFPOptimizer,
+    PrecisionFormat,  # noqa: F401
+)
+from kernel_pytorch.precision.ultra_precision import (
     ModelPrecisionOptimizer as AdaptivePrecisionAllocator,  # Alias for backward compatibility
-    PrecisionFormat
 )
 
+from .advanced_flex_attention import (
+    AdvancedFlexAttention,
+    FlashLightCompiler,
+    GQAOptimizedAttention,
+    PagedAttentionDecoder,
+    create_advanced_flex_attention,
+)
 from .fsdp2_integration import (
-    FSDP2Manager,
-    DTensorSharding,
     AdvancedPrefetching,
-    HybridShardingOptimizer,
+    DTensorSharding,
     FSDP2Config,
-    create_fsdp2_manager
+    FSDP2Manager,
+    HybridShardingOptimizer,
+    create_fsdp2_manager,
 )
-
+from .pygraph_optimizer import (
+    AutoGraphCapture,
+    CUDAGraphManager,
+    PyGraphOptimizer,
+    SelectiveCUDAGraphs,
+    create_pygraph_optimizer,
+)
 from .structured_sparsity import (
-    StructuredSparsity24,
+    AcceleratedSparseOps,
     DynamicSparsityOptimizer,
     SparsityPatternGenerator,
-    AcceleratedSparseOps,
-    create_structured_sparsity_optimizer
+    StructuredSparsity24,
+    create_structured_sparsity_optimizer,
 )
 
 __all__ = [

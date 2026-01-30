@@ -14,7 +14,6 @@ Features:
 Version: 0.3.7
 """
 
-import json
 import logging
 import os
 import subprocess
@@ -22,8 +21,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -66,15 +64,15 @@ class AWSInstanceConfig:
     """Configuration for an AWS EC2 instance."""
     instance_type: AWSInstanceType
     region: AWSRegion = AWSRegion.US_WEST_2
-    ami_id: Optional[str] = None  # Auto-detect if None
-    key_name: Optional[str] = None
-    security_group_ids: List[str] = field(default_factory=list)
-    subnet_id: Optional[str] = None
-    iam_instance_profile: Optional[str] = None
+    ami_id: str | None = None  # Auto-detect if None
+    key_name: str | None = None
+    security_group_ids: list[str] = field(default_factory=list)
+    subnet_id: str | None = None
+    iam_instance_profile: str | None = None
     spot_instance: bool = True  # Use spot for cost savings
-    max_spot_price: Optional[float] = None
+    max_spot_price: float | None = None
     root_volume_size_gb: int = 200
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         """Set default tags."""
@@ -112,13 +110,13 @@ class AWSTestResult:
     tests_failed: int
     tests_skipped: int
     test_output: str
-    benchmark_results: Dict[str, Any]
-    cloudwatch_metrics: Dict[str, Any]
+    benchmark_results: dict[str, Any]
+    cloudwatch_metrics: dict[str, Any]
     cost_estimate_usd: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "instance_id": self.instance_id,
@@ -173,7 +171,7 @@ class AWSTestHarness:
     def __init__(
         self,
         config: AWSInstanceConfig,
-        s3_bucket: Optional[str] = None,
+        s3_bucket: str | None = None,
         cloudwatch_namespace: str = "KernelPyTorch/Testing",
     ):
         """
@@ -187,14 +185,14 @@ class AWSTestHarness:
         self.config = config
         self.s3_bucket = s3_bucket or os.environ.get("KERNELPYTORCH_S3_BUCKET")
         self.cloudwatch_namespace = cloudwatch_namespace
-        self.instance_id: Optional[str] = None
-        self.public_ip: Optional[str] = None
+        self.instance_id: str | None = None
+        self.public_ip: str | None = None
         self._boto3_available = self._check_boto3()
 
     def _check_boto3(self) -> bool:
         """Check if boto3 is available."""
         try:
-            import boto3
+            import boto3  # noqa: F401
             return True
         except ImportError:
             logger.warning("boto3 not installed. AWS operations will be simulated.")
@@ -314,7 +312,7 @@ class AWSTestHarness:
     def run_tests(
         self,
         test_path: str = "tests/",
-        pytest_args: Optional[List[str]] = None,
+        pytest_args: list[str] | None = None,
         timeout_seconds: int = 7200,  # 2 hours default
     ) -> AWSTestResult:
         """
@@ -406,8 +404,8 @@ class AWSTestHarness:
     def _run_local_tests(
         self,
         test_path: str,
-        pytest_args: List[str],
-    ) -> Tuple[str, int, int, int]:
+        pytest_args: list[str],
+    ) -> tuple[str, int, int, int]:
         """Run tests locally (for simulation/development)."""
         logger.info("Running tests locally (simulated AWS)")
 
@@ -445,9 +443,9 @@ class AWSTestHarness:
     def _run_remote_tests(
         self,
         test_path: str,
-        pytest_args: List[str],
+        pytest_args: list[str],
         timeout_seconds: int,
-    ) -> Tuple[str, int, int, int]:
+    ) -> tuple[str, int, int, int]:
         """Run tests on remote EC2 instance via SSH."""
         logger.info(f"Running tests on {self.public_ip}")
 
@@ -462,7 +460,7 @@ class AWSTestHarness:
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get CloudWatch metrics for the test run."""
         if not self._boto3_available or not self.instance_id:
             return {"simulated": True}
@@ -478,7 +476,7 @@ class AWSTestHarness:
         self,
         benchmark_suite: str = "all",
         quick: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run performance benchmarks on the instance.
 

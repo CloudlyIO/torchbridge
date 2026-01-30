@@ -17,30 +17,27 @@ Testing Framework Requirements:
 - Performance benchmarking
 """
 
+import time
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-import time
-from typing import Dict, List, Optional, Tuple, Union
-import warnings
-from unittest.mock import patch, MagicMock
 
 # Import components to test
 from kernel_pytorch.precision.ultra_precision import (
-    UltraPrecisionModule,
+    AdaptivePrecisionAllocator,
+    AllocationStrategy,
+    InformationEntropyAnalyzer,
     PrecisionConfig,
     PrecisionFormat,
-    AllocationStrategy,
     QuantizationMode,
-    PrecisionStats,
-    InformationEntropyAnalyzer,
-    AdaptivePrecisionAllocator,
-    create_ultra_precision_module,
+    UltraPrecisionModule,
     analyze_precision_opportunities,
-    benchmark_precision_allocation
+    benchmark_precision_allocation,
+    create_ultra_precision_module,
 )
+
 
 # Test fixtures for various model configurations
 @pytest.fixture
@@ -245,7 +242,7 @@ class TestAdaptivePrecisionAllocator:
         config = PrecisionConfig(allocation_strategy=AllocationStrategy.ENTROPY_BASED)
         allocator = AdaptivePrecisionAllocator(config)
         model = basic_linear_model.to(device)
-        input_data = sample_data['linear_input'].to(device)
+        sample_data['linear_input'].to(device)
 
         # Get parameters for analysis
         param_dict = {name: param.data for name, param in model.named_parameters()}
@@ -286,7 +283,7 @@ class TestAdaptivePrecisionAllocator:
         config = PrecisionConfig(allocation_strategy=AllocationStrategy.ACTIVATION_AWARE)
         allocator = AdaptivePrecisionAllocator(config)
         model = basic_linear_model.to(device)
-        input_data = sample_data['linear_input'].to(device)
+        sample_data['linear_input'].to(device)
 
         # Get parameters for analysis
         param_dict = {name: param.data for name, param in model.named_parameters()}
@@ -413,7 +410,7 @@ class TestUltraPrecisionModule:
         config = PrecisionConfig(quantization_mode=QuantizationMode.DYNAMIC)
         ultra_model = UltraPrecisionModule(base_model, config)
 
-        input_data = sample_data['linear_input'].to(device)
+        sample_data['linear_input'].to(device)
 
         # Simulate different inputs to trigger dynamic adjustment
         inputs = [
@@ -820,4 +817,4 @@ if __name__ == "__main__":
 
     print(f"Output shape: {output.shape}")
     print(f"Precision allocation: {len(ultra_model.current_allocation)} layers")
-    print("✅ Basic smoke test passed!")
+    print(" Basic smoke test passed!")

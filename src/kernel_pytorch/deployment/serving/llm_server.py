@@ -37,26 +37,27 @@ Example:
 Version: 0.4.22
 """
 
+import asyncio
+import logging
+import queue
+import threading
+import time
+from collections import deque
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass, field
+from enum import Enum
+from typing import Any, Union
+
 import torch
 import torch.nn as nn
-import logging
-import time
-import asyncio
-from typing import Dict, List, Any, Optional, Union, AsyncIterator
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from enum import Enum
-from contextlib import asynccontextmanager
-import threading
-from collections import deque
-import queue
 
 logger = logging.getLogger(__name__)
 
 # Optional imports - server will work without these
 try:
-    from fastapi import FastAPI, HTTPException, Request, Response
-    from fastapi.responses import JSONResponse, StreamingResponse
+    from fastapi import FastAPI, HTTPException, Request, Response  # noqa: F401
+    from fastapi.responses import JSONResponse, StreamingResponse  # noqa: F401
     from pydantic import BaseModel, Field
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -75,7 +76,7 @@ except ImportError:
 try:
     from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
     TRANSFORMERS_AVAILABLE = True
-    TokenizerType = Union[PreTrainedTokenizer, PreTrainedTokenizerFast]
+    TokenizerType = Union[PreTrainedTokenizer, PreTrainedTokenizerFast]  # noqa: UP007
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
     TokenizerType = Any
@@ -124,7 +125,7 @@ class LLMServerConfig:
     enable_health_checks: bool = True
     enable_metrics: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -135,14 +136,14 @@ if FASTAPI_AVAILABLE:
         """Request model for text generation."""
 
         prompt: str = Field(..., description="Input text prompt")
-        max_new_tokens: Optional[int] = Field(None, description="Maximum tokens to generate")
-        temperature: Optional[float] = Field(None, description="Sampling temperature (0.0-2.0)")
-        top_p: Optional[float] = Field(None, description="Nucleus sampling probability")
-        top_k: Optional[int] = Field(None, description="Top-k sampling")
-        repetition_penalty: Optional[float] = Field(None, description="Repetition penalty")
-        do_sample: Optional[bool] = Field(True, description="Enable sampling")
-        stream: Optional[bool] = Field(False, description="Enable streaming response")
-        stop_sequences: Optional[List[str]] = Field(None, description="Stop generation sequences")
+        max_new_tokens: int | None = Field(None, description="Maximum tokens to generate")
+        temperature: float | None = Field(None, description="Sampling temperature (0.0-2.0)")
+        top_p: float | None = Field(None, description="Nucleus sampling probability")
+        top_k: int | None = Field(None, description="Top-k sampling")
+        repetition_penalty: float | None = Field(None, description="Repetition penalty")
+        do_sample: bool | None = Field(True, description="Enable sampling")
+        stream: bool | None = Field(False, description="Enable streaming response")
+        stop_sequences: list[str] | None = Field(None, description="Stop generation sequences")
 
     class ChatMessage(BaseModel):
         """Chat message format."""
@@ -153,11 +154,11 @@ if FASTAPI_AVAILABLE:
     class ChatCompletionRequest(BaseModel):
         """Request model for chat completion."""
 
-        messages: List[ChatMessage] = Field(..., description="List of chat messages")
-        max_new_tokens: Optional[int] = Field(None, description="Maximum tokens to generate")
-        temperature: Optional[float] = Field(None, description="Sampling temperature")
-        top_p: Optional[float] = Field(None, description="Nucleus sampling")
-        stream: Optional[bool] = Field(False, description="Enable streaming")
+        messages: list[ChatMessage] = Field(..., description="List of chat messages")
+        max_new_tokens: int | None = Field(None, description="Maximum tokens to generate")
+        temperature: float | None = Field(None, description="Sampling temperature")
+        top_p: float | None = Field(None, description="Nucleus sampling")
+        stream: bool | None = Field(False, description="Enable streaming")
 
     class GenerateResponse(BaseModel):
         """Response model for text generation."""
@@ -178,7 +179,7 @@ if FASTAPI_AVAILABLE:
 
         text: str = Field(..., description="Input text")
         num_tokens: int = Field(..., description="Number of tokens")
-        tokens: Optional[List[str]] = Field(None, description="Token list (if available)")
+        tokens: list[str] | None = Field(None, description="Token list (if available)")
 
     class HealthResponse(BaseModel):
         """Response model for health checks."""
@@ -206,14 +207,14 @@ if FASTAPI_AVAILABLE:
         memory_reserved_mb: float
 else:
     # Stub classes when FastAPI not available
-    GenerateRequest = Dict[str, Any]
-    ChatMessage = Dict[str, Any]
-    ChatCompletionRequest = Dict[str, Any]
-    GenerateResponse = Dict[str, Any]
-    TokenCountRequest = Dict[str, Any]
-    TokenCountResponse = Dict[str, Any]
-    HealthResponse = Dict[str, Any]
-    MetricsResponse = Dict[str, Any]
+    GenerateRequest = dict[str, Any]
+    ChatMessage = dict[str, Any]
+    ChatCompletionRequest = dict[str, Any]
+    GenerateResponse = dict[str, Any]
+    TokenCountRequest = dict[str, Any]
+    TokenCountResponse = dict[str, Any]
+    HealthResponse = dict[str, Any]
+    MetricsResponse = dict[str, Any]
 
 
 @dataclass
@@ -222,7 +223,7 @@ class BatchItem:
     request_id: str
     prompt: str
     input_ids: torch.Tensor
-    generation_kwargs: Dict[str, Any]
+    generation_kwargs: dict[str, Any]
     result_queue: queue.Queue
     timestamp: float = field(default_factory=time.time)
 
@@ -243,7 +244,7 @@ class LLMInferenceServer:
         self,
         model: nn.Module,
         tokenizer: TokenizerType,
-        config: Optional[LLMServerConfig] = None,
+        config: LLMServerConfig | None = None,
     ):
         """
         Initialize the LLM inference server.
@@ -268,7 +269,7 @@ class LLMInferenceServer:
         self.config = config or LLMServerConfig()
         self.model = model
         self.tokenizer = tokenizer
-        self.device: Optional[torch.device] = None
+        self.device: torch.device | None = None
         self.status = HealthStatus.STARTING
         self.start_time = time.time()
 
@@ -282,7 +283,7 @@ class LLMInferenceServer:
         # Dynamic batching
         self._batch_queue: deque = deque()
         self._batch_lock = threading.Lock()
-        self._batch_thread: Optional[threading.Thread] = None
+        self._batch_thread: threading.Thread | None = None
         self._stop_batching = threading.Event()
 
         # Initialize device and model
@@ -356,7 +357,7 @@ class LLMInferenceServer:
             except Exception as e:
                 logger.error(f"Error in batch processor: {e}")
 
-    def _process_batch(self, batch_items: List[BatchItem]) -> None:
+    def _process_batch(self, batch_items: list[BatchItem]) -> None:
         """Process a batch of generation requests."""
         try:
             # Prepare batch inputs
@@ -503,12 +504,12 @@ class LLMInferenceServer:
             return self._get_health_response()
 
         @app.get("/health/live")
-        async def liveness() -> Dict[str, str]:
+        async def liveness() -> dict[str, str]:
             """Kubernetes liveness probe."""
             return {"status": "alive"}
 
         @app.get("/health/ready")
-        async def readiness() -> Dict[str, Any]:
+        async def readiness() -> dict[str, Any]:
             """Kubernetes readiness probe."""
             if self.status == HealthStatus.HEALTHY:
                 return {"status": "ready", "model_loaded": True}
@@ -520,7 +521,7 @@ class LLMInferenceServer:
             return self._get_metrics_response()
 
         @app.get("/")
-        async def root() -> Dict[str, Any]:
+        async def root() -> dict[str, Any]:
             """Root endpoint with server info."""
             return {
                 "service": "KernelPyTorch LLM Inference Server",
@@ -541,7 +542,7 @@ class LLMInferenceServer:
                 ],
             }
 
-    def _format_chat_prompt(self, messages: List[ChatMessage]) -> str:
+    def _format_chat_prompt(self, messages: list[ChatMessage]) -> str:
         """Format chat messages into a prompt."""
         # Simple formatting - can be customized per model
         formatted = ""
@@ -636,7 +637,7 @@ class LLMInferenceServer:
 
         except Exception as e:
             logger.error(f"Generation error: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     async def _generate_stream(self, request: GenerateRequest) -> AsyncIterator[str]:
         """Handle streaming generation request using SSE."""
@@ -717,7 +718,7 @@ class LLMInferenceServer:
             logger.error(f"Streaming generation error: {e}")
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
 
-    def _prepare_generation_kwargs(self, request: GenerateRequest) -> Dict[str, Any]:
+    def _prepare_generation_kwargs(self, request: GenerateRequest) -> dict[str, Any]:
         """Prepare generation kwargs from request."""
         return {
             'max_new_tokens': request.max_new_tokens or self.config.max_new_tokens,
@@ -741,7 +742,7 @@ class LLMInferenceServer:
                 token_texts = [
                     self.tokenizer.decode([t]) for t in tokens
                 ]
-            except:
+            except Exception:
                 pass
 
             return TokenCountResponse(
@@ -751,7 +752,7 @@ class LLMInferenceServer:
             )
         except Exception as e:
             logger.error(f"Token counting error: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     def _get_health_response(self) -> HealthResponse:
         """Get health check response."""

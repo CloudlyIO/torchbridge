@@ -24,25 +24,24 @@ Example:
 Version: 0.3.9
 """
 
+import asyncio
+import logging
+import threading
+import time
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
-import logging
-import json
-import time
-import asyncio
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from enum import Enum
-from contextlib import asynccontextmanager
-import threading
 
 logger = logging.getLogger(__name__)
 
 # Optional imports - server will work without these
 try:
-    from fastapi import FastAPI, HTTPException, Request, Response
-    from fastapi.responses import JSONResponse
+    from fastapi import FastAPI, HTTPException, Request, Response  # noqa: F401
+    from fastapi.responses import JSONResponse  # noqa: F401
     from pydantic import BaseModel, Field
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -94,7 +93,7 @@ class ServerConfig:
     # Metrics settings
     enable_metrics: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -104,21 +103,21 @@ if FASTAPI_AVAILABLE:
     class InferenceRequest(BaseModel):
         """Request model for single inference."""
 
-        input: List[float] = Field(..., description="Input tensor data as flat list")
+        input: list[float] = Field(..., description="Input tensor data as flat list")
         dtype: str = Field(default="float32", description="Data type")
-        shape: Optional[List[int]] = Field(default=None, description="Optional tensor shape")
+        shape: list[int] | None = Field(default=None, description="Optional tensor shape")
 
     class BatchInferenceRequest(BaseModel):
         """Request model for batch inference."""
 
-        inputs: List[List[float]] = Field(..., description="Batch of input tensors")
+        inputs: list[list[float]] = Field(..., description="Batch of input tensors")
         dtype: str = Field(default="float32", description="Data type")
-        shape: Optional[List[int]] = Field(default=None, description="Shape per input")
+        shape: list[int] | None = Field(default=None, description="Shape per input")
 
     class InferenceResponse(BaseModel):
         """Response model for inference."""
 
-        output: List[float] = Field(..., description="Output tensor data")
+        output: list[float] = Field(..., description="Output tensor data")
         inference_time_ms: float = Field(..., description="Inference time in milliseconds")
         model_name: str = Field(..., description="Model name")
         model_version: str = Field(..., description="Model version")
@@ -147,11 +146,11 @@ if FASTAPI_AVAILABLE:
         memory_reserved_mb: float
 else:
     # Stub classes when FastAPI not available
-    InferenceRequest = Dict[str, Any]
-    BatchInferenceRequest = Dict[str, Any]
-    InferenceResponse = Dict[str, Any]
-    HealthResponse = Dict[str, Any]
-    MetricsResponse = Dict[str, Any]
+    InferenceRequest = dict[str, Any]
+    BatchInferenceRequest = dict[str, Any]
+    InferenceResponse = dict[str, Any]
+    HealthResponse = dict[str, Any]
+    MetricsResponse = dict[str, Any]
 
 
 class InferenceServer:
@@ -170,7 +169,7 @@ class InferenceServer:
     def __init__(
         self,
         model: nn.Module,
-        config: Optional[ServerConfig] = None,
+        config: ServerConfig | None = None,
     ):
         """
         Initialize the inference server.
@@ -187,7 +186,7 @@ class InferenceServer:
 
         self.config = config or ServerConfig()
         self.model = model
-        self.device: Optional[torch.device] = None
+        self.device: torch.device | None = None
         self.status = HealthStatus.STARTING
         self.start_time = time.time()
 
@@ -270,7 +269,7 @@ class InferenceServer:
             return await self._handle_inference(request)
 
         @app.post("/predict/batch")
-        async def predict_batch(request: BatchInferenceRequest) -> List[InferenceResponse]:
+        async def predict_batch(request: BatchInferenceRequest) -> list[InferenceResponse]:
             """Batch inference endpoint."""
             return await self._handle_batch_inference(request)
 
@@ -280,12 +279,12 @@ class InferenceServer:
             return self._get_health_response()
 
         @app.get("/health/live")
-        async def liveness() -> Dict[str, str]:
+        async def liveness() -> dict[str, str]:
             """Kubernetes liveness probe."""
             return {"status": "alive"}
 
         @app.get("/health/ready")
-        async def readiness() -> Dict[str, Any]:
+        async def readiness() -> dict[str, Any]:
             """Kubernetes readiness probe."""
             if self.status == HealthStatus.HEALTHY:
                 return {"status": "ready", "model_loaded": True}
@@ -297,7 +296,7 @@ class InferenceServer:
             return self._get_metrics_response()
 
         @app.get("/")
-        async def root() -> Dict[str, Any]:
+        async def root() -> dict[str, Any]:
             """Root endpoint with server info."""
             return {
                 "service": "KernelPyTorch Inference Server",
@@ -351,11 +350,11 @@ class InferenceServer:
 
         except Exception as e:
             logger.error(f"Inference error: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     async def _handle_batch_inference(
         self, request: BatchInferenceRequest
-    ) -> List[InferenceResponse]:
+    ) -> list[InferenceResponse]:
         """Handle batch inference request."""
         start_time = time.time()
 
@@ -400,7 +399,7 @@ class InferenceServer:
 
         except Exception as e:
             logger.error(f"Batch inference error: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     async def _run_inference(self, tensor: torch.Tensor) -> torch.Tensor:
         """Run model inference."""

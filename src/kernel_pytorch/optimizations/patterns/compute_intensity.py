@@ -5,31 +5,28 @@ This module provides comprehensive guidance and practical implementations for
 optimizing arithmetic intensity in PyTorch neural networks, focusing on maximizing
 the compute-to-memory-access ratio for optimal GPU utilization.
 
-🎓 EDUCATIONAL FOCUS:
 Arithmetic intensity (FLOPs per byte) is crucial for GPU performance optimization:
 - High intensity operations: Efficient use of GPU compute units (matrix multiplication)
 - Low intensity operations: Memory-bound, limited by bandwidth (element-wise operations)
 - Roofline model: Performance ceiling determined by arithmetic intensity
 - GPU utilization: Higher intensity = better GPU core utilization
 
-🔧 COMPUTE OPTIMIZATION STRATEGIES:
+ COMPUTE OPTIMIZATION STRATEGIES:
 - Operation fusion: Combine low-intensity operations to increase overall intensity
 - Blocking/Tiling: Process data in blocks that fit in cache for reuse
 - Batching: Increase arithmetic intensity through larger batch operations
 - Mixed precision: Use lower precision where appropriate to increase throughput
 
-💡 PRACTICAL APPLICATION:
 Learn to identify compute bottlenecks and transform memory-bound operations
 into compute-bound operations for 2-10x performance improvements.
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable
 from dataclasses import dataclass
 from enum import Enum
-import math
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 
 class ComputeIntensityCategory(Enum):
@@ -52,7 +49,6 @@ class ComputeOptimizationPattern:
     """
     Data structure for describing compute intensity optimization patterns.
 
-    🎓 EDUCATIONAL: Systematic compute optimization approach
     By analyzing compute intensity patterns, we can:
     - Identify memory-bound operations that limit performance
     - Apply transformations to increase arithmetic intensity
@@ -63,14 +59,14 @@ class ComputeOptimizationPattern:
     category: ComputeIntensityCategory
     baseline_intensity: float  # FLOPs per byte before optimization
     optimized_intensity: float  # FLOPs per byte after optimization
-    techniques: List[str]
+    techniques: list[str]
     hardware_utilization: float  # Expected GPU utilization improvement
     description: str
     example_before: str
     example_after: str
 
 
-# 🎓 EDUCATIONAL: Compute intensity optimization targets for different operations
+#  EDUCATIONAL: Compute intensity optimization targets for different operations
 COMPUTE_INTENSITY_TARGETS = [
     ComputeOptimizationPattern(
         name="Matrix Multiplication Optimization",
@@ -142,18 +138,17 @@ def calculate_arithmetic_intensity(
     """
     Calculate arithmetic intensity for a given operation.
 
-    🎓 EDUCATIONAL: Arithmetic intensity calculation methodology
     Arithmetic intensity is the fundamental metric for understanding GPU performance
     characteristics. This function demonstrates how to accurately calculate and
     interpret this critical metric.
 
-    🔧 CALCULATION COMPONENTS:
+     CALCULATION COMPONENTS:
     - FLOPs: Floating point operations (forward + backward if training)
     - Memory access: All reads and writes to global memory
     - Gradient computation: Additional FLOPs and memory access during training
     - Intermediate results: Memory overhead from temporary tensors
 
-    📊 INTENSITY INTERPRETATION:
+     INTENSITY INTERPRETATION:
     - < 1 FLOP/byte: Severely memory-bound, priority optimization target
     - 1-10 FLOP/byte: Balanced, good optimization potential
     - > 10 FLOP/byte: Compute-bound, focus on compute optimizations
@@ -169,7 +164,7 @@ def calculate_arithmetic_intensity(
     if memory_bytes_accessed == 0:
         return float('inf')  # Pure compute operation
 
-    # 🔧 EDUCATIONAL: Account for gradient computation overhead
+    #  EDUCATIONAL: Account for gradient computation overhead
     if include_gradients:
         # Backward pass typically adds 2x FLOPs and additional memory access
         total_flops = operation_flops * 3  # Forward + backward
@@ -186,15 +181,14 @@ def analyze_compute_intensity_profile(
     model: nn.Module,
     sample_input: torch.Tensor,
     detailed: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze the compute intensity profile of a neural network model.
 
-    🎓 EDUCATIONAL: Comprehensive compute intensity analysis
     This function provides a systematic methodology for analyzing model
     compute characteristics and identifying optimization opportunities.
 
-    🔧 ANALYSIS COMPONENTS:
+     ANALYSIS COMPONENTS:
     - Layer-by-layer intensity calculation
     - Operation type classification
     - Bottleneck identification
@@ -223,7 +217,6 @@ def analyze_compute_intensity_profile(
     total_flops = 0
     total_memory = 0
 
-    # 🔍 STEP 1: Analyze each module's compute characteristics
     for name, module in model.named_modules():
         if len(list(module.children())) == 0:  # Leaf modules only
             module_analysis = _analyze_module_intensity(module, sample_input)
@@ -242,13 +235,10 @@ def analyze_compute_intensity_profile(
                 else:
                     analysis_results["intensity_distribution"]["compute_bound"] += 1
 
-    # 🔍 STEP 2: Calculate overall model intensity
     analysis_results["overall_intensity"] = total_flops / total_memory if total_memory > 0 else 0
 
-    # 🔍 STEP 3: Identify optimization bottlenecks
     analysis_results["bottlenecks"] = _identify_compute_bottlenecks(analysis_results["layer_analysis"])
 
-    # 🔍 STEP 4: Generate optimization recommendations
     analysis_results["optimization_opportunities"] = _generate_intensity_optimizations(
         analysis_results["layer_analysis"]
     )
@@ -256,7 +246,7 @@ def analyze_compute_intensity_profile(
     return analysis_results
 
 
-def _analyze_module_intensity(module: nn.Module, sample_input: torch.Tensor) -> Optional[Dict[str, Any]]:
+def _analyze_module_intensity(module: nn.Module, sample_input: torch.Tensor) -> dict[str, Any] | None:
     """Analyze compute intensity for a specific module."""
     if isinstance(module, nn.Linear):
         # Linear layer analysis
@@ -328,7 +318,7 @@ def _analyze_module_intensity(module: nn.Module, sample_input: torch.Tensor) -> 
     return None
 
 
-def _identify_compute_bottlenecks(layer_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _identify_compute_bottlenecks(layer_analysis: dict[str, Any]) -> list[dict[str, Any]]:
     """Identify compute intensity bottlenecks in the model."""
     bottlenecks = []
 
@@ -355,7 +345,7 @@ def _identify_compute_bottlenecks(layer_analysis: Dict[str, Any]) -> List[Dict[s
     return sorted(bottlenecks, key=lambda x: x["intensity"])
 
 
-def _generate_intensity_optimizations(layer_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _generate_intensity_optimizations(layer_analysis: dict[str, Any]) -> list[dict[str, Any]]:
     """Generate specific optimization recommendations based on intensity analysis."""
     optimizations = []
 
@@ -400,12 +390,11 @@ def optimize_flop_to_byte_ratio(
     """
     Optimize model to achieve target arithmetic intensity.
 
-    🎓 EDUCATIONAL: Systematic intensity optimization approach
     This function demonstrates how to systematically transform a model
     to achieve higher arithmetic intensity through various optimization
     techniques.
 
-    🔧 OPTIMIZATION STRATEGIES:
+     OPTIMIZATION STRATEGIES:
     - Fusion: Combine operations to reduce memory traffic
     - Blocking: Process data in cache-friendly blocks
     - Precision: Use mixed precision to increase throughput
@@ -435,7 +424,7 @@ def _apply_fusion_optimization(model: nn.Module, target_intensity: float) -> nn.
     optimized_model = model
 
     # Example: Replace Linear + ReLU with fused implementation
-    for name, module in model.named_modules():
+    for _name, module in model.named_modules():
         if isinstance(module, nn.Linear):
             # Check if followed by activation
             # DESIGN_NOTE: Graph analysis for layer fusion is complex (requires tracing
@@ -467,15 +456,14 @@ def identify_compute_bottlenecks(
     model: nn.Module,
     sample_input: torch.Tensor,
     threshold_intensity: float = 1.0
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Identify compute bottlenecks in the model based on arithmetic intensity.
 
-    🎓 EDUCATIONAL: Systematic bottleneck identification
     This function provides a systematic approach to identifying operations
     that limit overall model performance due to low arithmetic intensity.
 
-    🔧 BOTTLENECK ANALYSIS:
+     BOTTLENECK ANALYSIS:
     - Layer-by-layer intensity measurement
     - Critical path identification
     - Performance impact quantification
@@ -533,7 +521,7 @@ def _calculate_optimization_priority(intensity: float, impact_ratio: float) -> s
         return "low"
 
 
-def _recommend_optimization_techniques(analysis: Dict[str, Any]) -> List[str]:
+def _recommend_optimization_techniques(analysis: dict[str, Any]) -> list[str]:
     """Recommend specific optimization techniques based on layer analysis."""
     layer_type = analysis.get("type", "")
     intensity = analysis.get("intensity", 0)
@@ -554,7 +542,6 @@ class ComputeIntensityProfiler:
     """
     Advanced profiler for compute intensity analysis and optimization.
 
-    🎓 EDUCATIONAL: Production-grade intensity profiling
     This class demonstrates how to build comprehensive profiling tools
     for systematic compute intensity optimization in production environments.
     """
@@ -566,13 +553,13 @@ class ComputeIntensityProfiler:
     def profile_model(
         self,
         model: nn.Module,
-        sample_inputs: List[torch.Tensor],
-        optimization_targets: Optional[Dict[str, float]] = None
-    ) -> Dict[str, Any]:
+        sample_inputs: list[torch.Tensor],
+        optimization_targets: dict[str, float] | None = None
+    ) -> dict[str, Any]:
         """
         Comprehensive model profiling for compute intensity optimization.
 
-        🔧 PROFILING CAPABILITIES:
+         PROFILING CAPABILITIES:
         - Multi-input analysis for robustness
         - Optimization target comparison
         - Performance regression detection
@@ -602,7 +589,7 @@ class ComputeIntensityProfiler:
 
         return results
 
-    def _get_model_summary(self, model: nn.Module) -> Dict[str, Any]:
+    def _get_model_summary(self, model: nn.Module) -> dict[str, Any]:
         """Generate model summary for profiling context."""
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -627,7 +614,7 @@ class ComputeIntensityProfiler:
         else:
             return "mixed"
 
-    def _generate_comprehensive_recommendations(self, intensity_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_comprehensive_recommendations(self, intensity_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate comprehensive optimization recommendations."""
         recommendations = []
 
@@ -659,9 +646,9 @@ class ComputeIntensityProfiler:
 
     def _compare_against_targets(
         self,
-        intensity_analysis: Dict[str, Any],
-        targets: Dict[str, float]
-    ) -> Dict[str, Any]:
+        intensity_analysis: dict[str, Any],
+        targets: dict[str, float]
+    ) -> dict[str, Any]:
         """Compare current performance against optimization targets."""
         comparison = {}
 
@@ -679,21 +666,21 @@ class ComputeIntensityProfiler:
         return comparison
 
 
-# 🎓 EDUCATIONAL: Utility functions for compute intensity optimization
-def print_compute_analysis(analysis_results: Dict[str, Any]) -> None:
+#  EDUCATIONAL: Utility functions for compute intensity optimization
+def print_compute_analysis(analysis_results: dict[str, Any]) -> None:
     """Print compute intensity analysis in a readable format."""
-    print("🚀 Compute Intensity Analysis Results\n")
+    print(" Compute Intensity Analysis Results\n")
 
     # Overall intensity
     overall = analysis_results.get("overall_intensity", 0)
-    print(f"📊 Overall Arithmetic Intensity: {overall:.2f} FLOP/byte")
+    print(f" Overall Arithmetic Intensity: {overall:.2f} FLOP/byte")
 
     if overall < 1.0:
-        print("   ⚠️  MEMORY-BOUND: Priority optimization target")
+        print("     MEMORY-BOUND: Priority optimization target")
     elif overall < 10.0:
-        print("   ⚖️  BALANCED: Good optimization potential")
+        print("     BALANCED: Good optimization potential")
     else:
-        print("   🚀 COMPUTE-BOUND: Focus on compute optimizations")
+        print("    COMPUTE-BOUND: Focus on compute optimizations")
     print()
 
     # Distribution analysis
@@ -701,7 +688,7 @@ def print_compute_analysis(analysis_results: Dict[str, Any]) -> None:
         dist = analysis_results["intensity_distribution"]
         total_layers = sum(dist.values())
         if total_layers > 0:
-            print("📈 Layer Intensity Distribution:")
+            print(" Layer Intensity Distribution:")
             print(f"   Memory-bound: {dist['memory_bound']} layers ({dist['memory_bound']/total_layers*100:.1f}%)")
             print(f"   Balanced: {dist['balanced']} layers ({dist['balanced']/total_layers*100:.1f}%)")
             print(f"   Compute-bound: {dist['compute_bound']} layers ({dist['compute_bound']/total_layers*100:.1f}%)")
@@ -710,7 +697,7 @@ def print_compute_analysis(analysis_results: Dict[str, Any]) -> None:
     # Optimization opportunities
     opportunities = analysis_results.get("optimization_opportunities", [])
     if opportunities:
-        print(f"🎯 Found {len(opportunities)} Optimization Opportunities:")
+        print(f" Found {len(opportunities)} Optimization Opportunities:")
         for i, opp in enumerate(opportunities, 1):
             print(f"  {i}. {opp.get('type', 'Unknown')}")
             print(f"     Layers: {', '.join(opp.get('layers', []))}")

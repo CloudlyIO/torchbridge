@@ -26,20 +26,20 @@ Example:
     ```
 """
 
-from .nvidia_backend import NVIDIABackend
-from .nvidia_optimizer import NVIDIAOptimizer
-from .fp8_compiler import FP8Compiler
-from .memory_manager import NVIDIAMemoryManager
-from .flash_attention_integration import (
-    FlashAttention3,
-    create_flash_attention_3,
-)
 from .cuda_utilities import (
     CUDADeviceManager,
     CUDAOptimizations,
     CUDAUtilities,
-    create_cuda_integration
+    create_cuda_integration,
 )
+from .flash_attention_integration import (
+    FlashAttention3,
+    create_flash_attention_3,
+)
+from .fp8_compiler import FP8Compiler
+from .memory_manager import NVIDIAMemoryManager
+from .nvidia_backend import NVIDIABackend
+from .nvidia_optimizer import NVIDIAOptimizer
 
 __all__ = [
     'NVIDIABackend',

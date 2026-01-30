@@ -7,16 +7,15 @@ following the same patterns as NVIDIA and AMD backends.
 
 from ..base_exceptions import (
     BackendError,
-    DeviceNotAvailableError,
-    DeviceError,
-    MemoryError,
-    OutOfMemoryError,
-    MemoryAllocationError,
     CompilationError,
-    KernelCompilationError,
-    OptimizationError,
     ConfigurationError,
+    DeviceError,
+    DeviceNotAvailableError,
     InvalidArchitectureError,
+    KernelCompilationError,
+    MemoryAllocationError,
+    OptimizationError,
+    OutOfMemoryError,
 )
 
 

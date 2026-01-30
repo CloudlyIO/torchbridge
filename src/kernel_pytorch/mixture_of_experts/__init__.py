@@ -15,35 +15,32 @@ Key Features:
 - Memory-efficient routing and switching
 """
 
+from .expert_networks import (
+    AttentionExpert,
+    ConvolutionalExpert,
+    FeedForwardExpert,
+    ParameterEfficientExpert,
+)
 from .moe_layers import (
+    GLaMStyleMoE,
+    MoEConfig,
     MoELayer,
     SparseMoELayer,
     SwitchTransformerMoE,
-    GLaMStyleMoE,
     create_moe_layer,
-    MoEConfig
 )
-
-from .expert_networks import (
-    FeedForwardExpert,
-    ConvolutionalExpert,
-    AttentionExpert,
-    ParameterEfficientExpert
-)
-
-from .routing import (
-    TopKRouter,
-    SwitchRouter,
-    HashRouter,
-    LearnedRouter,
-    DynamicCapacityRouter
-)
-
 from .optimization import (
     ExpertParallelism,
-    LoadBalancer,
     ExpertScheduler,
-    MemoryEfficientSwitching
+    LoadBalancer,
+    MemoryEfficientSwitching,
+)
+from .routing import (
+    DynamicCapacityRouter,
+    HashRouter,
+    LearnedRouter,
+    SwitchRouter,
+    TopKRouter,
 )
 
 __all__ = [

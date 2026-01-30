@@ -22,7 +22,7 @@ Version: 0.3.11
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Any
 
 from kernel_pytorch.core.errors import KernelPyTorchError
 
@@ -38,7 +38,7 @@ class BackendError(KernelPyTorchError):
     Supports optional details dictionary for structured error information.
     """
 
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
         """
         Initialize backend error.
 
@@ -98,8 +98,8 @@ class OutOfMemoryError(MemoryError):
 
     def __init__(
         self,
-        required_bytes: Optional[int] = None,
-        available_bytes: Optional[int] = None,
+        required_bytes: int | None = None,
+        available_bytes: int | None = None,
         device: str = "unknown"
     ):
         if required_bytes is not None and available_bytes is not None:
@@ -217,7 +217,7 @@ class InvalidArchitectureError(ConfigurationError):
 class KernelError(BackendError):
     """Raised when kernel execution fails."""
 
-    def __init__(self, kernel_name: str, error_code: Optional[int], error_message: str):
+    def __init__(self, kernel_name: str, error_code: int | None, error_message: str):
         if error_code is not None:
             message = f"Kernel '{kernel_name}' failed with code {error_code}: {error_message}"
         else:
@@ -242,7 +242,7 @@ def raise_or_warn(
     message: str,
     exception_class: type = BackendError,
     strict_mode: bool = False,
-    log: Optional[logging.Logger] = None,
+    log: logging.Logger | None = None,
     **kwargs
 ) -> None:
     """

@@ -7,10 +7,10 @@ Sophisticated checkpointing strategies for memory optimization:
 - Dynamic activation offloading
 """
 
+from collections.abc import Callable
+
 import torch
 import torch.nn as nn
-from typing import Optional, List, Callable, Dict, Any
-import math
 
 
 class SelectiveGradientCheckpointing:

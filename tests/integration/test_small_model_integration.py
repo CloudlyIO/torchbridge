@@ -7,14 +7,15 @@ Validates optimization, inference, and backend integration.
 Version: 0.4.11
 """
 
-import pytest
-import torch
-import torch.nn as nn
-from unittest.mock import MagicMock, patch
+import os
 
 # Import test utilities
 import sys
-import os
+
+import pytest
+import torch
+import torch.nn as nn
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
@@ -69,9 +70,9 @@ class TestTextModelConfig:
     def test_default_config(self):
         """Test default configuration values."""
         from kernel_pytorch.models.text.text_model_optimizer import (
+            OptimizationMode,
             TextModelConfig,
             TextModelType,
-            OptimizationMode
         )
 
         config = TextModelConfig()
@@ -93,9 +94,9 @@ class TestTextModelConfig:
     def test_custom_config(self):
         """Test custom configuration."""
         from kernel_pytorch.models.text.text_model_optimizer import (
+            OptimizationMode,
             TextModelConfig,
             TextModelType,
-            OptimizationMode
         )
 
         config = TextModelConfig(
@@ -131,9 +132,9 @@ class TestTextModelOptimizer:
     def test_optimizer_with_custom_config(self):
         """Test optimizer with custom configuration."""
         from kernel_pytorch.models.text.text_model_optimizer import (
-            TextModelOptimizer,
+            OptimizationMode,
             TextModelConfig,
-            OptimizationMode
+            TextModelOptimizer,
         )
 
         config = TextModelConfig(
@@ -148,7 +149,10 @@ class TestTextModelOptimizer:
 
     def test_device_detection_cpu(self):
         """Test CPU device detection."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(device="cpu")
         optimizer = TextModelOptimizer(config)
@@ -173,7 +177,10 @@ class TestTextModelOptimizer:
 
     def test_optimize_with_mock_model(self):
         """Test optimization with a mock model."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             use_torch_compile=False,  # Disable for faster testing
@@ -202,7 +209,7 @@ class TestModelTypeDetection:
         """Test BERT model detection."""
         from kernel_pytorch.models.text.text_model_optimizer import (
             TextModelOptimizer,
-            TextModelType
+            TextModelType,
         )
 
         optimizer = TextModelOptimizer()
@@ -221,7 +228,7 @@ class TestModelTypeDetection:
         """Test GPT-2 model detection."""
         from kernel_pytorch.models.text.text_model_optimizer import (
             TextModelOptimizer,
-            TextModelType
+            TextModelType,
         )
 
         optimizer = TextModelOptimizer()
@@ -239,7 +246,7 @@ class TestModelTypeDetection:
         """Test DistilBERT model detection."""
         from kernel_pytorch.models.text.text_model_optimizer import (
             TextModelOptimizer,
-            TextModelType
+            TextModelType,
         )
 
         optimizer = TextModelOptimizer()
@@ -257,7 +264,7 @@ class TestModelTypeDetection:
         """Test custom/unknown model detection."""
         from kernel_pytorch.models.text.text_model_optimizer import (
             TextModelOptimizer,
-            TextModelType
+            TextModelType,
         )
 
         optimizer = TextModelOptimizer()
@@ -277,9 +284,9 @@ class TestOptimizationModes:
     def test_inference_mode_disables_gradients(self):
         """Test that inference mode disables gradients."""
         from kernel_pytorch.models.text.text_model_optimizer import (
-            TextModelOptimizer,
+            OptimizationMode,
             TextModelConfig,
-            OptimizationMode
+            TextModelOptimizer,
         )
 
         config = TextModelConfig(
@@ -299,9 +306,9 @@ class TestOptimizationModes:
     def test_memory_mode(self):
         """Test memory optimization mode."""
         from kernel_pytorch.models.text.text_model_optimizer import (
-            TextModelOptimizer,
+            OptimizationMode,
             TextModelConfig,
-            OptimizationMode
+            TextModelOptimizer,
         )
 
         config = TextModelConfig(
@@ -323,7 +330,6 @@ class TestOptimizedBERT:
 
     def test_optimized_bert_init_without_transformers(self):
         """Test OptimizedBERT with mock when transformers unavailable."""
-        from kernel_pytorch.models.text.text_model_optimizer import OptimizedBERT
 
         # This will fail if transformers is not installed
         # We can mock it or skip
@@ -343,7 +349,10 @@ class TestOptimizedGPT2:
 
     def test_optimized_gpt2_config(self):
         """Test OptimizedGPT2 uses correct compile mode."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelConfig, TextModelType
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelType,
+        )
 
         # GPT-2 should use reduce-overhead for generation
         config = TextModelConfig(
@@ -361,9 +370,9 @@ class TestOptimizedDistilBERT:
     def test_optimized_distilbert_config(self):
         """Test OptimizedDistilBERT uses inference mode by default."""
         from kernel_pytorch.models.text.text_model_optimizer import (
+            OptimizationMode,
             TextModelConfig,
             TextModelType,
-            OptimizationMode
         )
 
         config = TextModelConfig(
@@ -387,8 +396,8 @@ class TestFactoryFunction:
     def test_factory_mode_mapping(self):
         """Test optimization mode string mapping."""
         from kernel_pytorch.models.text.text_model_optimizer import (
+            OptimizationMode,
             TextModelConfig,
-            OptimizationMode
         )
 
         # Test mode mapping logic
@@ -411,7 +420,10 @@ class TestDtypeHandling:
 
     def test_float16_conversion(self):
         """Test FP16 dtype conversion."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             dtype=torch.float16,
@@ -428,7 +440,10 @@ class TestDtypeHandling:
 
     def test_bfloat16_conversion(self):
         """Test BF16 dtype conversion."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             dtype=torch.bfloat16,
@@ -449,10 +464,10 @@ class TestModuleExports:
     def test_text_module_exports(self):
         """Test text module exports all required classes."""
         from kernel_pytorch.models.text import (
-            TextModelOptimizer,
             OptimizedBERT,
-            OptimizedGPT2,
             OptimizedDistilBERT,
+            OptimizedGPT2,
+            TextModelOptimizer,
             create_optimized_text_model,
         )
 
@@ -466,10 +481,6 @@ class TestModuleExports:
         """Test models module exports text components."""
         from kernel_pytorch.models import (
             TextModelOptimizer,
-            OptimizedBERT,
-            OptimizedGPT2,
-            OptimizedDistilBERT,
-            create_optimized_text_model,
         )
 
         assert TextModelOptimizer is not None
@@ -491,7 +502,10 @@ class TestBackendIntegration:
 
     def test_optimizer_fallback_to_pytorch(self):
         """Test optimizer falls back gracefully when backend unavailable."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(device="cpu")
         optimizer = TextModelOptimizer(config)
@@ -505,7 +519,10 @@ class TestWarmup:
 
     def test_warmup_runs(self):
         """Test warmup executes without error."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             use_torch_compile=False,
@@ -522,7 +539,10 @@ class TestWarmup:
 
     def test_no_warmup(self):
         """Test with warmup disabled."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             use_torch_compile=False,
@@ -541,7 +561,10 @@ class TestErrorHandling:
 
     def test_none_model_handling(self):
         """Test handling of None model."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             use_torch_compile=False,
@@ -563,14 +586,17 @@ class TestTransformersIntegration:
     @pytest.mark.skip(reason="Requires transformers library and model download")
     def test_load_bert_model(self):
         """Test loading BERT from HuggingFace."""
-        from kernel_pytorch.models.text.text_model_optimizer import TextModelOptimizer, TextModelConfig
+        from kernel_pytorch.models.text.text_model_optimizer import (
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         config = TextModelConfig(
             model_name="bert-base-uncased",
             use_torch_compile=False,
             warmup_steps=0,
         )
-        optimizer = TextModelOptimizer(config)
+        TextModelOptimizer(config)
 
         # This would download the model
         # Skip in CI to avoid downloads

@@ -9,16 +9,16 @@ Revolutionary CUDA graph optimization with three novel optimizations:
 Based on March 2025 PyGraph research breakthrough.
 """
 
-import torch
-import torch.nn as nn
-import torch.fx as fx
-from typing import Dict, List, Optional, Any, Tuple, Callable
 import time
-import psutil
-import gc
+import warnings
 from dataclasses import dataclass
 from enum import Enum
-import warnings
+from typing import Any
+
+import torch
+import torch.fx as fx
+import torch.nn as nn
+
 
 class GraphDeploymentStrategy(Enum):
     """CUDA graph deployment strategies"""
@@ -41,9 +41,9 @@ class WorkloadAnalysis:
 @dataclass
 class CUDAGraphState:
     """Manager for CUDA graph lifecycle"""
-    graph: Optional[torch.cuda.CUDAGraph] = None
-    static_inputs: Optional[List[torch.Tensor]] = None
-    static_outputs: Optional[List[torch.Tensor]] = None
+    graph: torch.cuda.CUDAGraph | None = None
+    static_inputs: list[torch.Tensor] | None = None
+    static_outputs: list[torch.Tensor] | None = None
     capture_time: float = 0.0
     replay_count: int = 0
     total_replay_time: float = 0.0
@@ -61,8 +61,8 @@ class PyGraphCUDAOptimizer:
     def __init__(self, cost_threshold: float = 0.1, strategy: str = "balanced"):
         self.cost_threshold = cost_threshold
         self.strategy = GraphDeploymentStrategy(strategy)
-        self.graph_cache: Dict[str, CUDAGraphState] = {}
-        self.analysis_cache: Dict[str, WorkloadAnalysis] = {}
+        self.graph_cache: dict[str, CUDAGraphState] = {}
+        self.analysis_cache: dict[str, WorkloadAnalysis] = {}
 
         # Performance tracking
         self.performance_stats = {
@@ -76,7 +76,7 @@ class PyGraphCUDAOptimizer:
     def analyze_workload(
         self,
         model: nn.Module,
-        inputs: List[torch.Tensor],
+        inputs: list[torch.Tensor],
         num_warmup: int = 3,
         num_trials: int = 10
     ) -> WorkloadAnalysis:
@@ -138,8 +138,8 @@ class PyGraphCUDAOptimizer:
     def create_cuda_graph(
         self,
         model: nn.Module,
-        inputs: List[torch.Tensor],
-        analysis: Optional[WorkloadAnalysis] = None
+        inputs: list[torch.Tensor],
+        analysis: WorkloadAnalysis | None = None
     ) -> CUDAGraphState:
         """
         Create optimized CUDA graph with parameter overhead reduction
@@ -154,7 +154,7 @@ class PyGraphCUDAOptimizer:
             analysis = self.analyze_workload(model, inputs)
 
         if not analysis.graph_recommended:
-            warnings.warn("CUDA graph not recommended for this workload based on analysis")
+            warnings.warn("CUDA graph not recommended for this workload based on analysis", stacklevel=2)
 
         # Generate cache key
         cache_key = self._generate_workload_key(model, inputs)
@@ -201,8 +201,8 @@ class PyGraphCUDAOptimizer:
     def execute_cuda_graph(
         self,
         graph_manager: CUDAGraphState,
-        inputs: List[torch.Tensor]
-    ) -> List[torch.Tensor]:
+        inputs: list[torch.Tensor]
+    ) -> list[torch.Tensor]:
         """
         Execute CUDA graph with optimized parameter handling
 
@@ -233,9 +233,9 @@ class PyGraphCUDAOptimizer:
     def benchmark_vs_eager(
         self,
         model: nn.Module,
-        inputs: List[torch.Tensor],
+        inputs: list[torch.Tensor],
         num_trials: int = 100
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Comprehensive benchmark: CUDA graph vs eager execution
 
@@ -325,7 +325,7 @@ class PyGraphCUDAOptimizer:
                 graph_times = [float('inf')]
                 graph_mean = float('inf')
                 graph_speedup = 0.0
-                warnings.warn(f"CUDA graph creation failed: {e}")
+                warnings.warn(f"CUDA graph creation failed: {e}", stacklevel=2)
         else:
             graph_mean = float('inf')
 
@@ -355,7 +355,7 @@ class PyGraphCUDAOptimizer:
     def _measure_cpu_overhead(
         self,
         model: nn.Module,
-        inputs: List[torch.Tensor],
+        inputs: list[torch.Tensor],
         num_warmup: int,
         num_trials: int
     ) -> float:
@@ -380,7 +380,7 @@ class PyGraphCUDAOptimizer:
 
         return sum(cpu_times) / len(cpu_times)
 
-    def _estimate_memory_usage(self, model: nn.Module, inputs: List[torch.Tensor]) -> int:
+    def _estimate_memory_usage(self, model: nn.Module, inputs: list[torch.Tensor]) -> int:
         """Estimate memory footprint of model execution"""
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -439,12 +439,12 @@ class PyGraphCUDAOptimizer:
 
         return False
 
-    def _detect_dynamic_shapes(self, model: nn.Module, inputs: List[torch.Tensor]) -> bool:
+    def _detect_dynamic_shapes(self, model: nn.Module, inputs: list[torch.Tensor]) -> bool:
         """Detect if model uses dynamic shapes that prevent graph capture"""
         try:
             # Try to trace the model - dynamic shapes will cause issues
             with torch.no_grad():
-                traced = torch.jit.trace(model, inputs)
+                torch.jit.trace(model, inputs)
             return False
         except Exception:
             # Tracing failed, likely due to dynamic shapes
@@ -480,13 +480,13 @@ class PyGraphCUDAOptimizer:
         # Conservative estimate
         return min(overhead_speedup * fusion_speedup, 3.0)
 
-    def _estimate_graph_memory_overhead(self, model: nn.Module, inputs: List[torch.Tensor]) -> int:
+    def _estimate_graph_memory_overhead(self, model: nn.Module, inputs: list[torch.Tensor]) -> int:
         """Estimate memory overhead of CUDA graph"""
         # Graph overhead is typically 5-10% of execution memory
         execution_memory = self._estimate_memory_usage(model, inputs)
         return int(execution_memory * 0.08)
 
-    def _generate_workload_key(self, model: nn.Module, inputs: List[torch.Tensor]) -> str:
+    def _generate_workload_key(self, model: nn.Module, inputs: list[torch.Tensor]) -> str:
         """Generate unique key for workload caching"""
         # Create key based on model structure and input shapes
         model_hash = hash(str(model))
@@ -496,7 +496,7 @@ class PyGraphCUDAOptimizer:
         key_data = f"{model_hash}_{input_shapes}_{input_dtypes}"
         return str(hash(key_data))
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics"""
         active_graphs = len(self.graph_cache)
         total_replays = sum(gm.replay_count for gm in self.graph_cache.values())

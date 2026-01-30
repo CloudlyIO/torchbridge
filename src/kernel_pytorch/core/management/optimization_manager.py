@@ -14,12 +14,13 @@ Consolidates functionality from:
 Version: 0.3.11
 """
 
+import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Any, Dict, List, Optional
-import warnings
 
-from .base import BaseManager, ManagerType, ManagerState
+from .base import BaseManager, ManagerState, ManagerType
 
 
 class OptimizationManager(BaseManager):
@@ -53,7 +54,7 @@ class OptimizationManager(BaseManager):
         self.fusion_enabled = self.config.attention.fusion_enabled
 
         # Track applied optimizations
-        self.applied_optimizations: List[str] = []
+        self.applied_optimizations: list[str] = []
 
         self.context.state = ManagerState.READY
         self._initialized = True
@@ -63,7 +64,7 @@ class OptimizationManager(BaseManager):
         if not self._initialized:
             raise RuntimeError("OptimizationManager not initialized")
 
-        optimization_level = kwargs.get('level', self.config.optimization_level)
+        kwargs.get('level', self.config.optimization_level)
 
         # Clear previous optimizations tracking
         self.applied_optimizations = []
@@ -82,7 +83,7 @@ class OptimizationManager(BaseManager):
 
         return target
 
-    def _setup_precision_formats(self) -> List[str]:
+    def _setup_precision_formats(self) -> list[str]:
         """Setup available precision formats based on default_format and fp8 settings."""
         formats = ['fp32', 'fp16', 'bf16']  # Standard formats always available
 
@@ -101,7 +102,7 @@ class OptimizationManager(BaseManager):
                     self.applied_optimizations.append('torch_compile')
                     return compiled
                 except Exception as e:
-                    warnings.warn(f"Compilation optimization failed: {e}")
+                    warnings.warn(f"Compilation optimization failed: {e}", stacklevel=2)
 
         return target
 
@@ -120,7 +121,7 @@ class OptimizationManager(BaseManager):
             self.applied_optimizations.append('fusion_enabled')
         return target
 
-    def get_available_optimizations(self) -> Dict[str, bool]:
+    def get_available_optimizations(self) -> dict[str, bool]:
         """Get available optimization capabilities."""
         return {
             'compilation': self.compilation_enabled,
@@ -131,10 +132,10 @@ class OptimizationManager(BaseManager):
             'adaptive_precision': self.precision_config.adaptive_allocation
         }
 
-    def get_applied_optimizations(self) -> List[str]:
+    def get_applied_optimizations(self) -> list[str]:
         """Get list of optimizations applied in last optimize() call."""
         return self.applied_optimizations.copy()
 
-    def get_precision_formats(self) -> List[str]:
+    def get_precision_formats(self) -> list[str]:
         """Get available precision formats."""
         return self.precision_formats.copy()

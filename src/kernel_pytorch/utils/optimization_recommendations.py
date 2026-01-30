@@ -8,12 +8,11 @@ Intelligent recommendation system for PyTorch model optimizations:
 - Estimates performance improvements
 """
 
+from dataclasses import dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Tuple, Optional, Any, Union
-import textwrap
-from dataclasses import dataclass
 
 
 @dataclass
@@ -22,11 +21,11 @@ class OptimizationRecommendation:
     optimization_type: str
     priority: str  # 'high', 'medium', 'low'
     description: str
-    implementation_steps: List[str]
+    implementation_steps: list[str]
     expected_improvement: str
     difficulty: str  # 'easy', 'medium', 'hard'
     code_example: str
-    educational_notes: List[str]
+    educational_notes: list[str]
 
 
 class OptimizationRecommendationEngine:
@@ -40,7 +39,7 @@ class OptimizationRecommendationEngine:
     def __init__(self):
         self.recommendation_rules = self._load_recommendation_rules()
 
-    def generate_recommendations(self, analysis: Dict[str, Any]) -> List[OptimizationRecommendation]:
+    def generate_recommendations(self, analysis: dict[str, Any]) -> list[OptimizationRecommendation]:
         """
         Generate optimization recommendations based on analysis.
 
@@ -84,7 +83,7 @@ class OptimizationRecommendationEngine:
 
         return recommendations
 
-    def _recommend_torch_compile(self, analysis: Dict[str, Any]) -> OptimizationRecommendation:
+    def _recommend_torch_compile(self, analysis: dict[str, Any]) -> OptimizationRecommendation:
         """Recommend torch.compile optimization."""
         compile_mode = analysis['compilation_readiness']['recommended_compile_mode']
 
@@ -122,7 +121,7 @@ optimized_model = torch.compile(model, mode="{compile_mode}")
             ]
         )
 
-    def _recommend_operation_fusion(self, fusion_ops: List[Dict]) -> OptimizationRecommendation:
+    def _recommend_operation_fusion(self, fusion_ops: list[dict]) -> OptimizationRecommendation:
         """Recommend operation fusion optimization."""
         return OptimizationRecommendation(
             optimization_type='operation_fusion',
@@ -160,7 +159,7 @@ def forward(self, x):
             ]
         )
 
-    def _recommend_attention_optimization(self, analysis: Dict[str, Any]) -> OptimizationRecommendation:
+    def _recommend_attention_optimization(self, analysis: dict[str, Any]) -> OptimizationRecommendation:
         """Recommend attention optimization."""
         return OptimizationRecommendation(
             optimization_type='attention_optimization',
@@ -195,7 +194,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
             ]
         )
 
-    def _recommend_normalization_optimization(self, norm_layers: List[Dict]) -> OptimizationRecommendation:
+    def _recommend_normalization_optimization(self, norm_layers: list[dict]) -> OptimizationRecommendation:
         """Recommend normalization optimization."""
         return OptimizationRecommendation(
             optimization_type='normalization_optimization',
@@ -231,7 +230,7 @@ self.norm = OptimizedRMSNorm(hidden_size)
             ]
         )
 
-    def _recommend_tensor_core_optimization(self, analysis: Dict[str, Any]) -> OptimizationRecommendation:
+    def _recommend_tensor_core_optimization(self, analysis: dict[str, Any]) -> OptimizationRecommendation:
         """Recommend Tensor Core optimization."""
         return OptimizationRecommendation(
             optimization_type='tensor_core_optimization',
@@ -273,7 +272,7 @@ scaler.update()
             ]
         )
 
-    def _recommend_memory_optimization(self, analysis: Dict[str, Any]) -> OptimizationRecommendation:
+    def _recommend_memory_optimization(self, analysis: dict[str, Any]) -> OptimizationRecommendation:
         """Recommend memory optimization."""
         return OptimizationRecommendation(
             optimization_type='memory_optimization',
@@ -314,7 +313,7 @@ def forward_with_checkpointing(self, x):
             ]
         )
 
-    def _load_recommendation_rules(self) -> Dict[str, Any]:
+    def _load_recommendation_rules(self) -> dict[str, Any]:
         """Load recommendation generation rules."""
         return {
             'torch_compile_threshold': 0.7,
@@ -336,7 +335,7 @@ class OptimizationImplementer:
 
     def implement_optimization(self,
                              model: nn.Module,
-                             recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+                             recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """
         Automatically implement an optimization recommendation.
 
@@ -364,7 +363,7 @@ class OptimizationImplementer:
         else:
             raise ValueError(f"Unknown optimization type: {optimization_type}")
 
-    def _implement_torch_compile(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_torch_compile(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement torch.compile optimization."""
         optimized_model = torch.compile(model, mode='default')
 
@@ -375,7 +374,7 @@ optimized_model = torch.compile(model, mode='default')
 
         return optimized_model, code
 
-    def _implement_operation_fusion(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_operation_fusion(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement operation fusion optimization."""
         # This is a simplified implementation
         # Real implementation would analyze the model and replace fusable operations
@@ -406,7 +405,7 @@ from kernel_pytorch.compiler_optimized import FusedLinearGELU
 
         return optimized_model, code
 
-    def _implement_attention_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_attention_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement attention optimization."""
         # Simplified implementation
         optimized_model = model
@@ -424,7 +423,7 @@ from kernel_pytorch.compiler_optimized import CompilerOptimizedMultiHeadAttentio
 
         return optimized_model, code
 
-    def _implement_normalization_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_normalization_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement normalization optimization."""
         optimized_model = model
 
@@ -441,7 +440,7 @@ from kernel_pytorch.compiler_optimized import OptimizedLayerNorm
 
         return optimized_model, code
 
-    def _implement_tensor_core_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_tensor_core_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement Tensor Core optimization."""
         optimized_model = model
 
@@ -457,7 +456,7 @@ optimized_model, optimization_info = tensor_optimizer.optimize_model_for_tensor_
 
         return optimized_model, code
 
-    def _implement_memory_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> Tuple[nn.Module, str]:
+    def _implement_memory_optimization(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement memory optimization."""
         optimized_model = model
 
@@ -475,7 +474,7 @@ optimized_model = memory_optimizer.optimize_memory_layout(
 
         return optimized_model, code
 
-    def _load_implementation_templates(self) -> Dict[str, str]:
+    def _load_implementation_templates(self) -> dict[str, str]:
         """Load code templates for optimization implementations."""
         return {
             'torch_compile': 'optimized_model = torch.compile(model)',

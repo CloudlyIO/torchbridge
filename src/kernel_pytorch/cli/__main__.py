@@ -6,6 +6,7 @@ This allows running the CLI via:
 """
 
 import sys
+
 from . import main
 
 if __name__ == '__main__':

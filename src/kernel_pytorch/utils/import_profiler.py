@@ -5,12 +5,12 @@ Measures and benchmarks import performance improvements from lazy loading
 and other optimization techniques.
 """
 
-import time
-import sys
 import importlib
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
+import sys
+import time
 from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -22,7 +22,7 @@ class ImportMetrics:
     memory_after: int
     memory_delta: int
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ImportProfiler:
@@ -33,7 +33,7 @@ class ImportProfiler:
     """
 
     def __init__(self):
-        self.results: List[ImportMetrics] = []
+        self.results: list[ImportMetrics] = []
 
     @contextmanager
     def profile_import(self, module_name: str):
@@ -70,15 +70,16 @@ class ImportProfiler:
     def _get_memory_usage(self) -> int:
         """Get current memory usage in bytes."""
         try:
-            import psutil
             import os
+
+            import psutil
             process = psutil.Process(os.getpid())
             return process.memory_info().rss
         except ImportError:
             # Fallback - return 0 if psutil not available
             return 0
 
-    def benchmark_imports(self, modules: List[str]) -> Dict[str, ImportMetrics]:
+    def benchmark_imports(self, modules: list[str]) -> dict[str, ImportMetrics]:
         """
         Benchmark import performance for a list of modules.
 
@@ -104,9 +105,9 @@ class ImportProfiler:
 
     def compare_import_strategies(
         self,
-        eager_modules: List[str],
-        lazy_modules: List[str]
-    ) -> Dict[str, any]:
+        eager_modules: list[str],
+        lazy_modules: list[str]
+    ) -> dict[str, Any]:
         """
         Compare eager vs lazy import performance.
 
@@ -117,10 +118,10 @@ class ImportProfiler:
         Returns:
             Comparison results with timing and memory data
         """
-        print("🔄 Benchmarking eager imports...")
+        print(" Benchmarking eager imports...")
         eager_results = self.benchmark_imports(eager_modules)
 
-        print("🔄 Benchmarking lazy imports...")
+        print(" Benchmarking lazy imports...")
         lazy_results = self.benchmark_imports(lazy_modules)
 
         # Calculate aggregate metrics
@@ -174,7 +175,7 @@ class ImportProfiler:
 
             for result in successful_imports:
                 memory_mb = result.memory_delta / (1024*1024)
-                report += f"| {result.module_name} | {result.import_time:.4f} | {memory_mb:.2f} | ✅ |\n"
+                report += f"| {result.module_name} | {result.import_time:.4f} | {memory_mb:.2f} |  |\n"
 
         if failed_imports:
             report += "\n## Failed Imports\n\n"
@@ -184,7 +185,7 @@ class ImportProfiler:
         return report
 
 
-def benchmark_lazy_loading_improvements() -> Dict[str, any]:
+def benchmark_lazy_loading_improvements() -> dict[str, Any]:
     """
     Benchmark the lazy loading improvements.
 
@@ -205,7 +206,7 @@ def benchmark_lazy_loading_improvements() -> Dict[str, any]:
         'kernel_pytorch.next_gen_optimizations'
     ]
 
-    print("📊 Benchmarking lazy loading performance...")
+    print(" Benchmarking lazy loading performance...")
 
     # Benchmark core modules (should be fast)
     core_results = profiler.benchmark_imports(core_modules)
@@ -230,7 +231,7 @@ def benchmark_lazy_loading_improvements() -> Dict[str, any]:
     }
 
 
-def measure_cold_startup_time() -> Tuple[float, str]:
+def measure_cold_startup_time() -> tuple[float, str]:
     """
     Measure cold startup time for the main package.
 
@@ -244,18 +245,17 @@ def measure_cold_startup_time() -> Tuple[float, str]:
 
     start_time = time.perf_counter()
     try:
-        import kernel_pytorch
         end_time = time.perf_counter()
         startup_time = end_time - start_time
-        return startup_time, f"✅ Cold startup: {startup_time:.4f}s"
+        return startup_time, f" Cold startup: {startup_time:.4f}s"
     except Exception as e:
         end_time = time.perf_counter()
         startup_time = end_time - start_time
-        return startup_time, f"❌ Startup failed after {startup_time:.4f}s: {e}"
+        return startup_time, f" Startup failed after {startup_time:.4f}s: {e}"
 
 
 if __name__ == "__main__":
-    print("🚀 Running import performance benchmarks...")
+    print(" Running import performance benchmarks...")
 
     # Test cold startup
     startup_time, startup_message = measure_cold_startup_time()
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     # Run comprehensive benchmarks
     results = benchmark_lazy_loading_improvements()
-    print(f"\n📈 Benchmark Summary:")
+    print("\n Benchmark Summary:")
     print(f"  Total modules tested: {results['summary']['total_modules']}")
     print(f"  Successful imports: {results['summary']['successful_imports']}")
     print(f"  Total import time: {results['summary']['total_import_time']:.4f}s")

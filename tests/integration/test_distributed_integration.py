@@ -5,10 +5,11 @@ Tests tensor parallelism, pipeline parallelism, model sharding,
 and large model optimization without requiring actual multi-GPU setup.
 """
 
+from unittest.mock import patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import MagicMock, patch
 
 # ============================================================================
 # Tensor Parallelism Tests
@@ -55,8 +56,8 @@ class TestColumnParallelLinear:
     def test_initialization(self):
         """Test layer initialization."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             ColumnParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -73,8 +74,8 @@ class TestColumnParallelLinear:
     def test_forward_pass(self):
         """Test forward pass."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             ColumnParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -98,8 +99,8 @@ class TestRowParallelLinear:
     def test_initialization(self):
         """Test layer initialization."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             RowParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -116,8 +117,8 @@ class TestRowParallelLinear:
     def test_forward_with_parallel_input(self):
         """Test forward pass with parallel input."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             RowParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -269,9 +270,9 @@ class TestGPipeScheduler:
     def test_scheduler_creation(self):
         """Test scheduler creation."""
         from kernel_pytorch.models.distributed import (
+            GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
         )
 
         module = nn.Linear(256, 256)
@@ -330,7 +331,7 @@ class TestModelSharder:
 
     def test_analyze_model(self):
         """Test model analysis for sharding."""
-        from kernel_pytorch.models.distributed import ShardingConfig, ModelSharder
+        from kernel_pytorch.models.distributed import ModelSharder, ShardingConfig
 
         model = nn.Sequential(
             nn.Embedding(10000, 512),
@@ -347,7 +348,7 @@ class TestModelSharder:
 
     def test_shard_model(self):
         """Test model sharding."""
-        from kernel_pytorch.models.distributed import ShardingConfig, ModelSharder
+        from kernel_pytorch.models.distributed import ModelSharder, ShardingConfig
 
         model = nn.Sequential(
             nn.Linear(1024, 2048),
@@ -423,7 +424,10 @@ class TestDistributedConfig:
 
     def test_auto_adjust_parallelism(self):
         """Test automatic parallelism adjustment."""
-        from kernel_pytorch.models.distributed import DistributedConfig, ParallelismStrategy
+        from kernel_pytorch.models.distributed import (
+            DistributedConfig,
+            ParallelismStrategy,
+        )
 
         config = DistributedConfig(
             world_size=8,
@@ -454,7 +458,10 @@ class TestDistributedLLMOptimizer:
 
     def test_memory_estimation(self):
         """Test memory estimation for large models."""
-        from kernel_pytorch.models.distributed import DistributedLLMOptimizer, DistributedConfig
+        from kernel_pytorch.models.distributed import (
+            DistributedConfig,
+            DistributedLLMOptimizer,
+        )
 
         config = DistributedConfig(world_size=8, tensor_parallel_size=8)
         optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf", config)
@@ -469,7 +476,10 @@ class TestDistributedLLMOptimizer:
 
     def test_mock_model_loading(self):
         """Test loading mock model (without transformers)."""
-        from kernel_pytorch.models.distributed import DistributedLLMOptimizer, DistributedConfig
+        from kernel_pytorch.models.distributed import (
+            DistributedConfig,
+            DistributedLLMOptimizer,
+        )
 
         config = DistributedConfig(world_size=1)
         optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf", config)
@@ -518,8 +528,8 @@ class TestCreateDistributedLLM:
     def test_create_with_custom_config(self):
         """Test creating with custom configuration."""
         from kernel_pytorch.models.distributed import (
-            create_distributed_llm,
             ParallelismStrategy,
+            create_distributed_llm,
         )
 
         optimizer = create_distributed_llm(
@@ -581,40 +591,12 @@ class TestEndToEndDistributed:
 
     def test_imports_work(self):
         """Test that all imports work correctly."""
-        from kernel_pytorch.models import (
-            # Tensor Parallelism
-            TensorParallelConfig,
-            ColumnParallelLinear,
-            RowParallelLinear,
-            TensorParallelEmbedding,
-            apply_tensor_parallelism,
-            # Pipeline Parallelism
-            PipelineParallelConfig,
-            PipelineStage,
-            GPipeScheduler,
-            InterleavedScheduler,
-            create_pipeline_stages,
-            # Model Sharding
-            ShardingStrategy,
-            ShardingConfig,
-            ModelSharder,
-            WeightDistributor,
-            automatic_sharding,
-            # Large Model Optimizer
-            DistributedLLMOptimizer,
-            DistributedConfig,
-            DistributedLlama70B,
-            DistributedFalcon,
-            DistributedMixtral,
-            create_distributed_llm,
-            estimate_gpu_requirements,
-        )
 
     def test_single_gpu_pipeline(self):
         """Test a complete single-GPU pipeline."""
         from kernel_pytorch.models.distributed import (
-            create_distributed_llm,
             ParallelismStrategy,
+            create_distributed_llm,
         )
 
         # Create optimizer for single GPU

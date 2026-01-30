@@ -14,21 +14,21 @@ into three focused managers coordinated by UnifiedManager.
 Version: 0.3.11
 """
 
-import torch
-import torch.nn as nn
-from typing import Any, Dict, Optional
 import warnings
 from dataclasses import dataclass
-from typing import List
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 from ..config import KernelPyTorchConfig
 from ..hardware_detector import HardwareDetector, HardwareProfile
 
 # Import management components
-from .base import ManagerType, ManagerState, ManagerContext, BaseManager
+from .base import ManagerType
 from .hardware_manager import HardwareManager
-from .optimization_manager import OptimizationManager
 from .infrastructure_manager import InfrastructureManager
+from .optimization_manager import OptimizationManager
 
 
 class UnifiedManager:
@@ -57,7 +57,7 @@ class UnifiedManager:
     - DeepOptimizerStates, InterleaveOffloadingOptimizer, CPUGPUHybridOptimizer
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         self.config = config or KernelPyTorchConfig()
 
         # Initialize sub-managers
@@ -73,7 +73,7 @@ class UnifiedManager:
 
         # Initialize hardware detector for auto-optimization
         self.hardware_detector = HardwareDetector()
-        self._hardware_profile: Optional[HardwareProfile] = None
+        self._hardware_profile: HardwareProfile | None = None
 
         # Backend optimizer instances (lazy-loaded)
         self._nvidia_optimizer = None
@@ -101,8 +101,8 @@ class UnifiedManager:
     def auto_optimize(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor] = None,
-        optimization_level: Optional[str] = None,
+        sample_inputs: torch.Tensor | None = None,
+        optimization_level: str | None = None,
         for_inference: bool = False
     ) -> nn.Module:
         """
@@ -168,7 +168,7 @@ class UnifiedManager:
     def _optimize_with_nvidia(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor],
+        sample_inputs: torch.Tensor | None,
         optimization_level: str,
         for_inference: bool
     ) -> Any:
@@ -191,13 +191,13 @@ class UnifiedManager:
             return result
 
         except ImportError as e:
-            warnings.warn(f"NVIDIA backend not available: {e}. Using CPU fallback.")
+            warnings.warn(f"NVIDIA backend not available: {e}. Using CPU fallback.", stacklevel=2)
             return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
 
     def _optimize_with_tpu(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor],
+        sample_inputs: torch.Tensor | None,
         optimization_level: str,
         for_inference: bool
     ) -> Any:
@@ -215,13 +215,13 @@ class UnifiedManager:
             return result
 
         except ImportError as e:
-            warnings.warn(f"TPU backend not available: {e}. Using CPU fallback.")
+            warnings.warn(f"TPU backend not available: {e}. Using CPU fallback.", stacklevel=2)
             return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
 
     def _optimize_with_amd(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor],
+        sample_inputs: torch.Tensor | None,
         optimization_level: str,
         for_inference: bool
     ) -> Any:
@@ -239,13 +239,13 @@ class UnifiedManager:
             return result
 
         except ImportError as e:
-            warnings.warn(f"AMD backend not available: {e}. Using CPU fallback.")
+            warnings.warn(f"AMD backend not available: {e}. Using CPU fallback.", stacklevel=2)
             return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
 
     def _optimize_with_cpu(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor],
+        sample_inputs: torch.Tensor | None,
         optimization_level: str,
         for_inference: bool
     ) -> Any:
@@ -254,7 +254,7 @@ class UnifiedManager:
         class CPUOptimizationResult:
             optimized_model: nn.Module
             optimization_level: str
-            optimizations_applied: List[str]
+            optimizations_applied: list[str]
             backend: str = "cpu"
 
         # For CPU, just set to eval mode if for inference
@@ -284,7 +284,7 @@ class UnifiedManager:
             self._hardware_profile = self.hardware_detector.detect(force_redetect)
         return self._hardware_profile
 
-    def get_optimization_recommendations(self, model: Optional[nn.Module] = None) -> Dict[str, Any]:
+    def get_optimization_recommendations(self, model: nn.Module | None = None) -> dict[str, Any]:
         """
         Get optimization recommendations based on detected hardware.
 
@@ -327,7 +327,7 @@ class UnifiedManager:
 
         return recommendations
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get status of all managers."""
         return {
             manager_type.value: manager.get_status()
@@ -351,10 +351,10 @@ class UnifiedManager:
 
 
 # Global unified manager instance for convenience
-default_manager: Optional[UnifiedManager] = None
+default_manager: UnifiedManager | None = None
 
 
-def get_manager(config: Optional[KernelPyTorchConfig] = None) -> UnifiedManager:
+def get_manager(config: KernelPyTorchConfig | None = None) -> UnifiedManager:
     """Get the global unified manager."""
     global default_manager
     if default_manager is None or config is not None:

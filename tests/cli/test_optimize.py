@@ -2,12 +2,12 @@
 Tests for the optimize CLI command.
 """
 
+import os
+import tempfile
+from unittest.mock import MagicMock, patch
+
 import pytest
 import torch
-import tempfile
-import os
-from unittest.mock import patch, MagicMock
-from pathlib import Path
 
 from kernel_pytorch.cli.optimize import OptimizeCommand
 
@@ -120,7 +120,7 @@ class TestOptimizeCommand:
 
         with patch('torch.compile') as mock_compile:
             mock_compile.return_value = model
-            optimized = OptimizeCommand._apply_optimizations(model, 'compile', sample_input, verbose=False)
+            OptimizeCommand._apply_optimizations(model, 'compile', sample_input, verbose=False)
             mock_compile.assert_called_with(model, mode='max-autotune')
 
     def test_apply_optimizations_production(self):
@@ -135,7 +135,7 @@ class TestOptimizeCommand:
 
             with patch('torch.compile') as mock_compile:
                 mock_compile.return_value = model
-                optimized = OptimizeCommand._apply_optimizations(model, 'production', sample_input, verbose=False)
+                OptimizeCommand._apply_optimizations(model, 'production', sample_input, verbose=False)
                 mock_compile.assert_called_with(model, mode='max-autotune')
 
     def test_validate_optimization_success(self):

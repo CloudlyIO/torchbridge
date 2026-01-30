@@ -12,29 +12,20 @@ The functionality has been split into focused modules:
 This maintains backward compatibility while providing better code organization.
 """
 
-import warnings
-from typing import Optional
+
+from .cluster_management import KubernetesDistributedOrchestrator, SLURMClusterManager
 
 # Import all functionality from split modules
 from .job_management import (
-    JobState,
-    ResourceType,
+    ClusterNode,
     FailureType,
-    ResourceRequirement,
-    TrainingJobSpec,
+    JobState,
     JobStatus,
-    ClusterNode
+    ResourceRequirement,
+    ResourceType,
+    TrainingJobSpec,
 )
-
-from .cluster_management import (
-    KubernetesDistributedOrchestrator,
-    SLURMClusterManager
-)
-
-from .scaling_fault_tolerance import (
-    AutoScalingManager,
-    FaultToleranceManager
-)
+from .scaling_fault_tolerance import AutoScalingManager, FaultToleranceManager
 
 # NOTE: This module provides backward compatibility for the refactored orchestration system.
 # For new code, consider importing from: job_management, cluster_management, scaling_fault_tolerance
@@ -43,7 +34,7 @@ from .scaling_fault_tolerance import (
 # Factory functions for easy orchestrator creation
 def create_kubernetes_orchestrator(
     namespace: str = "ml-training",
-    kubeconfig_path: Optional[str] = None
+    kubeconfig_path: str | None = None
 ) -> KubernetesDistributedOrchestrator:
     """Create Kubernetes orchestrator with default configuration"""
     return KubernetesDistributedOrchestrator(namespace, kubeconfig_path)

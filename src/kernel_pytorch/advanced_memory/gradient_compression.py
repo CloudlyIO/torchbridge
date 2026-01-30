@@ -4,10 +4,8 @@ Gradient Compression Techniques
 Advanced gradient compression for memory and communication efficiency
 """
 
+
 import torch
-import torch.nn as nn
-from typing import Dict, List, Optional, Tuple
-import math
 
 
 class GradientCompressor:
@@ -47,7 +45,7 @@ class LossyGradientCompression(GradientCompressor):
 
         return quantized, min_val, max_val
 
-    def decompress(self, compressed_data: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    def decompress(self, compressed_data: tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
         """Dequantize gradients"""
         quantized, min_val, max_val = compressed_data
 
@@ -81,7 +79,7 @@ class QuantizedGradientAccumulation:
         self.accumulated_gradients = None
         self.step_count = 0
 
-    def accumulate(self, gradients: Dict[str, torch.Tensor]):
+    def accumulate(self, gradients: dict[str, torch.Tensor]):
         """Accumulate quantized gradients"""
         if self.accumulated_gradients is None:
             self.accumulated_gradients = {k: torch.zeros_like(v) for k, v in gradients.items()}

@@ -14,11 +14,12 @@ Key Features:
 - Performance-based kernel selection
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, List, Optional, Tuple, Dict, Any
-from enum import Enum
-import torch
 import warnings
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+
+import torch
 
 from .config import NVIDIAArchitecture, PrecisionFormat
 
@@ -54,28 +55,28 @@ class KernelMetadata:
     backend: KernelBackend
 
     # Hardware requirements
-    min_compute_capability: Tuple[int, int] = (7, 0)  # (major, minor) e.g., (9, 0) for H100
-    supported_architectures: List[NVIDIAArchitecture] = field(default_factory=list)
+    min_compute_capability: tuple[int, int] = (7, 0)  # (major, minor) e.g., (9, 0) for H100
+    supported_architectures: list[NVIDIAArchitecture] = field(default_factory=list)
 
     # Precision support
-    precision_support: List[PrecisionFormat] = field(default_factory=lambda: [
+    precision_support: list[PrecisionFormat] = field(default_factory=lambda: [
         PrecisionFormat.FP32,
         PrecisionFormat.FP16
     ])
 
     # Operational constraints
-    max_sequence_length: Optional[int] = None
-    max_batch_size: Optional[int] = None
+    max_sequence_length: int | None = None
+    max_batch_size: int | None = None
     memory_bound: bool = False
     compute_bound: bool = True
 
     # Performance characteristics
     expected_speedup: float = 1.0  # vs PyTorch baseline
-    benchmark_latency_ms: Optional[float] = None
+    benchmark_latency_ms: float | None = None
 
     # Function pointers
-    kernel_fn: Optional[Callable] = None
-    validation_fn: Optional[Callable] = None
+    kernel_fn: Callable | None = None
+    validation_fn: Callable | None = None
 
     # Additional metadata
     description: str = ""
@@ -85,10 +86,10 @@ class KernelMetadata:
     def __post_init__(self):
         """Validate metadata after initialization."""
         if self.backend == KernelBackend.CUDA and not self.kernel_fn:
-            warnings.warn(f"CUDA kernel {self.kernel_id} registered without kernel function")
+            warnings.warn(f"CUDA kernel {self.kernel_id} registered without kernel function", stacklevel=2)
 
         if self.expected_speedup < 1.0:
-            warnings.warn(f"Kernel {self.kernel_id} has expected_speedup < 1.0")
+            warnings.warn(f"Kernel {self.kernel_id} has expected_speedup < 1.0", stacklevel=2)
 
 
 class KernelRegistry:
@@ -136,9 +137,9 @@ class KernelRegistry:
         if self._initialized:
             return
 
-        self._kernels: Dict[str, KernelMetadata] = {}
+        self._kernels: dict[str, KernelMetadata] = {}
         self._initialized = True
-        self._cache: Dict[str, KernelMetadata] = {}  # Selection cache
+        self._cache: dict[str, KernelMetadata] = {}  # Selection cache
 
     def register_kernel(self, metadata: KernelMetadata) -> None:
         """
@@ -156,7 +157,8 @@ class KernelRegistry:
             warnings.warn(
                 f"Overwriting existing kernel: {key}. "
                 f"Previous backend: {self._kernels[key].backend.value}, "
-                f"New backend: {metadata.backend.value}"
+                f"New backend: {metadata.backend.value}",
+            stacklevel=2,
             )
 
         self._kernels[key] = metadata
@@ -173,8 +175,8 @@ class KernelRegistry:
         kernel_type: KernelType,
         device: torch.device,
         precision: PrecisionFormat,
-        sequence_length: Optional[int],
-        batch_size: Optional[int]
+        sequence_length: int | None,
+        batch_size: int | None
     ) -> str:
         """Create cache key for kernel selection."""
         return f"{kernel_type.value}:{device.type}:{precision.value}:{sequence_length}:{batch_size}"
@@ -184,10 +186,10 @@ class KernelRegistry:
         kernel_type: KernelType,
         device: torch.device,
         precision: PrecisionFormat,
-        sequence_length: Optional[int] = None,
-        batch_size: Optional[int] = None,
-        prefer_backend: Optional[KernelBackend] = None
-    ) -> Optional[KernelMetadata]:
+        sequence_length: int | None = None,
+        batch_size: int | None = None,
+        prefer_backend: KernelBackend | None = None
+    ) -> KernelMetadata | None:
         """
         Select the optimal kernel for given requirements.
 
@@ -258,7 +260,7 @@ class KernelRegistry:
             return None
 
         # Sort by preference
-        def sort_key(kernel: KernelMetadata) -> Tuple:
+        def sort_key(kernel: KernelMetadata) -> tuple:
             """
             Sort kernels by:
             1. Backend preference (CUDA=3, Triton=2, PyTorch=1)
@@ -296,7 +298,7 @@ class KernelRegistry:
     def _is_hardware_compatible(
         self,
         kernel: KernelMetadata,
-        compute_capability: Tuple[int, int]
+        compute_capability: tuple[int, int]
     ) -> bool:
         """Check if kernel is compatible with hardware."""
         # Check minimum compute capability
@@ -327,7 +329,7 @@ class KernelRegistry:
         kernel_type: KernelType,
         device: torch.device,
         precision: PrecisionFormat
-    ) -> List[KernelMetadata]:
+    ) -> list[KernelMetadata]:
         """
         Get ordered fallback chain for a kernel type.
 
@@ -361,9 +363,9 @@ class KernelRegistry:
 
     def list_kernels(
         self,
-        kernel_type: Optional[KernelType] = None,
-        backend: Optional[KernelBackend] = None
-    ) -> List[KernelMetadata]:
+        kernel_type: KernelType | None = None,
+        backend: KernelBackend | None = None
+    ) -> list[KernelMetadata]:
         """
         List all registered kernels with optional filtering.
 
@@ -401,19 +403,19 @@ class KernelRegistry:
         ]
 
         if not matching_kernels:
-            warnings.warn(f"Kernel {kernel_id} not found in registry")
+            warnings.warn(f"Kernel {kernel_id} not found in registry", stacklevel=2)
             return False
 
         kernel = matching_kernels[0]  # Use first match
 
         if kernel.validation_fn is None:
-            warnings.warn(f"Kernel {kernel_id} has no validation function")
+            warnings.warn(f"Kernel {kernel_id} has no validation function", stacklevel=2)
             return True  # Assume valid if no validation function
 
         try:
             return kernel.validation_fn(*args, **kwargs)
         except Exception as e:
-            warnings.warn(f"Kernel {kernel_id} validation failed: {e}")
+            warnings.warn(f"Kernel {kernel_id} validation failed: {e}", stacklevel=2)
             return False
 
     def clear_cache(self) -> None:
@@ -463,7 +465,7 @@ def get_kernel_registry() -> KernelRegistry:
     return _global_registry
 
 
-def register_default_kernels(registry: Optional[KernelRegistry] = None) -> None:
+def register_default_kernels(registry: KernelRegistry | None = None) -> None:
     """
     Register default kernels that come with KernelPyTorch.
 
@@ -484,7 +486,7 @@ def register_default_kernels(registry: Optional[KernelRegistry] = None) -> None:
         cuda_available = True
     except ImportError:
         cuda_available = False
-        warnings.warn("CUDA kernels not available - using fallbacks")
+        warnings.warn("CUDA kernels not available - using fallbacks", stacklevel=2)
 
     # Register FlashAttention v2 (existing CUDA kernel)
     if cuda_available:

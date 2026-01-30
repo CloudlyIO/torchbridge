@@ -11,10 +11,8 @@ Version: 0.4.12
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 import torch
-import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +58,7 @@ class KVCacheManager:
         self.config = config
         self.device = torch.device(config.device if torch.cuda.is_available() else "cpu")
 
-    def create_cache(self, batch_size: int = 1) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    def create_cache(self, batch_size: int = 1) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Create empty KV-cache for all layers.
 
@@ -94,11 +92,11 @@ class KVCacheManager:
 
     def update_cache(
         self,
-        cache: List[Tuple[torch.Tensor, torch.Tensor]],
+        cache: list[tuple[torch.Tensor, torch.Tensor]],
         new_keys: torch.Tensor,
         new_values: torch.Tensor,
         layer_idx: int
-    ) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Update cache with new keys and values.
 
@@ -125,13 +123,13 @@ class KVCacheManager:
         cache[layer_idx] = (updated_keys, updated_values)
         return cache
 
-    def get_cache_length(self, cache: List[Tuple[torch.Tensor, torch.Tensor]]) -> int:
+    def get_cache_length(self, cache: list[tuple[torch.Tensor, torch.Tensor]]) -> int:
         """Get current cache length."""
         if not cache or not cache[0][0].numel():
             return 0
         return cache[0][0].size(2)
 
-    def clear_cache(self, cache: List[Tuple[torch.Tensor, torch.Tensor]]) -> None:
+    def clear_cache(self, cache: list[tuple[torch.Tensor, torch.Tensor]]) -> None:
         """Clear cache memory."""
         for i in range(len(cache)):
             cache[i] = (
@@ -139,7 +137,7 @@ class KVCacheManager:
                 cache[i][1][:, :, :0, :]
             )
 
-    def get_memory_usage(self, cache: List[Tuple[torch.Tensor, torch.Tensor]]) -> Dict[str, float]:
+    def get_memory_usage(self, cache: list[tuple[torch.Tensor, torch.Tensor]]) -> dict[str, float]:
         """Get cache memory usage in MB."""
         total_bytes = 0
         for key_cache, value_cache in cache:
@@ -177,14 +175,14 @@ class PagedKVCache:
         self.device = torch.device(config.device if torch.cuda.is_available() else "cpu")
 
         # Page table: maps (batch, seq_pos) -> page_id
-        self.page_table: Optional[torch.Tensor] = None
+        self.page_table: torch.Tensor | None = None
 
         # Physical pages: [num_pages, 2, num_layers, page_size, num_heads, head_dim]
         # 2 for keys and values
-        self.physical_pages: Optional[torch.Tensor] = None
+        self.physical_pages: torch.Tensor | None = None
 
         # Free page list
-        self.free_pages: List[int] = []
+        self.free_pages: list[int] = []
 
     def initialize_pages(self) -> None:
         """Initialize the physical page pool."""
@@ -290,7 +288,7 @@ class PagedKVCache:
         layer_idx: int,
         page_indices: torch.Tensor,
         slot_indices: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Read keys and values from cache.
 
@@ -322,7 +320,7 @@ class PagedKVCache:
 
         return keys, values
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """Get memory usage statistics."""
         if self.physical_pages is None:
             return {"total_mb": 0, "used_pages": 0, "free_pages": 0}
@@ -362,7 +360,7 @@ class SlidingWindowCache:
         self.device = torch.device(config.device if torch.cuda.is_available() else "cpu")
         self.window_size = config.window_size
 
-    def create_cache(self, batch_size: int = 1) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    def create_cache(self, batch_size: int = 1) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """Create empty sliding window cache."""
         cache = []
         for _ in range(self.config.num_layers):
@@ -381,11 +379,11 @@ class SlidingWindowCache:
 
     def update_cache(
         self,
-        cache: List[Tuple[torch.Tensor, torch.Tensor]],
+        cache: list[tuple[torch.Tensor, torch.Tensor]],
         new_keys: torch.Tensor,
         new_values: torch.Tensor,
         layer_idx: int
-    ) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Update cache with sliding window truncation.
 
@@ -436,8 +434,8 @@ class SlidingWindowCache:
 
     def get_memory_usage(
         self,
-        cache: List[Tuple[torch.Tensor, torch.Tensor]]
-    ) -> Dict[str, float]:
+        cache: list[tuple[torch.Tensor, torch.Tensor]]
+    ) -> dict[str, float]:
         """Get cache memory usage."""
         total_bytes = 0
         cache_len = 0

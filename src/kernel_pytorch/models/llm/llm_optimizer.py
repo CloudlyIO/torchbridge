@@ -12,10 +12,9 @@ Version: 0.4.12
 """
 
 import logging
-import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -73,12 +72,12 @@ class LLMConfig:
     compile_mode: str = "reduce-overhead"
 
     # Precision
-    dtype: Optional[torch.dtype] = None  # Auto-detect
-    compute_dtype: Optional[torch.dtype] = None
+    dtype: torch.dtype | None = None  # Auto-detect
+    compute_dtype: torch.dtype | None = None
 
     # KV-cache settings
     use_kv_cache: bool = True
-    kv_cache_dtype: Optional[torch.dtype] = None
+    kv_cache_dtype: torch.dtype | None = None
     max_cache_length: int = 4096
 
     # Memory settings
@@ -87,7 +86,7 @@ class LLMConfig:
 
     # Device settings
     device: str = "auto"
-    device_map: Optional[str] = "auto"
+    device_map: str | None = "auto"
 
     # Generation defaults
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -107,7 +106,7 @@ class LLMOptimizer:
         >>> outputs = model.generate(input_ids, max_new_tokens=100)
     """
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: LLMConfig | None = None):
         """
         Initialize the LLM optimizer.
 
@@ -143,7 +142,7 @@ class LLMOptimizer:
             return torch.device("cuda")
 
         try:
-            import intel_extension_for_pytorch as ipex
+            import intel_extension_for_pytorch as ipex  # noqa: F401
             if hasattr(torch, 'xpu') and torch.xpu.is_available():
                 return torch.device("xpu")
         except ImportError:
@@ -167,7 +166,7 @@ class LLMOptimizer:
 
         return torch.float32
 
-    def _get_quantization_config(self) -> Optional[Dict[str, Any]]:
+    def _get_quantization_config(self) -> dict[str, Any] | None:
         """Get quantization configuration based on settings."""
         if self.config.quantization == QuantizationMode.NONE:
             if self.config.load_in_8bit:
@@ -196,10 +195,10 @@ class LLMOptimizer:
 
     def optimize(
         self,
-        model_name_or_model: Union[str, nn.Module],
-        tokenizer: Optional[Any] = None,
+        model_name_or_model: str | nn.Module,
+        tokenizer: Any | None = None,
         **kwargs
-    ) -> Tuple[nn.Module, Any]:
+    ) -> tuple[nn.Module, Any]:
         """
         Optimize an LLM for inference.
 
@@ -248,9 +247,9 @@ class LLMOptimizer:
     def _load_model(
         self,
         model_name: str,
-        tokenizer: Optional[Any] = None,
+        tokenizer: Any | None = None,
         **kwargs
-    ) -> Tuple[nn.Module, Any]:
+    ) -> tuple[nn.Module, Any]:
         """Load model and tokenizer from HuggingFace."""
         try:
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -299,7 +298,7 @@ class LLMOptimizer:
         except ImportError:
             raise ImportError(
                 "transformers library required. Install with: pip install transformers"
-            )
+            ) from None
 
     def _detect_model_type(self, model: nn.Module) -> LLMType:
         """Detect the type of LLM."""
@@ -387,7 +386,7 @@ class LLMOptimizer:
         """Get current dtype."""
         return self._dtype
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         """Get information about applied optimizations."""
         return {
             "device": str(self._device),
@@ -400,7 +399,7 @@ class LLMOptimizer:
             "max_seq_length": self.config.max_sequence_length,
         }
 
-    def estimate_memory(self, model_name: str = None) -> Dict[str, float]:
+    def estimate_memory(self, model_name: str = None) -> dict[str, float]:
         """Estimate memory requirements for the model."""
         # Rough estimates based on parameter count (in FP16)
         param_estimates = {
@@ -456,7 +455,7 @@ class OptimizedLlama(nn.Module):
     def __init__(
         self,
         model_name: str = "meta-llama/Llama-2-7b-hf",
-        config: Optional[LLMConfig] = None,
+        config: LLMConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -484,7 +483,7 @@ class OptimizedLlama(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
@@ -494,7 +493,7 @@ class OptimizedMistral(nn.Module):
     def __init__(
         self,
         model_name: str = "mistralai/Mistral-7B-v0.1",
-        config: Optional[LLMConfig] = None,
+        config: LLMConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -521,7 +520,7 @@ class OptimizedMistral(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
@@ -531,7 +530,7 @@ class OptimizedPhi(nn.Module):
     def __init__(
         self,
         model_name: str = "microsoft/phi-2",
-        config: Optional[LLMConfig] = None,
+        config: LLMConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -558,7 +557,7 @@ class OptimizedPhi(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
@@ -567,7 +566,7 @@ def create_optimized_llm(
     quantization: str = "none",
     max_sequence_length: int = 4096,
     **kwargs
-) -> Tuple[nn.Module, Any]:
+) -> tuple[nn.Module, Any]:
     """
     Factory function to create an optimized LLM.
 

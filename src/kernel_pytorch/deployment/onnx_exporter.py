@@ -30,19 +30,14 @@ Example:
 """
 
 import logging
-import os
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union, Callable
+
 import torch
 import torch.nn as nn
 
-from .optimization_metadata import (
-    OptimizationMetadata,
-    ExportFormat,
-    create_metadata
-)
+from .optimization_metadata import OptimizationMetadata, create_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +52,7 @@ class ONNXExportConfig:
     verbose: bool = False
 
     # Dynamic axes configuration
-    dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None
+    dynamic_axes: dict[str, dict[int, str]] | None = None
     dynamic_batch: bool = True
     dynamic_sequence: bool = True
 
@@ -73,11 +68,11 @@ class ONNXExportConfig:
 
     # Metadata settings
     include_metadata: bool = True
-    metadata_path: Optional[str] = None  # Separate metadata file path
+    metadata_path: str | None = None  # Separate metadata file path
 
     # Input/output names
-    input_names: Optional[List[str]] = None
-    output_names: Optional[List[str]] = None
+    input_names: list[str] | None = None
+    output_names: list[str] | None = None
 
 
 @dataclass
@@ -85,24 +80,24 @@ class ONNXExportResult:
     """Result of ONNX export operation."""
     success: bool = False
     output_path: str = ""
-    metadata_path: Optional[str] = None
-    metadata: Optional[OptimizationMetadata] = None
+    metadata_path: str | None = None
+    metadata: OptimizationMetadata | None = None
 
     # Validation results
     validated: bool = False
-    validation_error: Optional[float] = None
+    validation_error: float | None = None
     validation_message: str = ""
 
     # Export details
     opset_version: int = 17
     model_size_mb: float = 0.0
-    input_shapes: Dict[str, List[int]] = field(default_factory=dict)
-    output_shapes: Dict[str, List[int]] = field(default_factory=dict)
-    dynamic_axes: Dict[str, Dict[int, str]] = field(default_factory=dict)
+    input_shapes: dict[str, list[int]] = field(default_factory=dict)
+    output_shapes: dict[str, list[int]] = field(default_factory=dict)
+    dynamic_axes: dict[str, dict[int, str]] = field(default_factory=dict)
 
     # Warnings and errors
-    warnings: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 class ONNXExporter:
@@ -113,7 +108,7 @@ class ONNXExporter:
     preserving optimization metadata and validating the exported model.
     """
 
-    def __init__(self, config: Optional[ONNXExportConfig] = None):
+    def __init__(self, config: ONNXExportConfig | None = None):
         """
         Initialize ONNX exporter.
 
@@ -127,7 +122,7 @@ class ONNXExporter:
     def _check_onnx_available(self) -> bool:
         """Check if ONNX is available."""
         try:
-            import onnx
+            import onnx  # noqa: F401
             return True
         except ImportError:
             logger.warning("ONNX not available. Install with: pip install onnx")
@@ -136,7 +131,7 @@ class ONNXExporter:
     def _check_onnxruntime_available(self) -> bool:
         """Check if ONNX Runtime is available for validation."""
         try:
-            import onnxruntime
+            import onnxruntime  # noqa: F401
             return True
         except ImportError:
             logger.warning("ONNX Runtime not available. Validation disabled. Install with: pip install onnxruntime")
@@ -145,8 +140,8 @@ class ONNXExporter:
     def export(
         self,
         model: nn.Module,
-        output_path: Union[str, Path],
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...], Dict[str, torch.Tensor]],
+        output_path: str | Path,
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...] | dict[str, torch.Tensor],
         optimization_level: str = "balanced",
         backend: str = "auto",
         benchmark: bool = True,
@@ -259,8 +254,8 @@ class ONNXExporter:
 
     def _prepare_input(
         self,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...], Dict[str, torch.Tensor]]
-    ) -> Tuple[Union[torch.Tensor, Tuple], List[str]]:
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...] | dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor | tuple, list[str]]:
         """Prepare sample input and generate input names."""
         if isinstance(sample_input, dict):
             # Dict input: use keys as names
@@ -282,9 +277,9 @@ class ONNXExporter:
 
     def _setup_dynamic_axes(
         self,
-        sample_input: Union[torch.Tensor, Tuple],
-        input_names: List[str]
-    ) -> Dict[str, Dict[int, str]]:
+        sample_input: torch.Tensor | tuple,
+        input_names: list[str]
+    ) -> dict[str, dict[int, str]]:
         """Setup dynamic axes configuration."""
         if self.config.dynamic_axes:
             return self.config.dynamic_axes
@@ -313,10 +308,10 @@ class ONNXExporter:
     def _export_to_onnx(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple],
+        sample_input: torch.Tensor | tuple,
         output_path: str,
-        input_names: List[str],
-        dynamic_axes: Dict[str, Dict[int, str]],
+        input_names: list[str],
+        dynamic_axes: dict[str, dict[int, str]],
         **kwargs
     ) -> None:
         """Perform the actual ONNX export."""
@@ -357,7 +352,7 @@ class ONNXExporter:
             model = onnx.load(str(output_path))
 
             # Add metadata as model properties
-            meta_dict = metadata.to_dict()
+            metadata.to_dict()
 
             # Add key metadata fields
             model.metadata_props.append(
@@ -386,7 +381,7 @@ class ONNXExporter:
     def _validate_export(
         self,
         original_model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple],
+        sample_input: torch.Tensor | tuple,
         output_path: Path,
         result: ONNXExportResult
     ) -> None:
@@ -421,7 +416,7 @@ class ONNXExporter:
 
             # Compare outputs
             max_error = np.max(np.abs(pytorch_output - ort_output))
-            mean_error = np.mean(np.abs(pytorch_output - ort_output))
+            np.mean(np.abs(pytorch_output - ort_output))
 
             result.validation_error = float(max_error)
 
@@ -476,10 +471,10 @@ class ONNXExporter:
 
     def validate_model(
         self,
-        onnx_path: Union[str, Path],
+        onnx_path: str | Path,
         sample_input: torch.Tensor,
-        expected_output: Optional[torch.Tensor] = None
-    ) -> Tuple[bool, str]:
+        expected_output: torch.Tensor | None = None
+    ) -> tuple[bool, str]:
         """
         Validate an existing ONNX model.
 
@@ -521,7 +516,7 @@ class ONNXExporter:
 
 def export_to_onnx(
     model: nn.Module,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     sample_input: torch.Tensor,
     optimization_level: str = "balanced",
     **kwargs

@@ -18,11 +18,11 @@ For ACTUAL FP8 training in production, use NVIDIA Transformer Engine directly:
 """
 
 import logging
-import warnings
+from dataclasses import dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Set
-from dataclasses import dataclass
 
 from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class FP8CompilationResult:
     """Results from FP8 compilation."""
     compiled_model: nn.Module
-    fp8_layers: Set[str]
+    fp8_layers: set[str]
     compilation_mode: str
     warnings: list
 
@@ -59,7 +59,7 @@ class FP8Compiler:
         from transformer_engine.pytorch import fp8_autocast
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize FP8 compiler.
 
@@ -140,8 +140,8 @@ class FP8Compiler:
     ) -> None:
         """Prepare Linear layer for FP8 execution."""
         # Mark layer as FP8-ready
-        setattr(module, '_fp8_enabled', True)
-        setattr(module, '_fp8_mode', 'inference' if for_inference else 'training')
+        module._fp8_enabled = True
+        module._fp8_mode = 'inference' if for_inference else 'training'
         self._fp8_layers.add(name)
 
         # For actual FP8 execution, we would use transformer_engine or similar
@@ -162,8 +162,8 @@ class FP8Compiler:
         for_inference: bool
     ) -> None:
         """Prepare Conv layer for FP8 execution."""
-        setattr(module, '_fp8_enabled', True)
-        setattr(module, '_fp8_mode', 'inference' if for_inference else 'training')
+        module._fp8_enabled = True
+        module._fp8_mode = 'inference' if for_inference else 'training'
         self._fp8_layers.add(name)
 
     def _prepare_attention_for_fp8(
@@ -173,8 +173,8 @@ class FP8Compiler:
         for_inference: bool
     ) -> None:
         """Prepare attention layer for FP8 execution."""
-        setattr(module, '_fp8_enabled', True)
-        setattr(module, '_fp8_mode', 'inference' if for_inference else 'training')
+        module._fp8_enabled = True
+        module._fp8_mode = 'inference' if for_inference else 'training'
         self._fp8_layers.add(name)
 
         # Check attention head dimensions
@@ -239,7 +239,7 @@ class FP8Compiler:
             return outputs
 
         # Register hooks on FP8-enabled layers
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
                 module.register_forward_pre_hook(fp8_forward_pre_hook)
                 module.register_forward_hook(fp8_forward_hook)
@@ -249,7 +249,7 @@ class FP8Compiler:
     def compile_with_fp8(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor] = None,
+        sample_inputs: torch.Tensor | None = None,
         for_inference: bool = False
     ) -> FP8CompilationResult:
         """
@@ -293,7 +293,7 @@ class FP8Compiler:
             warnings=self._warnings
         )
 
-    def get_fp8_stats(self, model: nn.Module) -> Dict[str, Any]:
+    def get_fp8_stats(self, model: nn.Module) -> dict[str, Any]:
         """Get FP8 statistics for the model."""
         total_layers = 0
         fp8_layers = 0
@@ -313,7 +313,7 @@ class FP8Compiler:
             'architecture': self.nvidia_config.architecture.value
         }
 
-    def estimate_speedup(self, model: nn.Module) -> Dict[str, Any]:
+    def estimate_speedup(self, model: nn.Module) -> dict[str, Any]:
         """
         Estimate FP8 training/inference speedup.
 

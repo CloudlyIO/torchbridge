@@ -4,7 +4,7 @@ Tests for Compute Intensity Optimization Patterns
 Comprehensive test suite validating compute intensity implementations
 and ensuring optimal FLOP/byte ratios for GPU performance.
 
-🎯 TEST COVERAGE:
+ TEST COVERAGE:
 - Arithmetic intensity calculation
 - Compute intensity profiling
 - FLOP/byte ratio optimization
@@ -13,26 +13,22 @@ and ensuring optimal FLOP/byte ratios for GPU performance.
 - Roofline model validation
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import time
-import math
-from typing import Dict, List, Any
-from unittest.mock import patch
 
 from kernel_pytorch.optimizations.patterns.compute_intensity import (
-    ComputeIntensityProfiler,
+    COMPUTE_INTENSITY_TARGETS,
     ComputeIntensityCategory,
-    OptimizationPriority,
+    ComputeIntensityProfiler,
     ComputeOptimizationPattern,
-    calculate_arithmetic_intensity,
+    OptimizationPriority,
     analyze_compute_intensity_profile,
+    calculate_arithmetic_intensity,
     identify_compute_bottlenecks,
     optimize_flop_to_byte_ratio,
     print_compute_analysis,
-    COMPUTE_INTENSITY_TARGETS
 )
 
 
@@ -145,7 +141,7 @@ class TestComputeIntensityCategories:
 
     def test_intensity_categories(self):
         """Test compute intensity category enumeration."""
-        categories = list(ComputeIntensityCategory)
+        list(ComputeIntensityCategory)
 
         expected_categories = ['MEMORY_BOUND', 'BALANCED', 'COMPUTE_BOUND']
         for category in expected_categories:
@@ -153,7 +149,7 @@ class TestComputeIntensityCategories:
 
     def test_optimization_priorities(self):
         """Test optimization priority levels."""
-        priorities = list(OptimizationPriority)
+        list(OptimizationPriority)
 
         expected_priorities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
         for priority in expected_priorities:
@@ -268,7 +264,9 @@ class TestComputeAnalysisUtilities:
 
     def test_compute_pattern_dataclass(self):
         """Test compute optimization pattern data structure."""
-        from kernel_pytorch.optimizations.patterns.compute_intensity import ComputeIntensityCategory
+        from kernel_pytorch.optimizations.patterns.compute_intensity import (
+            ComputeIntensityCategory,
+        )
 
         pattern = ComputeOptimizationPattern(
             name="Test Pattern",
@@ -372,7 +370,7 @@ class TestPerformanceValidation:
                 profile = analyze_compute_intensity_profile(model, x)
                 intensity = profile.get('overall_intensity', 0)
                 intensities.append(intensity)
-            except:
+            except Exception:
                 # If profiling fails, just test forward pass
                 output = model(x)
                 assert output.shape == (batch_size, 512)
@@ -395,7 +393,7 @@ class TestEdgeCases:
             intensity = calculate_arithmetic_intensity(zero_flop_op, x)
             # Should handle gracefully (might be 0 or small value)
             assert intensity >= 0
-        except:
+        except Exception:
             # If calculation fails, ensure operation still works
             result = zero_flop_op(x)
             assert torch.equal(result, x)
@@ -416,7 +414,7 @@ class TestEdgeCases:
             intensity = calculate_arithmetic_intensity(high_flop_op, x)
             assert isinstance(intensity, (int, float))
             assert intensity >= 0
-        except:
+        except Exception:
             # If calculation fails, test basic operation
             result = high_flop_op(x)
             assert result.shape == (8, 8)

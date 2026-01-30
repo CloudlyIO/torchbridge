@@ -9,12 +9,12 @@ Various routing mechanisms for Mixture of Experts:
 - Dynamic capacity routing
 """
 
+import hashlib
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, Tuple
-import math
-import hashlib
 
 
 class BaseRouter(nn.Module):
@@ -27,8 +27,8 @@ class BaseRouter(nn.Module):
         top_k: int = 2,
         dropout: float = 0.1,
         normalize_probs: bool = True,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -52,8 +52,8 @@ class BaseRouter(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """
         Base forward method - should be overridden by subclasses
 
@@ -69,7 +69,7 @@ class BaseRouter(nn.Module):
     def _apply_expert_mask(
         self,
         logits: torch.Tensor,
-        expert_mask: Optional[torch.Tensor]
+        expert_mask: torch.Tensor | None
     ) -> torch.Tensor:
         """Apply expert availability mask to logits"""
         if expert_mask is not None:
@@ -119,8 +119,8 @@ class TopKRouter(BaseRouter):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """
         Top-K routing forward pass
 
@@ -131,7 +131,7 @@ class TopKRouter(BaseRouter):
         Returns:
             Dictionary with routing information
         """
-        num_tokens = x.size(0)
+        x.size(0)
 
         # Compute routing logits
         if self.dropout_layer is not None and self.training:
@@ -202,10 +202,10 @@ class SwitchRouter(BaseRouter):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """Switch routing with capacity constraints"""
-        num_tokens = x.size(0)
+        x.size(0)
 
         # Compute routing logits
         logits = self.gate(x)  # [num_tokens, num_experts]
@@ -276,8 +276,8 @@ class HashRouter(BaseRouter):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """Hash-based routing"""
         num_tokens = x.size(0)
 
@@ -417,10 +417,10 @@ class LearnedRouter(BaseRouter):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """Advanced learned routing"""
-        num_tokens = x.size(0)
+        x.size(0)
 
         # Process through routing network
         router_features = self.router_network(x)  # [num_tokens, router_hidden_size]
@@ -522,8 +522,8 @@ class DynamicCapacityRouter(BaseRouter):
     def forward(
         self,
         x: torch.Tensor,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """Dynamic capacity routing"""
         num_tokens = x.size(0)
 
@@ -595,7 +595,7 @@ class DynamicCapacityRouter(BaseRouter):
         """Set capacity factor for all experts"""
         self.capacity_factors.fill_(capacity_factor)
 
-    def get_routing_stats(self) -> Dict[str, Any]:
+    def get_routing_stats(self) -> dict[str, Any]:
         """Get routing statistics"""
         return {
             'capacity_factors': self.capacity_factors.cpu().tolist(),

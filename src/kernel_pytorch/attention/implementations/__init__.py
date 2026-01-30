@@ -5,19 +5,23 @@ Consolidated implementations from attention/ and advanced_attention/ directories
 with enhanced features and consistent interfaces.
 """
 
-from .flash_attention import FlashAttention3, FlashAttention2
-from .memory_efficient import MemoryEfficientAttention, ChunkedAttention, LongSequenceAttention
-from .sparse import DynamicSparseAttention, SparseAttentionPattern
+from .flash_attention import FlashAttention2, FlashAttention3
 from .flex_attention import (
-    FlexAttentionLayer,
     FlexAttentionCausal,
-    FlexAttentionSlidingWindow,
-    FlexAttentionScoreMods,
+    FlexAttentionLayer,
     FlexAttentionMaskGenerators,
+    FlexAttentionScoreMods,
+    FlexAttentionSlidingWindow,
     create_flex_attention,
-    is_flex_attention_available,
     get_flex_attention_info,
+    is_flex_attention_available,
 )
+from .memory_efficient import (
+    ChunkedAttention,
+    LongSequenceAttention,
+    MemoryEfficientAttention,
+)
+from .sparse import DynamicSparseAttention, SparseAttentionPattern
 
 __all__ = [
     # Flash attention implementations

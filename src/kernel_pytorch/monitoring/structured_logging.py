@@ -31,18 +31,17 @@ from __future__ import annotations
 import contextvars
 import json
 import logging
-import os
 import sys
 import threading
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
-from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 # Context variable for correlation ID (thread-safe)
 _correlation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
@@ -51,7 +50,7 @@ _correlation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 
 # Context variable for additional context
 _log_context: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
-    "log_context", default={}
+    "log_context", default={}  # noqa: B039
 )
 
 # Global configuration lock
@@ -301,7 +300,7 @@ class CorrelationContext:
         self.correlation_id = correlation_id or str(uuid.uuid4())
         self._token: contextvars.Token | None = None
 
-    def __enter__(self) -> "CorrelationContext":
+    def __enter__(self) -> CorrelationContext:
         self._token = _correlation_id.set(self.correlation_id)
         return self
 
@@ -318,7 +317,7 @@ class LogContext:
         self._token: contextvars.Token | None = None
         self._previous: dict[str, Any] = {}
 
-    def __enter__(self) -> "LogContext":
+    def __enter__(self) -> LogContext:
         self._previous = _log_context.get().copy()
         new_context = {**self._previous, **self.context}
         self._token = _log_context.set(new_context)
@@ -642,7 +641,7 @@ class PerformanceLogger:
         self.start_time: float = 0
         self.start_memory: int = 0
 
-    def __enter__(self) -> "PerformanceLogger":
+    def __enter__(self) -> PerformanceLogger:
         self.start_time = time.perf_counter()
 
         # Try to get GPU memory if available

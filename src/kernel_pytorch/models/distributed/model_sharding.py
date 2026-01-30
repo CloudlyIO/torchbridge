@@ -13,7 +13,7 @@ Supports:
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -58,8 +58,8 @@ class ShardingConfig:
     strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     world_size: int = 1
     rank: int = 0
-    process_group: Optional[Any] = None
-    sharding_group_size: Optional[int] = None
+    process_group: Any | None = None
+    sharding_group_size: int | None = None
     cpu_offload: bool = False
     compute_device: str = "cuda"
     mixed_precision: bool = True
@@ -79,7 +79,7 @@ class ShardSpec:
     sharding_type: ParameterSharding
     shard_dim: int = 0
     num_shards: int = 1
-    shard_sizes: List[int] = field(default_factory=list)
+    shard_sizes: list[int] = field(default_factory=list)
 
 
 class ShardedParameter(nn.Parameter):
@@ -108,7 +108,7 @@ class ShardedParameter(nn.Parameter):
     ):
         self.spec = spec
         self.config = config
-        self._full_param: Optional[torch.Tensor] = None
+        self._full_param: torch.Tensor | None = None
         self._is_gathered = False
 
     def gather_full_param(self) -> torch.Tensor:
@@ -157,10 +157,10 @@ class ModelSharder:
 
     def __init__(self, config: ShardingConfig):
         self.config = config
-        self._shard_specs: Dict[str, ShardSpec] = {}
-        self._original_params: Dict[str, torch.Tensor] = {}
+        self._shard_specs: dict[str, ShardSpec] = {}
+        self._original_params: dict[str, torch.Tensor] = {}
 
-    def analyze_model(self, model: nn.Module) -> Dict[str, ShardSpec]:
+    def analyze_model(self, model: nn.Module) -> dict[str, ShardSpec]:
         """Analyze model and determine sharding strategy for each parameter.
 
         Args:
@@ -362,13 +362,13 @@ class WeightDistributor:
 
     def __init__(self, config: ShardingConfig):
         self.config = config
-        self._device_map: Dict[str, str] = {}
+        self._device_map: dict[str, str] = {}
 
     def create_device_map(
         self,
         model: nn.Module,
-        max_memory: Optional[Dict[str, int]] = None,
-    ) -> Dict[str, str]:
+        max_memory: dict[str, int] | None = None,
+    ) -> dict[str, str]:
         """Create device map for model layers.
 
         Args:
@@ -410,7 +410,7 @@ class WeightDistributor:
         self._device_map = device_map
         return device_map
 
-    def _get_available_memory(self) -> Dict[str, int]:
+    def _get_available_memory(self) -> dict[str, int]:
         """Get available memory per device.
 
         Returns:
@@ -431,7 +431,7 @@ class WeightDistributor:
 
         return memory
 
-    def _estimate_layer_memory(self, model: nn.Module) -> Dict[str, int]:
+    def _estimate_layer_memory(self, model: nn.Module) -> dict[str, int]:
         """Estimate memory usage per layer.
 
         Args:
@@ -455,7 +455,7 @@ class WeightDistributor:
     def distribute_model(
         self,
         model: nn.Module,
-        device_map: Optional[Dict[str, str]] = None,
+        device_map: dict[str, str] | None = None,
     ) -> nn.Module:
         """Distribute model according to device map.
 
@@ -477,7 +477,7 @@ class WeightDistributor:
         logger.info(f"Distributed model across {len(set(device_map.values()))} devices")
         return model
 
-    def _get_module_by_name(self, model: nn.Module, name: str) -> Optional[nn.Module]:
+    def _get_module_by_name(self, model: nn.Module, name: str) -> nn.Module | None:
         """Get module by dot-separated name.
 
         Args:
@@ -515,8 +515,8 @@ class WeightDistributor:
         Returns:
             Model with loaded weights
         """
-        import os
         import glob
+        import os
 
         # Find shard files
         if shard_format == "pytorch":
@@ -545,7 +545,7 @@ class WeightDistributor:
 
         return model
 
-    def _load_shard_file(self, path: str, shard_format: str) -> Dict[str, torch.Tensor]:
+    def _load_shard_file(self, path: str, shard_format: str) -> dict[str, torch.Tensor]:
         """Load a single shard file.
 
         Args:
@@ -598,8 +598,8 @@ class WeightDistributor:
 def automatic_sharding(
     model: nn.Module,
     config: ShardingConfig,
-    target_memory_gb: Optional[float] = None,
-) -> Tuple[nn.Module, Dict[str, Any]]:
+    target_memory_gb: float | None = None,
+) -> tuple[nn.Module, dict[str, Any]]:
     """Automatically shard model based on memory constraints.
 
     Args:
@@ -640,7 +640,7 @@ def automatic_sharding(
         sharded_gb = sharded_params * 4 / (1024**3)
         logger.info(f"After sharding: {sharded_gb:.2f} GB per GPU")
     else:
-        logger.info(f"Model fits in memory, no sharding needed")
+        logger.info("Model fits in memory, no sharding needed")
 
     info = {
         "original_params": total_params,

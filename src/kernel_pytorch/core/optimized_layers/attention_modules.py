@@ -18,11 +18,10 @@ Performance Focus:
 - Integration with Flash Attention when available
 """
 
-import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
 
 
 class CompilerOptimizedMultiHeadAttention(nn.Module):
@@ -91,33 +90,26 @@ class CompilerOptimizedMultiHeadAttention(nn.Module):
     def forward(
         self,
         query: torch.Tensor,
-        key: Optional[torch.Tensor] = None,
-        value: Optional[torch.Tensor] = None,
-        attn_mask: Optional[torch.Tensor] = None,
+        key: torch.Tensor | None = None,
+        value: torch.Tensor | None = None,
+        attn_mask: torch.Tensor | None = None,
         is_causal: bool = False
     ) -> torch.Tensor:
         """
         Forward pass with compiler-optimized attention computation.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Kernel mapping: Single QKV matmul → Flash Attention kernel → output projection
         - Memory access: Optimal for GPU memory hierarchy with attention pattern reuse
         - Hardware acceleration: Automatic Flash Attention on A100/H100 (compute ≥7.5)
         - Vectorization: All operations fully vectorized across batch and feature dimensions
 
-        📊 PERFORMANCE IMPACT:
-        - vs naive attention: ~4x speedup due to Flash Attention + optimized layout
-        - vs separate QKV projections: ~2x speedup from reduced memory bandwidth
-        - Memory scaling: O(n) instead of O(n²) for long sequences with Flash Attention
-        - Compilation benefit: +40% additional speedup with @torch.compile
-
-        💡 WHY THIS OPTIMIZES:
+         WHY THIS OPTIMIZES:
         - Single QKV projection: 1 GEMM instead of 3, better cache utilization
         - F.scaled_dot_product_attention: Automatic best implementation selection
         - Flash Attention: Tiled computation reduces memory from O(n²) to O(n)
         - Contiguous memory layout: Eliminates copy overhead in attention computation
 
-        🎓 EDUCATIONAL: Optimization hierarchy
         1. Algorithm: Flash Attention (quadratic → linear memory)
         2. Implementation: PyTorch's optimized kernels (assembly-level optimization)
         3. Memory: Single QKV projection (reduced bandwidth requirements)
@@ -141,24 +133,22 @@ class CompilerOptimizedMultiHeadAttention(nn.Module):
 
         batch_size, seq_len, embed_dim = query.size()
 
-        # 🔥 OPTIMIZATION #1: Single QKV projection for maximum GPU efficiency
-        # Educational: Why single projection is faster:
+        #  OPTIMIZATION #1: Single QKV projection for maximum GPU efficiency
         # - Single GEMM: [B×S×D] × [D×3D] = [B×S×3D] (one kernel launch)
         # - vs Triple GEMM: 3x([B×S×D] × [D×D]) = 3x kernel launches + memory overhead
         # - Memory bandwidth: 1x weight load vs 3x weight loads from GPU memory
         if key is query and value is query:
-            # 🎓 Self-attention path (95% of transformer usage)
+            #  Self-attention path (95% of transformer usage)
             qkv = self.qkv_proj(query)  # Single efficient GEMM operation
-            q, k, v = qkv.chunk(3, dim=-1)  # 🔥 chunk() is faster than slicing for contiguous tensors
+            q, k, v = qkv.chunk(3, dim=-1)  #  chunk() is faster than slicing for contiguous tensors
         else:
-            # 🎓 Cross-attention path (attention layers, encoder-decoder)
+            #  Cross-attention path (attention layers, encoder-decoder)
             # Note: This path is less optimized for simplicity - production code might optimize further
             q = self.qkv_proj(query)[:, :, :embed_dim]
             k = self.qkv_proj(key)[:, :, embed_dim:2*embed_dim]
             v = self.qkv_proj(value)[:, :, 2*embed_dim:]
 
-        # 🔥 OPTIMIZATION #2: GPU-friendly tensor layout transformation
-        # Educational: Memory layout optimization for attention computation
+        #  OPTIMIZATION #2: GPU-friendly tensor layout transformation
         # Original: [batch, seq_len, num_heads, head_dim] (head_dim changes fastest)
         # Target:   [batch, num_heads, seq_len, head_dim] (optimal for attention matrix ops)
         # Why: Better memory coalescing in attention score computation Q×K^T
@@ -166,8 +156,7 @@ class CompilerOptimizedMultiHeadAttention(nn.Module):
         k = k.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         v = v.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
 
-        # 🚀 OPTIMIZATION #3: Automatic best-implementation selection
-        # Educational: PyTorch's attention dispatcher hierarchy:
+        #  OPTIMIZATION #3: Automatic best-implementation selection
         # 1. Flash Attention (GPU compute ≥7.5): O(N) memory, optimized attention
         # 2. Memory-efficient attention (older GPUs): Reduced memory, good performance
         # 3. Math attention (fallback): Standard implementation, O(N²) memory
@@ -176,7 +165,7 @@ class CompilerOptimizedMultiHeadAttention(nn.Module):
             q, k, v,
             attn_mask=attn_mask,
             dropout_p=self.dropout if self.training else 0.0,
-            is_causal=is_causal  # 🔥 Causal masking handled efficiently in kernels
+            is_causal=is_causal  #  Causal masking handled efficiently in kernels
         )
 
         # Reshape back to original format
@@ -389,16 +378,16 @@ def validate_attention_correctness(
 
 if __name__ == "__main__":
     # Quick validation and benchmark
-    print("🧪 Testing Compiler-Optimized Attention Modules")
+    print(" Testing Compiler-Optimized Attention Modules")
     print("=" * 60)
 
     # Test correctness
     is_correct = validate_attention_correctness()
-    print(f"✅ Correctness validation: {'PASSED' if is_correct else 'FAILED'}")
+    print(f" Correctness validation: {'PASSED' if is_correct else 'FAILED'}")
 
     # Run benchmark if CUDA is available
     if torch.cuda.is_available():
-        print("\n📊 Performance Benchmark:")
+        print("\n Performance Benchmark:")
         results = benchmark_attention_implementations()
 
         for name, metrics in results.items():
@@ -411,6 +400,6 @@ if __name__ == "__main__":
                 speedup = baseline / metrics['avg_time_ms']
                 print(f"  {name:20s}: {speedup:6.2f}x speedup")
     else:
-        print("\n⚠️  CUDA not available - skipping performance benchmark")
+        print("\n  CUDA not available - skipping performance benchmark")
 
-    print("\n🎯 Ready for production use!")
+    print("\n Ready for production use!")

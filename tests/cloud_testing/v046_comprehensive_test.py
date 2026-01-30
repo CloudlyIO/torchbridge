@@ -16,6 +16,7 @@ Version: 0.4.6
 """
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -23,9 +24,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-import logging
+from typing import Any
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ class TestResult:
     passed: int = 0
     failed: int = 0
     skipped: int = 0
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     duration_seconds: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -105,7 +104,7 @@ class BenchmarkResult:
     benchmark_name: str
     platform: str
     gpu_type: str
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    metrics: dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -113,7 +112,7 @@ class BenchmarkResult:
 # Hardware Detection
 # ============================================================================
 
-def detect_hardware() -> Tuple[CloudPlatform, GPUType, Dict[str, Any]]:
+def detect_hardware() -> tuple[CloudPlatform, GPUType, dict[str, Any]]:
     """Detect the current hardware platform and GPU type."""
     import torch
 
@@ -207,7 +206,7 @@ def _detect_cloud_platform(backend: str) -> CloudPlatform:
             if backend == "amd":
                 return CloudPlatform.AWS_AMD
             return CloudPlatform.AWS_NVIDIA
-    except:
+    except Exception:
         pass
 
     # Try GCP
@@ -220,7 +219,7 @@ def _detect_cloud_platform(backend: str) -> CloudPlatform:
         )
         if resp.status_code == 200:
             return CloudPlatform.GCP_NVIDIA
-    except:
+    except Exception:
         pass
 
     return CloudPlatform.LOCAL
@@ -235,8 +234,8 @@ class TestSuite:
 
     def __init__(self, config: TestConfig):
         self.config = config
-        self.results: List[TestResult] = []
-        self.benchmarks: List[BenchmarkResult] = []
+        self.results: list[TestResult] = []
+        self.benchmarks: list[BenchmarkResult] = []
 
     def run_pytest(self, test_path: str, name: str) -> TestResult:
         """Run pytest on a test file/directory."""
@@ -298,7 +297,7 @@ class TestSuite:
 class MoETestSuite(TestSuite):
     """Test suite for Mixture of Experts functionality."""
 
-    def run(self) -> List[TestResult]:
+    def run(self) -> list[TestResult]:
         """Run MoE tests."""
         if not self.config.test_moe:
             logger.info("MoE tests disabled, skipping")
@@ -337,9 +336,13 @@ class MoETestSuite(TestSuite):
 
         try:
             from kernel_pytorch import (
-                MoEConfig, MoELayer, SparseMoELayer,
-                SwitchTransformerMoE, GLaMStyleMoE,
-                create_moe, create_moe_layer
+                GLaMStyleMoE,
+                MoEConfig,
+                MoELayer,
+                SparseMoELayer,
+                SwitchTransformerMoE,
+                create_moe,
+                create_moe_layer,
             )
 
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -440,7 +443,7 @@ class MoETestSuite(TestSuite):
 class FP8TestSuite(TestSuite):
     """Test suite for FP8 functionality."""
 
-    def run(self) -> List[TestResult]:
+    def run(self) -> list[TestResult]:
         """Run FP8 tests."""
         if not self.config.test_fp8:
             logger.info("FP8 tests disabled, skipping")
@@ -479,14 +482,14 @@ class FP8TestSuite(TestSuite):
 
         try:
             from kernel_pytorch.precision.fp8_native import (
+                FP8InferenceEngine,  # noqa: F401
+                NativeFP8Linear,  # noqa: F401
+                dequantize_from_fp8,  # noqa: F401
                 is_fp8_available,
-                NativeFP8Linear,
-                FP8InferenceEngine,
-                quantize_to_fp8,
-                dequantize_from_fp8
+                quantize_to_fp8,  # noqa: F401
             )
 
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            'cuda' if torch.cuda.is_available() else 'cpu'
 
             tests = [
                 ("fp8_availability", lambda: is_fp8_available()),
@@ -517,7 +520,12 @@ class FP8TestSuite(TestSuite):
     def _test_fp8_quantize(self):
         """Test FP8 quantization."""
         import torch
-        from kernel_pytorch.precision.fp8_native import quantize_to_fp8, dequantize_from_fp8, FP8Dtype
+
+        from kernel_pytorch.precision.fp8_native import (
+            FP8Dtype,
+            dequantize_from_fp8,
+            quantize_to_fp8,
+        )
 
         x = torch.randn(128, 256)
         quantized, scale = quantize_to_fp8(x, FP8Dtype.E4M3)
@@ -530,6 +538,7 @@ class FP8TestSuite(TestSuite):
     def _test_fp8_linear(self):
         """Test FP8 linear layer."""
         import torch
+
         from kernel_pytorch.precision.fp8_native import NativeFP8Linear
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -542,6 +551,7 @@ class FP8TestSuite(TestSuite):
         """Test FP8 inference engine."""
         import torch
         import torch.nn as nn
+
         from kernel_pytorch.precision.fp8_native import FP8InferenceEngine
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -569,8 +579,9 @@ class FP8TestSuite(TestSuite):
         )
 
         try:
-            from kernel_pytorch.precision.fp8_native import NativeFP8Linear
             import torch.nn as nn
+
+            from kernel_pytorch.precision.fp8_native import NativeFP8Linear
 
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             sizes = [(512, 1024), (1024, 2048), (2048, 4096)]
@@ -633,7 +644,7 @@ class FP8TestSuite(TestSuite):
 class BackendTestSuite(TestSuite):
     """Test suite for backend-specific functionality."""
 
-    def run(self) -> List[TestResult]:
+    def run(self) -> list[TestResult]:
         """Run backend tests based on detected hardware."""
         logger.info("=" * 60)
         logger.info(f"Running Backend Tests: {self.config.platform.value}")
@@ -751,7 +762,7 @@ class BackendTestSuite(TestSuite):
 class AttentionTestSuite(TestSuite):
     """Test suite for attention mechanisms."""
 
-    def run(self) -> List[TestResult]:
+    def run(self) -> list[TestResult]:
         """Run attention tests."""
         if not self.config.test_attention:
             logger.info("Attention tests disabled, skipping")
@@ -840,9 +851,9 @@ class AttentionTestSuite(TestSuite):
 
 def generate_report(
     config: TestConfig,
-    hardware_info: Dict[str, Any],
-    test_results: List[TestResult],
-    benchmarks: List[BenchmarkResult]
+    hardware_info: dict[str, Any],
+    test_results: list[TestResult],
+    benchmarks: list[BenchmarkResult]
 ) -> str:
     """Generate a comprehensive test report."""
 
@@ -892,7 +903,6 @@ def generate_report(
     report += "|-------|--------|--------|---------|----------|\n"
 
     for result in test_results:
-        status = "PASS" if result.failed == 0 else "FAIL"
         report += f"| {result.suite_name} | {result.passed} | {result.failed} | {result.skipped} | {result.duration_seconds:.1f}s |\n"
 
     report += "\n"
@@ -948,7 +958,7 @@ def generate_report(
 # Main Orchestration
 # ============================================================================
 
-def run_comprehensive_tests(output_dir: str = "./test_results") -> Dict[str, Any]:
+def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any]:
     """Run comprehensive tests on the current platform."""
 
     logger.info("=" * 70)

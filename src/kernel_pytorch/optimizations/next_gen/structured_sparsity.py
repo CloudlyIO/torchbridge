@@ -10,14 +10,14 @@ Implementation of advanced structured sparsity patterns:
 Based on latest NVIDIA Ampere/Hopper sparse tensor core research.
 """
 
+import math
+import warnings
+from collections import defaultdict
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Union, Callable, Any
-import math
-import warnings
-import numpy as np
-from collections import defaultdict
 
 
 class StructuredSparsity24:
@@ -60,7 +60,7 @@ class StructuredSparsity24:
         # Ampere (8.0+) and Hopper (9.0+) support sparse tensor cores
         return major >= 8
 
-    def create_24_pattern(self, tensor: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def create_24_pattern(self, tensor: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Create 2:4 sparsity pattern from dense tensor
 
@@ -104,7 +104,7 @@ class StructuredSparsity24:
         self,
         sparse_tensor: torch.Tensor,
         mask: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compress 2:4 sparse tensor for storage/computation efficiency
 
@@ -201,7 +201,7 @@ class SparsityPatternGenerator:
         pattern_type: str,
         sparsity_ratio: float = 0.5,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate sparsity pattern for given tensor"""
         if pattern_type not in self.supported_patterns:
             raise ValueError(f"Unsupported pattern: {pattern_type}")
@@ -214,7 +214,7 @@ class SparsityPatternGenerator:
         tensor: torch.Tensor,
         sparsity_ratio: float,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate 2:4 structured pattern"""
         sparsity_24 = StructuredSparsity24()
         return sparsity_24.create_24_pattern(tensor)
@@ -225,7 +225,7 @@ class SparsityPatternGenerator:
         sparsity_ratio: float,
         block_size: int = 4,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate block-wise sparsity pattern"""
         # Reshape tensor for block processing
         if tensor.dim() == 2:  # Matrix
@@ -311,7 +311,7 @@ class SparsityPatternGenerator:
         sparsity_ratio: float,
         pattern_size: int = 4,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate random structured pattern"""
         # Create regular patterns within blocks
         flat_tensor = tensor.flatten()
@@ -330,7 +330,7 @@ class SparsityPatternGenerator:
 
         for i in range(num_patterns):
             start_idx = i * pattern_size
-            end_idx = start_idx + pattern_size
+            start_idx + pattern_size
 
             # Random selection of elements to keep
             pattern_indices = torch.randperm(pattern_size)[:elements_per_pattern]
@@ -347,7 +347,7 @@ class SparsityPatternGenerator:
         tensor: torch.Tensor,
         sparsity_ratio: float,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate channel-wise structured sparsity"""
         if tensor.dim() < 2:
             raise ValueError("Channel-wise sparsity requires at least 2D tensor")
@@ -393,7 +393,7 @@ class SparsityPatternGenerator:
         sparsity_ratio: float,
         head_dim: int = 64,
         **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate attention-specific structured sparsity"""
         if tensor.dim() != 2:
             raise ValueError("Attention sparsity expects 2D tensor (seq_len, head_dim)")
@@ -401,7 +401,7 @@ class SparsityPatternGenerator:
         seq_len, dim = tensor.shape
 
         if dim % head_dim != 0:
-            warnings.warn(f"Dimension {dim} not divisible by head_dim {head_dim}")
+            warnings.warn(f"Dimension {dim} not divisible by head_dim {head_dim}", stacklevel=2)
 
         num_heads = dim // head_dim
 
@@ -454,8 +454,8 @@ class AcceleratedSparseOps:
         self,
         input_tensor: torch.Tensor,
         weight: torch.Tensor,
-        bias: Optional[torch.Tensor] = None,
-        sparsity_mask: Optional[torch.Tensor] = None
+        bias: torch.Tensor | None = None,
+        sparsity_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Accelerated sparse linear operation"""
         import time
@@ -485,7 +485,7 @@ class AcceleratedSparseOps:
         self,
         input_tensor: torch.Tensor,
         sparse_weight: torch.Tensor,
-        bias: Optional[torch.Tensor] = None
+        bias: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Hardware-optimized sparse linear operation"""
         # For actual hardware acceleration, this would use:
@@ -506,8 +506,8 @@ class AcceleratedSparseOps:
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        sparsity_pattern: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        sparsity_pattern: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Sparse attention computation with hardware acceleration"""
         import time
@@ -559,8 +559,8 @@ class AcceleratedSparseOps:
         self,
         input_tensor: torch.Tensor,
         weight: torch.Tensor,
-        bias: Optional[torch.Tensor] = None,
-        sparsity_mask: Optional[torch.Tensor] = None,
+        bias: torch.Tensor | None = None,
+        sparsity_mask: torch.Tensor | None = None,
         stride: int = 1,
         padding: int = 0
     ) -> torch.Tensor:
@@ -582,7 +582,7 @@ class AcceleratedSparseOps:
 
         return output
 
-    def get_performance_statistics(self) -> Dict[str, Any]:
+    def get_performance_statistics(self) -> dict[str, Any]:
         """Get performance statistics for sparse operations"""
         stats = {}
 
@@ -701,7 +701,7 @@ class DynamicSparsityOptimizer:
             else:
                 module.sparsity_mask = mask
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """Get optimization statistics"""
         return {
             'current_sparsity': self.current_sparsity,
@@ -718,8 +718,8 @@ class DynamicSparsityOptimizer:
 
 def create_structured_sparsity_optimizer(
     model: nn.Module,
-    sparsity_config: Optional[Dict[str, Any]] = None,
-    device: Optional[torch.device] = None
+    sparsity_config: dict[str, Any] | None = None,
+    device: torch.device | None = None
 ) -> DynamicSparsityOptimizer:
     """Factory function for structured sparsity optimizer"""
     if device is None:
@@ -795,4 +795,4 @@ if __name__ == "__main__":
     opt_stats = optimizer.get_optimization_stats()
     print(f"Dynamic optimization stats: {opt_stats}")
 
-    print("✅ Structured sparsity tests completed successfully!")
+    print(" Structured sparsity tests completed successfully!")

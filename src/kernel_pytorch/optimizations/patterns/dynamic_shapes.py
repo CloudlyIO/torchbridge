@@ -5,7 +5,6 @@ This module implements an advanced dynamic shape bucketing system that provides
 3x performance improvements on variable-size inputs by minimizing padding waste
 and maximizing GPU utilization through intelligent shape grouping.
 
-🎓 EDUCATIONAL FOCUS:
 Dynamic shape optimization is crucial for real-world AI workloads where input
 sizes vary significantly. Traditional fixed-size approaches cause:
 - Excessive padding waste (up to 70% memory overhead)
@@ -13,13 +12,13 @@ sizes vary significantly. Traditional fixed-size approaches cause:
 - Memory fragmentation from variable allocations
 - Suboptimal kernel launch configurations
 
-🔧 SHAPE BUCKETING PRINCIPLES:
+ SHAPE BUCKETING PRINCIPLES:
 - Geometric progression bucketing: Powers of 2 for cache alignment
 - Hardware-aware sizing: Multiples of warp/wavefront sizes
 - Memory layout optimization: Contiguous memory access patterns
 - Dynamic adaptation: Runtime bucket adjustment based on usage patterns
 
-💡 PRACTICAL VALUE:
+ PRACTICAL VALUE:
 Real-world workloads see 2-4x speedups through:
 - Reduced memory bandwidth requirements
 - Better GPU occupancy through optimal shapes
@@ -27,18 +26,19 @@ Real-world workloads see 2-4x speedups through:
 - Improved cache locality and access patterns
 """
 
+import math
+import threading
+import time
+from collections import OrderedDict
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+# Removed lru_cache import as we use manual caching for statistics
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable, Set
-from dataclasses import dataclass, field
-from enum import Enum
-from collections import defaultdict, OrderedDict
-import math
-import time
-import threading
-# Removed lru_cache import as we use manual caching for statistics
-import numpy as np
 
 
 class BucketingStrategy(Enum):
@@ -64,16 +64,15 @@ class ShapeBucket:
     """
     Represents a single shape bucket for grouping similar-sized inputs.
 
-    🎓 EDUCATIONAL: Bucket design principles
     Each bucket is designed to:
     - Minimize memory waste through intelligent size selection
     - Maximize GPU utilization through optimal dimensions
     - Enable efficient kernel launches with proper alignment
     - Support fast lookup and insertion operations
     """
-    shape: Tuple[int, ...]          # Canonical bucket shape
-    min_shape: Tuple[int, ...]      # Minimum shape this bucket can handle
-    max_shape: Tuple[int, ...]      # Maximum shape this bucket can handle
+    shape: tuple[int, ...]          # Canonical bucket shape
+    min_shape: tuple[int, ...]      # Minimum shape this bucket can handle
+    max_shape: tuple[int, ...]      # Maximum shape this bucket can handle
     usage_count: int = 0            # Number of times this bucket was used
     total_padding_overhead: float = 0.0  # Cumulative padding waste
     average_utilization: float = 0.0     # Average memory utilization
@@ -98,7 +97,7 @@ class ShapeBucket:
             0.1 * recency_score
         ) * self.hardware_efficiency
 
-    def update_usage(self, input_shape: Tuple[int, ...], utilization: float) -> None:
+    def update_usage(self, input_shape: tuple[int, ...], utilization: float) -> None:
         """Update bucket statistics with new usage data."""
         self.usage_count += 1
         self.last_used = time.time()
@@ -121,19 +120,19 @@ class DynamicShapeProfile:
     """
     Profile of input shape distributions for optimization analysis.
 
-    🔧 PROFILING COMPONENTS:
+     PROFILING COMPONENTS:
     - Shape frequency analysis for optimal bucket placement
     - Memory access pattern detection for layout optimization
     - Performance bottleneck identification
     - Hardware-specific optimization opportunities
     """
-    shape_frequencies: Dict[Tuple[int, ...], int] = field(default_factory=dict)
-    shape_performance: Dict[Tuple[int, ...], float] = field(default_factory=dict)
-    memory_patterns: Dict[str, float] = field(default_factory=dict)
-    temporal_patterns: List[Tuple[float, Tuple[int, ...]]] = field(default_factory=list)
-    optimization_opportunities: List[str] = field(default_factory=list)
+    shape_frequencies: dict[tuple[int, ...], int] = field(default_factory=dict)
+    shape_performance: dict[tuple[int, ...], float] = field(default_factory=dict)
+    memory_patterns: dict[str, float] = field(default_factory=dict)
+    temporal_patterns: list[tuple[float, tuple[int, ...]]] = field(default_factory=list)
+    optimization_opportunities: list[str] = field(default_factory=list)
 
-    def add_shape_sample(self, shape: Tuple[int, ...], performance: float) -> None:
+    def add_shape_sample(self, shape: tuple[int, ...], performance: float) -> None:
         """Add a new shape sample to the profile."""
         self.shape_frequencies[shape] = self.shape_frequencies.get(shape, 0) + 1
         self.shape_performance[shape] = performance
@@ -143,7 +142,7 @@ class DynamicShapeProfile:
         if len(self.temporal_patterns) > 1000:
             self.temporal_patterns = self.temporal_patterns[-1000:]
 
-    def get_common_shapes(self, top_k: int = 10) -> List[Tuple[Tuple[int, ...], int]]:
+    def get_common_shapes(self, top_k: int = 10) -> list[tuple[tuple[int, ...], int]]:
         """Get the most common shapes in order of frequency."""
         return sorted(
             self.shape_frequencies.items(),
@@ -151,7 +150,7 @@ class DynamicShapeProfile:
             reverse=True
         )[:top_k]
 
-    def analyze_shape_patterns(self) -> Dict[str, Any]:
+    def analyze_shape_patterns(self) -> dict[str, Any]:
         """Analyze shape usage patterns for optimization insights."""
         if not self.shape_frequencies:
             return {"error": "No shape data available"}
@@ -179,7 +178,7 @@ class DynamicShapeProfile:
             "recommended_buckets": self._recommend_bucket_count()
         }
 
-    def _calculate_shape_ranges(self, shapes: List[Tuple[int, ...]]) -> Dict[str, Tuple[int, int]]:
+    def _calculate_shape_ranges(self, shapes: list[tuple[int, ...]]) -> dict[str, tuple[int, int]]:
         """Calculate min/max ranges for each dimension."""
         if not shapes:
             return {}
@@ -195,8 +194,8 @@ class DynamicShapeProfile:
 
     def _estimate_bucketing_efficiency(
         self,
-        shapes: List[Tuple[int, ...]],
-        frequencies: List[int]
+        shapes: list[tuple[int, ...]],
+        frequencies: list[int]
     ) -> float:
         """Estimate potential efficiency gain from bucketing."""
         if not shapes:
@@ -214,7 +213,7 @@ class DynamicShapeProfile:
 
         return 1.0 - current_waste
 
-    def _find_geometric_bucket(self, shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _find_geometric_bucket(self, shape: tuple[int, ...]) -> tuple[int, ...]:
         """Find the smallest geometric bucket that can contain this shape."""
         return tuple(2 ** math.ceil(math.log2(max(1, dim))) for dim in shape)
 
@@ -237,14 +236,13 @@ class DynamicShapeBucketing:
     """
     Advanced dynamic shape bucketing system with automatic optimization.
 
-    🎓 EDUCATIONAL: Production-grade shape optimization
     This class implements a comprehensive shape bucketing system that:
     - Automatically discovers optimal bucket configurations
     - Adapts to changing input distributions over time
     - Minimizes memory waste while maximizing GPU utilization
     - Provides detailed performance analytics and optimization insights
 
-    🚀 PERFORMANCE TARGETS:
+     PERFORMANCE TARGETS:
     - 3x speedup on variable-size inputs
     - < 10% memory overhead from padding
     - > 90% GPU utilization on diverse workloads
@@ -258,7 +256,7 @@ class DynamicShapeBucketing:
         min_bucket_usage: int = 10,
         memory_limit_gb: float = 16.0,
         enable_adaptive_optimization: bool = True,
-        hardware_info: Optional[Dict[str, Any]] = None
+        hardware_info: dict[str, Any] | None = None
     ):
         self.strategy = strategy
         self.max_buckets = max_buckets
@@ -268,8 +266,8 @@ class DynamicShapeBucketing:
         self.hardware_info = hardware_info or self._detect_hardware_info()
 
         # Core data structures
-        self.buckets: Dict[int, ShapeBucket] = OrderedDict()
-        self.bucket_lookup: Dict[Tuple[int, ...], int] = {}
+        self.buckets: dict[int, ShapeBucket] = OrderedDict()
+        self.bucket_lookup: dict[tuple[int, ...], int] = {}
         self.shape_profile = DynamicShapeProfile()
 
         # Performance tracking
@@ -288,7 +286,7 @@ class DynamicShapeBucketing:
         # Initialize hardware-specific optimizations
         self._initialize_hardware_optimizations()
 
-    def _detect_hardware_info(self) -> Dict[str, Any]:
+    def _detect_hardware_info(self) -> dict[str, Any]:
         """Detect GPU hardware characteristics for optimization."""
         hardware_info = {
             "device_name": "unknown",
@@ -341,11 +339,11 @@ class DynamicShapeBucketing:
         else:
             self.alignment_requirement = 4   # 32-bit alignment
 
-    def find_optimal_bucket(self, shape: Tuple[int, ...]) -> int:
+    def find_optimal_bucket(self, shape: tuple[int, ...]) -> int:
         """
         Find the optimal bucket for a given input shape.
 
-        🔧 OPTIMIZATION STRATEGY:
+         OPTIMIZATION STRATEGY:
         - Manual cache for tracking statistics
         - Multi-criteria optimization balancing memory and performance
         - Hardware-aware dimension selection for optimal GPU utilization
@@ -381,7 +379,7 @@ class DynamicShapeBucketing:
             self._update_timing(start_time)
             return best_bucket_id
 
-    def _find_best_existing_bucket(self, shape: Tuple[int, ...]) -> Optional[int]:
+    def _find_best_existing_bucket(self, shape: tuple[int, ...]) -> int | None:
         """Find the best existing bucket for the given shape."""
         best_bucket_id = None
         best_score = float('inf')
@@ -416,14 +414,14 @@ class DynamicShapeBucketing:
 
         return best_bucket_id
 
-    def _can_fit_in_bucket(self, shape: Tuple[int, ...], bucket: ShapeBucket) -> bool:
+    def _can_fit_in_bucket(self, shape: tuple[int, ...], bucket: ShapeBucket) -> bool:
         """Check if a shape can fit in the given bucket."""
         if len(shape) != len(bucket.shape):
             return False
 
         return all(dim <= bucket_dim for dim, bucket_dim in zip(shape, bucket.shape))
 
-    def _calculate_padding_cost(self, input_shape: Tuple[int, ...], bucket_shape: Tuple[int, ...]) -> float:
+    def _calculate_padding_cost(self, input_shape: tuple[int, ...], bucket_shape: tuple[int, ...]) -> float:
         """Calculate the padding cost for using this bucket."""
         input_size = math.prod(input_shape)
         bucket_size = math.prod(bucket_shape)
@@ -434,7 +432,7 @@ class DynamicShapeBucketing:
         padding_ratio = (bucket_size - input_size) / bucket_size
         return padding_ratio * 1000  # Scale for comparison
 
-    def _create_new_bucket(self, shape: Tuple[int, ...]) -> int:
+    def _create_new_bucket(self, shape: tuple[int, ...]) -> int:
         """Create a new bucket optimized for the given shape."""
         bucket_id = len(self.buckets)
 
@@ -462,14 +460,14 @@ class DynamicShapeBucketing:
         self.buckets[bucket_id] = bucket
         return bucket_id
 
-    def _create_geometric_bucket(self, shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _create_geometric_bucket(self, shape: tuple[int, ...]) -> tuple[int, ...]:
         """Create a bucket using geometric progression (powers of 2)."""
         return tuple(
             2 ** math.ceil(math.log2(max(1, dim)))
             for dim in shape
         )
 
-    def _create_hardware_aware_bucket(self, shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _create_hardware_aware_bucket(self, shape: tuple[int, ...]) -> tuple[int, ...]:
         """Create a bucket optimized for hardware characteristics."""
         bucket_shape = []
 
@@ -490,7 +488,7 @@ class DynamicShapeBucketing:
 
         return tuple(bucket_shape)
 
-    def _create_memory_optimal_bucket(self, shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _create_memory_optimal_bucket(self, shape: tuple[int, ...]) -> tuple[int, ...]:
         """Create a bucket optimized for minimal memory waste."""
         # Use a smaller geometric progression (1.5x instead of 2x)
         return tuple(
@@ -498,7 +496,7 @@ class DynamicShapeBucketing:
             for dim in shape
         )
 
-    def _create_adaptive_bucket(self, shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _create_adaptive_bucket(self, shape: tuple[int, ...]) -> tuple[int, ...]:
         """Create a bucket using adaptive optimization based on usage patterns."""
         # Start with geometric bucket as baseline
         baseline = self._create_geometric_bucket(shape)
@@ -536,7 +534,7 @@ class DynamicShapeBucketing:
 
         return baseline
 
-    def _find_similar_shapes(self, target_shape: Tuple[int, ...], threshold: float = 0.2) -> List[Tuple[int, ...]]:
+    def _find_similar_shapes(self, target_shape: tuple[int, ...], threshold: float = 0.2) -> list[tuple[int, ...]]:
         """Find shapes similar to the target shape within the threshold."""
         similar_shapes = []
         target_size = math.prod(target_shape)
@@ -550,7 +548,7 @@ class DynamicShapeBucketing:
 
         return similar_shapes
 
-    def _calculate_hardware_efficiency(self, shape: Tuple[int, ...]) -> float:
+    def _calculate_hardware_efficiency(self, shape: tuple[int, ...]) -> float:
         """Calculate expected hardware efficiency for this shape."""
         efficiency = 1.0
 
@@ -574,7 +572,7 @@ class DynamicShapeBucketing:
 
         return min(1.0, efficiency)
 
-    def _replace_least_efficient_bucket(self, shape: Tuple[int, ...]) -> int:
+    def _replace_least_efficient_bucket(self, shape: tuple[int, ...]) -> int:
         """Replace the least efficient bucket with a new one for this shape."""
         # Find the bucket with the lowest efficiency score
         worst_bucket_id = min(
@@ -611,7 +609,7 @@ class DynamicShapeBucketing:
         """
         Pad tensor to match the bucket shape.
 
-        🔧 PADDING STRATEGIES:
+         PADDING STRATEGIES:
         - ZEROS: Most common, good for most operations
         - REFLECTION: Good for CNNs, preserves edge information
         - REPLICATION: Good for sequence models
@@ -677,7 +675,7 @@ class DynamicShapeBucketing:
     def unpad_from_bucket_shape(
         self,
         padded_tensor: torch.Tensor,
-        original_shape: Tuple[int, ...]
+        original_shape: tuple[int, ...]
     ) -> torch.Tensor:
         """Remove padding to restore original tensor shape."""
         current_shape = padded_tensor.shape
@@ -699,11 +697,11 @@ class DynamicShapeBucketing:
 
         return padded_tensor[tuple(slices)]
 
-    def optimize_buckets(self, force: bool = False) -> Dict[str, Any]:
+    def optimize_buckets(self, force: bool = False) -> dict[str, Any]:
         """
         Optimize bucket configuration based on usage patterns.
 
-        🔧 OPTIMIZATION STRATEGIES:
+         OPTIMIZATION STRATEGIES:
         - Remove unused buckets to reduce overhead
         - Merge similar buckets to improve cache efficiency
         - Split overloaded buckets to reduce padding waste
@@ -883,7 +881,7 @@ class DynamicShapeBucketing:
         if len(self.buckets) >= self.max_buckets:
             return False
 
-        bucket = self.buckets[bucket_id]
+        self.buckets[bucket_id]
 
         # Find shapes that use this bucket
         shapes_using_bucket = [
@@ -932,7 +930,7 @@ class DynamicShapeBucketing:
 
         return True
 
-    def _cluster_shapes(self, shapes: List[Tuple[int, ...]]) -> Tuple[List[Tuple[int, ...]], List[Tuple[int, ...]]]:
+    def _cluster_shapes(self, shapes: list[tuple[int, ...]]) -> tuple[list[tuple[int, ...]], list[tuple[int, ...]]]:
         """Simple k-means clustering for shape splitting."""
         if len(shapes) < 2:
             return shapes, []
@@ -993,7 +991,7 @@ class DynamicShapeBucketing:
 
         return rebalanced_count
 
-    def _calculate_optimal_bucket_shape(self, shapes: List[Tuple[int, ...]]) -> Tuple[int, ...]:
+    def _calculate_optimal_bucket_shape(self, shapes: list[tuple[int, ...]]) -> tuple[int, ...]:
         """Calculate the optimal bucket shape for a set of input shapes."""
         if not shapes:
             return (1,)
@@ -1017,7 +1015,7 @@ class DynamicShapeBucketing:
 
         return tuple(optimal_shape)
 
-    def _estimate_efficiency(self, shapes: List[Tuple[int, ...]], bucket_shape: Tuple[int, ...]) -> float:
+    def _estimate_efficiency(self, shapes: list[tuple[int, ...]], bucket_shape: tuple[int, ...]) -> float:
         """Estimate efficiency for a bucket shape given input shapes."""
         total_padding_waste = 0.0
         total_shapes = len(shapes)
@@ -1034,7 +1032,7 @@ class DynamicShapeBucketing:
 
         return padding_efficiency * hardware_efficiency
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics."""
         with self._lock:
             total_operations = self.total_bucketing_operations
@@ -1075,7 +1073,7 @@ class DynamicShapeBucketing:
                 "optimization_enabled": self.enable_adaptive_optimization
             }
 
-    def get_bucket_analysis(self) -> Dict[str, Any]:
+    def get_bucket_analysis(self) -> dict[str, Any]:
         """Get detailed analysis of bucket configuration and usage."""
         with self._lock:
             bucket_details = []
@@ -1112,14 +1110,13 @@ class DynamicShapeBucketing:
 
 
 def create_optimal_bucketing_system(
-    input_samples: List[torch.Tensor],
+    input_samples: list[torch.Tensor],
     strategy: BucketingStrategy = BucketingStrategy.HARDWARE_AWARE,
     max_buckets: int = 32
 ) -> DynamicShapeBucketing:
     """
     Create an optimal dynamic shape bucketing system based on input samples.
 
-    🎓 EDUCATIONAL: Automated optimization setup
     This function analyzes representative input samples to automatically
     configure an optimal bucketing system for maximum performance.
 
@@ -1141,7 +1138,7 @@ def create_optimal_bucketing_system(
     # Analyze input samples to pre-populate buckets
     for tensor in input_samples:
         shape = tensor.shape
-        bucket_id = bucketing.find_optimal_bucket(shape)
+        bucketing.find_optimal_bucket(shape)
 
         # Simulate usage to build statistics
         bucketing.shape_profile.add_shape_sample(shape, performance=1.0)
@@ -1152,7 +1149,7 @@ def create_optimal_bucketing_system(
     return bucketing
 
 
-# 🎓 EDUCATIONAL: Example usage and integration patterns
+#  EDUCATIONAL: Example usage and integration patterns
 class DynamicShapeModule(nn.Module):
     """
     Example module demonstrating dynamic shape bucketing integration.
@@ -1164,7 +1161,7 @@ class DynamicShapeModule(nn.Module):
     def __init__(
         self,
         base_module: nn.Module,
-        bucketing_system: Optional[DynamicShapeBucketing] = None,
+        bucketing_system: DynamicShapeBucketing | None = None,
         enable_bucketing: bool = True
     ):
         super().__init__()
@@ -1223,7 +1220,7 @@ class DynamicShapeModule(nn.Module):
 
         return output
 
-    def _calculate_output_shape(self, original_input_shape: Tuple[int, ...], padded_output_shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def _calculate_output_shape(self, original_input_shape: tuple[int, ...], padded_output_shape: tuple[int, ...]) -> tuple[int, ...]:
         """Efficiently calculate expected output shape without extra forward pass."""
         # For most common cases, preserve batch dimension and adjust others proportionally
         if len(original_input_shape) >= 1 and len(padded_output_shape) >= 1:
@@ -1234,19 +1231,19 @@ class DynamicShapeModule(nn.Module):
             return padded_output_shape
 
 
-# 🔧 UTILITY FUNCTIONS
+#  UTILITY FUNCTIONS
 
 def benchmark_dynamic_shapes(
     model: nn.Module,
-    input_shapes: List[Tuple[int, ...]],
+    input_shapes: list[tuple[int, ...]],
     num_iterations: int = 100,
     warmup_iterations: int = 10,
     bucketing_strategy: BucketingStrategy = BucketingStrategy.HARDWARE_AWARE
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Benchmark the performance impact of dynamic shape bucketing.
 
-    🎯 PERFORMANCE VALIDATION:
+     PERFORMANCE VALIDATION:
     This function provides comprehensive benchmarking to validate the
     performance improvements from dynamic shape bucketing.
 
@@ -1272,7 +1269,6 @@ def benchmark_dynamic_shapes(
     bucketed_model = DynamicShapeModule(model, bucketing, enable_bucketing=True)
 
     def run_benchmark(model_to_test, description):
-        times = []
 
         # Warmup
         for _ in range(warmup_iterations):
@@ -1329,24 +1325,24 @@ def benchmark_dynamic_shapes(
     }
 
 
-def print_bucketing_analysis(analysis_results: Dict[str, Any]) -> None:
+def print_bucketing_analysis(analysis_results: dict[str, Any]) -> None:
     """Print dynamic shape bucketing analysis in a readable format."""
-    print("🚀 Dynamic Shape Bucketing Analysis\n")
+    print(" Dynamic Shape Bucketing Analysis\n")
 
     # Performance results
     baseline = analysis_results["baseline"]
     bucketed = analysis_results["bucketed"]
     speedup = analysis_results["speedup"]
 
-    print("📊 Performance Results:")
+    print(" Performance Results:")
     print(f"  Baseline time per input: {baseline['avg_time_per_input']*1000:.2f} ms")
     print(f"  Bucketed time per input: {bucketed['avg_time_per_input']*1000:.2f} ms")
-    print(f"  🚀 Speedup: {speedup:.2f}x ({analysis_results['improvement_percent']:.1f}% faster)")
+    print(f"   Speedup: {speedup:.2f}x ({analysis_results['improvement_percent']:.1f}% faster)")
     print()
 
     # Bucketing statistics
     stats = analysis_results["bucketing_stats"]
-    print("🔧 Bucketing System Statistics:")
+    print(" Bucketing System Statistics:")
     print(f"  Total buckets: {stats['total_buckets']}")
     print(f"  Cache hit rate: {stats['cache_hit_rate']*100:.1f}%")
     print(f"  Average bucketing time: {stats['average_bucketing_time_us']:.1f} μs")
@@ -1357,7 +1353,7 @@ def print_bucketing_analysis(analysis_results: Dict[str, Any]) -> None:
     # Bucket analysis
     bucket_analysis = analysis_results["bucket_analysis"]
     if bucket_analysis["bucket_details"]:
-        print("📈 Top Bucket Performance:")
+        print(" Top Bucket Performance:")
         top_buckets = bucket_analysis["bucket_details"][:3]
         for i, bucket in enumerate(top_buckets, 1):
             print(f"  {i}. Shape {bucket['shape']}: "

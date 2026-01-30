@@ -5,13 +5,13 @@ Provides universal hardware abstraction for PyTorch optimization framework,
 enabling seamless integration of proprietary GPUs and AI chips.
 """
 
-import torch
-import torch.nn as nn
+import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
+from typing import Any
+
+import torch
 
 # Import HardwareVendor from the original location for compatibility
 from ...distributed_scale.hardware_discovery import HardwareVendor
@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 class DeviceMesh:
     """Cross-vendor device mesh for distributed computation"""
     mesh_id: str
-    devices: List['DeviceSpec']
+    devices: list['DeviceSpec']
     topology: str = "ring"  # ring, tree, mesh, custom
-    communication_backend: Optional[str] = None
-    bandwidth_matrix: Optional[List[List[float]]] = None
-    latency_matrix: Optional[List[List[float]]] = None
+    communication_backend: str | None = None
+    bandwidth_matrix: list[list[float]] | None = None
+    latency_matrix: list[list[float]] | None = None
 
     def __post_init__(self):
         if self.bandwidth_matrix is None:
@@ -45,13 +45,12 @@ class DeviceMesh:
 class CrossVendorCapabilities:
     """Aggregated capabilities across multiple vendors"""
     total_devices: int
-    vendor_distribution: Dict[HardwareVendor, int]
+    vendor_distribution: dict[HardwareVendor, int]
     total_memory_gb: float
     peak_compute_tflops: float
     mixed_precision_support: bool
     cross_vendor_communication: bool
-    mesh_topologies: List[str]
-
+    mesh_topologies: list[str]
 
 
 class ComputeCapability(Enum):
@@ -77,15 +76,15 @@ class HardwareCapabilities:
     peak_flops_fp32: float
     peak_flops_fp16: float
     memory_bandwidth_gbps: float
-    supported_precisions: List[ComputeCapability]
+    supported_precisions: list[ComputeCapability]
     tensor_core_support: bool = False
-    custom_instruction_sets: List[str] = field(default_factory=list)
+    custom_instruction_sets: list[str] = field(default_factory=list)
     interconnect_type: str = "PCIe"
     max_power_w: float = 300.0
     # Extended vendor-specific information
-    generation: Optional[str] = None          # GPU generation (e.g., Ampere, CDNA2)
-    architecture: Optional[str] = None        # Architecture code (e.g., GA100, gfx90a)
-    features: List[str] = field(default_factory=list)  # Vendor-specific features
+    generation: str | None = None          # GPU generation (e.g., Ampere, CDNA2)
+    architecture: str | None = None        # Architecture code (e.g., GA100, gfx90a)
+    features: list[str] = field(default_factory=list)  # Vendor-specific features
 
 
 @dataclass
@@ -110,8 +109,8 @@ class VendorAdapter(ABC):
 
     def __init__(self, vendor: HardwareVendor):
         self.vendor = vendor
-        self._devices: List[DeviceSpec] = []
-        self._capabilities_cache: Dict[int, HardwareCapabilities] = {}
+        self._devices: list[DeviceSpec] = []
+        self._capabilities_cache: dict[int, HardwareCapabilities] = {}
 
     @abstractmethod
     def initialize_device(self, device_id: int) -> DeviceSpec:
@@ -119,7 +118,7 @@ class VendorAdapter(ABC):
         pass
 
     @abstractmethod
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover all available devices"""
         pass
 
@@ -134,18 +133,18 @@ class VendorAdapter(ABC):
         pass
 
     @abstractmethod
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create vendor-specific communication backend"""
         pass
 
     @abstractmethod
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get real-time device performance metrics"""
         pass
 
     def get_optimal_kernel_variant(self,
                                   operation: str,
-                                  input_shapes: List[Tuple[int, ...]],
+                                  input_shapes: list[tuple[int, ...]],
                                   device: DeviceSpec) -> str:
         """Get optimal kernel variant for given operation and device"""
         # Default implementation - can be overridden by vendors
@@ -166,9 +165,9 @@ class HardwareAbstractionLayer:
     """
 
     def __init__(self):
-        self.vendor_adapters: Dict[HardwareVendor, VendorAdapter] = {}
-        self.devices: Dict[int, DeviceSpec] = {}
-        self.performance_models: Dict[HardwareVendor, Any] = {}
+        self.vendor_adapters: dict[HardwareVendor, VendorAdapter] = {}
+        self.devices: dict[int, DeviceSpec] = {}
+        self.performance_models: dict[HardwareVendor, Any] = {}
         self._device_counter = 0
 
     def register_vendor_adapter(self, adapter: VendorAdapter) -> None:
@@ -191,7 +190,7 @@ class HardwareAbstractionLayer:
         self._device_counter += 1
         logger.debug(f"Registered device {device.device_id}: {device.vendor.value} - {device.capabilities.device_name}")
 
-    def discover_all_hardware(self) -> Dict[HardwareVendor, List[DeviceSpec]]:
+    def discover_all_hardware(self) -> dict[HardwareVendor, list[DeviceSpec]]:
         """Discover all available hardware across vendors"""
         hardware_inventory = {}
 
@@ -209,8 +208,8 @@ class HardwareAbstractionLayer:
     def get_optimal_device(self,
                           memory_requirement_gb: float,
                           compute_requirement_tflops: float,
-                          preferred_vendors: Optional[List[HardwareVendor]] = None,
-                          precision_requirements: Optional[List[ComputeCapability]] = None) -> Optional[DeviceSpec]:
+                          preferred_vendors: list[HardwareVendor] | None = None,
+                          precision_requirements: list[ComputeCapability] | None = None) -> DeviceSpec | None:
         """
         Find optimal device for given requirements
 
@@ -291,10 +290,10 @@ class HardwareAbstractionLayer:
         return score
 
     def create_device_mesh(self,
-                          devices: List[DeviceSpec],
+                          devices: list[DeviceSpec],
                           tensor_parallel_size: int = 1,
                           pipeline_parallel_size: int = 1,
-                          data_parallel_size: Optional[int] = None) -> torch.distributed._tensor.DeviceMesh:
+                          data_parallel_size: int | None = None) -> torch.distributed._tensor.DeviceMesh:
         """Create device mesh for distributed operations"""
         if data_parallel_size is None:
             data_parallel_size = len(devices) // (tensor_parallel_size * pipeline_parallel_size)
@@ -330,7 +329,7 @@ class HardwareAbstractionLayer:
 
     def get_performance_estimate(self,
                                 operation: str,
-                                input_shapes: List[Tuple[int, ...]],
+                                input_shapes: list[tuple[int, ...]],
                                 device: DeviceSpec) -> float:
         """Estimate operation performance on specific device"""
         adapter = self.vendor_adapters.get(device.vendor)
@@ -348,7 +347,7 @@ class HardwareAbstractionLayer:
 
         return total_flops / device_flops if device_flops > 0 else float('inf')
 
-    def _estimate_operation_flops(self, operation: str, shapes: List[Tuple[int, ...]]) -> float:
+    def _estimate_operation_flops(self, operation: str, shapes: list[tuple[int, ...]]) -> float:
         """Estimate FLOPs for operation"""
         if operation == "matmul" and len(shapes) >= 2:
             # Matrix multiplication: 2 * M * N * K
@@ -365,7 +364,7 @@ class HardwareAbstractionLayer:
 
         return 1e6  # Default estimate
 
-    def get_cluster_status(self) -> Dict[str, Any]:
+    def get_cluster_status(self) -> dict[str, Any]:
         """Get comprehensive cluster status"""
         status = {
             'total_devices': len(self.devices),
@@ -412,7 +411,7 @@ class HardwareAbstractionLayer:
         return status
 
     def optimize_workload_placement(self,
-                                  workloads: List[Dict[str, Any]]) -> Dict[int, List[Dict[str, Any]]]:
+                                  workloads: list[dict[str, Any]]) -> dict[int, list[dict[str, Any]]]:
         """Optimize placement of multiple workloads across devices"""
         placement = {device_id: [] for device_id in self.devices.keys()}
 
@@ -438,7 +437,7 @@ class HardwareAbstractionLayer:
         return placement
 
     def create_cross_vendor_mesh(self,
-                                 devices: List[DeviceSpec],
+                                 devices: list[DeviceSpec],
                                  mesh_id: str,
                                  topology: str = "ring") -> DeviceMesh:
         """
@@ -487,7 +486,7 @@ class HardwareAbstractionLayer:
 
         return mesh
 
-    def _select_communication_backend(self, vendor_groups: Dict[HardwareVendor, List[DeviceSpec]]) -> str:
+    def _select_communication_backend(self, vendor_groups: dict[HardwareVendor, list[DeviceSpec]]) -> str:
         """Select optimal communication backend for vendor mix"""
         # If all NVIDIA, use NCCL
         if len(vendor_groups) == 1 and HardwareVendor.NVIDIA in vendor_groups:
@@ -511,7 +510,7 @@ class HardwareAbstractionLayer:
 
     def _populate_mesh_matrices(self, mesh: DeviceMesh) -> None:
         """Populate bandwidth and latency matrices for device mesh"""
-        n = len(mesh.devices)
+        len(mesh.devices)
 
         for i, device_a in enumerate(mesh.devices):
             for j, device_b in enumerate(mesh.devices):
@@ -525,7 +524,7 @@ class HardwareAbstractionLayer:
                 mesh.bandwidth_matrix[i][j] = bandwidth_gbps
                 mesh.latency_matrix[i][j] = latency_ms
 
-    def _estimate_device_connection(self, device_a: DeviceSpec, device_b: DeviceSpec) -> Tuple[float, float]:
+    def _estimate_device_connection(self, device_a: DeviceSpec, device_b: DeviceSpec) -> tuple[float, float]:
         """Estimate bandwidth and latency between two devices"""
         # Same vendor, likely better interconnects
         if device_a.vendor == device_b.vendor:
@@ -549,7 +548,7 @@ class HardwareAbstractionLayer:
         total_memory = 0.0
         total_compute = 0.0
         mixed_precision_devices = 0
-        cross_vendor_comm = len(set(d.vendor for d in self.devices.values())) > 1
+        cross_vendor_comm = len(set(d.vendor for d in self.devices.values())) > 1  # noqa: C401
 
         for device in self.devices.values():
             # Count by vendor

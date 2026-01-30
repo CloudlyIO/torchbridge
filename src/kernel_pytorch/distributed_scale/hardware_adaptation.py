@@ -12,7 +12,6 @@ The functionality has been split into focused modules:
 This maintains backward compatibility while providing better code organization.
 """
 
-import warnings
 
 # Import DeviceMesh for test compatibility
 try:
@@ -22,29 +21,18 @@ except ImportError:
     DeviceMesh = None
 
 # Import all functionality from split modules
+from .fault_tolerance import HardwareHealthMonitor
+from .hardware_adapter import DeviceMeshOptimizer, HardwareAdapter
 from .hardware_discovery import (
-    HardwareVendor,
-    DeviceCapability,
-    ThermalState,
-    DeviceInfo,
-    NodeTopology,
     ClusterTopology,
-    HardwareTopologyManager
+    DeviceCapability,
+    DeviceInfo,
+    HardwareTopologyManager,
+    HardwareVendor,
+    NodeTopology,
+    ThermalState,
 )
-
-from .thermal_power_management import (
-    ThermalAwareScheduler,
-    PowerEfficiencyOptimizer
-)
-
-from .fault_tolerance import (
-    HardwareHealthMonitor
-)
-
-from .hardware_adapter import (
-    HardwareAdapter,
-    DeviceMeshOptimizer
-)
+from .thermal_power_management import PowerEfficiencyOptimizer, ThermalAwareScheduler
 
 # NOTE: This module provides backward compatibility for the refactored hardware adaptation system.
 # For new code, consider importing from: hardware_discovery, thermal_power_management, fault_tolerance, hardware_adapter

@@ -7,10 +7,9 @@ Optimizations for processing very long sequences efficiently:
 - Incremental sequence caching
 """
 
+
 import torch
 import torch.nn as nn
-from typing import Dict, List, Optional, Tuple
-import math
 
 
 class LongSequenceOptimizer:
@@ -19,7 +18,7 @@ class LongSequenceOptimizer:
     def __init__(self, max_segment_length: int = 2048):
         self.max_segment_length = max_segment_length
 
-    def segment_sequence(self, sequence: torch.Tensor) -> List[torch.Tensor]:
+    def segment_sequence(self, sequence: torch.Tensor) -> list[torch.Tensor]:
         """Segment long sequence into manageable chunks"""
         seq_len = sequence.size(1)
         segments = []
@@ -131,7 +130,7 @@ class IncrementalSequenceCache:
         self.cache = {}
         self.access_order = []
 
-    def get(self, key: str) -> Optional[torch.Tensor]:
+    def get(self, key: str) -> torch.Tensor | None:
         """Get cached sequence"""
         if key in self.cache:
             # Update access order

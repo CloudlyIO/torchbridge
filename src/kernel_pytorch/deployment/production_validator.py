@@ -31,12 +31,12 @@ Example:
 
 import gc
 import logging
+import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-import tempfile
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -84,9 +84,9 @@ class ValidationCheck:
     status: ValidationStatus
     severity: ValidationSeverity
     message: str
-    details: Optional[Dict[str, Any]] = None
-    measured_value: Optional[float] = None
-    threshold: Optional[float] = None
+    details: dict[str, Any] | None = None
+    measured_value: float | None = None
+    threshold: float | None = None
 
     @property
     def passed(self) -> bool:
@@ -113,14 +113,14 @@ class ProductionRequirements:
         warmup_iterations: Warmup iterations before benchmarking
         benchmark_iterations: Number of benchmark iterations
     """
-    max_latency_ms: Optional[float] = None
-    min_throughput: Optional[float] = None
-    max_memory_mb: Optional[float] = None
+    max_latency_ms: float | None = None
+    min_throughput: float | None = None
+    max_memory_mb: float | None = None
     require_onnx_export: bool = True
     require_torchscript_export: bool = True
     require_safetensors_export: bool = False
     max_output_deviation: float = 1e-5
-    batch_sizes: List[int] = field(default_factory=lambda: [1, 4, 8])
+    batch_sizes: list[int] = field(default_factory=lambda: [1, 4, 8])
     warmup_iterations: int = 5
     benchmark_iterations: int = 20
 
@@ -138,22 +138,22 @@ class ProductionValidationResult:
         memory_stats: Memory statistics
     """
     passed: bool
-    checks: List[ValidationCheck] = field(default_factory=list)
+    checks: list[ValidationCheck] = field(default_factory=list)
     summary: str = ""
-    recommendations: List[str] = field(default_factory=list)
-    latency_stats: Optional[Dict[str, float]] = None
-    memory_stats: Optional[Dict[str, float]] = None
+    recommendations: list[str] = field(default_factory=list)
+    latency_stats: dict[str, float] | None = None
+    memory_stats: dict[str, float] | None = None
 
     @property
-    def failed_checks(self) -> List[ValidationCheck]:
+    def failed_checks(self) -> list[ValidationCheck]:
         return [c for c in self.checks if c.failed]
 
     @property
-    def passed_checks(self) -> List[ValidationCheck]:
+    def passed_checks(self) -> list[ValidationCheck]:
         return [c for c in self.checks if c.passed]
 
     @property
-    def critical_failures(self) -> List[ValidationCheck]:
+    def critical_failures(self) -> list[ValidationCheck]:
         return [
             c for c in self.checks
             if c.failed and c.severity == ValidationSeverity.CRITICAL
@@ -195,9 +195,9 @@ class ProductionValidator:
     def validate(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
-        requirements: Optional[ProductionRequirements] = None,
-        device: Optional[torch.device] = None,
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
+        requirements: ProductionRequirements | None = None,
+        device: torch.device | None = None,
     ) -> ProductionValidationResult:
         """Run full production validation.
 
@@ -269,7 +269,7 @@ class ProductionValidator:
     def _check_forward_pass(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
     ) -> ValidationCheck:
         """Check that forward pass succeeds."""
         try:
@@ -297,7 +297,7 @@ class ProductionValidator:
     def _check_determinism(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         num_runs: int = 3,
     ) -> ValidationCheck:
         """Check that model produces deterministic outputs."""
@@ -338,9 +338,9 @@ class ProductionValidator:
     def _check_exports(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         requirements: ProductionRequirements,
-    ) -> List[ValidationCheck]:
+    ) -> list[ValidationCheck]:
         """Check model export compatibility."""
         checks = []
 
@@ -362,7 +362,7 @@ class ProductionValidator:
     def _check_onnx_export(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         temp_dir: str,
     ) -> ValidationCheck:
         """Check ONNX export."""
@@ -409,7 +409,7 @@ class ProductionValidator:
     def _check_torchscript_export(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         temp_dir: str,
     ) -> ValidationCheck:
         """Check TorchScript export."""
@@ -492,10 +492,10 @@ class ProductionValidator:
     def _check_performance(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         requirements: ProductionRequirements,
         device: torch.device,
-    ) -> List[ValidationCheck]:
+    ) -> list[ValidationCheck]:
         """Check performance requirements."""
         checks = []
 
@@ -608,7 +608,7 @@ class ProductionValidator:
     def _check_memory(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         requirements: ProductionRequirements,
         device: torch.device,
     ) -> ValidationCheck:
@@ -699,9 +699,9 @@ class ProductionValidator:
 
     def _generate_recommendations(
         self,
-        checks: List[ValidationCheck],
+        checks: list[ValidationCheck],
         requirements: ProductionRequirements,
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate recommendations based on check results."""
         recommendations = []
 
@@ -741,9 +741,9 @@ class ProductionValidator:
 
 def validate_production_readiness(
     model: nn.Module,
-    sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
-    requirements: Optional[Dict[str, Any]] = None,
-    device: Optional[torch.device] = None,
+    sample_input: torch.Tensor | tuple[torch.Tensor, ...],
+    requirements: dict[str, Any] | None = None,
+    device: torch.device | None = None,
 ) -> ProductionValidationResult:
     """Validate model production readiness.
 

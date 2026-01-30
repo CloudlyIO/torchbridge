@@ -3,19 +3,17 @@
 Tests for BaselineManager functionality
 """
 
-import os
 import json
+import os
+import sys
 import tempfile
-import pytest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
-import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from benchmarks.regression.baseline_manager import BaselineManager, BaselineMetrics
 from benchmarks.framework.benchmark_runner import PerformanceMetrics
+from benchmarks.regression.baseline_manager import BaselineManager, BaselineMetrics
 
 
 class TestBaselineMetrics:

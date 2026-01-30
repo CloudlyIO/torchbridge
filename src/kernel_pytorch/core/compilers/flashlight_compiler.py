@@ -14,15 +14,17 @@ References:
     - CUDA Programming Guide: https://docs.nvidia.com/cuda/cuda-c-programming-guide/
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, Optional, Callable, Tuple, List, Any
 import hashlib
 import time
 import warnings
-from enum import Enum
+from collections.abc import Callable
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
+import torch
+import torch.nn.functional as F
+
 
 class AttentionPattern(Enum):
     """Supported attention patterns for kernel compilation"""
@@ -48,8 +50,8 @@ class CompiledKernel:
 class KernelCache:
     """Cache for compiled kernels with LRU eviction"""
     max_size: int = 100
-    cache: Dict[str, CompiledKernel] = None
-    access_times: Dict[str, float] = None
+    cache: dict[str, CompiledKernel] = None
+    access_times: dict[str, float] = None
 
     def __post_init__(self):
         if self.cache is None:
@@ -80,7 +82,7 @@ class FlashLightKernelCompiler:
         attention_pattern: str,
         seq_len: int,
         head_dim: int,
-        pattern_kwargs: Optional[Dict] = None
+        pattern_kwargs: dict | None = None
     ) -> CompiledKernel:
         """
         Compile optimized kernel for specific attention pattern
@@ -98,7 +100,7 @@ class FlashLightKernelCompiler:
         try:
             pattern_enum = AttentionPattern(attention_pattern)
         except ValueError:
-            raise ValueError(f"Unsupported attention pattern: {attention_pattern}")
+            raise ValueError(f"Unsupported attention pattern: {attention_pattern}") from None
 
         # Generate cache key
         cache_key = self._generate_cache_key(pattern_enum, seq_len, head_dim, pattern_kwargs)
@@ -131,7 +133,7 @@ class FlashLightKernelCompiler:
         pattern: AttentionPattern,
         seq_len: int,
         head_dim: int,
-        pattern_kwargs: Optional[Dict] = None
+        pattern_kwargs: dict | None = None
     ) -> CompiledKernel:
         """
         Generate fused kernel using FlashLight compiler techniques
@@ -171,7 +173,7 @@ class FlashLightKernelCompiler:
             memory_usage=memory_usage
         )
 
-    def _compile_causal_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_causal_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile causal (autoregressive) attention kernel"""
 
         def causal_attention_kernel(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
@@ -205,10 +207,10 @@ class FlashLightKernelCompiler:
             return compiled_kernel
         except Exception:
             # Fallback to uncompiled version if compilation fails
-            warnings.warn("torch.compile failed for causal attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for causal attention, using uncompiled version", UserWarning, stacklevel=2)
             return causal_attention_kernel
 
-    def _compile_sliding_window_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_sliding_window_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile sliding window attention kernel"""
         window_size = kwargs.get('window_size', 512)
 
@@ -246,10 +248,10 @@ class FlashLightKernelCompiler:
             return compiled_kernel
         except Exception:
             # Fallback to uncompiled version if compilation fails
-            warnings.warn("torch.compile failed for sliding window attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for sliding window attention, using uncompiled version", UserWarning, stacklevel=2)
             return sliding_window_attention_kernel
 
-    def _compile_dilated_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_dilated_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile dilated attention kernel"""
         dilation_rate = kwargs.get('dilation_rate', 2)
 
@@ -289,10 +291,10 @@ class FlashLightKernelCompiler:
             _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
             return compiled_kernel
         except Exception:
-            warnings.warn("torch.compile failed for dilated attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for dilated attention, using uncompiled version", UserWarning, stacklevel=2)
             return dilated_attention_kernel
 
-    def _compile_global_local_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_global_local_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile global-local attention kernel"""
         local_window = kwargs.get('local_window', 256)
         global_tokens = kwargs.get('global_tokens', 64)
@@ -338,10 +340,10 @@ class FlashLightKernelCompiler:
             _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
             return compiled_kernel
         except Exception:
-            warnings.warn("torch.compile failed for global-local attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for global-local attention, using uncompiled version", UserWarning, stacklevel=2)
             return global_local_attention_kernel
 
-    def _compile_sparse_block_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_sparse_block_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile sparse block attention kernel"""
         block_size = kwargs.get('block_size', 64)
 
@@ -385,10 +387,10 @@ class FlashLightKernelCompiler:
             _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
             return compiled_kernel
         except Exception:
-            warnings.warn("torch.compile failed for sparse block attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for sparse block attention, using uncompiled version", UserWarning, stacklevel=2)
             return sparse_block_attention_kernel
 
-    def _compile_ring_attention(self, seq_len: int, head_dim: int, kwargs: Dict) -> Callable:
+    def _compile_ring_attention(self, seq_len: int, head_dim: int, kwargs: dict) -> Callable:
         """Compile ring attention kernel for distributed sequences"""
         ring_size = kwargs.get('ring_size', 4096)
 
@@ -430,7 +432,7 @@ class FlashLightKernelCompiler:
             _ = compiled_kernel(dummy_q, dummy_k, dummy_v)
             return compiled_kernel
         except Exception:
-            warnings.warn("torch.compile failed for ring attention, using uncompiled version", UserWarning)
+            warnings.warn("torch.compile failed for ring attention, using uncompiled version", UserWarning, stacklevel=2)
             return ring_attention_kernel
 
     def _generate_cache_key(
@@ -438,7 +440,7 @@ class FlashLightKernelCompiler:
         pattern: AttentionPattern,
         seq_len: int,
         head_dim: int,
-        pattern_kwargs: Optional[Dict]
+        pattern_kwargs: dict | None
     ) -> str:
         """Generate unique cache key for kernel configuration"""
         key_data = f"{pattern.value}_{seq_len}_{head_dim}_{str(pattern_kwargs)}"
@@ -489,7 +491,7 @@ class FlashLightKernelCompiler:
 
         return base_memory + attention_memory.get(pattern, seq_len * seq_len * 4)
 
-    def get_compilation_stats(self) -> Dict[str, Any]:
+    def get_compilation_stats(self) -> dict[str, Any]:
         """Get compilation statistics"""
         cache_hit_rate = (self.compilation_stats["cache_hits"] /
                          max(1, self.compilation_stats["cache_hits"] + self.compilation_stats["total_compilations"]))
@@ -513,7 +515,7 @@ class FlashLightKernelCompiler:
         num_heads: int = 8,
         batch_size: int = 1,
         num_trials: int = 10
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark specific attention pattern"""
 
         # Generate test data
@@ -535,7 +537,7 @@ class FlashLightKernelCompiler:
         times = []
         for _ in range(num_trials):
             start_time = time.perf_counter()
-            output = compiled_kernel.kernel_fn(q, k, v)
+            compiled_kernel.kernel_fn(q, k, v)
             if device.type == 'cuda':
                 torch.cuda.synchronize()
             end_time = time.perf_counter()

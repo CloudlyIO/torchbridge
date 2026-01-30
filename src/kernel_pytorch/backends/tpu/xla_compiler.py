@@ -4,19 +4,20 @@ XLA Compiler for TPU Optimization
 Provides XLA compilation, optimization, and caching for TPU models.
 """
 
+import hashlib
 import logging
+import time
 import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Union, List, Callable
-import time
-import hashlib
-import pickle
 
-from kernel_pytorch.core.config import TPUConfig, TPUCompilationMode
+from kernel_pytorch.core.config import TPUCompilationMode, TPUConfig
+
+from . import xla_compat
 from .cache_utils import LRUCache
 from .tpu_exceptions import XLACompilationError, raise_or_warn
-from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +47,8 @@ class XLACompiler:
     def _setup_xla_compiler(self) -> None:
         """Set up XLA compiler environment."""
         try:
-            import torch_xla
-            import torch_xla.core.xla_model as xm
+            import torch_xla  # noqa: F401
+            import torch_xla.core.xla_model as xm  # noqa: F401
 
             self._xla_available = True
             logger.info(
@@ -61,11 +62,12 @@ class XLACompiler:
             self._xla_available = False
             warnings.warn(
                 "PyTorch/XLA not available. Compiler will use CPU fallback.",
-                RuntimeWarning
+                RuntimeWarning,
+            stacklevel=2,
             )
 
     def compile_model(self, model: nn.Module,
-                     sample_inputs: Optional[Union[torch.Tensor, tuple]] = None,
+                     sample_inputs: torch.Tensor | tuple | None = None,
                      use_cache: bool = True) -> nn.Module:
         """
         Compile model for TPU execution.
@@ -79,7 +81,7 @@ class XLACompiler:
             Compiled model
         """
         if not self._xla_available:
-            warnings.warn("XLA not available, returning original model")
+            warnings.warn("XLA not available, returning original model", stacklevel=2)
             return model
 
         # Generate cache key
@@ -117,7 +119,7 @@ class XLACompiler:
         return compiled_model
 
     def _compile_torch_xla(self, model: nn.Module,
-                          sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> nn.Module:
+                          sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
         """Compile using PyTorch/XLA torch.compile."""
         try:
             # Sync for XLA compilation using compatibility layer
@@ -153,7 +155,7 @@ class XLACompiler:
             return model
 
     def _compile_xla_direct(self, model: nn.Module,
-                           sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> nn.Module:
+                           sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
         """Compile using direct XLA compilation."""
         try:
             # Force XLA compilation with sample inputs
@@ -181,15 +183,15 @@ class XLACompiler:
             return model
 
     def _compile_pjit(self, model: nn.Module,
-                     sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> nn.Module:
+                     sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
         """Compile using JAX pjit (experimental)."""
         if not self.config.enable_jax_integration:
-            warnings.warn("JAX integration disabled, falling back to torch_xla")
+            warnings.warn("JAX integration disabled, falling back to torch_xla", stacklevel=2)
             return self._compile_torch_xla(model, sample_inputs)
 
         try:
             # This is experimental - would require JAX integration
-            warnings.warn("pjit compilation not yet implemented, using torch_xla")
+            warnings.warn("pjit compilation not yet implemented, using torch_xla", stacklevel=2)
             return self._compile_torch_xla(model, sample_inputs)
 
         except Exception as e:
@@ -198,7 +200,7 @@ class XLACompiler:
             return model
 
     def _generate_cache_key(self, model: nn.Module,
-                           sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> str:
+                           sample_inputs: torch.Tensor | tuple | None) -> str:
         """Generate cache key for model compilation."""
         # Create hash based on model structure and config
         model_str = str(model)
@@ -226,7 +228,7 @@ class XLACompiler:
         return total_params * 4
 
     def optimize_for_inference(self, model: nn.Module,
-                             sample_inputs: Optional[Union[torch.Tensor, tuple]] = None) -> nn.Module:
+                             sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
         """
         Optimize model specifically for inference.
 
@@ -254,7 +256,7 @@ class XLACompiler:
         return optimized_model
 
     def optimize_for_training(self, model: nn.Module,
-                            sample_inputs: Optional[Union[torch.Tensor, tuple]] = None) -> nn.Module:
+                            sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
         """
         Optimize model specifically for training.
 
@@ -278,7 +280,7 @@ class XLACompiler:
 
         return optimized_model
 
-    def get_compilation_stats(self) -> Dict[str, Any]:
+    def get_compilation_stats(self) -> dict[str, Any]:
         """Get compilation statistics."""
         cache_stats = self._compilation_cache.get_stats()
 
@@ -301,8 +303,8 @@ class XLACompiler:
             pass
 
     def benchmark_compilation(self, model: nn.Module,
-                            sample_inputs: Union[torch.Tensor, tuple],
-                            num_runs: int = 3) -> Dict[str, float]:
+                            sample_inputs: torch.Tensor | tuple,
+                            num_runs: int = 3) -> dict[str, float]:
         """
         Benchmark compilation performance.
 
@@ -316,7 +318,7 @@ class XLACompiler:
         """
         compilation_times = []
 
-        for i in range(num_runs):
+        for _i in range(num_runs):
             # Clear cache for fair comparison
             self.clear_cache()
 

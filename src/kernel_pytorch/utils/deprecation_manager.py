@@ -6,9 +6,7 @@ and automated tracking for the Phase 2 refactoring transition period.
 """
 
 import warnings
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
-import os
+from typing import Any
 
 
 class DeprecationManager:
@@ -23,7 +21,7 @@ class DeprecationManager:
     """
 
     # Centralized deprecation schedule
-    DEPRECATION_SCHEDULE = {
+    DEPRECATION_SCHEDULE: dict[str, dict[str, Any]] = {
         "hardware_adaptation": {
             "removal_version": "2.0.0",
             "removal_date": "June 2026",
@@ -69,7 +67,7 @@ class DeprecationManager:
     def warn_deprecated_module(
         cls,
         module_name: str,
-        imported_class: Optional[str] = None,
+        imported_class: str | None = None,
         stacklevel: int = 3
     ) -> None:
         """
@@ -146,7 +144,7 @@ from kernel_pytorch.{module_name.replace('_', '.')} import ClassName
         return guide
 
     @classmethod
-    def check_deprecation_status(cls) -> Dict[str, Any]:
+    def check_deprecation_status(cls) -> dict[str, Any]:
         """
         Check status of all deprecations for monitoring purposes.
 
@@ -171,7 +169,7 @@ from kernel_pytorch.{module_name.replace('_', '.')} import ClassName
 
 def warn_deprecated_import(
     old_module: str,
-    class_name: Optional[str] = None,
+    class_name: str | None = None,
     stacklevel: int = 3
 ) -> None:
     """

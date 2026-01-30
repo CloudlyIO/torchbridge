@@ -12,36 +12,31 @@ All backends (NVIDIA, AMD, TPU, Intel) should inherit from the base classes
 and provide a consistent API.
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-from typing import Dict, Any
 
 from kernel_pytorch.backends import (
-    # Base classes
-    BaseBackend,
-    CPUBackend,
-    BaseOptimizer,
-    CPUOptimizer,
-    BaseMemoryManager,
-    BaseMemoryStats,
-    # Dataclasses
-    DeviceInfo,
-    OptimizationResult,
-    OptimizationLevel,
-    KernelConfig,
-    OptimizationStrategy,
-    # Factory
+    # Exceptions
     BackendFactory,
     BackendType,
+    # Base classes
+    BaseBackend,
+    BaseOptimizer,
+    CPUBackend,
+    CPUOptimizer,
+    # Dataclasses
+    DeviceInfo,
+    KernelConfig,
+    OptimizationLevel,
+    OptimizationResult,
+    OptimizationStrategy,
+    detect_best_backend,
     get_backend,
     get_optimizer,
-    detect_best_backend,
     list_available_backends,
-    # Exceptions
-    BackendError,
 )
-
 
 # =============================================================================
 # Test Models
@@ -502,10 +497,10 @@ class TestUnifiedInterface:
     @pytest.fixture
     def backends(self):
         """Create instances of all backends."""
-        from kernel_pytorch.backends.nvidia import NVIDIABackend
         from kernel_pytorch.backends.amd import AMDBackend
-        from kernel_pytorch.backends.tpu import TPUBackend
         from kernel_pytorch.backends.intel import IntelBackend
+        from kernel_pytorch.backends.nvidia import NVIDIABackend
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         return [
             CPUBackend(),
@@ -545,7 +540,7 @@ class TestUnifiedInterface:
 
     def test_all_have_optimize_for_inference(self, backends):
         """Test all backends have optimize_for_inference method."""
-        model = SimpleModel()
+        SimpleModel()
 
         for backend in backends:
             assert hasattr(backend, 'optimize_for_inference')
@@ -553,7 +548,7 @@ class TestUnifiedInterface:
 
     def test_all_have_optimize_for_training(self, backends):
         """Test all backends have optimize_for_training method."""
-        model = SimpleModel()
+        SimpleModel()
 
         for backend in backends:
             assert hasattr(backend, 'optimize_for_training')
@@ -676,7 +671,7 @@ class TestIntegration:
         """Test workflow using factory for both backend and optimizer."""
         # Create backend and optimizer
         backend_type = detect_best_backend()
-        backend = get_backend(backend_type)
+        get_backend(backend_type)
         optimizer = get_optimizer(backend_type)
 
         # Create and optimize model

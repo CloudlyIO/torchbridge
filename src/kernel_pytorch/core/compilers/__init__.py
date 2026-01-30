@@ -10,26 +10,26 @@ These implementations bridge current PyTorch optimization gaps while preparing
 for next-generation computing paradigms.
 """
 
-from .flashlight_compiler import (
-    FlashLightKernelCompiler,
-    AttentionPattern,
-    CompiledKernel,
-    KernelCache
-)
-
-from .pygraph_optimizer import (
-    PyGraphCUDAOptimizer,
-    WorkloadAnalysis,
-    GraphDeploymentStrategy,
-    CUDAGraphState,
-    CUDAGraphState as CUDAGraphManager  # Backward compatibility alias
-)
-
 from .enhanced_fusion import (
     FusionBoundaryOptimizer,
     FusionPass,
+    FusionStrategy,
     OptimizedFXGraph,
-    FusionStrategy
+)
+from .flashlight_compiler import (
+    AttentionPattern,
+    CompiledKernel,
+    FlashLightKernelCompiler,
+    KernelCache,
+)
+from .pygraph_optimizer import (
+    CUDAGraphState,
+    GraphDeploymentStrategy,
+    PyGraphCUDAOptimizer,
+    WorkloadAnalysis,
+)
+from .pygraph_optimizer import (
+    CUDAGraphState as CUDAGraphManager,  # Backward compatibility alias
 )
 
 __all__ = [

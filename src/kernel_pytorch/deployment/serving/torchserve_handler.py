@@ -25,19 +25,20 @@ Example:
 Version: 0.3.9
 """
 
-import torch
-import torch.nn as nn
-import logging
 import json
-import time
+import logging
 import os
+import shutil
 import subprocess
 import tempfile
-import shutil
-from typing import Dict, List, Any, Optional, Union, Tuple
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
+import time
 from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -57,18 +58,18 @@ class HandlerConfig:
 
     # Device settings
     device: str = "auto"  # auto, cuda, cpu
-    device_ids: List[int] = field(default_factory=list)
+    device_ids: list[int] = field(default_factory=list)
 
     # Monitoring
     enable_metrics: bool = True
     log_inference_time: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "HandlerConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "HandlerConfig":
         """Create from dictionary."""
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
@@ -82,8 +83,8 @@ class BaseHandler(ABC):
     """
 
     def __init__(self):
-        self.model: Optional[nn.Module] = None
-        self.device: Optional[torch.device] = None
+        self.model: nn.Module | None = None
+        self.device: torch.device | None = None
         self.config: HandlerConfig = HandlerConfig()
         self.initialized: bool = False
         self.context = None
@@ -121,7 +122,7 @@ class BaseHandler(ABC):
         # Load configuration if available
         config_path = os.path.join(model_dir, "handler_config.json")
         if os.path.exists(config_path):
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config_data = json.load(f)
                 self.config = HandlerConfig.from_dict(config_data)
 
@@ -170,7 +171,7 @@ class BaseHandler(ABC):
         if self.config.enable_fp8 and torch.cuda.is_available():
             try:
                 # FP8 requires specific hardware
-                from kernel_pytorch.precision import FP8Config
+                from kernel_pytorch.precision import FP8Config  # noqa: F401
                 logger.info("FP8 optimization requested (requires H100/Blackwell)")
             except ImportError:
                 logger.warning("FP8 not available, falling back to FP16")
@@ -193,7 +194,7 @@ class BaseHandler(ABC):
         return model
 
     @abstractmethod
-    def preprocess(self, data: List[Dict[str, Any]]) -> torch.Tensor:
+    def preprocess(self, data: list[dict[str, Any]]) -> torch.Tensor:
         """
         Preprocess input data into model-ready tensors.
 
@@ -206,7 +207,7 @@ class BaseHandler(ABC):
         pass
 
     @abstractmethod
-    def postprocess(self, output: torch.Tensor) -> List[Dict[str, Any]]:
+    def postprocess(self, output: torch.Tensor) -> list[dict[str, Any]]:
         """
         Postprocess model output into response format.
 
@@ -237,7 +238,7 @@ class BaseHandler(ABC):
 
         return output
 
-    def handle(self, data: List[Dict[str, Any]], context) -> List[Dict[str, Any]]:
+    def handle(self, data: list[dict[str, Any]], context) -> list[dict[str, Any]]:
         """
         Main entry point for TorchServe inference requests.
 
@@ -278,7 +279,7 @@ class BaseHandler(ABC):
 
         return result
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get handler metrics."""
         avg_time = (
             self._total_inference_time / self._inference_count
@@ -314,7 +315,7 @@ class KernelPyTorchHandler(BaseHandler):
         ```
     """
 
-    def preprocess(self, data: List[Dict[str, Any]]) -> torch.Tensor:
+    def preprocess(self, data: list[dict[str, Any]]) -> torch.Tensor:
         """
         Default preprocessing: expects 'input' key with tensor data.
 
@@ -344,7 +345,7 @@ class KernelPyTorchHandler(BaseHandler):
 
         return torch.stack(tensors)
 
-    def postprocess(self, output: torch.Tensor) -> List[Dict[str, Any]]:
+    def postprocess(self, output: torch.Tensor) -> list[dict[str, Any]]:
         """
         Default postprocessing: returns output tensor as list.
 
@@ -369,7 +370,7 @@ class KernelPyTorchHandler(BaseHandler):
 
 def create_torchserve_handler(
     handler_class: type = KernelPyTorchHandler,
-    config: Optional[HandlerConfig] = None,
+    config: HandlerConfig | None = None,
 ) -> BaseHandler:
     """
     Create a TorchServe handler instance.
@@ -395,18 +396,18 @@ class TorchServePackageConfig:
     version: str = "1.0"
     handler: str = "kernel_pytorch.deployment.serving.torchserve_handler:KernelPyTorchHandler"
     runtime: str = "python"
-    requirements_file: Optional[str] = None
-    extra_files: List[str] = field(default_factory=list)
+    requirements_file: str | None = None
+    extra_files: list[str] = field(default_factory=list)
 
     # Handler config to embed
-    handler_config: Optional[HandlerConfig] = None
+    handler_config: HandlerConfig | None = None
 
 
 def package_for_torchserve(
     model: nn.Module,
     output_path: str,
     config: TorchServePackageConfig,
-    sample_input: Optional[torch.Tensor] = None,
+    sample_input: torch.Tensor | None = None,
 ) -> str:
     """
     Package a model for TorchServe deployment.

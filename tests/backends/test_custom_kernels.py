@@ -9,21 +9,21 @@ This module tests the custom CUDA kernel implementations including:
 - Fallback mechanisms
 """
 
+import math
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-from typing import Tuple
 
 # Import custom kernel modules
 try:
     from kernel_pytorch.hardware.gpu.custom_kernels import (
         FlashAttentionV3,
-        create_flash_attention_v3,
         FusedLinearGELU,
         FusedLinearSiLU,
-        create_fused_ffn_layer
+        create_flash_attention_v3,
+        create_fused_ffn_layer,
     )
     CUSTOM_KERNELS_AVAILABLE = True
 except ImportError:
@@ -31,7 +31,7 @@ except ImportError:
 
 # Try to import compiled CUDA kernels
 try:
-    import kernel_pytorch_cuda
+    import kernel_pytorch_cuda  # noqa: F401
     CUDA_KERNELS_AVAILABLE = torch.cuda.is_available()
 except ImportError:
     CUDA_KERNELS_AVAILABLE = False
@@ -54,7 +54,7 @@ def create_attention_tensors(
     head_dim: int,
     device: torch.device = torch.device('cpu'),
     dtype: torch.dtype = torch.float32
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Create random Q, K, V tensors for attention testing."""
     Q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
     K = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
@@ -394,7 +394,7 @@ class TestFlashAttentionV3Performance:
 
         start.record()
         for _ in range(100):
-            output_fa3 = fa3(Q, K, V)
+            fa3(Q, K, V)
         end.record()
         torch.cuda.synchronize()
         time_fa3 = start.elapsed_time(end) / 100
@@ -402,13 +402,13 @@ class TestFlashAttentionV3Performance:
         # Benchmark PyTorch
         start.record()
         for _ in range(100):
-            output_ref = pytorch_attention_reference(Q, K, V, scale)
+            pytorch_attention_reference(Q, K, V, scale)
         end.record()
         torch.cuda.synchronize()
         time_pytorch = start.elapsed_time(end) / 100
 
         speedup = time_pytorch / time_fa3
-        print(f"\nFlashAttention-3 Performance:")
+        print("\nFlashAttention-3 Performance:")
         print(f"  FA-3 time: {time_fa3:.3f} ms")
         print(f"  PyTorch time: {time_pytorch:.3f} ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -430,7 +430,7 @@ class TestFlashAttentionV3Performance:
         scale = 1.0 / math.sqrt(head_dim)
 
         fa3 = FlashAttentionV3(causal=False, scale=scale)
-        output = fa3(Q, K, V)
+        fa3(Q, K, V)
 
         peak_memory = torch.cuda.max_memory_allocated() / 1024**2  # MB
 
@@ -681,7 +681,7 @@ class TestFusedLinearPerformance:
 
         start.record()
         for _ in range(100):
-            output_fused = fused_layer(x)
+            fused_layer(x)
         end.record()
         torch.cuda.synchronize()
         time_fused = start.elapsed_time(end) / 100
@@ -689,13 +689,13 @@ class TestFusedLinearPerformance:
         # Benchmark separate
         start.record()
         for _ in range(100):
-            output_separate = F.gelu(linear(x))
+            F.gelu(linear(x))
         end.record()
         torch.cuda.synchronize()
         time_separate = start.elapsed_time(end) / 100
 
         speedup = time_separate / time_fused
-        print(f"\nFused Linear+GELU Performance:")
+        print("\nFused Linear+GELU Performance:")
         print(f"  Fused time: {time_fused:.3f} ms")
         print(f"  Separate time: {time_separate:.3f} ms")
         print(f"  Speedup: {speedup:.2f}x")

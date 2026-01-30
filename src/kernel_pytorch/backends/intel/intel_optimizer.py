@@ -6,15 +6,15 @@ including graph optimizations, operator fusion, and precision tuning.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import torch
 import torch.nn as nn
 
-from .intel_exceptions import XPUOptimizationError, XPUNotAvailableError
-from .xpu_utilities import XPU_AVAILABLE, IPEX_AVAILABLE
+from .intel_exceptions import XPUOptimizationError
+from .xpu_utilities import IPEX_AVAILABLE, XPU_AVAILABLE
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class IntelOptimizationLevel(Enum):
 class OptimizationResult:
     """Result of an optimization pass."""
     success: bool
-    optimizations_applied: List[str]
-    warnings: List[str]
-    metrics: Dict[str, Any]
+    optimizations_applied: list[str]
+    warnings: list[str]
+    metrics: dict[str, Any]
 
 
 class IntelOptimizer:
@@ -61,14 +61,14 @@ class IntelOptimizer:
         """
         self.optimization_level = optimization_level
         self.device_type = device_type
-        self._applied_optimizations: List[str] = []
+        self._applied_optimizations: list[str] = []
 
     def optimize(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Apply all optimizations based on the configured level.
 
@@ -126,7 +126,7 @@ class IntelOptimizer:
     def _apply_standard_optimizations(
         self,
         model: nn.Module,
-        dtype: Optional[torch.dtype] = None
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """Apply standard (O1) optimizations."""
         # Apply IPEX optimization if available
@@ -144,7 +144,7 @@ class IntelOptimizer:
     def _apply_aggressive_optimizations(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None
+        sample_input: torch.Tensor | None = None
     ) -> nn.Module:
         """Apply aggressive (O2) optimizations."""
         # Apply graph optimization
@@ -161,7 +161,7 @@ class IntelOptimizer:
     def _apply_maximum_optimizations(
         self,
         model: nn.Module
-    ) -> Tuple[nn.Module, List[str]]:
+    ) -> tuple[nn.Module, list[str]]:
         """Apply maximum (O3) optimizations."""
         warnings_list = []
 
@@ -184,7 +184,7 @@ class IntelOptimizer:
     def _apply_ipex_optimize(
         self,
         model: nn.Module,
-        dtype: Optional[torch.dtype] = None
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """Apply IPEX optimization."""
         if not IPEX_AVAILABLE:
@@ -264,7 +264,7 @@ class IntelOptimizer:
         """Optimize linear layers for Intel architecture."""
         optimized_count = 0
 
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if isinstance(module, nn.Linear):
                 # Check for optimal dimensions
                 in_features, out_features = module.in_features, module.out_features
@@ -272,7 +272,7 @@ class IntelOptimizer:
                 # Intel XPU prefers dimensions divisible by 16 for vectorization
                 if in_features % 16 != 0 or out_features % 16 != 0:
                     # Mark for potential padding (actual padding would change semantics)
-                    setattr(module, '_intel_suboptimal_dims', True)
+                    module._intel_suboptimal_dims = True
                 else:
                     optimized_count += 1
 
@@ -284,7 +284,7 @@ class IntelOptimizer:
     def _optimize_graph(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None
+        sample_input: torch.Tensor | None = None
     ) -> nn.Module:
         """Apply graph-level optimizations."""
         if not IPEX_AVAILABLE or sample_input is None:
@@ -343,7 +343,7 @@ class IntelOptimizer:
             raise XPUOptimizationError(
                 f"Auto-quantization failed: {e}",
                 optimization_type="quantization"
-            )
+            ) from e
 
         return model
 
@@ -367,7 +367,7 @@ class IntelKernelOptimizer:
             device_type: Target device type
         """
         self.device_type = device_type
-        self._kernel_configs: Dict[str, Dict[str, Any]] = {}
+        self._kernel_configs: dict[str, dict[str, Any]] = {}
 
     def get_optimal_gemm_config(
         self,
@@ -375,7 +375,7 @@ class IntelKernelOptimizer:
         n: int,
         k: int,
         dtype: torch.dtype = torch.float32
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get optimal GEMM configuration for given dimensions.
 
@@ -415,9 +415,9 @@ class IntelKernelOptimizer:
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int, ...],
+        kernel_size: tuple[int, ...],
         dtype: torch.dtype = torch.float32
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get optimal convolution configuration.
 
@@ -452,7 +452,7 @@ class IntelKernelOptimizer:
         head_dim: int,
         num_heads: int,
         dtype: torch.dtype = torch.float32
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get optimal attention configuration.
 

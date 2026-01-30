@@ -7,14 +7,16 @@ This module provides optimizations for ResNet models including:
 - Batch inference optimization
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
+
 import torch
 import torch.nn as nn
+
 from .base import (
     BaseVisionOptimizer,
-    VisionOptimizationConfig,
-    VisionModelType,
     OptimizationLevel,
+    VisionModelType,
+    VisionOptimizationConfig,
     count_parameters,
     estimate_model_memory,
 )
@@ -23,7 +25,7 @@ from .base import (
 class ResNetOptimizer(BaseVisionOptimizer):
     """Optimizer for ResNet models."""
 
-    def __init__(self, config: Optional[VisionOptimizationConfig] = None):
+    def __init__(self, config: VisionOptimizationConfig | None = None):
         """Initialize ResNet optimizer.
 
         Args:
@@ -72,7 +74,7 @@ class ResNetOptimizer(BaseVisionOptimizer):
         self,
         model: nn.Module,
         images: torch.Tensor,
-        batch_size: Optional[int] = None
+        batch_size: int | None = None
     ) -> torch.Tensor:
         """Run optimized batch inference.
 
@@ -141,7 +143,7 @@ def create_resnet_optimizer(
     try:
         import torchvision.models as models
     except ImportError:
-        raise ImportError("torchvision is required for ResNet models. Install with: pip install torchvision")
+        raise ImportError("torchvision is required for ResNet models. Install with: pip install torchvision") from None
 
     # Create model
     model_fn = getattr(models, model_name, None)
@@ -188,7 +190,7 @@ class ResNetBenchmark:
         num_iterations: int = 100,
         warmup_iterations: int = 10,
         image_size: int = 224,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark inference performance.
 
         Args:
@@ -250,7 +252,7 @@ class ResNetBenchmark:
             "num_iterations": num_iterations,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:

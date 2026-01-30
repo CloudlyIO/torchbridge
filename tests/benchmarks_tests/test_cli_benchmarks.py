@@ -2,16 +2,15 @@
 Tests for CLI benchmarking functionality.
 """
 
-import pytest
-import time
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
 
+import pytest
 from benchmarks.cli_performance_benchmark import (
-    CLIPerformanceBenchmark,
     CLIBenchmarkResult,
-    PackagingBenchmark
+    CLIPerformanceBenchmark,
+    PackagingBenchmark,
 )
 
 
@@ -100,7 +99,7 @@ class TestCLIPerformanceBenchmark:
         assert 'kernel_pytorch.cli' in results
 
         # Times should be reasonable (positive numbers)
-        for module, time_ms in results.items():
+        for _module, time_ms in results.items():
             if time_ms >= 0:  # Skip failed imports
                 assert time_ms < 10000  # Should import in < 10 seconds
 
@@ -221,7 +220,7 @@ class TestCLIPerformanceBenchmark:
 
                 # Verify file content
                 import json
-                with open(f.name, 'r') as json_file:
+                with open(f.name) as json_file:
                     saved_data = json.load(json_file)
 
                 assert 'timestamp' in saved_data
@@ -259,7 +258,7 @@ class TestPackagingBenchmark:
 
         # Should have metrics for existing directories
         assert len(results) > 0
-        for category, metrics in results.items():
+        for _category, metrics in results.items():
             assert 'total_bytes' in metrics
             assert 'total_mb' in metrics
             assert 'file_count' in metrics

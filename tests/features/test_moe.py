@@ -23,39 +23,39 @@ MOE_EXTENDED_AVAILABLE = False
 # Import MoE modules
 try:
     from kernel_pytorch import (
+        FeedForwardExpert,
+        GLaMStyleMoE,
+        LoadBalancer,
+        MoEConfig,
         MoELayer,
         SparseMoELayer,
-        SwitchTransformerMoE,
-        GLaMStyleMoE,
-        MoEConfig,
-        create_moe_layer,
-        create_moe,
-        TopKRouter,
         SwitchRouter,
-        LoadBalancer,
-        FeedForwardExpert,
+        SwitchTransformerMoE,
+        TopKRouter,
+        create_moe,
+        create_moe_layer,
     )
     MOE_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     pass
 
 # Extended imports - some may not be exported from main __init__
 try:
-    from kernel_pytorch.mixture_of_experts.moe_layers import AdaptiveMoELayer
-    from kernel_pytorch.mixture_of_experts.routing import (
-        HashRouter,
-        LearnedRouter,
-        DynamicCapacityRouter,
-    )
     from kernel_pytorch.mixture_of_experts.expert_networks import (
-        ConvolutionalExpert,
         AttentionExpert,
+        ConvolutionalExpert,
         ParameterEfficientExpert,
     )
+    from kernel_pytorch.mixture_of_experts.moe_layers import AdaptiveMoELayer
     from kernel_pytorch.mixture_of_experts.optimization import (
         ExpertParallelism,
         ExpertScheduler,
         MemoryEfficientSwitching,
+    )
+    from kernel_pytorch.mixture_of_experts.routing import (
+        DynamicCapacityRouter,
+        HashRouter,
+        LearnedRouter,  # noqa: F401
     )
     MOE_EXTENDED_AVAILABLE = True
 except ImportError:

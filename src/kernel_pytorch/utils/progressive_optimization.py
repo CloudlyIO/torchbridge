@@ -6,27 +6,22 @@ with different levels of kernel optimization, showing the computational
 equivalence while highlighting performance improvements.
 """
 
+import time
+
 import torch
 import torch.nn as nn
-import time
-import math
-from typing import Dict, List, Optional, Tuple
 
 # Import our optimized components
-from ..components.basic_optimized import (
+from ..core.components.basic_optimized import (
     OptimizedTransformerBlock as BasicTransformerBlock,
-    OptimizedMultiHeadAttention,
-    OptimizedMLP
 )
-from ..components.jit_optimized import (
-    JITOptimizedTransformer as JITOptimizedTransformerBlock
-)
+from ..core.components.jit_optimized import FullyJITTransformerBlock
 
 try:
     from .triton_fused_ops import (
+        TritonLayerNorm,  # noqa: F401
         TritonOptimizedTransformerBlock,
-        TritonLayerNorm,
-        TritonSwiGLU
+        TritonSwiGLU,  # noqa: F401
     )
     TRITON_AVAILABLE = True
 except ImportError:
@@ -34,7 +29,7 @@ except ImportError:
     print("Triton not available, skipping Triton optimizations")
 
 try:
-    import kernel_pytorch_cuda
+    import kernel_pytorch_cuda  # noqa: F401
     CUDA_AVAILABLE = True
 except ImportError:
     CUDA_AVAILABLE = False
@@ -139,7 +134,7 @@ class ProgressiveOptimizationDemo:
                 max_diff = diff.max().item()
                 mean_diff = diff.mean().item()
 
-                status = "✓ PASS" if max_diff < tolerance else "✗ FAIL"
+                status = " PASS" if max_diff < tolerance else " FAIL"
                 print(f"{name1:10s} vs {name2:10s}: max_diff={max_diff:.2e}, mean_diff={mean_diff:.2e} [{status}]")
 
     def print_results(self):
@@ -191,7 +186,7 @@ class ProgressiveOptimizationDemo:
         start_time = time.perf_counter()
         for _ in range(100):
             y = x.view(-1, dim)  # Contiguous reshape
-            result = torch.sum(y, dim=1)
+            torch.sum(y, dim=1)
         torch.cuda.synchronize() if self.device == "cuda" else None
         contiguous_time = time.perf_counter() - start_time
 
@@ -199,7 +194,7 @@ class ProgressiveOptimizationDemo:
         start_time = time.perf_counter()
         for _ in range(100):
             y = x[:, ::2, :]  # Strided access
-            result = torch.sum(y, dim=1)
+            torch.sum(y, dim=1)
         torch.cuda.synchronize() if self.device == "cuda" else None
         strided_time = time.perf_counter() - start_time
 
@@ -220,7 +215,7 @@ class ProgressiveOptimizationDemo:
         for _ in range(100):
             y = torch.relu(x)
             z = torch.sigmoid(y)
-            result = torch.tanh(z)
+            torch.tanh(z)
         torch.cuda.synchronize() if self.device == "cuda" else None
         unfused_time = time.perf_counter() - start_time
 
@@ -232,7 +227,7 @@ class ProgressiveOptimizationDemo:
 
             start_time = time.perf_counter()
             for _ in range(100):
-                result = fused_ops(x)
+                fused_ops(x)
             torch.cuda.synchronize() if self.device == "cuda" else None
             fused_time = time.perf_counter() - start_time
 
@@ -255,7 +250,7 @@ class ProgressiveOptimizationDemo:
             x = torch.randn(size, size, device=self.device)
 
             start_time = time.perf_counter()
-            result = torch.matmul(x, x)  # This will use optimized BLAS
+            torch.matmul(x, x)  # This will use optimized BLAS
             torch.cuda.synchronize() if self.device == "cuda" else None
             time_taken = time.perf_counter() - start_time
 
@@ -275,7 +270,7 @@ class ProgressiveOptimizationDemo:
             # Parallel reduction (optimized by PyTorch/CUDA)
             start_time = time.perf_counter()
             for _ in range(1000):
-                result = torch.sum(x)
+                torch.sum(x)
             torch.cuda.synchronize() if self.device == "cuda" else None
             parallel_time = time.perf_counter() - start_time
 
@@ -300,7 +295,7 @@ class TransformerModel(nn.Module):
             ])
         elif block_type == 'jit':
             self.layers = nn.ModuleList([
-                FullyJITTransformerBlock(dim, num_heads)
+                FullyJITTransformerBlock(dim, num_heads)  # noqa: F821
                 for _ in range(num_layers)
             ])
         elif block_type == 'triton' and TRITON_AVAILABLE:

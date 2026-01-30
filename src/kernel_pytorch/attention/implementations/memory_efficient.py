@@ -13,16 +13,14 @@ Implements:
 v0.4.23 - Complete implementation replacing placeholders
 """
 
-import math
-from typing import Optional, Tuple, Callable
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
-from ..core.base import BaseAttention, AttentionWithCache
-from ..core.registry import register_attention
+from ..core.base import AttentionWithCache, BaseAttention
 from ..core.config import AttentionConfig
+from ..core.registry import register_attention
 
 
 @register_attention('memory_efficient_attention')
@@ -61,7 +59,7 @@ class MemoryEfficientAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention with chunked memory efficiency.
 
@@ -87,7 +85,7 @@ class MemoryEfficientAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention in chunks."""
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -157,7 +155,7 @@ class ChunkedAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention with double chunking.
 
@@ -171,8 +169,8 @@ class ChunkedAttention(BaseAttention):
 
         # Output and normalization accumulators
         output = torch.zeros_like(q)
-        normalizer = torch.zeros(batch_size, num_heads, q_len, 1, device=q.device)
-        max_scores = torch.full(
+        torch.zeros(batch_size, num_heads, q_len, 1, device=q.device)
+        torch.full(
             (batch_size, num_heads, q_len, 1),
             float('-inf'),
             device=q.device
@@ -276,7 +274,7 @@ class LongSequenceAttention(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute long sequence attention.
 
@@ -296,7 +294,7 @@ class LongSequenceAttention(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Combined local window + global strided attention."""
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -334,7 +332,7 @@ class LongSequenceAttention(AttentionWithCache):
                 # Create combined mask for local + global
                 local_len = local_end - local_start
                 global_len = len(global_positions)
-                combined_len = local_len + global_len
+                local_len + global_len
 
                 if attention_mask.dim() == 4:
                     # Extract local mask
@@ -356,7 +354,7 @@ class LongSequenceAttention(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Standard chunked attention for moderate sequence lengths."""
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -412,7 +410,7 @@ class GradientCheckpointedAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor],
+        attention_mask: torch.Tensor | None,
     ) -> torch.Tensor:
         """Core attention computation (wrapped by checkpoint)."""
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
@@ -430,7 +428,7 @@ class GradientCheckpointedAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention with optional gradient checkpointing."""
         if self._checkpointing_enabled and self.training:
@@ -461,7 +459,7 @@ class SlidingWindowAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute sliding window attention."""
         batch_size, num_heads, seq_len, head_dim = q.shape

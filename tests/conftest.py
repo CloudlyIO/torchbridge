@@ -9,12 +9,11 @@ This module provides reusable fixtures for:
 - Mock utilities for hardware simulation
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import MagicMock, patch
-from typing import Dict, Any, Tuple
-
 
 # ============================================================================
 # Device Fixtures

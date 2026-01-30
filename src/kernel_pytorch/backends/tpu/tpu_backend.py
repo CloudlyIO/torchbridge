@@ -12,15 +12,24 @@ Version: 0.4.8
 
 import logging
 import warnings
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Union, List, Tuple
-from pathlib import Path
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
-from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
-from .cache_utils import LRUCache
+from kernel_pytorch.backends.base_backend import (
+    BaseBackend,
+    DeviceInfo,
+    OptimizationLevel,
+)
+from kernel_pytorch.core.config import (
+    KernelPyTorchConfig,
+    TPUVersion,
+)
+
 from . import xla_compat
+from .cache_utils import LRUCache
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +48,7 @@ class TPUBackend(BaseBackend):
     # Backend identifier
     BACKEND_NAME: str = "tpu"
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize TPU backend.
 
@@ -71,7 +80,7 @@ class TPUBackend(BaseBackend):
     def _check_availability(self) -> bool:
         """Check if XLA/TPU is available (implements BaseBackend abstract method)."""
         try:
-            import torch_xla
+            import torch_xla  # noqa: F401
             return self._xla_device is not None and str(self._xla_device) != 'cpu'
         except ImportError:
             return False
@@ -128,7 +137,7 @@ class TPUBackend(BaseBackend):
         """Set up PyTorch/XLA environment for TPU."""
         try:
             import torch_xla
-            import torch_xla.distributed.xla_backend
+            import torch_xla.distributed.xla_backend  # noqa: F401
 
             # Get TPU device using compatibility layer
             self._xla_device = xla_compat.get_xla_device()
@@ -150,7 +159,8 @@ class TPUBackend(BaseBackend):
         except ImportError:
             warnings.warn(
                 "PyTorch/XLA not available. TPU backend will use CPU fallback.",
-                RuntimeWarning
+                RuntimeWarning,
+            stacklevel=2,
             )
             self._xla_device = torch.device("cpu")
 
@@ -208,7 +218,7 @@ class TPUBackend(BaseBackend):
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """
         Prepare a PyTorch model for TPU execution (implements BaseBackend abstract method).
@@ -241,8 +251,8 @@ class TPUBackend(BaseBackend):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize a model for inference (implements BaseBackend abstract method).
@@ -270,9 +280,9 @@ class TPUBackend(BaseBackend):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize a model for training (implements BaseBackend abstract method).
 
@@ -332,7 +342,7 @@ class TPUBackend(BaseBackend):
 
         return model
 
-    def prepare_data(self, data: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+    def prepare_data(self, data: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | dict[str, torch.Tensor]:
         """
         Prepare data for TPU execution.
 
@@ -385,7 +395,7 @@ class TPUBackend(BaseBackend):
     def _setup_distributed_optimizations(self) -> None:
         """Set up optimizations for distributed TPU training."""
         try:
-            import torch_xla.distributed.xla_backend as xla_backend
+            import torch_xla.distributed.xla_backend as xla_backend  # noqa: F401
 
             # Initialize process group for distributed training
             if not torch.distributed.is_initialized():
@@ -396,7 +406,7 @@ class TPUBackend(BaseBackend):
                 )
 
         except ImportError:
-            warnings.warn("Distributed training setup failed - XLA backend not available")
+            warnings.warn("Distributed training setup failed - XLA backend not available", stacklevel=2)
 
     def synchronize(self) -> None:
         """Synchronize TPU operations."""
@@ -407,7 +417,7 @@ class TPUBackend(BaseBackend):
         except Exception:
             pass
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """Get TPU memory statistics."""
         stats = {
             'device': str(self.device),
@@ -436,8 +446,8 @@ class TPUBackend(BaseBackend):
         except Exception:
             pass
 
-    def save_model(self, model: nn.Module, path: Union[str, Path],
-                   save_optimizer: bool = False, optimizer: Optional[torch.optim.Optimizer] = None) -> None:
+    def save_model(self, model: nn.Module, path: str | Path,
+                   save_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> None:
         """
         Save TPU model with proper state synchronization.
 
@@ -463,8 +473,8 @@ class TPUBackend(BaseBackend):
 
             torch.save(checkpoint, path)
 
-    def load_model(self, model: nn.Module, path: Union[str, Path],
-                   load_optimizer: bool = False, optimizer: Optional[torch.optim.Optimizer] = None) -> nn.Module:
+    def load_model(self, model: nn.Module, path: str | Path,
+                   load_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> nn.Module:
         """
         Load TPU model with proper device placement.
 

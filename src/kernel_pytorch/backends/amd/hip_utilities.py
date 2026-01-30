@@ -18,14 +18,14 @@ Version: 0.3.6
 """
 
 import logging
-import torch
-from typing import Optional, List, Dict, Any, Tuple
-from dataclasses import dataclass
-from contextlib import contextmanager
 import time
+from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from .amd_exceptions import AMDDeviceError, HIPKernelError
+import torch
+
+from kernel_pytorch.core.config import AMDConfig
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +36,14 @@ class HIPEvent:
 
     name: str
     device_id: int
-    _event: Optional[torch.cuda.Event] = None
+    _event: torch.cuda.Event | None = None
 
     def __post_init__(self):
         """Initialize the CUDA/HIP event."""
         if torch.cuda.is_available():
             self._event = torch.cuda.Event(enable_timing=True)
 
-    def record(self, stream: Optional[torch.cuda.Stream] = None) -> None:
+    def record(self, stream: torch.cuda.Stream | None = None) -> None:
         """Record the event on a stream."""
         if self._event is not None:
             self._event.record(stream)
@@ -75,7 +75,7 @@ class HIPStream:
     name: str
     device_id: int
     priority: int = 0
-    _stream: Optional[torch.cuda.Stream] = None
+    _stream: torch.cuda.Stream | None = None
 
     def __post_init__(self):
         """Initialize the CUDA/HIP stream."""
@@ -92,7 +92,7 @@ class HIPStream:
             self._stream.synchronize()
 
     @property
-    def stream(self) -> Optional[torch.cuda.Stream]:
+    def stream(self) -> torch.cuda.Stream | None:
         """Get the underlying CUDA/HIP stream."""
         return self._stream
 
@@ -119,15 +119,15 @@ class HIPUtilities:
             config: AMD configuration
         """
         self.config = config
-        self._streams: Dict[str, HIPStream] = {}
-        self._events: Dict[str, HIPEvent] = {}
+        self._streams: dict[str, HIPStream] = {}
+        self._events: dict[str, HIPEvent] = {}
         self._profiling_enabled = config.enable_profiling
-        self._profiling_data: List[Dict[str, Any]] = []
+        self._profiling_data: list[dict[str, Any]] = []
 
         logger.info("HIPUtilities initialized for device %d", config.device_id)
 
     def create_stream(
-        self, name: str, priority: int = 0, device_id: Optional[int] = None
+        self, name: str, priority: int = 0, device_id: int | None = None
     ) -> HIPStream:
         """
         Create a named HIP stream.
@@ -148,7 +148,7 @@ class HIPUtilities:
         logger.debug("Created stream '%s' on device %d", name, device)
         return stream
 
-    def get_stream(self, name: str) -> Optional[HIPStream]:
+    def get_stream(self, name: str) -> HIPStream | None:
         """
         Get a named stream.
 
@@ -161,7 +161,7 @@ class HIPUtilities:
         return self._streams.get(name)
 
     def create_event(
-        self, name: str, device_id: Optional[int] = None
+        self, name: str, device_id: int | None = None
     ) -> HIPEvent:
         """
         Create a named HIP event.
@@ -181,7 +181,7 @@ class HIPUtilities:
         logger.debug("Created event '%s' on device %d", name, device)
         return event
 
-    def synchronize_device(self, device_id: Optional[int] = None) -> None:
+    def synchronize_device(self, device_id: int | None = None) -> None:
         """
         Synchronize all operations on a device.
 
@@ -272,7 +272,7 @@ class HIPUtilities:
                 cpu_time,
             )
 
-    def get_profiling_data(self) -> List[Dict[str, Any]]:
+    def get_profiling_data(self) -> list[dict[str, Any]]:
         """
         Get collected profiling data.
 
@@ -286,7 +286,7 @@ class HIPUtilities:
         self._profiling_data.clear()
         logger.debug("Profiling data cleared")
 
-    def get_profiling_summary(self) -> Dict[str, Any]:
+    def get_profiling_summary(self) -> dict[str, Any]:
         """
         Get summary of profiling data.
 
@@ -297,7 +297,7 @@ class HIPUtilities:
             return {"total_regions": 0}
 
         # Group by region name
-        regions: Dict[str, List[float]] = {}
+        regions: dict[str, list[float]] = {}
         for entry in self._profiling_data:
             name = entry["name"]
             if name not in regions:
@@ -325,7 +325,7 @@ class HIPUtilities:
         self,
         dst: torch.Tensor,
         src: torch.Tensor,
-        stream: Optional[HIPStream] = None,
+        stream: HIPStream | None = None,
     ) -> None:
         """
         Asynchronous memory copy between tensors.
@@ -341,8 +341,8 @@ class HIPUtilities:
             dst.copy_(src, non_blocking=True)
 
     def get_device_properties(
-        self, device_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, device_id: int | None = None
+    ) -> dict[str, Any]:
         """
         Get properties of an AMD GPU device.
 
@@ -371,8 +371,8 @@ class HIPUtilities:
         }
 
     def get_memory_info(
-        self, device_id: Optional[int] = None
-    ) -> Tuple[int, int]:
+        self, device_id: int | None = None
+    ) -> tuple[int, int]:
         """
         Get memory information for a device.
 

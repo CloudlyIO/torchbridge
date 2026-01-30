@@ -29,15 +29,17 @@ Example:
 Version: 0.3.10
 """
 
+import logging
+import threading
+import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
-import time
-import threading
-import logging
-from typing import Dict, List, Any, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +60,11 @@ class ComponentHealth:
     name: str
     status: HealthStatus
     message: str = ""
-    last_check: Optional[datetime] = None
+    last_check: datetime | None = None
     latency_ms: float = 0.0
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -79,7 +81,7 @@ class HealthCheck:
     """Health check result."""
 
     overall_status: HealthStatus
-    components: List[ComponentHealth]
+    components: list[ComponentHealth]
     timestamp: datetime = field(default_factory=datetime.now)
     uptime_seconds: float = 0.0
 
@@ -91,7 +93,7 @@ class HealthCheck:
         """Check if service is ready (healthy or degraded)."""
         return self.overall_status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "overall_status": self.overall_status.value,
@@ -113,7 +115,7 @@ class HealthMonitor:
 
     def __init__(
         self,
-        model: Optional[nn.Module] = None,
+        model: nn.Module | None = None,
         model_name: str = "model",
     ):
         """
@@ -126,8 +128,8 @@ class HealthMonitor:
         self.model = model
         self.model_name = model_name
         self._start_time = time.time()
-        self._custom_checks: Dict[str, Callable[[], ComponentHealth]] = {}
-        self._last_inference_time: Optional[float] = None
+        self._custom_checks: dict[str, Callable[[], ComponentHealth]] = {}
+        self._last_inference_time: float | None = None
         self._inference_errors: int = 0
         self._lock = threading.Lock()
 
@@ -368,7 +370,7 @@ class HealthMonitor:
 
 
 def create_health_monitor(
-    model: Optional[nn.Module] = None,
+    model: nn.Module | None = None,
     model_name: str = "model",
 ) -> HealthMonitor:
     """

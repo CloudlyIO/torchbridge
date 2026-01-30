@@ -4,15 +4,15 @@ Test NVIDIA Configuration Integration
 Tests the new NVIDIA configuration system in KernelPyTorchConfig.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-import torch
-from unittest.mock import patch, MagicMock
 
 from kernel_pytorch.core.config import (
+    HardwareBackend,
     KernelPyTorchConfig,
-    NVIDIAConfig,
     NVIDIAArchitecture,
-    HardwareBackend
+    NVIDIAConfig,
 )
 
 

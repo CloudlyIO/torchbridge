@@ -8,16 +8,16 @@ Core communication patterns and collective operations for distributed training:
 - Communication metrics and monitoring
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable, Set
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
 import numpy as np
 import torch
 import torch.distributed as dist
-from torch.distributed._tensor import DeviceMesh
-from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +53,9 @@ class NetworkTopology:
     topology_type: str = "fat_tree"
 
     # Hierarchical structure
-    rack_count: Optional[int] = None
-    nodes_per_rack: Optional[int] = None
-    rack_bandwidth_gbps: Optional[float] = None
+    rack_count: int | None = None
+    nodes_per_rack: int | None = None
+    rack_bandwidth_gbps: float | None = None
 
 
 @dataclass
@@ -98,7 +98,7 @@ class AdvancedCollectiveOps:
         world_size: int,
         rank: int,
         topology: NetworkTopology,
-        config: Optional[CollectiveOpConfig] = None
+        config: CollectiveOpConfig | None = None
     ):
         self.world_size = world_size
         self.rank = rank
@@ -107,18 +107,18 @@ class AdvancedCollectiveOps:
 
         # Communication state
         self.metrics = CommunicationMetrics()
-        self.bandwidth_history: List[float] = []
-        self.latency_history: List[float] = []
+        self.bandwidth_history: list[float] = []
+        self.latency_history: list[float] = []
 
         # Topology optimization
         self.communication_groups = self._create_communication_groups()
         self.optimal_patterns = self._analyze_optimal_patterns()
 
         # Compression state
-        self.compression_stats: Dict[str, float] = {}
+        self.compression_stats: dict[str, float] = {}
         self.adaptive_compression_enabled = self.config.compression == CompressionMethod.ADAPTIVE
 
-    def _create_communication_groups(self) -> Dict[str, List[int]]:
+    def _create_communication_groups(self) -> dict[str, list[int]]:
         """Create hierarchical communication groups"""
         groups = {}
 
@@ -154,7 +154,7 @@ class AdvancedCollectiveOps:
 
         return groups
 
-    def _analyze_optimal_patterns(self) -> Dict[str, CommunicationPattern]:
+    def _analyze_optimal_patterns(self) -> dict[str, CommunicationPattern]:
         """Analyze optimal communication patterns for different operations"""
         patterns = {}
 
@@ -199,7 +199,7 @@ class AdvancedCollectiveOps:
         self,
         tensor: torch.Tensor,
         async_op: bool = False
-    ) -> Optional[dist.Work]:
+    ) -> dist.Work | None:
         """
         Hierarchical AllReduce optimized for multi-node clusters
 
@@ -244,9 +244,9 @@ class AdvancedCollectiveOps:
     def adaptive_allgather(
         self,
         tensor: torch.Tensor,
-        gather_list: Optional[List[torch.Tensor]] = None,
+        gather_list: list[torch.Tensor] | None = None,
         async_op: bool = False
-    ) -> Optional[dist.Work]:
+    ) -> dist.Work | None:
         """
         Adaptive AllGather with dynamic pattern selection
 
@@ -275,9 +275,9 @@ class AdvancedCollectiveOps:
     def _chunked_allgather(
         self,
         tensor: torch.Tensor,
-        gather_list: Optional[List[torch.Tensor]],
+        gather_list: list[torch.Tensor] | None,
         async_op: bool
-    ) -> Optional[dist.Work]:
+    ) -> dist.Work | None:
         """Chunked allgather for large tensors"""
         chunk_size = self.config.chunk_size_mb * 1024 * 1024 // tensor.element_size()
 
@@ -422,7 +422,7 @@ class AdvancedCollectiveOps:
         self,
         tensor: torch.Tensor,
         op: str = 'sum',
-        pattern: Optional[CommunicationPattern] = None
+        pattern: CommunicationPattern | None = None
     ) -> torch.Tensor:
         """
         Optimized AllReduce with topology awareness
@@ -450,7 +450,7 @@ class AdvancedCollectiveOps:
     async def allgather_optimized(
         self,
         tensor: torch.Tensor,
-        pattern: Optional[CommunicationPattern] = None
+        pattern: CommunicationPattern | None = None
     ) -> torch.Tensor:
         """
         Optimized AllGather with bandwidth optimization
@@ -476,7 +476,7 @@ class AdvancedCollectiveOps:
             # Fallback for testing - simulate gather by replicating tensor
             return torch.cat([tensor for _ in range(self.world_size)], dim=0)
 
-    def get_communication_stats(self) -> Dict[str, Any]:
+    def get_communication_stats(self) -> dict[str, Any]:
         """Get comprehensive communication statistics"""
         return {
             'metrics': {

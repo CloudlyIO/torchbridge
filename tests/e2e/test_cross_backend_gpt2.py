@@ -20,26 +20,21 @@ Success Criteria:
 """
 
 import copy
+
 import pytest
 import torch
 
 from .conftest import (
-    requires_transformers,
-    benchmark_function,
     assert_output_close,
+    benchmark_function,
+    requires_transformers,
 )
-
 from .test_cross_backend_bert import (
-    is_nvidia_available,
-    is_amd_available,
-    is_tpu_available,
-    is_intel_available,
-    requires_nvidia,
     requires_amd,
-    requires_tpu,
     requires_intel,
+    requires_nvidia,
+    requires_tpu,
 )
-
 
 # =============================================================================
 # Cross-Backend GPT-2 Tests
@@ -133,10 +128,10 @@ class TestCrossBackendGPT2:
             message="GPT-2 NVIDIA logits vs CPU baseline"
         )
 
-        print(f"\nGPT-2 NVIDIA Logits Test:")
+        print("\nGPT-2 NVIDIA Logits Test:")
         print(f"  Device: {backend.device}")
         print(f"  Logits shape: {nvidia_logits.shape}")
-        print(f"  Logits match baseline: PASS")
+        print("  Logits match baseline: PASS")
 
     @requires_nvidia
     def test_gpt2_nvidia_generation_match(self, gpt2_baseline):
@@ -166,14 +161,14 @@ class TestCrossBackendGPT2:
         nvidia_text = tokenizer.batch_decode(nvidia_generated, skip_special_tokens=True)
 
         # Compare generated text
-        print(f"\nGPT-2 NVIDIA Generation Test:")
+        print("\nGPT-2 NVIDIA Generation Test:")
         for i, (baseline, nvidia) in enumerate(zip(baseline_text, nvidia_text)):
             print(f"  Sample {i+1}:")
             print(f"    Baseline: {baseline}")
             print(f"    NVIDIA:   {nvidia}")
             assert baseline == nvidia, f"Generation mismatch at sample {i+1}"
 
-        print(f"  Generation match: PASS")
+        print("  Generation match: PASS")
 
     @requires_nvidia
     def test_gpt2_nvidia_speedup(self, gpt2_baseline):
@@ -218,7 +213,7 @@ class TestCrossBackendGPT2:
 
         speedup = cpu_result.mean_time_ms / nvidia_result.mean_time_ms
 
-        print(f"\nGPT-2 NVIDIA Speedup:")
+        print("\nGPT-2 NVIDIA Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  NVIDIA: {nvidia_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -254,14 +249,14 @@ class TestCrossBackendGPT2:
         amd_text = tokenizer.batch_decode(amd_generated, skip_special_tokens=True)
 
         # Compare
-        print(f"\nGPT-2 AMD Generation Test:")
+        print("\nGPT-2 AMD Generation Test:")
         for i, (baseline, amd) in enumerate(zip(baseline_text, amd_text)):
             print(f"  Sample {i+1}:")
             print(f"    Baseline: {baseline}")
             print(f"    AMD:      {amd}")
             assert baseline == amd, f"Generation mismatch at sample {i+1}"
 
-        print(f"  Generation match: PASS")
+        print("  Generation match: PASS")
 
     @requires_amd
     def test_gpt2_amd_speedup(self, gpt2_baseline):
@@ -307,7 +302,7 @@ class TestCrossBackendGPT2:
 
         speedup = cpu_result.mean_time_ms / amd_result.mean_time_ms
 
-        print(f"\nGPT-2 AMD Speedup:")
+        print("\nGPT-2 AMD Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  AMD: {amd_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -317,8 +312,9 @@ class TestCrossBackendGPT2:
     @requires_tpu
     def test_gpt2_tpu_generation_match(self, gpt2_baseline):
         """Test GPT-2 generation matches baseline on TPU."""
-        from kernel_pytorch.backends.tpu import TPUBackend
         import torch_xla.core.xla_model as xm
+
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = gpt2_baseline["model"]
@@ -330,7 +326,7 @@ class TestCrossBackendGPT2:
         prepared_model = backend.prepare_model(model)
 
         # Move inputs to TPU
-        device = xm.xla_device()
+        xm.xla_device()
         tpu_inputs = backend.prepare_data(inputs)
 
         # Generate text
@@ -345,20 +341,21 @@ class TestCrossBackendGPT2:
         tpu_text = tokenizer.batch_decode(tpu_generated.cpu(), skip_special_tokens=True)
 
         # Compare
-        print(f"\nGPT-2 TPU Generation Test:")
+        print("\nGPT-2 TPU Generation Test:")
         for i, (baseline, tpu) in enumerate(zip(baseline_text, tpu_text)):
             print(f"  Sample {i+1}:")
             print(f"    Baseline: {baseline}")
             print(f"    TPU:      {tpu}")
             assert baseline == tpu, f"Generation mismatch at sample {i+1}"
 
-        print(f"  Generation match: PASS")
+        print("  Generation match: PASS")
 
     @requires_tpu
     def test_gpt2_tpu_speedup(self, gpt2_baseline):
         """Test GPT-2 speedup on TPU backend."""
-        from kernel_pytorch.backends.tpu import TPUBackend
         import torch_xla.core.xla_model as xm
+
+        from kernel_pytorch.backends.tpu import TPUBackend
 
         backend = TPUBackend()
         model = gpt2_baseline["model"]
@@ -381,7 +378,7 @@ class TestCrossBackendGPT2:
 
         # TPU optimized
         prepared_model = backend.prepare_model(model)
-        device = xm.xla_device()
+        xm.xla_device()
         tpu_inputs = backend.prepare_data(inputs)
 
         def run_tpu():
@@ -401,7 +398,7 @@ class TestCrossBackendGPT2:
 
         speedup = cpu_result.mean_time_ms / tpu_result.mean_time_ms
 
-        print(f"\nGPT-2 TPU Speedup:")
+        print("\nGPT-2 TPU Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  TPU: {tpu_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -437,14 +434,14 @@ class TestCrossBackendGPT2:
         intel_text = tokenizer.batch_decode(intel_generated.cpu(), skip_special_tokens=True)
 
         # Compare
-        print(f"\nGPT-2 Intel Generation Test:")
+        print("\nGPT-2 Intel Generation Test:")
         for i, (baseline, intel) in enumerate(zip(baseline_text, intel_text)):
             print(f"  Sample {i+1}:")
             print(f"    Baseline: {baseline}")
             print(f"    Intel:    {intel}")
             assert baseline == intel, f"Generation mismatch at sample {i+1}"
 
-        print(f"  Generation match: PASS")
+        print("  Generation match: PASS")
 
     @requires_intel
     def test_gpt2_intel_speedup(self, gpt2_baseline):
@@ -490,7 +487,7 @@ class TestCrossBackendGPT2:
 
         speedup = cpu_result.mean_time_ms / intel_result.mean_time_ms
 
-        print(f"\nGPT-2 Intel Speedup:")
+        print("\nGPT-2 Intel Speedup:")
         print(f"  CPU: {cpu_result.mean_time_ms:.2f}ms")
         print(f"  Intel XPU: {intel_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -509,7 +506,6 @@ class TestCrossBackendGPT2Perplexity:
     def perplexity_setup(self):
         """Set up GPT-2 for perplexity calculation."""
         from transformers import GPT2LMHeadModel, GPT2Tokenizer
-        import torch.nn.functional as F
 
         model_name = "gpt2"
         tokenizer = GPT2Tokenizer.from_pretrained(model_name)
@@ -558,7 +554,7 @@ class TestCrossBackendGPT2Perplexity:
         # Perplexity should be very close
         perplexity_diff = abs(nvidia_perplexity - baseline_perplexity) / baseline_perplexity
 
-        print(f"\nGPT-2 Perplexity Consistency (NVIDIA):")
+        print("\nGPT-2 Perplexity Consistency (NVIDIA):")
         print(f"  Baseline perplexity: {baseline_perplexity:.4f}")
         print(f"  NVIDIA perplexity: {nvidia_perplexity:.4f}")
         print(f"  Difference: {perplexity_diff*100:.2f}%")
@@ -587,7 +583,7 @@ class TestCrossBackendGPT2Perplexity:
 
         perplexity_diff = abs(amd_perplexity - baseline_perplexity) / baseline_perplexity
 
-        print(f"\nGPT-2 Perplexity Consistency (AMD):")
+        print("\nGPT-2 Perplexity Consistency (AMD):")
         print(f"  Baseline perplexity: {baseline_perplexity:.4f}")
         print(f"  AMD perplexity: {amd_perplexity:.4f}")
         print(f"  Difference: {perplexity_diff*100:.2f}%")

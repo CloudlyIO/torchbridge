@@ -4,9 +4,9 @@ Memory Pool Management
 Advanced memory pool management for efficient allocation and deallocation
 """
 
-import torch
-from typing import Dict, List, Optional, Tuple
 import threading
+
+import torch
 
 
 class DynamicMemoryPool:
@@ -17,7 +17,7 @@ class DynamicMemoryPool:
         self.pool = {}
         self.lock = threading.Lock()
 
-    def get_tensor(self, shape: Tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
+    def get_tensor(self, shape: tuple[int, ...], dtype: torch.dtype) -> torch.Tensor:
         """Get tensor from pool or allocate new one"""
         key = (shape, dtype)
         with self.lock:

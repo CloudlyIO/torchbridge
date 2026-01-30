@@ -10,11 +10,10 @@ Tests all placeholder implementations that were completed in v0.4.23:
 v0.4.23 - Complete Placeholder Implementations
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-import math
-
 
 # =============================================================================
 # Test Configuration
@@ -40,8 +39,8 @@ class TestViTAttentionSlicing:
     def test_sliced_attention_import(self):
         """Test that sliced attention can be imported."""
         from kernel_pytorch.models.vision.vit import (
-            SlicedMultiheadAttention,
             SlicedAttentionWrapper,
+            SlicedMultiheadAttention,
         )
         assert SlicedMultiheadAttention is not None
         assert SlicedAttentionWrapper is not None
@@ -192,8 +191,6 @@ class TestInterleavedScheduler:
         """Test that scheduler can be imported."""
         from kernel_pytorch.models.distributed.pipeline_parallel import (
             InterleavedScheduler,
-            PipelineStage,
-            PipelineParallelConfig,
         )
         assert InterleavedScheduler is not None
 
@@ -223,7 +220,7 @@ class TestMockPipelineScheduler:
             InterleavedScheduler,
         )
         assert hasattr(InterleavedScheduler, 'run_forward')
-        assert callable(getattr(InterleavedScheduler, 'run_forward'))
+        assert callable(InterleavedScheduler.run_forward)
 
     def test_run_backward_method_exists(self):
         """Test that run_backward method exists."""
@@ -231,7 +228,7 @@ class TestMockPipelineScheduler:
             InterleavedScheduler,
         )
         assert hasattr(InterleavedScheduler, 'run_backward')
-        assert callable(getattr(InterleavedScheduler, 'run_backward'))
+        assert callable(InterleavedScheduler.run_backward)
 
 
 # =============================================================================
@@ -244,10 +241,9 @@ class TestSparseAttention:
     def test_sparse_attention_imports(self):
         """Test that sparse attention classes can be imported."""
         from kernel_pytorch.attention.implementations.sparse import (
-            DynamicSparseAttention,
             BlockSparseAttention,
+            DynamicSparseAttention,
             StridedSparseAttention,
-            SparseAttentionPattern,
         )
         assert DynamicSparseAttention is not None
         assert BlockSparseAttention is not None
@@ -255,8 +251,8 @@ class TestSparseAttention:
 
     def test_block_sparse_attention(self, device):
         """Test block sparse attention forward pass."""
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
         from kernel_pytorch.attention.core.config import AttentionConfig
+        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
 
         config = AttentionConfig(
             embed_dim=256,
@@ -281,8 +277,10 @@ class TestSparseAttention:
 
     def test_strided_sparse_attention(self, device):
         """Test strided sparse attention forward pass."""
-        from kernel_pytorch.attention.implementations.sparse import StridedSparseAttention
         from kernel_pytorch.attention.core.config import AttentionConfig
+        from kernel_pytorch.attention.implementations.sparse import (
+            StridedSparseAttention,
+        )
 
         config = AttentionConfig(
             embed_dim=256,
@@ -306,8 +304,10 @@ class TestSparseAttention:
 
     def test_dynamic_sparse_attention(self, device):
         """Test dynamic sparse attention with learned patterns."""
-        from kernel_pytorch.attention.implementations.sparse import DynamicSparseAttention
         from kernel_pytorch.attention.core.config import AttentionConfig
+        from kernel_pytorch.attention.implementations.sparse import (
+            DynamicSparseAttention,
+        )
 
         config = AttentionConfig(
             embed_dim=256,
@@ -391,11 +391,9 @@ class TestMemoryEfficientAttention:
     def test_memory_efficient_imports(self):
         """Test that memory-efficient attention classes can be imported."""
         from kernel_pytorch.attention.implementations.memory_efficient import (
-            MemoryEfficientAttention,
             ChunkedAttention,
             LongSequenceAttention,
-            GradientCheckpointedAttention,
-            SlidingWindowAttention,
+            MemoryEfficientAttention,
         )
         assert MemoryEfficientAttention is not None
         assert ChunkedAttention is not None
@@ -403,10 +401,10 @@ class TestMemoryEfficientAttention:
 
     def test_memory_efficient_attention(self, device):
         """Test basic memory-efficient attention."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -426,10 +424,10 @@ class TestMemoryEfficientAttention:
 
     def test_chunked_attention(self, device):
         """Test double-chunked attention for very long sequences."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             ChunkedAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -453,10 +451,10 @@ class TestMemoryEfficientAttention:
 
     def test_long_sequence_attention(self, device):
         """Test attention optimized for long sequences."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             LongSequenceAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -481,10 +479,10 @@ class TestMemoryEfficientAttention:
 
     def test_sliding_window_attention(self, device):
         """Test sliding window attention."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             SlidingWindowAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -504,10 +502,10 @@ class TestMemoryEfficientAttention:
 
     def test_gradient_checkpointing(self, device):
         """Test gradient checkpointed attention."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             GradientCheckpointedAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=256,
@@ -531,10 +529,10 @@ class TestMemoryEfficientAttention:
 
     def test_memory_efficient_vs_standard(self, device):
         """Test that memory-efficient attention produces reasonable outputs."""
+        from kernel_pytorch.attention.core.config import AttentionConfig
         from kernel_pytorch.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
-        from kernel_pytorch.attention.core.config import AttentionConfig
 
         config = AttentionConfig(
             embed_dim=128,
@@ -590,8 +588,8 @@ class TestIntegration:
 
         try:
             from kernel_pytorch.attention.implementations.memory_efficient import (
-                MemoryEfficientAttention,
                 ChunkedAttention,
+                MemoryEfficientAttention,
             )
             attention_classes.extend([
                 (MemoryEfficientAttention, {'chunk_size': 16}),
@@ -615,10 +613,10 @@ class TestIntegration:
     def test_vit_with_sliced_attention(self, device):
         """Test ViT optimizer with attention slicing."""
         from kernel_pytorch.models.vision.vit import (
-            ViTOptimizer,
-            VisionOptimizationConfig,
-            VisionModelType,
             OptimizationLevel,
+            VisionModelType,
+            VisionOptimizationConfig,
+            ViTOptimizer,
         )
 
         config = VisionOptimizationConfig(
@@ -642,10 +640,10 @@ class TestIntegration:
         )
 
         # Test with both sparse and memory-efficient in sequence
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
         from kernel_pytorch.attention.implementations.memory_efficient import (
             MemoryEfficientAttention,
         )
+        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
 
         sparse_attn = BlockSparseAttention(config, block_size=32).to(device)
         mem_attn = MemoryEfficientAttention(config, chunk_size=32).to(device)
@@ -673,8 +671,9 @@ class TestPerformance:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_sliced_attention_performance(self, device):
         """Benchmark sliced attention performance."""
-        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
         import time
+
+        from kernel_pytorch.models.vision.vit import SlicedMultiheadAttention
 
         batch_size = 4
         seq_len = 512
@@ -710,9 +709,10 @@ class TestPerformance:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_sparse_attention_performance(self, device):
         """Benchmark sparse attention performance."""
-        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
-        from kernel_pytorch.attention.core.config import AttentionConfig
         import time
+
+        from kernel_pytorch.attention.core.config import AttentionConfig
+        from kernel_pytorch.attention.implementations.sparse import BlockSparseAttention
 
         config = AttentionConfig(
             embed_dim=768,

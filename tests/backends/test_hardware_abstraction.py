@@ -9,28 +9,38 @@ Tests cover:
 - Integration with existing hardware systems
 """
 
+from typing import Any
+from unittest.mock import Mock
+
 import pytest
 import torch
-import logging
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List, Any
 
 # Import hardware abstraction components
 try:
-    from kernel_pytorch.hardware.abstraction.hal_core import (
-        HardwareAbstractionLayer, DeviceSpec, HardwareCapabilities,
-        ComputeCapability, DeviceMesh, CrossVendorCapabilities
-    )
+    from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
+
     # Use the original HardwareVendor for compatibility
     from kernel_pytorch.distributed_scale.hardware_discovery import HardwareVendor
+    from kernel_pytorch.hardware.abstraction.hal_core import (
+        ComputeCapability,
+        CrossVendorCapabilities,
+        DeviceMesh,
+        DeviceSpec,
+        HardwareAbstractionLayer,
+        HardwareCapabilities,
+    )
     from kernel_pytorch.hardware.abstraction.privateuse1_integration import (
-        PrivateUse1Manager, CustomDeviceBackend, PrivateUse1Config,
-        register_custom_device, validate_privateuse1_setup
+        CustomDeviceBackend,
+        PrivateUse1Config,  # noqa: F401
+        PrivateUse1Manager,  # noqa: F401
+        register_custom_device,  # noqa: F401
+        validate_privateuse1_setup,
     )
     from kernel_pytorch.hardware.abstraction.vendor_adapters import (
-        NVIDIAAdapter, IntelAdapter, CPUAdapter
+        CPUAdapter,
+        IntelAdapter,  # noqa: F401
+        NVIDIAAdapter,
     )
-    from kernel_pytorch.distributed_scale.hardware_adapter import HardwareAdapter
     HAL_AVAILABLE = True
 except ImportError as e:
     HAL_AVAILABLE = False
@@ -184,7 +194,9 @@ class TestPrivateUse1Integration:
 
     def test_privateuse1_manager_creation(self):
         """Test PrivateUse1 manager creation"""
-        from kernel_pytorch.hardware_abstraction.privateuse1_integration import get_privateuse1_manager
+        from kernel_pytorch.hardware_abstraction.privateuse1_integration import (
+            get_privateuse1_manager,
+        )
 
         manager = get_privateuse1_manager()
         assert manager is not None
@@ -200,7 +212,7 @@ class TestPrivateUse1Integration:
             def get_device_count(self) -> int:
                 return 1
 
-            def get_device_properties(self, device_id: int) -> Dict[str, Any]:
+            def get_device_properties(self, device_id: int) -> dict[str, Any]:
                 return {"name": "test_device", "memory": 1024}
 
             def allocate_memory(self, size: int, device_id: int) -> Any:
@@ -464,7 +476,9 @@ class TestIntegrationWithExistingSystems:
 
     def test_compatibility_with_existing_hardware_discovery(self):
         """Test compatibility with existing hardware discovery system"""
-        from kernel_pytorch.distributed_scale.hardware_discovery import HardwareTopologyManager
+        from kernel_pytorch.distributed_scale.hardware_discovery import (
+            HardwareTopologyManager,
+        )
 
         # Should be able to create both systems without conflict
         topology_manager = HardwareTopologyManager()

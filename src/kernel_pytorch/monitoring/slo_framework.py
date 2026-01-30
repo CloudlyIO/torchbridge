@@ -50,14 +50,13 @@ from __future__ import annotations
 
 import statistics
 import threading
-import time
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Deque
+from typing import Any
 
-from .structured_logging import get_logger, correlation_context
+from .structured_logging import correlation_context, get_logger
 
 logger = get_logger(__name__)
 
@@ -208,9 +207,9 @@ class SLICollector:
     """Collects and aggregates SLI measurements."""
 
     def __init__(self, max_measurements: int = 100000):
-        self._latencies: Deque[SLIMeasurement] = deque(maxlen=max_measurements)
-        self._requests: Deque[SLIMeasurement] = deque(maxlen=max_measurements)
-        self._custom: dict[str, Deque[SLIMeasurement]] = {}
+        self._latencies: deque[SLIMeasurement] = deque(maxlen=max_measurements)
+        self._requests: deque[SLIMeasurement] = deque(maxlen=max_measurements)
+        self._custom: dict[str, deque[SLIMeasurement]] = {}
         self._lock = threading.Lock()
         self._total_requests = 0
         self._successful_requests = 0
@@ -402,7 +401,7 @@ class SLOManager:
         self._slos: dict[str, SLOConfig] = {}
         self._collector = SLICollector(max_measurements)
         self._lock = threading.Lock()
-        self._compliance_history: Deque[ComplianceReport] = deque(maxlen=10000)
+        self._compliance_history: deque[ComplianceReport] = deque(maxlen=10000)
 
     def add_slo(self, config: SLOConfig) -> None:
         """Add an SLO configuration."""

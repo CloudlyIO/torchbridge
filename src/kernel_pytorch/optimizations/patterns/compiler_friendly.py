@@ -5,7 +5,6 @@ This module provides comprehensive guidance and practical implementations for
 writing PyTorch code that optimizes effectively with modern compilers like
 torch.compile, TorchScript, and TensorRT.
 
-🎓 EDUCATIONAL FOCUS:
 Modern PyTorch compilers can achieve significant performance improvements, but only
 when code follows compiler-friendly patterns:
 - torch.compile: JIT compilation with graph optimization and kernel fusion
@@ -13,26 +12,26 @@ when code follows compiler-friendly patterns:
 - TensorRT: NVIDIA's deep learning inference optimizer
 - XLA: Google's accelerated linear algebra compiler
 
-🔧 COMPILER OPTIMIZATION PRINCIPLES:
+ COMPILER OPTIMIZATION PRINCIPLES:
 - Static shapes: Avoid dynamic shape operations when possible
 - Function composition: Structure code for graph-level optimizations
 - Avoid Python overhead: Minimize Python loops and conditionals in hot paths
 - Memory layout consistency: Use consistent tensor formats and strides
 
-💡 PRACTICAL APPLICATION:
 Learn to write PyTorch code that leverages automatic compiler optimizations
 for 2-5x performance improvements with minimal code changes.
 """
 
+import inspect
+import math
+import warnings
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable
-from dataclasses import dataclass
-from enum import Enum
-import warnings
-import inspect
-import math
 
 
 class CompilationCompatibility(Enum):
@@ -56,7 +55,6 @@ class CompilationPattern:
     """
     Data structure for describing compiler-friendly patterns.
 
-    🎓 EDUCATIONAL: Systematic compiler optimization approach
     By categorizing compilation patterns, we can:
     - Identify code structures that optimize well
     - Avoid patterns that prevent compiler optimization
@@ -65,15 +63,15 @@ class CompilationPattern:
     """
     name: str
     compatibility: CompilationCompatibility
-    supported_compilers: List[CompilerType]
-    optimization_benefits: List[str]
-    common_pitfalls: List[str]
+    supported_compilers: list[CompilerType]
+    optimization_benefits: list[str]
+    common_pitfalls: list[str]
     description: str
     example_good: str
     example_bad: str
 
 
-# 🎓 EDUCATIONAL: Compiler optimization best practices and common patterns
+#  EDUCATIONAL: Compiler optimization best practices and common patterns
 COMPILER_BEST_PRACTICES = [
     CompilationPattern(
         name="Static Shape Operations",
@@ -136,15 +134,14 @@ def check_compilation_compatibility(
     model: nn.Module,
     sample_input: torch.Tensor,
     target_compiler: CompilerType = CompilerType.TORCH_COMPILE
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze model for compiler compatibility and optimization potential.
 
-    🎓 EDUCATIONAL: Systematic compilation analysis methodology
     This function demonstrates how to systematically analyze PyTorch models
     to identify compilation opportunities and potential issues.
 
-    🔧 COMPATIBILITY ANALYSIS:
+     COMPATIBILITY ANALYSIS:
     - Static vs dynamic operations identification
     - Control flow pattern analysis
     - Memory layout consistency checking
@@ -166,28 +163,22 @@ def check_compilation_compatibility(
         "performance_estimate": {}
     }
 
-    # 🔍 STEP 1: Analyze model architecture for compilation patterns
     architecture_analysis = _analyze_architecture_compatibility(model)
     compatibility_analysis.update(architecture_analysis)
 
-    # 🔍 STEP 2: Check for dynamic operations
     dynamic_analysis = _check_dynamic_operations(model, sample_input)
     compatibility_analysis["dynamic_operations"] = dynamic_analysis
 
-    # 🔍 STEP 3: Analyze control flow patterns
     control_flow_analysis = _analyze_control_flow(model)
     compatibility_analysis["control_flow_issues"] = control_flow_analysis
 
-    # 🔍 STEP 4: Check memory layout consistency
     memory_analysis = _check_memory_layout_consistency(model, sample_input)
     compatibility_analysis["memory_layout_issues"] = memory_analysis
 
-    # 🔍 STEP 5: Generate specific recommendations
     compatibility_analysis["recommended_changes"] = _generate_compilation_recommendations(
         compatibility_analysis, target_compiler
     )
 
-    # 🔍 STEP 6: Estimate compilation benefits
     compatibility_analysis["performance_estimate"] = _estimate_compilation_benefits(
         compatibility_analysis, target_compiler
     )
@@ -195,7 +186,7 @@ def check_compilation_compatibility(
     return compatibility_analysis
 
 
-def _analyze_architecture_compatibility(model: nn.Module) -> Dict[str, Any]:
+def _analyze_architecture_compatibility(model: nn.Module) -> dict[str, Any]:
     """Analyze model architecture for compiler compatibility."""
     analysis = {
         "module_compatibility": {},
@@ -218,9 +209,9 @@ def _analyze_architecture_compatibility(model: nn.Module) -> Dict[str, Any]:
     return analysis
 
 
-def _assess_module_compatibility(module: nn.Module) -> Dict[str, Any]:
+def _assess_module_compatibility(module: nn.Module) -> dict[str, Any]:
     """Assess individual module compatibility with compilers."""
-    module_type = type(module).__name__
+    type(module).__name__  # noqa: B018
 
     # Standard PyTorch modules generally compile well
     if isinstance(module, (nn.Linear, nn.Conv2d, nn.LayerNorm, nn.ReLU, nn.GELU)):
@@ -257,7 +248,7 @@ def _assess_module_compatibility(module: nn.Module) -> Dict[str, Any]:
     }
 
 
-def _check_dynamic_operations(model: nn.Module, sample_input: torch.Tensor) -> List[Dict[str, Any]]:
+def _check_dynamic_operations(model: nn.Module, sample_input: torch.Tensor) -> list[dict[str, Any]]:
     """Check for operations with dynamic behavior that may hinder compilation."""
     dynamic_operations = []
 
@@ -279,7 +270,7 @@ def _check_dynamic_operations(model: nn.Module, sample_input: torch.Tensor) -> L
     return dynamic_operations
 
 
-def _analyze_control_flow(model: nn.Module) -> List[Dict[str, Any]]:
+def _analyze_control_flow(model: nn.Module) -> list[dict[str, Any]]:
     """Analyze control flow patterns that may prevent optimization."""
     control_flow_issues = []
 
@@ -312,7 +303,7 @@ def _analyze_control_flow(model: nn.Module) -> List[Dict[str, Any]]:
     return control_flow_issues
 
 
-def _check_memory_layout_consistency(model: nn.Module, sample_input: torch.Tensor) -> List[Dict[str, Any]]:
+def _check_memory_layout_consistency(model: nn.Module, sample_input: torch.Tensor) -> list[dict[str, Any]]:
     """Check for memory layout inconsistencies that may hurt performance."""
     layout_issues = []
 
@@ -327,7 +318,7 @@ def _check_memory_layout_consistency(model: nn.Module, sample_input: torch.Tenso
 
     # Check for mixed memory formats (simplified check)
     # Note: memory_format is not directly accessible, so we check stride patterns
-    is_channels_last = (len(sample_input.shape) == 4 and
+    (len(sample_input.shape) == 4 and
                        sample_input.stride()[1] == 1)  # Channel stride is 1 for channels_last
 
     for name, module in model.named_modules():
@@ -346,9 +337,9 @@ def _check_memory_layout_consistency(model: nn.Module, sample_input: torch.Tenso
 
 
 def _generate_compilation_recommendations(
-    analysis: Dict[str, Any],
+    analysis: dict[str, Any],
     target_compiler: CompilerType
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Generate specific recommendations for compilation optimization."""
     recommendations = []
 
@@ -386,9 +377,9 @@ def _generate_compilation_recommendations(
 
 
 def _estimate_compilation_benefits(
-    analysis: Dict[str, Any],
+    analysis: dict[str, Any],
     target_compiler: CompilerType
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Estimate potential performance benefits from compilation."""
     # Educational estimates based on compatibility analysis
     base_speedup = 1.0
@@ -426,12 +417,11 @@ def optimize_for_torch_compile(
     """
     Optimize model specifically for torch.compile backend.
 
-    🎓 EDUCATIONAL: torch.compile optimization strategies
     torch.compile is PyTorch's latest JIT compiler that can achieve significant
     performance improvements. This function demonstrates how to prepare models
     for optimal torch.compile performance.
 
-    🔧 TORCH.COMPILE OPTIMIZATION TECHNIQUES:
+     TORCH.COMPILE OPTIMIZATION TECHNIQUES:
     - Function structuring for graph capture
     - Dynamic shape handling
     - Memory layout optimization
@@ -445,10 +435,8 @@ def optimize_for_torch_compile(
     Returns:
         Model optimized for torch.compile
     """
-    # 🚀 STEP 1: Prepare model structure for compilation
     optimized_model = _prepare_model_for_compilation(model)
 
-    # 🚀 STEP 2: Apply torch.compile with appropriate settings
     compile_kwargs = {
         "mode": optimization_level,
         "dynamic": enable_dynamic,
@@ -459,7 +447,7 @@ def optimize_for_torch_compile(
         compiled_model = torch.compile(optimized_model, **compile_kwargs)
         return compiled_model
     except Exception as e:
-        warnings.warn(f"Compilation failed: {e}. Returning uncompiled model.")
+        warnings.warn(f"Compilation failed: {e}. Returning uncompiled model.", stacklevel=2)
         return optimized_model
 
 
@@ -471,22 +459,21 @@ def _prepare_model_for_compilation(model: nn.Module) -> nn.Module:
             param.data = param.data.contiguous()
 
     # Check for and fix common compilation issues
-    for name, module in model.named_modules():
+    for _name, module in model.named_modules():
         if hasattr(module, '_fix_for_compilation'):
             module._fix_for_compilation()
 
     return model
 
 
-def avoid_compilation_pitfalls(code_snippet: str) -> Dict[str, Any]:
+def avoid_compilation_pitfalls(code_snippet: str) -> dict[str, Any]:
     """
     Analyze code snippet for common compilation pitfalls and suggest fixes.
 
-    🎓 EDUCATIONAL: Common compilation anti-patterns
     This function demonstrates how to identify and fix common patterns
     that prevent effective compilation in PyTorch.
 
-    🔧 COMMON PITFALLS:
+     COMMON PITFALLS:
     - Python loops over tensors
     - Dynamic tensor indexing
     - Conditional execution based on tensor values
@@ -543,11 +530,10 @@ class CompilerOptimizedModule(nn.Module):
     """
     Base class for modules designed for optimal compiler performance.
 
-    🎓 EDUCATIONAL: Compiler-first module design
     This demonstrates how to design PyTorch modules specifically for
     compiler optimization from the ground up.
 
-    🔧 DESIGN PRINCIPLES:
+     DESIGN PRINCIPLES:
     - Static shape operations
     - Minimal Python overhead
     - Consistent memory layouts
@@ -591,7 +577,7 @@ class OptimizedLinearGELU(CompilerOptimizedModule):
     """
     Example of compiler-optimized module: Linear + GELU fusion.
 
-    🔧 OPTIMIZATION FEATURES:
+     OPTIMIZATION FEATURES:
     - Single forward method for optimal graph capture
     - Contiguous tensor operations
     - No Python control flow
@@ -606,7 +592,7 @@ class OptimizedLinearGELU(CompilerOptimizedModule):
         """
         Optimized forward pass designed for torch.compile fusion.
 
-        🔧 COMPILER OPTIMIZATION NOTES:
+         COMPILER OPTIMIZATION NOTES:
         - Single expression allows kernel fusion
         - No intermediate tensor storage
         - Optimal memory access pattern
@@ -620,7 +606,6 @@ class OptimizedTransformerBlock(CompilerOptimizedModule):
     """
     Example of compiler-optimized transformer block.
 
-    🎓 EDUCATIONAL: Transformer optimization for compilers
     This demonstrates how to structure complex modules like transformer
     blocks for optimal compiler performance.
     """
@@ -654,13 +639,13 @@ class OptimizedTransformerBlock(CompilerOptimizedModule):
         """
         Compiler-optimized transformer block forward pass.
 
-        🔧 OPTIMIZATION TECHNIQUES:
+         OPTIMIZATION TECHNIQUES:
         - Minimal intermediate variables
         - Structured for attention and feedforward fusion
         - Consistent tensor operations
         - No Python control flow
         """
-        # 🚀 ATTENTION: Structured for optimal compilation
+        #  ATTENTION: Structured for optimal compilation
         residual = x
         x = self.norm1(x)
 
@@ -686,7 +671,7 @@ class OptimizedTransformerBlock(CompilerOptimizedModule):
         # Residual connection
         x = residual + self.dropout(attention_output)
 
-        # 🚀 FEEDFORWARD: Structured for optimal compilation
+        #  FEEDFORWARD: Structured for optimal compilation
         residual = x
         x = self.norm2(x)
 
@@ -698,30 +683,30 @@ class OptimizedTransformerBlock(CompilerOptimizedModule):
         return residual + self.dropout(x)
 
 
-# 🎓 EDUCATIONAL: Utility functions for compilation optimization
-def print_compilation_analysis(analysis: Dict[str, Any]) -> None:
+#  EDUCATIONAL: Utility functions for compilation optimization
+def print_compilation_analysis(analysis: dict[str, Any]) -> None:
     """Print compilation analysis results in a readable format."""
-    print("🔧 Compilation Compatibility Analysis\n")
+    print(" Compilation Compatibility Analysis\n")
 
     # Overall compatibility
     overall = analysis.get("overall_compatibility", "unknown")
-    print(f"📊 Overall Compatibility: {overall.upper()}")
+    print(f" Overall Compatibility: {overall.upper()}")
 
     if overall == "excellent":
-        print("   ✅ Model is ready for compilation optimization")
+        print("    Model is ready for compilation optimization")
     elif overall == "good":
-        print("   ✨ Model should compile well with minor optimizations")
+        print("    Model should compile well with minor optimizations")
     elif overall == "limited":
-        print("   ⚠️  Some compilation limitations present")
+        print("     Some compilation limitations present")
     else:
-        print("   ❌ Significant compilation issues detected")
+        print("    Significant compilation issues detected")
     print()
 
     # Performance estimate
     if "performance_estimate" in analysis:
         perf = analysis["performance_estimate"]
         speedup = perf.get("estimated_speedup", 1.0)
-        print(f"🚀 Estimated Compilation Speedup: {speedup:.1f}x")
+        print(f" Estimated Compilation Speedup: {speedup:.1f}x")
         print(f"   Confidence: {perf.get('confidence', 'unknown')}")
         print(f"   Optimization potential: {perf.get('optimization_potential', 'unknown')}")
         print()
@@ -729,9 +714,9 @@ def print_compilation_analysis(analysis: Dict[str, Any]) -> None:
     # Issues and recommendations
     recommendations = analysis.get("recommended_changes", [])
     if recommendations:
-        print(f"🎯 Optimization Recommendations ({len(recommendations)} items):")
+        print(f" Optimization Recommendations ({len(recommendations)} items):")
         for i, rec in enumerate(recommendations, 1):
-            priority_icon = "🔥" if rec.get("priority") == "high" else "⭐"
+            priority_icon = "" if rec.get("priority") == "high" else "⭐"
             print(f"  {priority_icon} {i}. {rec.get('type', 'Unknown')}")
             print(f"     Target: {rec.get('target', 'N/A')}")
             print(f"     Action: {rec.get('action', 'N/A')}")
@@ -741,7 +726,7 @@ def print_compilation_analysis(analysis: Dict[str, Any]) -> None:
     # Dynamic operations
     dynamic_ops = analysis.get("dynamic_operations", [])
     if dynamic_ops:
-        print(f"⚡ Dynamic Operations Found ({len(dynamic_ops)} items):")
+        print(f" Dynamic Operations Found ({len(dynamic_ops)} items):")
         for op in dynamic_ops:
             print(f"   • {op.get('module', 'Unknown')}: {op.get('operation', 'Unknown')}")
             print(f"     Recommendation: {op.get('recommendation', 'N/A')}")
@@ -752,11 +737,10 @@ def benchmark_compilation_impact(
     compiled_model: nn.Module,
     sample_input: torch.Tensor,
     num_iterations: int = 100
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Benchmark the performance impact of compilation optimizations.
 
-    🎓 EDUCATIONAL: Compilation optimization validation
     Always measure compilation impact to verify that optimizations
     provide real performance benefits.
     """

@@ -38,15 +38,13 @@ Example:
 from __future__ import annotations
 
 import gc
-import os
-import platform
-import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Deque
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -57,7 +55,7 @@ from .health_monitor import (
     HealthMonitor,
     HealthStatus,
 )
-from .structured_logging import get_logger, correlation_context
+from .structured_logging import correlation_context, get_logger
 
 logger = get_logger(__name__)
 
@@ -258,7 +256,7 @@ class EnhancedHealthMonitor(HealthMonitor):
 
         self._thresholds = ResourceThresholds()
         self._resource_monitor = SystemResourceMonitor()
-        self._history: Deque[HealthHistoryEntry] = deque(maxlen=history_size)
+        self._history: deque[HealthHistoryEntry] = deque(maxlen=history_size)
         self._enable_predictive = enable_predictive
         self._liveness_checks: list[Callable[[], bool]] = []
         self._last_liveness_check: float | None = None
@@ -729,7 +727,7 @@ class EnhancedHealthMonitor(HealthMonitor):
 
         # Analyze recent metrics
         recent = history[-min(10, len(history)):]
-        latest = recent[-1]
+        recent[-1]
 
         # CPU recommendations
         cpu_metrics = [h.metrics.get("cpu_percent", 0) for h in recent]

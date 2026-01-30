@@ -17,17 +17,17 @@ References:
     - NCCL Communication: https://docs.nvidia.com/deeplearning/nccl/
 """
 
-import torch
-import torch.nn as nn
-import torch.distributed as dist
-from torch.distributed._tensor import DTensor, Shard, Replicate
-from typing import Dict, List, Optional, Any, Union, Callable
-import functools
-import warnings
-from collections import defaultdict
 import asyncio
 import threading
+import warnings
+from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any
+
+import torch
+import torch.distributed as dist
+import torch.nn as nn
+from torch.distributed._tensor import DTensor, Replicate, Shard
 
 
 @dataclass
@@ -73,7 +73,7 @@ class DTensorSharding:
         self.dtensor_params = {}
         self.parameter_specs = {}
 
-    def _create_hybrid_strategy(self) -> List:
+    def _create_hybrid_strategy(self) -> list:
         """Create hybrid sharding strategy based on device mesh"""
         if len(self.device_mesh.size()) >= 2:
             # 2D mesh: shard across first dimension, replicate across second
@@ -101,7 +101,7 @@ class DTensorSharding:
     def _create_dtensor_parameter(
         self,
         param: torch.Tensor,
-        strategy: List
+        strategy: list
     ) -> DTensor:
         """Create DTensor from parameter with sharding strategy"""
         # Ensure parameter is on correct device
@@ -116,7 +116,7 @@ class DTensorSharding:
                 placements=strategy
             )
         except Exception as e:
-            warnings.warn(f"Failed to create DTensor, using replicated: {e}")
+            warnings.warn(f"Failed to create DTensor, using replicated: {e}", stacklevel=2)
             dtensor = DTensor.from_local(
                 param,
                 device_mesh=self.device_mesh,
@@ -140,7 +140,7 @@ class DTensorSharding:
     def reshard_for_computation(
         self,
         param_name: str,
-        target_strategy: Optional[List] = None
+        target_strategy: list | None = None
     ) -> DTensor:
         """Reshard DTensor for specific computation pattern"""
         if param_name not in self.dtensor_params:
@@ -160,7 +160,7 @@ class DTensorSharding:
 
         return dtensor
 
-    def get_sharding_info(self) -> Dict[str, Any]:
+    def get_sharding_info(self) -> dict[str, Any]:
         """Get information about current sharding configuration"""
         return {
             'strategy': self.config.sharding_strategy,
@@ -221,9 +221,9 @@ class AdvancedPrefetching:
                 await self._predictive_prefetch()
 
             except Exception as e:
-                warnings.warn(f"Prefetch error: {e}")
+                warnings.warn(f"Prefetch error: {e}", stacklevel=2)
 
-    async def _execute_prefetch(self, request: Dict[str, Any]):
+    async def _execute_prefetch(self, request: dict[str, Any]):
         """Execute a specific prefetch request"""
         param_name = request['param_name']
         operation = request['operation']
@@ -267,7 +267,7 @@ class AdvancedPrefetching:
                     'confidence': confidence
                 })
 
-    def _predict_next_accesses(self) -> Dict[str, float]:
+    def _predict_next_accesses(self) -> dict[str, float]:
         """Predict next parameter accesses based on history"""
         predictions = {}
 
@@ -316,7 +316,7 @@ class AdvancedPrefetching:
             # Queue full, skip this prefetch
             pass
 
-    def get_prefetch_stats(self) -> Dict[str, Any]:
+    def get_prefetch_stats(self) -> dict[str, Any]:
         """Get prefetching statistics"""
         return {
             'prefetch_policy': self.prefetch_policy,
@@ -353,7 +353,7 @@ class HybridShardingOptimizer:
         self.current_strategy = config.sharding_strategy
         self.strategy_adaptation_enabled = True
 
-    def analyze_model_for_sharding(self, model: nn.Module) -> Dict[str, str]:
+    def analyze_model_for_sharding(self, model: nn.Module) -> dict[str, str]:
         """Analyze model to recommend sharding strategies per layer"""
         recommendations = {}
 
@@ -397,7 +397,7 @@ class HybridShardingOptimizer:
         model: nn.Module,
         sample_input: torch.Tensor,
         num_trials: int = 5
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Optimize sharding strategy through profiling"""
         strategies = ["full_shard", "shard_grad_op", "no_shard"]
         results = {}
@@ -430,7 +430,7 @@ class HybridShardingOptimizer:
         sample_input: torch.Tensor,
         strategy: str,
         num_trials: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Profile a specific sharding strategy"""
         import time
 
@@ -457,7 +457,7 @@ class HybridShardingOptimizer:
 
                 torch.cuda.synchronize()
 
-            except Exception as e:
+            except Exception:
                 # Strategy failed
                 execution_times.append(float('inf'))
                 memory_usages.append(float('inf'))
@@ -501,7 +501,7 @@ class HybridShardingOptimizer:
         else:  # no_shard
             return 0.0
 
-    def _calculate_improvement(self, results: Dict[str, Dict[str, float]]) -> float:
+    def _calculate_improvement(self, results: dict[str, dict[str, float]]) -> float:
         """Calculate performance improvement over baseline"""
         baseline_cost = results.get("no_shard", {}).get("total_cost", 1.0)
         best_cost = min(result["total_cost"] for result in results.values())
@@ -510,13 +510,13 @@ class HybridShardingOptimizer:
 
     def adapt_strategy_online(
         self,
-        current_metrics: Dict[str, float]
-    ) -> Optional[str]:
+        current_metrics: dict[str, float]
+    ) -> str | None:
         """Adapt sharding strategy based on runtime metrics"""
         if not self.strategy_adaptation_enabled:
             return None
 
-        current_cost = current_metrics.get('execution_time', 0) + \
+        current_metrics.get('execution_time', 0) + \
                       current_metrics.get('communication_cost', 0) * 0.1
 
         # Check if current strategy is underperforming
@@ -559,7 +559,7 @@ class FSDP2Manager:
         self,
         model: nn.Module,
         device_mesh: torch.distributed.DeviceMesh,
-        config: Optional[FSDP2Config] = None
+        config: FSDP2Config | None = None
     ):
         self.model = model
         self.device_mesh = device_mesh
@@ -587,7 +587,7 @@ class FSDP2Manager:
 
         def fsdp2_forward(*args, **kwargs):
             # Record access patterns for prefetching
-            for name, param in self.model.named_parameters():
+            for name, _param in self.model.named_parameters():
                 self.prefetching.record_parameter_access(name, "forward")
 
             return original_forward(*args, **kwargs)
@@ -598,7 +598,7 @@ class FSDP2Manager:
         self,
         sample_input: torch.Tensor,
         auto_tune: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Optimize model configuration for training"""
         optimization_results = {}
 
@@ -615,7 +615,7 @@ class FSDP2Manager:
 
         return optimization_results
 
-    def get_fsdp2_statistics(self) -> Dict[str, Any]:
+    def get_fsdp2_statistics(self) -> dict[str, Any]:
         """Get comprehensive FSDP2 statistics"""
         return {
             'config': self.config.__dict__,
@@ -652,12 +652,12 @@ class FSDP2Manager:
 def create_fsdp2_manager(
     model: nn.Module,
     world_size: int = None,
-    config: Optional[FSDP2Config] = None,
+    config: FSDP2Config | None = None,
     **kwargs
 ) -> FSDP2Manager:
     """Factory function for FSDP2 manager"""
     if not dist.is_initialized():
-        warnings.warn("Distributed training not initialized")
+        warnings.warn("Distributed training not initialized", stacklevel=2)
         # Create dummy device mesh for testing
         device_mesh = torch.distributed.DeviceMesh(
             "cuda" if torch.cuda.is_available() else "cpu",

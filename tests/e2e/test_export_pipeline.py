@@ -12,19 +12,19 @@ These tests validate the export pipeline works correctly
 without requiring external services.
 """
 
-import os
-import pytest
 import tempfile
+from pathlib import Path
+
+import pytest
 import torch
 import torch.nn as nn
-from pathlib import Path
 
 
 def _onnx_available() -> bool:
     """Check if ONNX is available."""
     try:
-        import onnx
-        import onnxscript
+        import onnx  # noqa: F401
+        import onnxscript  # noqa: F401
         return True
     except ImportError:
         return False
@@ -33,7 +33,7 @@ def _onnx_available() -> bool:
 def _safetensors_available() -> bool:
     """Check if SafeTensors is available."""
     try:
-        import safetensors
+        import safetensors  # noqa: F401
         return True
     except ImportError:
         return False
@@ -153,10 +153,8 @@ class TestSafeTensorsExport:
     def test_safetensors_import(self):
         """Test SafeTensors module can be imported."""
         from kernel_pytorch.deployment import (
-            SafeTensorsExporter,
             SafeTensorsExportConfig,
-            SafeTensorsExportResult,
-            export_to_safetensors,
+            SafeTensorsExporter,
         )
         assert SafeTensorsExporter is not None
         assert SafeTensorsExportConfig is not None
@@ -220,7 +218,10 @@ class TestSafeTensorsExport:
         """Test loading SafeTensors into model."""
         pytest.importorskip("safetensors")
 
-        from kernel_pytorch.deployment import export_to_safetensors, load_model_safetensors
+        from kernel_pytorch.deployment import (
+            export_to_safetensors,
+            load_model_safetensors,
+        )
 
         # Create and export model
         model1 = SimpleLinear()
@@ -232,7 +233,7 @@ class TestSafeTensorsExport:
         model2 = load_model_safetensors(model2, output_path)
 
         # Check weights are same
-        for (n1, p1), (n2, p2) in zip(model1.named_parameters(), model2.named_parameters()):
+        for (n1, p1), (n2, p2) in zip(model1.named_parameters(), model2.named_parameters()):  # noqa: B007
             assert torch.allclose(p1, p2)
 
 
@@ -246,10 +247,8 @@ class TestProductionValidator:
     def test_validator_import(self):
         """Test production validator can be imported."""
         from kernel_pytorch.deployment import (
-            ProductionValidator,
             ProductionRequirements,
-            ProductionValidationResult,
-            validate_production_readiness,
+            ProductionValidator,
         )
         assert ProductionValidator is not None
         assert ProductionRequirements is not None
@@ -267,7 +266,10 @@ class TestProductionValidator:
 
     def test_validate_forward_pass(self, simple_model, sample_input):
         """Test forward pass validation."""
-        from kernel_pytorch.deployment import ProductionValidator, ProductionRequirements
+        from kernel_pytorch.deployment import (
+            ProductionRequirements,
+            ProductionValidator,
+        )
 
         validator = ProductionValidator()
         requirements = ProductionRequirements()
@@ -280,7 +282,10 @@ class TestProductionValidator:
 
     def test_validate_determinism(self, simple_model, sample_input):
         """Test determinism validation."""
-        from kernel_pytorch.deployment import ProductionValidator, ProductionRequirements
+        from kernel_pytorch.deployment import (
+            ProductionRequirements,
+            ProductionValidator,
+        )
 
         validator = ProductionValidator()
         requirements = ProductionRequirements()
@@ -293,7 +298,10 @@ class TestProductionValidator:
 
     def test_validate_eval_mode(self, sample_input):
         """Test eval mode validation."""
-        from kernel_pytorch.deployment import ProductionValidator, ProductionRequirements
+        from kernel_pytorch.deployment import (
+            ProductionRequirements,
+            ProductionValidator,
+        )
 
         # Model in training mode
         model = SimpleLinear()
@@ -311,7 +319,10 @@ class TestProductionValidator:
 
     def test_validate_torchscript_export(self, simple_model, sample_input):
         """Test TorchScript export validation."""
-        from kernel_pytorch.deployment import ProductionValidator, ProductionRequirements
+        from kernel_pytorch.deployment import (
+            ProductionRequirements,
+            ProductionValidator,
+        )
 
         validator = ProductionValidator()
         requirements = ProductionRequirements(require_torchscript_export=True)
@@ -342,7 +353,10 @@ class TestProductionValidator:
 
     def test_validate_latency_stats(self, simple_model, sample_input):
         """Test that latency stats are collected."""
-        from kernel_pytorch.deployment import ProductionValidator, ProductionRequirements
+        from kernel_pytorch.deployment import (
+            ProductionRequirements,
+            ProductionValidator,
+        )
 
         validator = ProductionValidator()
         requirements = ProductionRequirements()
@@ -485,9 +499,9 @@ class TestExportIntegration:
     def test_full_export_pipeline(self, mlp_model, sample_input, temp_dir):
         """Test complete export pipeline."""
         from kernel_pytorch.deployment import (
-            export_to_torchscript,
-            ProductionValidator,
             ProductionRequirements,
+            ProductionValidator,
+            export_to_torchscript,
         )
 
         # Validate with ONNX optional

@@ -12,27 +12,18 @@ The functionality has been split into focused modules:
 This maintains backward compatibility while providing better code organization.
 """
 
-import warnings
-from typing import Optional, List, Dict, Any
 
 # Import all functionality from split modules
 from .communication_primitives import (
+    AdvancedCollectiveOps,
+    CollectiveOpConfig,
+    CommunicationMetrics,
     CommunicationPattern,
     CompressionMethod,
     NetworkTopology,
-    CommunicationMetrics,
-    CollectiveOpConfig,
-    AdvancedCollectiveOps
 )
-
-from .network_optimization import (
-    NetworkTopologyOptimizer,
-    BandwidthAwareScheduler
-)
-
-from .communication_profiling import (
-    CommunicationProfiler
-)
+from .communication_profiling import CommunicationProfiler
+from .network_optimization import BandwidthAwareScheduler, NetworkTopologyOptimizer
 
 # NOTE: This module provides backward compatibility for the refactored communication system.
 # For new code, consider importing from: communication_primitives, network_optimization, communication_profiling
@@ -43,7 +34,7 @@ def create_collective_ops(
     world_size: int,
     rank: int,
     topology: NetworkTopology,
-    config: Optional[CollectiveOpConfig] = None
+    config: CollectiveOpConfig | None = None
 ) -> AdvancedCollectiveOps:
     """Create AdvancedCollectiveOps with default configuration"""
     return AdvancedCollectiveOps(world_size, rank, topology, config)

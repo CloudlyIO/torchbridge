@@ -7,27 +7,27 @@ into a single, unified framework with consistent interfaces and enhanced capabil
 
 # Core framework
 from .core import (
-    BaseAttention,
     AttentionConfig,  # Backward compat alias for AttentionModuleConfig
     AttentionModuleConfig,
     AttentionPatterns,
-    FP8AttentionConfig,
+    BaseAttention,
     DynamicSparseConfig,
+    FP8AttentionConfig,
     RingAttentionConfig,
+    create_attention,
     register_attention,
-    create_attention
 )
 
 # Main implementations
-from .implementations.flash_attention import FlashAttention3, FlashAttention2
+from .implementations.flash_attention import FlashAttention2, FlashAttention3
 from .implementations.flex_attention import (
-    FlexAttentionLayer,
     FlexAttentionCausal,
-    FlexAttentionSlidingWindow,
+    FlexAttentionLayer,
     FlexAttentionScoreMods,
+    FlexAttentionSlidingWindow,
     create_flex_attention,
-    is_flex_attention_available,
     get_flex_attention_info,
+    is_flex_attention_available,
 )
 
 # Distributed attention - import what exists

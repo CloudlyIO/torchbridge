@@ -10,18 +10,16 @@ Advanced distributed inference serving for models across thousands of GPUs using
 """
 
 import asyncio
-import time
 import logging
 import threading
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import torch
-import torch.nn as nn
-import torch.distributed as dist
-from torch.distributed._tensor import DeviceMesh
+from typing import Any
+
 import numpy as np
-from contextlib import asynccontextmanager
+import torch
+from torch.distributed._tensor import DeviceMesh
 
 try:
     from vllm import LLM, SamplingParams
@@ -120,7 +118,7 @@ class DistributedInferenceServer:
     def __init__(
         self,
         config: InferenceServerConfig,
-        device_mesh: Optional[DeviceMesh] = None
+        device_mesh: DeviceMesh | None = None
     ):
         self.config = config
         self.device_mesh = device_mesh
@@ -129,11 +127,11 @@ class DistributedInferenceServer:
         # State management
         self.is_running = False
         self.request_queue = asyncio.Queue(maxsize=config.max_concurrent_requests)
-        self.active_requests: Dict[str, Any] = {}
+        self.active_requests: dict[str, Any] = {}
 
         # Performance monitoring
-        self.latency_history: List[float] = []
-        self.throughput_history: List[float] = []
+        self.latency_history: list[float] = []
+        self.throughput_history: list[float] = []
         self.metrics_lock = threading.Lock()
 
         # Load balancer
@@ -230,8 +228,8 @@ class DistributedInferenceServer:
     async def generate(
         self,
         prompt: str,
-        sampling_params: Optional[Dict] = None,
-        request_id: Optional[str] = None
+        sampling_params: dict | None = None,
+        request_id: str | None = None
     ) -> str:
         """
         Generate response for given prompt
@@ -383,8 +381,8 @@ class AdaptiveLoadBalancer:
 
     def __init__(self, strategy: LoadBalancingStrategy = LoadBalancingStrategy.ADAPTIVE):
         self.strategy = strategy
-        self.servers: List[Dict] = []
-        self.server_metrics: Dict[str, ServerMetrics] = {}
+        self.servers: list[dict] = []
+        self.server_metrics: dict[str, ServerMetrics] = {}
         self.request_count = 0
 
     def add_server(self, server_id: str, endpoint: str, weight: float = 1.0):
@@ -400,7 +398,7 @@ class AdaptiveLoadBalancer:
         self.servers.append(server_info)
         logger.info(f"Added server {server_id} to load balancer")
 
-    def select_server(self) -> Optional[str]:
+    def select_server(self) -> str | None:
         """Select best server based on current strategy"""
         if not self.servers:
             return None
@@ -481,14 +479,14 @@ class MemoryEfficientScheduler:
         self.memory_threshold = memory_threshold
 
         # Scheduling state
-        self.pending_requests: Dict[str, Dict] = {}
-        self.active_requests: Dict[str, Dict] = {}
-        self.completed_requests: Dict[str, Dict] = {}
+        self.pending_requests: dict[str, dict] = {}
+        self.active_requests: dict[str, dict] = {}
+        self.completed_requests: dict[str, dict] = {}
 
         # Memory management
         self.current_memory_usage = 0.0
         self.kv_cache_size = 0.0
-        self.prefix_cache: Dict[str, Any] = {}
+        self.prefix_cache: dict[str, Any] = {}
 
     async def schedule_request(self, request_id: str, estimated_tokens: int):
         """Schedule request for execution"""
@@ -564,8 +562,8 @@ def create_inference_cluster(
     model_path: str,
     num_servers: int = 4,
     tensor_parallel_size: int = 1,
-    config_overrides: Optional[Dict] = None
-) -> List[DistributedInferenceServer]:
+    config_overrides: dict | None = None
+) -> list[DistributedInferenceServer]:
     """
     Create cluster of distributed inference servers
 
@@ -603,10 +601,10 @@ def create_inference_cluster(
 
 
 async def benchmark_inference_cluster(
-    servers: List[DistributedInferenceServer],
-    test_prompts: List[str],
+    servers: list[DistributedInferenceServer],
+    test_prompts: list[str],
     concurrent_requests: int = 100
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Benchmark inference cluster performance
 

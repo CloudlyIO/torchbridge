@@ -8,48 +8,43 @@ Tests cover:
 - IPEX integration (when available)
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch, MagicMock
 
 # Import Intel backend components
 from kernel_pytorch.backends.intel import (
-    IntelBackend,
-    IntelMemoryManager,
-    XPUDeviceManager,
-    XPUDeviceInfo,
-    XPUOptimizations,
-    IntelOptimizer,
-    IntelKernelOptimizer,
-    IntelOptimizationLevel,
-    OptimizationResult,
-    is_xpu_available,
-    is_ipex_available,
-    get_ipex_version,
-    XPU_AVAILABLE,
     IPEX_AVAILABLE,
+    XPU_AVAILABLE,
+    IntelBackend,
+    IntelKernelOptimizer,
+    IntelMemoryManager,
+    IntelOptimizationLevel,
+    IntelOptimizer,
+    OptimizationResult,
+    XPUDeviceInfo,
+    XPUDeviceManager,
+    XPUOptimizations,
+    get_ipex_version,
+    is_ipex_available,
+    is_xpu_available,
 )
-
 from kernel_pytorch.backends.intel.intel_exceptions import (
-    IntelBackendError,
-    XPUNotAvailableError,
     IPEXNotInstalledError,
-    XPUDeviceError,
-    XPUOutOfMemoryError,
-    XPUMemoryAllocationError,
     OneDNNError,
+    XPUDeviceError,
+    XPUNotAvailableError,
     XPUOptimizationError,
+    XPUOutOfMemoryError,
 )
-
 from kernel_pytorch.core.config import (
+    HardwareBackend,
+    HardwareConfig,
     IntelArchitecture,
     IntelConfig,
-    HardwareConfig,
-    HardwareBackend,
     KernelPyTorchConfig,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -552,7 +547,7 @@ class TestIntelBackendIntegration:
         backend = IntelBackend()
 
         # Prepare model
-        prepared_model = backend.prepare_model(simple_model)
+        backend.prepare_model(simple_model)
 
         # Get device info
         info = backend.get_device_info()

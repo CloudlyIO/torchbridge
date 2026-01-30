@@ -10,7 +10,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import torch
 
@@ -266,7 +266,7 @@ Examples:
         iterations: int,
         device: str,
         verbose: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Quick summary profiling."""
         # Warmup
         with torch.no_grad():
@@ -286,11 +286,11 @@ Examples:
                 latencies.append(time.perf_counter() - start)
 
         # Calculate statistics
-        latencies_ms = [l * 1000 for l in latencies]
+        latencies_ms = [l * 1000 for l in latencies]  # noqa: E741
         mean_latency = sum(latencies_ms) / len(latencies_ms)
         min_latency = min(latencies_ms)
         max_latency = max(latencies_ms)
-        std_latency = (sum((l - mean_latency) ** 2 for l in latencies_ms) / len(latencies_ms)) ** 0.5
+        std_latency = (sum((l - mean_latency) ** 2 for l in latencies_ms) / len(latencies_ms)) ** 0.5  # noqa: E741
 
         # Memory info
         memory_info = {}
@@ -330,7 +330,7 @@ Examples:
         print("\nPROFILE SUMMARY")
         print("=" * 60)
         print(f"Model Parameters: {param_count:,} ({param_size_mb:.2f} MB)")
-        print(f"\nLatency (ms):")
+        print("\nLatency (ms):")
         print(f"  Mean:   {mean_latency:.3f}")
         print(f"  Std:    {std_latency:.3f}")
         print(f"  Min:    {min_latency:.3f}")
@@ -338,7 +338,7 @@ Examples:
         print(f"\nThroughput: {results['latency']['throughput_samples_per_sec']:.1f} samples/sec")
 
         if memory_info:
-            print(f"\nGPU Memory:")
+            print("\nGPU Memory:")
             print(f"  Allocated: {memory_info['allocated_mb']:.2f} MB")
             print(f"  Reserved:  {memory_info['reserved_mb']:.2f} MB")
             print(f"  Peak:      {memory_info['max_allocated_mb']:.2f} MB")
@@ -357,7 +357,7 @@ Examples:
         with_stack: bool,
         with_modules: bool,
         verbose: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detailed operator-level profiling."""
         # Warmup
         with torch.no_grad():
@@ -430,7 +430,7 @@ Examples:
         iterations: int,
         device: str,
         verbose: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Memory allocation analysis."""
         if 'cuda' not in device:
             print("Memory profiling is most useful on CUDA devices.")
@@ -444,10 +444,9 @@ Examples:
         # Get baseline
         if 'cuda' in device:
             baseline_allocated = torch.cuda.memory_allocated()
-            baseline_reserved = torch.cuda.memory_reserved()
+            torch.cuda.memory_reserved()
         else:
             baseline_allocated = 0
-            baseline_reserved = 0
 
         # Warmup
         with torch.no_grad():
@@ -464,7 +463,7 @@ Examples:
                     torch.cuda.synchronize()
                     before = torch.cuda.memory_allocated()
 
-                output = model(sample_input)
+                model(sample_input)
 
                 if 'cuda' in device:
                     torch.cuda.synchronize()
@@ -498,7 +497,7 @@ Examples:
         print(f"Input Size: {results['input_size_mb']:.2f} MB")
 
         if 'cuda' in device:
-            print(f"\nGPU Memory:")
+            print("\nGPU Memory:")
             print(f"  Baseline:  {results['baseline_allocated_mb']:.2f} MB")
             print(f"  Peak:      {results['peak_allocated_mb']:.2f} MB")
             print(f"  Reserved:  {results['peak_reserved_mb']:.2f} MB")
@@ -516,9 +515,9 @@ Examples:
         warmup: int,
         iterations: int,
         device: str,
-        output_path: Optional[str],
+        output_path: str | None,
         verbose: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Full execution trace (Chrome trace format)."""
         # Warmup
         with torch.no_grad():
@@ -554,8 +553,8 @@ Examples:
         print("\nTRACE PROFILE")
         print("=" * 60)
         print(f"Trace exported to: {output_path}")
-        print(f"Open in Chrome: chrome://tracing")
-        print(f"Or use: https://ui.perfetto.dev/")
+        print("Open in Chrome: chrome://tracing")
+        print("Or use: https://ui.perfetto.dev/")
 
         return {
             'trace_file': output_path,

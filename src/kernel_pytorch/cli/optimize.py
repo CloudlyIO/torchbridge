@@ -7,10 +7,10 @@ and hardware configurations.
 
 import argparse
 import sys
-import torch
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
+
+import torch
 
 import kernel_pytorch as kpt
 from kernel_pytorch.utils.compiler_assistant import CompilerOptimizationAssistant
@@ -96,7 +96,7 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the optimize command."""
-        print("🚀 KernelPyTorch Model Optimization")
+        print(" KernelPyTorch Model Optimization")
         print("=" * 50)
 
         try:
@@ -130,11 +130,11 @@ Examples:
             if args.output:
                 OptimizeCommand._save_model(optimized_model, args.output, args.verbose)
 
-            print("\n✅ Optimization completed successfully!")
+            print("\n Optimization completed successfully!")
             return 0
 
         except Exception as e:
-            print(f"❌ Optimization failed: {e}")
+            print(f" Optimization failed: {e}")
             if args.verbose:
                 import traceback
                 traceback.print_exc()
@@ -154,7 +154,7 @@ Examples:
             device = torch.device(hardware)
 
         if verbose:
-            print(f"🖥️  Target device: {device}")
+            print(f"  Target device: {device}")
             if device.type == 'cuda':
                 print(f"   GPU: {torch.cuda.get_device_name()}")
                 print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
@@ -165,7 +165,7 @@ Examples:
     def _load_model(model_path: str, verbose: bool) -> torch.nn.Module:
         """Load model from file or create example model."""
         if verbose:
-            print(f"📂 Loading model: {model_path}")
+            print(f" Loading model: {model_path}")
 
         # Check if it's a file path
         if Path(model_path).exists():
@@ -196,7 +196,7 @@ Examples:
         return model
 
     @staticmethod
-    def _parse_input_shape(input_shape_str: Optional[str], model: torch.nn.Module) -> tuple:
+    def _parse_input_shape(input_shape_str: str | None, model: torch.nn.Module) -> tuple:
         """Parse input shape string or infer from model."""
         if input_shape_str:
             shape = tuple(map(int, input_shape_str.split(',')))
@@ -214,7 +214,7 @@ Examples:
     def _apply_optimizations(model: torch.nn.Module, level: str, sample_input: torch.Tensor, verbose: bool) -> torch.nn.Module:
         """Apply optimizations based on level."""
         if verbose:
-            print(f"⚙️  Applying '{level}' optimizations...")
+            print(f"  Applying '{level}' optimizations...")
 
         optimized_model = model
 
@@ -252,7 +252,7 @@ Examples:
                 optimized_model = torch.compile(model, mode='max-autotune')
 
         if verbose:
-            print(f"   ✓ Optimizations applied")
+            print("    Optimizations applied")
 
         return optimized_model
 
@@ -261,7 +261,7 @@ Examples:
                              sample_input: torch.Tensor, verbose: bool) -> None:
         """Validate that optimization preserves correctness."""
         if verbose:
-            print("🔍 Validating optimization correctness...")
+            print(" Validating optimization correctness...")
 
         with torch.no_grad():
             original_output = original(sample_input)
@@ -280,16 +280,16 @@ Examples:
                 print(f"   Relative error: {relative_error:.2e}")
 
             if relative_error > 0.01:  # 1% tolerance
-                print(f"⚠️  Warning: High relative error ({relative_error:.2e})")
+                print(f"  Warning: High relative error ({relative_error:.2e})")
             else:
-                print("   ✓ Validation passed")
+                print("    Validation passed")
 
     @staticmethod
     def _benchmark_models(original: torch.nn.Module, optimized: torch.nn.Module,
                          sample_input: torch.Tensor, verbose: bool) -> None:
         """Benchmark original vs optimized model performance."""
         if verbose:
-            print("📊 Benchmarking performance...")
+            print(" Benchmarking performance...")
 
         def benchmark_model(model, name: str, warmup: int = 10, runs: int = 100):
             model.eval()
@@ -321,13 +321,13 @@ Examples:
         optimized_time = benchmark_model(optimized, "Optimized")
 
         speedup = original_time / optimized_time
-        print(f"   🚀 Speedup: {speedup:.2f}x")
+        print(f"    Speedup: {speedup:.2f}x")
 
     @staticmethod
     def _save_model(model: torch.nn.Module, output_path: str, verbose: bool) -> None:
         """Save optimized model to file."""
         if verbose:
-            print(f"💾 Saving optimized model to: {output_path}")
+            print(f" Saving optimized model to: {output_path}")
 
         # Create output directory if needed
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)

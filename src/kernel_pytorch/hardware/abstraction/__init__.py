@@ -10,28 +10,26 @@ Universal hardware abstraction supporting proprietary GPUs and AI chips through:
 """
 
 from .hal_core import (
+    DeviceSpec,
     HardwareAbstractionLayer,
-    VendorAdapter,
     HardwareCapabilities,
-    DeviceSpec
+    VendorAdapter,
 )
-
 from .privateuse1_integration import (
     CustomDeviceBackend,
     PrivateUse1Manager,
-    register_custom_device
+    register_custom_device,
 )
-
 from .vendor_adapters import (
-    NVIDIAAdapter,
     AMDAdapter,
-    IntelAdapter,
     CPUAdapter,
     CustomHardwareAdapter,
+    IntelAdapter,
+    NVIDIAAdapter,
+    auto_detect_best_adapter,
     create_custom_adapter,
     create_vendor_adapter_enhanced,
     get_available_vendors,
-    auto_detect_best_adapter
 )
 
 __all__ = [

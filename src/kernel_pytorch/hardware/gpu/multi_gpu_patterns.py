@@ -16,19 +16,21 @@ This module provides:
 Author: KernelPyTorch Team
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from typing import Dict, List, Tuple, Optional, Any, Union, Callable
 import os
+import time
+from collections import defaultdict
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass
-import time
+from typing import Any
+
 import numpy as np
-from collections import defaultdict
+import torch
+import torch.distributed as dist
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 @dataclass
@@ -109,7 +111,7 @@ class DistributedManager:
             dist.all_reduce(tensor, op=op)
         return tensor
 
-    def all_gather(self, tensor: torch.Tensor) -> List[torch.Tensor]:
+    def all_gather(self, tensor: torch.Tensor) -> list[torch.Tensor]:
         """Gather tensor from all processes."""
         if not self.is_initialized:
             return [tensor]
@@ -129,7 +131,7 @@ class DataParallelOptimizer:
 
     def __init__(self,
                  model: nn.Module,
-                 device_ids: Optional[List[int]] = None,
+                 device_ids: list[int] | None = None,
                  find_unused_parameters: bool = False,
                  gradient_as_bucket_view: bool = True,
                  bucket_cap_mb: int = 25):
@@ -206,13 +208,13 @@ class ModelParallelOptimizer:
     communication between model partitions.
     """
 
-    def __init__(self, devices: List[torch.device]):
+    def __init__(self, devices: list[torch.device]):
         self.devices = devices
         self.num_partitions = len(devices)
 
     def create_pipeline_parallel_model(self,
                                      model: nn.Module,
-                                     partition_sizes: Optional[List[int]] = None) -> nn.Module:
+                                     partition_sizes: list[int] | None = None) -> nn.Module:
         """Create a pipeline parallel model."""
         if partition_sizes is None:
             # Equal partitioning
@@ -224,7 +226,7 @@ class ModelParallelOptimizer:
 
     def optimize_tensor_parallelism(self,
                                   linear_layer: nn.Linear,
-                                  dim: int = 0) -> List[nn.Linear]:
+                                  dim: int = 0) -> list[nn.Linear]:
         """Split a linear layer for tensor parallelism."""
         weight = linear_layer.weight
         bias = linear_layer.bias
@@ -256,9 +258,9 @@ class PipelineParallelModel(nn.Module):
 
     def __init__(self,
                  model: nn.Module,
-                 devices: List[torch.device],
-                 partition_sizes: List[int],
-                 micro_batch_size: Optional[int] = None):
+                 devices: list[torch.device],
+                 partition_sizes: list[int],
+                 micro_batch_size: int | None = None):
         super().__init__()
         self.devices = devices
         self.partition_sizes = partition_sizes
@@ -337,7 +339,7 @@ class CommunicationOptimizer:
                                         optimizer: torch.optim.Optimizer,
                                         loss_fn: Callable,
                                         inputs: torch.Tensor,
-                                        targets: torch.Tensor) -> Dict[str, float]:
+                                        targets: torch.Tensor) -> dict[str, float]:
         """
         Training step with overlapped communication and computation.
 
@@ -390,7 +392,7 @@ class CommunicationOptimizer:
             'loss': loss.item()
         }
 
-    def gradient_compression(self, gradients: List[torch.Tensor], compression_ratio: float = 0.1) -> List[torch.Tensor]:
+    def gradient_compression(self, gradients: list[torch.Tensor], compression_ratio: float = 0.1) -> list[torch.Tensor]:
         """
         Compress gradients for reduced communication overhead.
 
@@ -424,7 +426,7 @@ class CommunicationOptimizer:
 
         return compressed_gradients
 
-    def efficient_all_reduce(self, tensors: List[torch.Tensor], bucket_size_mb: float = 25.0) -> List[torch.Tensor]:
+    def efficient_all_reduce(self, tensors: list[torch.Tensor], bucket_size_mb: float = 25.0) -> list[torch.Tensor]:
         """
         Efficient all-reduce with bucketing for reduced communication overhead.
 
@@ -467,7 +469,7 @@ class CommunicationOptimizer:
 
             # Split back to original tensors
             start_idx = 0
-            for i, tensor in enumerate(bucket):
+            for _i, tensor in enumerate(bucket):
                 end_idx = start_idx + tensor.numel()
                 tensor.data = bucket_tensor[start_idx:end_idx].view(tensor.shape)
                 start_idx = end_idx
@@ -523,7 +525,7 @@ class MultiGPUProfiler:
             'bandwidth': tensor_size / duration if duration > 0 else 0
         })
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary."""
         summary = {
             'rank': self.rank,
@@ -556,7 +558,7 @@ class MultiGPUProfiler:
 
         return summary
 
-    def _analyze_load_balance(self) -> Dict[str, float]:
+    def _analyze_load_balance(self) -> dict[str, float]:
         """Analyze load balance across ranks."""
         # This would collect timing data from all ranks and analyze balance
         # For demo purposes, return placeholder data
@@ -571,14 +573,14 @@ def demonstrate_multi_gpu_patterns():
     """
     Comprehensive demonstration of multi-GPU optimization patterns.
     """
-    print("🔗 Multi-GPU Optimization Patterns Demonstration")
+    print(" Multi-GPU Optimization Patterns Demonstration")
     print("=" * 60)
 
     # Check if multiple GPUs are available
     num_gpus = torch.cuda.device_count()
 
     if num_gpus < 2:
-        print("⚠️  Multi-GPU demonstration requires at least 2 GPUs")
+        print("  Multi-GPU demonstration requires at least 2 GPUs")
         print("Running single-GPU demonstration instead...")
         num_gpus = 1
 
@@ -601,19 +603,19 @@ def demonstrate_multi_gpu_patterns():
     devices = [torch.device(f'cuda:{i}') for i in range(min(num_gpus, 4))]
     model = MultiGPUTestModel()
 
-    print(f"\n🏗️ Model Architecture:")
-    print(f"  Input size: 512")
-    print(f"  Hidden size: 1024")
-    print(f"  Number of layers: 4")
+    print("\n Model Architecture:")
+    print("  Input size: 512")
+    print("  Hidden size: 1024")
+    print("  Number of layers: 4")
     print(f"  Total parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Demonstrate Data Parallelism
-    print(f"\n📊 Data Parallelism Demo:")
+    print("\n Data Parallelism Demo:")
     if num_gpus > 1:
-        data_parallel_optimizer = DataParallelOptimizer(model)
+        DataParallelOptimizer(model)
 
         # Simulate distributed configuration
-        config = MultiGPUConfig(
+        MultiGPUConfig(
             world_size=num_gpus,
             rank=0,
             local_rank=0
@@ -621,14 +623,14 @@ def demonstrate_multi_gpu_patterns():
 
         # For demonstration, show DDP setup process
         print(f"  Setting up DistributedDataParallel with {num_gpus} GPUs")
-        print(f"  Bucket size: 25 MB")
-        print(f"  Gradient as bucket view: True")
+        print("  Bucket size: 25 MB")
+        print("  Gradient as bucket view: True")
     else:
-        print(f"  Single GPU mode - using DataParallel")
+        print("  Single GPU mode - using DataParallel")
         model = nn.DataParallel(model, device_ids=[0])
 
     # Demonstrate Model Parallelism
-    print(f"\n🔧 Model Parallelism Demo:")
+    print("\n Model Parallelism Demo:")
     model_parallel_optimizer = ModelParallelOptimizer(devices)
 
     # Create pipeline parallel model
@@ -641,7 +643,7 @@ def demonstrate_multi_gpu_patterns():
     print(f"  Tensor parallel layers: {len(parallel_layers)} partitions")
 
     # Performance Analysis
-    print(f"\n⚡ Performance Analysis:")
+    print("\n Performance Analysis:")
 
     # Sample data
     batch_size = 32
@@ -654,7 +656,7 @@ def demonstrate_multi_gpu_patterns():
 
         start_time = time.time()
         for _ in range(10):
-            output = model_single(sample_input)
+            model_single(sample_input)
         single_gpu_time = (time.time() - start_time) / 10
 
         print(f"  Single GPU forward pass: {single_gpu_time*1000:.2f} ms")
@@ -665,7 +667,7 @@ def demonstrate_multi_gpu_patterns():
 
             start_time = time.time()
             for _ in range(10):
-                output = pipeline_model(sample_input_pipeline)
+                pipeline_model(sample_input_pipeline)
             pipeline_time = (time.time() - start_time) / 10
 
             print(f"  Pipeline parallel forward pass: {pipeline_time*1000:.2f} ms")
@@ -674,7 +676,7 @@ def demonstrate_multi_gpu_patterns():
             print(f"  Pipeline speedup: {speedup:.2f}x")
 
     # Communication Optimization Demo
-    print(f"\n📡 Communication Optimization:")
+    print("\n Communication Optimization:")
     comm_optimizer = CommunicationOptimizer(world_size=num_gpus)
 
     # Demonstrate gradient compression
@@ -689,11 +691,11 @@ def demonstrate_multi_gpu_patterns():
     print(f"  Communication reduction: {(1 - compression_ratio)*100:.1f}%")
 
     # Multi-GPU Profiling Demo
-    print(f"\n📈 Multi-GPU Profiling:")
+    print("\n Multi-GPU Profiling:")
     profiler = MultiGPUProfiler(world_size=num_gpus, rank=0)
 
     # Simulate some operations with profiling
-    for i in range(5):
+    for _i in range(5):
         with profiler.time_operation('forward_pass'):
             time.sleep(0.001)  # Simulate computation
 
@@ -710,13 +712,13 @@ def demonstrate_multi_gpu_patterns():
         backward_stats = perf_summary['timing_stats']['backward_pass']
         print(f"  Average backward pass time: {backward_stats['mean']*1000:.2f} ± {backward_stats['std']*1000:.2f} ms")
 
-    print(f"\n✅ Multi-GPU optimization demonstration complete!")
-    print(f"Key benefits demonstrated:")
-    print(f"  • Data parallelism for scaling across multiple GPUs")
-    print(f"  • Model parallelism for large models")
-    print(f"  • Pipeline parallelism for memory efficiency")
-    print(f"  • Communication optimization for reduced overhead")
-    print(f"  • Performance profiling for optimization insights")
+    print("\n Multi-GPU optimization demonstration complete!")
+    print("Key benefits demonstrated:")
+    print("  • Data parallelism for scaling across multiple GPUs")
+    print("  • Model parallelism for large models")
+    print("  • Pipeline parallelism for memory efficiency")
+    print("  • Communication optimization for reduced overhead")
+    print("  • Performance profiling for optimization insights")
 
 
 if __name__ == "__main__":

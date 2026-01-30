@@ -8,13 +8,14 @@ Advanced profiling tools for communication operations:
 - Comprehensive performance reporting
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Tuple, Any
+import time
 from contextlib import contextmanager
+from typing import Any
+
 import numpy as np
-import torch
 import psutil
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,12 @@ class CommunicationProfiler:
     """
 
     def __init__(self):
-        self.operation_history: List[Dict] = []
-        self.performance_stats: Dict[str, List[float]] = {}
-        self.bottlenecks: List[Dict] = []
+        self.operation_history: list[dict] = []
+        self.performance_stats: dict[str, list[float]] = {}
+        self.bottlenecks: list[dict] = []
 
     @contextmanager
-    def profile_operation(self, operation_type: str, participants: List[int]):
+    def profile_operation(self, operation_type: str, participants: list[int]):
         """Context manager for profiling communication operations"""
         start_time = time.time()
         start_memory = self._get_memory_usage()
@@ -72,7 +73,7 @@ class CommunicationProfiler:
         else:
             return psutil.Process().memory_info().rss
 
-    def identify_bottlenecks(self) -> List[Dict[str, Any]]:
+    def identify_bottlenecks(self) -> list[dict[str, Any]]:
         """Identify communication bottlenecks"""
         bottlenecks = []
 
@@ -98,7 +99,7 @@ class CommunicationProfiler:
         self.bottlenecks = bottlenecks
         return bottlenecks
 
-    def get_optimization_recommendations(self) -> List[str]:
+    def get_optimization_recommendations(self) -> list[str]:
         """Generate optimization recommendations based on profiling data"""
         recommendations = []
 
@@ -128,7 +129,7 @@ class CommunicationProfiler:
 
         return recommendations
 
-    def generate_performance_report(self) -> Dict[str, Any]:
+    def generate_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report"""
         report = {
             'total_operations': len(self.operation_history),
@@ -159,7 +160,7 @@ class CommunicationProfiler:
 
         return report
 
-    def analyze_communication_patterns(self) -> Dict[str, Any]:
+    def analyze_communication_patterns(self) -> dict[str, Any]:
         """Analyze communication patterns over time"""
         if not self.operation_history:
             return {'error': 'No operation history available'}
@@ -208,7 +209,7 @@ class CommunicationProfiler:
             'temporal_patterns': temporal_patterns
         }
 
-    def _analyze_temporal_patterns(self) -> Dict[str, Any]:
+    def _analyze_temporal_patterns(self) -> dict[str, Any]:
         """Analyze temporal patterns in communications"""
         if len(self.operation_history) < 10:
             return {'insufficient_data': True}
@@ -250,7 +251,7 @@ class CommunicationProfiler:
             'peak_activity_window': max(window_stats, key=lambda w: w['operation_count']) if window_stats else None
         }
 
-    def _calculate_trend(self, values: List[float]) -> str:
+    def _calculate_trend(self, values: list[float]) -> str:
         """Calculate trend direction for a series of values"""
         if len(values) < 2:
             return 'insufficient_data'
@@ -266,7 +267,7 @@ class CommunicationProfiler:
         else:
             return 'decreasing'
 
-    def get_memory_profile(self) -> Dict[str, Any]:
+    def get_memory_profile(self) -> dict[str, Any]:
         """Get memory usage profile from operations"""
         if not self.operation_history:
             return {'error': 'No operation history available'}
@@ -353,7 +354,7 @@ class CommunicationProfiler:
             # Clear bottlenecks (will be recalculated when needed)
             self.bottlenecks.clear()
 
-    def compare_with_baseline(self, baseline_stats: Dict[str, Any]) -> Dict[str, Any]:
+    def compare_with_baseline(self, baseline_stats: dict[str, Any]) -> dict[str, Any]:
         """Compare current performance with baseline statistics"""
         current_stats = self.generate_performance_report()['performance_stats']
 

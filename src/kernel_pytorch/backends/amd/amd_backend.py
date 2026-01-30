@@ -24,18 +24,23 @@ Version: 0.4.9
 """
 
 import logging
+from dataclasses import dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Optional, Dict, Any, List, Union, Tuple
-from dataclasses import dataclass
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
+from kernel_pytorch.backends.base_backend import (
+    BaseBackend,
+    DeviceInfo,
+    OptimizationLevel,
+)
+from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
+
 from .amd_exceptions import (
     AMDBackendError,
-    ROCmNotAvailableError,
-    AMDDeviceError,
     AMDConfigurationError,
+    AMDDeviceError,
 )
 
 logger = logging.getLogger(__name__)
@@ -73,7 +78,7 @@ class AMDBackend(BaseBackend):
     # Backend identifier
     BACKEND_NAME: str = "amd"
 
-    def __init__(self, config: Optional[AMDConfig] = None):
+    def __init__(self, config: AMDConfig | None = None):
         """
         Initialize AMD backend with configuration.
 
@@ -84,8 +89,8 @@ class AMDBackend(BaseBackend):
             Falls back to CPU mode if ROCm is not available.
         """
         self._amd_config = config or AMDConfig()
-        self._amd_devices: List[AMDDeviceInfoLegacy] = []
-        self._current_amd_device: Optional[AMDDeviceInfoLegacy] = None
+        self._amd_devices: list[AMDDeviceInfoLegacy] = []
+        self._current_amd_device: AMDDeviceInfoLegacy | None = None
         self._cpu_fallback = False
 
         logger.info("Initializing AMD ROCm Backend v0.4.8")
@@ -258,7 +263,7 @@ class AMDBackend(BaseBackend):
                 self._amd_config.device_id,
                 "initialization",
                 f"Failed to initialize devices: {e}",
-            )
+            ) from e
 
     def _get_amd_device_info(self, device_id: int) -> AMDDeviceInfoLegacy:
         """
@@ -358,7 +363,7 @@ class AMDBackend(BaseBackend):
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """
         Prepare a PyTorch model for AMD GPU execution (implements BaseBackend abstract method).
@@ -408,13 +413,13 @@ class AMDBackend(BaseBackend):
             return model
 
         except Exception as e:
-            raise AMDBackendError(f"Model preparation failed: {e}")
+            raise AMDBackendError(f"Model preparation failed: {e}") from e
 
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize a model for inference (implements BaseBackend abstract method).
@@ -448,9 +453,9 @@ class AMDBackend(BaseBackend):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize a model for training (implements BaseBackend abstract method).
 
@@ -474,7 +479,7 @@ class AMDBackend(BaseBackend):
         """Get the number of available AMD devices (overrides BaseBackend)."""
         return len(self._amd_devices)
 
-    def get_device_info_dict(self) -> Dict[str, Any]:
+    def get_device_info_dict(self) -> dict[str, Any]:
         """
         Get information about the current device (legacy method).
 
@@ -503,7 +508,7 @@ class AMDBackend(BaseBackend):
 
         return {"device_type": "unknown", "rocm_available": False}
 
-    def get_all_amd_devices(self) -> List[AMDDeviceInfoLegacy]:
+    def get_all_amd_devices(self) -> list[AMDDeviceInfoLegacy]:
         """
         Get information about all available AMD GPU devices (legacy method).
 

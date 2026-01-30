@@ -8,15 +8,12 @@ Tests cover:
 - Integration between components
 """
 
+import os
+import tempfile
+
 import pytest
 import torch
 import torch.nn as nn
-import tempfile
-import json
-import os
-from pathlib import Path
-from typing import Dict, Any, List
-
 
 # ============================================================================
 # Test Fixtures
@@ -457,9 +454,9 @@ class TestGenerateTritonModelRepository:
         pytest.importorskip("onnx")
 
         from kernel_pytorch.deployment.serving import (
+            TritonBackend,
             create_triton_config,
             generate_triton_model_repository,
-            TritonBackend,
         )
 
         config = create_triton_config(
@@ -583,17 +580,9 @@ class TestServingIntegration:
     def test_import_all(self):
         """Test importing all serving components."""
         from kernel_pytorch.deployment.serving import (
-            # TorchServe
             KernelPyTorchHandler,
-            BaseHandler,
-            create_torchserve_handler,
-            package_for_torchserve,
-            # Triton
             TritonModelConfig,
-            TritonBackend,
-            TritonDataType,
             create_triton_config,
-            generate_triton_model_repository,
         )
 
         assert KernelPyTorchHandler is not None
@@ -614,8 +603,8 @@ class TestServingIntegration:
     def test_full_workflow_torchscript(self, simple_model, sample_input, temp_dir):
         """Test full workflow: export -> configure -> package."""
         from kernel_pytorch.deployment import (
-            export_to_torchscript,
             create_triton_config,
+            export_to_torchscript,
         )
 
         # Export model

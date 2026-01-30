@@ -12,21 +12,15 @@ Tests cover:
 
 import json
 import logging
-import sys
 import threading
 import time
 from io import StringIO
-from unittest.mock import patch
 
 import pytest
 
 from kernel_pytorch.monitoring.structured_logging import (
-    CorrelationContext,
     LogConfig,
-    LogContext,
     LogLevel,
-    PerformanceLogger,
-    StructuredLogger,
     configure_logging,
     correlation_context,
     get_correlation_id,
@@ -34,7 +28,6 @@ from kernel_pytorch.monitoring.structured_logging import (
     log_context,
     log_function_call,
     performance_log,
-    set_correlation_id,
 )
 
 
@@ -173,10 +166,10 @@ class TestCorrelationID:
 
     def test_correlation_context_nested(self):
         """Test nested correlation contexts."""
-        with correlation_context("outer-id") as outer:
+        with correlation_context("outer-id"):
             assert get_correlation_id() == "outer-id"
 
-            with correlation_context("inner-id") as inner:
+            with correlation_context("inner-id"):
                 assert get_correlation_id() == "inner-id"
 
             assert get_correlation_id() == "outer-id"
@@ -260,7 +253,7 @@ class TestStructuredLogger:
 
     def test_logger_with_kwargs(self):
         """Test logger accepts kwargs as extra."""
-        stream = StringIO()
+        StringIO()
         configure_logging(level="DEBUG", json_format=True)
 
         logger = get_logger("test_kwargs")
@@ -495,7 +488,7 @@ class TestEdgeCases:
         """Test logging unicode characters."""
         configure_logging(level="DEBUG", json_format=True)
         logger = get_logger("unicode_test")
-        logger.info("Unicode: 你好世界 🚀 émojis")
+        logger.info("Unicode: 你好世界  émojis")
 
     def test_special_characters(self):
         """Test logging special characters."""

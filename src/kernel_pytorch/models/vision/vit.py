@@ -9,20 +9,21 @@ This module provides optimizations for ViT models including:
 v0.4.23 - Complete attention slicing implementation
 """
 
-from typing import Optional, Dict, Any, Tuple
 import math
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .base import (
     BaseVisionOptimizer,
-    VisionOptimizationConfig,
-    VisionModelType,
     OptimizationLevel,
+    VisionModelType,
+    VisionOptimizationConfig,
     count_parameters,
     estimate_model_memory,
 )
-
 
 # =============================================================================
 # Sliced Attention Implementations
@@ -48,7 +49,7 @@ class SlicedMultiheadAttention(nn.Module):
         num_heads: int,
         dropout: float = 0.0,
         bias: bool = True,
-        slice_size: Optional[int] = None,
+        slice_size: int | None = None,
         batch_first: bool = True,
     ):
         super().__init__()
@@ -73,7 +74,7 @@ class SlicedMultiheadAttention(nn.Module):
     def from_pretrained(
         cls,
         mha: nn.MultiheadAttention,
-        slice_size: Optional[int] = None
+        slice_size: int | None = None
     ) -> "SlicedMultiheadAttention":
         """Create from existing MultiheadAttention module."""
         sliced = cls(
@@ -115,10 +116,10 @@ class SlicedMultiheadAttention(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        key_padding_mask: Optional[torch.Tensor] = None,
+        key_padding_mask: torch.Tensor | None = None,
         need_weights: bool = False,
-        attn_mask: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        attn_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Forward with sliced attention computation.
 
         Args:
@@ -183,8 +184,8 @@ class SlicedMultiheadAttention(nn.Module):
         k: torch.Tensor,  # (batch, heads, kv_len, head_dim)
         v: torch.Tensor,  # (batch, heads, kv_len, head_dim)
         slice_size: int,
-        attn_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None,
+        attn_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention in slices to save memory.
 
@@ -246,7 +247,7 @@ class SlicedAttentionWrapper(nn.Module):
     and adds sliced computation for memory efficiency.
     """
 
-    def __init__(self, attention_module: nn.Module, slice_size: Optional[int] = None):
+    def __init__(self, attention_module: nn.Module, slice_size: int | None = None):
         super().__init__()
         self.attention = attention_module
         self.slice_size = slice_size
@@ -257,7 +258,7 @@ class SlicedAttentionWrapper(nn.Module):
 
     def _patch_forward(self):
         """Patch the attention module's forward method."""
-        module_name = type(self.attention).__name__
+        type(self.attention).__name__  # noqa: B018
 
         # Check for timm-style attention (has qkv combined projection)
         if hasattr(self.attention, 'qkv'):
@@ -298,7 +299,7 @@ class SlicedAttentionWrapper(nn.Module):
 class ViTOptimizer(BaseVisionOptimizer):
     """Optimizer for Vision Transformer models."""
 
-    def __init__(self, config: Optional[VisionOptimizationConfig] = None):
+    def __init__(self, config: VisionOptimizationConfig | None = None):
         """Initialize ViT optimizer.
 
         Args:
@@ -354,7 +355,7 @@ class ViTOptimizer(BaseVisionOptimizer):
     def apply_attention_slicing(
         self,
         model: nn.Module,
-        slice_size: Optional[int] = None
+        slice_size: int | None = None
     ) -> nn.Module:
         """Apply attention slicing to reduce memory usage.
 
@@ -446,7 +447,7 @@ class ViTOptimizer(BaseVisionOptimizer):
         self,
         model: nn.Module,
         images: torch.Tensor,
-        batch_size: Optional[int] = None
+        batch_size: int | None = None
     ) -> torch.Tensor:
         """Run optimized batch inference.
 
@@ -569,7 +570,7 @@ class ViTBenchmark:
         num_iterations: int = 100,
         warmup_iterations: int = 10,
         image_size: int = 224,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark inference performance.
 
         Args:
@@ -628,7 +629,7 @@ class ViTBenchmark:
             "num_iterations": num_iterations,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:

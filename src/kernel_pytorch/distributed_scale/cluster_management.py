@@ -8,21 +8,20 @@ Kubernetes and SLURM cluster management for distributed training:
 - Service mesh integration for communication
 """
 
-import asyncio
-import time
 import logging
-import yaml
+import os
 import subprocess
-from typing import Dict, List, Optional, Tuple, Any, Union, Set
-from dataclasses import dataclass, field, asdict
+import tempfile
 import threading
 from datetime import datetime, timedelta
-import tempfile
-import os
+from typing import Any
+
+import yaml
 
 from .job_management import (
-    JobState, ResourceType, FailureType,
-    ResourceRequirement, TrainingJobSpec, JobStatus, ClusterNode
+    JobState,
+    JobStatus,
+    TrainingJobSpec,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,21 +41,21 @@ class KubernetesDistributedOrchestrator:
     def __init__(
         self,
         namespace: str = "ml-training",
-        kubeconfig_path: Optional[str] = None
+        kubeconfig_path: str | None = None
     ):
         self.namespace = namespace
         self.kubeconfig_path = kubeconfig_path
 
         # Job tracking
-        self.active_jobs: Dict[str, TrainingJobSpec] = {}
-        self.job_statuses: Dict[str, JobStatus] = {}
+        self.active_jobs: dict[str, TrainingJobSpec] = {}
+        self.job_statuses: dict[str, JobStatus] = {}
 
         # Kubernetes resources
         self.k8s_available = self._check_kubernetes_availability()
 
         # Monitoring
         self.monitoring_active = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
 
     def _check_kubernetes_availability(self) -> bool:
         """Check if Kubernetes is available"""
@@ -68,7 +67,7 @@ class KubernetesDistributedOrchestrator:
             logger.warning("kubectl not available, running in simulation mode")
             return False
 
-    def submit_job(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def submit_job(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """
         Submit distributed training job to Kubernetes
 
@@ -124,7 +123,7 @@ class KubernetesDistributedOrchestrator:
             logger.error(f"Failed to submit job {job_spec.job_id}: {e}")
             return {'success': False, 'error': str(e)}
 
-    def _validate_job_spec(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def _validate_job_spec(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """Validate training job specification"""
         errors = []
 
@@ -148,7 +147,7 @@ class KubernetesDistributedOrchestrator:
 
         return {'valid': len(errors) == 0, 'errors': errors}
 
-    def _create_kubernetes_resources(self, job_spec: TrainingJobSpec) -> List[Dict[str, Any]]:
+    def _create_kubernetes_resources(self, job_spec: TrainingJobSpec) -> list[dict[str, Any]]:
         """Create Kubernetes resource manifests for training job"""
         resources = []
 
@@ -237,7 +236,7 @@ class KubernetesDistributedOrchestrator:
 
         return resources
 
-    def _create_pod_template(self, job_spec: TrainingJobSpec, rank: Optional[int]) -> Dict[str, Any]:
+    def _create_pod_template(self, job_spec: TrainingJobSpec, rank: int | None) -> dict[str, Any]:
         """Create pod template for training workers"""
         # Base environment variables
         env_vars = [
@@ -343,7 +342,7 @@ class KubernetesDistributedOrchestrator:
 
         return template
 
-    def _apply_kubernetes_resources(self, resources: List[Dict[str, Any]]):
+    def _apply_kubernetes_resources(self, resources: list[dict[str, Any]]):
         """Apply Kubernetes resources to cluster"""
         for resource in resources:
             try:
@@ -377,7 +376,7 @@ class KubernetesDistributedOrchestrator:
         start_time = datetime.now() + timedelta(minutes=estimated_delay_minutes)
         return start_time.isoformat()
 
-    def _estimate_resource_allocation(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def _estimate_resource_allocation(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """Estimate resource allocation for job"""
         return {
             'total_gpus': job_spec.resources.gpu_count,
@@ -386,7 +385,7 @@ class KubernetesDistributedOrchestrator:
             'memory_per_node_gb': job_spec.resources.memory_gb // job_spec.world_size
         }
 
-    def get_job_status(self, job_id: str) -> Optional[JobStatus]:
+    def get_job_status(self, job_id: str) -> JobStatus | None:
         """Get current status of training job"""
         return self.job_statuses.get(job_id)
 
@@ -419,7 +418,7 @@ class KubernetesDistributedOrchestrator:
             logger.error(f"Failed to cancel job {job_id}: {e}")
             return False
 
-    def list_jobs(self) -> List[JobStatus]:
+    def list_jobs(self) -> list[JobStatus]:
         """List all jobs and their statuses"""
         return list(self.job_statuses.values())
 
@@ -438,8 +437,8 @@ class SLURMClusterManager:
     def __init__(
         self,
         partition: str = "gpu",
-        default_partition: Optional[str] = None,  # For test compatibility
-        account: Optional[str] = None,
+        default_partition: str | None = None,  # For test compatibility
+        account: str | None = None,
         default_time_limit: str = "24:00:00"
     ):
         # Use default_partition if provided for test compatibility
@@ -449,16 +448,16 @@ class SLURMClusterManager:
         self.default_time_limit = default_time_limit
 
         # Job tracking
-        self.active_jobs: Dict[str, TrainingJobSpec] = {}
-        self.job_statuses: Dict[str, JobStatus] = {}
-        self.slurm_job_ids: Dict[str, str] = {}  # our_id -> slurm_id
+        self.active_jobs: dict[str, TrainingJobSpec] = {}
+        self.job_statuses: dict[str, JobStatus] = {}
+        self.slurm_job_ids: dict[str, str] = {}  # our_id -> slurm_id
 
         # SLURM availability
         self.slurm_available = self._check_slurm_availability()
 
         # Monitoring
         self.monitoring_active = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
 
     def _check_slurm_availability(self) -> bool:
         """Check if SLURM commands are available"""
@@ -470,7 +469,7 @@ class SLURMClusterManager:
             logger.warning("SLURM commands not available, running in simulation mode")
             return False
 
-    def submit_job(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def submit_job(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """
         Submit distributed training job to SLURM
 
@@ -523,7 +522,7 @@ class SLURMClusterManager:
             logger.error(f"Failed to submit job {job_spec.job_id}: {e}")
             return {'success': False, 'error': str(e)}
 
-    def _validate_job_spec(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def _validate_job_spec(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """Validate training job specification for SLURM"""
         errors = []
 
@@ -636,7 +635,7 @@ class SLURMClusterManager:
         start_time = datetime.now() + timedelta(minutes=estimated_delay_minutes)
         return start_time.isoformat()
 
-    def _estimate_resource_allocation(self, job_spec: TrainingJobSpec) -> Dict[str, Any]:
+    def _estimate_resource_allocation(self, job_spec: TrainingJobSpec) -> dict[str, Any]:
         """Estimate resource allocation for job"""
         return {
             'total_gpus': job_spec.resources.gpu_count,
@@ -645,7 +644,7 @@ class SLURMClusterManager:
             'memory_per_node_gb': job_spec.resources.memory_gb // job_spec.world_size
         }
 
-    def get_job_status(self, job_id: str) -> Optional[JobStatus]:
+    def get_job_status(self, job_id: str) -> JobStatus | None:
         """Get current status of training job"""
         status = self.job_statuses.get(job_id)
         if status and self.slurm_available:
@@ -720,7 +719,7 @@ class SLURMClusterManager:
             logger.error(f"Failed to cancel job {job_id}: {e}")
             return False
 
-    def list_jobs(self) -> List[JobStatus]:
+    def list_jobs(self) -> list[JobStatus]:
         """List all jobs and their statuses"""
         # Update all statuses from SLURM
         if self.slurm_available:
@@ -729,7 +728,7 @@ class SLURMClusterManager:
 
         return list(self.job_statuses.values())
 
-    def get_cluster_info(self) -> Dict[str, Any]:
+    def get_cluster_info(self) -> dict[str, Any]:
         """Get cluster information from SLURM"""
         if not self.slurm_available:
             return {'simulation_mode': True}

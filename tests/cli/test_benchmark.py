@@ -2,12 +2,12 @@
 Tests for the benchmark CLI command.
 """
 
-import pytest
-import torch
 import json
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
+
+import torch
 
 from kernel_pytorch.cli.benchmark import BenchmarkCommand, BenchmarkResult
 
@@ -81,7 +81,7 @@ class TestBenchmarkCommand:
         mock_torchvision.models = mock_models
 
         with patch.dict('sys.modules', {'torchvision': mock_torchvision, 'torchvision.models': mock_models}):
-            model = BenchmarkCommand._load_model('resnet50', device)
+            BenchmarkCommand._load_model('resnet50', device)
 
             # Verify resnet50 was called with pretrained=False
             mock_models.resnet50.assert_called_once_with(pretrained=False)
@@ -142,7 +142,7 @@ class TestBenchmarkCommand:
 
         with patch('torch.compile') as mock_compile:
             mock_compile.return_value = model
-            optimized = BenchmarkCommand._apply_optimization(model, 'compile', input_shape, device)
+            BenchmarkCommand._apply_optimization(model, 'compile', input_shape, device)
             mock_compile.assert_called_with(model, mode='default')
 
     def test_benchmark_model(self):
@@ -295,7 +295,7 @@ class TestBenchmarkCommand:
                 assert os.path.exists(f.name)
 
                 # Verify JSON content
-                with open(f.name, 'r') as json_file:
+                with open(f.name) as json_file:
                     data = json.load(json_file)
 
                 assert 'benchmark_results' in data

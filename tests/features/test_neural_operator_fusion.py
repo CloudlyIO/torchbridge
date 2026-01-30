@@ -4,7 +4,7 @@ Tests for Neural Operator Fusion (NOF) Implementation
 Comprehensive test suite validating the unified attention fusion implementation
 and ensuring 40-60% kernel overhead reduction through advanced fusion techniques.
 
-🎯 TEST COVERAGE:
+ TEST COVERAGE:
 - Core fusion functionality and algorithms
 - Performance validation and benchmarking
 - Integration with existing PyTorch patterns
@@ -13,26 +13,21 @@ and ensuring 40-60% kernel overhead reduction through advanced fusion techniques
 - Edge cases and error handling
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import time
-import math
-import numpy as np
-from typing import List, Tuple, Dict, Any
-from unittest.mock import patch, MagicMock
 
 from kernel_pytorch.attention.fusion.neural_operator import (
-    UnifiedAttentionFusion,
     FusionConfig,
+    FusionPerformanceStats,
     FusionStrategy,
     OptimizationLevel,
-    FusionPerformanceStats,
-    create_unified_attention_fusion,
+    UnifiedAttentionFusion,
     benchmark_fusion_performance,
+    create_unified_attention_fusion,
+    print_benchmark_results,
     print_fusion_analysis,
-    print_benchmark_results
 )
 
 
@@ -45,8 +40,8 @@ class TestFusionConfig:
 
         assert config.strategy == FusionStrategy.FULL_BLOCK
         assert config.optimization_level == OptimizationLevel.AGGRESSIVE
-        assert config.enable_flash_attention == True
-        assert config.enable_custom_kernels == True
+        assert config.enable_flash_attention is True
+        assert config.enable_custom_kernels is True
         assert config.max_sequence_length == 8192
 
     def test_config_customization(self):
@@ -71,7 +66,7 @@ class TestFusionConfig:
             warp_size=32
         )
 
-        assert config.enable_tensor_cores == True
+        assert config.enable_tensor_cores is True
         assert config.block_size == 256
         assert config.warp_size == 32
 
@@ -301,7 +296,7 @@ class TestUnifiedAttentionFusion:
         assert not torch.isnan(x.grad).any()
 
         # Check parameter gradients
-        for name, param in fusion_module.named_parameters():
+        for _name, param in fusion_module.named_parameters():
             if param.requires_grad:
                 assert param.grad is not None
                 assert not torch.isnan(param.grad).any()
@@ -382,7 +377,7 @@ class TestFusionUtilityFunctions:
         assert FusionStrategy.FULL_BLOCK in results
         assert FusionStrategy.ATTENTION_NORM in results
 
-        for strategy, stats in results.items():
+        for _strategy, stats in results.items():
             assert isinstance(stats, FusionPerformanceStats)
             assert stats.execution_time_fused_ms > 0
 
@@ -523,7 +518,7 @@ class TestFusionAnalysis:
         assert "mixed_precision" in compatibility
 
         # All should be boolean values
-        for key, value in compatibility.items():
+        for _key, value in compatibility.items():
             assert isinstance(value, bool)
 
 
@@ -549,7 +544,7 @@ class TestNumericalAccuracy:
 
         # Copy weights to ensure identical computation (except for fusion)
         with torch.no_grad():
-            for (name_fused, param_fused), (name_unfused, param_unfused) in zip(
+            for (name_fused, param_fused), (name_unfused, param_unfused) in zip(  # noqa: B007
                 fusion_module_fused.named_parameters(),
                 fusion_module_unfused.named_parameters()
             ):
@@ -825,31 +820,31 @@ class TestIntegrationWithExistingCode:
 
 if __name__ == "__main__":
     # Run specific test functions for quick validation
-    print("🧪 Running Neural Operator Fusion Tests")
+    print(" Running Neural Operator Fusion Tests")
 
     # Test basic functionality
     test_config = TestFusionConfig()
     test_config.test_config_initialization()
     test_config.test_config_customization()
-    print("✅ FusionConfig tests passed")
+    print(" FusionConfig tests passed")
 
     # Test core fusion module
     test_fusion = TestUnifiedAttentionFusion()
     test_fusion.test_module_initialization()
     test_fusion.test_basic_forward_pass()
     test_fusion.test_different_fusion_strategies()
-    print("✅ UnifiedAttentionFusion core tests passed")
+    print(" UnifiedAttentionFusion core tests passed")
 
     # Test performance features
     test_perf = TestPerformanceOptimizations()
     test_perf.test_kernel_launch_estimation()
     test_perf.test_memory_bandwidth_estimation()
-    print("✅ Performance optimization tests passed")
+    print(" Performance optimization tests passed")
 
     # Test numerical accuracy
     test_accuracy = TestNumericalAccuracy()
     test_accuracy.test_fusion_vs_unfused_accuracy()
     test_accuracy.test_gradient_accuracy_preservation()
-    print("✅ Numerical accuracy tests passed")
+    print(" Numerical accuracy tests passed")
 
-    print("🎯 All key Neural Operator Fusion tests completed successfully!")
+    print(" All key Neural Operator Fusion tests completed successfully!")

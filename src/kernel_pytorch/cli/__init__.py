@@ -7,16 +7,16 @@ model export, and system validation.
 
 import argparse
 import sys
-from typing import List, Optional
+from typing import Optional  # noqa: F401
 
-from .optimize import OptimizeCommand
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
+from .optimize import OptimizeCommand
 from .profile import ProfileCommand
 
 
-def main(args: Optional[List[str]] = None) -> int:
+def main(args: list[str] | None = None) -> int:
     """
     Main entry point for the kernelpytorch CLI.
 

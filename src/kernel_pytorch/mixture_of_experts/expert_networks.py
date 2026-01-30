@@ -8,11 +8,12 @@ Various expert architectures for MoE systems:
 - Parameter-efficient experts for memory optimization
 """
 
+import math
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any
-import math
 
 
 class FeedForwardExpert(nn.Module):
@@ -28,13 +29,13 @@ class FeedForwardExpert(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        output_size: Optional[int] = None,
+        output_size: int | None = None,
         dropout: float = 0.1,
         activation_fn: str = "relu",
         use_bias: bool = True,
         use_layernorm: bool = False,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -110,14 +111,14 @@ class ConvolutionalExpert(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        output_size: Optional[int] = None,
+        output_size: int | None = None,
         kernel_size: int = 3,
         num_layers: int = 2,
         dropout: float = 0.1,
         activation_fn: str = "relu",
         use_bias: bool = True,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -129,7 +130,7 @@ class ConvolutionalExpert(nn.Module):
 
         # Convolutional layers
         self.conv_layers = nn.ModuleList()
-        for i in range(num_layers):
+        for _i in range(num_layers):
             self.conv_layers.append(
                 nn.Conv1d(
                     in_channels=hidden_size,
@@ -221,13 +222,13 @@ class AttentionExpert(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        output_size: Optional[int] = None,
+        output_size: int | None = None,
         num_heads: int = 8,
         dropout: float = 0.1,
         use_bias: bool = True,
         max_seq_len: int = 2048,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -367,14 +368,14 @@ class ParameterEfficientExpert(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        output_size: Optional[int] = None,
+        output_size: int | None = None,
         rank: int = 32,
         dropout: float = 0.1,
         activation_fn: str = "relu",
         use_bias: bool = True,
         adaptation_type: str = "lora",  # "lora", "adapter", "prefix"
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 
@@ -456,7 +457,7 @@ class ParameterEfficientExpert(nn.Module):
 
         return output
 
-    def get_parameter_count(self) -> Dict[str, int]:
+    def get_parameter_count(self) -> dict[str, int]:
         """Get parameter count breakdown"""
         total_params = sum(p.numel() for p in self.parameters())
 
@@ -492,11 +493,11 @@ class HybridExpert(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        output_size: Optional[int] = None,
-        expert_types: Dict[str, Dict[str, Any]] = None,
+        output_size: int | None = None,
+        expert_types: dict[str, dict[str, Any]] = None,
         combination_method: str = "concat",  # "concat", "add", "attention"
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
 

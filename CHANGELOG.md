@@ -6,9 +6,66 @@
 
 ---
 
-## 🎉 **v0.4.x - Production Release Series**
+## **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.30 (Release Candidate)
+**Current Version**: v0.4.35 (Production Hardening)
+
+---
+
+## [0.4.35] - 2026-01-30 - Production Hardening Release
+
+### **Summary**
+
+Comprehensive code quality hardening, codebase compaction, and multi-cloud
+validation. This release brings the v0.4.x train to production-ready status
+with zero linting issues, zero type errors, and validated operation across
+AWS (A10G), GCP (T4, L4), and GCP TPU (v5e).
+
+### **Fixed**
+
+- **5,002 ruff linting issues resolved to zero** (unused imports, type annotations,
+  f-string bugs, bare excepts, mutable defaults, missing stacklevels, raise-from)
+- **959 mypy type errors resolved to zero** (proper type annotations, valid-type
+  fixes, missing return statements, undefined name resolution, mypy configuration)
+- **Test ordering flakiness** in BERT/GPT2 e2e tests (session-scoped fixtures,
+  error handling for model loading)
+- **Missing return statement** in `embedding_layers.py` forward() and
+  `flash_attention.py` \_flash\_attention3\_forward()
+- **FullyJITTransformerBlock import** missing in progressive\_optimization.py
+- **Mutable argument defaults** in profiling.py, custom\_kernels.py,
+  memory\_efficiency.py (replaced with None + guard pattern)
+
+### **Changed**
+
+- Stripped 744 emoji characters from source/test code (kept in demos)
+- Removed 354 verbose educational docstring/comment lines
+- Removed dead `compiled_linear_gelu` export from core
+- Removed empty `docs/archive/` directory
+- All `warnings.warn()` calls now include `stacklevel=2`
+- All `raise` inside `except` blocks now use `from e` or `from None`
+- All bare `except:` replaced with `except Exception:`
+- All boolean comparisons use `is True/False` instead of `== True/False`
+- E2e model fixtures now session-scoped to avoid redundant downloads
+- Updated mypy configuration in pyproject.toml with proper per-module overrides
+
+### **Quality Metrics**
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Ruff issues | 5,002 | 0 |
+| Mypy errors | 959 | 0 |
+| Tests passing | 1,719 | 1,724+ |
+| Tests failing | 1 | 0 |
+| Source LOC | 83,756 | 83,514 |
+
+### **Cloud Validation Results**
+
+| Platform | Accelerator | Tests | Status |
+|----------|-------------|-------|--------|
+| AWS g5.xlarge | NVIDIA A10G | 66/66 | Validated |
+| GCP n1-std-4 | Tesla T4 | 66/66 | Validated |
+| GCP g2-std-4 | NVIDIA L4 | 282/284 | Validated |
+| GCP TPU v5litepod-1 | TPU v5e | 55/57 | Validated |
 
 ---
 

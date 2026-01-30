@@ -8,42 +8,36 @@ Comprehensive benchmark tests for next-generation optimizations:
 - Hardware compatibility testing
 - Production readiness assessment
 
-🎯 BENCHMARK TARGETS:
+ BENCHMARK TARGETS:
 - Advanced FlexAttention patterns
 - Ultra-precision quantization performance
 - Structured sparsity acceleration
 - Combined optimization scenarios
 """
 
+import os
+import sys
+import time
+
+import numpy as np
 import pytest
 import torch
 import torch.nn as nn
-import time
-import numpy as np
-import sys
-import os
-from typing import Dict, List, Any, Optional
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from kernel_pytorch.optimizations.next_gen import (
-    # Advanced FlexAttention
+    AcceleratedSparseOps,
+    AdaptivePrecisionAllocator,
     FlashLightCompiler,
-    AdvancedFlexAttention,
-    GQAOptimizedAttention,
-    create_advanced_flex_attention,
-
     # Ultra-precision
     FP4Quantizer,
-    MXFPOptimizer,
-    AdaptivePrecisionAllocator,
+    GQAOptimizedAttention,
     PrecisionFormat,
-
     # Structured sparsity
     StructuredSparsity24,
-    DynamicSparsityOptimizer,
-    AcceleratedSparseOps
+    create_advanced_flex_attention,
 )
 
 
@@ -55,7 +49,7 @@ class BenchmarkTimer:
         self.warmup_steps = warmup_steps
         self.benchmark_steps = benchmark_steps
 
-    def time_operation(self, operation, *args, **kwargs) -> Dict[str, float]:
+    def time_operation(self, operation, *args, **kwargs) -> dict[str, float]:
         """Time operation with proper warmup and statistics."""
         # Warmup
         for _ in range(self.warmup_steps):
@@ -67,7 +61,7 @@ class BenchmarkTimer:
         times = []
         for _ in range(self.benchmark_steps):
             start_time = time.perf_counter()
-            result = operation(*args, **kwargs)
+            operation(*args, **kwargs)
             if self.device.type == 'cuda':
                 torch.cuda.synchronize()
             end_time = time.perf_counter()
@@ -235,7 +229,7 @@ class TestUltraPrecisionBenchmarks:
         test_input = torch.randn(8, 64, device=device)
 
         # Baseline timing
-        baseline_timing = timer.time_operation(test_model, test_input)
+        timer.time_operation(test_model, test_input)
 
         # Create adaptive precision allocator
         allocator = AdaptivePrecisionAllocator(
@@ -283,7 +277,7 @@ class TestStructuredSparsityBenchmarks:
         )
 
         # Create sparse model
-        sparse_model = nn.Sequential(*[layer for layer in model])
+        sparse_model = nn.Sequential(*[layer for layer in model])  # noqa: C416
         total_params = 0
         sparse_params = 0
 
@@ -380,7 +374,7 @@ class TestIntegrationBenchmarks:
         # Test 2: Sparsity
         try:
             sparsity = StructuredSparsity24(sparsity_ratio=0.5)
-            sparse_model = nn.Sequential(*[layer for layer in model])
+            sparse_model = nn.Sequential(*[layer for layer in model])  # noqa: C416
 
             for module in sparse_model.modules():
                 if isinstance(module, nn.Linear):

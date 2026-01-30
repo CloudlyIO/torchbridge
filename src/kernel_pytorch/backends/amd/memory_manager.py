@@ -21,17 +21,20 @@ Inherits from BaseMemoryManager for shared functionality.
 Version: 0.4.9
 """
 
-import logging
-import torch
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass
-from collections import defaultdict
-import time
 import gc
+import logging
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
-from kernel_pytorch.backends.base_memory_manager import BaseMemoryManager, BaseMemoryStats
-from .amd_exceptions import ROCmMemoryError, AMDDeviceError
+import torch
+
+from kernel_pytorch.backends.base_memory_manager import (
+    BaseMemoryManager,
+)
+from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
+
+from .amd_exceptions import ROCmMemoryError
 
 logger = logging.getLogger(__name__)
 
@@ -189,10 +192,10 @@ class AMDMemoryManager(BaseMemoryManager):
 
     def allocate_tensor(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
-        pool_id: Optional[str] = None,
+        pool_id: str | None = None,
         purpose: str = "unknown",
         check_oom: bool = True,
     ) -> torch.Tensor:
@@ -240,13 +243,13 @@ class AMDMemoryManager(BaseMemoryManager):
             # Use base class allocation for pooling support
             return super().allocate_tensor(shape, dtype, requires_grad, pool_id, purpose)
 
-        except torch.cuda.OutOfMemoryError as e:
+        except torch.cuda.OutOfMemoryError:
             self._amd_stats["oom_count"] += 1
             raise ROCmMemoryError(
                 "allocation",
                 required_mb=size_mb,
                 available_mb=self.get_free_memory_mb(),
-            )
+            ) from None
 
     def free_tensor(self, tensor: torch.Tensor) -> None:
         """
@@ -255,7 +258,7 @@ class AMDMemoryManager(BaseMemoryManager):
         Args:
             tensor: Tensor to free
         """
-        alloc_id = str(id(tensor))
+        str(id(tensor))
 
         logger.debug(
             "Freeing tensor: size=%.2fMB",
@@ -267,7 +270,7 @@ class AMDMemoryManager(BaseMemoryManager):
         # Delete tensor reference
         del tensor
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """
         Get current memory statistics.
 
@@ -376,7 +379,7 @@ class AMDMemoryManager(BaseMemoryManager):
             torch.cuda.reset_peak_memory_stats(self.device_id)
         logger.debug("Peak memory stats reset")
 
-    def get_allocation_summary(self) -> Dict[str, int]:
+    def get_allocation_summary(self) -> dict[str, int]:
         """
         Get summary of allocations by purpose.
 

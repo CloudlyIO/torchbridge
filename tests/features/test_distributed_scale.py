@@ -10,66 +10,68 @@ Tests the large-scale distributed training and inference framework including:
 - Orchestration and fault tolerance
 """
 
-import pytest
-import asyncio
+import os
+import sys
 import time
+from dataclasses import asdict
+from unittest.mock import Mock, patch
+
+import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch, MagicMock
-from dataclasses import asdict
-import sys
-import os
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from kernel_pytorch.distributed_scale import (
-    # Multi-node training
-    MultiNodeTrainingManager,
-    AdvancedFSDPManager,
-    HeterogenousClusterManager,
-    create_multi_node_trainer,
-
-    # Large-scale inference
-    DistributedInferenceServer,
     AdaptiveLoadBalancer,
-    MemoryEfficientScheduler,
-    create_inference_cluster,
-
     # Communication optimization
     AdvancedCollectiveOps,
-    NetworkTopologyOptimizer,
+    AdvancedFSDPManager,
+    AutoScalingManager,
     BandwidthAwareScheduler,
     CommunicationProfiler,
-
+    DeviceMeshOptimizer,
+    # Large-scale inference
+    DistributedInferenceServer,
+    FaultToleranceManager,
     # Hardware adaptation
     HardwareTopologyManager,
-    DeviceMeshOptimizer,
-    ThermalAwareScheduler,
-    PowerEfficiencyOptimizer,
-
+    HeterogenousClusterManager,
     # Orchestration
     KubernetesDistributedOrchestrator,
+    MemoryEfficientScheduler,
+    # Multi-node training
+    MultiNodeTrainingManager,
+    NetworkTopologyOptimizer,
+    PowerEfficiencyOptimizer,
     SLURMClusterManager,
-    AutoScalingManager,
-    FaultToleranceManager
-)
-
-from kernel_pytorch.distributed_scale.multi_node_training import (
-    ClusterConfig, TrainingConfig, FSDPConfig
-)
-from kernel_pytorch.distributed_scale.large_scale_inference import (
-    InferenceServerConfig, LoadBalancingStrategy, BatchingStrategy
+    ThermalAwareScheduler,
+    create_inference_cluster,
+    create_multi_node_trainer,
 )
 from kernel_pytorch.distributed_scale.communication_optimization import (
-    CommunicationPattern, CompressionMethod, NetworkTopology, CollectiveOpConfig
-)
-from kernel_pytorch.distributed_scale.hardware_adaptation import (
-    DeviceCapability, ThermalState, NodeTopology, ClusterTopology
+    CollectiveOpConfig,
+    CommunicationPattern,
+    CompressionMethod,
+    NetworkTopology,
 )
 from kernel_pytorch.distributed_scale.hardware_discovery import HardwareVendor
+from kernel_pytorch.distributed_scale.large_scale_inference import (
+    BatchingStrategy,
+    InferenceServerConfig,
+    LoadBalancingStrategy,
+)
+from kernel_pytorch.distributed_scale.multi_node_training import (
+    ClusterConfig,
+    FSDPConfig,
+    TrainingConfig,
+)
 from kernel_pytorch.distributed_scale.orchestration import (
-    JobState, TrainingJobSpec, ResourceRequirement, JobStatus, FailureType
+    FailureType,
+    JobState,
+    ResourceRequirement,
+    TrainingJobSpec,
 )
 
 
@@ -440,7 +442,7 @@ class TestHardwareAdaptation:
 
                 mock_mesh.return_value = Mock()
 
-                mesh = optimizer.create_optimal_mesh(
+                optimizer.create_optimal_mesh(
                     world_size=8,
                     tensor_parallel_size=2,
                     pipeline_parallel_size=2,
@@ -709,7 +711,7 @@ class TestIntegration:
             topology_manager = HardwareTopologyManager(enable_monitoring=False)
 
             # Create device mesh optimizer
-            mesh_optimizer = DeviceMeshOptimizer(topology_manager)
+            DeviceMeshOptimizer(topology_manager)
 
             # Create thermal-aware scheduler
             thermal_scheduler = ThermalAwareScheduler(
@@ -737,7 +739,7 @@ class TestIntegration:
         )
 
         # Create collective operations
-        ops = AdvancedCollectiveOps(
+        AdvancedCollectiveOps(
             world_size=8,
             rank=0,
             topology=topology

@@ -5,10 +5,10 @@ Automatically detects available hardware and provides capability profiles
 for intelligent optimization selection.
 """
 
-import torch
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
+
+import torch
 
 from .config import NVIDIAArchitecture, TPUVersion
 
@@ -42,18 +42,18 @@ class HardwareProfile:
     device_count: int
 
     # Specific architecture details
-    nvidia_architecture: Optional[NVIDIAArchitecture] = None
-    tpu_version: Optional[TPUVersion] = None
-    compute_capability: Optional[tuple] = None
+    nvidia_architecture: NVIDIAArchitecture | None = None
+    tpu_version: TPUVersion | None = None
+    compute_capability: tuple | None = None
 
     # Available capabilities
-    capabilities: List[OptimizationCapability] = None
+    capabilities: list[OptimizationCapability] = None
 
     # Memory information
     total_memory_gb: float = 0.0
 
     # Additional metadata
-    cuda_version: Optional[str] = None
+    cuda_version: str | None = None
     xla_available: bool = False
 
     def __post_init__(self):
@@ -99,7 +99,7 @@ class HardwareDetector:
 
     def __init__(self):
         """Initialize hardware detector."""
-        self._cached_profile: Optional[HardwareProfile] = None
+        self._cached_profile: HardwareProfile | None = None
 
     def detect(self, force_redetect: bool = False) -> HardwareProfile:
         """
@@ -124,7 +124,7 @@ class HardwareDetector:
         self._cached_profile = profile
         return profile
 
-    def _detect_nvidia_gpu(self) -> Optional[HardwareProfile]:
+    def _detect_nvidia_gpu(self) -> HardwareProfile | None:
         """Detect NVIDIA GPU hardware."""
         if not torch.cuda.is_available():
             return None
@@ -163,14 +163,14 @@ class HardwareDetector:
                 cuda_version=torch.version.cuda if hasattr(torch.version, 'cuda') else None
             )
 
-        except Exception as e:
+        except Exception:
             # Detection failed, return None
             return None
 
     def _detect_nvidia_architecture(self, props) -> NVIDIAArchitecture:
         """Detect specific NVIDIA architecture."""
-        name = props.name.lower()
-        major, minor = props.major, props.minor
+        props.name.lower()
+        major, _minor = props.major, props.minor
 
         # Blackwell (compute capability 10.0+)
         if major >= 10:
@@ -187,7 +187,7 @@ class HardwareDetector:
         # Older architectures
         return NVIDIAArchitecture.PASCAL
 
-    def _detect_tpu(self) -> Optional[HardwareProfile]:
+    def _detect_tpu(self) -> HardwareProfile | None:
         """Detect TPU hardware."""
         try:
             import torch_xla
@@ -253,7 +253,7 @@ class HardwareDetector:
             capabilities=[],  # Minimal capabilities on CPU
         )
 
-    def get_optimal_backend(self, profile: Optional[HardwareProfile] = None) -> str:
+    def get_optimal_backend(self, profile: HardwareProfile | None = None) -> str:
         """
         Get optimal backend name based on hardware profile.
 
@@ -275,7 +275,7 @@ class HardwareDetector:
 
     def get_recommended_optimization_level(
         self,
-        profile: Optional[HardwareProfile] = None
+        profile: HardwareProfile | None = None
     ) -> str:
         """
         Get recommended optimization level based on hardware.
@@ -302,7 +302,7 @@ class HardwareDetector:
 
 
 # Global detector instance
-_global_detector: Optional[HardwareDetector] = None
+_global_detector: HardwareDetector | None = None
 
 
 def get_hardware_detector() -> HardwareDetector:

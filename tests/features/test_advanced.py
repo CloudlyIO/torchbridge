@@ -8,28 +8,31 @@ Tests for cutting-edge optimization implementations:
 - Integration and performance validation
 """
 
+import os
+import sys
+import time
+import warnings
+
+import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pytest
-import sys
-import os
-import time
-import warnings
-from typing import Dict, Any
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from kernel_pytorch.attention import (
-    FlashAttention3, FP8AttentionConfig, AttentionPatterns, AttentionConfig
-)
-from kernel_pytorch.mixture_of_experts import (
-    create_moe_layer, MoELayer, MoEConfig
-)
 from kernel_pytorch.advanced_memory import (
-    InterleaveOffloadingOptimizer, DeepOptimizerStates, MemoryConfig
+    DeepOptimizerStates,
+    InterleaveOffloadingOptimizer,
+    MemoryConfig,
 )
+from kernel_pytorch.attention import (
+    AttentionConfig,
+    AttentionPatterns,
+    FlashAttention3,
+    FP8AttentionConfig,
+)
+from kernel_pytorch.mixture_of_experts import MoEConfig, MoELayer, create_moe_layer
 
 
 class TestFlashAttention3:
@@ -172,7 +175,7 @@ class TestFlexAttention:
             elif pattern == AttentionPatterns.PREFIX_LM:
                 pattern_kwargs = {'prefix_length': 32}
 
-            attention = FlexAttentionAPI(
+            attention = FlexAttentionAPI(  # noqa: F821
                 embed_dim=512,
                 num_heads=8,
                 pattern=pattern,
@@ -189,7 +192,7 @@ class TestFlexAttention:
     @pytest.mark.skip("FlexAttentionAPI needs to be implemented in unified framework")
     def test_pattern_switching(self, device):
         """Test dynamic pattern switching"""
-        attention = FlexAttentionAPI(
+        attention = FlexAttentionAPI(  # noqa: F821
             embed_dim=256,
             num_heads=4,
             pattern=AttentionPatterns.CAUSAL
@@ -216,7 +219,7 @@ class TestFlexAttention:
     @pytest.mark.skip("FlexAttentionAPI needs to be implemented in unified framework")
     def test_benchmark_patterns(self, device):
         """Test pattern benchmarking functionality"""
-        attention = FlexAttentionAPI(
+        attention = FlexAttentionAPI(  # noqa: F821
             embed_dim=256,
             num_heads=4,
             pattern=AttentionPatterns.CAUSAL
@@ -229,7 +232,7 @@ class TestFlexAttention:
 
         assert isinstance(results, dict)
         assert len(results) > 0
-        for pattern_name, time_ms in results.items():
+        for _pattern_name, time_ms in results.items():
             assert isinstance(time_ms, float)
             assert time_ms > 0
 
@@ -259,7 +262,7 @@ class TestMixtureOfExperts:
 
             except Exception as e:
                 # Some MoE types might not be fully implemented
-                warnings.warn(f"MoE type {moe_type} failed: {str(e)}")
+                warnings.warn(f"MoE type {moe_type} failed: {str(e)}", stacklevel=2)
 
     def test_moe_forward_pass(self, device):
         """Test MoE forward pass with auxiliary losses"""
@@ -448,8 +451,8 @@ class TestAdvancedMemory:
 
             def closure():
                 optimizer.zero_grad()
-                output = model(x)
-                loss = F.mse_loss(output, target)
+                output = model(x)  # noqa: B023
+                loss = F.mse_loss(output, target)  # noqa: B023
                 loss.backward()
                 return loss
 
@@ -580,7 +583,7 @@ class TestIntegration:
 
 def run_comprehensive_test():
     """Run comprehensive test suite"""
-    print("🧪 Running Advanced Optimizations Test Suite")
+    print(" Running Advanced Optimizations Test Suite")
     print("=" * 60)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -600,7 +603,7 @@ def run_comprehensive_test():
     failed_tests = []
 
     for test_class in test_classes:
-        print(f"\n📋 Testing {test_class.__class__.__name__}")
+        print(f"\n Testing {test_class.__class__.__name__}")
         print("-" * 40)
 
         # Get all test methods
@@ -608,7 +611,7 @@ def run_comprehensive_test():
 
         for test_method in test_methods:
             total_tests += 1
-            print(f"  🧪 {test_method}... ", end="")
+            print(f"   {test_method}... ", end="")
 
             try:
                 # Call the test method
@@ -621,15 +624,15 @@ def run_comprehensive_test():
                 else:
                     method()
 
-                print("✅ PASSED")
+                print(" PASSED")
                 passed_tests += 1
 
             except Exception as e:
-                print(f"❌ FAILED: {str(e)}")
+                print(f" FAILED: {str(e)}")
                 failed_tests.append((test_class.__class__.__name__, test_method, str(e)))
 
     # Print summary
-    print(f"\n📊 TEST SUMMARY")
+    print("\n TEST SUMMARY")
     print("=" * 40)
     print(f"Total tests: {total_tests}")
     print(f"Passed: {passed_tests}")
@@ -637,7 +640,7 @@ def run_comprehensive_test():
     print(f"Success rate: {passed_tests/total_tests*100:.1f}%")
 
     if failed_tests:
-        print(f"\n❌ Failed Tests:")
+        print("\n Failed Tests:")
         for test_class, test_method, error in failed_tests:
             print(f"  • {test_class}.{test_method}: {error}")
 
@@ -649,8 +652,8 @@ if __name__ == "__main__":
     success = run_comprehensive_test()
 
     if success:
-        print("\n🎉 All tests passed!")
+        print("\n All tests passed!")
         exit(0)
     else:
-        print("\n💥 Some tests failed!")
+        print("\n Some tests failed!")
         exit(1)

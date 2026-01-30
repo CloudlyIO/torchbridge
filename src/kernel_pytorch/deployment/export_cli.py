@@ -20,11 +20,9 @@ Commands:
 """
 
 import argparse
-import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -40,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Utility Functions
 # =============================================================================
 
-def parse_shape(shape_str: str) -> Tuple[int, ...]:
+def parse_shape(shape_str: str) -> tuple[int, ...]:
     """Parse shape string like '(1, 512)' or '1,512' to tuple."""
     shape_str = shape_str.strip().strip("()[]")
     parts = [int(x.strip()) for x in shape_str.split(",")]
@@ -82,11 +80,11 @@ def load_model(model_path: str) -> nn.Module:
         else:
             raise ValueError("Unsupported model format")
     except Exception as e:
-        raise ValueError(f"Failed to load model: {e}")
+        raise ValueError(f"Failed to load model: {e}") from e
 
 
 def create_sample_input(
-    shape: Tuple[int, ...],
+    shape: tuple[int, ...],
     dtype: str = "float32",
     device: str = "cpu",
 ) -> torch.Tensor:
@@ -267,8 +265,8 @@ def validate_model(args: argparse.Namespace) -> int:
     """Validate model production readiness."""
     try:
         from ..deployment.production_validator import (
-            ProductionValidator,
             ProductionRequirements,
+            ProductionValidator,
         )
 
         # Load model
@@ -306,11 +304,11 @@ def validate_model(args: argparse.Namespace) -> int:
 
         print("\nCheck Details:")
         for check in result.checks:
-            status_icon = "✓" if check.passed else "✗" if check.failed else "?"
+            status_icon = "" if check.passed else "" if check.failed else "?"
             print(f"  {status_icon} {check.name}: {check.message}")
 
         if result.latency_stats:
-            print(f"\nLatency Stats:")
+            print("\nLatency Stats:")
             print(f"  Average: {result.latency_stats.get('avg_ms', 0):.2f} ms")
             print(f"  P95: {result.latency_stats.get('p95_ms', 0):.2f} ms")
             print(f"  Throughput: {result.latency_stats.get('throughput', 0):.2f} samples/sec")
@@ -346,19 +344,19 @@ def model_info(args: argparse.Namespace) -> int:
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-        print(f"\nParameters:")
+        print("\nParameters:")
         print(f"  Total: {total_params:,}")
         print(f"  Trainable: {trainable_params:,}")
         print(f"  Size: {total_params * 4 / 1024 / 1024:.2f} MB (FP32)")
 
         # Model structure
         if args.verbose:
-            print(f"\nModel Structure:")
+            print("\nModel Structure:")
             print(model)
 
         # File info
         path = Path(args.model)
-        print(f"\nFile Info:")
+        print("\nFile Info:")
         print(f"  Path: {path}")
         print(f"  Size: {path.stat().st_size / 1024 / 1024:.2f} MB")
 

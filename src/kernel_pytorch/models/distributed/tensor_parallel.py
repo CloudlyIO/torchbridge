@@ -8,13 +8,13 @@ Based on techniques from Megatron-LM and other distributed training frameworks.
 """
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
-import torch.nn as nn
 import torch.distributed as dist
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class TensorParallelConfig:
     """
     world_size: int = 1
     rank: int = 0
-    process_group: Optional[Any] = None
+    process_group: Any | None = None
     scatter_to_sequence_parallel: bool = False
     sequence_parallel: bool = False
     async_tensor_model_parallel_allreduce: bool = True
@@ -221,7 +221,7 @@ class ColumnParallelLinear(TensorParallelLinear):
 
         self._init_weights()
 
-    def forward(self, input_: torch.Tensor) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(self, input_: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Forward pass with column parallelism.
 
         Args:
@@ -300,7 +300,7 @@ class RowParallelLinear(TensorParallelLinear):
 
         self._init_weights()
 
-    def forward(self, input_: torch.Tensor) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(self, input_: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Forward pass with row parallelism.
 
         Args:
@@ -341,7 +341,7 @@ class TensorParallelEmbedding(nn.Module):
         num_embeddings: int,
         embedding_dim: int,
         config: TensorParallelConfig,
-        padding_idx: Optional[int] = None,
+        padding_idx: int | None = None,
     ):
         super().__init__()
         self.num_embeddings = num_embeddings
@@ -404,7 +404,7 @@ class VocabParallelEmbedding(nn.Module):
         num_embeddings: int,
         embedding_dim: int,
         config: TensorParallelConfig,
-        padding_idx: Optional[int] = None,
+        padding_idx: int | None = None,
     ):
         super().__init__()
         self.num_embeddings = num_embeddings
@@ -465,8 +465,8 @@ class VocabParallelEmbedding(nn.Module):
 def apply_tensor_parallelism(
     module: nn.Module,
     config: TensorParallelConfig,
-    linear_layer_names: Optional[List[str]] = None,
-    embedding_layer_names: Optional[List[str]] = None,
+    linear_layer_names: list[str] | None = None,
+    embedding_layer_names: list[str] | None = None,
 ) -> nn.Module:
     """Apply tensor parallelism to a model.
 
@@ -559,8 +559,8 @@ def apply_tensor_parallelism(
 def get_tensor_parallel_state_dict(
     module: nn.Module,
     config: TensorParallelConfig,
-    full_state_dict: Dict[str, torch.Tensor],
-) -> Dict[str, torch.Tensor]:
+    full_state_dict: dict[str, torch.Tensor],
+) -> dict[str, torch.Tensor]:
     """Get the partition of state dict for this rank.
 
     Args:

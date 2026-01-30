@@ -29,10 +29,11 @@ Example:
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
 from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -52,7 +53,7 @@ class HardwareMetadata:
     """Hardware-specific optimization metadata."""
     backend: str = "auto"  # cuda, tpu, amd, cpu
     architecture: str = "auto"  # hopper, ampere, cdna3, v5e, etc.
-    compute_capability: Optional[Tuple[int, int]] = None
+    compute_capability: tuple[int, int] | None = None
     tensor_cores: bool = False
     fp8_support: bool = False
     memory_gb: float = 0.0
@@ -60,9 +61,9 @@ class HardwareMetadata:
     # Optimization flags
     flash_attention_enabled: bool = False
     fused_kernels_enabled: bool = False
-    custom_kernels_used: List[str] = field(default_factory=list)
+    custom_kernels_used: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         result = asdict(self)
         # Convert tuple to list for JSON serialization
@@ -71,7 +72,7 @@ class HardwareMetadata:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'HardwareMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'HardwareMetadata':
         """Create from dictionary."""
         if data.get('compute_capability'):
             data['compute_capability'] = tuple(data['compute_capability'])
@@ -88,18 +89,18 @@ class PrecisionMetadata:
     # FP8 specific
     fp8_enabled: bool = False
     fp8_format: str = "e4m3"
-    fp8_layers: List[str] = field(default_factory=list)
+    fp8_layers: list[str] = field(default_factory=list)
 
     # Quantization
     quantized: bool = False
-    quantization_config: Dict[str, Any] = field(default_factory=dict)
+    quantization_config: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PrecisionMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'PrecisionMetadata':
         """Create from dictionary."""
         return cls(**data)
 
@@ -107,7 +108,7 @@ class PrecisionMetadata:
 @dataclass
 class FusionMetadata:
     """Kernel fusion information."""
-    fused_operations: List[Dict[str, Any]] = field(default_factory=list)
+    fused_operations: list[dict[str, Any]] = field(default_factory=list)
     attention_fusion: bool = False
     ffn_fusion: bool = False
     layernorm_fusion: bool = False
@@ -119,7 +120,7 @@ class FusionMetadata:
     def add_fusion(
         self,
         fusion_type: str,
-        layers: List[str],
+        layers: list[str],
         estimated_speedup: float = 1.0
     ) -> None:
         """Add a fusion record."""
@@ -130,12 +131,12 @@ class FusionMetadata:
         })
         self.fusion_count += 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'FusionMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'FusionMetadata':
         """Create from dictionary."""
         return cls(**data)
 
@@ -163,12 +164,12 @@ class PerformanceMetadata:
     benchmark_iterations: int = 100
     benchmark_device: str = "cuda"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PerformanceMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'PerformanceMetadata':
         """Create from dictionary."""
         return cls(**data)
 
@@ -189,16 +190,16 @@ class ModelMetadata:
     max_position_embeddings: int = 0
 
     # Input/output shapes
-    input_shapes: Dict[str, List[int]] = field(default_factory=dict)
-    output_shapes: Dict[str, List[int]] = field(default_factory=dict)
-    dynamic_axes: Dict[str, Dict[int, str]] = field(default_factory=dict)
+    input_shapes: dict[str, list[int]] = field(default_factory=dict)
+    output_shapes: dict[str, list[int]] = field(default_factory=dict)
+    dynamic_axes: dict[str, dict[int, str]] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ModelMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'ModelMetadata':
         """Create from dictionary."""
         return cls(**data)
 
@@ -228,14 +229,14 @@ class OptimizationMetadata:
     model: ModelMetadata = field(default_factory=ModelMetadata)
 
     # Deployment recommendations
-    recommended_batch_sizes: List[int] = field(default_factory=lambda: [1, 8, 16, 32])
-    recommended_backends: List[str] = field(default_factory=lambda: ["cuda", "cpu"])
-    minimum_compute_capability: Optional[Tuple[int, int]] = None
+    recommended_batch_sizes: list[int] = field(default_factory=lambda: [1, 8, 16, 32])
+    recommended_backends: list[str] = field(default_factory=lambda: ["cuda", "cpu"])
+    minimum_compute_capability: tuple[int, int] | None = None
 
     # Custom metadata
-    custom: Dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = {
             'schema_version': self.schema_version,
@@ -256,7 +257,7 @@ class OptimizationMetadata:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'OptimizationMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> 'OptimizationMetadata':
         """Create from dictionary."""
         # Parse nested dataclasses
         hardware = HardwareMetadata.from_dict(data.get('hardware', {}))
@@ -295,7 +296,7 @@ class OptimizationMetadata:
     @classmethod
     def load(cls, path: str) -> 'OptimizationMetadata':
         """Load metadata from JSON file."""
-        with open(path, 'r') as f:
+        with open(path) as f:
             data = json.load(f)
         logger.info(f"Loaded optimization metadata from {path}")
         return cls.from_dict(data)
@@ -344,7 +345,7 @@ def create_metadata(
     backend: str = "auto",
     optimization_level: str = "balanced",
     export_format: str = "onnx",
-    sample_input: Optional[torch.Tensor] = None,
+    sample_input: torch.Tensor | None = None,
     benchmark: bool = False,
     benchmark_iterations: int = 100
 ) -> OptimizationMetadata:

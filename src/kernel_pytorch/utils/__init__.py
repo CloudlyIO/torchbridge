@@ -2,23 +2,22 @@
 Utility modules for profiling, benchmarking, analysis, and infrastructure.
 """
 
-from .profiling import (
-    KernelProfiler,
-    ComparisonSuite,
-    quick_benchmark,
-    compare_functions,
-    profile_model_inference
-)
-
 from .cache import LRUCache, TTLCache
+from .profiling import (
+    ComparisonSuite,
+    KernelProfiler,
+    compare_functions,
+    profile_model_inference,
+    quick_benchmark,
+)
 
 # Optional imports for advanced features
 try:
     from .ab_testing import (
-        HardwareABTestingFramework,
-        ABExperiment,
-        TrafficSplitter,
-        StatisticalSignificance
+        ABExperiment,  # noqa: F401
+        HardwareABTestingFramework,  # noqa: F401
+        StatisticalSignificance,  # noqa: F401
+        TrafficSplitter,  # noqa: F401
     )
     _ab_testing_available = True
 except ImportError:
@@ -26,10 +25,10 @@ except ImportError:
 
 try:
     from .universal_inference_engine import (
-        UniversalInferenceEngine,
-        InferenceRequest,
-        InferenceResponse,
-        RequestProfile
+        InferenceRequest,  # noqa: F401
+        InferenceResponse,  # noqa: F401
+        RequestProfile,  # noqa: F401
+        UniversalInferenceEngine,  # noqa: F401
     )
     _inference_engine_available = True
 except ImportError:

@@ -8,15 +8,19 @@ Comprehensive fault detection and recovery system for large-scale GPU clusters:
 - Error reporting and alerting
 """
 
-import time
-import threading
 import logging
-from typing import Dict, List, Optional, Any
-import torch
+import threading
+import time
+from typing import Any
+
 import numpy as np
+import torch
 
 from .hardware_discovery import (
-    HardwareTopologyManager, DeviceInfo, ThermalState, HardwareVendor
+    DeviceInfo,
+    HardwareTopologyManager,
+    HardwareVendor,
+    ThermalState,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,15 +42,15 @@ class HardwareHealthMonitor:
         self.enable_monitoring = enable_monitoring
 
         # Monitoring state
-        self.device_monitors: Dict[int, threading.Thread] = {}
+        self.device_monitors: dict[int, threading.Thread] = {}
         self.monitoring_active = False
 
         # Performance tracking
-        self.performance_history: Dict[int, List[Dict]] = {}
-        self.performance_baselines: Dict[int, Dict[str, float]] = {}
+        self.performance_history: dict[int, list[dict]] = {}
+        self.performance_baselines: dict[int, dict[str, float]] = {}
 
         # Health tracking
-        self.device_health_status: Dict[int, str] = {}  # "healthy", "degraded", "failed"
+        self.device_health_status: dict[int, str] = {}  # "healthy", "degraded", "failed"
         self.error_thresholds = {
             'temperature': 85.0,  # °C
             'power': 1.2,         # multiplier of power limit
@@ -227,7 +231,7 @@ class HardwareHealthMonitor:
 
         return False
 
-    def get_device_health_status(self, device_id: Optional[int] = None) -> Dict[str, Any]:
+    def get_device_health_status(self, device_id: int | None = None) -> dict[str, Any]:
         """Get health status for device(s)"""
         if device_id is not None:
             return {
@@ -248,7 +252,7 @@ class HardwareHealthMonitor:
 
         return health_summary
 
-    def get_performance_report(self, device_id: Optional[int] = None, hours: int = 1) -> Dict[str, Any]:
+    def get_performance_report(self, device_id: int | None = None, hours: int = 1) -> dict[str, Any]:
         """Generate performance report for device(s)"""
         if device_id is not None:
             return self._get_single_device_report(device_id, hours)
@@ -313,7 +317,7 @@ class HardwareHealthMonitor:
 
         return report
 
-    def _get_single_device_report(self, device_id: int, hours: int) -> Dict[str, Any]:
+    def _get_single_device_report(self, device_id: int, hours: int) -> dict[str, Any]:
         """Generate report for single device"""
         if device_id not in self.performance_history:
             return {'error': f'No performance history for device {device_id}'}

@@ -7,16 +7,17 @@ compatibility for NVIDIA, TPU, and AMD backends.
 Phase 4C-Pre Week 5: AMD Testing & Integration (v0.3.5)
 """
 
+import logging
+
 import pytest
 import torch
 import torch.nn as nn
-import logging
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, AMDConfig, AMDArchitecture
-from kernel_pytorch.core.hardware_detector import HardwareDetector, HardwareProfile
+from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
 from kernel_pytorch.backends.nvidia import NVIDIABackend
 from kernel_pytorch.backends.tpu import TPUBackend
-from kernel_pytorch.backends.amd import AMDBackend, AMDOptimizer
+from kernel_pytorch.core.config import AMDConfig, KernelPyTorchConfig
+from kernel_pytorch.core.hardware_detector import HardwareDetector, HardwareProfile
 from kernel_pytorch.validation.unified_validator import UnifiedValidator
 
 logger = logging.getLogger(__name__)
@@ -477,4 +478,4 @@ def test_integration_summary():
     optimized = amd_optimizer.optimize(model)
     assert optimized is not None
 
-    logger.info("✅ Cross-backend integration validated (NVIDIA, TPU, AMD)")
+    logger.info(" Cross-backend integration validated (NVIDIA, TPU, AMD)")

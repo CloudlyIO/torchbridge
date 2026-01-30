@@ -17,11 +17,13 @@ Version: 0.4.9
 """
 
 import logging
-import torch
-from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass
+from typing import Any
 
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+import torch
+
+from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
+
 from .amd_exceptions import AMDOptimizationError, MatrixCoreError
 
 logger = logging.getLogger(__name__)
@@ -31,10 +33,10 @@ logger = logging.getLogger(__name__)
 class OptimizationResult:
     """Results from applying optimizations."""
 
-    optimizations_applied: List[str]
-    performance_improvement: Optional[float] = None
-    memory_savings_mb: Optional[float] = None
-    warnings: List[str] = None
+    optimizations_applied: list[str]
+    performance_improvement: float | None = None
+    memory_savings_mb: float | None = None
+    warnings: list[str] = None
 
     def __post_init__(self):
         if self.warnings is None:
@@ -69,8 +71,8 @@ class AMDOptimizer:
             config: AMD configuration with optimization settings
         """
         self.config = config
-        self._optimization_cache: Dict[str, Any] = {}
-        self._fused_ops: Set[str] = set()
+        self._optimization_cache: dict[str, Any] = {}
+        self._fused_ops: set[str] = set()
 
         logger.info(
             "Initializing AMDOptimizer: level=%s, architecture=%s",
@@ -79,7 +81,7 @@ class AMDOptimizer:
         )
 
     def optimize(
-        self, model: torch.nn.Module, level: Optional[str] = None
+        self, model: torch.nn.Module, level: str | None = None
     ) -> torch.nn.Module:
         """
         Apply AMD-specific optimizations to a PyTorch model.
@@ -129,7 +131,7 @@ class AMDOptimizer:
             return model
 
         except Exception as e:
-            raise AMDOptimizationError(optimization_level, str(e))
+            raise AMDOptimizationError(optimization_level, str(e)) from e
 
     def _apply_conservative_optimizations(
         self, model: torch.nn.Module
@@ -476,7 +478,7 @@ class AMDOptimizer:
                 "enable",
                 self.config.architecture.value,
                 str(e),
-            )
+            ) from e
 
     def _setup_mixed_precision(self, model: torch.nn.Module) -> bool:
         """
@@ -566,13 +568,13 @@ class AMDOptimizer:
             modules = list(model.named_modules())
 
             # 1. Identify and optimize attention patterns
-            for name, module in modules:
+            for name, _module in modules:
                 if 'attention' in name.lower() or 'attn' in name.lower():
                     self._fused_ops.add(f"{name}:attention_pattern")
                     fused_count += 1
 
             # 2. Look for LayerNorm + residual patterns
-            for i, (name, module) in enumerate(modules):
+            for _i, (name, module) in enumerate(modules):
                 if isinstance(module, torch.nn.LayerNorm):
                     self._fused_ops.add(f"{name}:layernorm_fusion")
                     fused_count += 1
@@ -644,7 +646,7 @@ class AMDOptimizer:
             logger.warning("Failed to prepare FP8 quantization: %s", e)
             return False
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """
         Get summary of applied optimizations.
 

@@ -31,46 +31,42 @@ Requirements:
     - PyTorch with XPU support
 """
 
+from .intel_backend import IntelBackend
 from .intel_exceptions import (
+    AMXNotSupportedError,
+    DPCPPError,
     IntelBackendError,
     IntelXPUError,
-    XPUNotAvailableError,
+    InvalidXPUArchitectureError,
     IPEXNotInstalledError,
-    XPUDeviceError,
-    XPUOutOfMemoryError,
-    XPUMemoryAllocationError,
     OneDNNError,
     SYCLCompilationError,
-    DPCPPError,
-    XPUOptimizationError,
-    AMXNotSupportedError,
-    InvalidXPUArchitectureError,
     XPUConfigurationError,
+    XPUDeviceError,
+    XPUMemoryAllocationError,
+    XPUNotAvailableError,
+    XPUOptimizationError,
+    XPUOutOfMemoryError,
 )
-
-from .xpu_utilities import (
-    XPUDeviceManager,
-    XPUDeviceInfo,
-    XPUOptimizations,
-    get_xpu_device_count,
-    is_xpu_available,
-    is_ipex_available,
-    get_ipex_version,
-    xpu_synchronize,
-    xpu_empty_cache,
-    IPEX_AVAILABLE,
-    XPU_AVAILABLE,
-)
-
-from .memory_manager import IntelMemoryManager
-
-from .intel_backend import IntelBackend
-
 from .intel_optimizer import (
-    IntelOptimizer,
     IntelKernelOptimizer,
     IntelOptimizationLevel,
+    IntelOptimizer,
     OptimizationResult,
+)
+from .memory_manager import IntelMemoryManager
+from .xpu_utilities import (
+    IPEX_AVAILABLE,
+    XPU_AVAILABLE,
+    XPUDeviceInfo,
+    XPUDeviceManager,
+    XPUOptimizations,
+    get_ipex_version,
+    get_xpu_device_count,
+    is_ipex_available,
+    is_xpu_available,
+    xpu_empty_cache,
+    xpu_synchronize,
 )
 
 __version__ = "0.4.19"

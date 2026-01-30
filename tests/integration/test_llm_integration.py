@@ -7,13 +7,13 @@ Validates optimization, quantization, and backend integration.
 Version: 0.4.12
 """
 
+import os
+import sys
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import MagicMock, patch
 
-import sys
-import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
@@ -102,7 +102,9 @@ class TestLLMConfig:
     def test_default_llm_config(self):
         """Test default LLM config values."""
         from kernel_pytorch.models.llm.llm_optimizer import (
-            LLMConfig, LLMType, QuantizationMode
+            LLMConfig,
+            LLMType,
+            QuantizationMode,
         )
 
         config = LLMConfig()
@@ -121,7 +123,9 @@ class TestLLMConfig:
     def test_custom_llm_config(self):
         """Test custom LLM config."""
         from kernel_pytorch.models.llm.llm_optimizer import (
-            LLMConfig, LLMType, QuantizationMode
+            LLMConfig,
+            LLMType,
+            QuantizationMode,
         )
 
         config = LLMConfig(
@@ -153,7 +157,9 @@ class TestLLMOptimizer:
     def test_optimizer_with_custom_config(self):
         """Test optimizer with custom configuration."""
         from kernel_pytorch.models.llm.llm_optimizer import (
-            LLMOptimizer, LLMConfig, QuantizationMode
+            LLMConfig,
+            LLMOptimizer,
+            QuantizationMode,
         )
 
         config = LLMConfig(
@@ -183,7 +189,7 @@ class TestLLMOptimizer:
 
     def test_estimate_memory_7b(self):
         """Test memory estimation for 7B model."""
-        from kernel_pytorch.models.llm.llm_optimizer import LLMOptimizer, LLMConfig
+        from kernel_pytorch.models.llm.llm_optimizer import LLMConfig, LLMOptimizer
 
         config = LLMConfig()
         optimizer = LLMOptimizer(config)
@@ -198,7 +204,9 @@ class TestLLMOptimizer:
     def test_estimate_memory_with_quantization(self):
         """Test memory estimation with quantization."""
         from kernel_pytorch.models.llm.llm_optimizer import (
-            LLMOptimizer, LLMConfig, QuantizationMode
+            LLMConfig,
+            LLMOptimizer,
+            QuantizationMode,
         )
 
         # Test that INT4 uses less memory than INT8
@@ -267,7 +275,7 @@ class TestKVCacheManager:
 
     def test_cache_manager_creation(self):
         """Test cache manager creation."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=2048,
@@ -283,7 +291,7 @@ class TestKVCacheManager:
 
     def test_create_cache(self):
         """Test cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             num_layers=4,
@@ -302,7 +310,7 @@ class TestKVCacheManager:
 
     def test_update_cache(self):
         """Test cache update."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=100,
@@ -326,7 +334,7 @@ class TestKVCacheManager:
 
     def test_cache_truncation(self):
         """Test that cache truncates when exceeding max length."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
             max_length=20,  # Small max length
@@ -350,7 +358,7 @@ class TestKVCacheManager:
 
     def test_get_cache_length(self):
         """Test cache length retrieval."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(num_layers=1, num_heads=2, head_dim=16, device="cpu")
         manager = KVCacheManager(config)
@@ -366,7 +374,7 @@ class TestKVCacheManager:
 
     def test_get_memory_usage(self):
         """Test memory usage calculation."""
-        from kernel_pytorch.models.llm.kv_cache import KVCacheManager, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(num_layers=2, num_heads=4, head_dim=32, device="cpu")
         manager = KVCacheManager(config)
@@ -389,7 +397,7 @@ class TestPagedKVCache:
 
     def test_paged_cache_creation(self):
         """Test paged cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import PagedKVCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=16,
@@ -405,7 +413,7 @@ class TestPagedKVCache:
 
     def test_initialize_pages(self):
         """Test page initialization."""
-        from kernel_pytorch.models.llm.kv_cache import PagedKVCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=8,
@@ -424,7 +432,7 @@ class TestPagedKVCache:
 
     def test_allocate_pages(self):
         """Test page allocation."""
-        from kernel_pytorch.models.llm.kv_cache import PagedKVCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=16,
@@ -443,7 +451,7 @@ class TestPagedKVCache:
 
     def test_get_memory_usage(self):
         """Test memory usage reporting."""
-        from kernel_pytorch.models.llm.kv_cache import PagedKVCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, PagedKVCache
 
         config = CacheConfig(
             num_pages=8,
@@ -473,7 +481,7 @@ class TestSlidingWindowCache:
 
     def test_sliding_window_creation(self):
         """Test sliding window cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import SlidingWindowCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=256,
@@ -488,7 +496,7 @@ class TestSlidingWindowCache:
 
     def test_create_cache(self):
         """Test cache creation."""
-        from kernel_pytorch.models.llm.kv_cache import SlidingWindowCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=128,
@@ -506,7 +514,7 @@ class TestSlidingWindowCache:
 
     def test_update_within_window(self):
         """Test update within window size."""
-        from kernel_pytorch.models.llm.kv_cache import SlidingWindowCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=100,
@@ -528,7 +536,7 @@ class TestSlidingWindowCache:
 
     def test_sliding_window_truncation(self):
         """Test that cache slides when exceeding window size."""
-        from kernel_pytorch.models.llm.kv_cache import SlidingWindowCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(
             window_size=50,
@@ -552,7 +560,7 @@ class TestSlidingWindowCache:
 
     def test_get_window_mask(self):
         """Test window mask generation."""
-        from kernel_pytorch.models.llm.kv_cache import SlidingWindowCache, CacheConfig
+        from kernel_pytorch.models.llm.kv_cache import CacheConfig, SlidingWindowCache
 
         config = CacheConfig(window_size=10, device="cpu")
         sw_cache = SlidingWindowCache(config)
@@ -596,17 +604,17 @@ class TestModuleExports:
     def test_llm_module_exports(self):
         """Test LLM module exports all required classes."""
         from kernel_pytorch.models.llm import (
-            LLMOptimizer,
+            GenerationConfig,
+            KVCacheManager,
             LLMConfig,
+            LLMOptimizer,
             OptimizedLlama,
             OptimizedMistral,
             OptimizedPhi,
-            create_optimized_llm,
-            QuantizationMode,
-            GenerationConfig,
-            KVCacheManager,
             PagedKVCache,
+            QuantizationMode,
             SlidingWindowCache,
+            create_optimized_llm,
         )
 
         assert LLMOptimizer is not None
@@ -624,8 +632,8 @@ class TestModuleExports:
     def test_models_module_exports_llm(self):
         """Test models module exports LLM components."""
         from kernel_pytorch.models import (
-            LLMOptimizer,
             LLMConfig,
+            LLMOptimizer,
             create_optimized_llm,
         )
 

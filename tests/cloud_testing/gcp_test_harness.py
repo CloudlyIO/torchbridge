@@ -14,7 +14,6 @@ Features:
 Version: 0.3.7
 """
 
-import json
 import logging
 import os
 import subprocess
@@ -22,8 +21,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -87,16 +85,16 @@ class GCPInstanceConfig:
     """Configuration for a GCP Compute Engine instance."""
     machine_type: GCPMachineType
     zone: GCPZone = GCPZone.US_CENTRAL1_A
-    project_id: Optional[str] = None  # Auto-detect if None
+    project_id: str | None = None  # Auto-detect if None
     image_family: str = "pytorch-latest-gpu"
     image_project: str = "deeplearning-platform-release"
     boot_disk_size_gb: int = 200
     boot_disk_type: str = "pd-ssd"
     preemptible: bool = True  # Use preemptible for cost savings
-    service_account: Optional[str] = None
+    service_account: str | None = None
     network: str = "default"
-    subnetwork: Optional[str] = None
-    labels: Dict[str, str] = field(default_factory=dict)
+    subnetwork: str | None = None
+    labels: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         """Set default labels."""
@@ -113,11 +111,11 @@ class TPUConfig:
     """Configuration for a GCP TPU."""
     tpu_type: TPUType
     zone: GCPZone = GCPZone.US_CENTRAL1_A
-    project_id: Optional[str] = None
+    project_id: str | None = None
     runtime_version: str = "tpu-ubuntu2204-base"
     network: str = "default"
     preemptible: bool = True
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         """Set default labels."""
@@ -143,13 +141,13 @@ class GCPTestResult:
     tests_failed: int
     tests_skipped: int
     test_output: str
-    benchmark_results: Dict[str, Any]
-    monitoring_metrics: Dict[str, Any]
+    benchmark_results: dict[str, Any]
+    monitoring_metrics: dict[str, Any]
     cost_estimate_usd: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "resource_id": self.resource_id,
@@ -218,7 +216,7 @@ class GCPTestHarness:
     def __init__(
         self,
         config: GCPInstanceConfig,
-        gcs_bucket: Optional[str] = None,
+        gcs_bucket: str | None = None,
         monitoring_namespace: str = "kernelpytorch-testing",
     ):
         """
@@ -232,14 +230,14 @@ class GCPTestHarness:
         self.config = config
         self.gcs_bucket = gcs_bucket or os.environ.get("KERNELPYTORCH_GCS_BUCKET")
         self.monitoring_namespace = monitoring_namespace
-        self.instance_name: Optional[str] = None
-        self.external_ip: Optional[str] = None
+        self.instance_name: str | None = None
+        self.external_ip: str | None = None
         self._google_cloud_available = self._check_google_cloud()
 
     def _check_google_cloud(self) -> bool:
         """Check if google-cloud libraries are available."""
         try:
-            from google.cloud import compute_v1
+            from google.cloud import compute_v1  # noqa: F401
             return True
         except ImportError:
             logger.warning("google-cloud-compute not installed. GCP operations will be simulated.")
@@ -287,7 +285,7 @@ class GCPTestHarness:
     def run_tests(
         self,
         test_path: str = "tests/",
-        pytest_args: Optional[List[str]] = None,
+        pytest_args: list[str] | None = None,
         timeout_seconds: int = 7200,
     ) -> GCPTestResult:
         """
@@ -375,8 +373,8 @@ class GCPTestHarness:
     def _run_local_tests(
         self,
         test_path: str,
-        pytest_args: List[str],
-    ) -> Tuple[str, int, int, int]:
+        pytest_args: list[str],
+    ) -> tuple[str, int, int, int]:
         """Run tests locally (for simulation/development)."""
         logger.info("Running tests locally (simulated GCP)")
 
@@ -415,7 +413,7 @@ class GCPTestHarness:
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get Cloud Monitoring metrics for the test run."""
         if not self._google_cloud_available or not self.instance_name:
             return {"simulated": True}
@@ -450,18 +448,18 @@ class TPUTestHarness:
     def __init__(
         self,
         config: TPUConfig,
-        gcs_bucket: Optional[str] = None,
+        gcs_bucket: str | None = None,
     ):
         """Initialize TPU Test Harness."""
         self.config = config
         self.gcs_bucket = gcs_bucket
-        self.tpu_name: Optional[str] = None
+        self.tpu_name: str | None = None
         self._tpu_available = self._check_tpu_api()
 
     def _check_tpu_api(self) -> bool:
         """Check if TPU API is available."""
         try:
-            from google.cloud import tpu_v2
+            from google.cloud import tpu_v2  # noqa: F401
             return True
         except ImportError:
             logger.warning("google-cloud-tpu not installed. TPU operations will be simulated.")
@@ -490,7 +488,7 @@ class TPUTestHarness:
     def run_tests(
         self,
         test_path: str = "tests/",
-        pytest_args: Optional[List[str]] = None,
+        pytest_args: list[str] | None = None,
     ) -> GCPTestResult:
         """Run tests on the TPU."""
         start_time = datetime.now()

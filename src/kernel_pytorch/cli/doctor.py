@@ -5,12 +5,12 @@ Provides comprehensive system compatibility checking and optimization recommenda
 """
 
 import argparse
-import sys
 import platform
 import subprocess
-import torch
-from typing import Dict, Any, List, Optional, Tuple
+import sys
 from dataclasses import dataclass
+
+import torch
 
 import kernel_pytorch as kpt
 
@@ -21,8 +21,8 @@ class DiagnosticResult:
     name: str
     status: str  # "pass", "warning", "fail"
     message: str
-    details: Optional[str] = None
-    recommendation: Optional[str] = None
+    details: str | None = None
+    recommendation: str | None = None
 
 
 class DoctorCommand:
@@ -84,7 +84,7 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the doctor command."""
-        print("🩺 KernelPyTorch System Diagnostics")
+        print(" KernelPyTorch System Diagnostics")
         print("=" * 50)
 
         try:
@@ -132,17 +132,17 @@ Examples:
             return 1 if has_failures else 0
 
         except Exception as e:
-            print(f"❌ Diagnostics failed: {e}")
+            print(f" Diagnostics failed: {e}")
             if args.verbose:
                 import traceback
                 traceback.print_exc()
             return 1
 
     @staticmethod
-    def _check_basic_requirements(verbose: bool) -> List[DiagnosticResult]:
+    def _check_basic_requirements(verbose: bool) -> list[DiagnosticResult]:
         """Check basic Python and PyTorch requirements."""
         if verbose:
-            print("🔍 Checking basic requirements...")
+            print(" Checking basic requirements...")
 
         results = []
 
@@ -154,13 +154,13 @@ Examples:
             results.append(DiagnosticResult(
                 "Python Version",
                 "pass",
-                f"Python {python_version} (✓ Compatible)"
+                f"Python {python_version} ( Compatible)"
             ))
         else:
             results.append(DiagnosticResult(
                 "Python Version",
                 "fail",
-                f"Python {python_version} (✗ Requires Python 3.8+)",
+                f"Python {python_version} ( Requires Python 3.8+)",
                 recommendation="Upgrade to Python 3.8 or later"
             ))
 
@@ -173,20 +173,20 @@ Examples:
                 results.append(DiagnosticResult(
                     "PyTorch Version",
                     "pass",
-                    f"PyTorch {torch_version} (✓ Compatible)"
+                    f"PyTorch {torch_version} ( Compatible)"
                 ))
             elif torch_major == 1 and torch_minor >= 12:
                 results.append(DiagnosticResult(
                     "PyTorch Version",
                     "warning",
-                    f"PyTorch {torch_version} (⚠ Recommend 2.0+)",
+                    f"PyTorch {torch_version} ( Recommend 2.0+)",
                     recommendation="Upgrade to PyTorch 2.0+ for best performance"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "PyTorch Version",
                     "fail",
-                    f"PyTorch {torch_version} (✗ Requires 1.12+)",
+                    f"PyTorch {torch_version} ( Requires 1.12+)",
                     recommendation="Upgrade to PyTorch 2.0+ for full compatibility"
                 ))
         except Exception as e:
@@ -204,7 +204,7 @@ Examples:
             results.append(DiagnosticResult(
                 "NumPy Version",
                 "pass",
-                f"NumPy {numpy_version} (✓ Available)"
+                f"NumPy {numpy_version} ( Available)"
             ))
         except ImportError:
             results.append(DiagnosticResult(
@@ -220,7 +220,7 @@ Examples:
             results.append(DiagnosticResult(
                 "KernelPyTorch Version",
                 "pass",
-                f"KernelPyTorch {kpt_version} (✓ Available)"
+                f"KernelPyTorch {kpt_version} ( Available)"
             ))
         except Exception as e:
             results.append(DiagnosticResult(
@@ -233,10 +233,10 @@ Examples:
         return results
 
     @staticmethod
-    def _check_hardware(verbose: bool) -> List[DiagnosticResult]:
+    def _check_hardware(verbose: bool) -> list[DiagnosticResult]:
         """Check hardware capabilities and GPU availability."""
         if verbose:
-            print("🔍 Checking hardware capabilities...")
+            print(" Checking hardware capabilities...")
 
         results = []
 
@@ -249,7 +249,7 @@ Examples:
             results.append(DiagnosticResult(
                 "CUDA GPU",
                 "pass",
-                f"{gpu_name} with {gpu_memory:.1f} GB (✓ Available)",
+                f"{gpu_name} with {gpu_memory:.1f} GB ( Available)",
                 details=f"CUDA {cuda_version}"
             ))
 
@@ -261,21 +261,21 @@ Examples:
                 results.append(DiagnosticResult(
                     "GPU Compute Capability",
                     "pass",
-                    f"Compute {compute_capability} (✓ Excellent for optimization)",
+                    f"Compute {compute_capability} ( Excellent for optimization)",
                     details="Supports Tensor Cores and advanced optimizations"
                 ))
             elif major >= 6:  # Pascal
                 results.append(DiagnosticResult(
                     "GPU Compute Capability",
                     "warning",
-                    f"Compute {compute_capability} (⚠ Good, but older)",
+                    f"Compute {compute_capability} ( Good, but older)",
                     recommendation="Consider upgrading for best performance"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "GPU Compute Capability",
                     "warning",
-                    f"Compute {compute_capability} (⚠ Limited optimization support)",
+                    f"Compute {compute_capability} ( Limited optimization support)",
                     recommendation="GPU may not support all optimization features"
                 ))
 
@@ -284,27 +284,27 @@ Examples:
                 results.append(DiagnosticResult(
                     "GPU Memory",
                     "pass",
-                    f"{gpu_memory:.1f} GB (✓ Sufficient for most workloads)"
+                    f"{gpu_memory:.1f} GB ( Sufficient for most workloads)"
                 ))
             elif gpu_memory >= 4.0:
                 results.append(DiagnosticResult(
                     "GPU Memory",
                     "warning",
-                    f"{gpu_memory:.1f} GB (⚠ May limit large models)",
+                    f"{gpu_memory:.1f} GB ( May limit large models)",
                     recommendation="Consider larger GPU for production workloads"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "GPU Memory",
                     "warning",
-                    f"{gpu_memory:.1f} GB (⚠ Limited memory for optimization)",
+                    f"{gpu_memory:.1f} GB ( Limited memory for optimization)",
                     recommendation="Upgrade GPU or use CPU-only optimizations"
                 ))
         else:
             results.append(DiagnosticResult(
                 "CUDA GPU",
                 "warning",
-                "No CUDA GPU detected (⚠ CPU-only mode)",
+                "No CUDA GPU detected ( CPU-only mode)",
                 recommendation="Install CUDA-compatible PyTorch for GPU acceleration"
             ))
 
@@ -313,7 +313,7 @@ Examples:
             results.append(DiagnosticResult(
                 "Apple Silicon GPU",
                 "pass",
-                "Apple Silicon GPU (✓ Available)",
+                "Apple Silicon GPU ( Available)",
                 details="MPS backend available for acceleration"
             ))
 
@@ -323,17 +323,17 @@ Examples:
         results.append(DiagnosticResult(
             "CPU Cores",
             "pass",
-            f"{cpu_count} cores (✓ Available)",
+            f"{cpu_count} cores ( Available)",
             details=f"Platform: {platform.machine()}"
         ))
 
         return results
 
     @staticmethod
-    def _check_optimization_frameworks(verbose: bool) -> List[DiagnosticResult]:
+    def _check_optimization_frameworks(verbose: bool) -> list[DiagnosticResult]:
         """Check availability of optimization frameworks."""
         if verbose:
-            print("🔍 Checking optimization frameworks...")
+            print(" Checking optimization frameworks...")
 
         results = []
 
@@ -342,18 +342,18 @@ Examples:
             if hasattr(torch, 'compile'):
                 # Test torch.compile
                 test_model = torch.nn.Linear(10, 1)
-                compiled_model = torch.compile(test_model, mode='default')
+                torch.compile(test_model, mode='default')
                 results.append(DiagnosticResult(
                     "torch.compile",
                     "pass",
-                    "torch.compile (✓ Available and working)",
+                    "torch.compile ( Available and working)",
                     details="PyTorch 2.0+ compilation framework"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "torch.compile",
                     "warning",
-                    "torch.compile not available (⚠ Requires PyTorch 2.0+)",
+                    "torch.compile not available ( Requires PyTorch 2.0+)",
                     recommendation="Upgrade to PyTorch 2.0+ for compilation features"
                 ))
         except Exception as e:
@@ -368,11 +368,11 @@ Examples:
         try:
             test_model = torch.nn.Linear(10, 1)
             test_input = torch.randn(1, 10)
-            traced_model = torch.jit.trace(test_model, test_input)
+            torch.jit.trace(test_model, test_input)
             results.append(DiagnosticResult(
                 "TorchScript",
                 "pass",
-                "TorchScript JIT (✓ Available and working)"
+                "TorchScript JIT ( Available and working)"
             ))
         except Exception as e:
             results.append(DiagnosticResult(
@@ -384,11 +384,13 @@ Examples:
 
         # KernelPyTorch components
         try:
-            from kernel_pytorch.utils.compiler_assistant import CompilerOptimizationAssistant
+            from kernel_pytorch.utils.compiler_assistant import (
+                CompilerOptimizationAssistant,  # noqa: F401
+            )
             results.append(DiagnosticResult(
                 "KernelPyTorch Optimization",
                 "pass",
-                "Optimization framework (✓ Available)"
+                "Optimization framework ( Available)"
             ))
         except ImportError as e:
             results.append(DiagnosticResult(
@@ -401,10 +403,10 @@ Examples:
         return results
 
     @staticmethod
-    def _check_advanced_features(verbose: bool) -> List[DiagnosticResult]:
+    def _check_advanced_features(verbose: bool) -> list[DiagnosticResult]:
         """Check availability of advanced optimization features."""
         if verbose:
-            print("🔍 Checking advanced features...")
+            print(" Checking advanced features...")
 
         results = []
 
@@ -415,7 +417,7 @@ Examples:
             results.append(DiagnosticResult(
                 "Triton Kernels",
                 "pass",
-                f"Triton {triton_version} (✓ Available)",
+                f"Triton {triton_version} ( Available)",
                 details="Python-based GPU kernel development"
             ))
         except ImportError:
@@ -423,24 +425,24 @@ Examples:
                 results.append(DiagnosticResult(
                     "Triton Kernels",
                     "warning",
-                    "Triton not available (⚠ Optional for advanced kernels)",
+                    "Triton not available ( Optional for advanced kernels)",
                     recommendation="Install Triton: pip install triton"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "Triton Kernels",
                     "warning",
-                    "Triton not available (⚠ Requires CUDA GPU)",
+                    "Triton not available ( Requires CUDA GPU)",
                     details="Triton requires CUDA-compatible hardware"
                 ))
 
         # Flash Attention
         try:
-            import flash_attn
+            import flash_attn  # noqa: F401
             results.append(DiagnosticResult(
                 "Flash Attention",
                 "pass",
-                "Flash Attention (✓ Available)",
+                "Flash Attention ( Available)",
                 details="Optimized attention implementation"
             ))
         except ImportError:
@@ -448,7 +450,7 @@ Examples:
                 results.append(DiagnosticResult(
                     "Flash Attention",
                     "warning",
-                    "Flash Attention not available (⚠ Optional optimization)",
+                    "Flash Attention not available ( Optional optimization)",
                     recommendation="Install: pip install flash-attn"
                 ))
 
@@ -456,42 +458,41 @@ Examples:
         try:
             result = subprocess.run(['nvcc', '--version'], capture_output=True, text=True)
             if result.returncode == 0:
-                nvcc_info = result.stdout
                 results.append(DiagnosticResult(
                     "CUDA Toolkit",
                     "pass",
-                    "NVCC compiler (✓ Available)",
+                    "NVCC compiler ( Available)",
                     details="Can compile custom CUDA kernels"
                 ))
             else:
                 results.append(DiagnosticResult(
                     "CUDA Toolkit",
                     "warning",
-                    "CUDA Toolkit not found (⚠ Optional for custom kernels)",
+                    "CUDA Toolkit not found ( Optional for custom kernels)",
                     recommendation="Install CUDA Toolkit for kernel development"
                 ))
         except FileNotFoundError:
             results.append(DiagnosticResult(
                 "CUDA Toolkit",
                 "warning",
-                "NVCC not in PATH (⚠ Optional for custom kernels)",
+                "NVCC not in PATH ( Optional for custom kernels)",
                 recommendation="Add CUDA to PATH or install CUDA Toolkit"
             ))
 
         return results
 
     @staticmethod
-    def _display_results(results: List[DiagnosticResult], verbose: bool) -> None:
+    def _display_results(results: list[DiagnosticResult], verbose: bool) -> None:
         """Display diagnostic results in a formatted way."""
-        print("\n🔍 Diagnostic Results:")
+        print("\n Diagnostic Results:")
         print("-" * 60)
 
         for result in results:
             status_icon = {
-                'pass': '✅',
-                'warning': '⚠️',
-                'fail': '❌'
-            }.get(result.status, '❓')
+                'pass': '',
+                'warning': '',
+                'fail': ''
+            }.get(result.status, '')
 
             print(f"{status_icon} {result.name}: {result.message}")
 
@@ -499,38 +500,38 @@ Examples:
                 print(f"   Details: {result.details}")
 
             if result.recommendation:
-                print(f"   💡 Recommendation: {result.recommendation}")
+                print(f"    Recommendation: {result.recommendation}")
 
             if verbose:
                 print()
 
     @staticmethod
-    def _generate_summary(results: List[DiagnosticResult]) -> str:
+    def _generate_summary(results: list[DiagnosticResult]) -> str:
         """Generate a summary of diagnostic results."""
         total = len(results)
         passed = sum(1 for r in results if r.status == 'pass')
         warnings = sum(1 for r in results if r.status == 'warning')
         failed = sum(1 for r in results if r.status == 'fail')
 
-        summary = f"\n📊 Summary: {passed}/{total} checks passed"
+        summary = f"\n Summary: {passed}/{total} checks passed"
         if warnings > 0:
             summary += f", {warnings} warnings"
         if failed > 0:
             summary += f", {failed} failures"
 
         if failed > 0:
-            summary += "\n❗ Critical issues detected - system may not work optimally"
+            summary += "\n Critical issues detected - system may not work optimally"
         elif warnings > 0:
-            summary += "\n⚠️  Some optimizations may not be available"
+            summary += "\n  Some optimizations may not be available"
         else:
-            summary += "\n✅ System is ready for optimal KernelPyTorch performance!"
+            summary += "\n System is ready for optimal KernelPyTorch performance!"
 
         return summary
 
     @staticmethod
-    def _attempt_fixes(results: List[DiagnosticResult], verbose: bool) -> None:
+    def _attempt_fixes(results: list[DiagnosticResult], verbose: bool) -> None:
         """Attempt to fix detected issues where possible."""
-        print("\n🔧 Attempting to fix detected issues...")
+        print("\n Attempting to fix detected issues...")
 
         fixable_issues = [r for r in results if r.status in ['fail', 'warning'] and r.recommendation]
 
@@ -542,15 +543,15 @@ Examples:
             if 'pip install' in issue.recommendation:
                 print(f"   Attempting to install missing package for {issue.name}...")
                 # Note: In a real implementation, you might want to be more careful about automatic installation
-                print(f"   ℹ️  Manual action required: {issue.recommendation}")
+                print(f"   ℹ  Manual action required: {issue.recommendation}")
 
-        print("   💡 Some fixes require manual intervention. See recommendations above.")
+        print("    Some fixes require manual intervention. See recommendations above.")
 
     @staticmethod
-    def _save_report(results: List[DiagnosticResult], output_path: str, verbose: bool) -> None:
+    def _save_report(results: list[DiagnosticResult], output_path: str, verbose: bool) -> None:
         """Save diagnostic report to file."""
         if verbose:
-            print(f"💾 Saving diagnostic report to: {output_path}")
+            print(f" Saving diagnostic report to: {output_path}")
 
         import json
         import time

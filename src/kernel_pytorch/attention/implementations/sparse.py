@@ -10,15 +10,14 @@ Implements multiple sparse attention strategies:
 v0.4.23 - Complete implementation replacing placeholders
 """
 
-import math
-from typing import Optional, Tuple, List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from ..core.base import BaseAttention
-from ..core.registry import register_attention
 from ..core.config import AttentionConfig
+from ..core.registry import register_attention
 
 
 def _compute_block_mask(
@@ -166,7 +165,7 @@ class DynamicSparseAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention with dynamic sparsity.
 
@@ -249,7 +248,7 @@ class BlockSparseAttention(BaseAttention):
         self.block_size = block_size
         self.num_random_blocks = num_random_blocks
         self.num_global_blocks = num_global_blocks
-        self._cached_mask: Optional[torch.Tensor] = None
+        self._cached_mask: torch.Tensor | None = None
         self._cached_seq_len: int = 0
 
     def _get_block_mask(self, seq_len: int, device: torch.device) -> torch.Tensor:
@@ -270,7 +269,7 @@ class BlockSparseAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute block sparse attention.
 
@@ -330,7 +329,7 @@ class StridedSparseAttention(BaseAttention):
         super().__init__(config)
         self.local_window = local_window
         self.stride = stride
-        self._cached_mask: Optional[torch.Tensor] = None
+        self._cached_mask: torch.Tensor | None = None
         self._cached_seq_len: int = 0
 
     def _get_strided_mask(self, seq_len: int, device: torch.device) -> torch.Tensor:
@@ -350,7 +349,7 @@ class StridedSparseAttention(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute strided sparse attention.
 
@@ -397,7 +396,7 @@ class SparseAttentionPattern(BaseAttention):
     def __init__(
         self,
         config: AttentionConfig,
-        patterns: Optional[List[str]] = None,
+        patterns: list[str] | None = None,
     ):
         super().__init__(config)
         self.patterns = patterns or ['local', 'global']
@@ -438,7 +437,7 @@ class SparseAttentionPattern(BaseAttention):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute attention with combined patterns."""
         batch_size, num_heads, seq_len, head_dim = q.shape

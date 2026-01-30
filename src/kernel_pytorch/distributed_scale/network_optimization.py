@@ -8,13 +8,16 @@ Advanced network optimization for large-scale distributed training:
 - Bandwidth-aware scheduling and congestion avoidance
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Tuple, Any, Union
+import time
+from typing import Any
+
 import numpy as np
 
 from .communication_primitives import (
-    NetworkTopology, CommunicationPattern, CompressionMethod
+    CommunicationPattern,
+    CompressionMethod,
+    NetworkTopology,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,8 +44,8 @@ class NetworkTopologyOptimizer:
         self.latency_matrix = self._initialize_latency_matrix()
 
         # Optimization state
-        self.optimal_routes: Dict[Tuple[int, int], List[int]] = {}
-        self.congestion_levels: Dict[int, float] = {}
+        self.optimal_routes: dict[tuple[int, int], list[int]] = {}
+        self.congestion_levels: dict[int, float] = {}
 
     def _discover_topology(self) -> NetworkTopology:
         """Discover network topology automatically"""
@@ -166,8 +169,8 @@ class NetworkTopologyOptimizer:
         self,
         operation: str,
         tensor_size: int,
-        participants: List[int]
-    ) -> Dict[str, Any]:
+        participants: list[int]
+    ) -> dict[str, Any]:
         """
         Optimize communication pattern for given operation
 
@@ -230,7 +233,7 @@ class NetworkTopologyOptimizer:
         self,
         operation: str,
         tensor_size: int,
-        participants: List[int],
+        participants: list[int],
         pattern: CommunicationPattern
     ) -> float:
         """Estimate completion time for given operation"""
@@ -282,7 +285,7 @@ class NetworkTopologyOptimizer:
 
         return (transfer_time + latency_penalty / 1000.0) * 1000.0  # Convert to ms
 
-    def update_congestion_levels(self, link_utilizations: Dict[Tuple[int, int], float]):
+    def update_congestion_levels(self, link_utilizations: dict[tuple[int, int], float]):
         """Update network congestion levels"""
         for (src, dst), utilization in link_utilizations.items():
             if utilization > 0.8:  # High utilization threshold
@@ -293,7 +296,7 @@ class NetworkTopologyOptimizer:
                     self.congestion_levels.get(dst, 0.0), utilization
                 )
 
-    def get_topology_info(self) -> Dict[str, Any]:
+    def get_topology_info(self) -> dict[str, Any]:
         """Get comprehensive topology information"""
         return {
             'discovered_topology': {
@@ -333,18 +336,18 @@ class BandwidthAwareScheduler:
 
     def __init__(self, topology_optimizer: NetworkTopologyOptimizer):
         self.topology_optimizer = topology_optimizer
-        self.active_communications: Dict[str, Dict] = {}
-        self.bandwidth_utilization: Dict[Tuple[int, int], float] = {}
-        self.scheduled_operations: List[Dict] = []
+        self.active_communications: dict[str, dict] = {}
+        self.bandwidth_utilization: dict[tuple[int, int], float] = {}
+        self.scheduled_operations: list[dict] = []
 
     def schedule_communication(
         self,
         operation_id: str,
         operation_type: str,
-        participants: List[int],
+        participants: list[int],
         tensor_size: int,
         priority: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Schedule communication operation with bandwidth awareness
 
@@ -415,7 +418,7 @@ class BandwidthAwareScheduler:
 
         return scheduling_decision
 
-    def _calculate_network_load(self, participants: List[int]) -> float:
+    def _calculate_network_load(self, participants: list[int]) -> float:
         """Calculate current network load for participants"""
         if not participants:
             return 0.0
@@ -430,7 +433,7 @@ class BandwidthAwareScheduler:
 
         return total_load / len(affected_links) if affected_links else 0.0
 
-    def _calculate_congestion_score(self, participants: List[int]) -> float:
+    def _calculate_congestion_score(self, participants: list[int]) -> float:
         """Calculate congestion score for participants"""
         congestion_levels = [
             self.topology_optimizer.congestion_levels.get(rank, 0.0)
@@ -439,7 +442,7 @@ class BandwidthAwareScheduler:
 
         return max(congestion_levels) if congestion_levels else 0.0
 
-    def _identify_affected_links(self, participants: List[int]) -> List[Tuple[int, int]]:
+    def _identify_affected_links(self, participants: list[int]) -> list[tuple[int, int]]:
         """Identify network links affected by communication"""
         links = []
 
@@ -450,7 +453,7 @@ class BandwidthAwareScheduler:
 
         return links
 
-    def update_bandwidth_utilization(self, link: Tuple[int, int], utilization: float):
+    def update_bandwidth_utilization(self, link: tuple[int, int], utilization: float):
         """Update bandwidth utilization for a link"""
         self.bandwidth_utilization[link] = utilization
 
@@ -458,7 +461,7 @@ class BandwidthAwareScheduler:
         if utilization > 0.8:
             self.topology_optimizer.update_congestion_levels({link: utilization})
 
-    def get_active_communications(self) -> List[Dict[str, Any]]:
+    def get_active_communications(self) -> list[dict[str, Any]]:
         """Get list of currently active communications"""
         current_time = time.time()
         active = [
@@ -468,7 +471,7 @@ class BandwidthAwareScheduler:
 
         return active
 
-    def get_scheduling_stats(self) -> Dict[str, Any]:
+    def get_scheduling_stats(self) -> dict[str, Any]:
         """Get comprehensive scheduling statistics"""
         current_time = time.time()
 

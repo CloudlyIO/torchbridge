@@ -18,27 +18,27 @@ References:
     - PyTorch Distributed: https://pytorch.org/docs/stable/distributed.html
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Tuple, Dict, Any, List, Union
 import math
 import warnings
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 try:
     import torch.distributed as dist
-    from torch.distributed import DeviceMesh, ProcessGroup
+    from torch.distributed import DeviceMesh, ProcessGroup  # noqa: F401
     DISTRIBUTED_AVAILABLE = True
 except ImportError:
     DISTRIBUTED_AVAILABLE = False
-    warnings.warn("PyTorch distributed not available - Context Parallel Attention will use single device fallback")
+    warnings.warn("PyTorch distributed not available - Context Parallel Attention will use single device fallback", stacklevel=2)
 
 try:
     from ..hardware_abstraction.device_coordinator import HardwareAbstractionLayer
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False
-    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination", stacklevel=2)
 
 
 class ContextParallelConfig:
@@ -46,8 +46,8 @@ class ContextParallelConfig:
 
     def __init__(
         self,
-        context_parallel_size: Optional[int] = None,
-        sequence_parallel_size: Optional[int] = None,
+        context_parallel_size: int | None = None,
+        sequence_parallel_size: int | None = None,
         overlap_communication: bool = True,
         use_flash_attention: bool = True,
         enable_gradient_checkpointing: bool = False,
@@ -194,7 +194,7 @@ class ContextParallelAttention(nn.Module):
         d_model: int,
         num_heads: int,
         config: ContextParallelConfig,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -234,7 +234,7 @@ class ContextParallelAttention(nn.Module):
         """Check if Flash Attention is available and compatible"""
         try:
             # Try importing flash attention
-            import flash_attn
+            import flash_attn  # noqa: F401
             return True
         except ImportError:
             return False
@@ -244,9 +244,9 @@ class ContextParallelAttention(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = False
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute attention for local context partition
 
@@ -303,7 +303,7 @@ class ContextParallelAttention(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = False
     ) -> torch.Tensor:
         """
@@ -341,7 +341,7 @@ class ContextParallelAttention(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = False
     ) -> torch.Tensor:
         """
@@ -412,7 +412,7 @@ class ContextParallelAttention(nn.Module):
     def _standard_attention_forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = False
     ) -> torch.Tensor:
         """Fallback to standard attention for non-distributed case"""
@@ -467,7 +467,7 @@ class ContextParallelBlock(nn.Module):
         d_ff: int,
         config: ContextParallelConfig,
         dropout: float = 0.1,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -489,7 +489,7 @@ class ContextParallelBlock(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = False
     ) -> torch.Tensor:
         """Forward pass with residual connections"""
@@ -511,8 +511,8 @@ class ContextParallelBlock(nn.Module):
 def create_context_parallel_attention(
     d_model: int,
     num_heads: int,
-    context_parallel_size: Optional[int] = None,
-    device: Optional[torch.device] = None
+    context_parallel_size: int | None = None,
+    device: torch.device | None = None
 ) -> ContextParallelAttention:
     """
     Factory function to create Context Parallel Attention with optimal configuration
@@ -549,7 +549,7 @@ def estimate_context_parallel_efficiency(
     num_heads: int,
     context_parallel_size: int,
     batch_size: int = 1
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Estimate efficiency gains from context parallelism
 

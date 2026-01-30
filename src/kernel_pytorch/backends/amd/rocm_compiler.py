@@ -17,15 +17,17 @@ Key Features:
 Version: 0.4.9
 """
 
-import logging
 import hashlib
+import logging
 import pickle
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
-from kernel_pytorch.core.config import AMDConfig, AMDArchitecture
+from pathlib import Path
+from typing import Any
+
+from kernel_pytorch.core.config import AMDArchitecture, AMDConfig
 from kernel_pytorch.utils.cache import LRUCache
-from .amd_exceptions import HIPCompilationError, HIPKernelError
+
+from .amd_exceptions import HIPCompilationError
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +38,9 @@ class CompiledKernel:
 
     name: str
     source_hash: str
-    binary: Optional[bytes]
+    binary: bytes | None
     architecture: AMDArchitecture
-    optimization_flags: List[str]
+    optimization_flags: list[str]
     compile_time_ms: float
 
 
@@ -66,7 +68,7 @@ class ROCmCompiler:
         self.config = config
         self._cache = LRUCache(max_size=config.hip_compiler_cache_size)
         self._cache_dir = Path(config.hip_compiler_cache_dir)
-        self._compilation_stats: Dict[str, int] = {
+        self._compilation_stats: dict[str, int] = {
             "total_compilations": 0,
             "cache_hits": 0,
             "cache_misses": 0,
@@ -83,7 +85,7 @@ class ROCmCompiler:
         )
 
     def compile_kernel(
-        self, source: str, kernel_name: str, optimization_level: Optional[str] = None
+        self, source: str, kernel_name: str, optimization_level: str | None = None
     ) -> CompiledKernel:
         """
         Compile a HIP kernel from source code.
@@ -129,10 +131,10 @@ class ROCmCompiler:
 
         except Exception as e:
             self._compilation_stats["compilation_errors"] += 1
-            raise HIPCompilationError(kernel_name, str(e))
+            raise HIPCompilationError(kernel_name, str(e)) from e
 
     def _compile_kernel_impl(
-        self, source: str, kernel_name: str, optimization_level: Optional[str]
+        self, source: str, kernel_name: str, optimization_level: str | None
     ) -> CompiledKernel:
         """
         Internal implementation of kernel compilation.
@@ -155,10 +157,8 @@ class ROCmCompiler:
         Returns:
             CompiledKernel object
         """
-        import time
         import os
-        import subprocess
-        import tempfile
+        import time
 
         start_time = time.time()
 
@@ -198,9 +198,9 @@ class ROCmCompiler:
         self,
         source: str,
         kernel_name: str,
-        opt_flags: List[str],
+        opt_flags: list[str],
         hipcc_path: str
-    ) -> Optional[bytes]:
+    ) -> bytes | None:
         """
         Compile HIP source using hipcc.
 
@@ -213,8 +213,8 @@ class ROCmCompiler:
         Returns:
             Compiled binary bytes or None if compilation fails
         """
-        import tempfile
         import subprocess
+        import tempfile
 
         try:
             # Create temporary files for source and output
@@ -298,7 +298,7 @@ class ROCmCompiler:
         logger.debug("Simulated compilation for kernel: %s", kernel_name)
         return binary
 
-    def _get_optimization_flags(self, optimization_level: Optional[str]) -> List[str]:
+    def _get_optimization_flags(self, optimization_level: str | None) -> list[str]:
         """
         Get HIP compiler optimization flags.
 
@@ -358,7 +358,7 @@ class ROCmCompiler:
         return target_map.get(self.config.architecture, "gfx90a")
 
     def _generate_cache_key(
-        self, source: str, kernel_name: str, optimization_level: Optional[str]
+        self, source: str, kernel_name: str, optimization_level: str | None
     ) -> str:
         """
         Generate cache key for compiled kernel.
@@ -408,7 +408,7 @@ class ROCmCompiler:
         except Exception as e:
             logger.warning("Failed to save kernel to disk cache: %s", e)
 
-    def _load_from_disk_cache(self, cache_key: str) -> Optional[CompiledKernel]:
+    def _load_from_disk_cache(self, cache_key: str) -> CompiledKernel | None:
         """
         Load compiled kernel from disk cache.
 
@@ -444,7 +444,7 @@ class ROCmCompiler:
         except Exception as e:
             logger.warning("Failed to clear disk cache: %s", e)
 
-    def get_compilation_stats(self) -> Dict[str, Any]:
+    def get_compilation_stats(self) -> dict[str, Any]:
         """
         Get compilation statistics.
 

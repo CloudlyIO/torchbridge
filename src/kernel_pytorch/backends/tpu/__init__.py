@@ -25,16 +25,16 @@ Example:
     ```
 """
 
+from .memory_manager import TPUMemoryManager
 from .tpu_backend import TPUBackend
 from .tpu_optimizer import TPUOptimizer
 from .xla_compiler import XLACompiler
-from .memory_manager import TPUMemoryManager
 from .xla_integration import (
     XLADeviceManager,
     XLADistributedTraining,
     XLAOptimizations,
     XLAUtilities,
-    create_xla_integration
+    create_xla_integration,
 )
 
 __all__ = [

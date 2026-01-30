@@ -5,23 +5,23 @@ Tests the FP8 training engine, optimizations, and related functionality
 to ensure proper operation and performance characteristics.
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import warnings
 
 # Import FP8 modules
 try:
     from kernel_pytorch.precision import (
-        FP8TrainingEngine,
         FP8Config,
         FP8Format,
-        create_fp8_trainer,
         FP8LinearLayer,
-        FP8Optimizer,
+        FP8Optimizer,  # noqa: F401
+        FP8TrainingEngine,
         convert_model_to_fp8,
-        validate_fp8_setup
+        create_fp8_trainer,
+        validate_fp8_setup,
     )
     FP8_AVAILABLE = True
 except ImportError as e:
@@ -158,14 +158,14 @@ class TestFP8LinearLayer:
 
         # Forward pass should update AMAX
         x = torch.randn(4, 256)
-        output = layer(x)
+        layer(x)
 
         initial_input_amax = layer.input_amax.item()
-        initial_weight_amax = layer.weight_amax.item()
+        layer.weight_amax.item()
 
         # Another forward pass
         x2 = torch.randn(4, 256) * 10  # Larger input
-        output2 = layer(x2)
+        layer(x2)
 
         # AMAX should have updated
         assert layer.input_amax.item() >= initial_input_amax
@@ -227,7 +227,8 @@ class TestFP8TrainingEngine:
         # FP8 training may have overflow on initial steps while scale adjusts
         # This is expected behavior - scale gradually reduces until stable
         max_retries = 5
-        for retry in range(max_retries):
+        retry = 0
+        for retry in range(max_retries):  # noqa: B007
             if success:
                 break
             optimizer.zero_grad()
@@ -322,7 +323,7 @@ class TestFP8Integration:
 
         # Training steps
         losses = []
-        for step in range(5):
+        for _step in range(5):
             optimizer.zero_grad()
 
             # Forward pass
@@ -340,7 +341,7 @@ class TestFP8Integration:
 
         # Should have some successful training steps
         assert len(losses) > 0
-        assert all(torch.isfinite(torch.tensor(l)) for l in losses)
+        assert all(torch.isfinite(torch.tensor(l)) for l in losses)  # noqa: E741
 
     def test_statistics_tracking(self, simple_model, fp8_config, sample_data):
         """Test training statistics tracking"""
@@ -352,7 +353,7 @@ class TestFP8Integration:
         # Perform several training steps
         optimizer = torch.optim.AdamW(simple_model.parameters(), lr=1e-4)
 
-        for step in range(3):
+        for _step in range(3):
             loss = engine.training_step(inputs, targets[:, 0])
             loss.backward()
             engine.optimizer_step(optimizer)
@@ -431,7 +432,7 @@ def test_different_format_combinations(simple_model, format_combo):
 if __name__ == "__main__":
     # Run basic smoke test
     if FP8_AVAILABLE:
-        print("🧪 Running FP8 training smoke test...")
+        print(" Running FP8 training smoke test...")
 
         model = SimpleTransformerBlock(d_model=128, num_heads=2, d_ff=256)
         config = FP8Config(use_te_linear=False)
@@ -448,11 +449,11 @@ if __name__ == "__main__":
             outputs = model(x)
             loss = F.cross_entropy(outputs.mean(dim=1), y)
 
-            print(f"✅ FP8 training smoke test passed")
+            print(" FP8 training smoke test passed")
             print(f"   Loss: {loss.item():.4f}")
             print(f"   Output shape: {outputs.shape}")
 
         except Exception as e:
-            print(f"❌ FP8 training smoke test failed: {e}")
+            print(f" FP8 training smoke test failed: {e}")
     else:
-        print("⚠️  FP8 training not available - skipping smoke test")
+        print("  FP8 training not available - skipping smoke test")

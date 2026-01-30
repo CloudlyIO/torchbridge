@@ -8,31 +8,26 @@ Tests cover:
 - Export validation
 """
 
-import json
 import os
 import tempfile
-from pathlib import Path
+
 import pytest
 import torch
 import torch.nn as nn
 
 from kernel_pytorch.deployment import (
-    # Metadata
-    OptimizationMetadata,
-    HardwareMetadata,
-    PrecisionMetadata,
     FusionMetadata,
-    PerformanceMetadata,
-    ModelMetadata,
-    create_metadata,
+    HardwareMetadata,
+    ONNXExportConfig,
     # ONNX
     ONNXExporter,
-    ONNXExportConfig,
-    export_to_onnx,
+    # Metadata
+    OptimizationMetadata,
+    TorchScriptExportConfig,
     # TorchScript
     TorchScriptExporter,
-    TorchScriptExportConfig,
-    ExportMethod,
+    create_metadata,
+    export_to_onnx,
     export_to_torchscript,
     load_torchscript,
 )
@@ -380,7 +375,7 @@ class TestONNXExporter:
     def check_onnx_available(self):
         """Check if ONNX is available."""
         try:
-            import onnx
+            import onnx  # noqa: F401
             return True
         except ImportError:
             pytest.skip("ONNX not available")
@@ -458,7 +453,7 @@ class TestONNXExporter:
     def test_export_validation(self, check_onnx_available):
         """Test ONNX export validation."""
         try:
-            import onnxruntime
+            import onnxruntime  # noqa: F401
         except ImportError:
             pytest.skip("ONNX Runtime not available")
 
@@ -525,7 +520,7 @@ class TestDeploymentIntegration:
 
             # ONNX export (if available)
             try:
-                import onnx
+                import onnx  # noqa: F401
                 onnx_path = os.path.join(tmpdir, "model.onnx")
                 onnx_result = export_to_onnx(
                     model=model,

@@ -13,10 +13,10 @@ Consolidates functionality from:
 Version: 0.3.11
 """
 
-from typing import Any, Dict, List, Optional
 import warnings
+from typing import Any
 
-from .base import BaseManager, ManagerType, ManagerState
+from .base import BaseManager, ManagerState, ManagerType
 
 
 class InfrastructureManager(BaseManager):
@@ -41,10 +41,10 @@ class InfrastructureManager(BaseManager):
         self.testing_enabled = self.validation_config.enabled
 
         # Initialize lifecycle management
-        self.deprecation_tracking: Dict[str, Dict[str, Any]] = {}
+        self.deprecation_tracking: dict[str, dict[str, Any]] = {}
 
         # Track validation results
-        self.validation_results: List[Dict[str, Any]] = []
+        self.validation_results: list[dict[str, Any]] = []
 
         self.context.state = ManagerState.READY
         self._initialized = True
@@ -87,15 +87,16 @@ class InfrastructureManager(BaseManager):
             deprecation_info = self.deprecation_tracking[target_type]
             warnings.warn(
                 f"{target_type} is deprecated: {deprecation_info.get('message', 'No details')}",
-                DeprecationWarning
+                DeprecationWarning,
+            stacklevel=2,
             )
 
     def register_deprecation(
         self,
         component_name: str,
         message: str,
-        removal_version: Optional[str] = None,
-        replacement: Optional[str] = None
+        removal_version: str | None = None,
+        replacement: str | None = None
     ) -> None:
         """Register a deprecation for a component."""
         self.deprecation_tracking[component_name] = {
@@ -104,11 +105,11 @@ class InfrastructureManager(BaseManager):
             'replacement': replacement
         }
 
-    def get_deprecations(self) -> Dict[str, Dict[str, Any]]:
+    def get_deprecations(self) -> dict[str, dict[str, Any]]:
         """Get all registered deprecations."""
         return self.deprecation_tracking.copy()
 
-    def get_validation_results(self) -> List[Dict[str, Any]]:
+    def get_validation_results(self) -> list[dict[str, Any]]:
         """Get validation results from last validation pass."""
         return self.validation_results.copy()
 

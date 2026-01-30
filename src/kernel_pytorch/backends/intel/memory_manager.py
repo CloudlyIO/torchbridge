@@ -6,18 +6,20 @@ following the BaseMemoryManager pattern.
 """
 
 import logging
-from typing import Optional, Tuple
 import time
 
 import torch
 
-from ..base_memory_manager import BaseMemoryManager, BaseMemoryStats, MemoryAllocationInfo
-from .intel_exceptions import (
-    XPUNotAvailableError,
-    XPUOutOfMemoryError,
-    XPUMemoryAllocationError,
+from ..base_memory_manager import (
+    BaseMemoryManager,
+    BaseMemoryStats,
+    MemoryAllocationInfo,
 )
-from .xpu_utilities import XPU_AVAILABLE, IPEX_AVAILABLE
+from .intel_exceptions import (
+    XPUMemoryAllocationError,
+    XPUOutOfMemoryError,
+)
+from .xpu_utilities import XPU_AVAILABLE
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +125,7 @@ class IntelMemoryManager(BaseMemoryManager):
 
     def allocate_tensor(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         purpose: str = "unknown",
         use_pool: bool = True
@@ -184,16 +186,16 @@ class IntelMemoryManager(BaseMemoryManager):
                     available_bytes=self._get_total_memory_bytes() - self._get_allocated_memory_bytes(),
                     device_id=self._device_id,
                     details={"shape": shape, "dtype": str(dtype), "error": str(e)}
-                )
+                ) from e
             raise XPUMemoryAllocationError(
                 f"Failed to allocate tensor: {e}",
                 size_bytes=size_bytes,
                 details={"shape": shape, "dtype": str(dtype)}
-            )
+            ) from e
 
     def _track_allocation(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype,
         size_bytes: int,
         purpose: str

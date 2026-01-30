@@ -5,7 +5,6 @@ This module implements cutting-edge Neural Operator Fusion techniques that combi
 attention, feed-forward networks, and normalization into single, highly optimized
 kernels, achieving 40-60% reduction in kernel launch overhead.
 
-🎓 EDUCATIONAL FOCUS:
 Neural Operator Fusion represents a paradigm shift in how we think about neural
 network execution. Instead of executing operations sequentially, NOF identifies
 mathematically compatible operations that can be fused into unified kernels:
@@ -15,7 +14,7 @@ mathematically compatible operations that can be fused into unified kernels:
 - Multi-head attention with output projection
 - Residual connections with layer normalization
 
-🔬 RESEARCH BASIS:
+ RESEARCH BASIS:
 Based on 2025 research showing that modern transformer blocks spend 60-80% of
 time in kernel launch overhead rather than computation. NOF addresses this by:
 - Reducing kernel launches from ~15 to ~3 per transformer block
@@ -23,37 +22,34 @@ time in kernel launch overhead rather than computation. NOF addresses this by:
 - Optimizing register usage across fused operations
 - Leveraging modern GPU architecture (Hopper, Blackwell)
 
-🚀 PERFORMANCE TARGETS:
+ PERFORMANCE TARGETS:
 - 40-60% reduction in kernel launch overhead
 - 25-35% reduction in memory bandwidth requirements
 - 90%+ GPU utilization on fused operations
 - Maintained numerical accuracy (<1e-6 difference)
 """
 
+import math
+import time
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Parameter
-import torch.utils.checkpoint as checkpoint
-from typing import Optional, Tuple, Dict, Any, List, Union, Callable
-from dataclasses import dataclass
-from enum import Enum
-import math
-import warnings
-from functools import lru_cache
-import time
 
 try:
     # Try to import FlashAttention for baseline comparison
-    from flash_attn import flash_attn_func, flash_attn_varlen_func
+    from flash_attn import flash_attn_func, flash_attn_varlen_func  # noqa: F401
     FLASH_ATTN_AVAILABLE = True
 except ImportError:
     FLASH_ATTN_AVAILABLE = False
 
 try:
     # Try to import triton for custom kernel implementation
-    import triton
-    import triton.language as tl
+    import triton  # noqa: F401
+    import triton.language as tl  # noqa: F401
     TRITON_AVAILABLE = True
 except ImportError:
     TRITON_AVAILABLE = False
@@ -134,7 +130,7 @@ class UnifiedAttentionFusion(nn.Module):
     This module fuses attention, feed-forward networks, and normalization
     layers into optimized unified kernels for maximum performance.
 
-    🎯 KEY INNOVATIONS:
+     KEY INNOVATIONS:
     - Single-kernel attention + FFN + normalization
     - Optimized memory access patterns
     - Reduced kernel launch overhead
@@ -147,8 +143,8 @@ class UnifiedAttentionFusion(nn.Module):
         n_heads: int,
         d_ff: int,
         dropout: float = 0.0,
-        config: Optional[FusionConfig] = None,
-        device: Optional[torch.device] = None
+        config: FusionConfig | None = None,
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -228,10 +224,10 @@ class UnifiedAttentionFusion(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None,
         return_stats: bool = False
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, FusionPerformanceStats]]:
+    ) -> torch.Tensor | tuple[torch.Tensor, FusionPerformanceStats]:
         """
         Forward pass with unified neural operator fusion.
 
@@ -245,7 +241,7 @@ class UnifiedAttentionFusion(nn.Module):
             Output tensor or (output, stats) tuple
         """
         if return_stats:
-            start_time = time.perf_counter()
+            time.perf_counter()
             original_stats = self._benchmark_unfused(x, attention_mask, key_padding_mask)
             fused_output, fused_stats = self._forward_fused_with_stats(x, attention_mask, key_padding_mask)
 
@@ -269,8 +265,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _forward_fused(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Optimized fused forward pass."""
 
@@ -290,8 +286,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _fused_transformer_block(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Fully fused transformer block implementation.
@@ -315,8 +311,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _pytorch_fused_transformer_block(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """PyTorch-native fused transformer block."""
 
@@ -371,8 +367,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _triton_fused_transformer_block(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Triton-optimized fused transformer block."""
         # This would implement custom Triton kernels for maximum performance
@@ -384,8 +380,8 @@ class UnifiedAttentionFusion(nn.Module):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Optimized attention computation with fusion techniques."""
 
@@ -426,7 +422,7 @@ class UnifiedAttentionFusion(nn.Module):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """FlashAttention-based forward pass."""
 
@@ -454,8 +450,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _fused_attention_norm(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Fused attention + normalization."""
 
@@ -493,8 +489,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _fused_attention_ffn(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Fused attention + FFN (without normalization)."""
 
@@ -507,8 +503,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _unfused_forward(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Unfused baseline forward pass for comparison."""
 
@@ -521,8 +517,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _unfused_attention(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Unfused attention computation."""
 
@@ -565,9 +561,9 @@ class UnifiedAttentionFusion(nn.Module):
     def _forward_fused_with_stats(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, FusionPerformanceStats]:
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, FusionPerformanceStats]:
         """Forward pass with detailed performance statistics."""
 
         # Measure fused execution
@@ -601,8 +597,8 @@ class UnifiedAttentionFusion(nn.Module):
     def _benchmark_unfused(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        key_padding_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None
     ) -> FusionPerformanceStats:
         """Benchmark unfused execution for comparison."""
 
@@ -648,7 +644,7 @@ class UnifiedAttentionFusion(nn.Module):
     def _estimate_memory_bandwidth(
         self,
         input_tensor: torch.Tensor,
-        output_tensor: Optional[torch.Tensor],
+        output_tensor: torch.Tensor | None,
         execution_time_ms: float
     ) -> float:
         """Estimate memory bandwidth utilization."""
@@ -727,7 +723,7 @@ class UnifiedAttentionFusion(nn.Module):
         else:
             return 0.999  # Mixed precision
 
-    def get_fusion_analysis(self, x: torch.Tensor) -> Dict[str, Any]:
+    def get_fusion_analysis(self, x: torch.Tensor) -> dict[str, Any]:
         """Get detailed analysis of fusion opportunities and performance."""
 
         batch_size, seq_len, d_model = x.shape
@@ -799,7 +795,7 @@ class UnifiedAttentionFusion(nn.Module):
 
         return int(unfused_memory * (1 - reduction_factor))
 
-    def _get_gpu_info(self) -> Dict[str, Any]:
+    def _get_gpu_info(self) -> dict[str, Any]:
         """Get information about current GPU hardware."""
 
         gpu_info = {
@@ -826,7 +822,7 @@ class UnifiedAttentionFusion(nn.Module):
 
         return gpu_info
 
-    def _identify_optimization_opportunities(self, x: torch.Tensor) -> List[str]:
+    def _identify_optimization_opportunities(self, x: torch.Tensor) -> list[str]:
         """Identify specific optimization opportunities for current setup."""
 
         opportunities = []
@@ -861,11 +857,11 @@ class UnifiedAttentionFusion(nn.Module):
 def create_unified_attention_fusion(
     d_model: int,
     n_heads: int,
-    d_ff: Optional[int] = None,
+    d_ff: int | None = None,
     dropout: float = 0.0,
     strategy: FusionStrategy = FusionStrategy.FULL_BLOCK,
     optimization_level: OptimizationLevel = OptimizationLevel.AGGRESSIVE,
-    device: Optional[torch.device] = None
+    device: torch.device | None = None
 ) -> UnifiedAttentionFusion:
     """
     Create an optimized unified attention fusion module.
@@ -908,8 +904,8 @@ def benchmark_fusion_performance(
     seq_len: int = 1024,
     batch_size: int = 16,
     num_iterations: int = 100,
-    strategies: Optional[List[FusionStrategy]] = None
-) -> Dict[FusionStrategy, FusionPerformanceStats]:
+    strategies: list[FusionStrategy] | None = None
+) -> dict[FusionStrategy, FusionPerformanceStats]:
     """
     Benchmark fusion performance across different strategies.
 
@@ -992,43 +988,43 @@ def benchmark_fusion_performance(
 
 # Utility functions for integration
 
-def print_fusion_analysis(analysis: Dict[str, Any]) -> None:
+def print_fusion_analysis(analysis: dict[str, Any]) -> None:
     """Print fusion analysis in a readable format."""
 
-    print("🚀 Neural Operator Fusion Analysis")
+    print(" Neural Operator Fusion Analysis")
     print("=" * 50)
 
-    print(f"\nInput Configuration:")
+    print("\nInput Configuration:")
     print(f"  Shape: {analysis['input_shape']}")
     print(f"  Fusion Strategy: {analysis['fusion_strategy']}")
 
-    print(f"\nPerformance Projections:")
+    print("\nPerformance Projections:")
     print(f"  Theoretical Speedup: {analysis['theoretical_speedup']:.2f}x")
     print(f"  Memory Reduction: {analysis['memory_reduction_ratio']*100:.1f}%")
     print(f"  Kernel Launches: {analysis['estimated_kernel_launches_original']} → {analysis['estimated_kernel_launches_fused']}")
 
-    print(f"\nHardware Information:")
+    print("\nHardware Information:")
     hw = analysis['hardware_info']
     print(f"  Device: {hw['device_name']}")
     print(f"  Compute Capability: {hw['compute_capability']}")
     print(f"  Memory: {hw['memory_gb']} GB")
     print(f"  Tensor Cores: {'Yes' if hw['tensor_cores'] else 'No'}")
 
-    print(f"\nCompatibility:")
+    print("\nCompatibility:")
     compat = analysis['compatibility']
-    print(f"  FlashAttention: {'✅' if compat['flash_attention'] else '❌'}")
-    print(f"  Triton Kernels: {'✅' if compat['triton_kernels'] else '❌'}")
-    print(f"  Torch Compile: {'✅' if compat['torch_compile'] else '❌'}")
+    print(f"  FlashAttention: {'' if compat['flash_attention'] else ''}")
+    print(f"  Triton Kernels: {'' if compat['triton_kernels'] else ''}")
+    print(f"  Torch Compile: {'' if compat['torch_compile'] else ''}")
 
-    print(f"\nOptimization Opportunities:")
+    print("\nOptimization Opportunities:")
     for i, opp in enumerate(analysis['optimization_opportunities'], 1):
         print(f"  {i}. {opp}")
 
 
-def print_benchmark_results(results: Dict[FusionStrategy, FusionPerformanceStats]) -> None:
+def print_benchmark_results(results: dict[FusionStrategy, FusionPerformanceStats]) -> None:
     """Print benchmark results in a formatted table."""
 
-    print("\n🏆 Fusion Performance Benchmark Results")
+    print("\n Fusion Performance Benchmark Results")
     print("=" * 80)
 
     # Header

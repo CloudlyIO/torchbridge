@@ -15,14 +15,14 @@ This module provides:
 Author: KernelPyTorch Team
 """
 
+from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Optional, Any, Union, Callable
-import gc
-import numpy as np
-from contextlib import contextmanager
-from dataclasses import dataclass
 
 
 @dataclass
@@ -48,14 +48,14 @@ class MemoryOptimizer:
     - Memory leak detection and prevention
     """
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self, device: torch.device | None = None):
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.memory_snapshots = []
         self.peak_memory = 0.0
 
     def profile_memory_usage(self,
                            model: nn.Module,
-                           sample_inputs: Union[torch.Tensor, List[torch.Tensor]],
+                           sample_inputs: torch.Tensor | list[torch.Tensor],
                            num_iterations: int = 10) -> MemoryProfile:
         """
         Profile memory usage patterns for a model and inputs.
@@ -82,7 +82,7 @@ class MemoryOptimizer:
         allocated_memories = []
         cached_memories = []
 
-        for i in range(num_iterations):
+        for _i in range(num_iterations):
             # Forward pass
             if len(sample_inputs) == 1:
                 outputs = model(sample_inputs[0])
@@ -172,7 +172,7 @@ class MemoryOptimizer:
 
     def _optimize_embedding_memory(self, model: nn.Module) -> nn.Module:
         """Optimize embedding layers for memory efficiency."""
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if isinstance(module, nn.Embedding):
                 # Apply sparse gradient updates for large embeddings
                 if module.num_embeddings > 10000:
@@ -190,7 +190,7 @@ class GradientAccumulator:
     def __init__(self,
                  accumulation_steps: int,
                  normalize_gradients: bool = True,
-                 clip_grad_norm: Optional[float] = None):
+                 clip_grad_norm: float | None = None):
         self.accumulation_steps = accumulation_steps
         self.normalize_gradients = normalize_gradients
         self.clip_grad_norm = clip_grad_norm
@@ -236,7 +236,7 @@ class MemoryEfficientLinear(nn.Module):
                  in_features: int,
                  out_features: int,
                  bias: bool = True,
-                 chunk_size: Optional[int] = None,
+                 chunk_size: int | None = None,
                  use_checkpoint: bool = False):
         super().__init__()
         self.in_features = in_features
@@ -304,7 +304,7 @@ class MemoryEfficientAttention(nn.Module):
                  num_heads: int,
                  dropout: float = 0.0,
                  bias: bool = True,
-                 chunk_size: Optional[int] = None,
+                 chunk_size: int | None = None,
                  use_flash_attention: bool = True):
         super().__init__()
         self.embed_dim = embed_dim
@@ -325,10 +325,10 @@ class MemoryEfficientAttention(nn.Module):
 
     def forward(self,
                 query: torch.Tensor,
-                key: Optional[torch.Tensor] = None,
-                value: Optional[torch.Tensor] = None,
-                attn_mask: Optional[torch.Tensor] = None,
-                key_padding_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                key: torch.Tensor | None = None,
+                value: torch.Tensor | None = None,
+                attn_mask: torch.Tensor | None = None,
+                key_padding_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Memory-efficient attention forward pass."""
         if key is None:
             key = query
@@ -374,7 +374,7 @@ class MemoryEfficientAttention(nn.Module):
                          q: torch.Tensor,
                          k: torch.Tensor,
                          v: torch.Tensor,
-                         attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                         attn_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Manual attention computation with memory optimizations."""
         scale = 1.0 / (self.head_dim ** 0.5)
 
@@ -397,10 +397,10 @@ class MemoryEfficientAttention(nn.Module):
                           k: torch.Tensor,
                           v: torch.Tensor,
                           scale: float,
-                          attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                          attn_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Chunked attention computation to reduce memory usage."""
         batch_size, num_heads, q_len, head_dim = q.shape
-        kv_len = k.shape[2]
+        k.shape[2]
 
         # Process in chunks
         chunk_size = min(self.chunk_size, q_len)
@@ -434,7 +434,7 @@ class MemoryPool:
 
     def __init__(self, device: torch.device):
         self.device = device
-        self.pools: Dict[Tuple[torch.Size, torch.dtype], List[torch.Tensor]] = {}
+        self.pools: dict[tuple[torch.Size, torch.dtype], list[torch.Tensor]] = {}
         self.allocated_tensors = set()
 
     def get_tensor(self,
@@ -486,7 +486,7 @@ class MemoryLeakDetector:
     potential memory leaks.
     """
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self, device: torch.device | None = None):
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.memory_snapshots = []
         self.baseline_memory = 0.0
@@ -505,7 +505,7 @@ class MemoryLeakDetector:
         if label:
             print(f"Memory snapshot '{label}': {current_memory:.2f} MB")
 
-    def analyze_memory_pattern(self) -> Dict[str, Any]:
+    def analyze_memory_pattern(self) -> dict[str, Any]:
         """Analyze memory usage patterns for potential leaks."""
         if len(self.memory_snapshots) < 2:
             return {"error": "Need at least 2 snapshots for analysis"}
@@ -539,7 +539,7 @@ def demonstrate_memory_optimization():
     """
     Comprehensive demonstration of memory optimization techniques.
     """
-    print("🔋 GPU Memory Optimization Demonstration")
+    print(" GPU Memory Optimization Demonstration")
     print("=" * 50)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -564,14 +564,14 @@ def demonstrate_memory_optimization():
     memory_optimizer = MemoryOptimizer(device)
 
     # Profile original memory usage
-    print("\n📊 Memory Profiling:")
+    print("\n Memory Profiling:")
     original_profile = memory_optimizer.profile_memory_usage(model, sample_input)
     print(f"Original memory usage: {original_profile.allocated_memory:.3f} GB")
     print(f"Memory efficiency: {original_profile.memory_efficiency:.2%}")
     print(f"Fragmentation ratio: {original_profile.fragmentation_ratio:.2%}")
 
     # Apply memory optimizations
-    print("\n⚡ Applying Memory Optimizations:")
+    print("\n Applying Memory Optimizations:")
     optimized_model = memory_optimizer.optimize_memory_layout(model)
 
     # Profile optimized memory usage
@@ -581,7 +581,7 @@ def demonstrate_memory_optimization():
     print(f"Memory reduction: {((original_profile.allocated_memory - optimized_profile.allocated_memory) / original_profile.allocated_memory * 100):.1f}%")
 
     # Demonstrate gradient accumulation
-    print("\n🔄 Gradient Accumulation Demo:")
+    print("\n Gradient Accumulation Demo:")
     accumulator = GradientAccumulator(accumulation_steps=4)
     optimizer = torch.optim.Adam(optimized_model.parameters())
 
@@ -597,7 +597,7 @@ def demonstrate_memory_optimization():
             print(f"  Optimizer step performed at iteration {step + 1}")
 
     # Demonstrate memory leak detection
-    print("\n🔍 Memory Leak Detection:")
+    print("\n Memory Leak Detection:")
     leak_detector = MemoryLeakDetector(device)
     leak_detector.start_monitoring()
 
@@ -610,7 +610,7 @@ def demonstrate_memory_optimization():
     print(f"Memory trend: {analysis['memory_trend']}")
     print(f"Potential memory leak detected: {analysis['potential_leak']}")
 
-    print("\n✅ Memory optimization demonstration complete!")
+    print("\n Memory optimization demonstration complete!")
 
 
 if __name__ == "__main__":

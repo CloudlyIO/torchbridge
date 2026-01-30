@@ -2,14 +2,12 @@
 Tests for the doctor CLI command.
 """
 
-import pytest
-import subprocess
-from unittest.mock import patch, MagicMock
-import tempfile
-import os
 import json
+import os
+import tempfile
+from unittest.mock import MagicMock, patch
 
-from kernel_pytorch.cli.doctor import DoctorCommand, DiagnosticResult
+from kernel_pytorch.cli.doctor import DiagnosticResult, DoctorCommand
 
 
 class TestDiagnosticResult:
@@ -292,7 +290,7 @@ class TestDoctorCommand:
                 assert os.path.exists(f.name)
 
                 # Verify JSON content
-                with open(f.name, 'r') as json_file:
+                with open(f.name) as json_file:
                     data = json.load(json_file)
 
                 assert 'timestamp' in data

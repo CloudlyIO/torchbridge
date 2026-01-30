@@ -9,45 +9,38 @@ Tests for all advanced memory optimization components:
 - Long Sequence Optimization
 """
 
+import time
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import os
-import tempfile
-from typing import Dict, Any
 
 from kernel_pytorch.advanced_memory import (
+    AdaptiveCheckpointing,
+    AdaptiveCompressionOptimizer,
+    CPUGPUHybridOptimizer,
     # Deep optimizer states
     DeepOptimizerStates,
-    InterleaveOffloadingOptimizer,
-    CPUGPUHybridOptimizer,
-    MemoryConfig,
-
-    # Advanced checkpointing
-    SelectiveGradientCheckpointing,
-    AdaptiveCheckpointing,
-    MemoryEfficientBackprop,
     DynamicActivationOffloading,
-
     # Memory pool management
     DynamicMemoryPool,
-    MemoryPoolManager,
-    SmartMemoryAllocator,
-    MemoryFragmentationOptimizer,
-
     # Gradient compression
     GradientCompressor,
-    LossyGradientCompression,
-    AdaptiveCompressionOptimizer,
-    QuantizedGradientAccumulation,
-
+    IncrementalSequenceCache,
+    InterleaveOffloadingOptimizer,
     # Long sequence optimization
     LongSequenceOptimizer,
+    LossyGradientCompression,
+    MemoryConfig,
+    MemoryEfficientBackprop,
+    MemoryFragmentationOptimizer,
+    MemoryPoolManager,
+    QuantizedGradientAccumulation,
     SegmentedAttentionMemory,
-    StreamingSequenceProcessor,
-    IncrementalSequenceCache
+    # Advanced checkpointing
+    SelectiveGradientCheckpointing,
+    SmartMemoryAllocator,
 )
 
 
@@ -408,7 +401,9 @@ class TestLongSequenceOptimization:
     def test_streaming_sequence_processor(self, device):
         """Test streaming sequence processor"""
         try:
-            from kernel_pytorch.advanced_memory.long_sequence_optimization import StreamingSequenceProcessor
+            from kernel_pytorch.advanced_memory.long_sequence_optimization import (
+                StreamingSequenceProcessor,
+            )
 
             # Create a simple model for the processor
             simple_model = nn.Linear(64, 64).to(device)
@@ -510,7 +505,7 @@ class TestAdvancedMemoryIntegration:
             loss.backward()
 
             # Compress gradients
-            for name, param in model.named_parameters():
+            for _name, param in model.named_parameters():
                 if param.grad is not None:
                     compressed = compressor.compress(param.grad)
                     decompressed = compressor.decompress(compressed)

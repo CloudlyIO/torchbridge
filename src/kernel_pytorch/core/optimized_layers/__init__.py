@@ -19,45 +19,44 @@ Complete Component Suite:
 """
 
 # Attention components
+# Activation components
+from .activation_functions import (
+    FusedGELU,
+    FusedReLU,
+    FusedSwiGLU,
+    create_optimized_activation,
+)
 from .attention_modules import (
     CompilerOptimizedMultiHeadAttention,
     FlashAttentionWrapper,
     MemoryEfficientAttention,
     benchmark_attention_implementations,
-    validate_attention_correctness
-)
-
-# Normalization components
-from .normalization_layers import (
-    OptimizedLayerNorm,
-    OptimizedRMSNorm,
-    FusedLayerNormActivation
-)
-
-# Activation components
-from .activation_functions import (
-    FusedGELU,
-    FusedSwiGLU,
-    FusedReLU,
-    create_optimized_activation
-)
-
-# Linear transformation components
-from .linear_transformations import (
-    MultiHeadLinearProjection,
-    GroupedLinearTransformation,
-    MemoryEfficientLinear,
-    FusedLinearSequence,
-    create_optimized_linear
+    validate_attention_correctness,
 )
 
 # Embedding components
 from .embedding_layers import (
+    FusedTokenPositionalEmbedding,
+    LearnablePositionalEncoding,
     OptimizedEmbedding,
     RotaryPositionalEncoding,
-    LearnablePositionalEncoding,
-    FusedTokenPositionalEmbedding,
-    create_optimized_embedding
+    create_optimized_embedding,
+)
+
+# Linear transformation components
+from .linear_transformations import (
+    FusedLinearSequence,
+    GroupedLinearTransformation,
+    MemoryEfficientLinear,
+    MultiHeadLinearProjection,
+    create_optimized_linear,
+)
+
+# Normalization components
+from .normalization_layers import (
+    FusedLayerNormActivation,
+    OptimizedLayerNorm,
+    OptimizedRMSNorm,
 )
 
 __all__ = [

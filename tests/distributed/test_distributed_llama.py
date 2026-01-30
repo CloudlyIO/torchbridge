@@ -7,11 +7,10 @@ with Llama-class models across multiple GPUs.
 These tests validate the distributed APIs without requiring multi-GPU setup.
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-from typing import Optional
-
 
 # =============================================================================
 # Test Fixtures
@@ -44,10 +43,8 @@ class TestDistributedImports:
     def test_tensor_parallel_imports(self):
         """Test importing tensor parallel components."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             ColumnParallelLinear,
-            RowParallelLinear,
-            apply_tensor_parallelism,
+            TensorParallelConfig,
         )
         assert TensorParallelConfig is not None
         assert ColumnParallelLinear is not None
@@ -57,10 +54,6 @@ class TestDistributedImports:
         from kernel_pytorch.models.distributed import (
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
-            InterleavedScheduler,
-            create_pipeline_stages,
-            estimate_pipeline_memory,
         )
         assert PipelineParallelConfig is not None
         assert PipelineStage is not None
@@ -68,9 +61,8 @@ class TestDistributedImports:
     def test_sharding_imports(self):
         """Test importing sharding components."""
         from kernel_pytorch.models.distributed import (
-            ShardingStrategy,
             ModelSharder,
-            WeightDistributor,
+            ShardingStrategy,
         )
         assert ShardingStrategy is not None
         assert ModelSharder is not None
@@ -111,8 +103,8 @@ class TestDistributedLLMOptimizer:
     def test_optimizer_creation(self):
         """Test creating distributed optimizer."""
         from kernel_pytorch.models.distributed import (
-            DistributedLLMOptimizer,
             DistributedConfig,
+            DistributedLLMOptimizer,
         )
 
         config = DistributedConfig(
@@ -130,8 +122,8 @@ class TestDistributedLLMOptimizer:
     def test_optimizer_with_strategy(self):
         """Test optimizer with explicit strategy."""
         from kernel_pytorch.models.distributed import (
-            DistributedLLMOptimizer,
             DistributedConfig,
+            DistributedLLMOptimizer,
             ParallelismStrategy,
         )
 
@@ -225,8 +217,8 @@ class TestParallelLinear:
     def test_column_parallel_creation(self, device):
         """Test creating column parallel linear."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             ColumnParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -242,8 +234,8 @@ class TestParallelLinear:
     def test_row_parallel_creation(self, device):
         """Test creating row parallel linear."""
         from kernel_pytorch.models.distributed import (
-            TensorParallelConfig,
             RowParallelLinear,
+            TensorParallelConfig,
         )
 
         config = TensorParallelConfig(world_size=2, rank=0)
@@ -333,8 +325,8 @@ class TestPipelineMemory:
     def test_memory_estimation(self, device):
         """Test pipeline memory estimation."""
         from kernel_pytorch.models.distributed import (
-            estimate_pipeline_memory,
             PipelineParallelConfig,
+            estimate_pipeline_memory,
         )
 
         # Create a simple model for estimation
@@ -403,8 +395,8 @@ class TestWeightDistributor:
     def test_distributor_creation(self):
         """Test creating weight distributor."""
         from kernel_pytorch.models.distributed import (
-            WeightDistributor,
             ShardingStrategy,
+            WeightDistributor,
         )
         from kernel_pytorch.models.distributed.model_sharding import ShardingConfig
 

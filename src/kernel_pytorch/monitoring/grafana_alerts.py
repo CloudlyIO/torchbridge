@@ -37,7 +37,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -672,7 +671,7 @@ def export_alert_rules_yaml(
     try:
         import yaml
     except ImportError:
-        raise ImportError("PyYAML is required for YAML export. Install with: pip install pyyaml")
+        raise ImportError("PyYAML is required for YAML export. Install with: pip install pyyaml") from None
 
     output = {
         "apiVersion": 1,

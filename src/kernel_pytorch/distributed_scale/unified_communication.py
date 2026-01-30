@@ -13,21 +13,21 @@ Provides unified interface for:
 - Communication profiling and analysis
 """
 
-import torch
-import torch.distributed as dist
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+import logging
+import time
+import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-import time
-import logging
-import warnings
-from abc import ABC, abstractmethod
+from typing import Any
+
+import torch
+import torch.distributed as dist
 
 try:
     import torch.distributed._functional_collectives as funcol
 except ImportError:
     funcol = None
-    warnings.warn("Functional collectives not available")
+    warnings.warn("Functional collectives not available", stacklevel=2)
 
 
 class CommunicationPattern(Enum):
@@ -92,7 +92,7 @@ class CommunicationProfiler:
         }
         return op_id
 
-    def end_operation(self, op_id: str) -> Optional[CommunicationMetrics]:
+    def end_operation(self, op_id: str) -> CommunicationMetrics | None:
         """End profiling and record metrics."""
         if not self.enabled or op_id not in self.active_operations:
             return None
@@ -117,7 +117,7 @@ class CommunicationProfiler:
         self.metrics.append(metrics)
         return metrics
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get profiling summary."""
         if not self.metrics:
             return {"total_operations": 0}
@@ -143,7 +143,7 @@ class NetworkTopologyOptimizer:
         self.world_size = dist.get_world_size() if dist.is_initialized() else 1
         self.rank = dist.get_rank() if dist.is_initialized() else 0
 
-    def optimize_topology(self, operation: CommunicationPattern) -> Dict[str, Any]:
+    def optimize_topology(self, operation: CommunicationPattern) -> dict[str, Any]:
         """Optimize network topology for operation."""
         if operation == CommunicationPattern.ALL_REDUCE:
             return self._optimize_allreduce_topology()
@@ -152,7 +152,7 @@ class NetworkTopologyOptimizer:
         else:
             return {"topology": self.topology.value, "optimized": False}
 
-    def _optimize_allreduce_topology(self) -> Dict[str, Any]:
+    def _optimize_allreduce_topology(self) -> dict[str, Any]:
         """Optimize for all-reduce operations."""
         if self.world_size <= 8:
             optimal_topology = NetworkTopology.TREE
@@ -167,7 +167,7 @@ class NetworkTopologyOptimizer:
             "expected_improvement": self._estimate_improvement(optimal_topology)
         }
 
-    def _optimize_allgather_topology(self) -> Dict[str, Any]:
+    def _optimize_allgather_topology(self) -> dict[str, Any]:
         """Optimize for all-gather operations."""
         # All-gather typically benefits from hierarchical for large scale
         if self.world_size > 16:
@@ -210,7 +210,7 @@ class CommunicationPrimitives:
         op_id = self.profiler.start_operation("all_reduce", tensor.numel() * tensor.element_size())
 
         # Optimize topology
-        topology_info = self.optimizer.optimize_topology(CommunicationPattern.ALL_REDUCE)
+        self.optimizer.optimize_topology(CommunicationPattern.ALL_REDUCE)
 
         try:
             # Perform all-reduce
@@ -248,7 +248,7 @@ class CommunicationPrimitives:
             self.profiler.end_operation(op_id)
             raise e
 
-    def optimized_reduce_scatter(self, input_list: List[torch.Tensor], **kwargs) -> torch.Tensor:
+    def optimized_reduce_scatter(self, input_list: list[torch.Tensor], **kwargs) -> torch.Tensor:
         """Optimized reduce-scatter with profiling."""
         if not dist.is_initialized():
             return input_list[0] if input_list else torch.tensor([])
@@ -269,7 +269,7 @@ class CommunicationPrimitives:
             self.profiler.end_operation(op_id)
             raise e
 
-    def get_profiling_summary(self) -> Dict[str, Any]:
+    def get_profiling_summary(self) -> dict[str, Any]:
         """Get communication profiling summary."""
         return self.profiler.get_summary()
 
@@ -285,12 +285,12 @@ class UnifiedCommunicationManager:
     - Various communication primitive implementations
     """
 
-    def __init__(self, config: Optional[CommunicationConfig] = None):
+    def __init__(self, config: CommunicationConfig | None = None):
         self.config = config or CommunicationConfig()
         self.primitives = CommunicationPrimitives(self.config)
         self.is_initialized = False
 
-    def initialize(self, backend: Optional[str] = None) -> bool:
+    def initialize(self, backend: str | None = None) -> bool:
         """Initialize distributed communication."""
         if self.is_initialized:
             return True
@@ -318,11 +318,11 @@ class UnifiedCommunicationManager:
         """Unified all-gather operation."""
         return self.primitives.optimized_all_gather(tensor, **kwargs)
 
-    def reduce_scatter(self, input_list: List[torch.Tensor], **kwargs) -> torch.Tensor:
+    def reduce_scatter(self, input_list: list[torch.Tensor], **kwargs) -> torch.Tensor:
         """Unified reduce-scatter operation."""
         return self.primitives.optimized_reduce_scatter(input_list, **kwargs)
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary."""
         summary = self.primitives.get_profiling_summary()
         summary.update({
@@ -347,7 +347,7 @@ class UnifiedCommunicationManager:
 default_comm_manager = None
 
 
-def get_communication_manager(config: Optional[CommunicationConfig] = None) -> UnifiedCommunicationManager:
+def get_communication_manager(config: CommunicationConfig | None = None) -> UnifiedCommunicationManager:
     """Get global communication manager."""
     global default_comm_manager
     if default_comm_manager is None or config is not None:

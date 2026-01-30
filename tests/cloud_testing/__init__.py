@@ -12,32 +12,29 @@ Components:
 """
 
 from .aws_test_harness import (
-    AWSTestHarness,
     AWSInstanceConfig,
+    AWSTestHarness,
     AWSTestResult,
     create_aws_harness,
 )
-
+from .benchmark_database import (
+    BenchmarkDatabase,
+    BenchmarkRecord,
+    compare_platforms,
+    query_benchmarks,
+)
 from .gcp_test_harness import (
-    GCPTestHarness,
     GCPInstanceConfig,
+    GCPTestHarness,
     GCPTestResult,
     TPUConfig,
     create_gcp_harness,
 )
-
 from .result_uploader import (
+    GCSUploader,
     ResultUploader,
     S3Uploader,
-    GCSUploader,
     upload_results,
-)
-
-from .benchmark_database import (
-    BenchmarkDatabase,
-    BenchmarkRecord,
-    query_benchmarks,
-    compare_platforms,
 )
 
 __all__ = [

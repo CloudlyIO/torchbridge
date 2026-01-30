@@ -6,27 +6,30 @@ Comprehensive tests for TPU backend, optimizer, compiler, memory manager,
 XLA integration, and validation components.
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig, TPUVersion, TPUTopology
 from kernel_pytorch.backends.tpu import (
     TPUBackend,
+    TPUMemoryManager,
     TPUOptimizer,
     XLACompiler,
-    TPUMemoryManager,
     XLADeviceManager,
     XLADistributedTraining,
     XLAOptimizations,
     XLAUtilities,
-    create_xla_integration
+    create_xla_integration,
+)
+from kernel_pytorch.core.config import (
+    KernelPyTorchConfig,
+    TPUConfig,
+    TPUVersion,
 )
 from kernel_pytorch.validation.unified_validator import (
     validate_tpu_configuration,
-    validate_tpu_model
+    validate_tpu_model,
 )
 
 
@@ -567,17 +570,16 @@ class TestTPUErrorPaths:
 
         # In strict mode, should raise exception
         with pytest.raises((TPUValidationError, Exception)):
-            result = optimizer.optimize(model, invalid_inputs)
+            optimizer.optimize(model, invalid_inputs)
 
     def test_custom_exceptions_importable(self):
         """Test that custom TPU exceptions can be imported and used."""
         from kernel_pytorch.backends.tpu.tpu_exceptions import (
             TPUBackendError,
-            TPUNotAvailableError,
-            XLACompilationError,
             TPUMemoryError,
+            TPUNotAvailableError,
             TPUOutOfMemoryError,
-            TPUValidationError
+            XLACompilationError,
         )
 
         # Verify exception hierarchy
@@ -723,10 +725,10 @@ class TestTPUErrorPaths:
 
         # Create backend (should log, not print)
         config = KernelPyTorchConfig()
-        backend = TPUBackend(config)
+        TPUBackend(config)
 
         # Check that logs were captured
-        log_output = log_stream.getvalue()
+        log_stream.getvalue()
         # Should have some log output from backend initialization
         # (but may be empty if logger not configured in test env)
 

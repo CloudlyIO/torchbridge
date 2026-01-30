@@ -10,18 +10,19 @@ Version: 0.4.8
 """
 
 import logging
-import warnings
+import time
+from dataclasses import dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Tuple, List
-from dataclasses import dataclass
-import time
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAArchitecture
 from kernel_pytorch.backends.base_backend import OptimizationLevel, OptimizationResult
 from kernel_pytorch.backends.base_optimizer import BaseOptimizer, OptimizationStrategy
-from .nvidia_backend import NVIDIABackend
+from kernel_pytorch.core.config import KernelPyTorchConfig
+
 from .fp8_compiler import FP8Compiler
+from .nvidia_backend import NVIDIABackend
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +32,11 @@ class NVIDIAOptimizationResult:
     """Results from NVIDIA model optimization (legacy format for backward compatibility)."""
     optimized_model: nn.Module
     optimization_level: str
-    optimizations_applied: List[str]
+    optimizations_applied: list[str]
     compilation_time: float
-    memory_stats: Dict[str, Any]
-    device_info: Dict[str, Any]
-    warnings: List[str]
+    memory_stats: dict[str, Any]
+    device_info: dict[str, Any]
+    warnings: list[str]
 
 
 class NVIDIAOptimizer(BaseOptimizer):
@@ -52,7 +53,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     OPTIMIZER_NAME: str = "nvidia"
     DEFAULT_LEVEL = OptimizationLevel.O2
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None, device: Optional[torch.device] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None, device: torch.device | None = None):
         """
         Initialize NVIDIA optimizer.
 
@@ -76,9 +77,9 @@ class NVIDIAOptimizer(BaseOptimizer):
         self,
         model: nn.Module,
         level: OptimizationLevel,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Apply NVIDIA-specific optimizations (implements BaseOptimizer abstract method).
 
@@ -122,7 +123,7 @@ class NVIDIAOptimizer(BaseOptimizer):
             }
         )
 
-    def get_available_strategies(self) -> List[OptimizationStrategy]:
+    def get_available_strategies(self) -> list[OptimizationStrategy]:
         """Get available NVIDIA optimization strategies (implements BaseOptimizer abstract method)."""
         strategies = [
             OptimizationStrategy(
@@ -177,7 +178,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     def optimize_legacy(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor] = None,
+        sample_inputs: torch.Tensor | None = None,
         optimization_level: str = "balanced",
         for_inference: bool = False
     ) -> NVIDIAOptimizationResult:
@@ -230,9 +231,9 @@ class NVIDIAOptimizer(BaseOptimizer):
         self,
         model: nn.Module,
         level: str,
-        sample_inputs: Optional[torch.Tensor],
+        sample_inputs: torch.Tensor | None,
         for_inference: bool
-    ) -> Tuple[nn.Module, List[str]]:
+    ) -> tuple[nn.Module, list[str]]:
         """Apply optimizations based on level."""
         applied = []
 
@@ -304,7 +305,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         """Enable mixed precision training/inference."""
         # This is typically handled via torch.cuda.amp.autocast during training
         # Here we just mark the model as mixed-precision ready
-        setattr(model, '_mixed_precision_enabled', True)
+        model._mixed_precision_enabled = True
         return model
 
     def _enable_gradient_checkpointing(self, model: nn.Module) -> nn.Module:
@@ -321,7 +322,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     def _enable_kernel_fusion(self, model: nn.Module) -> nn.Module:
         """Enable kernel fusion optimizations."""
         # Mark model for kernel fusion with torch.compile
-        setattr(model, '_kernel_fusion_enabled', True)
+        model._kernel_fusion_enabled = True
         return model
 
     def _apply_aggressive_memory_optimizations(
@@ -355,7 +356,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         try:
             # Fuse Conv + BatchNorm layers
             torch.quantization.fuse_modules(model, inplace=True)
-        except Exception as e:
+        except Exception:
             # Fusion may not be applicable for all models
             pass
         return model
@@ -404,7 +405,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     def optimize_for_inference_legacy(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor] = None,
+        sample_inputs: torch.Tensor | None = None,
         optimization_level: str = "aggressive"
     ) -> NVIDIAOptimizationResult:
         """
@@ -428,7 +429,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     def optimize_for_training_legacy(
         self,
         model: nn.Module,
-        sample_inputs: Optional[torch.Tensor] = None,
+        sample_inputs: torch.Tensor | None = None,
         optimization_level: str = "balanced"
     ) -> NVIDIAOptimizationResult:
         """
@@ -449,7 +450,7 @@ class NVIDIAOptimizer(BaseOptimizer):
             for_inference=False
         )
 
-    def get_optimization_recommendations(self, model: nn.Module) -> Dict[str, Any]:
+    def get_optimization_recommendations(self, model: nn.Module) -> dict[str, Any]:
         """
         Get optimization recommendations for the model.
 

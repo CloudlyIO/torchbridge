@@ -6,12 +6,12 @@ advanced_attention/ implementations.
 """
 
 import math
+import warnings
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict, Any
+from typing import Any
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import warnings
 
 from .config import AttentionConfig, AttentionPatterns
 
@@ -94,7 +94,7 @@ class BaseAttention(nn.Module, ABC):
             mask[i, start:end] = False
         return mask
 
-    def _apply_attention_mask(self, scores: torch.Tensor, mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def _apply_attention_mask(self, scores: torch.Tensor, mask: torch.Tensor | None) -> torch.Tensor:
         """Apply attention mask to scores"""
         if mask is not None:
             if mask.dtype == torch.bool:
@@ -108,7 +108,7 @@ class BaseAttention(nn.Module, ABC):
                           q: torch.Tensor,
                           k: torch.Tensor,
                           v: torch.Tensor,
-                          attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                          attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
         Compute attention weights and apply to values.
 
@@ -125,10 +125,10 @@ class BaseAttention(nn.Module, ABC):
 
     def forward(self,
                 query: torch.Tensor,
-                key: Optional[torch.Tensor] = None,
-                value: Optional[torch.Tensor] = None,
-                attention_mask: Optional[torch.Tensor] = None,
-                return_attention_weights: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+                key: torch.Tensor | None = None,
+                value: torch.Tensor | None = None,
+                attention_mask: torch.Tensor | None = None,
+                return_attention_weights: bool = False) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """
         Unified forward pass for all attention implementations.
 
@@ -179,12 +179,12 @@ class BaseAttention(nn.Module, ABC):
 
         if return_attention_weights:
             # This would need to be implemented in subclasses
-            warnings.warn("Attention weights not implemented for this attention type")
+            warnings.warn("Attention weights not implemented for this attention type", stacklevel=2)
             return output, None
 
         return output
 
-    def _create_pattern_mask(self, seq_len: int, device: torch.device) -> Optional[torch.Tensor]:
+    def _create_pattern_mask(self, seq_len: int, device: torch.device) -> torch.Tensor | None:
         """Create mask based on attention pattern"""
         if self.config.causal or self.config.pattern == AttentionPatterns.CAUSAL:
             return self._create_causal_mask(seq_len, device)
@@ -193,7 +193,7 @@ class BaseAttention(nn.Module, ABC):
         # Other patterns handled in specific implementations
         return None
 
-    def get_attention_stats(self) -> Dict[str, Any]:
+    def get_attention_stats(self) -> dict[str, Any]:
         """Get statistics about the attention layer"""
         return {
             'pattern': self.config.pattern.value,
@@ -228,9 +228,9 @@ class AttentionWithCache(BaseAttention):
     def __init__(self, config: AttentionConfig):
         super().__init__(config)
         self.cache_enabled = False
-        self.kv_cache: Optional[Dict[str, torch.Tensor]] = None
+        self.kv_cache: dict[str, torch.Tensor] | None = None
 
-    def enable_cache(self, max_batch_size: int = 1, max_seq_len: Optional[int] = None):
+    def enable_cache(self, max_batch_size: int = 1, max_seq_len: int | None = None):
         """Enable KV caching for faster autoregressive generation"""
         if max_seq_len is None:
             max_seq_len = self.config.max_sequence_length

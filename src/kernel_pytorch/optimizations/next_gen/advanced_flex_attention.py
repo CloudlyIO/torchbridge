@@ -10,14 +10,16 @@ Latest FlexAttention advances including:
 Based on latest 2025 research and PyTorch developments.
 """
 
+import math
+from collections.abc import Callable
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, Callable, Tuple, List
-import math
 
 try:
-    from torch.nn.attention.flex_attention import flex_attention
+    from torch.nn.attention.flex_attention import flex_attention  # noqa: F401
     FLEX_ATTENTION_AVAILABLE = True
 except ImportError:
     FLEX_ATTENTION_AVAILABLE = False
@@ -41,7 +43,7 @@ class FlashLightCompiler:
         attention_pattern: str,
         seq_len: int,
         head_dim: int,
-        pattern_kwargs: Optional[Dict] = None
+        pattern_kwargs: dict | None = None
     ) -> Callable:
         """
         Compile optimized kernel for specific attention pattern
@@ -160,7 +162,7 @@ class AdvancedFlexAttention(nn.Module):
         pattern: str = "standard",
         use_flashlight: bool = True,
         enable_gqa: bool = False,
-        kv_heads: Optional[int] = None,
+        kv_heads: int | None = None,
         dropout: float = 0.1,
         max_seq_len: int = 8192
     ):
@@ -197,7 +199,7 @@ class AdvancedFlexAttention(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        pattern_kwargs: Optional[Dict] = None,
+        pattern_kwargs: dict | None = None,
         return_performance_stats: bool = False
     ) -> torch.Tensor:
         """
@@ -289,7 +291,7 @@ class AdvancedFlexAttention(nn.Module):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        pattern_kwargs: Optional[Dict] = None
+        pattern_kwargs: dict | None = None
     ) -> torch.Tensor:
         """FlashLight optimized attention"""
         seq_len = q.size(-2)
@@ -340,7 +342,7 @@ class AdvancedFlexAttention(nn.Module):
             self.performance_stats['avg_speedup'] * 0.9 + speedup * 0.1
         )
 
-    def get_performance_stats(self) -> Dict[str, float]:
+    def get_performance_stats(self) -> dict[str, float]:
         """Get performance statistics"""
         calls = max(self.performance_stats['forward_calls'], 1)
         return {
@@ -406,7 +408,7 @@ class PagedAttentionDecoder:
         self.page_allocation_table = {}
         self.free_pages = list(range(max_pages))
 
-    def allocate_pages(self, sequence_id: str, num_tokens: int) -> List[int]:
+    def allocate_pages(self, sequence_id: str, num_tokens: int) -> list[int]:
         """Allocate pages for sequence KV cache"""
         pages_needed = (num_tokens + self.page_size - 1) // self.page_size
         pages_needed = min(pages_needed, len(self.free_pages))
@@ -445,7 +447,7 @@ class PagedAttentionDecoder:
 
         # Calculate page and offset for current position
         page_idx = position // self.page_size
-        page_offset = position % self.page_size
+        position % self.page_size
 
         if page_idx >= len(pages):
             # Need more pages
@@ -460,7 +462,7 @@ class PagedAttentionDecoder:
 
         return output
 
-    def get_memory_efficiency_stats(self) -> Dict[str, Any]:
+    def get_memory_efficiency_stats(self) -> dict[str, Any]:
         """Get memory efficiency statistics"""
         total_pages = self.max_pages
         used_pages = total_pages - len(self.free_pages)
@@ -479,7 +481,7 @@ def create_advanced_flex_attention(
     num_heads: int,
     pattern: str = "standard",
     enable_gqa: bool = False,
-    kv_heads: Optional[int] = None,
+    kv_heads: int | None = None,
     use_paged_attention: bool = False,
     **kwargs
 ) -> AdvancedFlexAttention:

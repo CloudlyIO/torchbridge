@@ -3,17 +3,21 @@
 Tests for RegressionDetector functionality
 """
 
-import pytest
-from datetime import datetime
-import numpy as np
-
 import os
 import sys
+from datetime import datetime
+
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from benchmarks.regression.regression_detector import RegressionDetector, RegressionResult, RegressionSeverity
-from benchmarks.regression.baseline_manager import BaselineMetrics
 from benchmarks.framework.benchmark_runner import PerformanceMetrics
+from benchmarks.regression.baseline_manager import BaselineMetrics
+from benchmarks.regression.regression_detector import (
+    RegressionDetector,
+    RegressionResult,
+    RegressionSeverity,
+)
 
 
 class TestRegressionResult:

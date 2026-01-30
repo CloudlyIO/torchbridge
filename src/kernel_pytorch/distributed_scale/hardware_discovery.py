@@ -8,14 +8,15 @@ Comprehensive hardware discovery for heterogeneous clusters:
 - NUMA and interconnect topology mapping
 """
 
-import time
 import logging
-import subprocess
 import socket
-import psutil
-from typing import Dict, List, Optional, Tuple, Any
+import subprocess
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
+import psutil
 import torch
 
 logger = logging.getLogger(__name__)
@@ -88,32 +89,32 @@ class NodeTopology:
     """Node-level hardware topology"""
     node_id: int
     hostname: str
-    devices: List[DeviceInfo]
+    devices: list[DeviceInfo]
     cpu_count: int
     memory_gb: float
     storage_type: str  # "nvme", "ssd", "hdd"
-    network_interfaces: List[str]
+    network_interfaces: list[str]
 
     # NUMA topology
-    numa_topology: Dict[int, List[int]]  # NUMA node -> device IDs
+    numa_topology: dict[int, list[int]]  # NUMA node -> device IDs
 
     # Interconnect information
-    nvlink_topology: Dict[Tuple[int, int], float]  # (dev1, dev2) -> bandwidth_gb_s
-    pcie_topology: Dict[int, Dict[str, Any]]  # device_id -> PCIe info
+    nvlink_topology: dict[tuple[int, int], float]  # (dev1, dev2) -> bandwidth_gb_s
+    pcie_topology: dict[int, dict[str, Any]]  # device_id -> PCIe info
 
 
 @dataclass
 class ClusterTopology:
     """Cluster-level hardware topology"""
-    nodes: Dict[int, NodeTopology]
+    nodes: dict[int, NodeTopology]
     total_devices: int
     total_memory_gb: float
-    network_topology: Dict[Tuple[int, int], Dict[str, float]]  # (node1, node2) -> {bandwidth, latency}
+    network_topology: dict[tuple[int, int], dict[str, float]]  # (node1, node2) -> {bandwidth, latency}
 
     # Heterogeneity metrics
-    vendor_distribution: Dict[HardwareVendor, int]
-    capability_distribution: Dict[DeviceCapability, int]
-    memory_distribution: Dict[float, int]  # memory_gb -> count
+    vendor_distribution: dict[HardwareVendor, int]
+    capability_distribution: dict[DeviceCapability, int]
+    memory_distribution: dict[float, int]  # memory_gb -> count
 
 
 class HardwareTopologyManager:
@@ -129,7 +130,7 @@ class HardwareTopologyManager:
     def __init__(self, enable_monitoring: bool = True):
         self.enable_monitoring = enable_monitoring
         # Initialize cluster topology during construction
-        self.cluster_topology: Optional[ClusterTopology] = self.discover_topology()
+        self.cluster_topology: ClusterTopology | None = self.discover_topology()
 
     def discover_topology(self) -> ClusterTopology:
         """Discover and analyze cluster hardware topology"""
@@ -241,7 +242,7 @@ class HardwareTopologyManager:
             # Get additional device info via nvidia-ml-py if available
             temp, power, utilization = self._get_nvidia_device_status(device_id)
 
-        except (AssertionError, RuntimeError) as e:
+        except (AssertionError, RuntimeError):
             # CUDA not available, return mock device info
             return DeviceInfo(
                 device_id=device_id,
@@ -289,7 +290,7 @@ class HardwareTopologyManager:
             peak_tensor_flops=peak_tensor_flops
         )
 
-    def _discover_other_accelerators(self) -> List[DeviceInfo]:
+    def _discover_other_accelerators(self) -> list[DeviceInfo]:
         """Discover non-CUDA accelerators (AMD, Intel)"""
         devices = []
 
@@ -309,7 +310,7 @@ class HardwareTopologyManager:
 
         return devices
 
-    def _get_nvidia_device_status(self, device_id: int) -> Tuple[float, float, float]:
+    def _get_nvidia_device_status(self, device_id: int) -> tuple[float, float, float]:
         """Get NVIDIA device status (temperature, power, utilization)"""
         try:
             # Try to use nvidia-ml-py if available
@@ -419,7 +420,7 @@ class HardwareTopologyManager:
 
         return "unknown"
 
-    def _get_network_interfaces(self) -> List[str]:
+    def _get_network_interfaces(self) -> list[str]:
         """Get network interface information"""
         interfaces = []
         net_io = psutil.net_io_counters(pernic=True)
@@ -430,7 +431,7 @@ class HardwareTopologyManager:
 
         return interfaces
 
-    def _discover_numa_topology(self, devices: List[DeviceInfo]) -> Dict[int, List[int]]:
+    def _discover_numa_topology(self, devices: list[DeviceInfo]) -> dict[int, list[int]]:
         """Discover NUMA topology for devices"""
         # Simplified NUMA discovery
         numa_topology = {}
@@ -445,7 +446,7 @@ class HardwareTopologyManager:
 
         return numa_topology
 
-    def _discover_nvlink_topology(self, devices: List[DeviceInfo]) -> Dict[Tuple[int, int], float]:
+    def _discover_nvlink_topology(self, devices: list[DeviceInfo]) -> dict[tuple[int, int], float]:
         """Discover NVLink topology and bandwidth"""
         nvlink_topology = {}
 
@@ -467,7 +468,7 @@ class HardwareTopologyManager:
 
         return nvlink_topology
 
-    def _discover_pcie_topology(self, devices: List[DeviceInfo]) -> Dict[int, Dict[str, Any]]:
+    def _discover_pcie_topology(self, devices: list[DeviceInfo]) -> dict[int, dict[str, Any]]:
         """Discover PCIe topology for devices"""
         pcie_topology = {}
 
@@ -485,8 +486,8 @@ class HardwareTopologyManager:
     def get_optimal_device_placement(
         self,
         num_devices: int,
-        memory_requirements: Optional[List[float]] = None
-    ) -> List[int]:
+        memory_requirements: list[float] | None = None
+    ) -> list[int]:
         """
         Get optimal device placement for given requirements
 

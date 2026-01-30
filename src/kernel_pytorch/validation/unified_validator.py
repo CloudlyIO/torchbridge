@@ -11,16 +11,15 @@ Replaces validation functions from:
 - And scattered validation across 14 files
 """
 
+import time
+import traceback
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
+import psutil
 import torch
 import torch.nn as nn
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
-from dataclasses import dataclass
-import warnings
-import traceback
-from enum import Enum
-import time
-import psutil
-import gc
 
 from ..core.config import KernelPyTorchConfig, ValidationConfig
 
@@ -48,7 +47,7 @@ class ValidationReport:
     status: ValidationResult
     message: str
     execution_time: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -60,7 +59,7 @@ class ValidationSummary:
     failed: int
     skipped: int
     execution_time: float
-    reports: List[ValidationReport]
+    reports: list[ValidationReport]
 
     @property
     def success_rate(self) -> float:
@@ -88,13 +87,13 @@ class UnifiedValidator:
     - Memory validation
     """
 
-    def __init__(self, config: Optional[ValidationConfig] = None):
+    def __init__(self, config: ValidationConfig | None = None):
         self.config = config or ValidationConfig()
-        self.reports: List[ValidationReport] = []
+        self.reports: list[ValidationReport] = []
 
     def validate_model(self,
                       model: nn.Module,
-                      input_shape: Tuple[int, ...],
+                      input_shape: tuple[int, ...],
                       level: ValidationLevel = ValidationLevel.STANDARD) -> ValidationSummary:
         """Comprehensive model validation."""
         self.reports.clear()
@@ -173,7 +172,7 @@ class UnifiedValidator:
     def validate_tpu_model_optimization(self,
                                       model: nn.Module,
                                       tpu_config,
-                                      sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+                                      sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
         """Validate TPU model optimization."""
         self.reports.clear()
         start_time = time.time()
@@ -257,7 +256,7 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Parameter validation failed: {e}")
 
-    def _validate_forward_pass(self, model: nn.Module, input_shape: Tuple[int, ...]) -> None:
+    def _validate_forward_pass(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
         """Validate model forward pass."""
         try:
             model.eval()
@@ -281,7 +280,7 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Forward pass validation failed: {e}")
 
-    def _validate_gradient_flow(self, model: nn.Module, input_shape: Tuple[int, ...]) -> None:
+    def _validate_gradient_flow(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
         """Validate gradient flow through model."""
         try:
             model.train()
@@ -313,7 +312,7 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Gradient flow validation failed: {e}")
 
-    def _validate_memory_usage(self, model: nn.Module, input_shape: Tuple[int, ...]) -> None:
+    def _validate_memory_usage(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
         """Validate memory usage patterns."""
         try:
             if torch.cuda.is_available():
@@ -323,7 +322,7 @@ class UnifiedValidator:
 
             # Forward pass
             dummy_input = torch.randn(input_shape, device=next(model.parameters()).device)
-            output = model(dummy_input)
+            model(dummy_input)
 
             peak_memory = self._get_memory_usage()
             memory_usage = peak_memory - initial_memory
@@ -331,7 +330,7 @@ class UnifiedValidator:
             threshold = self.config.memory_threshold_gb * 1024 * 1024 * 1024  # Convert GB to bytes
 
             if memory_usage > threshold:
-                self._add_warning(f"High memory usage detected", {
+                self._add_warning("High memory usage detected", {
                     "memory_usage_mb": memory_usage / (1024 * 1024),
                     "threshold_gb": self.config.memory_threshold_gb
                 })
@@ -343,7 +342,7 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Memory validation failed: {e}")
 
-    def _validate_numerical_stability(self, model: nn.Module, input_shape: Tuple[int, ...]) -> None:
+    def _validate_numerical_stability(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
         """Validate numerical stability."""
         try:
             model.eval()
@@ -357,7 +356,7 @@ class UnifiedValidator:
             ]
 
             stable = True
-            for i, test_input in enumerate(test_inputs):
+            for _i, test_input in enumerate(test_inputs):
                 with torch.no_grad():
                     output = model(test_input)
                     if isinstance(output, torch.Tensor):
@@ -373,7 +372,7 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Numerical stability validation failed: {e}")
 
-    def _validate_performance_characteristics(self, model: nn.Module, input_shape: Tuple[int, ...]) -> None:
+    def _validate_performance_characteristics(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
         """Validate performance characteristics."""
         try:
             model.eval()
@@ -560,7 +559,7 @@ class UnifiedValidator:
         else:
             return psutil.Process().memory_info().rss
 
-    def _add_success(self, message: str, metadata: Optional[Dict] = None) -> None:
+    def _add_success(self, message: str, metadata: dict | None = None) -> None:
         """Add successful validation result."""
         self.reports.append(ValidationReport(
             name=f"test_{len(self.reports)}",
@@ -570,7 +569,7 @@ class UnifiedValidator:
             metadata=metadata or {}
         ))
 
-    def _add_warning(self, message: str, metadata: Optional[Dict] = None) -> None:
+    def _add_warning(self, message: str, metadata: dict | None = None) -> None:
         """Add warning validation result."""
         self.reports.append(ValidationReport(
             name=f"test_{len(self.reports)}",
@@ -580,7 +579,7 @@ class UnifiedValidator:
             metadata=metadata or {}
         ))
 
-    def _add_failure(self, message: str, metadata: Optional[Dict] = None) -> None:
+    def _add_failure(self, message: str, metadata: dict | None = None) -> None:
         """Add failed validation result."""
         self.reports.append(ValidationReport(
             name=f"test_{len(self.reports)}",
@@ -613,7 +612,7 @@ class UnifiedValidator:
         """Validate basic TPU configuration."""
         try:
             # Check TPU version
-            from ..core.config import TPUVersion, TPUTopology, TPUCompilationMode
+            from ..core.config import TPUCompilationMode, TPUTopology, TPUVersion
 
             if tpu_config.version not in TPUVersion:
                 self._add_failure(f"Invalid TPU version: {tpu_config.version}")
@@ -856,7 +855,7 @@ class UnifiedValidator:
     def validate_nvidia_model_optimization(self,
                                           model: nn.Module,
                                           nvidia_config,
-                                          sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+                                          sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
         """Validate NVIDIA model optimization."""
         self.reports.clear()
         start_time = time.time()
@@ -1052,7 +1051,7 @@ class UnifiedValidator:
                 kernel_count = sum(1 for attr in kernel_attrs if not attr.startswith('_'))
                 self._add_success(f"Found {kernel_count} CUDA kernel functions")
 
-            except ImportError as e:
+            except ImportError:
                 self._add_warning(
                     "CUDA kernels not compiled - will use PyTorch fallback. "
                     "Run 'python setup.py build_ext --inplace' to compile kernels"
@@ -1065,11 +1064,8 @@ class UnifiedValidator:
         """Validate kernel registry functionality."""
         try:
             from ..core.kernel_registry import (
-                KernelRegistry,
-                KernelMetadata,
                 KernelType,
-                KernelBackend,
-                get_kernel_registry
+                get_kernel_registry,
             )
 
             # Test registry creation
@@ -1149,7 +1145,7 @@ class UnifiedValidator:
                 from ..hardware.gpu.custom_kernels import (
                     FusedLinearGELU,
                     FusedLinearSiLU,
-                    create_fused_ffn_layer
+                    create_fused_ffn_layer,
                 )
                 self._add_success("Fused Linear+Activation modules importable")
 
@@ -1173,7 +1169,7 @@ class UnifiedValidator:
                         self._add_warning("FusedLinearSiLU using PyTorch fallback")
 
                 # Test FFN layer factory
-                ffn = create_fused_ffn_layer(512, 2048, activation="gelu")
+                create_fused_ffn_layer(512, 2048, activation="gelu")
                 self._add_success("Fused FFN layer created successfully")
 
             except ImportError as e:
@@ -1231,7 +1227,6 @@ class UnifiedValidator:
 
     def _validate_nvidia_layer_optimization(self, model: nn.Module, nvidia_config) -> None:
         """Validate NVIDIA layer optimization."""
-        from ..core.config import NVIDIAArchitecture
 
         optimal_div = 16 if nvidia_config.tensor_core_version >= 4 else 8
 
@@ -1288,7 +1283,7 @@ class UnifiedValidator:
 default_validator = UnifiedValidator()
 
 
-def validate_model(model: nn.Module, input_shape: Tuple[int, ...], **kwargs) -> ValidationSummary:
+def validate_model(model: nn.Module, input_shape: tuple[int, ...], **kwargs) -> ValidationSummary:
     """Convenience function for model validation."""
     return default_validator.validate_model(model, input_shape, **kwargs)
 
@@ -1308,7 +1303,7 @@ def validate_tpu_configuration(config: KernelPyTorchConfig) -> ValidationSummary
     return default_validator.validate_tpu_compatibility(config)
 
 
-def validate_tpu_model(model: nn.Module, tpu_config, sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+def validate_tpu_model(model: nn.Module, tpu_config, sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
     """Convenience function for TPU model optimization validation."""
     return default_validator.validate_tpu_model_optimization(model, tpu_config, sample_inputs)
 
@@ -1318,7 +1313,7 @@ def validate_nvidia_configuration(config: KernelPyTorchConfig) -> ValidationSumm
     return default_validator.validate_nvidia_compatibility(config)
 
 
-def validate_nvidia_model(model: nn.Module, nvidia_config, sample_inputs: Optional[torch.Tensor] = None) -> ValidationSummary:
+def validate_nvidia_model(model: nn.Module, nvidia_config, sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
     """Convenience function for NVIDIA model optimization validation."""
     return default_validator.validate_nvidia_model_optimization(model, nvidia_config, sample_inputs)
 

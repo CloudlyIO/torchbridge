@@ -6,11 +6,10 @@ through optimization, export, and inference. They ensure all components
 work together correctly.
 """
 
+
 import pytest
-import tempfile
 import torch
 import torch.nn as nn
-from pathlib import Path
 
 
 class SimpleTransformerBlock(nn.Module):
@@ -311,8 +310,8 @@ class TestDeploymentIntegration:
     def test_serving_imports(self):
         """Test serving components can be imported."""
         from kernel_pytorch.deployment import (
-            create_fastapi_server,
             ServerConfig,
+            create_fastapi_server,
         )
         assert create_fastapi_server is not None
         assert ServerConfig is not None
@@ -347,7 +346,9 @@ class TestBackendIntegration:
 
     def test_hal_import(self):
         """Test Hardware Abstraction Layer can be imported."""
-        from kernel_pytorch.hardware.abstraction.hal_core import HardwareAbstractionLayer
+        from kernel_pytorch.hardware.abstraction.hal_core import (
+            HardwareAbstractionLayer,
+        )
         assert HardwareAbstractionLayer is not None
 
 
@@ -366,7 +367,9 @@ class TestDistributedIntegration:
 
     def test_pipeline_parallel_import(self):
         """Test pipeline parallel can be imported."""
-        from kernel_pytorch.models.distributed.pipeline_parallel import PipelineParallelConfig
+        from kernel_pytorch.models.distributed.pipeline_parallel import (
+            PipelineParallelConfig,
+        )
         assert PipelineParallelConfig is not None
 
 
@@ -396,7 +399,7 @@ class TestValidationFramework:
         """Test basic validator usage."""
         from kernel_pytorch.validation import UnifiedValidator
 
-        model = nn.Linear(256, 128)
+        nn.Linear(256, 128)
         validator = UnifiedValidator()
 
         # Basic validation should work

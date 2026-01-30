@@ -9,19 +9,20 @@ This module tests the kernel registry functionality including:
 - Version management
 """
 
+from unittest.mock import Mock
+
 import pytest
 import torch
-from unittest.mock import Mock, patch
 
+from kernel_pytorch.core.config import PrecisionFormat
 from kernel_pytorch.core.kernel_registry import (
-    KernelRegistry,
-    KernelMetadata,
-    KernelType,
     KernelBackend,
+    KernelMetadata,
+    KernelRegistry,
+    KernelType,
     get_kernel_registry,
-    register_default_kernels
+    register_default_kernels,
 )
-from kernel_pytorch.core.config import NVIDIAArchitecture, PrecisionFormat
 
 
 class TestKernelMetadata:

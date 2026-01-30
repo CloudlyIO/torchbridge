@@ -13,20 +13,17 @@ Tests cover:
 Version: 0.4.22
 """
 
+import time
+from unittest.mock import Mock
+
 import pytest
 import torch
-import time
-import asyncio
-import json
-from typing import Dict, Any, List
-from unittest.mock import Mock, MagicMock, patch
 
 # Skip all tests if FastAPI not available
 pytest.importorskip("fastapi")
 pytest.importorskip("transformers")
 
 from fastapi.testclient import TestClient
-
 
 # ============================================================================
 # Test Fixtures
@@ -149,11 +146,11 @@ def mock_tokenizer():
 def llm_server(mock_llm_model, mock_tokenizer):
     """Create LLM server for testing."""
     from kernel_pytorch.deployment.serving.llm_server import (
-        create_llm_server,
         LLMServerConfig,
+        create_llm_server,
     )
 
-    config = LLMServerConfig(
+    LLMServerConfig(
         model_name="test-model",
         enable_streaming=True,
         enable_dynamic_batching=True,
@@ -650,7 +647,6 @@ class TestCleanup:
 
     def test_server_shutdown(self, llm_server):
         """Test server can be shut down cleanly."""
-        from kernel_pytorch.deployment.serving.llm_server import HealthStatus
 
         # Trigger shutdown
         llm_server._stop_batching.set()

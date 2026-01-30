@@ -9,27 +9,27 @@ Tests for:
 These tests validate state-of-the-art optimizations.
 """
 
+import os
+import sys
+import time
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import sys
-import os
-import time
-from typing import List, Dict, Any
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from kernel_pytorch.core.compilers import (
-    FlashLightKernelCompiler,
     AttentionPattern,
-    PyGraphCUDAOptimizer,
-    WorkloadAnalysis,
-    GraphDeploymentStrategy,
+    FlashLightKernelCompiler,
     FusionBoundaryOptimizer,
     FusionPass,
-    FusionStrategy
+    FusionStrategy,
+    GraphDeploymentStrategy,
+    PyGraphCUDAOptimizer,
+    WorkloadAnalysis,
 )
 
 
@@ -214,7 +214,7 @@ class TestFlashLightCompiler:
         total_compilation_time = sum(compilation_times.values())
         total_execution_time = sum(execution_times.values())
 
-        print(f"\\nPerformance Results:")
+        print("\\nPerformance Results:")
         print(f"Total compilation time: {total_compilation_time:.3f}s")
         print(f"Total execution time: {total_execution_time:.3f}s")
         print(f"Patterns tested: {patterns}")
@@ -231,11 +231,11 @@ class TestFlashLightCompiler:
         seq_len, head_dim = q.shape[2], q.shape[3]
 
         # First compilation
-        kernel1 = compiler.compile_attention_kernel("causal", seq_len, head_dim)
+        compiler.compile_attention_kernel("causal", seq_len, head_dim)
         initial_compilations = compiler.compilation_stats["total_compilations"]
 
         # Second compilation (should use cache)
-        kernel2 = compiler.compile_attention_kernel("causal", seq_len, head_dim)
+        compiler.compile_attention_kernel("causal", seq_len, head_dim)
         final_compilations = compiler.compilation_stats["total_compilations"]
 
         # Should not increase compilation count due to cache hit
@@ -463,7 +463,7 @@ class TestEnhancedFusion:
 
         # Test pattern detection methods
         relu_node = MockNode('call_function', torch.relu)
-        linear_node = MockNode('call_module', nn.Linear(10, 10))
+        MockNode('call_module', nn.Linear(10, 10))
 
         assert fusion_optimizer._is_vertically_fusable(relu_node)
         assert not fusion_optimizer._is_attention_operation(relu_node)
@@ -585,7 +585,7 @@ class TestIntegrationScenarios:
         analysis = pygraph_optimizer.analyze_workload(attention_model, inputs, num_trials=3)
 
         try:
-            fusion_result = fusion_optimizer.optimize_fusion_graph(attention_model)
+            fusion_optimizer.optimize_fusion_graph(attention_model)
             fusion_success = True
         except Exception:
             fusion_success = False  # FX tracing might fail
@@ -627,7 +627,7 @@ class TestIntegrationScenarios:
             baseline_output = attention_model(*inputs)
             if device.type == 'cuda':
                 torch.cuda.synchronize()
-            baseline_time = time.perf_counter() - start_time
+            time.perf_counter() - start_time
 
         # Apply optimizations and measure performance
         pygraph_optimizer = PyGraphCUDAOptimizer()

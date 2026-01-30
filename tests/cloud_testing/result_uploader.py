@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +28,8 @@ class UploadResult:
     """Result of an upload operation."""
     success: bool
     path: str
-    url: Optional[str] = None
-    error_message: Optional[str] = None
+    url: str | None = None
+    error_message: str | None = None
     bytes_uploaded: int = 0
 
 
@@ -39,9 +39,9 @@ class ResultUploader(ABC):
     @abstractmethod
     def upload_json(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload JSON data."""
         pass
@@ -49,9 +49,9 @@ class ResultUploader(ABC):
     @abstractmethod
     def upload_file(
         self,
-        local_path: Union[str, Path],
+        local_path: str | Path,
         remote_path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload a file."""
         pass
@@ -61,12 +61,12 @@ class ResultUploader(ABC):
         self,
         prefix: str = "",
         limit: int = 100,
-    ) -> List[str]:
+    ) -> list[str]:
         """List uploaded results."""
         pass
 
     @abstractmethod
-    def download_json(self, path: str) -> Optional[Dict[str, Any]]:
+    def download_json(self, path: str) -> dict[str, Any] | None:
         """Download JSON data."""
         pass
 
@@ -109,7 +109,7 @@ class S3Uploader(ResultUploader):
     def _check_boto3(self) -> bool:
         """Check if boto3 is available."""
         try:
-            import boto3
+            import boto3  # noqa: F401
             return True
         except ImportError:
             logger.warning("boto3 not installed. S3 uploads will be simulated.")
@@ -128,9 +128,9 @@ class S3Uploader(ResultUploader):
 
     def upload_json(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload JSON data to S3."""
         full_path = self._get_full_path(path)
@@ -177,9 +177,9 @@ class S3Uploader(ResultUploader):
 
     def upload_file(
         self,
-        local_path: Union[str, Path],
+        local_path: str | Path,
         remote_path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload a file to S3."""
         local_path = Path(local_path)
@@ -234,7 +234,7 @@ class S3Uploader(ResultUploader):
         self,
         prefix: str = "",
         limit: int = 100,
-    ) -> List[str]:
+    ) -> list[str]:
         """List results in S3."""
         full_prefix = self._get_full_path(prefix) if prefix else self.prefix
 
@@ -254,7 +254,7 @@ class S3Uploader(ResultUploader):
             logger.error(f"Failed to list S3 objects: {e}")
             return []
 
-    def download_json(self, path: str) -> Optional[Dict[str, Any]]:
+    def download_json(self, path: str) -> dict[str, Any] | None:
         """Download JSON data from S3."""
         full_path = self._get_full_path(path)
 
@@ -306,7 +306,7 @@ class GCSUploader(ResultUploader):
     def _check_gcs(self) -> bool:
         """Check if google-cloud-storage is available."""
         try:
-            from google.cloud import storage
+            from google.cloud import storage  # noqa: F401
             return True
         except ImportError:
             logger.warning("google-cloud-storage not installed. GCS uploads will be simulated.")
@@ -325,9 +325,9 @@ class GCSUploader(ResultUploader):
 
     def upload_json(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload JSON data to GCS."""
         full_path = self._get_full_path(path)
@@ -370,9 +370,9 @@ class GCSUploader(ResultUploader):
 
     def upload_file(
         self,
-        local_path: Union[str, Path],
+        local_path: str | Path,
         remote_path: str,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> UploadResult:
         """Upload a file to GCS."""
         local_path = Path(local_path)
@@ -424,7 +424,7 @@ class GCSUploader(ResultUploader):
         self,
         prefix: str = "",
         limit: int = 100,
-    ) -> List[str]:
+    ) -> list[str]:
         """List results in GCS."""
         full_prefix = self._get_full_path(prefix) if prefix else self.prefix
 
@@ -441,7 +441,7 @@ class GCSUploader(ResultUploader):
             logger.error(f"Failed to list GCS objects: {e}")
             return []
 
-    def download_json(self, path: str) -> Optional[Dict[str, Any]]:
+    def download_json(self, path: str) -> dict[str, Any] | None:
         """Download JSON data from GCS."""
         full_path = self._get_full_path(path)
 
@@ -464,10 +464,10 @@ class GCSUploader(ResultUploader):
 # ============================================================================
 
 def upload_results(
-    results: Dict[str, Any],
+    results: dict[str, Any],
     cloud_provider: str = "auto",
-    bucket: Optional[str] = None,
-    path: Optional[str] = None,
+    bucket: str | None = None,
+    path: str | None = None,
 ) -> UploadResult:
     """
     Upload results to cloud storage.

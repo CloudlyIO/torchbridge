@@ -14,12 +14,13 @@ Version: 0.4.8
 """
 
 import logging
+from collections.abc import Callable
 from enum import Enum
-from typing import Dict, Any, Optional, List, Type, Callable, Union
+from typing import Any
 
 import torch
 
-from .base_backend import BaseBackend, CPUBackend, DeviceInfo, OptimizationLevel
+from .base_backend import BaseBackend, CPUBackend
 from .base_optimizer import BaseOptimizer, CPUOptimizer
 
 logger = logging.getLogger(__name__)
@@ -74,13 +75,13 @@ class BackendFactory:
     """
 
     # Registered backends (populated by register_backend)
-    _backends: Dict[BackendType, Type[BaseBackend]] = {}
+    _backends: dict[BackendType, type[BaseBackend]] = {}
 
     # Registered optimizers
-    _optimizers: Dict[BackendType, Type[BaseOptimizer]] = {}
+    _optimizers: dict[BackendType, type[BaseOptimizer]] = {}
 
     # Backend priority for auto-selection (higher = preferred)
-    _priority: Dict[BackendType, int] = {
+    _priority: dict[BackendType, int] = {
         BackendType.NVIDIA: 100,  # Highest priority
         BackendType.AMD: 90,
         BackendType.TPU: 85,
@@ -89,16 +90,16 @@ class BackendFactory:
     }
 
     # Availability check functions
-    _availability_checks: Dict[BackendType, Callable[[], bool]] = {}
+    _availability_checks: dict[BackendType, Callable[[], bool]] = {}
 
     @classmethod
     def register_backend(
         cls,
         backend_type: BackendType,
-        backend_class: Type[BaseBackend],
-        optimizer_class: Optional[Type[BaseOptimizer]] = None,
-        availability_check: Optional[Callable[[], bool]] = None,
-        priority: Optional[int] = None
+        backend_class: type[BaseBackend],
+        optimizer_class: type[BaseOptimizer] | None = None,
+        availability_check: Callable[[], bool] | None = None,
+        priority: int | None = None
     ) -> None:
         """
         Register a backend with the factory.
@@ -126,7 +127,7 @@ class BackendFactory:
     @classmethod
     def create(
         cls,
-        backend_type: Union[BackendType, str] = BackendType.AUTO,
+        backend_type: BackendType | str = BackendType.AUTO,
         config: Any = None,
         **kwargs
     ) -> BaseBackend:
@@ -166,9 +167,9 @@ class BackendFactory:
     @classmethod
     def create_optimizer(
         cls,
-        backend_type: Union[BackendType, str] = BackendType.AUTO,
+        backend_type: BackendType | str = BackendType.AUTO,
         config: Any = None,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
         **kwargs
     ) -> BaseOptimizer:
         """
@@ -226,7 +227,7 @@ class BackendFactory:
         return selected
 
     @classmethod
-    def _get_backend_class(cls, backend_type: BackendType) -> Type[BaseBackend]:
+    def _get_backend_class(cls, backend_type: BackendType) -> type[BaseBackend]:
         """Get the backend class for the given type."""
         if backend_type in cls._backends:
             return cls._backends[backend_type]
@@ -268,7 +269,7 @@ class BackendFactory:
         return CPUBackend
 
     @classmethod
-    def get_available_backends(cls) -> List[BackendType]:
+    def get_available_backends(cls) -> list[BackendType]:
         """
         Get list of available backends.
 
@@ -335,7 +336,6 @@ class BackendFactory:
             return cls._availability_checks[BackendType.TPU]()
 
         try:
-            import torch_xla
             import torch_xla.core.xla_model as xm
             # Try to get a device - this will fail if no TPU
             xm.xla_device()
@@ -357,7 +357,7 @@ class BackendFactory:
             return False
 
     @classmethod
-    def get_backend_info(cls, backend_type: BackendType) -> Dict[str, Any]:
+    def get_backend_info(cls, backend_type: BackendType) -> dict[str, Any]:
         """
         Get information about a specific backend.
 
@@ -398,7 +398,7 @@ class BackendFactory:
         return info
 
     @classmethod
-    def get_all_backend_info(cls) -> Dict[str, Dict[str, Any]]:
+    def get_all_backend_info(cls) -> dict[str, dict[str, Any]]:
         """
         Get information about all backends.
 
@@ -447,7 +447,7 @@ class BackendFactory:
 
 
 def get_backend(
-    backend_type: Union[BackendType, str] = BackendType.AUTO,
+    backend_type: BackendType | str = BackendType.AUTO,
     config: Any = None,
     **kwargs
 ) -> BaseBackend:
@@ -466,9 +466,9 @@ def get_backend(
 
 
 def get_optimizer(
-    backend_type: Union[BackendType, str] = BackendType.AUTO,
+    backend_type: BackendType | str = BackendType.AUTO,
     config: Any = None,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     **kwargs
 ) -> BaseOptimizer:
     """
@@ -496,7 +496,7 @@ def detect_best_backend() -> BackendType:
     return BackendFactory._auto_select()
 
 
-def list_available_backends() -> List[str]:
+def list_available_backends() -> list[str]:
     """
     List available backend names.
 

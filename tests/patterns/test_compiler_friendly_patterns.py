@@ -4,7 +4,7 @@ Tests for Compiler-Friendly Optimization Patterns
 Comprehensive test suite validating compiler-friendly implementations
 and ensuring optimal compatibility with torch.compile and other compilers.
 
-🎯 TEST COVERAGE:
+ TEST COVERAGE:
 - Compilation compatibility analysis
 - torch.compile optimization
 - TorchScript compatibility
@@ -13,28 +13,24 @@ and ensuring optimal compatibility with torch.compile and other compilers.
 - Function composition patterns
 """
 
+import math
+
 import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import math
-from typing import Dict, List, Any
-from unittest.mock import patch
 
 from kernel_pytorch.optimizations.patterns.compiler_friendly import (
-    CompilerOptimizedModule,
-    OptimizedTransformerBlock,
-    OptimizedLinearGELU,
+    COMPILER_BEST_PRACTICES,
     CompilationCompatibility,
     CompilerType,
-    CompilationPattern,
-    check_compilation_compatibility,
-    benchmark_compilation_impact,
-    optimize_for_torch_compile,
+    OptimizedLinearGELU,
+    OptimizedTransformerBlock,
     avoid_compilation_pitfalls,
+    benchmark_compilation_impact,
+    check_compilation_compatibility,
+    optimize_for_torch_compile,
     print_compilation_analysis,
-    COMPILER_BEST_PRACTICES
 )
 
 
@@ -149,7 +145,7 @@ class TestOptimizedModules:
         assert not torch.isnan(output).any()
         # Should have compiler optimization flag
         assert hasattr(optimized_model, '_compiler_optimized')
-        assert optimized_model._compiler_optimized == True
+        assert optimized_model._compiler_optimized is True
 
 
 class TestTorchCompileOptimization:
@@ -309,7 +305,7 @@ class TestCompilationPatterns:
 
     def test_compiler_type_enum(self):
         """Test compiler type enumeration."""
-        compiler_types = list(CompilerType)
+        list(CompilerType)
 
         expected_types = ['TORCH_COMPILE', 'TORCHSCRIPT', 'TENSORRT']
         for compiler_type in expected_types:
@@ -317,7 +313,7 @@ class TestCompilationPatterns:
 
     def test_compilation_compatibility_enum(self):
         """Test compilation compatibility levels."""
-        compat_levels = list(CompilationCompatibility)
+        list(CompilationCompatibility)
 
         expected_levels = ['EXCELLENT', 'GOOD', 'LIMITED', 'PROBLEMATIC']
         for level in expected_levels:
@@ -444,7 +440,7 @@ class TestEdgeCases:
         try:
             compatibility = check_compilation_compatibility(empty_model, x)
             assert isinstance(compatibility, dict)
-        except:
+        except Exception:
             # Empty models may not be handled by all analysis functions
             pass
 

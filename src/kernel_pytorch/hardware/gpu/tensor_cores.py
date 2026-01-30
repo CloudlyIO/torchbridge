@@ -5,32 +5,32 @@ This module provides comprehensive guidance and tools for leveraging NVIDIA
 Tensor Cores for maximum performance in PyTorch neural networks, focusing on
 mixed precision training and specialized hardware acceleration.
 
-🎓 EDUCATIONAL FOCUS:
 Tensor Cores are specialized matrix multiplication units on modern NVIDIA GPUs:
 - Available on V100, A100, H100, RTX 20/30/40 series
 - Deliver 4-16x speedup for mixed precision operations
 - Require specific data types and dimensions for optimal performance
 - Critical for large-scale transformer and deep learning workloads
 
-🔧 TENSOR CORE OPTIMIZATION TECHNIQUES:
+ TENSOR CORE OPTIMIZATION TECHNIQUES:
 - Automatic Mixed Precision (AMP) integration
 - Optimal tensor shapes and alignment for Tensor Core utilization
 - Custom autocast policies for different model architectures
 - Performance measurement and validation frameworks
 
-💡 PRACTICAL APPLICATION:
 Learn to leverage Tensor Cores effectively for real performance gains in
 training and inference, with demonstrated 2-8x speedups on compatible hardware.
 """
 
+import warnings
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.cuda.amp import autocast, GradScaler
-from typing import Dict, List, Optional, Tuple, Any, Union, Callable
-from dataclasses import dataclass
-from enum import Enum
-import warnings
+from torch.cuda.amp import GradScaler, autocast
 
 
 class TensorCoreCompatibility(Enum):
@@ -46,7 +46,6 @@ class TensorCoreOptimizationConfig:
     """
     Configuration for Tensor Core optimization strategies.
 
-    🎓 EDUCATIONAL: Tensor Core optimization parameters
     Understanding these parameters is crucial for maximizing Tensor Core
     utilization and achieving optimal performance.
     """
@@ -62,18 +61,17 @@ class TensorCoreOptimizer:
     """
     Advanced optimizer for leveraging NVIDIA Tensor Cores in PyTorch models.
 
-    🎓 EDUCATIONAL: Systematic Tensor Core optimization
     This class demonstrates how to systematically optimize PyTorch models
     to achieve maximum Tensor Core utilization and performance benefits.
 
-    🔧 OPTIMIZATION STRATEGIES:
+     OPTIMIZATION STRATEGIES:
     - Automatic shape optimization for Tensor Core alignment
     - Mixed precision policy optimization
     - Custom autocast scope management
     - Performance measurement and validation
     """
 
-    def __init__(self, config: Optional[TensorCoreOptimizationConfig] = None):
+    def __init__(self, config: TensorCoreOptimizationConfig | None = None):
         """
         Initialize Tensor Core optimizer.
 
@@ -100,15 +98,14 @@ class TensorCoreOptimizer:
         self,
         model: nn.Module,
         sample_input: torch.Tensor
-    ) -> Tuple[nn.Module, Dict[str, Any]]:
+    ) -> tuple[nn.Module, dict[str, Any]]:
         """
         Optimize model for maximum Tensor Core utilization.
 
-        🎓 EDUCATIONAL: Model optimization process
         This demonstrates the systematic process of optimizing a PyTorch model
         to achieve maximum Tensor Core utilization and performance benefits.
 
-        🔧 OPTIMIZATION PROCESS:
+         OPTIMIZATION PROCESS:
         - Analyze current model compatibility
         - Apply shape optimizations
         - Configure mixed precision settings
@@ -131,7 +128,7 @@ class TensorCoreOptimizer:
         }
 
         if not self._tensor_core_available:
-            warnings.warn("Tensor Cores not available on current GPU")
+            warnings.warn("Tensor Cores not available on current GPU", stacklevel=2)
             return model, optimization_report
 
         # Step 1: Analyze current compatibility
@@ -164,15 +161,14 @@ class TensorCoreOptimizer:
         self,
         model: nn.Module,
         sample_input: torch.Tensor
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze model compatibility with Tensor Core requirements.
 
-        🎓 EDUCATIONAL: Tensor Core compatibility analysis
         Understanding compatibility requirements is essential for achieving
         optimal Tensor Core utilization and maximum performance benefits.
 
-        🔧 COMPATIBILITY FACTORS:
+         COMPATIBILITY FACTORS:
         - Tensor dimensions: Must be multiples of 8 (fp16) or 16 (int8)
         - Operation types: Matrix multiplications benefit most
         - Data types: fp16, bf16, or int8 for optimal performance
@@ -233,7 +229,7 @@ class TensorCoreOptimizer:
         self,
         layer: nn.Linear,
         sample_input: torch.Tensor
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze individual linear layer for Tensor Core compatibility."""
         analysis = {
             "compatibility": TensorCoreCompatibility.INCOMPATIBLE.value,
@@ -282,7 +278,7 @@ class TensorCoreOptimizer:
         self,
         model: nn.Module,
         sample_input: torch.Tensor
-    ) -> Tuple[nn.Module, List[str]]:
+    ) -> tuple[nn.Module, list[str]]:
         """Optimize tensor shapes for Tensor Core alignment."""
         applied_optimizations = []
 
@@ -314,9 +310,9 @@ class TensorCoreOptimizer:
 
     def _estimate_tensor_core_speedup(
         self,
-        original_analysis: Dict[str, Any],
-        optimized_analysis: Dict[str, Any]
-    ) -> Dict[str, float]:
+        original_analysis: dict[str, Any],
+        optimized_analysis: dict[str, Any]
+    ) -> dict[str, float]:
         """Estimate performance improvement from Tensor Core optimization."""
         original_potential = original_analysis.get("performance_potential", 0.0)
         optimized_potential = optimized_analysis.get("performance_potential", 0.0)
@@ -338,7 +334,6 @@ class MixedPrecisionManager:
     """
     Manager for mixed precision training with Tensor Core optimization.
 
-    🎓 EDUCATIONAL: Production mixed precision training
     This class demonstrates how to implement robust mixed precision training
     with proper error handling, loss scaling, and numerical stability.
     """
@@ -378,11 +373,11 @@ class MixedPrecisionManager:
         loss_fn: Callable,
         inputs: torch.Tensor,
         targets: torch.Tensor
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Execute one training step with mixed precision.
 
-        🔧 MIXED PRECISION TRAINING PROCESS:
+         MIXED PRECISION TRAINING PROCESS:
         - Forward pass with autocast for fp16 computation
         - Loss computation in fp32 for numerical stability
         - Backward pass with gradient scaling
@@ -435,7 +430,7 @@ class MixedPrecisionManager:
             "grad_scale": self.scaler.get_scale() if self.scaler else 1.0
         }
 
-    def get_training_statistics(self) -> Dict[str, Any]:
+    def get_training_statistics(self) -> dict[str, Any]:
         """Get comprehensive training statistics."""
         total_steps = self.training_stats["successful_steps"] + self.training_stats["overflow_count"]
 
@@ -453,7 +448,6 @@ class AutocastOptimizer:
     """
     Optimizer for autocast policies and mixed precision configuration.
 
-    🎓 EDUCATIONAL: Advanced autocast configuration
     This class demonstrates how to configure autocast policies for different
     model architectures and achieve optimal mixed precision performance.
     """
@@ -468,7 +462,7 @@ class AutocastOptimizer:
         self.target_architecture = target_architecture
         self.custom_policies = self._get_architecture_policies()
 
-    def _get_architecture_policies(self) -> Dict[str, Any]:
+    def _get_architecture_policies(self) -> dict[str, Any]:
         """Get optimized autocast policies for different architectures."""
         policies = {
             "transformer": {
@@ -502,12 +496,11 @@ class AutocastOptimizer:
 def optimize_for_tensor_cores(
     model: nn.Module,
     sample_input: torch.Tensor,
-    config: Optional[TensorCoreOptimizationConfig] = None
-) -> Tuple[nn.Module, Dict[str, Any]]:
+    config: TensorCoreOptimizationConfig | None = None
+) -> tuple[nn.Module, dict[str, Any]]:
     """
     High-level function to optimize any PyTorch model for Tensor Core performance.
 
-    🎓 EDUCATIONAL: One-stop Tensor Core optimization
     This function provides a simple interface for applying comprehensive
     Tensor Core optimizations to any PyTorch model.
 
@@ -527,11 +520,10 @@ def validate_tensor_core_usage(
     model: nn.Module,
     sample_input: torch.Tensor,
     tolerance: float = 1e-3
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate that Tensor Core optimizations maintain numerical accuracy.
 
-    🎓 EDUCATIONAL: Optimization validation methodology
     This function demonstrates how to validate that performance optimizations
     don't compromise model accuracy or numerical stability.
 
@@ -576,13 +568,13 @@ def validate_tensor_core_usage(
     return validation_results
 
 
-# 🎓 EDUCATIONAL: Example implementations demonstrating Tensor Core optimization
+#  EDUCATIONAL: Example implementations demonstrating Tensor Core optimization
 
 class TensorCoreOptimizedLinear(nn.Module):
     """
     Linear layer optimized for Tensor Core performance.
 
-    🔧 OPTIMIZATION FEATURES:
+     OPTIMIZATION FEATURES:
     - Automatic dimension padding for Tensor Core alignment
     - Built-in mixed precision support
     - Performance monitoring and validation
@@ -610,7 +602,7 @@ class TensorCoreOptimizedLinear(nn.Module):
         """
         Forward pass with automatic Tensor Core optimization.
 
-        🔧 TENSOR CORE OPTIMIZATION:
+         TENSOR CORE OPTIMIZATION:
         - Input padding for dimension alignment
         - Mixed precision computation
         - Output trimming to original dimensions
@@ -635,17 +627,16 @@ class TensorCoreOptimizedLinear(nn.Module):
         return output.view(*batch_shape, self.original_out_features)
 
 
-# 🔧 UTILITY: Tensor Core performance measurement
+#  UTILITY: Tensor Core performance measurement
 def benchmark_tensor_core_performance(
     model_fp32: nn.Module,
     model_optimized: nn.Module,
     sample_input: torch.Tensor,
     num_iterations: int = 100
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Benchmark Tensor Core performance improvements.
 
-    🎓 EDUCATIONAL: Performance measurement methodology
     This function demonstrates how to properly measure and compare
     performance improvements from Tensor Core optimizations.
     """

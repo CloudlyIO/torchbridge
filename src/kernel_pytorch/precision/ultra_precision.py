@@ -5,7 +5,6 @@ This module implements cutting-edge adaptive precision allocation based on
 information entropy analysis, providing 30% quality improvement over uniform
 quantization by dynamically allocating precision where it matters most.
 
-🎓 EDUCATIONAL FOCUS:
 Traditional quantization uses uniform precision across all tensor regions,
 wasting precision in low-information areas and under-representing critical
 high-information regions. Ultra Precision solves this by:
@@ -15,42 +14,44 @@ high-information regions. Ultra Precision solves this by:
 - Gradient-aware precision assignment during training
 - Hardware-optimized precision formats (FP8, INT8, INT4)
 
-🔬 RESEARCH BASIS:
+ RESEARCH BASIS:
 Based on 2025 research papers showing:
 - 30% quality improvement over uniform quantization
 - 40% memory reduction with maintained accuracy
 - Adaptive precision responds to content complexity
 - Entropy-based allocation outperforms static schemes
 
-🚀 PERFORMANCE TARGETS:
+ PERFORMANCE TARGETS:
 - 30% improvement in model quality at same precision budget
 - 40% memory reduction vs uniform precision
 - Real-time precision adaptation during inference
 - Hardware acceleration on modern GPUs (H100, Blackwell)
 """
 
+import math
+import time
+import warnings
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable, TYPE_CHECKING
-from dataclasses import dataclass, field
-from enum import Enum
-import math
-import numpy as np
-import warnings
-from collections import defaultdict
-import time
 
 # Try to import advanced quantization libraries
 try:
-    import bitsandbytes as bnb
+    import bitsandbytes as bnb  # noqa: F401
     BITSANDBYTES_AVAILABLE = True
 except ImportError:
     BITSANDBYTES_AVAILABLE = False
 
 try:
-    from transformers.utils.quantization_config import BitsAndBytesConfig
+    from transformers.utils.quantization_config import BitsAndBytesConfig  # noqa: F401
     TRANSFORMERS_QUANT_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_QUANT_AVAILABLE = False
@@ -113,7 +114,7 @@ class PrecisionConfig:
     # Hardware optimization
     enable_tensor_cores: bool = True
     enable_mixed_precision: bool = True
-    hardware_precision_support: List[PrecisionFormat] = field(
+    hardware_precision_support: list[PrecisionFormat] = field(
         default_factory=lambda: [PrecisionFormat.FP16, PrecisionFormat.FP8_E4M3, PrecisionFormat.INT8]
     )
 
@@ -129,8 +130,8 @@ class PrecisionStats:
     """Statistics for precision allocation performance."""
     memory_usage_bytes: int = 0
     original_memory_bytes: int = 0
-    precision_distribution: Dict[PrecisionFormat, float] = field(default_factory=dict)
-    entropy_scores: Dict[str, float] = field(default_factory=dict)
+    precision_distribution: dict[PrecisionFormat, float] = field(default_factory=dict)
+    entropy_scores: dict[str, float] = field(default_factory=dict)
     allocation_efficiency: float = 0.0
     quality_preservation: float = 1.0
     adaptation_overhead_ms: float = 0.0
@@ -160,7 +161,7 @@ class PrecisionStats:
         return self.memory_reduction_ratio
 
     @property
-    def format_usage_distribution(self) -> Dict[str, float]:
+    def format_usage_distribution(self) -> dict[str, float]:
         """Format usage distribution as strings (API compatibility)."""
         return {fmt.value: usage for fmt, usage in self.precision_distribution.items()}
 
@@ -174,7 +175,7 @@ class InformationEntropyAnalyzer:
     """
     Analyzer for computing information entropy in tensor regions.
 
-    🧮 ENTROPY COMPUTATION:
+     ENTROPY COMPUTATION:
     Information entropy H(X) = -Σ P(x) * log2(P(x)) measures the information
     content in tensor regions. High entropy regions contain more information
     and deserve higher precision allocation.
@@ -203,7 +204,6 @@ class InformationEntropyAnalyzer:
                 return self.entropy_cache[cache_key]
 
         # Reshape tensor for block-wise processing
-        original_shape = tensor.shape
         entropy_map = self._compute_blockwise_entropy(tensor)
 
         if use_cache:
@@ -331,7 +331,7 @@ class AdaptivePrecisionAllocator:
     """
     Core allocator for adaptive precision based on information entropy.
 
-    🎯 ALLOCATION STRATEGY:
+     ALLOCATION STRATEGY:
     1. Analyze information entropy in tensor regions
     2. Compute gradient importance during training
     3. Assign precision levels based on importance ranking
@@ -343,9 +343,9 @@ class AdaptivePrecisionAllocator:
         self.entropy_analyzer = InformationEntropyAnalyzer()
 
         # Precision allocation maps
-        self.precision_maps: Dict[str, torch.Tensor] = {}
-        self.gradient_importance: Dict[str, torch.Tensor] = {}
-        self.allocation_history: List[Dict[str, Any]] = []
+        self.precision_maps: dict[str, torch.Tensor] = {}
+        self.gradient_importance: dict[str, torch.Tensor] = {}
+        self.allocation_history: list[dict[str, Any]] = []
 
         # Performance tracking
         self.stats = PrecisionStats()
@@ -362,7 +362,7 @@ class AdaptivePrecisionAllocator:
 
             # Check for tensor core support
             if self.config.enable_tensor_cores and device_props.major < 7:
-                warnings.warn("Tensor cores not supported on this hardware")
+                warnings.warn("Tensor cores not supported on this hardware", stacklevel=2)
                 self.config.enable_tensor_cores = False
 
             # Check for FP8 support (requires Hopper or later)
@@ -372,13 +372,13 @@ class AdaptivePrecisionAllocator:
                         fmt for fmt in self.config.hardware_precision_support
                         if not fmt.value.startswith('fp8')
                     ]
-                    warnings.warn("FP8 not supported on this hardware, falling back to FP16/INT8")
+                    warnings.warn("FP8 not supported on this hardware, falling back to FP16/INT8", stacklevel=2)
 
     def analyze_precision_requirements(
         self,
-        tensors: Dict[str, torch.Tensor],
-        gradients: Optional[Dict[str, torch.Tensor]] = None
-    ) -> Dict[str, torch.Tensor]:
+        tensors: dict[str, torch.Tensor],
+        gradients: dict[str, torch.Tensor] | None = None
+    ) -> dict[str, torch.Tensor]:
         """
         Analyze precision requirements for a set of tensors.
 
@@ -482,7 +482,7 @@ class AdaptivePrecisionAllocator:
         allocated_budget = 0.0
         current_threshold_idx = 0
 
-        for level, (precision_fmt, relative_cost) in enumerate(precision_levels):
+        for level, (precision_fmt, relative_cost) in enumerate(precision_levels):  # noqa: B007
             # Determine how many elements can use this precision level
             remaining_budget = memory_budget - allocated_budget
             elements_at_level = min(
@@ -513,7 +513,7 @@ class AdaptivePrecisionAllocator:
 
         return precision_map
 
-    def _get_available_precision_levels(self) -> List[Tuple[PrecisionFormat, float]]:
+    def _get_available_precision_levels(self) -> list[tuple[PrecisionFormat, float]]:
         """
         Get available precision levels with their relative memory costs.
 
@@ -607,7 +607,7 @@ class UltraPrecisionModule(nn.Module):
     def __init__(
         self,
         base_module: nn.Module,
-        config: Optional[PrecisionConfig] = None,
+        config: PrecisionConfig | None = None,
         enable_training_adaptation: bool = True
     ):
         super().__init__()
@@ -620,12 +620,12 @@ class UltraPrecisionModule(nn.Module):
         self.allocator = AdaptivePrecisionAllocator(self.config)
 
         # Track original parameters for precision allocation
-        self.original_parameters: Dict[str, Parameter] = {}
-        self.quantized_parameters: Dict[str, Parameter] = {}
-        self.precision_maps: Dict[str, torch.Tensor] = {}
+        self.original_parameters: dict[str, Parameter] = {}
+        self.quantized_parameters: dict[str, Parameter] = {}
+        self.precision_maps: dict[str, torch.Tensor] = {}
 
         # Register hooks for gradient tracking
-        self.gradient_hooks: List[torch.utils.hooks.RemovableHandle] = []
+        self.gradient_hooks: list[torch.utils.hooks.RemovableHandle] = []
 
         # Initialize precision allocation
         self._initialize_precision_allocation()
@@ -634,7 +634,7 @@ class UltraPrecisionModule(nn.Module):
         """Initialize precision allocation for all parameters."""
 
         # Collect all parameters
-        param_dict = {name: param for name, param in self.base_module.named_parameters()}
+        param_dict = {name: param for name, param in self.base_module.named_parameters()}  # noqa: C416
 
         # Analyze precision requirements
         precision_maps = self.allocator.analyze_precision_requirements(param_dict)
@@ -868,7 +868,7 @@ class UltraPrecisionModule(nn.Module):
         return self.get_precision_statistics()
 
     @property
-    def current_allocation(self) -> Dict[str, Any]:
+    def current_allocation(self) -> dict[str, Any]:
         """Get current precision allocation state (API compatibility)."""
         return {
             'precision_maps': self.precision_maps.copy(),
@@ -877,7 +877,7 @@ class UltraPrecisionModule(nn.Module):
             'memory_reduction': self.get_precision_statistics().memory_reduction_ratio
         }
 
-    def get_precision_analysis(self) -> Dict[str, Any]:
+    def get_precision_analysis(self) -> dict[str, Any]:
         """Get detailed analysis of precision allocation."""
 
         analysis = {
@@ -914,7 +914,7 @@ def create_ultra_precision_module(
     base_module: nn.Module,
     allocation_strategy: AllocationStrategy = AllocationStrategy.ENTROPY_BASED,
     target_memory_reduction: float = 0.4,
-    precision_formats: Optional[List[PrecisionFormat]] = None,
+    precision_formats: list[PrecisionFormat] | None = None,
     enable_training_adaptation: bool = True
 ) -> UltraPrecisionModule:
     """
@@ -949,9 +949,9 @@ def create_ultra_precision_module(
 
 def analyze_precision_opportunities(
     module: nn.Module,
-    sample_inputs: List[torch.Tensor],
+    sample_inputs: list[torch.Tensor],
     target_memory_reduction: float = 0.4
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze precision optimization opportunities for a module.
 
@@ -965,17 +965,16 @@ def analyze_precision_opportunities(
     """
 
     # Create analyzer
-    analyzer = InformationEntropyAnalyzer()
+    InformationEntropyAnalyzer()
     allocator = AdaptivePrecisionAllocator(
         PrecisionConfig(target_memory_reduction=target_memory_reduction)
     )
 
     # Collect parameters
-    param_dict = {name: param for name, param in module.named_parameters()}
+    param_dict = {name: param for name, param in module.named_parameters()}  # noqa: C416
 
     # Run sample inputs to collect activation statistics
     module.eval()
-    activation_stats = {}
 
     with torch.no_grad():
         for sample_input in sample_inputs[:5]:  # Use first 5 samples
@@ -1010,7 +1009,7 @@ def analyze_precision_opportunities(
     }
 
     # Identify specific optimization opportunities
-    for name, precision_map in precision_maps.items():
+    for name, _precision_map in precision_maps.items():
         param = param_dict[name]
 
         # Check for high-entropy regions that could benefit from higher precision
@@ -1038,10 +1037,10 @@ def analyze_precision_opportunities(
 
 def benchmark_precision_allocation(
     module: nn.Module,
-    sample_inputs: List[torch.Tensor],
-    strategies: Optional[List[AllocationStrategy]] = None,
-    target_reductions: Optional[List[float]] = None
-) -> Dict[str, Any]:
+    sample_inputs: list[torch.Tensor],
+    strategies: list[AllocationStrategy] | None = None,
+    target_reductions: list[float] | None = None
+) -> dict[str, Any]:
     """
     Benchmark different precision allocation strategies.
 
@@ -1187,7 +1186,7 @@ class FP4Quantizer(nn.Module):
                 values.append(sign * magnitude)
         return torch.tensor(values, dtype=torch.float32)
 
-    def quantize(self, x: torch.Tensor) -> Tuple[Any, torch.Size]:
+    def quantize(self, x: torch.Tensor) -> tuple[Any, torch.Size]:
         """Quantize tensor to FP4 format."""
         original_shape = x.shape
         x_flat = x.view(-1)
@@ -1232,7 +1231,7 @@ class FP4Quantizer(nn.Module):
         indices = distances.argmin(dim=-1)
         return indices
 
-    def _quantize_scales(self, scales: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _quantize_scales(self, scales: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Double quantization: quantize the scaling factors."""
         scale_min = scales.min()
         scale_max = scales.max()
@@ -1247,7 +1246,7 @@ class FP4Quantizer(nn.Module):
 
         return quantized_scales, scale_scale
 
-    def dequantize(self, quantized_data: Tuple, original_shape: torch.Size) -> torch.Tensor:
+    def dequantize(self, quantized_data: tuple, original_shape: torch.Size) -> torch.Tensor:
         """Dequantize FP4 tensor back to FP32."""
         if self.use_double_quantization:
             quantized_indices, quantized_scales, scale_scale = quantized_data
@@ -1482,7 +1481,7 @@ class InformationEntropyPrecision(nn.Module):
         else:
             return dequantized
 
-    def get_precision_stats(self) -> Dict[str, float]:
+    def get_precision_stats(self) -> dict[str, float]:
         """Get precision allocation statistics."""
         return {
             'current_precision_bits': self.current_precision.item(),
@@ -1490,7 +1489,7 @@ class InformationEntropyPrecision(nn.Module):
             'precision_utilization': (self.current_precision.item() - self.min_bits) / (self.max_bits - self.min_bits)
         }
 
-    def analyze_precision_requirements(self, x: torch.Tensor, block_size: int = 64) -> Dict[str, Any]:
+    def analyze_precision_requirements(self, x: torch.Tensor, block_size: int = 64) -> dict[str, Any]:
         """
         Analyze tensor for optimal precision allocation.
 
@@ -1538,7 +1537,7 @@ class InformationEntropyPrecision(nn.Module):
     def apply_precision_allocation(
         self,
         x: torch.Tensor,
-        precision_map: Dict[str, Any],
+        precision_map: dict[str, Any],
         block_size: int = 64
     ) -> torch.Tensor:
         """
@@ -1599,8 +1598,8 @@ class ModelPrecisionOptimizer(nn.Module):
         self.target_speedup = target_speedup
         self.sensitivity_threshold = sensitivity_threshold
 
-        self.layer_precisions: Dict[str, int] = {}
-        self.layer_sensitivities: Dict[str, float] = {}
+        self.layer_precisions: dict[str, int] = {}
+        self.layer_sensitivities: dict[str, float] = {}
 
         self._initialize_precision_mapping()
 
@@ -1637,7 +1636,7 @@ class ModelPrecisionOptimizer(nn.Module):
         samples_processed = 0
 
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(dataloader):
+            for _batch_idx, (data, target) in enumerate(dataloader):
                 if samples_processed >= num_samples:
                     break
                 output = self.model(data)
@@ -1665,9 +1664,9 @@ class ModelPrecisionOptimizer(nn.Module):
 
         return current_speedup
 
-    def get_allocation_summary(self) -> Dict[str, Any]:
+    def get_allocation_summary(self) -> dict[str, Any]:
         """Get summary of precision allocation."""
-        precision_counts: Dict[str, int] = {}
+        precision_counts: dict[str, int] = {}
         for precision in self.layer_precisions.values():
             key = f"{precision}-bit"
             precision_counts[key] = precision_counts.get(key, 0) + 1
@@ -1685,7 +1684,7 @@ class ModelPrecisionOptimizer(nn.Module):
         self,
         model: nn.Module,
         sample_input: torch.Tensor
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Optimize model precision based on layer analysis.
 

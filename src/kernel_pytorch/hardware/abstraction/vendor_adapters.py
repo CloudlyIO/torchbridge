@@ -5,19 +5,19 @@ Concrete implementations of vendor adapters for different hardware types,
 providing a unified interface while leveraging vendor-specific optimizations.
 """
 
-import torch
 import logging
-import subprocess
-import psutil
-from typing import Dict, List, Optional, Any, Tuple
-import numpy as np
+from typing import Any
 
-from .hal_core import VendorAdapter, DeviceSpec, HardwareCapabilities, ComputeCapability
-from ...distributed_scale.hardware_discovery import HardwareVendor
-from .privateuse1_integration import CustomDeviceBackend, PrivateUse1Config
+import numpy as np
+import psutil
+import torch
 
 # Import existing hardware discovery for compatibility
-from ...distributed_scale.hardware_discovery import DeviceInfo, DeviceCapability, ThermalState
+from ...distributed_scale.hardware_discovery import (
+    HardwareVendor,
+)
+from .hal_core import ComputeCapability, DeviceSpec, HardwareCapabilities, VendorAdapter
+from .privateuse1_integration import PrivateUse1Config
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +157,7 @@ class NVIDIAAdapter(VendorAdapter):
 
         return device_spec
 
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover all NVIDIA GPU devices"""
         devices = []
 
@@ -216,11 +216,11 @@ class NVIDIAAdapter(VendorAdapter):
 
         return tensor
 
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create NCCL communication backend for NVIDIA devices"""
         try:
             # Check if NCCL is available
-            import torch.distributed as dist
+            import torch.distributed as dist  # noqa: F401
 
             # Filter for NVIDIA devices only
             nvidia_devices = [d for d in devices if d.vendor == HardwareVendor.NVIDIA]
@@ -237,7 +237,7 @@ class NVIDIAAdapter(VendorAdapter):
             logger.warning("NCCL not available, falling back to Gloo")
             return {'backend_type': 'gloo', 'devices': []}
 
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get real-time NVIDIA device metrics"""
         metrics = {
             'utilization': 0.0,
@@ -251,7 +251,7 @@ class NVIDIAAdapter(VendorAdapter):
             if self.cuda_available and device_id < torch.cuda.device_count():
                 # Memory metrics
                 memory_allocated = torch.cuda.memory_allocated(device_id) / (1024**3)
-                memory_reserved = torch.cuda.memory_reserved(device_id) / (1024**3)
+                torch.cuda.memory_reserved(device_id) / (1024**3)
 
                 props = torch.cuda.get_device_properties(device_id)
                 memory_total = props.total_memory / (1024**3)
@@ -339,7 +339,7 @@ class NVIDIAAdapter(VendorAdapter):
         else:
             return 400   # Older architectures
 
-    def _get_supported_precisions(self, props) -> List[ComputeCapability]:
+    def _get_supported_precisions(self, props) -> list[ComputeCapability]:
         """Get supported precision modes for device"""
         precisions = [ComputeCapability.FP32]
 
@@ -363,7 +363,7 @@ class NVIDIAAdapter(VendorAdapter):
 
         return precisions
 
-    def _get_generation_info(self, compute_capability: str) -> Dict[str, Any]:
+    def _get_generation_info(self, compute_capability: str) -> dict[str, Any]:
         """Get generation-specific information for device"""
         if compute_capability in self.gpu_generations:
             generation, architecture, features = self.gpu_generations[compute_capability]
@@ -394,7 +394,7 @@ class NVIDIAAdapter(VendorAdapter):
                 'multi_instance_gpu': False
             }
 
-    def _get_interconnect_type(self, props, generation_info: Dict) -> str:
+    def _get_interconnect_type(self, props, generation_info: dict) -> str:
         """Determine interconnect type based on generation and device characteristics"""
         # High-end cards typically have NVLink
         if generation_info['nvlink_support']:
@@ -406,7 +406,7 @@ class NVIDIAAdapter(VendorAdapter):
 
         return "PCIe"
 
-    def get_generation_optimizations(self, device_spec: DeviceSpec) -> Dict[str, Any]:
+    def get_generation_optimizations(self, device_spec: DeviceSpec) -> dict[str, Any]:
         """Get recommended optimizations for specific GPU generation"""
         compute_capability = device_spec.capabilities.compute_capability
         generation_info = self._get_generation_info(compute_capability)
@@ -518,7 +518,7 @@ class AMDAdapter(VendorAdapter):
         except (ImportError, subprocess.TimeoutExpired, FileNotFoundError):
             return False
 
-    def _get_amd_device_properties(self, device_id: int) -> Dict[str, Any]:
+    def _get_amd_device_properties(self, device_id: int) -> dict[str, Any]:
         """Get AMD device properties using ROCm tools"""
         props = {
             'name': f'AMD GPU {device_id}',
@@ -600,7 +600,7 @@ class AMDAdapter(VendorAdapter):
 
         return device_spec
 
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover all AMD GPU devices"""
         devices = []
 
@@ -686,11 +686,11 @@ class AMDAdapter(VendorAdapter):
 
         return tensor
 
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create RCCL communication backend for AMD devices"""
         try:
             # Check if RCCL is available
-            import torch.distributed as dist
+            import torch.distributed as dist  # noqa: F401
 
             # Filter for AMD devices only
             amd_devices = [d for d in devices if d.vendor == HardwareVendor.AMD]
@@ -708,7 +708,7 @@ class AMDAdapter(VendorAdapter):
             logger.warning("RCCL not available, falling back to Gloo")
             return {'backend_type': 'gloo', 'devices': []}
 
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get real-time AMD device metrics"""
         metrics = {
             'utilization': 0.0,
@@ -750,7 +750,7 @@ class AMDAdapter(VendorAdapter):
 
         return metrics
 
-    def _estimate_amd_peak_flops(self, props: Dict) -> float:
+    def _estimate_amd_peak_flops(self, props: dict) -> float:
         """Estimate peak FLOPS for AMD GPU"""
         architecture = props.get('compute_capability', 'unknown')
 
@@ -766,7 +766,7 @@ class AMDAdapter(VendorAdapter):
 
         return flops_estimates.get(architecture, 10e12)  # 10 TF fallback
 
-    def _estimate_amd_memory_bandwidth(self, props: Dict) -> float:
+    def _estimate_amd_memory_bandwidth(self, props: dict) -> float:
         """Estimate memory bandwidth for AMD GPU"""
         architecture = props.get('compute_capability', 'unknown')
 
@@ -782,7 +782,7 @@ class AMDAdapter(VendorAdapter):
 
         return bandwidth_estimates.get(architecture, 500)  # 500 GB/s fallback
 
-    def _get_amd_supported_precisions(self, props: Dict) -> List[ComputeCapability]:
+    def _get_amd_supported_precisions(self, props: dict) -> list[ComputeCapability]:
         """Get supported precision modes for AMD device"""
         architecture = props.get('compute_capability', 'unknown')
         precisions = [ComputeCapability.FP32]
@@ -808,14 +808,14 @@ class AMDAdapter(VendorAdapter):
 
         return precisions
 
-    def _has_matrix_cores(self, props: Dict) -> bool:
+    def _has_matrix_cores(self, props: dict) -> bool:
         """Check if device has matrix/tensor core equivalent"""
         architecture = props.get('compute_capability', 'unknown')
 
         # CDNA architectures have Matrix Core Units
         return 'gfx90' in architecture or 'gfx940' in architecture
 
-    def _get_amd_interconnect_type(self, props: Dict) -> str:
+    def _get_amd_interconnect_type(self, props: dict) -> str:
         """Determine interconnect type for AMD device"""
         architecture = props.get('compute_capability', 'unknown')
 
@@ -825,7 +825,7 @@ class AMDAdapter(VendorAdapter):
         else:
             return "PCIe"
 
-    def _check_infinity_fabric(self, devices: List[DeviceSpec]) -> bool:
+    def _check_infinity_fabric(self, devices: list[DeviceSpec]) -> bool:
         """Check if devices support Infinity Fabric interconnect"""
         for device in devices:
             if device.capabilities.interconnect_type == "Infinity Fabric":
@@ -849,7 +849,7 @@ class IntelAdapter(VendorAdapter):
     def _check_ipex_availability(self) -> bool:
         """Check if Intel Extension for PyTorch is available"""
         try:
-            import intel_extension_for_pytorch as ipex
+            import intel_extension_for_pytorch as ipex  # noqa: F401
             return True
         except ImportError:
             return False
@@ -894,7 +894,7 @@ class IntelAdapter(VendorAdapter):
         self._devices.append(device_spec)
         return device_spec
 
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover Intel devices (CPU + XPU if available)"""
         devices = []
 
@@ -973,7 +973,7 @@ class IntelAdapter(VendorAdapter):
 
         return tensor
 
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create communication backend for Intel devices"""
         intel_devices = [d for d in devices if d.vendor == HardwareVendor.INTEL]
 
@@ -985,7 +985,7 @@ class IntelAdapter(VendorAdapter):
             'optimizations': ['avx512'] if self._has_avx512() else []
         }
 
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get Intel device metrics"""
         metrics = {
             'utilization': 0.0,
@@ -1116,7 +1116,7 @@ class CPUAdapter(VendorAdapter):
         self._devices.append(device_spec)
         return device_spec
 
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover CPU device"""
         try:
             return [self.initialize_device(0)]
@@ -1144,7 +1144,7 @@ class CPUAdapter(VendorAdapter):
 
         return tensor
 
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create CPU communication backend"""
         return {
             'backend_type': 'gloo',
@@ -1153,7 +1153,7 @@ class CPUAdapter(VendorAdapter):
             'supports_allgather': True
         }
 
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get CPU metrics"""
         try:
             cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -1201,7 +1201,7 @@ def create_vendor_adapter(vendor: HardwareVendor) -> VendorAdapter:
 
 
 # Convenience functions for adapter management
-def get_available_vendors() -> List[HardwareVendor]:
+def get_available_vendors() -> list[HardwareVendor]:
     """Get list of available hardware vendors"""
     vendors = []
 
@@ -1227,7 +1227,7 @@ def get_available_vendors() -> List[HardwareVendor]:
 
     # Check Intel
     try:
-        import intel_extension_for_pytorch as ipex
+        import intel_extension_for_pytorch as ipex  # noqa: F401
         vendors.append(HardwareVendor.INTEL)
     except ImportError:
         pass
@@ -1254,7 +1254,7 @@ def auto_detect_best_adapter() -> VendorAdapter:
 
     # Check for Intel XPU
     try:
-        import intel_extension_for_pytorch as ipex
+        import intel_extension_for_pytorch as ipex  # noqa: F401
         return IntelAdapter()
     except ImportError:
         pass
@@ -1295,8 +1295,8 @@ class CustomHardwareAdapter(VendorAdapter):
         """Initialize TPU backend support"""
         try:
             # Check for Google Cloud TPU support
-            import torch_xla
-            import torch_xla.core.xla_model as xm
+            import torch_xla  # noqa: F401
+            import torch_xla.core.xla_model as xm  # noqa: F401
             self.custom_backend = "xla_tpu"
             logger.info("TPU backend initialized with XLA")
         except ImportError:
@@ -1310,7 +1310,10 @@ class CustomHardwareAdapter(VendorAdapter):
 
         # Register custom ASIC device with PyTorch PrivateUse1
         try:
-            from .privateuse1_integration import register_custom_device, CustomDeviceBackend
+            from .privateuse1_integration import (
+                CustomDeviceBackend,
+                register_custom_device,
+            )
 
             # Create custom ASIC backend (simplified for demo purposes)
             class ASICBackend(CustomDeviceBackend):
@@ -1322,7 +1325,7 @@ class CustomHardwareAdapter(VendorAdapter):
                     # (e.g., Google TPU libtpu, Graphcore PopART, SambaNova runtime).
                     pass
 
-                def get_device_properties(self, device_id: int) -> Dict[str, Any]:
+                def get_device_properties(self, device_id: int) -> dict[str, Any]:
                     return {"name": "Custom AI ASIC", "memory": "16GB"}
 
             # Create ASIC device configuration
@@ -1478,7 +1481,7 @@ class CustomHardwareAdapter(VendorAdapter):
         self._devices.append(device_spec)
         return device_spec
 
-    def discover_devices(self) -> List[DeviceSpec]:
+    def discover_devices(self) -> list[DeviceSpec]:
         """Discover custom hardware devices"""
         devices = []
 
@@ -1498,7 +1501,7 @@ class CustomHardwareAdapter(VendorAdapter):
 
         return devices
 
-    def _discover_tpu_devices(self) -> List[DeviceSpec]:
+    def _discover_tpu_devices(self) -> list[DeviceSpec]:
         """Discover TPU devices"""
         devices = []
 
@@ -1522,7 +1525,7 @@ class CustomHardwareAdapter(VendorAdapter):
 
         return devices
 
-    def _discover_asic_devices(self) -> List[DeviceSpec]:
+    def _discover_asic_devices(self) -> list[DeviceSpec]:
         """Discover ASIC devices"""
         # FUTURE: ASIC discovery requires vendor-specific device enumeration APIs.
         # Current implementation uses ASIC_NUM_DEVICES env var as fallback.
@@ -1542,7 +1545,7 @@ class CustomHardwareAdapter(VendorAdapter):
 
         return devices
 
-    def _discover_neuromorphic_devices(self) -> List[DeviceSpec]:
+    def _discover_neuromorphic_devices(self) -> list[DeviceSpec]:
         """Discover neuromorphic devices"""
         devices = []
 
@@ -1625,7 +1628,7 @@ class CustomHardwareAdapter(VendorAdapter):
         """Optimize tensor layout for TPU"""
         try:
             if self.custom_backend == "xla_tpu":
-                import torch_xla
+                import torch_xla  # noqa: F401
                 # Move to TPU device
                 tensor = tensor.to(f'xla:{device.device_id}')
 
@@ -1673,7 +1676,7 @@ class CustomHardwareAdapter(VendorAdapter):
 
         return tensor
 
-    def create_communication_backend(self, devices: List[DeviceSpec]) -> Any:
+    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
         """Create communication backend for custom devices"""
         custom_devices = [d for d in devices if d.vendor == HardwareVendor.UNKNOWN]
 
@@ -1706,7 +1709,7 @@ class CustomHardwareAdapter(VendorAdapter):
 
         return backend_config
 
-    def get_device_metrics(self, device_id: int) -> Dict[str, float]:
+    def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get custom device metrics"""
         base_metrics = {
             'utilization': 0.0,
@@ -1778,7 +1781,7 @@ def create_custom_adapter(hardware_type: str) -> CustomHardwareAdapter:
 
 
 # Enhanced factory function with custom hardware support
-def create_vendor_adapter_enhanced(vendor: HardwareVendor, custom_type: Optional[str] = None) -> VendorAdapter:
+def create_vendor_adapter_enhanced(vendor: HardwareVendor, custom_type: str | None = None) -> VendorAdapter:
     """Enhanced vendor adapter creation with custom hardware support"""
     if vendor == HardwareVendor.NVIDIA:
         return NVIDIAAdapter()

@@ -8,22 +8,22 @@ This module provides optimizations for Stable Diffusion models including:
 - Memory-efficient generation
 """
 
-from typing import Optional, Dict, Any, List, Union
+from typing import Any
+
 import torch
-import torch.nn as nn
+
 from .base import (
     BaseVisionOptimizer,
-    VisionOptimizationConfig,
-    VisionModelType,
     OptimizationLevel,
-    count_parameters,
+    VisionModelType,
+    VisionOptimizationConfig,
 )
 
 
 class StableDiffusionOptimizer(BaseVisionOptimizer):
     """Optimizer for Stable Diffusion models."""
 
-    def __init__(self, config: Optional[VisionOptimizationConfig] = None):
+    def __init__(self, config: VisionOptimizationConfig | None = None):
         """Initialize Stable Diffusion optimizer.
 
         Args:
@@ -130,9 +130,9 @@ class StableDiffusionOptimizer(BaseVisionOptimizer):
 
     def generate_optimized(
         self,
-        prompt: Union[str, List[str]],
-        negative_prompt: Optional[Union[str, List[str]]] = None,
-        num_inference_steps: Optional[int] = None,
+        prompt: str | list[str],
+        negative_prompt: str | list[str] | None = None,
+        num_inference_steps: int | None = None,
         guidance_scale: float = 7.5,
         height: int = 512,
         width: int = 512,
@@ -195,12 +195,12 @@ def create_stable_diffusion_optimizer(
     """
     # Import diffusers
     try:
-        from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+        from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
     except ImportError:
         raise ImportError(
             "diffusers is required for Stable Diffusion models. "
             "Install with: pip install diffusers transformers"
-        )
+        ) from None
 
     # Load pipeline
     pipeline = StableDiffusionPipeline.from_pretrained(
@@ -252,7 +252,7 @@ class StableDiffusionBenchmark:
         num_inference_steps: int = 50,
         height: int = 512,
         width: int = 512,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark image generation performance.
 
         Args:
@@ -307,7 +307,7 @@ class StableDiffusionBenchmark:
             "images_per_minute": 60 / time_per_image,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:
@@ -395,12 +395,12 @@ def create_sdxl_optimized(
         Tuple of (optimized_pipeline, optimizer)
     """
     try:
-        from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
+        from diffusers import DPMSolverMultistepScheduler, StableDiffusionXLPipeline
     except ImportError:
         raise ImportError(
             "diffusers is required for Stable Diffusion XL. "
             "Install with: pip install diffusers transformers"
-        )
+        ) from None
 
     device = kwargs.get("device", "cuda")
 

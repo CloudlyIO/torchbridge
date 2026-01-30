@@ -10,11 +10,10 @@ Triton kernels demonstrate:
 - Tiling strategies for memory hierarchy optimization
 """
 
+
 import torch
 import triton
 import triton.language as tl
-from typing import Optional, Tuple
-import math
 
 
 @triton.jit
@@ -32,11 +31,11 @@ def layer_norm_kernel(
     """
     Triton kernel for fused layer normalization - Educational GPU Kernel Implementation.
 
-    🎓 EDUCATIONAL OVERVIEW:
+     EDUCATIONAL OVERVIEW:
     This kernel demonstrates fundamental GPU optimization principles that make
     Triton kernels faster than standard PyTorch operations in specific cases.
 
-    🔧 GPU OPTIMIZATION TECHNIQUES DEMONSTRATED:
+     GPU OPTIMIZATION TECHNIQUES DEMONSTRATED:
 
     1. BLOCK-BASED COMPUTATION:
        - BLOCK_SIZE parameter controls parallelism granularity
@@ -61,27 +60,25 @@ def layer_norm_kernel(
        - No global memory allocations for temporary results
        - Eliminates memory bandwidth overhead of separate operations
 
-    📊 PERFORMANCE CHARACTERISTICS:
+     PERFORMANCE CHARACTERISTICS:
     - Memory bandwidth bound: Performance scales with memory access efficiency
     - Optimal for: Medium-sized tensors where kernel launch overhead is amortized
     - Speedup vs PyTorch: 1.5-3x for suitable tensor sizes (depends on hardware)
     - Best performance: Tensors with n_cols that align well with BLOCK_SIZE
 
-    💡 WHEN TO USE TRITON VS PYTORCH:
-    ✅ Use Triton when: Custom fusion patterns, specific memory layouts, research
-    ❌ Use PyTorch when: Standard operations, varied tensor sizes, rapid prototyping
+     WHEN TO USE TRITON VS PYTORCH:
+     Use Triton when: Custom fusion patterns, specific memory layouts, research
+     Use PyTorch when: Standard operations, varied tensor sizes, rapid prototyping
 
-    🎓 EDUCATIONAL COMPARISON:
+     EDUCATIONAL COMPARISON:
     PyTorch LayerNorm: x.mean() → (x-mean) → x.var() → normalize (4 kernel launches)
     Triton LayerNorm:  Single kernel with fused mean+variance+normalize (1 kernel launch)
     """
-    # 🎓 STEP 1: GPU Thread Block Identification
     # Each GPU thread block handles one row of the input tensor
     # program_id(0) gives us the unique ID of this thread block
     # This is how we achieve parallelism: thousands of rows processed simultaneously
     row_idx = tl.program_id(0)
 
-    # 🔥 STEP 2: Memory Coalescing Setup - CRITICAL for performance!
     # Calculate memory addresses ensuring consecutive threads access consecutive memory
     # input_row_stride: number of elements to jump to next row
     # tl.arange(0, BLOCK_SIZE): creates [0,1,2,...,BLOCK_SIZE-1] for coalesced access
@@ -89,47 +86,39 @@ def layer_norm_kernel(
     input_ptrs = input_ptr + row_idx * input_row_stride + tl.arange(0, BLOCK_SIZE)
     output_ptrs = output_ptr + row_idx * output_row_stride + tl.arange(0, BLOCK_SIZE)
 
-    # 🛡️ STEP 3: Memory Safety - Handle variable tensor sizes
     # mask ensures we don't read/write beyond tensor boundaries
     # Essential when BLOCK_SIZE doesn't perfectly divide n_cols
     mask = tl.arange(0, BLOCK_SIZE) < n_cols
 
-    # 🚀 STEP 4: Vectorized Memory Load
     # tl.load automatically handles vectorization and coalescing
     # 'other=0.0' provides safe padding values for masked-out elements
     # Single instruction loads up to BLOCK_SIZE elements simultaneously!
     x = tl.load(input_ptrs, mask=mask, other=0.0)
 
-    # 🧮 STEP 5: Parallel Reduction for Statistics
     # tl.sum uses GPU hardware reduction trees (much faster than loops)
     # All threads in block collaborate to compute mean efficiently
     # Hardware executes this as logarithmic reduction tree
     mean = tl.sum(x, axis=0) / n_cols
 
-    # 🧮 STEP 6: Variance Computation (Fused with Mean)
     # Everything stays in GPU registers - no global memory overhead!
     # Manual implementation would require separate kernels and memory round-trips
     x_centered = x - mean  # Broadcasting handled automatically by GPU
     var = tl.sum(x_centered * x_centered, axis=0) / n_cols  # Another parallel reduction
 
-    # 🔢 STEP 7: Normalization with Numerical Stability
     # inv_std approach is more numerically stable than direct division
     # tl.sqrt uses GPU's built-in transcendental function units
     inv_std = 1.0 / tl.sqrt(var + eps)
     normalized = (x - mean) * inv_std  # Element-wise operations are fully vectorized
 
-    # 📚 STEP 8: Parameter Loading (Weight & Bias)
     # Separate loads for weight/bias parameters (typically smaller, well-cached)
     # Default values (1.0, 0.0) handle cases where parameters might be missing
     weight = tl.load(weight_ptr + tl.arange(0, BLOCK_SIZE), mask=mask, other=1.0)
     bias = tl.load(bias_ptr + tl.arange(0, BLOCK_SIZE), mask=mask, other=0.0)
 
-    # ⚡ STEP 9: Final Transformation (Fused)
     # Affine transformation fused with normalization - no intermediate storage!
     # All arithmetic happens in GPU registers at maximum throughput
     output = normalized * weight + bias
 
-    # 💾 STEP 10: Coalesced Memory Store
     # tl.store ensures optimal write patterns back to global memory
     # Completes the fully-fused layer normalization in single kernel!
     tl.store(output_ptrs, output, mask=mask)
@@ -152,16 +141,16 @@ def swiglu_kernel(
     """
     Advanced Triton kernel for fused SwiGLU computation - Production-Level GPU Optimization.
 
-    🎓 EDUCATIONAL OVERVIEW:
+     EDUCATIONAL OVERVIEW:
     SwiGLU (Swish-Gated Linear Unit) is a key component in modern language models
     (PaLM, LLaMA). This kernel demonstrates advanced GPU optimization techniques
     for complex fused operations that would be impossible with standard PyTorch.
 
-    🧠 MATHEMATICAL BACKGROUND:
+     MATHEMATICAL BACKGROUND:
     SwiGLU(x) = Swish(x @ W_gate) ⊙ (x @ W_up)
     Where: Swish(x) = x * sigmoid(x), ⊙ = element-wise multiplication
 
-    🔧 ADVANCED GPU OPTIMIZATION TECHNIQUES:
+     ADVANCED GPU OPTIMIZATION TECHNIQUES:
 
     1. TILED MATRIX MULTIPLICATION:
        - Large matrix ops broken into GPU-cache-sized tiles (BLOCK_SIZE_K)
@@ -187,17 +176,17 @@ def swiglu_kernel(
        - Memory savings: No intermediate tensor storage between operations
        - Bandwidth savings: ~3x reduction in memory traffic
 
-    📊 PERFORMANCE CHARACTERISTICS:
+     PERFORMANCE CHARACTERISTICS:
     - Compute intensity: High FLOP/byte ratio due to matrix multiplications
     - Memory pattern: Optimized for GPU memory coalescing
     - Scalability: Linear scaling with hidden_dim, quadratic with seq_len
     - Hardware utilization: Near-peak FLOPS on modern GPUs (A100/H100)
 
-    💡 WHEN TO USE CUSTOM KERNELS:
-    ✅ Use for: Unique fusion patterns, memory-intensive ops, production deployment
-    ❌ Avoid for: Standard operations, rapid prototyping, small models
+     WHEN TO USE CUSTOM KERNELS:
+     Use for: Unique fusion patterns, memory-intensive ops, production deployment
+     Avoid for: Standard operations, rapid prototyping, small models
 
-    🎓 EDUCATIONAL VALUE:
+     EDUCATIONAL VALUE:
     - Demonstrates advanced tiling strategies for large matrix operations
     - Shows how to achieve memory bandwidth optimization on modern GPUs
     - Illustrates the complexity/benefit tradeoff of custom GPU kernels
@@ -600,18 +589,18 @@ def benchmark_triton_vs_pytorch():
     batch_size, seq_len, dim = 4, 512, 768
 
     # Test data
-    x = torch.randn(batch_size, seq_len, dim, device=device)
+    torch.randn(batch_size, seq_len, dim, device=device)
 
     # Layer Norm comparison
-    pytorch_ln = torch.nn.LayerNorm(dim).to(device)
-    triton_ln = TritonLayerNorm(dim).to(device)
+    torch.nn.LayerNorm(dim).to(device)
+    TritonLayerNorm(dim).to(device)
 
     print("Benchmarking Layer Norm...")
     # Add actual benchmarking code here
 
     # SwiGLU comparison
     hidden_dim = dim * 4
-    triton_swiglu = TritonSwiGLU(dim, hidden_dim).to(device)
+    TritonSwiGLU(dim, hidden_dim).to(device)
 
     print("Benchmarking SwiGLU...")
     # Add actual benchmarking code here

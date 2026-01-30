@@ -20,9 +20,9 @@ Version: 0.4.19
 
 from .amd_backend import AMDBackend
 from .amd_optimizer import AMDOptimizer
-from .rocm_compiler import ROCmCompiler
-from .memory_manager import AMDMemoryManager
 from .hip_utilities import HIPUtilities
+from .memory_manager import AMDMemoryManager
+from .rocm_compiler import ROCmCompiler
 
 __all__ = [
     "AMDBackend",

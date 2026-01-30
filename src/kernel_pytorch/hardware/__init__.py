@@ -18,18 +18,18 @@ Development Status:
 
 # GPU integration and optimization - import what's available
 try:
-    from .gpu import *
+    from .gpu import *  # noqa: F403
 except ImportError as e:
     import warnings
-    warnings.warn(f"GPU module import failed: {e}")
+    warnings.warn(f"GPU module import failed: {e}", stacklevel=2)
     pass
 
 # Hardware abstraction layer - import what's available
 try:
-    from .abstraction import *
+    from .abstraction import *  # noqa: F403
 except ImportError as e:
     import warnings
-    warnings.warn(f"Hardware abstraction import failed: {e}")
+    warnings.warn(f"Hardware abstraction import failed: {e}", stacklevel=2)
     pass
 
 # CUDA kernels and interfaces (legacy files)
@@ -39,6 +39,7 @@ __all__ = []
 
 # Dynamically add available exports
 import sys
+
 current_module = sys.modules[__name__]
 for attr_name in dir(current_module):
     if not attr_name.startswith('_') and attr_name not in ['warnings', 'sys']:
@@ -52,8 +53,9 @@ for attr_name in dir(current_module):
             pass
 
 # Backward compatibility support
-import warnings
-import sys
+import sys  # noqa: E402
+import warnings  # noqa: E402
+
 
 def _deprecation_warning(old_path: str, new_path: str):
     warnings.warn(

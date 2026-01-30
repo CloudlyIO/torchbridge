@@ -17,15 +17,15 @@ Success Criteria:
 """
 
 import copy
+
 import pytest
 import torch
 
 from .conftest import (
-    requires_transformers,
-    requires_cuda,
-    benchmark_function,
-    assert_speedup,
     assert_output_close,
+    benchmark_function,
+    requires_cuda,
+    requires_transformers,
 )
 
 
@@ -62,13 +62,17 @@ class TestRealGPT2Optimization:
         assert len(generated_text) > len(prompt)
         assert generated_text.startswith(prompt[:20])  # Starts with prompt prefix
 
-        print(f"\nGPT-2 Generation Test:")
+        print("\nGPT-2 Generation Test:")
         print(f"  Prompt: {prompt}")
         print(f"  Generated: {generated_text}")
 
     def test_gpt2_forward_pass_optimization(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 forward pass optimization speedup."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
 
@@ -121,7 +125,7 @@ class TestRealGPT2Optimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nGPT-2 Forward Pass Optimization:")
+        print("\nGPT-2 Forward Pass Optimization:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -140,7 +144,11 @@ class TestRealGPT2Optimization:
         1. Both outputs are coherent (extend the prompt)
         2. At least 50% of prompts produce identical outputs
         """
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
 
@@ -205,9 +213,9 @@ class TestRealGPT2Optimization:
             # Track exact matches
             if baseline == optimized:
                 matches += 1
-                print(f"    Status: ✓ Exact match")
+                print("    Status:  Exact match")
             else:
-                print(f"    Status: ~ Different (expected with mixed precision)")
+                print("    Status: ~ Different (expected with mixed precision)")
 
         # At least some outputs should match exactly
         # With FP32-only optimization, all should match; with BF16, some may differ
@@ -224,7 +232,11 @@ class TestRealGPT2Optimization:
         GPT-2 logits can differ by 1-2 points with BF16, which is acceptable
         as it typically doesn't change the argmax predictions significantly.
         """
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
 
@@ -254,7 +266,7 @@ class TestRealGPT2Optimization:
 
         # Calculate actual difference for diagnostics
         max_diff = (baseline_logits.float() - optimized_logits.float()).abs().max().item()
-        print(f"\nGPT-2 Logits Comparison:")
+        print("\nGPT-2 Logits Comparison:")
         print(f"  Max difference: {max_diff:.4f}")
         print(f"  Tolerance: atol={output_tolerance['atol']}, rtol={output_tolerance['rtol']}")
 
@@ -276,14 +288,18 @@ class TestRealGPT2Optimization:
         # Prediction match rate is informational - mixed precision can cause divergence
         # The important test is that tolerances pass (atol=0.5) and model is functional
         if pred_match_rate < 0.7:
-            print(f"  Warning: Low prediction match rate may indicate optimization issue")
+            print("  Warning: Low prediction match rate may indicate optimization issue")
         # Only fail on very low match rates that suggest a bug
         assert pred_match_rate >= 0.5, f"Prediction match rate too low: {pred_match_rate:.1%}"
 
     @requires_cuda
     def test_gpt2_cuda_generation_speedup(self, gpt2_model_and_tokenizer):
         """Test GPT-2 generation speedup on CUDA."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
         device = torch.device("cuda")
@@ -340,7 +356,7 @@ class TestRealGPT2Optimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nGPT-2 CUDA Generation Speedup:")
+        print("\nGPT-2 CUDA Generation Speedup:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -352,7 +368,11 @@ class TestRealGPT2Optimization:
 
     def test_gpt2_batch_generation(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 batch generation works correctly."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
 
@@ -409,7 +429,11 @@ class TestGPT2MemoryOptimization:
 
     def test_gpt2_memory_efficient_mode(self, gpt2_model_and_tokenizer, e2e_device):
         """Test GPT-2 memory-efficient optimization."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_model_and_tokenizer
 
@@ -439,5 +463,5 @@ class TestGPT2MemoryOptimization:
         generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
         assert len(generated) > len(prompt)
 
-        print(f"\nGPT-2 Memory Efficient Mode:")
+        print("\nGPT-2 Memory Efficient Mode:")
         print(f"  Generated: {generated}")

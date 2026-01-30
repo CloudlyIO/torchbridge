@@ -8,14 +8,15 @@ directories to ensure existing code continues to work.
 import warnings
 from typing import Any
 
+from ..core import AttentionConfig, AttentionPatterns, FP8AttentionConfig
+from ..distributed.context_parallel import ContextParallelAttention
+from ..distributed.ring_attention import RingAttentionLayer
+from ..fusion.neural_operator import create_unified_attention_fusion
+
 # Import all components for re-export
-from ..implementations.flash_attention import FlashAttention3, FlashAttention2
+from ..implementations.flash_attention import FlashAttention2, FlashAttention3
 from ..implementations.memory_efficient import MemoryEfficientAttention
 from ..implementations.sparse import DynamicSparseAttention
-from ..distributed.ring_attention import RingAttentionLayer
-from ..distributed.context_parallel import ContextParallelAttention
-from ..fusion.neural_operator import create_unified_attention_fusion
-from ..core import AttentionConfig, AttentionPatterns, FP8AttentionConfig
 
 
 def __getattr__(name: str) -> Any:

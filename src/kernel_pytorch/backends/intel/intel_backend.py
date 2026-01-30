@@ -12,26 +12,25 @@ Version: 0.4.10
 
 import logging
 import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, List, Union, Tuple
 
-from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel
-from .intel_exceptions import (
-    XPUNotAvailableError,
-    IPEXNotInstalledError,
-    XPUDeviceError,
+from kernel_pytorch.backends.base_backend import (
+    BaseBackend,
+    DeviceInfo,
+    OptimizationLevel,
 )
+
+from .memory_manager import IntelMemoryManager
 from .xpu_utilities import (
+    IPEX_AVAILABLE,
+    XPU_AVAILABLE,
     XPUDeviceManager,
     XPUOptimizations,
-    XPU_AVAILABLE,
-    IPEX_AVAILABLE,
-    is_xpu_available,
-    is_ipex_available,
     get_ipex_version,
 )
-from .memory_manager import IntelMemoryManager
 
 logger = logging.getLogger(__name__)
 
@@ -121,14 +120,15 @@ class IntelBackend(BaseBackend):
     def _setup_xpu_environment(self) -> None:
         """Set up XPU environment for Intel devices."""
         if not XPU_AVAILABLE:
-            warnings.warn("Intel XPU not available. Using CPU fallback.")
+            warnings.warn("Intel XPU not available. Using CPU fallback.", stacklevel=2)
             self._device = torch.device("cpu")
             return
 
         if not IPEX_AVAILABLE:
             warnings.warn(
                 "Intel Extension for PyTorch (IPEX) not installed. "
-                "Install with: pip install intel-extension-for-pytorch"
+                "Install with: pip install intel-extension-for-pytorch",
+            stacklevel=2,
             )
 
         # Get device information
@@ -191,17 +191,17 @@ class IntelBackend(BaseBackend):
         return self._device
 
     @property
-    def devices(self) -> List[torch.device]:
+    def devices(self) -> list[torch.device]:
         """Get all available XPU devices."""
         return self._xpu_devices
 
     @property
-    def device_name(self) -> Optional[str]:
+    def device_name(self) -> str | None:
         """Get current device name."""
         return self._device_name
 
     @property
-    def device_type(self) -> Optional[str]:
+    def device_type(self) -> str | None:
         """Get current device type (data_center, consumer, integrated)."""
         return self._device_type
 
@@ -237,14 +237,14 @@ class IntelBackend(BaseBackend):
         return device_info.supports_amx
 
     @property
-    def memory_manager(self) -> Optional[IntelMemoryManager]:
+    def memory_manager(self) -> IntelMemoryManager | None:
         """Get memory manager instance."""
         return self._memory_manager
 
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """
         Prepare model for Intel XPU execution (implements BaseBackend abstract method).
@@ -257,11 +257,11 @@ class IntelBackend(BaseBackend):
             Prepared model ready for Intel XPU execution
         """
         if model is None:
-            warnings.warn("Model is None, returning unchanged")
+            warnings.warn("Model is None, returning unchanged", stacklevel=2)
             return model
 
         if not self.is_xpu_available:
-            warnings.warn("XPU not available, returning model unchanged")
+            warnings.warn("XPU not available, returning model unchanged", stacklevel=2)
             return model
 
         # Move model to device
@@ -321,8 +321,8 @@ class IntelBackend(BaseBackend):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize model for inference using IPEX (implements BaseBackend abstract method).
@@ -345,9 +345,9 @@ class IntelBackend(BaseBackend):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize model and optimizer for training using IPEX (implements BaseBackend abstract method).
 
@@ -380,7 +380,7 @@ class IntelBackend(BaseBackend):
         """Empty XPU memory cache."""
         self._device_manager.empty_cache()
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """Get XPU memory statistics."""
         if not self.is_xpu_available:
             return {
@@ -410,7 +410,7 @@ class IntelBackend(BaseBackend):
             'device_name': self._device_name,
         }
 
-    def get_device_info_dict(self) -> Dict[str, Any]:
+    def get_device_info_dict(self) -> dict[str, Any]:
         """Get comprehensive device information (legacy format)."""
         info = {
             'backend': 'intel',
@@ -453,7 +453,7 @@ class IntelBackend(BaseBackend):
                 device_id=device_id
             )
         else:
-            warnings.warn(f"Device {device_id} not available, using current device")
+            warnings.warn(f"Device {device_id} not available, using current device", stacklevel=2)
 
     def get_memory_summary(self) -> str:
         """Get a human-readable memory summary."""

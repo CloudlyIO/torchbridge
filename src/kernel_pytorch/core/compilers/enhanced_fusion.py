@@ -9,16 +9,17 @@ Based on latest 2025 research showing that fusion boundaries can be dismantled
 by modeling tensor contractions as generalized reductions.
 """
 
-import torch
-import torch.nn as nn
-import torch.fx as fx
-from torch.fx.graph_module import GraphModule
-from typing import Dict, List, Optional, Any, Callable, Set, Tuple
+import warnings
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-import warnings
-import re
-from collections import defaultdict
+from typing import Any
+
+import torch
+import torch.fx as fx
+import torch.nn as nn
+from torch.fx.graph_module import GraphModule
+
 
 class FusionPass(Enum):
     """Types of fusion optimization passes"""
@@ -32,7 +33,7 @@ class FusionPass(Enum):
 @dataclass
 class FusionStrategy:
     """Configuration for fusion optimization strategy"""
-    enabled_passes: List[FusionPass]
+    enabled_passes: list[FusionPass]
     aggressive_mode: bool = False
     memory_budget_mb: int = 1024
     target_architecture: str = "ampere"  # "ampere", "hopper", "ada"
@@ -60,7 +61,7 @@ class FusionBoundaryOptimizer:
     6. Memory layout fusion: Eliminating redundant layout transformations
     """
 
-    def __init__(self, strategy: Optional[FusionStrategy] = None):
+    def __init__(self, strategy: FusionStrategy | None = None):
         self.strategy = strategy or FusionStrategy(
             enabled_passes=[
                 FusionPass.HORIZONTAL_FUSION,
@@ -95,7 +96,7 @@ class FusionBoundaryOptimizer:
         try:
             traced = torch.fx.symbolic_trace(model)
         except Exception as e:
-            warnings.warn(f"Failed to trace model for fusion optimization: {e}")
+            warnings.warn(f"Failed to trace model for fusion optimization: {e}", stacklevel=2)
             # Return unoptimized graph
             return OptimizedFXGraph(
                 graph_module=GraphModule(model, fx.Graph()),
@@ -162,7 +163,7 @@ class FusionBoundaryOptimizer:
             memory_reduction_mb=memory_reduction
         )
 
-    def _horizontal_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _horizontal_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         Horizontal fusion: Batched and grouped operations
 
@@ -184,13 +185,13 @@ class FusionBoundaryOptimizer:
             operation_groups[op_type].append(node)
 
         # Fuse groups with multiple operations
-        for op_type, nodes in operation_groups.items():
+        for _op_type, nodes in operation_groups.items():
             if len(nodes) > 1:
                 fusion_count += self._fuse_horizontal_group(graph, nodes)
 
         return graph, fusion_count
 
-    def _vertical_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _vertical_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         Vertical fusion: Sequential operation chains
 
@@ -208,7 +209,7 @@ class FusionBoundaryOptimizer:
 
         return graph, fusion_count
 
-    def _cross_attention_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _cross_attention_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         Cross-attention fusion: Attention with surrounding operations
 
@@ -239,7 +240,7 @@ class FusionBoundaryOptimizer:
 
         return graph, fusion_count
 
-    def _quantization_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _quantization_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         Quantization fusion: Quantization with activation functions
 
@@ -265,7 +266,7 @@ class FusionBoundaryOptimizer:
 
         return graph, fusion_count
 
-    def _gemm_epilogue_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _gemm_epilogue_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         GEMM epilogue fusion: Matrix multiplication with post-processing
 
@@ -288,7 +289,7 @@ class FusionBoundaryOptimizer:
 
         return graph, fusion_count
 
-    def _memory_layout_fusion(self, graph: fx.Graph) -> Tuple[fx.Graph, int]:
+    def _memory_layout_fusion(self, graph: fx.Graph) -> tuple[fx.Graph, int]:
         """
         Memory layout fusion: Eliminating redundant layout transformations
 
@@ -326,7 +327,7 @@ class FusionBoundaryOptimizer:
             return node.target.__class__.__name__
         return "unknown"
 
-    def _find_fusion_chains(self, graph: fx.Graph) -> List[List[fx.Node]]:
+    def _find_fusion_chains(self, graph: fx.Graph) -> list[list[fx.Node]]:
         """Find chains of operations that can be fused vertically"""
         chains = []
         visited = set()
@@ -425,26 +426,26 @@ class FusionBoundaryOptimizer:
 
     # Fusion implementation methods (simplified for demo)
 
-    def _fuse_horizontal_group(self, graph: fx.Graph, nodes: List[fx.Node]) -> int:
+    def _fuse_horizontal_group(self, graph: fx.Graph, nodes: list[fx.Node]) -> int:
         """Fuse a group of horizontal operations"""
         # Implementation would create batched/grouped operation
         return 1 if len(nodes) > 1 else 0
 
-    def _fuse_vertical_chain(self, graph: fx.Graph, chain: List[fx.Node]) -> int:
+    def _fuse_vertical_chain(self, graph: fx.Graph, chain: list[fx.Node]) -> int:
         """Fuse a chain of vertical operations"""
         # Implementation would combine operations into single kernel
         return 1 if len(chain) > 1 else 0
 
-    def _find_qkv_projection_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> List:
+    def _find_qkv_projection_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> list:
         """Find QKV projection fusion opportunities"""
         # Implementation would identify and fuse Q, K, V projections
         return []
 
-    def _find_output_projection_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> List:
+    def _find_output_projection_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> list:
         """Find attention output projection fusion opportunities"""
         return []
 
-    def _find_attention_activation_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> List:
+    def _find_attention_activation_fusion(self, graph: fx.Graph, attn_node: fx.Node) -> list:
         """Find attention + activation fusion opportunities"""
         return []
 
@@ -464,23 +465,23 @@ class FusionBoundaryOptimizer:
         """Fuse quantization with normalization"""
         return 1
 
-    def _find_gemm_epilogue_pattern(self, graph: fx.Graph, gemm_node: fx.Node) -> Optional[Dict]:
+    def _find_gemm_epilogue_pattern(self, graph: fx.Graph, gemm_node: fx.Node) -> dict | None:
         """Find GEMM epilogue pattern"""
         return None
 
-    def _fuse_gemm_epilogue(self, graph: fx.Graph, gemm_node: fx.Node, pattern: Dict) -> int:
+    def _fuse_gemm_epilogue(self, graph: fx.Graph, gemm_node: fx.Node, pattern: dict) -> int:
         """Fuse GEMM with epilogue operations"""
         return 1
 
-    def _find_layout_transformation_chains(self, graph: fx.Graph) -> List[List[fx.Node]]:
+    def _find_layout_transformation_chains(self, graph: fx.Graph) -> list[list[fx.Node]]:
         """Find chains of layout transformations"""
         return []
 
-    def _can_optimize_layout_chain(self, chain: List[fx.Node]) -> bool:
+    def _can_optimize_layout_chain(self, chain: list[fx.Node]) -> bool:
         """Check if layout transformation chain can be optimized"""
         return len(chain) > 1
 
-    def _optimize_layout_chain(self, graph: fx.Graph, chain: List[fx.Node]) -> int:
+    def _optimize_layout_chain(self, graph: fx.Graph, chain: list[fx.Node]) -> int:
         """Optimize layout transformation chain"""
         return 1
 
@@ -505,7 +506,7 @@ class FusionBoundaryOptimizer:
         # Estimate 50MB reduction per fusion (conservative)
         return fusion_count * 50.0
 
-    def _build_fusion_patterns(self) -> Dict[str, Any]:
+    def _build_fusion_patterns(self) -> dict[str, Any]:
         """Build library of fusion patterns"""
         return {
             "gelu_fusion": {
@@ -522,7 +523,7 @@ class FusionBoundaryOptimizer:
             }
         }
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """Get optimization statistics"""
         avg_speedup = (self.optimization_stats["total_speedup"] /
                       max(self.optimization_stats["graphs_optimized"], 1))
@@ -544,7 +545,6 @@ class FusionBoundaryOptimizer:
             return optimized_graph.graph_module(*args, **kwargs)
 
         # Replace forward method
-        original_forward = model.forward
         model.forward = enhanced_model_forward
 
         return model

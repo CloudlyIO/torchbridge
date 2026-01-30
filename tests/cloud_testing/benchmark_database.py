@@ -15,12 +15,11 @@ Version: 0.3.7
 
 import json
 import logging
-import os
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 class BenchmarkRecord:
     """A single benchmark result record."""
     # Identification
-    id: Optional[int] = None
+    id: int | None = None
     run_id: str = ""  # Unique run identifier
     timestamp: datetime = field(default_factory=datetime.now)
 
@@ -61,9 +60,9 @@ class BenchmarkRecord:
     cost_usd: float = 0.0
 
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -88,7 +87,7 @@ class BenchmarkRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BenchmarkRecord":
+    def from_dict(cls, data: dict[str, Any]) -> "BenchmarkRecord":
         """Create from dictionary."""
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
@@ -268,21 +267,21 @@ class BenchmarkDatabase:
         logger.info(f"Inserted benchmark record {record_id}")
         return record_id
 
-    def insert_many(self, records: List[BenchmarkRecord]) -> List[int]:
+    def insert_many(self, records: list[BenchmarkRecord]) -> list[int]:
         """Insert multiple benchmark records."""
         return [self.insert(r) for r in records]
 
     def query(
         self,
-        cloud_provider: Optional[str] = None,
-        hardware_type: Optional[str] = None,
-        benchmark_name: Optional[str] = None,
-        benchmark_suite: Optional[str] = None,
-        instance_type: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        cloud_provider: str | None = None,
+        hardware_type: str | None = None,
+        benchmark_name: str | None = None,
+        benchmark_suite: str | None = None,
+        instance_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
-    ) -> List[BenchmarkRecord]:
+    ) -> list[BenchmarkRecord]:
         """
         Query benchmark records.
 
@@ -364,8 +363,8 @@ class BenchmarkDatabase:
     def get_latest(
         self,
         benchmark_name: str,
-        hardware_type: Optional[str] = None,
-    ) -> Optional[BenchmarkRecord]:
+        hardware_type: str | None = None,
+    ) -> BenchmarkRecord | None:
         """Get the latest benchmark result."""
         results = self.query(
             benchmark_name=benchmark_name,
@@ -377,9 +376,9 @@ class BenchmarkDatabase:
     def get_statistics(
         self,
         benchmark_name: str,
-        cloud_provider: Optional[str] = None,
-        hardware_type: Optional[str] = None,
-    ) -> Dict[str, float]:
+        cloud_provider: str | None = None,
+        hardware_type: str | None = None,
+    ) -> dict[str, float]:
         """
         Get statistics for a benchmark.
 
@@ -485,7 +484,7 @@ def compare_platforms(
 def query_benchmarks(
     db_path: str = "benchmarks.db",
     **kwargs,
-) -> List[BenchmarkRecord]:
+) -> list[BenchmarkRecord]:
     """
     Convenience function to query benchmarks.
 

@@ -11,14 +11,27 @@ Version: 0.4.8
 
 import logging
 import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, List, Type, Union, Tuple
-import os
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, NVIDIAConfig, NVIDIAArchitecture, PrecisionFormat
-from kernel_pytorch.core.kernel_registry import KernelRegistry, KernelMetadata, KernelType, KernelBackend
-from kernel_pytorch.backends.base_backend import BaseBackend, DeviceInfo, OptimizationLevel, OptimizationResult
+from kernel_pytorch.backends.base_backend import (
+    BaseBackend,
+    DeviceInfo,
+    OptimizationLevel,
+)
+from kernel_pytorch.core.config import (
+    KernelPyTorchConfig,
+    NVIDIAArchitecture,
+    PrecisionFormat,
+)
+from kernel_pytorch.core.kernel_registry import (
+    KernelBackend,
+    KernelMetadata,
+    KernelRegistry,
+    KernelType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +50,7 @@ class NVIDIABackend(BaseBackend):
     # Backend identifier
     BACKEND_NAME: str = "nvidia"
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize NVIDIA backend.
 
@@ -68,7 +81,7 @@ class NVIDIABackend(BaseBackend):
     def _setup_environment(self) -> None:
         """Set up CUDA environment for NVIDIA GPUs (implements BaseBackend abstract method)."""
         if not torch.cuda.is_available():
-            warnings.warn("CUDA not available. Using CPU fallback.")
+            warnings.warn("CUDA not available. Using CPU fallback.", stacklevel=2)
             self._device = torch.device("cpu")
             return
 
@@ -138,7 +151,7 @@ class NVIDIABackend(BaseBackend):
         return self._device
 
     @property
-    def devices(self) -> List[torch.device]:
+    def devices(self) -> list[torch.device]:
         """Get all available CUDA devices."""
         return self._devices
 
@@ -148,7 +161,7 @@ class NVIDIABackend(BaseBackend):
         return len(self._devices)
 
     @property
-    def compute_capability(self) -> Optional[tuple]:
+    def compute_capability(self) -> tuple | None:
         """Get CUDA compute capability."""
         return self._compute_capability
 
@@ -178,7 +191,7 @@ class NVIDIABackend(BaseBackend):
     def prepare_model(
         self,
         model: nn.Module,
-        optimization_level: Optional[Union[str, OptimizationLevel]] = None
+        optimization_level: str | OptimizationLevel | None = None
     ) -> nn.Module:
         """
         Prepare model for NVIDIA GPU execution (implements BaseBackend abstract method).
@@ -191,11 +204,11 @@ class NVIDIABackend(BaseBackend):
             Prepared model ready for NVIDIA GPU execution
         """
         if model is None:
-            warnings.warn("Model is None, returning unchanged")
+            warnings.warn("Model is None, returning unchanged", stacklevel=2)
             return model
 
         if not self.is_cuda_available:
-            warnings.warn("CUDA not available, returning model unchanged")
+            warnings.warn("CUDA not available, returning model unchanged", stacklevel=2)
             return model
 
         # Move model to device
@@ -219,8 +232,8 @@ class NVIDIABackend(BaseBackend):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize a model for inference (implements BaseBackend abstract method).
@@ -259,9 +272,9 @@ class NVIDIABackend(BaseBackend):
     def optimize_for_training(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Union[nn.Module, Tuple[nn.Module, torch.optim.Optimizer]]:
+        optimizer: torch.optim.Optimizer | None = None,
+        dtype: torch.dtype | None = None
+    ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize a model for training (implements BaseBackend abstract method).
 
@@ -281,7 +294,7 @@ class NVIDIABackend(BaseBackend):
 
         # Apply mixed precision settings if configured
         if self.nvidia_config.mixed_precision_enabled:
-            setattr(model, '_mixed_precision_enabled', True)
+            model._mixed_precision_enabled = True
 
         if optimizer:
             return model, optimizer
@@ -314,7 +327,8 @@ class NVIDIABackend(BaseBackend):
                 if in_features % optimal_divisor != 0 or out_features % optimal_divisor != 0:
                     warnings.warn(
                         f"Linear layer {name} dimensions ({in_features}x{out_features}) "
-                        f"not optimal for Tensor Cores. Consider padding to multiples of {optimal_divisor}."
+                        f"not optimal for Tensor Cores. Consider padding to multiples of {optimal_divisor}.",
+                    stacklevel=2,
                     )
 
         return model
@@ -340,7 +354,7 @@ class NVIDIABackend(BaseBackend):
         for module in model.modules():
             if isinstance(module, (nn.Linear, nn.Conv2d)):
                 # Add metadata for torch.compile
-                setattr(module, '_cuda_fusible', True)
+                module._cuda_fusible = True
 
         return model
 
@@ -360,7 +374,7 @@ class NVIDIABackend(BaseBackend):
         if self.is_cuda_available:
             torch.cuda.empty_cache()
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """Get CUDA memory statistics."""
         if not self.is_cuda_available:
             return {
@@ -379,7 +393,7 @@ class NVIDIABackend(BaseBackend):
             'compute_capability': self._compute_capability
         }
 
-    def get_device_info_dict(self) -> Dict[str, Any]:
+    def get_device_info_dict(self) -> dict[str, Any]:
         """Get comprehensive device information (legacy format)."""
         info = {
             'backend': 'nvidia',
@@ -410,7 +424,7 @@ class NVIDIABackend(BaseBackend):
             if self.is_cuda_available:
                 torch.cuda.set_device(device_id)
         else:
-            warnings.warn(f"Device {device_id} not available, using default device")
+            warnings.warn(f"Device {device_id} not available, using default device", stacklevel=2)
 
     def reset_peak_memory_stats(self) -> None:
         """Reset peak memory statistics."""
@@ -424,7 +438,9 @@ class NVIDIABackend(BaseBackend):
         try:
             # Import custom kernels
             from kernel_pytorch.hardware.gpu.custom_kernels import (
-                FlashAttentionV3, FusedLinearGELU, FusedLinearSiLU
+                FlashAttentionV3,
+                FusedLinearGELU,
+                FusedLinearSiLU,
             )
 
             # Determine supported precisions based on architecture
@@ -475,11 +491,11 @@ class NVIDIABackend(BaseBackend):
                 self._kernel_registry.register_kernel(silu_metadata)
 
         except ImportError as e:
-            warnings.warn(f"Could not import custom kernels: {e}")
+            warnings.warn(f"Could not import custom kernels: {e}", stacklevel=2)
 
     def get_optimal_attention_kernel(self,
                                      head_dim: int,
-                                     precision: Optional[PrecisionFormat] = None) -> Optional[Type[nn.Module]]:
+                                     precision: PrecisionFormat | None = None) -> type[nn.Module] | None:
         """
         Select optimal attention kernel for current hardware.
 
@@ -535,7 +551,8 @@ class NVIDIABackend(BaseBackend):
 
         try:
             from kernel_pytorch.hardware.gpu.custom_kernels import (
-                FusedLinearGELU, FusedLinearSiLU
+                FusedLinearGELU,
+                FusedLinearSiLU,
             )
 
             # Track replacements
@@ -603,7 +620,7 @@ class NVIDIABackend(BaseBackend):
                     logger.debug("  ... and %d more", len(replacements) - 5)
 
         except Exception as e:
-            warnings.warn(f"Could not apply custom kernels: {e}")
+            warnings.warn(f"Could not apply custom kernels: {e}", stacklevel=2)
 
         return model
 

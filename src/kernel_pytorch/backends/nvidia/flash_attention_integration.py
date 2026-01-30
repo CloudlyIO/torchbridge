@@ -7,15 +7,15 @@ Uses shared attention operations from kernel_pytorch.attention.core.attention_op
 
 import logging
 import warnings
+
 import torch
 import torch.nn as nn
-from typing import Optional, Tuple
 
-from kernel_pytorch.core.config import KernelPyTorchConfig
 from kernel_pytorch.attention.core.attention_ops import (
     check_flash_attention_available,
     flash_attention_forward,
 )
+from kernel_pytorch.core.config import KernelPyTorchConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class FlashAttention3(nn.Module):
         dropout: float = 0.0,
         bias: bool = True,
         causal: bool = False,
-        config: Optional[KernelPyTorchConfig] = None
+        config: KernelPyTorchConfig | None = None
     ):
         """
         Initialize FlashAttention-3.
@@ -72,7 +72,8 @@ class FlashAttention3(nn.Module):
         if self.head_dim % optimal_div != 0:
             warnings.warn(
                 f"Head dimension {self.head_dim} not divisible by {optimal_div}. "
-                f"Consider using head_dim divisible by {optimal_div} for optimal Tensor Core performance."
+                f"Consider using head_dim divisible by {optimal_div} for optimal Tensor Core performance.",
+            stacklevel=2,
             )
 
         # QKV projection
@@ -97,9 +98,9 @@ class FlashAttention3(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         return_attention_weights: bool = False
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Forward pass with FlashAttention-3.
 
@@ -148,7 +149,7 @@ def create_flash_attention_3(
     num_heads: int,
     dropout: float = 0.0,
     bias: bool = True,
-    config: Optional[KernelPyTorchConfig] = None
+    config: KernelPyTorchConfig | None = None
 ) -> FlashAttention3:
     """
     Factory function to create FlashAttention-3 module.
@@ -179,7 +180,7 @@ class FlashAttention3Optimizer:
     Helps convert existing attention modules to FlashAttention-3.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize FlashAttention-3 optimizer.
 
@@ -214,7 +215,7 @@ class FlashAttention3Optimizer:
         # Return original module if not convertible
         return module
 
-    def optimize_model(self, model: nn.Module) -> Tuple[nn.Module, int]:
+    def optimize_model(self, model: nn.Module) -> tuple[nn.Module, int]:
         """
         Convert all attention layers in model to FlashAttention-3.
 

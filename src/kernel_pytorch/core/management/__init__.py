@@ -30,15 +30,15 @@ Version: 0.3.11
 # Base classes and types
 from .base import (
     BaseManager,
-    ManagerType,
-    ManagerState,
     ManagerContext,
+    ManagerState,
+    ManagerType,
 )
 
 # Individual managers
 from .hardware_manager import HardwareManager
-from .optimization_manager import OptimizationManager
 from .infrastructure_manager import InfrastructureManager
+from .optimization_manager import OptimizationManager
 
 # Main coordinator and helpers
 from .unified_manager import (

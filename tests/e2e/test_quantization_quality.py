@@ -18,13 +18,13 @@ Quality Targets:
 """
 
 import copy
+import warnings
+
 import pytest
 import torch
 import torch.nn as nn
-import warnings
 
-from .conftest import requires_transformers, requires_cuda
-
+from .conftest import requires_cuda, requires_transformers
 
 # =============================================================================
 # Quality Thresholds
@@ -139,7 +139,7 @@ def calculate_perplexity_simple(
                 total_loss += loss.item() * num_tokens
                 total_tokens += num_tokens
             except Exception as e:
-                warnings.warn(f"Error computing loss: {e}")
+                warnings.warn(f"Error computing loss: {e}", stacklevel=2)
                 continue
 
     if total_tokens == 0:
@@ -271,10 +271,10 @@ class TestINT8Quantization:
         # Check max difference
         max_diff = (baseline_output - quantized_output).abs().max().item()
 
-        print(f"\nGPT-2 INT8 Output Quality:")
+        print("\nGPT-2 INT8 Output Quality:")
         print(f"  Cosine similarity: {cosine_sim:.4f}")
         print(f"  Max output diff: {max_diff:.4f}")
-        print(f"  Target: cosine > 0.9")
+        print("  Target: cosine > 0.9")
 
         # INT8 dynamic quantization should preserve output quality
         assert cosine_sim > 0.9, f"INT8 output similarity {cosine_sim:.4f} too low"
@@ -295,12 +295,12 @@ class TestINT8Quantization:
 
         memory_reduction_pct = (baseline_size - quantized_size) / baseline_size * 100
 
-        print(f"\nGPT-2 INT8 Dynamic Quantization Results:")
+        print("\nGPT-2 INT8 Dynamic Quantization Results:")
         print(f"  Baseline size: {baseline_size:.1f} MB")
         print(f"  Quantized size: {quantized_size:.1f} MB")
         print(f"  Size change: {memory_reduction_pct:.1f}%")
-        print(f"  Note: Dynamic quantization doesn't reduce memory footprint")
-        print(f"        It quantizes activations at runtime for potential speedup")
+        print("  Note: Dynamic quantization doesn't reduce memory footprint")
+        print("        It quantizes activations at runtime for potential speedup")
 
         # Dynamic quantization should at least not break the model
         # Memory may not decrease (or may even slightly increase due to quantization params)
@@ -311,7 +311,7 @@ class TestINT8Quantization:
         print(f"  Has quantized layers: {has_quant}")
 
         # List layer types in quantized model
-        layer_types = set(type(m).__name__ for m in quantized_model.modules())
+        layer_types = set(type(m).__name__ for m in quantized_model.modules())  # noqa: C401
         print(f"  Layer types: {sorted(layer_types)[:10]}...")
 
         # Note: GPT-2 uses HuggingFace Conv1D which PyTorch dynamic quant doesn't support
@@ -358,9 +358,9 @@ class TestINT8Quantization:
             quantized_flat.unsqueeze(0)
         ).item()
 
-        print(f"\nBERT INT8 Output Similarity:")
+        print("\nBERT INT8 Output Similarity:")
         print(f"  Cosine similarity: {cosine_sim:.4f}")
-        print(f"  Target: >0.95")
+        print("  Target: >0.95")
 
         # Outputs should be highly similar
         assert cosine_sim > 0.95, f"INT8 output similarity {cosine_sim:.4f} too low"
@@ -380,13 +380,13 @@ class TestFP8Quantization:
     def test_fp8_availability(self):
         """Test FP8 support detection."""
         from kernel_pytorch.precision.fp8_native import (
-            FP8_NATIVE_AVAILABLE,
             FP8_DTYPES_AVAILABLE,
+            FP8_NATIVE_AVAILABLE,
+            get_fp8_info,
             is_fp8_available,
-            get_fp8_info
         )
 
-        print(f"\nFP8 Availability Check:")
+        print("\nFP8 Availability Check:")
         print(f"  Native FP8 available: {FP8_NATIVE_AVAILABLE}")
         print(f"  FP8 dtypes available: {FP8_DTYPES_AVAILABLE}")
         print(f"  is_fp8_available(): {is_fp8_available()}")
@@ -401,11 +401,11 @@ class TestFP8Quantization:
     def test_fp8_quantize_dequantize_accuracy(self):
         """Test FP8 quantization preserves values."""
         from kernel_pytorch.precision.fp8_native import (
-            quantize_to_fp8,
-            dequantize_from_fp8,
-            compute_fp8_scale,
+            FP8_NATIVE_AVAILABLE,
             FP8Dtype,
-            FP8_NATIVE_AVAILABLE
+            compute_fp8_scale,
+            dequantize_from_fp8,
+            quantize_to_fp8,
         )
 
         if not FP8_NATIVE_AVAILABLE:
@@ -423,7 +423,7 @@ class TestFP8Quantization:
         mse = torch.mean((original - recovered) ** 2).item()
         max_error = torch.max(torch.abs(original - recovered)).item()
 
-        print(f"\nFP8 Quantization Accuracy:")
+        print("\nFP8 Quantization Accuracy:")
         print(f"  MSE: {mse:.6f}")
         print(f"  Max error: {max_error:.6f}")
         print(f"  Scale: {scale.item():.4f}")
@@ -435,7 +435,10 @@ class TestFP8Quantization:
     @requires_cuda
     def test_fp8_linear_layer(self):
         """Test FP8 linear layer functionality."""
-        from kernel_pytorch.precision.fp8_native import NativeFP8Linear, FP8_NATIVE_AVAILABLE
+        from kernel_pytorch.precision.fp8_native import (
+            FP8_NATIVE_AVAILABLE,
+            NativeFP8Linear,
+        )
 
         if not FP8_NATIVE_AVAILABLE:
             pytest.skip("FP8 not available on this system")
@@ -449,7 +452,7 @@ class TestFP8Quantization:
         x = torch.randn(4, 256, device=device)
         output = fp8_linear(x)
 
-        print(f"\nFP8 Linear Layer Test:")
+        print("\nFP8 Linear Layer Test:")
         print(f"  Input shape: {x.shape}")
         print(f"  Output shape: {output.shape}")
         print(f"  Output dtype: {output.dtype}")
@@ -461,8 +464,8 @@ class TestFP8Quantization:
     def test_gpt2_fp8_conversion(self, gpt2_for_quantization, sample_texts):
         """Test GPT-2 FP8 conversion and quality."""
         from kernel_pytorch.precision.fp8_native import (
+            FP8_NATIVE_AVAILABLE,
             convert_model_to_native_fp8,
-            FP8_NATIVE_AVAILABLE
         )
 
         if not FP8_NATIVE_AVAILABLE:
@@ -488,7 +491,7 @@ class TestFP8Quantization:
 
         ppl_increase_pct = (fp8_ppl - baseline_ppl) / baseline_ppl * 100
 
-        print(f"\nGPT-2 FP8 Quantization Results:")
+        print("\nGPT-2 FP8 Quantization Results:")
         print(f"  Baseline perplexity: {baseline_ppl:.2f}")
         print(f"  FP8 perplexity: {fp8_ppl:.2f}")
         print(f"  Perplexity increase: {ppl_increase_pct:.2f}%")
@@ -513,7 +516,11 @@ class TestQuantizationIntegration:
     @requires_quantization
     def test_text_model_int8_optimization(self, gpt2_for_quantization, sample_texts):
         """Test INT8 quantization via TextModelOptimizer."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = gpt2_for_quantization
         device = torch.device("cpu")
@@ -553,7 +560,7 @@ class TestQuantizationIntegration:
         # Verify outputs are similar
         max_diff = (baseline_output - quantized_output).abs().max().item()
 
-        print(f"\nTextModelOptimizer + INT8 Test:")
+        print("\nTextModelOptimizer + INT8 Test:")
         print(f"  Max output difference: {max_diff:.4f}")
 
         # Allow larger difference since quantization + optimization can compound
@@ -583,7 +590,7 @@ class TestQuantizationIntegration:
 
         generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        print(f"\nQuantized Generation Test:")
+        print("\nQuantized Generation Test:")
         print(f"  Prompt: {prompt}")
         print(f"  Generated: {generated}")
 
@@ -622,12 +629,12 @@ class TestQuantizationMemory:
 
         reduction = (baseline_size - quantized_size) / baseline_size * 100
 
-        print(f"\nINT8 Memory Footprint:")
+        print("\nINT8 Memory Footprint:")
         print(f"  Parameters: {baseline_params:,}")
         print(f"  FP32 size: {baseline_size:.1f} MB")
         print(f"  INT8 size: {quantized_size:.1f} MB")
         print(f"  Reduction: {reduction:.1f}%")
-        print(f"  Note: Dynamic quantization keeps FP32 weights")
+        print("  Note: Dynamic quantization keeps FP32 weights")
 
         # Dynamic quantization doesn't reduce stored model size
         # It quantizes activations at runtime for potential speedup
@@ -662,7 +669,7 @@ class TestQuantizationMemory:
         logits = outputs.logits
         predictions = logits.argmax(dim=-1)
 
-        print(f"\nQuantized Inference Test:")
+        print("\nQuantized Inference Test:")
         print(f"  Batch size: {len(sample_texts)}")
         print(f"  Output shape: {logits.shape}")
         print(f"  Predictions: {predictions.tolist()}")

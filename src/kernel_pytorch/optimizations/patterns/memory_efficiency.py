@@ -5,7 +5,6 @@ This module provides comprehensive guidance and practical implementations for
 optimizing GPU memory utilization in PyTorch neural networks, focusing on
 bandwidth optimization, allocation strategies, and cache-friendly patterns.
 
-🎓 EDUCATIONAL FOCUS:
 GPU memory hierarchy optimization is critical for high-performance computing:
 - Global memory bandwidth: Often the primary bottleneck (500-1000 GB/s)
 - L2 cache: 40MB shared across GPU, crucial for data reuse
@@ -13,24 +12,17 @@ GPU memory hierarchy optimization is critical for high-performance computing:
 - Shared memory: 48-164KB per SM, programmer-controlled fast storage
 - Registers: 65K 32-bit registers per SM, fastest memory tier
 
-🔧 MEMORY OPTIMIZATION STRATEGIES:
-- Access pattern optimization: Coalesced memory access for maximum bandwidth
-- Allocation minimization: Reduce memory fragmentation and allocation overhead
-- Tensor layout optimization: Data structure organization for cache efficiency
-- Memory reuse patterns: Maximize data locality and minimize transfers
-
-💡 PRACTICAL APPLICATION:
 Learn to identify memory bottlenecks in your models and apply proven patterns
 that lead to 2-10x performance improvements through better memory utilization.
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Union
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-import math
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 
 class MemoryAccessPattern(Enum):
@@ -47,7 +39,6 @@ class MemoryOptimizationStrategy:
     """
     Data structure for describing memory optimization patterns.
 
-    🎓 EDUCATIONAL: Systematic memory optimization approach
     By categorizing memory optimization opportunities, we can:
     - Systematically identify memory bottlenecks
     - Apply proven optimization strategies
@@ -56,7 +47,7 @@ class MemoryOptimizationStrategy:
     """
     name: str
     access_pattern: MemoryAccessPattern
-    techniques: List[str]
+    techniques: list[str]
     bandwidth_improvement: float  # Expected bandwidth utilization improvement
     memory_reduction: float  # Expected memory usage reduction (0.0-1.0)
     cache_efficiency: float  # Expected cache hit ratio improvement
@@ -65,7 +56,7 @@ class MemoryOptimizationStrategy:
     example_after: str
 
 
-# 🎓 EDUCATIONAL: Common memory optimization patterns in neural networks
+#  EDUCATIONAL: Common memory optimization patterns in neural networks
 MEMORY_OPTIMIZATION_GUIDE = [
     MemoryOptimizationStrategy(
         name="Tensor Reshaping for Coalescing",
@@ -132,21 +123,14 @@ MEMORY_OPTIMIZATION_GUIDE = [
 def analyze_memory_access_patterns(
     model: nn.Module,
     sample_input: torch.Tensor,
-    batch_sizes: List[int] = [1, 8, 32, 128]
-) -> Dict[str, Any]:
+    batch_sizes: list[int] = [1, 8, 32, 128]  # noqa: B006
+) -> dict[str, Any]:
     """
     Analyze memory access patterns and identify optimization opportunities.
 
-    🎓 EDUCATIONAL: Memory profiling and analysis methodology
     This function demonstrates how to systematically analyze memory usage patterns
     to identify optimization opportunities. It serves as a template for building
     memory optimization analysis tools.
-
-    🔧 ANALYSIS TECHNIQUES:
-    - Memory allocation tracking: Identify allocation hotspots
-    - Access pattern analysis: Classify memory access patterns
-    - Cache behavior modeling: Predict cache efficiency
-    - Bandwidth utilization measurement: Quantify memory bottlenecks
 
     Args:
         model: PyTorch model to analyze
@@ -165,7 +149,6 @@ def analyze_memory_access_patterns(
     }
 
     for batch_size in batch_sizes:
-        # 🔍 STEP 1: Memory usage analysis across batch sizes
         if sample_input.shape[0] == 1:
             # Single sample input - can expand to different batch sizes
             batch_input = sample_input.expand(batch_size, *sample_input.shape[1:])
@@ -178,7 +161,7 @@ def analyze_memory_access_patterns(
         torch.cuda.reset_peak_memory_stats() if torch.cuda.is_available() else None
 
         with torch.no_grad():
-            output = model(batch_input)
+            model(batch_input)
 
         peak_memory = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0
         analysis_results["memory_usage_by_batch"][batch_size] = {
@@ -186,19 +169,16 @@ def analyze_memory_access_patterns(
             "memory_per_sample": peak_memory / batch_size if batch_size > 0 else 0
         }
 
-    # 🔍 STEP 2: Analyze module-level memory patterns
     analysis_results["module_analysis"] = _analyze_module_memory_patterns(model)
 
-    # 🔍 STEP 3: Identify specific optimization opportunities
     analysis_results["optimization_opportunities"] = _identify_memory_optimizations(model, sample_input)
 
-    # 🔍 STEP 4: Bandwidth utilization analysis
     analysis_results["bandwidth_analysis"] = _analyze_memory_bandwidth(model, sample_input)
 
     return analysis_results
 
 
-def _analyze_module_memory_patterns(model: nn.Module) -> Dict[str, Any]:
+def _analyze_module_memory_patterns(model: nn.Module) -> dict[str, Any]:
     """Analyze memory patterns for individual modules."""
     module_patterns = {}
 
@@ -227,13 +207,13 @@ def _analyze_module_memory_patterns(model: nn.Module) -> Dict[str, Any]:
     return module_patterns
 
 
-def _identify_memory_optimizations(model: nn.Module, sample_input: torch.Tensor) -> List[Dict[str, Any]]:
+def _identify_memory_optimizations(model: nn.Module, sample_input: torch.Tensor) -> list[dict[str, Any]]:
     """Identify specific memory optimization opportunities."""
     optimizations = []
 
     # Check for non-contiguous tensor operations
     modules = list(model.named_modules())
-    for i, (name, module) in enumerate(modules):
+    for _unused_i, (name, module) in enumerate(modules):
         if hasattr(module, 'weight') and hasattr(module.weight, 'is_contiguous'):
             if not module.weight.is_contiguous():
                 optimizations.append({
@@ -253,7 +233,6 @@ def _identify_memory_optimizations(model: nn.Module, sample_input: torch.Tensor)
             })
 
     # Check for activation functions that could be fused
-    activation_sequences = []
     for i, (name, module) in enumerate(modules[:-1]):
         next_name, next_module = modules[i + 1]
         if isinstance(module, nn.Linear) and isinstance(next_module, (nn.ReLU, nn.GELU, nn.SiLU)):
@@ -267,7 +246,7 @@ def _identify_memory_optimizations(model: nn.Module, sample_input: torch.Tensor)
     return optimizations
 
 
-def _analyze_memory_bandwidth(model: nn.Module, sample_input: torch.Tensor) -> Dict[str, float]:
+def _analyze_memory_bandwidth(model: nn.Module, sample_input: torch.Tensor) -> dict[str, float]:
     """Analyze memory bandwidth utilization characteristics."""
     # Educational implementation - in practice would use profiling tools
     total_params = sum(p.numel() for p in model.parameters())
@@ -312,15 +291,8 @@ def optimize_tensor_layouts(
     """
     Optimize tensor layouts for improved memory access patterns.
 
-    🎓 EDUCATIONAL: Tensor layout optimization strategies
     Memory layout significantly impacts GPU performance. This function demonstrates
     how different layout strategies can improve cache efficiency and memory bandwidth.
-
-    🔧 LAYOUT OPTIMIZATION TECHNIQUES:
-    - Channels last: Optimize for convolution operations (NHWC vs NCHW)
-    - Contiguous memory: Ensure optimal memory access patterns
-    - Memory format conversion: Match layout to operation requirements
-    - Stride optimization: Align memory access with GPU architecture
 
     Args:
         model: Model to optimize
@@ -333,17 +305,16 @@ def optimize_tensor_layouts(
     optimized_model = model.to(target_device)
 
     if optimization_strategy == "channels_last":
-        # 🚀 OPTIMIZATION: Convert to channels_last format for convolutions
+        #  OPTIMIZATION: Convert to channels_last format for convolutions
         for module in optimized_model.modules():
             if isinstance(module, (nn.Conv2d, nn.BatchNorm2d)):
-                # Educational: channels_last format improves cache locality for 2D convolutions
                 if hasattr(module, 'weight'):
                     module.weight.data = module.weight.data.to(memory_format=torch.channels_last)
                 if hasattr(module, 'bias') and module.bias is not None:
                     module.bias.data = module.bias.data.contiguous()
 
     elif optimization_strategy == "contiguous":
-        # 🚀 OPTIMIZATION: Ensure all parameters are contiguous
+        #  OPTIMIZATION: Ensure all parameters are contiguous
         for param in optimized_model.parameters():
             param.data = param.data.contiguous()
 
@@ -351,28 +322,16 @@ def optimize_tensor_layouts(
 
 
 def minimize_memory_allocations(
-    operations: List[callable],
+    operations: list[Callable],
     input_tensor: torch.Tensor,
     use_inplace: bool = True
 ) -> torch.Tensor:
     """
     Minimize memory allocations through operation optimization.
 
-    🎓 EDUCATIONAL: Memory allocation optimization strategies
     GPU memory allocation/deallocation overhead can be significant, especially
     for small tensors. This function demonstrates techniques to minimize
     memory churn and improve performance.
-
-    🔧 ALLOCATION MINIMIZATION TECHNIQUES:
-    - In-place operations: Reuse existing memory buffers
-    - Pre-allocation: Allocate tensors once and reuse
-    - Memory pooling: Use PyTorch's native memory pool
-    - Buffer reuse: Explicitly manage temporary buffers
-
-    📊 PERFORMANCE IMPACT:
-    - Allocation overhead: Can be 10-50% of total time for small operations
-    - Memory fragmentation: Reduced through careful allocation patterns
-    - Cache efficiency: Improved through memory locality preservation
 
     Args:
         operations: List of operations to apply with minimal allocations
@@ -383,7 +342,7 @@ def minimize_memory_allocations(
         Processed tensor with minimal memory allocations
     """
     if use_inplace:
-        # 🚀 OPTIMIZATION: In-place operation chain
+        #  OPTIMIZATION: In-place operation chain
         result = input_tensor.clone()  # Single allocation
         for op in operations:
             if hasattr(op, '__name__') and 'relu' in op.__name__:
@@ -406,16 +365,10 @@ class MemoryEfficientSequential(nn.Module):
     """
     Memory-efficient sequential module with optimization patterns.
 
-    🎓 EDUCATIONAL: Sequential processing optimization
     Standard nn.Sequential can be memory-inefficient for large models.
     This implementation demonstrates memory optimization techniques for
     sequential neural network architectures.
 
-    🔧 MEMORY OPTIMIZATION FEATURES:
-    - Gradient checkpointing support
-    - In-place operation optimization
-    - Activation memory management
-    - Buffer reuse strategies
     """
 
     def __init__(self, *modules, use_checkpoint: bool = False, checkpoint_segments: int = 1):
@@ -436,14 +389,9 @@ class MemoryEfficientSequential(nn.Module):
         """
         Memory-efficient forward pass with optional checkpointing.
 
-        🔧 MEMORY OPTIMIZATION STRATEGIES:
-        - Gradient checkpointing: Trade compute for memory during backpropagation
-        - Segment processing: Process model in chunks to reduce peak memory
-        - Activation management: Minimize intermediate activation storage
-        - Memory reuse: Reuse activation buffers where possible
         """
         if self.use_checkpoint and self.training:
-            # 🔧 MEMORY OPTIMIZATION: Gradient checkpointing
+            #  MEMORY OPTIMIZATION: Gradient checkpointing
             return self._checkpointed_forward(x)
         else:
             return self._standard_forward(x)
@@ -477,7 +425,6 @@ class AdaptiveMemoryManager:
     """
     Adaptive memory manager for dynamic memory optimization.
 
-    🎓 EDUCATIONAL: Dynamic memory management strategies
     Different models and workloads have different memory characteristics.
     This class demonstrates adaptive strategies that adjust to runtime
     memory patterns for optimal performance.
@@ -491,14 +438,10 @@ class AdaptiveMemoryManager:
             "fragmentation_ratio": 0
         }
 
-    def optimize_for_batch_size(self, model: nn.Module, batch_size: int) -> Dict[str, Any]:
+    def optimize_for_batch_size(self, model: nn.Module, batch_size: int) -> dict[str, Any]:
         """
         Optimize memory strategy based on batch size characteristics.
 
-        🔧 BATCH-AWARE OPTIMIZATION:
-        - Small batches: Minimize allocation overhead
-        - Large batches: Maximize memory reuse
-        - Variable batches: Use adaptive strategies
         """
         if batch_size <= 4:
             # Small batch optimization
@@ -525,7 +468,7 @@ class AdaptiveMemoryManager:
                 "memory_format": torch.channels_last
             }
 
-    def analyze_memory_pressure(self) -> Dict[str, float]:
+    def analyze_memory_pressure(self) -> dict[str, float]:
         """Analyze current memory pressure and recommend optimizations."""
         if torch.cuda.is_available():
             current_memory = torch.cuda.memory_allocated()
@@ -545,20 +488,19 @@ class AdaptiveMemoryManager:
         return {"memory_pressure": 0, "fragmentation_ratio": 0, "optimization_urgency": 0}
 
 
-# 🎓 EDUCATIONAL: Memory optimization utility functions
-def print_memory_analysis(analysis_results: Dict[str, Any]) -> None:
+#  EDUCATIONAL: Memory optimization utility functions
+def print_memory_analysis(analysis_results: dict[str, Any]) -> None:
     """
     Print memory analysis results in a readable format.
 
-    🎓 EDUCATIONAL: Memory optimization reporting
     This demonstrates how to present memory analysis results in a way that's
     actionable for developers optimizing GPU memory usage.
     """
-    print("🔍 Memory Usage Analysis Results\n")
+    print(" Memory Usage Analysis Results\n")
 
     # Memory usage by batch size
     if "memory_usage_by_batch" in analysis_results:
-        print("📊 Memory Usage by Batch Size:")
+        print(" Memory Usage by Batch Size:")
         for batch_size, stats in analysis_results["memory_usage_by_batch"].items():
             print(f"  Batch {batch_size:3d}: {stats['peak_memory_mb']:.1f} MB total, "
                   f"{stats['memory_per_sample']:.1f} MB/sample")
@@ -567,7 +509,7 @@ def print_memory_analysis(analysis_results: Dict[str, Any]) -> None:
     # Optimization opportunities
     if "optimization_opportunities" in analysis_results:
         opportunities = analysis_results["optimization_opportunities"]
-        print(f"🚀 Found {len(opportunities)} Memory Optimization Opportunities:")
+        print(f" Found {len(opportunities)} Memory Optimization Opportunities:")
         for i, opp in enumerate(opportunities, 1):
             print(f"  {i}. {opp.get('type', 'Unknown')}")
             print(f"     Module(s): {opp.get('module', opp.get('modules', 'N/A'))}")
@@ -578,7 +520,7 @@ def print_memory_analysis(analysis_results: Dict[str, Any]) -> None:
     # Bandwidth analysis
     if "bandwidth_analysis" in analysis_results:
         bandwidth = analysis_results["bandwidth_analysis"]
-        print("📈 Memory Bandwidth Analysis:")
+        print(" Memory Bandwidth Analysis:")
         print(f"  Arithmetic intensity: {bandwidth.get('arithmetic_intensity', 0):.2f} FLOP/byte")
         print(f"  Parameter memory: {bandwidth.get('parameter_memory_gb', 0):.2f} GB")
         print(f"  Optimization priority: {bandwidth.get('optimization_priority', 'unknown')}")
@@ -590,11 +532,10 @@ def benchmark_memory_optimizations(
     optimized_model: nn.Module,
     sample_input: torch.Tensor,
     num_iterations: int = 50
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Benchmark memory optimization impact.
 
-    🎓 EDUCATIONAL: Memory optimization validation methodology
     Always measure memory optimization impact to verify that theoretical
     improvements translate to real memory efficiency gains.
     """

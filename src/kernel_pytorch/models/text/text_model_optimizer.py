@@ -17,10 +17,9 @@ Version: 0.4.11
 """
 
 import logging
-import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -60,7 +59,7 @@ class TextModelConfig:
     compile_mode: str = "reduce-overhead"  # "default", "reduce-overhead", "max-autotune"
 
     # Precision settings
-    dtype: Optional[torch.dtype] = None  # Auto-detect if None
+    dtype: torch.dtype | None = None  # Auto-detect if None
     use_amp: bool = True
 
     # Memory settings
@@ -89,7 +88,7 @@ class TextModelOptimizer:
         >>> outputs = model(input_ids, attention_mask=attention_mask)
     """
 
-    def __init__(self, config: Optional[TextModelConfig] = None):
+    def __init__(self, config: TextModelConfig | None = None):
         """
         Initialize the text model optimizer.
 
@@ -128,7 +127,7 @@ class TextModelOptimizer:
 
         # Check for Intel XPU
         try:
-            import intel_extension_for_pytorch as ipex
+            import intel_extension_for_pytorch as ipex  # noqa: F401
             if hasattr(torch, 'xpu') and torch.xpu.is_available():
                 return torch.device("xpu")
         except ImportError:
@@ -158,8 +157,8 @@ class TextModelOptimizer:
 
     def optimize(
         self,
-        model_name_or_model: Union[str, nn.Module],
-        task: Optional[str] = None,
+        model_name_or_model: str | nn.Module,
+        task: str | None = None,
         **kwargs
     ) -> nn.Module:
         """
@@ -214,13 +213,17 @@ class TextModelOptimizer:
     def _load_model(
         self,
         model_name: str,
-        task: Optional[str] = None,
+        task: str | None = None,
         **kwargs
     ) -> nn.Module:
         """Load a model from HuggingFace."""
         try:
-            from transformers import AutoModel, AutoModelForSequenceClassification
-            from transformers import AutoModelForCausalLM, AutoModelForMaskedLM
+            from transformers import (
+                AutoModel,
+                AutoModelForCausalLM,
+                AutoModelForMaskedLM,
+                AutoModelForSequenceClassification,
+            )
 
             # Select model class based on task
             if task == "text-classification" or task == "sequence-classification":
@@ -239,7 +242,7 @@ class TextModelOptimizer:
             raise ImportError(
                 "transformers library not installed. "
                 "Install with: pip install transformers"
-            )
+            ) from None
 
     def _detect_model_type(self, model: nn.Module) -> TextModelType:
         """Detect the type of text model."""
@@ -395,7 +398,7 @@ class TextModelOptimizer:
         """Get the current dtype."""
         return self._dtype
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         """Get information about applied optimizations."""
         return {
             "device": str(self._device),
@@ -422,7 +425,7 @@ class OptimizedBERT(nn.Module):
         model_name: str = "bert-base-uncased",
         task: str = "sequence-classification",
         num_labels: int = 2,
-        config: Optional[TextModelConfig] = None,
+        config: TextModelConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -450,8 +453,8 @@ class OptimizedBERT(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        token_type_ids: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
+        token_type_ids: torch.Tensor | None = None,
         **kwargs
     ):
         """Forward pass through the optimized BERT model."""
@@ -466,7 +469,7 @@ class OptimizedBERT(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
@@ -483,7 +486,7 @@ class OptimizedGPT2(nn.Module):
         self,
         model_name: str = "gpt2",
         task: str = "causal-lm",
-        config: Optional[TextModelConfig] = None,
+        config: TextModelConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -507,7 +510,7 @@ class OptimizedGPT2(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         **kwargs
     ):
         """Forward pass through the optimized GPT-2 model."""
@@ -534,7 +537,7 @@ class OptimizedGPT2(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
@@ -555,7 +558,7 @@ class OptimizedDistilBERT(nn.Module):
         model_name: str = "distilbert-base-uncased",
         task: str = "sequence-classification",
         num_labels: int = 2,
-        config: Optional[TextModelConfig] = None,
+        config: TextModelConfig | None = None,
         **kwargs
     ):
         super().__init__()
@@ -584,7 +587,7 @@ class OptimizedDistilBERT(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         **kwargs
     ):
         """Forward pass through the optimized DistilBERT model."""
@@ -598,13 +601,13 @@ class OptimizedDistilBERT(nn.Module):
     def device(self) -> torch.device:
         return self._device
 
-    def get_optimization_info(self) -> Dict[str, Any]:
+    def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
 
 def create_optimized_text_model(
     model_name: str,
-    task: Optional[str] = None,
+    task: str | None = None,
     optimization_mode: str = "inference",
     **kwargs
 ) -> nn.Module:

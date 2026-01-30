@@ -9,15 +9,16 @@ This module provides the foundation for all managers:
 Version: 0.3.11
 """
 
-import torch
-from typing import Any, Dict, Optional
-from dataclasses import dataclass, field
-from enum import Enum
-from abc import ABC, abstractmethod
-import time
 import gc
 import threading
+import time
 import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+import torch
 
 from ..config import KernelPyTorchConfig
 
@@ -47,7 +48,7 @@ class ManagerContext:
     state: ManagerState
     device: torch.device
     config: KernelPyTorchConfig
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
 
@@ -60,7 +61,7 @@ class BaseManager(ABC):
     Provides lifecycle management, thread-safety, and status reporting.
     """
 
-    def __init__(self, config: KernelPyTorchConfig, context: Optional[ManagerContext] = None):
+    def __init__(self, config: KernelPyTorchConfig, context: ManagerContext | None = None):
         self.config = config
         self.context = context or ManagerContext(
             manager_id=self._generate_id(),
@@ -72,7 +73,7 @@ class BaseManager(ABC):
 
         self._lock = threading.RLock()
         self._initialized = False
-        self._active_operations: Dict[str, Any] = {}
+        self._active_operations: dict[str, Any] = {}
 
         self._initialize()
 
@@ -95,7 +96,7 @@ class BaseManager(ABC):
         """Generate unique manager ID."""
         return f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current manager status."""
         return {
             "manager_id": self.context.manager_id,

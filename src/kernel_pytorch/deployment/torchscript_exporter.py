@@ -29,18 +29,13 @@ Example:
 """
 
 import logging
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union, Callable
+
 import torch
 import torch.nn as nn
 
-from .optimization_metadata import (
-    OptimizationMetadata,
-    ExportFormat,
-    create_metadata
-)
+from .optimization_metadata import OptimizationMetadata, create_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +70,7 @@ class TorchScriptExportConfig:
 
     # Metadata options
     include_metadata: bool = True
-    metadata_path: Optional[str] = None
+    metadata_path: str | None = None
 
     # Save options
     save_extra_files: bool = True
@@ -87,8 +82,8 @@ class TorchScriptExportResult:
     """Result of TorchScript export operation."""
     success: bool = False
     output_path: str = ""
-    metadata_path: Optional[str] = None
-    metadata: Optional[OptimizationMetadata] = None
+    metadata_path: str | None = None
+    metadata: OptimizationMetadata | None = None
 
     # Export details
     export_method: str = "trace"
@@ -96,7 +91,7 @@ class TorchScriptExportResult:
 
     # Validation results
     validated: bool = False
-    validation_error: Optional[float] = None
+    validation_error: float | None = None
     validation_message: str = ""
 
     # Optimization flags
@@ -105,8 +100,8 @@ class TorchScriptExportResult:
     optimized_for_mobile: bool = False
 
     # Warnings and errors
-    warnings: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 class TorchScriptExporter:
@@ -117,7 +112,7 @@ class TorchScriptExporter:
     using either tracing or scripting methods.
     """
 
-    def __init__(self, config: Optional[TorchScriptExportConfig] = None):
+    def __init__(self, config: TorchScriptExportConfig | None = None):
         """
         Initialize TorchScript exporter.
 
@@ -129,9 +124,9 @@ class TorchScriptExporter:
     def export(
         self,
         model: nn.Module,
-        output_path: Union[str, Path],
-        sample_input: Optional[Union[torch.Tensor, Tuple[torch.Tensor, ...]]] = None,
-        method: Optional[str] = None,
+        output_path: str | Path,
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...] | None = None,
+        method: str | None = None,
         optimization_level: str = "balanced",
         backend: str = "auto",
         benchmark: bool = True,
@@ -250,12 +245,12 @@ class TorchScriptExporter:
     def _determine_best_method(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor]
+        sample_input: torch.Tensor | None
     ) -> str:
         """Determine the best export method for a model."""
         # Try scripting first as it's more robust
         try:
-            test_scripted = torch.jit.script(model)
+            torch.jit.script(model)
             return ExportMethod.SCRIPT
         except Exception as script_error:
             logger.debug(f"Scripting not possible: {script_error}")
@@ -280,7 +275,7 @@ class TorchScriptExporter:
     def _export_trace(
         self,
         model: nn.Module,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]]
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...]
     ) -> torch.jit.ScriptModule:
         """Export using torch.jit.trace."""
         with torch.no_grad():
@@ -344,7 +339,7 @@ class TorchScriptExporter:
         self,
         original_model: nn.Module,
         scripted_model: torch.jit.ScriptModule,
-        sample_input: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+        sample_input: torch.Tensor | tuple[torch.Tensor, ...],
         result: TorchScriptExportResult
     ) -> None:
         """Validate exported model against original."""
@@ -387,9 +382,9 @@ class TorchScriptExporter:
 
     def load(
         self,
-        model_path: Union[str, Path],
-        map_location: Optional[Union[str, torch.device]] = None
-    ) -> Tuple[torch.jit.ScriptModule, Optional[OptimizationMetadata]]:
+        model_path: str | Path,
+        map_location: str | torch.device | None = None
+    ) -> tuple[torch.jit.ScriptModule, OptimizationMetadata | None]:
         """
         Load a TorchScript model with its metadata.
 
@@ -430,8 +425,8 @@ class TorchScriptExporter:
 
 def export_to_torchscript(
     model: nn.Module,
-    output_path: Union[str, Path],
-    sample_input: Optional[torch.Tensor] = None,
+    output_path: str | Path,
+    sample_input: torch.Tensor | None = None,
     method: str = "trace",
     optimization_level: str = "balanced",
     **kwargs
@@ -462,9 +457,9 @@ def export_to_torchscript(
 
 
 def load_torchscript(
-    model_path: Union[str, Path],
-    map_location: Optional[Union[str, torch.device]] = None
-) -> Tuple[torch.jit.ScriptModule, Optional[OptimizationMetadata]]:
+    model_path: str | Path,
+    map_location: str | torch.device | None = None
+) -> tuple[torch.jit.ScriptModule, OptimizationMetadata | None]:
     """
     Convenience function to load TorchScript model with metadata.
 

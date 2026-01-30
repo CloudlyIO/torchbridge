@@ -18,12 +18,13 @@ References:
     - PyTorch Distributed: https://pytorch.org/tutorials/intermediate/ddp_tutorial.html
 """
 
+import math
+import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, List, Dict, Any
-import math
-import warnings
 
 try:
     import torch.distributed as dist
@@ -31,14 +32,14 @@ try:
     DISTRIBUTED_AVAILABLE = True
 except ImportError:
     DISTRIBUTED_AVAILABLE = False
-    warnings.warn("PyTorch distributed not available - Ring Attention will use single device fallback")
+    warnings.warn("PyTorch distributed not available - Ring Attention will use single device fallback", stacklevel=2)
 
 try:
     from ..hardware_abstraction.device_coordinator import HardwareAbstractionLayer
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False
-    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination")
+    warnings.warn("Hardware Abstraction Layer not available - using basic device coordination", stacklevel=2)
 
 
 class RingAttentionConfig:
@@ -46,12 +47,12 @@ class RingAttentionConfig:
 
     def __init__(
         self,
-        ring_size: Optional[int] = None,
+        ring_size: int | None = None,
         chunk_size: int = 4096,
         overlap_comm_compute: bool = True,
         use_flash_attention: bool = True,
         enable_checkpointing: bool = False,
-        device_mesh: Optional[DeviceMesh] = None
+        device_mesh: DeviceMesh | None = None
     ):
         self.ring_size = ring_size  # Auto-detect if None
         self.chunk_size = chunk_size
@@ -87,7 +88,7 @@ class RingAttentionLayer(nn.Module):
         d_model: int,
         num_heads: int,
         config: RingAttentionConfig,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -178,7 +179,7 @@ class RingAttentionLayer(nn.Module):
             'value': torch.zeros(attention_buffer_shape, device=self.device, dtype=torch.float16)
         }
 
-    def _ring_communication_step(self, kv_chunk: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _ring_communication_step(self, kv_chunk: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
         Perform one step of ring communication to exchange key-value chunks
 
@@ -261,9 +262,9 @@ class RingAttentionLayer(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = True
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Forward pass of Ring Attention
 
@@ -352,9 +353,9 @@ class RingAttentionLayer(nn.Module):
     def _standard_attention(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = True
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Fallback to standard attention for shorter sequences"""
         batch_size, seq_len, d_model = hidden_states.shape
 
@@ -406,7 +407,7 @@ class RingAttentionBlock(nn.Module):
         d_ff: int,
         config: RingAttentionConfig,
         dropout: float = 0.1,
-        device: Optional[torch.device] = None
+        device: torch.device | None = None
     ):
         super().__init__()
 
@@ -428,7 +429,7 @@ class RingAttentionBlock(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
         causal_mask: bool = True
     ) -> torch.Tensor:
         """Forward pass with residual connections"""
@@ -451,8 +452,8 @@ def create_ring_attention(
     d_model: int,
     num_heads: int,
     max_sequence_length: int = 1_000_000,
-    ring_size: Optional[int] = None,
-    device: Optional[torch.device] = None
+    ring_size: int | None = None,
+    device: torch.device | None = None
 ) -> RingAttentionLayer:
     """
     Factory function to create Ring Attention layer with optimal configuration
@@ -501,7 +502,7 @@ def estimate_memory_usage(
     d_model: int,
     num_heads: int,
     ring_size: int = 1
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Estimate memory usage for Ring Attention
 
@@ -540,7 +541,7 @@ def estimate_memory_usage(
     }
 
 
-def validate_ring_attention_setup(config: RingAttentionConfig) -> Dict[str, Any]:
+def validate_ring_attention_setup(config: RingAttentionConfig) -> dict[str, Any]:
     """
     Validate Ring Attention configuration and system setup
 

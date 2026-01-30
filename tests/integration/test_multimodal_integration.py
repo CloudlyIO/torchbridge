@@ -2,22 +2,17 @@
 
 import pytest
 import torch
-import torch.nn as nn
 
 from kernel_pytorch.models.multimodal import (
     # Base
-    BaseMultiModalOptimizer,
+    CLIPOptimizer,
+    CrossModalAttention,
+    # LLaVA
+    LLaVAOptimizer,
+    ModalityType,
     MultiModalOptimizationConfig,
     MultiModalType,
     OptimizationLevel,
-    ModalityType,
-    CrossModalAttention,
-    count_parameters,
-    estimate_model_memory,
-    # CLIP
-    CLIPOptimizer,
-    # LLaVA
-    LLaVAOptimizer,
     # Whisper
     WhisperOptimizer,
 )

@@ -4,7 +4,7 @@ Tests for Dynamic Shape Bucketing System
 Comprehensive test suite validating the dynamic shape bucketing implementation
 and ensuring 3x performance improvements on variable-size inputs.
 
-🎯 TEST COVERAGE:
+ TEST COVERAGE:
 - Core bucketing functionality and algorithms
 - Hardware-aware optimization strategies
 - Performance validation and benchmarking
@@ -13,26 +13,21 @@ and ensuring 3x performance improvements on variable-size inputs.
 - Edge cases and error handling
 """
 
+
 import pytest
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import time
-import math
-import numpy as np
-from typing import List, Tuple, Dict, Any
-from unittest.mock import patch, MagicMock
 
 from kernel_pytorch.optimizations.patterns.dynamic_shapes import (
-    DynamicShapeBucketing,
-    ShapeBucket,
-    DynamicShapeProfile,
     BucketingStrategy,
-    PaddingStrategy,
+    DynamicShapeBucketing,
     DynamicShapeModule,
-    create_optimal_bucketing_system,
+    DynamicShapeProfile,
+    PaddingStrategy,
+    ShapeBucket,
     benchmark_dynamic_shapes,
-    print_bucketing_analysis
+    create_optimal_bucketing_system,
+    print_bucketing_analysis,
 )
 
 
@@ -248,8 +243,8 @@ class TestDynamicShapeBucketing:
         bucket_id_2 = bucketing.find_optimal_bucket((16, 32))
 
         # Should reuse the same bucket if it can fit
-        bucket_1 = bucketing.buckets[bucket_id_1]
-        bucket_2 = bucketing.buckets[bucket_id_2]
+        bucketing.buckets[bucket_id_1]
+        bucketing.buckets[bucket_id_2]
 
         # They might be the same bucket or different, but should be valid
         assert bucket_id_1 in bucketing.buckets
@@ -729,24 +724,24 @@ class TestIntegrationWithExistingCode:
 
 if __name__ == "__main__":
     # Run specific test functions for quick validation
-    print("🧪 Running Dynamic Shape Bucketing Tests")
+    print(" Running Dynamic Shape Bucketing Tests")
 
     # Test basic functionality
     test_bucket = TestShapeBucket()
     test_bucket.test_shape_bucket_initialization()
     test_bucket.test_efficiency_score_calculation()
-    print("✅ ShapeBucket tests passed")
+    print(" ShapeBucket tests passed")
 
     # Test bucketing system
     test_bucketing = TestDynamicShapeBucketing()
     test_bucketing.test_bucketing_initialization()
     test_bucketing.test_bucket_creation_geometric()
     test_bucketing.test_padding_and_unpadding()
-    print("✅ DynamicShapeBucketing core tests passed")
+    print(" DynamicShapeBucketing core tests passed")
 
     # Test integration
     test_integration = TestIntegrationWithExistingCode()
     test_integration.test_integration_with_autograd()
-    print("✅ Integration tests passed")
+    print(" Integration tests passed")
 
-    print("🎯 All key dynamic shape bucketing tests completed successfully!")
+    print(" All key dynamic shape bucketing tests completed successfully!")

@@ -7,8 +7,6 @@ torch_xla APIs, supporting both old (2.x) and new (2.9+) versions.
 Version: 0.4.2
 """
 
-import warnings
-from typing import Any, Optional
 
 import torch
 
@@ -170,7 +168,7 @@ def is_xla_available() -> bool:
         True if XLA is available and working
     """
     try:
-        import torch_xla
+        import torch_xla  # noqa: F401
         device = get_xla_device()
         return device.type == 'xla'
     except ImportError:
@@ -185,7 +183,7 @@ def is_tpu_device() -> bool:
         True if running on TPU, False otherwise
     """
     try:
-        import torch_xla
+        import torch_xla  # noqa: F401
         import torch_xla.core.xla_model as xm
 
         # Get device using compatibility layer
@@ -211,7 +209,7 @@ def is_tpu_device() -> bool:
 
         # Check if libtpu is available (indicates TPU environment)
         try:
-            from torch_xla._internal import tpu
+            from torch_xla._internal import tpu  # noqa: F401
             return True
         except ImportError:
             pass
@@ -262,7 +260,7 @@ def get_torch_xla_version() -> str:
         return 'not installed'
 
 
-def get_torch_compile_backend() -> Optional[str]:
+def get_torch_compile_backend() -> str | None:
     """
     Get the appropriate torch.compile backend for the installed torch_xla version.
 

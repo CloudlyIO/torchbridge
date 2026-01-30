@@ -5,31 +5,23 @@ This module provides embedding layer implementations optimized for PyTorch compi
 and GPU kernel efficiency, focusing on token embeddings, positional encodings,
 and memory-efficient embedding patterns for large vocabulary models.
 
-🎓 EDUCATIONAL FOCUS:
-- Efficient token embedding lookups optimized for GPU memory hierarchy
-- Positional encoding strategies for transformer architectures
-- Memory-efficient embedding patterns for large vocabulary models
-- Gradient optimization strategies for embedding layers
-
-🔧 OPTIMIZATION TECHNIQUES:
+ OPTIMIZATION TECHNIQUES:
 - GPU-optimized embedding lookup patterns
 - Fused embedding + positional encoding operations
 - Memory bandwidth optimization for large embedding tables
 - Automatic mixed precision compatibility for embedding operations
 """
 
-import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Union, Tuple
 
 
 class OptimizedEmbedding(nn.Module):
     """
     GPU-optimized token embedding layer with enhanced memory efficiency.
 
-    🎓 EDUCATIONAL: Why embedding layers need special GPU optimization
     Standard embedding layers can be memory bandwidth bottlenecks because:
     - Sparse memory access patterns from token lookups
     - Large embedding tables that exceed GPU cache
@@ -37,7 +29,7 @@ class OptimizedEmbedding(nn.Module):
 
     This implementation optimizes for GPU memory hierarchy and access patterns.
 
-    🔧 OPTIMIZATION STRATEGIES:
+     OPTIMIZATION STRATEGIES:
     - Memory layout optimization for GPU cache efficiency
     - Gradient accumulation optimization for sparse updates
     - Mixed precision compatibility for memory efficiency
@@ -48,8 +40,8 @@ class OptimizedEmbedding(nn.Module):
         self,
         vocab_size: int,
         embed_dim: int,
-        padding_idx: Optional[int] = None,
-        max_norm: Optional[float] = None,
+        padding_idx: int | None = None,
+        max_norm: float | None = None,
         scale_grad_by_freq: bool = False,
         sparse: bool = False
     ):
@@ -84,10 +76,6 @@ class OptimizedEmbedding(nn.Module):
         """
         Initialize embedding weights for optimal GPU performance.
 
-        🎓 EDUCATIONAL: Embedding initialization strategies
-        - Normal initialization with proper scaling prevents gradient issues
-        - Padding token embeddings set to zero to avoid bias
-        - Initialization affects automatic mixed precision performance
         """
         # Standard normal initialization scaled by embedding dimension
         nn.init.normal_(self.embedding.weight, mean=0.0, std=self.embed_dim ** -0.5)
@@ -101,13 +89,13 @@ class OptimizedEmbedding(nn.Module):
         """
         Optimized embedding lookup with GPU memory optimization.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Memory access: Optimized lookup patterns for GPU memory coalescing
         - Cache efficiency: Embedding table layout optimized for GPU cache hierarchy
         - Bandwidth utilization: Efficient memory bandwidth usage for sparse lookups
         - Mixed precision: Automatic fp16/bf16 support for memory efficiency
 
-        📊 PERFORMANCE CHARACTERISTICS:
+         PERFORMANCE CHARACTERISTICS:
         - Memory bandwidth: Optimized for GPU memory hierarchy (L1/L2/HBM)
         - Lookup efficiency: Vectorized embedding lookups for batch processing
         - Cache optimization: Access patterns designed for GPU cache reuse
@@ -118,8 +106,7 @@ class OptimizedEmbedding(nn.Module):
         Returns:
             Token embeddings [batch_size, seq_len, embed_dim]
         """
-        # 🚀 OPTIMIZATION: F.embedding for optimized GPU kernel dispatch
-        # Educational: PyTorch's embedding uses optimized sparse lookup kernels
+        #  OPTIMIZATION: F.embedding for optimized GPU kernel dispatch
         return self.embedding(input_ids)
 
 
@@ -127,7 +114,7 @@ class RotaryPositionalEncoding(nn.Module):
     """
     Rotary Positional Encoding (RoPE) optimized for GPU computation.
 
-    🧠 MATHEMATICAL BACKGROUND:
+     MATHEMATICAL BACKGROUND:
     RoPE applies rotation transformations to query and key vectors based on position:
     - Preserves relative positional information in attention computations
     - Enables extrapolation to longer sequences than seen during training
@@ -135,7 +122,7 @@ class RotaryPositionalEncoding(nn.Module):
 
     Used in: GPT-NeoX, PaLM, LLaMA, and other modern language models
 
-    🔧 OPTIMIZATION ADVANTAGES:
+     OPTIMIZATION ADVANTAGES:
     - No learnable parameters (computation-only operation)
     - Excellent vectorization properties for GPU computation
     - Cache-friendly computation patterns
@@ -168,7 +155,6 @@ class RotaryPositionalEncoding(nn.Module):
         """
         Compute inverse frequencies for rotary encoding.
 
-        🎓 EDUCATIONAL: Frequency computation in RoPE
         The frequency for each dimension pair is computed as:
         freq_i = base^(-2i/embed_dim) for i = 0, 1, ..., embed_dim/2 - 1
         """
@@ -195,17 +181,17 @@ class RotaryPositionalEncoding(nn.Module):
         self.register_buffer('cos_cached', cos, persistent=False)
         self.register_buffer('sin_cached', sin, persistent=False)
 
-    def forward(self, x: torch.Tensor, seq_len: Optional[int] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, seq_len: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute rotary positional encoding cos/sin components.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Precomputed frequencies: Avoid recomputation in forward pass
         - Cached cos/sin: Memory-efficient reuse of trigonometric computations
         - Vectorized operations: All computations fully vectorized for GPU
         - Memory coalescing: Access patterns optimized for GPU memory bandwidth
 
-        📊 PERFORMANCE BENEFITS:
+         PERFORMANCE BENEFITS:
         - Computation efficiency: O(1) lookup vs O(seq_len) computation
         - Memory efficiency: Cached values reduce memory bandwidth requirements
         - GPU utilization: Vectorized operations maximize GPU core usage
@@ -224,8 +210,7 @@ class RotaryPositionalEncoding(nn.Module):
         if seq_len > self.max_seq_len:
             self._update_cache(seq_len)
 
-        # 🚀 OPTIMIZATION: Return cached cos/sin values
-        # Educational: Precomputed values eliminate trigonometric computation overhead
+        #  OPTIMIZATION: Return cached cos/sin values
         return self.cos_cached[:seq_len], self.sin_cached[:seq_len]
 
     @staticmethod
@@ -233,7 +218,7 @@ class RotaryPositionalEncoding(nn.Module):
         """
         Apply rotary positional encoding to input tensor.
 
-        🔧 ROTARY ENCODING COMPUTATION:
+         ROTARY ENCODING COMPUTATION:
         For each position, applies rotation matrix to adjacent dimension pairs:
         [x_0, x_1] -> [x_0*cos - x_1*sin, x_1*cos + x_0*sin]
 
@@ -247,15 +232,11 @@ class RotaryPositionalEncoding(nn.Module):
         Returns:
             Tensor with rotary positional encoding applied
         """
-        # 🔧 STEP 1: Split tensor into pairs for rotation
         x1, x2 = x.chunk(2, dim=-1)
 
-        # 🚀 STEP 2: Apply rotation transformation
-        # Educational: Vectorized rotation operation optimized for GPU
         rotated_x1 = x1 * cos - x2 * sin
         rotated_x2 = x2 * cos + x1 * sin
 
-        # 🔧 STEP 3: Concatenate rotated pairs
         return torch.cat([rotated_x1, rotated_x2], dim=-1)
 
 
@@ -263,7 +244,6 @@ class LearnablePositionalEncoding(nn.Module):
     """
     Learnable positional encoding optimized for GPU training efficiency.
 
-    🎓 EDUCATIONAL: Learnable vs Fixed positional encoding trade-offs
     Learnable positional encodings:
     - Can adapt to specific tasks and datasets
     - Require additional parameters and memory
@@ -271,7 +251,7 @@ class LearnablePositionalEncoding(nn.Module):
 
     This implementation optimizes learnable encodings for GPU efficiency.
 
-    🔧 OPTIMIZATION STRATEGIES:
+     OPTIMIZATION STRATEGIES:
     - Parameter initialization for stable gradient flow
     - Memory-efficient encoding addition
     - Dropout integration for regularization
@@ -312,9 +292,6 @@ class LearnablePositionalEncoding(nn.Module):
         """
         Initialize positional embeddings for stable training.
 
-        🎓 EDUCATIONAL: Positional embedding initialization
-        - Small random initialization prevents overwhelming token embeddings
-        - Proper scaling ensures stable gradient flow during training
         """
         nn.init.normal_(self.pos_embedding, mean=0.0, std=0.02)
 
@@ -322,13 +299,13 @@ class LearnablePositionalEncoding(nn.Module):
         """
         Add learnable positional encoding to token embeddings.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Memory access: Optimized for GPU memory coalescing
         - Broadcasting: Efficient position encoding addition
         - Dropout: Applied efficiently without additional memory allocation
         - Extrapolation: Handles sequences longer than max_seq_len gracefully
 
-        📊 PERFORMANCE CHARACTERISTICS:
+         PERFORMANCE CHARACTERISTICS:
         - Memory efficiency: Minimal additional memory overhead
         - Computation: Simple addition operation with optimal GPU utilization
         - Regularization: Integrated dropout for improved generalization
@@ -343,16 +320,15 @@ class LearnablePositionalEncoding(nn.Module):
 
         # Handle sequences longer than max_seq_len
         if seq_len <= self.max_seq_len:
-            # 🚀 OPTIMIZATION: Direct indexing for cached positions
+            #  OPTIMIZATION: Direct indexing for cached positions
             pos_encoding = self.pos_embedding[:seq_len]
         else:
-            # 🔧 EXTRAPOLATION: Interpolation for longer sequences
-            # Educational: Simple strategy for handling longer sequences
+            #  EXTRAPOLATION: Interpolation for longer sequences
             indices = torch.linspace(0, self.max_seq_len - 1, seq_len,
                                    device=token_embeddings.device, dtype=torch.long)
             pos_encoding = self.pos_embedding[indices]
 
-        # 🚀 OPTIMIZATION: Broadcasting addition (very efficient on GPU)
+        #  OPTIMIZATION: Broadcasting addition (very efficient on GPU)
         combined_embeddings = token_embeddings + pos_encoding
 
         # Apply dropout if configured
@@ -366,13 +342,12 @@ class FusedTokenPositionalEmbedding(nn.Module):
     """
     Fused token and positional embedding for maximum GPU efficiency.
 
-    🎓 EDUCATIONAL: Fusion opportunities in embedding layers
     Combining token lookup and positional encoding addition can be optimized:
     - Reduced memory bandwidth from fewer separate operations
     - Better GPU cache utilization from combined access patterns
     - Opportunity for torch.compile optimization
 
-    🔧 FUSION OPTIMIZATION BENEFITS:
+     FUSION OPTIMIZATION BENEFITS:
     - Memory bandwidth: Reduced memory traffic from combined operations
     - Cache efficiency: Better GPU cache utilization patterns
     - Kernel fusion: torch.compile can optimize the entire sequence
@@ -383,7 +358,7 @@ class FusedTokenPositionalEmbedding(nn.Module):
         vocab_size: int,
         embed_dim: int,
         max_seq_len: int = 2048,
-        padding_idx: Optional[int] = None,
+        padding_idx: int | None = None,
         dropout: float = 0.1,
         pos_encoding_type: str = 'learnable'
     ):
@@ -429,17 +404,17 @@ class FusedTokenPositionalEmbedding(nn.Module):
         else:
             self.dropout_layer = None
 
-    def forward(self, input_ids: torch.Tensor) -> Union[torch.Tensor, Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]]:
+    def forward(self, input_ids: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         """
         Fused token and positional embedding forward pass.
 
-        🔧 FUSION OPTIMIZATION DETAILS:
+         FUSION OPTIMIZATION DETAILS:
         - Combined operations: Token lookup + positional encoding in sequence
         - Memory efficiency: Minimal intermediate tensor allocations
         - torch.compile compatibility: Designed for automatic optimization
         - Cache optimization: Access patterns optimized for GPU memory hierarchy
 
-        📊 FUSION PERFORMANCE BENEFITS:
+         FUSION PERFORMANCE BENEFITS:
         - Memory bandwidth: ~30% reduction from combined operations
         - GPU utilization: Better arithmetic intensity through operation combining
         - Latency: Reduced kernel dispatch overhead
@@ -451,11 +426,9 @@ class FusedTokenPositionalEmbedding(nn.Module):
             For learnable: Combined embeddings [batch_size, seq_len, embed_dim]
             For RoPE: (token_embeddings, (cos, sin)) for separate RoPE application
         """
-        # 🚀 STEP 1: Token embedding lookup
         token_embeddings = self.token_embedding(input_ids)
 
         if self.pos_encoding_type == 'learnable':
-            # 🔥 STEP 2: Add learnable positional encoding (fusion opportunity)
             combined_embeddings = self.pos_encoding(token_embeddings)
 
             # Apply dropout if configured
@@ -465,12 +438,13 @@ class FusedTokenPositionalEmbedding(nn.Module):
             return combined_embeddings
 
         elif self.pos_encoding_type == 'rope':
-            # 🔧 STEP 2: Compute RoPE components (applied separately in attention)
             cos, sin = self.pos_encoding(token_embeddings)
             return token_embeddings, (cos, sin)
 
+        return token_embeddings
 
-# 🎓 EDUCATIONAL: Factory function for creating optimized embeddings
+
+# Factory function for creating optimized embeddings
 def create_optimized_embedding(
     embedding_type: str,
     vocab_size: int,
@@ -480,7 +454,6 @@ def create_optimized_embedding(
     """
     Factory function for creating optimized embedding layers.
 
-    🎓 EDUCATIONAL: Choosing the right embedding strategy
     Different embedding strategies optimize differently based on model requirements:
     - Token-only: Minimal memory, requires separate positional encoding
     - Fused: Better GPU utilization, convenient for standard transformers
@@ -509,7 +482,7 @@ def create_optimized_embedding(
         raise ValueError(f"Unsupported embedding type: {embedding_type}")
 
 
-# 🔧 OPTIMIZATION: Pre-compiled embedding functions for common patterns
+#  OPTIMIZATION: Pre-compiled embedding functions for common patterns
 @torch.compile
 def compiled_token_embedding_lookup(input_ids: torch.Tensor, embedding_weight: torch.Tensor) -> torch.Tensor:
     """Pre-compiled token embedding lookup for maximum performance."""
@@ -525,7 +498,6 @@ def compiled_fused_embedding(
     """
     Pre-compiled fused token + positional embedding for maximum performance.
 
-    🎓 EDUCATIONAL: Function-level compilation for embedding patterns
     This demonstrates how to create optimized embedding functions that
     torch.compile can heavily optimize for repeated usage patterns.
     """

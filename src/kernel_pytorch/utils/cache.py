@@ -9,9 +9,9 @@ Consolidated from:
 - backends/tpu/cache_utils.py
 """
 
-from collections import OrderedDict
-from typing import TypeVar, Generic, Optional, Dict, Any
 import logging
+from collections import OrderedDict
+from typing import Any, Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class LRUCache(Generic[K, V]):
 
         logger.debug("LRU Cache initialized: max_size=%d, stats=%s", max_size, enable_stats)
 
-    def get(self, key: K) -> Optional[V]:
+    def get(self, key: K) -> V | None:
         """
         Get value from cache.
 
@@ -135,7 +135,7 @@ class LRUCache(Generic[K, V]):
         """Return cache items."""
         return self._cache.items()
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 
@@ -155,7 +155,7 @@ class LRUCache(Generic[K, V]):
             "utilization": len(self._cache) / self._max_size if self._max_size > 0 else 0.0
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Alias for stats() for backward compatibility."""
         return self.stats()
 
@@ -207,7 +207,7 @@ class TTLCache(Generic[K, V]):
         self._ttl = ttl_seconds
         self._time_fn = time.time
 
-    def get(self, key: K) -> Optional[V]:
+    def get(self, key: K) -> V | None:
         """Get value from cache if not expired."""
         if key in self._cache:
             value, timestamp = self._cache[key]

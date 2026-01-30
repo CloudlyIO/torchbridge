@@ -1,10 +1,9 @@
 """Tests for the kpt-profile CLI command."""
 
 import json
+
 import pytest
-import tempfile
 import torch
-from pathlib import Path
 
 from kernel_pytorch.cli.profile import ProfileCommand
 

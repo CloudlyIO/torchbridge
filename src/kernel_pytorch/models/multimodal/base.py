@@ -8,7 +8,8 @@ including CLIP, LLaVA, and Whisper.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any, List, Tuple, Union
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -46,7 +47,7 @@ class MultiModalOptimizationConfig:
     optimization_level: OptimizationLevel = OptimizationLevel.O2
 
     # Modalities
-    modalities: List[ModalityType] = None
+    modalities: list[ModalityType] = None
 
     # Inference optimization
     batch_size: int = 1
@@ -61,7 +62,7 @@ class MultiModalOptimizationConfig:
     # Memory optimization
     enable_gradient_checkpointing: bool = False
     enable_attention_slicing: bool = False
-    attention_slice_size: Optional[int] = None
+    attention_slice_size: int | None = None
 
     # Precision
     use_fp16: bool = False
@@ -130,7 +131,7 @@ class MultiModalOptimizationConfig:
 class BaseMultiModalOptimizer(ABC):
     """Abstract base class for multi-modal model optimizers."""
 
-    def __init__(self, config: Optional[MultiModalOptimizationConfig] = None):
+    def __init__(self, config: MultiModalOptimizationConfig | None = None):
         """Initialize multi-modal optimizer.
 
         Args:
@@ -138,10 +139,10 @@ class BaseMultiModalOptimizer(ABC):
         """
         self.config = config or MultiModalOptimizationConfig()
         self.device = torch.device(self.config.device)
-        self.optimizations_applied: List[str] = []
+        self.optimizations_applied: list[str] = []
 
     @abstractmethod
-    def optimize(self, model: Union[nn.Module, Any]) -> Union[nn.Module, Any]:
+    def optimize(self, model: nn.Module | Any) -> nn.Module | Any:
         """Optimize the model.
 
         Args:
@@ -238,7 +239,7 @@ class BaseMultiModalOptimizer(ABC):
 
         return model
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """Get summary of applied optimizations.
 
         Returns:
@@ -266,7 +267,7 @@ class BaseMultiModalOptimizer(ABC):
             return "fp32"
 
 
-def count_parameters(model: nn.Module) -> Tuple[int, int]:
+def count_parameters(model: nn.Module) -> tuple[int, int]:
     """Count total and trainable parameters.
 
     Args:
@@ -283,9 +284,9 @@ def count_parameters(model: nn.Module) -> Tuple[int, int]:
 def estimate_model_memory(
     model: nn.Module,
     batch_size: int = 1,
-    input_sizes: Dict[str, Tuple[int, ...]] = None,
+    input_sizes: dict[str, tuple[int, ...]] = None,
     precision: str = "fp32"
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Estimate model memory requirements.
 
     Args:
@@ -372,7 +373,7 @@ class CrossModalAttention(nn.Module):
         self,
         x_query: torch.Tensor,
         x_context: torch.Tensor,
-        mask: Optional[torch.Tensor] = None
+        mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Forward pass.
 

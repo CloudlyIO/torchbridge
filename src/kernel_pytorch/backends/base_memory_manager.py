@@ -8,13 +8,13 @@ Backends (NVIDIA, AMD, TPU) inherit from this base and implement
 device-specific optimizations while maintaining a consistent API.
 """
 
-import logging
 import gc
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Tuple, TypeVar
-from dataclasses import dataclass, field
-from collections import defaultdict
+import logging
 import time
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn
@@ -28,11 +28,11 @@ ConfigT = TypeVar('ConfigT')
 @dataclass
 class MemoryAllocationInfo:
     """Information about a memory allocation."""
-    shape: Tuple[int, ...]
+    shape: tuple[int, ...]
     dtype: torch.dtype
     size_bytes: int
     timestamp: float = field(default_factory=time.time)
-    pool_id: Optional[str] = None
+    pool_id: str | None = None
     purpose: str = "unknown"
 
 
@@ -74,7 +74,7 @@ class BaseMemoryStats:
             return 0.0
         return self.allocated_bytes / self.total_bytes
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'allocated_mb': self.allocated_mb,
@@ -122,10 +122,10 @@ class BaseMemoryManager(ABC):
         self._device = self._get_device()
 
         # Memory pool management
-        self._memory_pools: Dict[str, List[torch.Tensor]] = defaultdict(list)
+        self._memory_pools: dict[str, list[torch.Tensor]] = defaultdict(list)
 
         # Allocation tracking
-        self._allocation_history: List[MemoryAllocationInfo] = []
+        self._allocation_history: list[MemoryAllocationInfo] = []
         self._peak_memory_bytes: int = 0
 
         # Statistics
@@ -192,10 +192,10 @@ class BaseMemoryManager(ABC):
 
     def allocate_tensor(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
-        pool_id: Optional[str] = None,
+        pool_id: str | None = None,
         purpose: str = "unknown"
     ) -> torch.Tensor:
         """
@@ -264,7 +264,7 @@ class BaseMemoryManager(ABC):
             self._memory_pools[pool_id].append(tensor)
             self._stats['total_frees'] += 1
 
-    def clear_pool(self, pool_id: Optional[str] = None) -> None:
+    def clear_pool(self, pool_id: str | None = None) -> None:
         """
         Clear memory pool(s).
 
@@ -341,7 +341,7 @@ class BaseMemoryManager(ABC):
         free_bytes = self._get_total_memory_bytes() - self._get_reserved_memory_bytes()
         return free_bytes >= required_bytes
 
-    def estimate_tensor_size(self, shape: Tuple[int, ...], dtype: torch.dtype) -> int:
+    def estimate_tensor_size(self, shape: tuple[int, ...], dtype: torch.dtype) -> int:
         """
         Estimate tensor size in bytes.
 
@@ -359,7 +359,7 @@ class BaseMemoryManager(ABC):
         dtype_size = torch.tensor([], dtype=dtype).element_size()
         return num_elements * dtype_size
 
-    def get_pool_stats(self, pool_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_pool_stats(self, pool_id: str | None = None) -> dict[str, Any]:
         """
         Get statistics for memory pool(s).
 
@@ -392,7 +392,7 @@ class BaseMemoryManager(ABC):
                 'stats': self._stats.copy()
             }
 
-    def optimize_model_memory(self, model: nn.Module) -> Dict[str, Any]:
+    def optimize_model_memory(self, model: nn.Module) -> dict[str, Any]:
         """
         Analyze model memory usage.
 

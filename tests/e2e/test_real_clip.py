@@ -18,14 +18,12 @@ Success Criteria:
 
 import pytest
 import torch
-import torch.nn.functional as F
 
 from .conftest import (
-    requires_transformers,
-    requires_cuda,
-    benchmark_function,
-    assert_speedup,
     assert_output_close,
+    benchmark_function,
+    requires_cuda,
+    requires_transformers,
 )
 
 
@@ -97,7 +95,11 @@ class TestRealCLIPOptimization:
 
     def test_clip_optimization_speedup(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP optimization produces speedup."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
 
@@ -147,7 +149,7 @@ class TestRealCLIPOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nCLIP Optimization Results:")
+        print("\nCLIP Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -157,7 +159,11 @@ class TestRealCLIPOptimization:
 
     def test_clip_embedding_correctness(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP embeddings match after optimization."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
 
@@ -209,7 +215,11 @@ class TestRealCLIPOptimization:
 
     def test_clip_similarity_ranking_preserved(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP similarity ranking is preserved after optimization."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
 
@@ -269,7 +279,11 @@ class TestCLIPEncoderOptimization:
 
     def test_clip_image_encoder_speedup(self, clip_model_and_processor, sample_pil_images, e2e_device):
         """Test CLIP image encoder optimization speedup."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
 
@@ -307,14 +321,18 @@ class TestCLIPEncoderOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nCLIP Image Encoder Speedup:")
+        print("\nCLIP Image Encoder Speedup:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
 
     def test_clip_text_encoder_speedup(self, clip_model_and_processor, e2e_device):
         """Test CLIP text encoder optimization speedup."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
 
@@ -360,7 +378,7 @@ class TestCLIPEncoderOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nCLIP Text Encoder Speedup:")
+        print("\nCLIP Text Encoder Speedup:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -376,7 +394,11 @@ class TestCLIPCUDAOptimizations:
 
     def test_clip_fp16_optimization(self, clip_model_and_processor, sample_pil_images):
         """Test CLIP FP16 optimization on CUDA."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
         device = torch.device("cuda")
@@ -424,7 +446,7 @@ class TestCLIPCUDAOptimizations:
 
         speedup = fp32_result.mean_time_ms / fp16_result.mean_time_ms
 
-        print(f"\nCLIP FP16 vs FP32:")
+        print("\nCLIP FP16 vs FP32:")
         print(f"  FP32: {fp32_result.mean_time_ms:.2f}ms")
         print(f"  FP16: {fp16_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -434,9 +456,14 @@ class TestCLIPCUDAOptimizations:
 
     def test_clip_batch_throughput(self, clip_model_and_processor, e2e_device):
         """Test CLIP batch throughput on CUDA."""
-        from kernel_pytorch.models.multimodal import CLIPOptimizer, MultiModalOptimizationConfig, OptimizationLevel
-        from PIL import Image
         import numpy as np
+        from PIL import Image
+
+        from kernel_pytorch.models.multimodal import (
+            CLIPOptimizer,
+            MultiModalOptimizationConfig,
+            OptimizationLevel,
+        )
 
         model, processor = clip_model_and_processor
         device = torch.device("cuda")
@@ -477,7 +504,7 @@ class TestCLIPCUDAOptimizations:
         # Calculate throughput
         pairs_per_second = (batch_size * 1000) / result.mean_time_ms
 
-        print(f"\nCLIP Batch Throughput:")
+        print("\nCLIP Batch Throughput:")
         print(f"  Batch size: {batch_size}")
         print(f"  Latency: {result.mean_time_ms:.2f}ms")
         print(f"  Throughput: {pairs_per_second:.1f} image-text pairs/sec")

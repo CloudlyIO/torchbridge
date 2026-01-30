@@ -7,14 +7,13 @@ core functionality works before comprehensive test updates.
 
 import pytest
 import torch
-import torch.nn as nn
 
 from kernel_pytorch.attention import (
     AttentionConfig,
     AttentionPatterns,
-    FP8AttentionConfig,
     FlashAttention3,
-    create_attention
+    FP8AttentionConfig,
+    create_attention,
 )
 
 

@@ -19,19 +19,17 @@ Version: 0.3.7
 """
 
 import logging
-from typing import Optional, Any
+from typing import Any
 
 from kernel_pytorch.backends.base_exceptions import (
     BackendError,
-    DeviceNotAvailableError,
-    MemoryError,
-    MemoryAllocationError,
-    CompilationError,
-    KernelCompilationError,
-    KernelError,
-    OptimizationError,
     ConfigurationError,
     DeviceError,
+    DeviceNotAvailableError,
+    KernelCompilationError,
+    KernelError,
+    MemoryError,
+    OptimizationError,
     raise_or_warn,
 )
 

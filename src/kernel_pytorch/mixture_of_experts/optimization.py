@@ -8,12 +8,13 @@ Optimization techniques for Mixture of Experts:
 - Memory-efficient expert switching
 """
 
-import torch
-import torch.nn as nn
-import torch.distributed as dist
-from typing import Dict, List, Optional, Tuple, Any
 import math
 import warnings
+from typing import Any
+
+import torch
+import torch.distributed as dist
+import torch.nn as nn
 
 
 class LoadBalancer:
@@ -42,8 +43,8 @@ class LoadBalancer:
         self,
         router_probs: torch.Tensor,
         num_tokens: int,
-        expert_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        expert_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         """
         Compute capacity information for experts
 
@@ -106,7 +107,7 @@ class LoadBalancer:
         self,
         router_probs: torch.Tensor,
         expert_indices: torch.Tensor,
-        mask: Optional[torch.Tensor] = None
+        mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Compute load balancing loss
@@ -132,7 +133,7 @@ class LoadBalancer:
         self,
         router_probs: torch.Tensor,
         expert_indices: torch.Tensor,
-        mask: Optional[torch.Tensor] = None
+        mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Switch Transformer load balancing loss"""
         num_tokens = router_probs.size(0)
@@ -163,7 +164,7 @@ class LoadBalancer:
         self,
         router_probs: torch.Tensor,
         expert_indices: torch.Tensor,
-        mask: Optional[torch.Tensor] = None
+        mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """GShard-style load balancing loss"""
         if mask is not None:
@@ -181,7 +182,7 @@ class LoadBalancer:
     def _entropy_load_balance_loss(
         self,
         router_probs: torch.Tensor,
-        mask: Optional[torch.Tensor] = None
+        mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Entropy-based load balancing loss"""
         if mask is not None:
@@ -203,7 +204,7 @@ class LoadBalancer:
         self,
         router_probs: torch.Tensor,
         expert_indices: torch.Tensor
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute expert balance metrics for monitoring"""
         # Assignment distribution
         assignment_counts = torch.zeros(self.num_experts, device=router_probs.device)
@@ -240,7 +241,7 @@ class ExpertParallelism:
         self,
         num_experts: int,
         experts: nn.ModuleList,
-        expert_parallel_size: Optional[int] = None,
+        expert_parallel_size: int | None = None,
         all_to_all_communication: bool = True
     ):
         self.num_experts = num_experts
@@ -276,7 +277,7 @@ class ExpertParallelism:
         tokens: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """
         Forward pass with expert parallelism
@@ -306,7 +307,7 @@ class ExpertParallelism:
         tokens: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Process experts locally (single device)"""
         num_tokens, hidden_size = tokens.shape
@@ -349,7 +350,7 @@ class ExpertParallelism:
         tokens: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Process experts in distributed setting"""
         if not self.all_to_all_communication:
@@ -368,7 +369,7 @@ class ExpertParallelism:
         tokens: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Process only local experts in distributed setting"""
         num_tokens, hidden_size = tokens.shape
@@ -414,7 +415,7 @@ class ExpertParallelism:
         tokens: torch.Tensor,
         expert_indices: torch.Tensor,
         expert_weights: torch.Tensor,
-        capacity_info: Dict[str, torch.Tensor]
+        capacity_info: dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Process experts with all-to-all communication"""
         # This is a simplified version - full implementation would require
@@ -422,7 +423,8 @@ class ExpertParallelism:
 
         warnings.warn(
             "All-to-all expert parallelism not fully implemented. "
-            "Using local expert processing."
+            "Using local expert processing.",
+        stacklevel=2,
         )
 
         return self._process_local_experts_distributed(
@@ -464,7 +466,7 @@ class ExpertScheduler:
         expert_utilization: torch.Tensor,
         load_balance_loss: torch.Tensor,
         total_tokens_processed: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Update scheduling based on current metrics
 
@@ -506,7 +508,7 @@ class ExpertScheduler:
 
         return scheduling_info
 
-    def _adapt_capacity_factors(self) -> List[float]:
+    def _adapt_capacity_factors(self) -> list[float]:
         """Adapt capacity factors based on utilization history"""
         # Compute average utilization over recent history
         recent_utilization = torch.stack(self.expert_utilization_history[-100:])  # Last 100 steps
@@ -535,11 +537,11 @@ class ExpertScheduler:
 
         return new_capacity_factors
 
-    def get_current_capacity_factors(self) -> List[float]:
+    def get_current_capacity_factors(self) -> list[float]:
         """Get current capacity factors"""
         return self.current_capacity_factors.copy()
 
-    def get_utilization_stats(self) -> Dict[str, Any]:
+    def get_utilization_stats(self) -> dict[str, Any]:
         """Get utilization statistics"""
         if not self.expert_utilization_history:
             return {'error': 'No utilization history available'}
@@ -586,7 +588,7 @@ class MemoryEfficientSwitching:
         self,
         experts: nn.ModuleList,
         current_step: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Apply memory optimizations to experts
 
@@ -624,7 +626,7 @@ class MemoryEfficientSwitching:
         self,
         experts: nn.ModuleList,
         current_step: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply expert offloading based on usage patterns"""
         # Simple LRU-based offloading strategy
         usage_threshold = 100  # Steps since last use
@@ -668,7 +670,7 @@ class MemoryEfficientSwitching:
                 if expert_idx in self.offloaded_experts:
                     self.offloaded_experts.remove(expert_idx)
 
-    def get_memory_stats(self, experts: nn.ModuleList) -> Dict[str, Any]:
+    def get_memory_stats(self, experts: nn.ModuleList) -> dict[str, Any]:
         """Get memory usage statistics"""
         total_params = 0
         offloaded_params = 0

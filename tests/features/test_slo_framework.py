@@ -10,8 +10,6 @@ Tests cover:
 - Recommendations generation
 """
 
-import time
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -20,11 +18,9 @@ from kernel_pytorch.monitoring.slo_framework import (
     ComplianceReport,
     ComplianceStatus,
     SLICollector,
-    SLIMeasurement,
     SLIType,
     SLOConfig,
     SLOManager,
-    SLOStatus,
     create_slo_manager,
 )
 

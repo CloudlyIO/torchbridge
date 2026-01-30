@@ -5,14 +5,13 @@ Automatically generates comprehensive API documentation from the clean package
 structure, leveraging type hints and docstrings.
 """
 
-import inspect
 import importlib
-import ast
-from typing import Dict, List, Set, Tuple, Optional, Any, Type
-from dataclasses import dataclass
-from pathlib import Path
+import inspect
 import json
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -23,10 +22,10 @@ class APIDocItem:
     signature: str
     docstring: str
     module_path: str
-    parameters: List[Dict[str, Any]]
+    parameters: list[dict[str, Any]]
     return_type: str
-    examples: List[str]
-    deprecation_info: Optional[str] = None
+    examples: list[str]
+    deprecation_info: str | None = None
 
 
 class DocumentationGenerator:
@@ -39,10 +38,10 @@ class DocumentationGenerator:
 
     def __init__(self, package_name: str = "kernel_pytorch"):
         self.package_name = package_name
-        self.doc_items: List[APIDocItem] = []
-        self.module_hierarchy: Dict[str, List[str]] = {}
+        self.doc_items: list[APIDocItem] = []
+        self.module_hierarchy: dict[str, list[str]] = {}
 
-    def generate_full_documentation(self) -> Dict[str, Any]:
+    def generate_full_documentation(self) -> dict[str, Any]:
         """
         Generate complete documentation for the package.
 
@@ -60,7 +59,7 @@ class DocumentationGenerator:
         # Organize documentation
         return self._organize_documentation()
 
-    def _discover_modules(self) -> List[str]:
+    def _discover_modules(self) -> list[str]:
         """Discover all modules in the package."""
         try:
             package = importlib.import_module(self.package_name)
@@ -113,7 +112,7 @@ class DocumentationGenerator:
         except ImportError as e:
             print(f"Warning: Could not import {module_name}: {e}")
 
-    def _process_class(self, cls: Type, module_name: str) -> None:
+    def _process_class(self, cls: type, module_name: str) -> None:
         """Process a class to extract documentation."""
         class_doc = self._extract_api_doc_item(cls, "class", module_name)
         self.doc_items.append(class_doc)
@@ -134,7 +133,7 @@ class DocumentationGenerator:
         obj: Any,
         obj_type: str,
         module_name: str,
-        parent_class: Optional[str] = None
+        parent_class: str | None = None
     ) -> APIDocItem:
         """Extract documentation for an API object."""
         name = obj.__name__
@@ -168,7 +167,7 @@ class DocumentationGenerator:
             deprecation_info=deprecation_info
         )
 
-    def _extract_type_info(self, obj: Any) -> Tuple[List[Dict[str, Any]], str]:
+    def _extract_type_info(self, obj: Any) -> tuple[list[dict[str, Any]], str]:
         """Extract parameter and return type information."""
         try:
             sig = inspect.signature(obj)
@@ -190,7 +189,7 @@ class DocumentationGenerator:
         except (ValueError, TypeError):
             return [], "Any"
 
-    def _check_deprecation(self, obj: Any, module_name: str) -> Optional[str]:
+    def _check_deprecation(self, obj: Any, module_name: str) -> str | None:
         """Check if an object or its module is deprecated."""
         # Check for deprecated modules from Phase 2 refactoring
         deprecated_modules = [
@@ -206,7 +205,7 @@ class DocumentationGenerator:
 
         return None
 
-    def _extract_examples(self, docstring: str) -> List[str]:
+    def _extract_examples(self, docstring: str) -> list[str]:
         """Extract code examples from docstring."""
         examples = []
         lines = docstring.split('\n')
@@ -230,7 +229,7 @@ class DocumentationGenerator:
 
         return examples
 
-    def _organize_documentation(self) -> Dict[str, Any]:
+    def _organize_documentation(self) -> dict[str, Any]:
         """Organize documentation into structured format."""
         organized = {
             "package_info": {
@@ -283,7 +282,7 @@ class DocumentationGenerator:
 
         return organized
 
-    def _generate_migration_guide(self) -> Dict[str, str]:
+    def _generate_migration_guide(self) -> dict[str, str]:
         """Generate migration guide for deprecated APIs."""
         from .deprecation_manager import DeprecationManager
 
@@ -311,9 +310,9 @@ class DocumentationGenerator:
         # Generate migration guide
         self._write_migration_guide_md(docs["migration_guide"], output_dir / "MIGRATION_GUIDE.md")
 
-        print(f"📚 Documentation generated in {output_dir}")
+        print(f" Documentation generated in {output_dir}")
 
-    def _write_api_reference_md(self, docs: Dict[str, Any], output_file: Path) -> None:
+    def _write_api_reference_md(self, docs: dict[str, Any], output_file: Path) -> None:
         """Write main API reference markdown file."""
         content = f"""# {docs['package_info']['name']} API Reference
 
@@ -345,7 +344,7 @@ Total API items: {docs['package_info']['total_items']}
 
         output_file.write_text(content)
 
-    def _write_module_md(self, module_name: str, module_info: Dict[str, Any], output_file: Path) -> None:
+    def _write_module_md(self, module_name: str, module_info: dict[str, Any], output_file: Path) -> None:
         """Write module-specific markdown documentation."""
         clean_name = module_name.replace(self.package_name + ".", "")
 
@@ -383,12 +382,12 @@ Total API items: {docs['package_info']['total_items']}
 
         output_file.write_text(content)
 
-    def _write_migration_guide_md(self, migration_guide: Dict[str, str], output_file: Path) -> None:
+    def _write_migration_guide_md(self, migration_guide: dict[str, str], output_file: Path) -> None:
         """Write migration guide markdown file."""
         content = "# Phase 2 Migration Guide\n\n"
         content += "This guide helps migrate from deprecated modules to the new refactored structure.\n\n"
 
-        for module_name, guide_text in migration_guide.items():
+        for _module_name, guide_text in migration_guide.items():
             content += guide_text + "\n\n"
 
         output_file.write_text(content)
@@ -417,10 +416,10 @@ def generate_package_documentation(package_name: str = "kernel_pytorch", output_
     # Generate markdown documentation
     generator.generate_markdown_docs(output_path)
 
-    print(f"✅ Documentation generated successfully in {output_path}")
+    print(f" Documentation generated successfully in {output_path}")
 
 
 if __name__ == "__main__":
-    print("📚 Generating package documentation...")
+    print(" Generating package documentation...")
     generate_package_documentation()
-    print("✅ Documentation generation complete!")
+    print(" Documentation generation complete!")

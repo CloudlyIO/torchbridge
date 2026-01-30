@@ -8,9 +8,10 @@ Advanced scaling and fault tolerance systems for distributed training:
 - Elastic training support and resource optimization
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Tuple, Any, Set
+import time
+from typing import Any
+
 import numpy as np
 
 from .job_management import FailureType
@@ -44,15 +45,15 @@ class AutoScalingManager:
         self.scale_down_threshold = scale_down_threshold
 
         # Scaling state
-        self.current_replicas: Dict[str, int] = {}
-        self.scaling_history: Dict[str, List[Dict]] = {}
+        self.current_replicas: dict[str, int] = {}
+        self.scaling_history: dict[str, list[dict]] = {}
         self.cooldown_period_seconds = 300  # 5 minutes
-        self.last_scale_time: Dict[str, float] = {}
+        self.last_scale_time: dict[str, float] = {}
 
         # Metrics tracking
-        self.metrics_history: Dict[str, List[Dict]] = {}
+        self.metrics_history: dict[str, list[dict]] = {}
 
-    def update_metrics(self, job_id: str, metrics: Dict[str, float]):
+    def update_metrics(self, job_id: str, metrics: dict[str, float]):
         """Update metrics for job"""
         if job_id not in self.metrics_history:
             self.metrics_history[job_id] = []
@@ -72,7 +73,7 @@ class AutoScalingManager:
         if len(self.metrics_history[job_id]) > 1000:
             self.metrics_history[job_id] = self.metrics_history[job_id][-500:]
 
-    def should_scale(self, job_id: str) -> Tuple[bool, str, int]:
+    def should_scale(self, job_id: str) -> tuple[bool, str, int]:
         """
         Determine if job should be scaled
 
@@ -95,7 +96,7 @@ class AutoScalingManager:
         # Calculate average utilization
         avg_gpu_util = np.mean([m['gpu_utilization'] for m in recent_metrics])
         avg_memory_util = np.mean([m['memory_utilization'] for m in recent_metrics])
-        avg_throughput = np.mean([m['throughput'] for m in recent_metrics])
+        np.mean([m['throughput'] for m in recent_metrics])
 
         current_replicas = self.current_replicas.get(job_id, 1)
 
@@ -159,7 +160,7 @@ class AutoScalingManager:
             logger.error(f"Failed to scale job {job_id}: {e}")
             return False
 
-    def get_scaling_history(self, job_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_scaling_history(self, job_id: str | None = None) -> dict[str, Any]:
         """Get scaling history for job or all jobs"""
         if job_id:
             return {
@@ -173,7 +174,7 @@ class AutoScalingManager:
             'current_state': dict(self.current_replicas)
         }
 
-    def get_metrics_summary(self, job_id: str, hours: int = 1) -> Dict[str, Any]:
+    def get_metrics_summary(self, job_id: str, hours: int = 1) -> dict[str, Any]:
         """Get metrics summary for job"""
         if job_id not in self.metrics_history:
             return {'error': 'No metrics available for job'}
@@ -214,14 +215,14 @@ class FaultToleranceManager:
         self.checkpoint_interval_minutes = checkpoint_interval_minutes
 
         # Failure tracking
-        self.failure_history: Dict[str, List[Dict]] = {}
-        self.recovery_attempts: Dict[str, int] = {}
+        self.failure_history: dict[str, list[dict]] = {}
+        self.recovery_attempts: dict[str, int] = {}
 
         # Health monitoring
-        self.health_checks: Dict[str, Dict] = {}
-        self.unhealthy_nodes: Set[str] = set()
+        self.health_checks: dict[str, dict] = {}
+        self.unhealthy_nodes: set[str] = set()
 
-    def detect_failure(self, job_id: str, error_info: Dict[str, Any]) -> FailureType:
+    def detect_failure(self, job_id: str, error_info: dict[str, Any]) -> FailureType:
         """Detect and classify failure type"""
         error_message = error_info.get('message', '').lower()
         exit_code = error_info.get('exit_code', 0)
@@ -244,8 +245,8 @@ class FaultToleranceManager:
         self,
         job_id: str,
         failure_type: FailureType,
-        error_info: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        error_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Handle job failure and attempt recovery"""
 
         # Record failure
@@ -296,7 +297,7 @@ class FaultToleranceManager:
         job_id: str,
         failure_type: FailureType,
         attempts: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create recovery plan based on failure type"""
 
         max_attempts = 3
@@ -326,7 +327,7 @@ class FaultToleranceManager:
             'checkpoint_restore': True
         }
 
-    def _execute_recovery(self, job_id: str, recovery_plan: Dict[str, Any]) -> bool:
+    def _execute_recovery(self, job_id: str, recovery_plan: dict[str, Any]) -> bool:
         """Execute recovery plan"""
         strategy = recovery_plan['strategy']
 
@@ -386,14 +387,14 @@ class FaultToleranceManager:
         # Would update network settings (timeouts, retry counts, etc.)
         return True
 
-    def _find_latest_checkpoint(self, job_id: str) -> Optional[str]:
+    def _find_latest_checkpoint(self, job_id: str) -> str | None:
         """Find latest checkpoint for job"""
         # Would scan checkpoint directory for latest checkpoint
         # For simulation, return a placeholder
         checkpoint_dir = f"/checkpoints/{job_id}"
         return f"{checkpoint_dir}/latest.pt"  # Placeholder
 
-    def get_failure_statistics(self) -> Dict[str, Any]:
+    def get_failure_statistics(self) -> dict[str, Any]:
         """Get failure statistics across all jobs"""
         stats = {
             'total_failures': 0,
@@ -431,7 +432,7 @@ class FaultToleranceManager:
 
         return stats
 
-    def update_node_health(self, node_id: str, health_status: Dict[str, Any]):
+    def update_node_health(self, node_id: str, health_status: dict[str, Any]):
         """Update health status for a node"""
         self.health_checks[node_id] = {
             'timestamp': time.time(),
@@ -449,13 +450,13 @@ class FaultToleranceManager:
         else:
             self.unhealthy_nodes.discard(node_id)
 
-    def get_healthy_nodes(self) -> List[str]:
+    def get_healthy_nodes(self) -> list[str]:
         """Get list of healthy nodes"""
         all_nodes = set(self.health_checks.keys())
         healthy_nodes = all_nodes - self.unhealthy_nodes
         return list(healthy_nodes)
 
-    def get_recovery_report(self, job_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_recovery_report(self, job_id: str | None = None) -> dict[str, Any]:
         """Get comprehensive recovery report"""
         if job_id:
             return {

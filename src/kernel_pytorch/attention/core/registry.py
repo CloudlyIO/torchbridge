@@ -5,16 +5,14 @@ Provides a centralized registry for all attention implementations,
 enabling dynamic creation and configuration of attention layers.
 """
 
-from typing import Dict, Type, Callable, Any, Optional
 import warnings
 from functools import wraps
 
 from .base import BaseAttention
 from .config import AttentionConfig, AttentionPatterns
 
-
 # Global registry for attention implementations
-_ATTENTION_REGISTRY: Dict[str, Type[BaseAttention]] = {}
+_ATTENTION_REGISTRY: dict[str, type[BaseAttention]] = {}
 
 
 def register_attention(name: str):
@@ -29,9 +27,9 @@ def register_attention(name: str):
         class FlashAttention3(BaseAttention):
             ...
     """
-    def decorator(cls: Type[BaseAttention]):
+    def decorator(cls: type[BaseAttention]):
         if name in _ATTENTION_REGISTRY:
-            warnings.warn(f"Overriding existing attention implementation '{name}'")
+            warnings.warn(f"Overriding existing attention implementation '{name}'", stacklevel=2)
 
         _ATTENTION_REGISTRY[name] = cls
 
@@ -47,7 +45,7 @@ def register_attention(name: str):
     return decorator
 
 
-def get_attention_registry() -> Dict[str, Type[BaseAttention]]:
+def get_attention_registry() -> dict[str, type[BaseAttention]]:
     """Get the current attention registry"""
     return _ATTENTION_REGISTRY.copy()
 
@@ -58,7 +56,7 @@ def list_available_attention() -> list:
 
 
 def create_attention(config: AttentionConfig,
-                    implementation: Optional[str] = None,
+                    implementation: str | None = None,
                     **kwargs) -> BaseAttention:
     """
     Factory function to create attention layers.
@@ -134,7 +132,7 @@ def unregister_attention(name: str):
     if name in _ATTENTION_REGISTRY:
         del _ATTENTION_REGISTRY[name]
     else:
-        warnings.warn(f"Attention implementation '{name}' not found in registry")
+        warnings.warn(f"Attention implementation '{name}' not found in registry", stacklevel=2)
 
 
 def clear_registry():

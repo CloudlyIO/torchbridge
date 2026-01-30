@@ -12,7 +12,6 @@ Tests cover:
 
 import time
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pytest
 import torch

@@ -17,16 +17,16 @@ Success Criteria:
 """
 
 import copy
+
 import pytest
 import torch
 import torch.nn.functional as F
 
 from .conftest import (
-    requires_torchvision,
-    requires_cuda,
-    benchmark_function,
-    assert_speedup,
     assert_output_close,
+    benchmark_function,
+    requires_cuda,
+    requires_torchvision,
 )
 
 
@@ -54,7 +54,11 @@ class TestRealResNetOptimization:
 
     def test_resnet50_optimization_speedup_cpu(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 optimization produces speedup on CPU."""
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         device = torch.device("cpu")
         model = resnet50_model.to(device)
@@ -98,7 +102,7 @@ class TestRealResNetOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nResNet-50 CPU Optimization Results:")
+        print("\nResNet-50 CPU Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -109,7 +113,11 @@ class TestRealResNetOptimization:
     @requires_cuda
     def test_resnet50_optimization_speedup_cuda(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 optimization produces speedup on CUDA."""
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         device = torch.device("cuda")
         images = sample_image_tensor.to(device)
@@ -159,7 +167,7 @@ class TestRealResNetOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nResNet-50 CUDA Optimization Results:")
+        print("\nResNet-50 CUDA Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -177,7 +185,11 @@ class TestRealResNetOptimization:
         due to different computation order. These differences are typically <0.01
         and don't affect classification predictions.
         """
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         # Use deepcopy to ensure clean baseline
         baseline_model = copy.deepcopy(resnet50_model).to(e2e_device)
@@ -212,7 +224,7 @@ class TestRealResNetOptimization:
 
         # Calculate actual difference for diagnostics
         max_diff = (baseline_output.float() - optimized_output.float()).abs().max().item()
-        print(f"\nResNet-50 Output Comparison:")
+        print("\nResNet-50 Output Comparison:")
         print(f"  Max difference: {max_diff:.6f}")
 
         # Logits should be close - channels_last can introduce small differences
@@ -227,7 +239,11 @@ class TestRealResNetOptimization:
 
     def test_resnet50_batch_throughput(self, resnet50_model, e2e_device):
         """Test ResNet-50 batch throughput optimization."""
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         # Larger batch for throughput testing
         batch_size = 32
@@ -261,7 +277,7 @@ class TestRealResNetOptimization:
         # Calculate throughput
         images_per_second = (batch_size * 1000) / result.mean_time_ms
 
-        print(f"\nResNet-50 Batch Throughput:")
+        print("\nResNet-50 Batch Throughput:")
         print(f"  Batch size: {batch_size}")
         print(f"  Latency: {result.mean_time_ms:.2f}ms")
         print(f"  Throughput: {images_per_second:.1f} images/sec")
@@ -279,10 +295,16 @@ class TestResNetVariants:
 
     def test_resnet18_optimization(self, e2e_device, sample_image_tensor):
         """Test ResNet-18 optimization (smaller model)."""
-        from torchvision.models import resnet18, ResNet18_Weights
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
-        import urllib.error
         import ssl
+        import urllib.error
+
+        from torchvision.models import ResNet18_Weights, resnet18
+
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         try:
             model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
@@ -317,15 +339,21 @@ class TestResNetVariants:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nResNet-18 Optimization:")
+        print("\nResNet-18 Optimization:")
         print(f"  Speedup: {speedup:.2f}x")
 
     def test_resnet101_optimization(self, e2e_device, sample_image_tensor):
         """Test ResNet-101 optimization (larger model)."""
-        from torchvision.models import resnet101, ResNet101_Weights
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
-        import urllib.error
         import ssl
+        import urllib.error
+
+        from torchvision.models import ResNet101_Weights, resnet101
+
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         try:
             model = resnet101(weights=ResNet101_Weights.IMAGENET1K_V2)
@@ -360,7 +388,7 @@ class TestResNetVariants:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nResNet-101 Optimization:")
+        print("\nResNet-101 Optimization:")
         print(f"  Speedup: {speedup:.2f}x")
 
 
@@ -374,7 +402,11 @@ class TestResNetCUDAOptimizations:
 
     def test_resnet50_fp16_optimization(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 FP16 optimization on CUDA."""
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         device = torch.device("cuda")
         images = sample_image_tensor.to(device)
@@ -411,7 +443,7 @@ class TestResNetCUDAOptimizations:
 
         speedup = fp32_result.mean_time_ms / fp16_result.mean_time_ms
 
-        print(f"\nResNet-50 FP16 vs FP32:")
+        print("\nResNet-50 FP16 vs FP32:")
         print(f"  FP32: {fp32_result.mean_time_ms:.2f}ms")
         print(f"  FP16: {fp16_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -421,7 +453,11 @@ class TestResNetCUDAOptimizations:
 
     def test_resnet50_torch_compile(self, resnet50_model, sample_image_tensor):
         """Test ResNet-50 with torch.compile."""
-        from kernel_pytorch.models.vision import ResNetOptimizer, VisionOptimizationConfig, OptimizationLevel
+        from kernel_pytorch.models.vision import (
+            OptimizationLevel,
+            ResNetOptimizer,
+            VisionOptimizationConfig,
+        )
 
         device = torch.device("cuda")
         model = resnet50_model.to(device)
@@ -453,7 +489,7 @@ class TestResNetCUDAOptimizations:
 
         speedup = baseline_result.mean_time_ms / compiled_result.mean_time_ms
 
-        print(f"\nResNet-50 torch.compile:")
+        print("\nResNet-50 torch.compile:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Compiled: {compiled_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")

@@ -15,7 +15,6 @@ import pytest
 import torch
 import torch.nn as nn
 
-
 # =============================================================================
 # Test Fixtures
 # =============================================================================
@@ -227,7 +226,7 @@ class TestPipelineStage:
 
         # Backward
         grad_output = torch.randn_like(output)
-        grad_input = stage.backward_step(grad_output, micro_batch_id=0)
+        stage.backward_step(grad_output, micro_batch_id=0)
 
         assert output.shape == x.shape
 
@@ -247,9 +246,9 @@ class TestGPipeScheduler:
     def test_scheduler_creation(self, device):
         """Test creating GPipe scheduler."""
         from kernel_pytorch.models.distributed import (
+            GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -267,9 +266,9 @@ class TestGPipeScheduler:
     def test_gpipe_forward(self, device):
         """Test GPipe forward pass."""
         from kernel_pytorch.models.distributed import (
+            GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -298,9 +297,9 @@ class TestGPipeScheduler:
     def test_gpipe_backward(self, device):
         """Test GPipe backward pass."""
         from kernel_pytorch.models.distributed import (
+            GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -344,9 +343,9 @@ class TestInterleavedScheduler:
     def test_scheduler_creation(self, device):
         """Test creating interleaved scheduler."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -364,9 +363,9 @@ class TestInterleavedScheduler:
     def test_interleaved_forward(self, device):
         """Test interleaved forward pass."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -395,9 +394,9 @@ class TestInterleavedScheduler:
     def test_interleaved_backward(self, device):
         """Test interleaved backward pass."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -428,9 +427,9 @@ class TestInterleavedScheduler:
     def test_run_forward_backward_combined(self, device):
         """Test combined forward-backward pass."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -470,8 +469,8 @@ class TestPipelineMemoryEfficiency:
     def test_memory_estimation_function(self, device):
         """Test pipeline memory estimation."""
         from kernel_pytorch.models.distributed import (
-            estimate_pipeline_memory,
             PipelineParallelConfig,
+            estimate_pipeline_memory,
         )
 
         # Create a model for estimation
@@ -569,9 +568,9 @@ class TestPipelineIntegration:
     def test_full_training_step(self, device):
         """Test a full training step with pipeline."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -617,9 +616,9 @@ class TestPipelineIntegration:
     def test_gradient_accumulation(self, device):
         """Test gradient accumulation across micro-batches."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -661,9 +660,9 @@ class TestPipelineEdgeCases:
     def test_single_micro_batch(self, device):
         """Test with single micro-batch."""
         from kernel_pytorch.models.distributed import (
+            GPipeScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            GPipeScheduler,
         )
 
         config = PipelineParallelConfig(
@@ -685,9 +684,9 @@ class TestPipelineEdgeCases:
     def test_many_micro_batches(self, device):
         """Test with many micro-batches."""
         from kernel_pytorch.models.distributed import (
+            InterleavedScheduler,
             PipelineParallelConfig,
             PipelineStage,
-            InterleavedScheduler,
         )
 
         config = PipelineParallelConfig(

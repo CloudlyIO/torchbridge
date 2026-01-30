@@ -7,7 +7,6 @@ This module consolidates the core attention logic to eliminate code duplication.
 
 import math
 import warnings
-from typing import Optional, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -16,7 +15,7 @@ import torch.nn.functional as F
 def check_flash_attention_available() -> bool:
     """Check if FlashAttention library is available."""
     try:
-        import flash_attn
+        import flash_attn  # noqa: F401
         return True
     except ImportError:
         return False
@@ -61,7 +60,7 @@ def validate_attention_inputs(
         assert K.shape[3] == V.shape[3], "K and V head dimensions must match"
 
 
-def compute_attention_scale(head_dim: int, custom_scale: Optional[float] = None) -> float:
+def compute_attention_scale(head_dim: int, custom_scale: float | None = None) -> float:
     """Compute attention scale factor."""
     if custom_scale is not None:
         return custom_scale
@@ -72,13 +71,13 @@ def scaled_dot_product_attention(
     Q: torch.Tensor,
     K: torch.Tensor,
     V: torch.Tensor,
-    scale: Optional[float] = None,
+    scale: float | None = None,
     causal: bool = False,
     dropout: float = 0.0,
     training: bool = False,
-    attention_mask: Optional[torch.Tensor] = None,
+    attention_mask: torch.Tensor | None = None,
     return_weights: bool = False
-) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+) -> tuple[torch.Tensor, torch.Tensor | None]:
     """
     Compute scaled dot-product attention.
 
@@ -138,13 +137,13 @@ def flash_attention_forward(
     Q: torch.Tensor,
     K: torch.Tensor,
     V: torch.Tensor,
-    scale: Optional[float] = None,
+    scale: float | None = None,
     causal: bool = False,
     dropout: float = 0.0,
     training: bool = False,
-    attention_mask: Optional[torch.Tensor] = None,
+    attention_mask: torch.Tensor | None = None,
     return_weights: bool = False
-) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+) -> tuple[torch.Tensor, torch.Tensor | None]:
     """
     FlashAttention forward pass with automatic fallback.
 
@@ -193,7 +192,7 @@ def flash_attention_forward(
             return output, None
 
         except Exception as e:
-            warnings.warn(f"FlashAttention failed ({e}), using fallback")
+            warnings.warn(f"FlashAttention failed ({e}), using fallback", stacklevel=2)
 
     # Try custom CUDA kernel
     if check_cuda_kernel_available() and Q.is_cuda:
@@ -204,7 +203,7 @@ def flash_attention_forward(
             output = kernel_pytorch_cuda.flash_attention_v3(Q, K, V, scale_val, causal)
             return output, None
         except Exception as e:
-            warnings.warn(f"CUDA kernel failed ({e}), using fallback")
+            warnings.warn(f"CUDA kernel failed ({e}), using fallback", stacklevel=2)
 
     # Fallback to PyTorch implementation
     return scaled_dot_product_attention(

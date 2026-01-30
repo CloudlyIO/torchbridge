@@ -8,14 +8,13 @@ Advanced thermal and power management for large-scale GPU clusters:
 - Carbon footprint minimization
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Any, Set
+import time
+from typing import Any
+
 import numpy as np
 
-from .hardware_discovery import (
-    HardwareTopologyManager, ThermalState, DeviceInfo
-)
+from .hardware_discovery import DeviceInfo, HardwareTopologyManager, ThermalState
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +34,20 @@ class ThermalAwareScheduler:
         self,
         topology_manager: HardwareTopologyManager,
         thermal_threshold: float = 85.0,
-        power_budget_w: Optional[float] = None
+        power_budget_w: float | None = None
     ):
         self.topology_manager = topology_manager
         self.thermal_threshold = thermal_threshold
         self.power_budget_w = power_budget_w
 
         # Scheduling state
-        self.active_jobs: Dict[str, Dict] = {}
-        self.thermal_history: Dict[int, List[float]] = {}
-        self.power_history: Dict[int, List[float]] = {}
+        self.active_jobs: dict[str, dict] = {}
+        self.thermal_history: dict[int, list[float]] = {}
+        self.power_history: dict[int, list[float]] = {}
 
         # Thermal management
-        self.throttled_devices: Set[int] = set()
-        self.cooling_devices: Set[int] = set()
+        self.throttled_devices: set[int] = set()
+        self.cooling_devices: set[int] = set()
 
     def schedule_job(
         self,
@@ -56,7 +55,7 @@ class ThermalAwareScheduler:
         required_devices: int,
         estimated_power_per_device: float = 300.0,
         thermal_sensitivity: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Schedule job with thermal awareness
 
@@ -122,7 +121,7 @@ class ThermalAwareScheduler:
             'estimated_power': len(selected_devices) * estimated_power_per_device
         }
 
-    def _get_thermally_safe_devices(self) -> List[int]:
+    def _get_thermally_safe_devices(self) -> list[int]:
         """Get list of devices that are thermally safe for new workloads"""
         safe_devices = []
 
@@ -162,7 +161,7 @@ class ThermalAwareScheduler:
         recent_temps = history[-3:]
         return all(recent_temps[i] <= recent_temps[i+1] for i in range(len(recent_temps)-1))
 
-    def _attempt_thermal_balancing(self, required_devices: int) -> List[int]:
+    def _attempt_thermal_balancing(self, required_devices: int) -> list[int]:
         """Attempt to balance thermal load across cluster"""
         if not self.topology_manager.cluster_topology:
             return []
@@ -193,10 +192,10 @@ class ThermalAwareScheduler:
 
     def _select_optimal_thermal_devices(
         self,
-        candidate_devices: List[int],
+        candidate_devices: list[int],
         power_per_device: float,
         thermal_sensitivity: float
-    ) -> List[int]:
+    ) -> list[int]:
         """Select optimal devices considering thermal characteristics"""
         if not self.topology_manager.cluster_topology:
             return candidate_devices
@@ -266,7 +265,7 @@ class ThermalAwareScheduler:
 
         return total_power
 
-    def _calculate_thermal_safety_score(self, device_ids: List[int]) -> float:
+    def _calculate_thermal_safety_score(self, device_ids: list[int]) -> float:
         """Calculate overall thermal safety score for device selection"""
         if not device_ids or not self.topology_manager.cluster_topology:
             return 0.0
@@ -287,7 +286,7 @@ class ThermalAwareScheduler:
 
     def monitor_thermal_state(self):
         """Monitor and update thermal state of active jobs"""
-        current_time = time.time()
+        time.time()
 
         # Update thermal history
         if self.topology_manager.cluster_topology:
@@ -317,7 +316,7 @@ class ThermalAwareScheduler:
                                        f"{device.current_temp_c}°C")
                             self.throttled_devices.discard(device.device_id)
 
-    def get_thermal_report(self) -> Dict[str, Any]:
+    def get_thermal_report(self) -> dict[str, Any]:
         """Generate thermal management report"""
         report = {
             'timestamp': time.time(),
@@ -370,7 +369,7 @@ class PowerEfficiencyOptimizer:
     def __init__(
         self,
         topology_manager: HardwareTopologyManager,
-        power_budget_w: Optional[float] = None,
+        power_budget_w: float | None = None,
         carbon_intensity_g_kwh: float = 400.0
     ):
         self.topology_manager = topology_manager
@@ -378,14 +377,14 @@ class PowerEfficiencyOptimizer:
         self.carbon_intensity_g_kwh = carbon_intensity_g_kwh
 
         # Power management state
-        self.power_profiles: Dict[int, Dict] = {}
-        self.efficiency_history: List[Dict] = []
+        self.power_profiles: dict[int, dict] = {}
+        self.efficiency_history: list[dict] = []
 
     def optimize_power_distribution(
         self,
-        workload_priorities: Dict[str, float],
+        workload_priorities: dict[str, float],
         efficiency_target: float = 0.8
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Optimize power distribution across cluster
 
@@ -434,7 +433,7 @@ class PowerEfficiencyOptimizer:
 
         return optimization_plan
 
-    def _calculate_power_metrics(self) -> Dict[str, float]:
+    def _calculate_power_metrics(self) -> dict[str, float]:
         """Calculate current power consumption and efficiency metrics"""
         total_power = 0.0
         total_compute = 0.0

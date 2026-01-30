@@ -7,15 +7,16 @@ This module provides optimizations for CLIP models including:
 - Batch embedding generation
 """
 
-from typing import Optional, Dict, Any, List, Union
+from typing import Any
+
 import torch
-import torch.nn as nn
+
 from .base import (
     BaseMultiModalOptimizer,
+    ModalityType,
     MultiModalOptimizationConfig,
     MultiModalType,
     OptimizationLevel,
-    ModalityType,
     count_parameters,
     estimate_model_memory,
 )
@@ -24,7 +25,7 @@ from .base import (
 class CLIPOptimizer(BaseMultiModalOptimizer):
     """Optimizer for CLIP models."""
 
-    def __init__(self, config: Optional[MultiModalOptimizationConfig] = None):
+    def __init__(self, config: MultiModalOptimizationConfig | None = None):
         """Initialize CLIP optimizer.
 
         Args:
@@ -85,7 +86,7 @@ class CLIPOptimizer(BaseMultiModalOptimizer):
         self,
         model: Any,
         images: torch.Tensor,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         normalize: bool = True
     ) -> torch.Tensor:
         """Encode images to embeddings.
@@ -135,8 +136,8 @@ class CLIPOptimizer(BaseMultiModalOptimizer):
     def encode_text(
         self,
         model: Any,
-        text_inputs: Union[torch.Tensor, List[str]],
-        batch_size: Optional[int] = None,
+        text_inputs: torch.Tensor | list[str],
+        batch_size: int | None = None,
         normalize: bool = True
     ) -> torch.Tensor:
         """Encode text to embeddings.
@@ -165,7 +166,7 @@ class CLIPOptimizer(BaseMultiModalOptimizer):
                     truncation=True
                 )["input_ids"]
             except Exception:
-                raise ValueError("String inputs require transformers library with CLIPProcessor")
+                raise ValueError("String inputs require transformers library with CLIPProcessor") from None
 
         # Ensure correct device
         text_inputs = text_inputs.to(self.device)
@@ -244,7 +245,7 @@ def create_clip_optimizer(
         raise ImportError(
             "transformers is required for CLIP models. "
             "Install with: pip install transformers"
-        )
+        ) from None
 
     # Load model
     model = CLIPModel.from_pretrained(model_name)
@@ -288,7 +289,7 @@ class CLIPBenchmark:
         num_iterations: int = 100,
         warmup_iterations: int = 10,
         image_size: int = 224,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark image encoding performance.
 
         Args:
@@ -351,7 +352,7 @@ class CLIPBenchmark:
         num_iterations: int = 100,
         warmup_iterations: int = 10,
         sequence_length: int = 77,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark text encoding performance.
 
         Args:
@@ -404,7 +405,7 @@ class CLIPBenchmark:
             "num_iterations": num_iterations,
         }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get model information.
 
         Returns:

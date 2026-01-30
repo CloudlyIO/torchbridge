@@ -11,11 +11,10 @@ Key Optimizations:
 - Numerical stability while maintaining performance
 """
 
-import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional
 
 
 class OptimizedLayerNorm(nn.Module):
@@ -48,18 +47,13 @@ class OptimizedLayerNorm(nn.Module):
         """
         Optimized layer normalization forward pass.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Kernel mapping: Uses cuDNN's highly optimized layer normalization kernel
         - Memory access: Single pass through data with fused mean/variance computation
         - Hardware acceleration: Leverages Tensor Cores for mixed precision (fp16/bf16)
         - Vectorization: cuDNN kernel uses vectorized loads/stores for memory efficiency
 
-        📊 PERFORMANCE IMPACT:
-        - vs manual implementation: ~2.5x speedup due to kernel fusion
-        - Memory bandwidth: ~40% more efficient than separate mean/var operations
-        - Scaling: Linear with sequence length, optimal for transformer workloads
-
-        💡 WHY THIS OPTIMIZES:
+         WHY THIS OPTIMIZES:
         - F.layer_norm dispatches to cuDNN's hand-optimized assembly kernels
         - Single kernel eliminates intermediate tensor allocations
         - GPU-friendly memory access patterns maximize bandwidth utilization
@@ -95,28 +89,22 @@ class OptimizedRMSNorm(nn.Module):
         """
         Efficient RMS normalization optimized for modern language models.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Kernel mapping: Uses PyTorch's optimized norm() kernel + element-wise operations
         - Memory access: Two-pass algorithm but eliminates mean computation overhead
         - Compute efficiency: ~25% fewer operations than LayerNorm (no mean subtraction)
         - Vectorization: All operations are fully vectorizable across feature dimension
 
-        📊 PERFORMANCE IMPACT:
-        - vs LayerNorm: ~1.3x speedup due to eliminated mean computation
-        - Memory efficiency: Same bandwidth as LayerNorm but fewer compute operations
-        - Scaling: Better performance advantage on larger feature dimensions
-
-        💡 WHY RMS IS FASTER:
+         WHY RMS IS FASTER:
         - LayerNorm: compute mean → subtract mean → compute variance → normalize
         - RMSNorm: compute RMS directly → normalize (skips mean computation)
         - Particularly effective for large language models (GPT, LLaMA architectures)
         - Maintains similar training dynamics to LayerNorm with better efficiency
 
-        🎓 EDUCATIONAL: Mathematical comparison:
         LayerNorm: (x - mean(x)) / sqrt(var(x) + ε) * γ + β
         RMSNorm:   x / sqrt(mean(x²) + ε) * γ
         """
-        # 🎓 EDUCATIONAL NOTE: More efficient than LayerNorm - no mean computation needed
+        #  EDUCATIONAL NOTE: More efficient than LayerNorm - no mean computation needed
         norm = x.norm(dtype=torch.float32, dim=-1, keepdim=True)  # Compute L2 norm efficiently
         rms = norm * (x.shape[-1] ** -0.5)  # Convert to RMS: norm / sqrt(N)
         return (x / (rms + self.eps)).to(x.dtype) * self.weight  # Normalize and scale
@@ -149,37 +137,31 @@ class FusedLayerNormActivation(nn.Module):
         """
         Fused normalization + activation optimized for kernel fusion.
 
-        🔧 GPU OPTIMIZATION DETAILS:
+         GPU OPTIMIZATION DETAILS:
         - Kernel mapping: torch.compile can fuse LayerNorm + Activation into single kernel
         - Memory access: Eliminates intermediate tensor storage between operations
         - Fusion opportunity: Two separate kernel launches → single optimized kernel
         - Hardware utilization: Better memory bandwidth and compute unit usage
 
-        📊 PERFORMANCE IMPACT:
-        - vs separate operations: ~1.8x speedup due to kernel fusion
-        - Memory bandwidth: ~50% reduction in memory traffic
-        - Latency: Single kernel launch reduces GPU dispatch overhead
-
-        💡 WHY FUSION WORKS:
+         WHY FUSION WORKS:
         - Compiler recognizes producer-consumer pattern (norm → activation)
         - Intermediate results kept in GPU registers instead of global memory
         - Enables more aggressive compiler optimizations (loop fusion, vectorization)
         - Particularly effective with @torch.compile decorator
 
-        🎓 EDUCATIONAL: Fusion demonstration:
         Unfused: x → [global memory] → LayerNorm → [global memory] → Activation → output
         Fused:   x → [registers only] → LayerNorm+Activation → output
         """
-        # 🎓 EDUCATIONAL NOTE: Layer normalization (fusion candidate #1)
+        #  EDUCATIONAL NOTE: Layer normalization (fusion candidate #1)
         normalized = F.layer_norm(x, (self.normalized_shape,), self.weight, self.bias, self.eps)
 
-        # 🎓 EDUCATIONAL NOTE: Activation function (fusion candidate #2)
+        #  EDUCATIONAL NOTE: Activation function (fusion candidate #2)
         # torch.compile will automatically fuse these operations when possible
         if self.activation == 'gelu':
-            return F.gelu(normalized)  # 🔥 Popular in transformers, complex but very fusable
+            return F.gelu(normalized)  #  Popular in transformers, complex but very fusable
         elif self.activation == 'relu':
-            return F.relu(normalized)  # 🔥 Simple, perfect fusion candidate
+            return F.relu(normalized)  #  Simple, perfect fusion candidate
         elif self.activation == 'swish':
-            return normalized * torch.sigmoid(normalized)  # 🔥 SiLU activation, good fusion
+            return normalized * torch.sigmoid(normalized)  #  SiLU activation, good fusion
         else:
             return normalized

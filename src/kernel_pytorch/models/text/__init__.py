@@ -17,12 +17,12 @@ Version: 0.4.11
 """
 
 from .text_model_optimizer import (
-    TextModelOptimizer,
-    TextModelConfig,
     OptimizationMode,
     OptimizedBERT,
-    OptimizedGPT2,
     OptimizedDistilBERT,
+    OptimizedGPT2,
+    TextModelConfig,
+    TextModelOptimizer,
     create_optimized_text_model,
 )
 

@@ -7,22 +7,32 @@ inheriting from the shared base_exceptions module.
 Version: 0.3.7
 """
 
-from typing import Optional, Any, List
+from typing import Any
 
 from kernel_pytorch.backends.base_exceptions import (
     BackendError,
-    DeviceNotAvailableError,
-    DeviceError,
-    MemoryError,
-    MemoryAllocationError as BaseMemoryAllocationError,
-    OutOfMemoryError as BaseOutOfMemoryError,
     CompilationError,
-    OptimizationError,
-    ModelOptimizationError as BaseModelOptimizationError,
-    ConfigurationError as BaseConfigurationError,
-    InvalidArchitectureError as BaseInvalidArchitectureError,
-    KernelLaunchError as BaseKernelLaunchError,
+    DeviceError,
+    DeviceNotAvailableError,
     raise_or_warn,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    ConfigurationError as BaseConfigurationError,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    InvalidArchitectureError as BaseInvalidArchitectureError,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    KernelLaunchError as BaseKernelLaunchError,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    MemoryAllocationError as BaseMemoryAllocationError,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    ModelOptimizationError as BaseModelOptimizationError,
+)
+from kernel_pytorch.backends.base_exceptions import (
+    OutOfMemoryError as BaseOutOfMemoryError,
 )
 
 
@@ -68,7 +78,7 @@ class MemoryAllocationError(BaseMemoryAllocationError):
 class OutOfMemoryError(BaseOutOfMemoryError):
     """GPU out of memory error."""
 
-    def __init__(self, message: str = "", required_bytes: Optional[int] = None, available_bytes: Optional[int] = None):
+    def __init__(self, message: str = "", required_bytes: int | None = None, available_bytes: int | None = None):
         if message:
             # Support legacy string-based initialization
             BackendError.__init__(self, message, {
@@ -106,7 +116,7 @@ class ModelOptimizationError(BaseModelOptimizationError):
 class InvalidArchitectureError(BaseInvalidArchitectureError):
     """Invalid or unsupported NVIDIA GPU architecture."""
 
-    def __init__(self, architecture: str, supported: Optional[List[str]] = None):
+    def __init__(self, architecture: str, supported: list[str] | None = None):
         super().__init__(architecture, supported or [])
 
 

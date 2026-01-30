@@ -8,18 +8,17 @@ Uses shared attention operations from kernel_pytorch.attention.core.attention_op
 for the core PyTorch fallback computation.
 """
 
-from typing import Optional, Tuple
-import torch
-import torch.nn.functional as F
 import warnings
 
-from ..core.base import AttentionWithCache
-from ..core.config import AttentionConfig, FP8AttentionConfig
-from ..core.registry import register_attention
+import torch
+
 from ..core.attention_ops import (
     check_flash_attention_available,
     scaled_dot_product_attention,
 )
+from ..core.base import AttentionWithCache
+from ..core.config import AttentionConfig, FP8AttentionConfig
+from ..core.registry import register_attention
 
 # Check FlashAttention availability using shared function
 FLASH_ATTN_AVAILABLE = check_flash_attention_available()
@@ -33,7 +32,7 @@ except ImportError:
     FLASH_ATTN_3_AVAILABLE = False
 
 try:
-    import triton
+    import triton  # noqa: F401
     TRITON_AVAILABLE = True
 except ImportError:
     TRITON_AVAILABLE = False
@@ -104,7 +103,7 @@ class FlashAttention3(AttentionWithCache):
         else:
             self.backend = "pytorch_native"
 
-    def _apply_fp8_optimization(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _apply_fp8_optimization(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Apply FP8 optimizations from advanced_attention implementation"""
         if not (self.config.use_fp8 and self.fp8_config):
             return q, k, v
@@ -126,7 +125,7 @@ class FlashAttention3(AttentionWithCache):
                           q: torch.Tensor,
                           k: torch.Tensor,
                           v: torch.Tensor,
-                          attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                          attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Unified attention computation with best available backend"""
 
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -155,7 +154,7 @@ class FlashAttention3(AttentionWithCache):
 
         return attn_output
 
-    def _flash_attention3_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def _flash_attention3_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: torch.Tensor | None) -> torch.Tensor:
         """FlashAttention-3 forward pass with FP8 optimizations"""
         try:
             if hasattr(flash_attn, 'flash_attn_v3'):
@@ -167,10 +166,11 @@ class FlashAttention3(AttentionWithCache):
                     return_attn_probs=False
                 )[0]
         except Exception as e:
-            warnings.warn(f"FlashAttention-3 failed: {e}, falling back to FlashAttention-2")
-            return self._flash_attention2_forward(q, k, v, attn_mask)
+            warnings.warn(f"FlashAttention-3 failed: {e}, falling back to FlashAttention-2", stacklevel=2)
 
-    def _flash_attention2_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: Optional[torch.Tensor]) -> torch.Tensor:
+        return self._flash_attention2_forward(q, k, v, attn_mask)
+
+    def _flash_attention2_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: torch.Tensor | None) -> torch.Tensor:
         """FlashAttention-2 forward pass"""
         try:
             return flash_attn_func(
@@ -180,16 +180,16 @@ class FlashAttention3(AttentionWithCache):
                 softmax_scale=self.scale
             )
         except Exception as e:
-            warnings.warn(f"FlashAttention-2 failed: {e}, falling back to Triton")
+            warnings.warn(f"FlashAttention-2 failed: {e}, falling back to Triton", stacklevel=2)
             return self._triton_attention_forward(q, k, v, attn_mask)
 
-    def _triton_attention_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def _triton_attention_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: torch.Tensor | None) -> torch.Tensor:
         """Triton-based attention implementation"""
         # For now, fallback to PyTorch implementation
         # In a full implementation, this would use Triton kernels
         return self._pytorch_attention_forward(q, k, v, attn_mask)
 
-    def _pytorch_attention_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def _pytorch_attention_forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attn_mask: torch.Tensor | None) -> torch.Tensor:
         """PyTorch native attention implementation using shared attention ops."""
         # Input is [B, S, H, D], rearrange to [B, H, S, D] for shared function
         batch_size, seq_len, num_heads, head_dim = q.shape
@@ -243,7 +243,7 @@ class FlashAttention2(FlashAttention3):
         if self.use_flash_attn2:
             self.backend = "flash_attention_2"
 
-    def _compute_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _compute_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Force FlashAttention-2 only"""
         batch_size, num_heads, seq_len, head_dim = q.shape
 

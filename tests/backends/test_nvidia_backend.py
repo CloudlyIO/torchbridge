@@ -4,36 +4,31 @@ Comprehensive NVIDIA Backend Tests
 Tests all NVIDIA backend components to match TPU testing depth.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import patch, MagicMock
 
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
-    NVIDIAConfig,
-    NVIDIAArchitecture
-)
 from kernel_pytorch.backends.nvidia import (
-    NVIDIABackend,
-    NVIDIAOptimizer,
-    FP8Compiler,
-    NVIDIAMemoryManager,
-    FlashAttention3,
-    create_flash_attention_3,
     CUDADeviceManager,
     CUDAOptimizations,
-    create_cuda_integration
+    FlashAttention3,
+    FP8Compiler,
+    NVIDIABackend,
+    NVIDIAMemoryManager,
+    NVIDIAOptimizer,
+    create_cuda_integration,
+    create_flash_attention_3,
 )
 from kernel_pytorch.backends.nvidia.nvidia_exceptions import (
-    NVIDIABackendError,
-    CUDANotAvailableError,
-    OutOfMemoryError,
     MemoryAllocationError,
-    FlashAttentionError,
-    FP8CompilationError
+    OutOfMemoryError,
 )
-
+from kernel_pytorch.core.config import (
+    KernelPyTorchConfig,
+    NVIDIAArchitecture,
+)
 
 # ============================================================================
 # NVIDIA Backend Tests (10 tests)
@@ -152,7 +147,7 @@ class TestNVIDIABackend:
         config.hardware.nvidia.fp8_enabled = False
         config.hardware.nvidia.cudnn_benchmark = False
         backend = NVIDIABackend(config)
-        assert backend.nvidia_config.fp8_enabled == False
+        assert backend.nvidia_config.fp8_enabled is False
 
 
 # ============================================================================
@@ -551,7 +546,7 @@ class TestNVIDIAErrorPaths:
     def test_memory_allocation_error_handling(self):
         """Test that memory allocation errors are properly caught and logged."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         # Test with extremely large tensor that should fail
         with pytest.raises((OutOfMemoryError, MemoryAllocationError, RuntimeError)):
             # Try to allocate 1TB tensor (will fail on most systems)
@@ -566,7 +561,7 @@ class TestNVIDIAErrorPaths:
         backend = NVIDIABackend()
         assert backend.device.type == "cpu"
         assert not backend.is_cuda_available
-        
+
         # Should not raise exception, just fall back to CPU
         model = nn.Linear(10, 10)
         prepared = backend.prepare_model(model)
@@ -582,7 +577,7 @@ class TestNVIDIAErrorPaths:
     def test_oom_protection_with_insufficient_memory(self):
         """Test OOM protection triggers when insufficient memory."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         with patch.object(memory_manager, 'check_memory_available', return_value=False):
             with patch.object(memory_manager, 'get_memory_stats', return_value={
                 'allocated_gb': 10.0,
@@ -613,7 +608,7 @@ class TestNVIDIAErrorPaths:
         # Test that causal parameter is properly set
         fa = FlashAttention3(embed_dim=64, num_heads=4, causal=True)
         assert fa.causal is True
-        
+
         fa_no_causal = FlashAttention3(embed_dim=64, num_heads=4, causal=False)
         assert fa_no_causal.causal is False
 
@@ -623,27 +618,27 @@ class TestNVIDIAErrorPaths:
         config = KernelPyTorchConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
         config.hardware.nvidia.fp8_enabled = True
-        
+
         compiler = FP8Compiler(config)
         model = nn.Linear(128, 128)
-        
+
         # Should issue warning about metadata-only FP8
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = compiler.prepare_for_fp8(model, for_inference=False)
+            compiler.prepare_for_fp8(model, for_inference=False)
             # Check if warning was issued (UserWarning or DeprecationWarning)
             assert any("metadata-only" in str(warning.message).lower() for warning in w)
 
     def test_memory_allocation_with_cleanup(self):
         """Test that memory allocation attempts cleanup before failing."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         # Mock check_memory_available to return False initially, True after cleanup
         call_count = [0]
         def mock_check(required_mb):
             call_count[0] += 1
             return call_count[0] > 1  # False first time, True second time
-        
+
         with patch.object(memory_manager, 'check_memory_available', side_effect=mock_check):
             with patch.object(memory_manager, 'clear_pool') as mock_clear:
                 # This should succeed on second attempt after cleanup
@@ -673,12 +668,12 @@ class TestNVIDIAErrorPaths:
     def test_memory_stats_tensor_size_estimation(self):
         """Test accurate tensor size estimation."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         # Test size estimation for various dtypes
         size_fp32 = memory_manager._estimate_tensor_size((1000, 1000), torch.float32)
         size_fp16 = memory_manager._estimate_tensor_size((1000, 1000), torch.float16)
         size_int8 = memory_manager._estimate_tensor_size((1000, 1000), torch.int8)
-        
+
         # FP32 should be 2x FP16, FP16 should be 2x INT8
         assert abs(size_fp32 - 2 * size_fp16) < 0.01
         assert abs(size_fp16 - 2 * size_int8) < 0.01
@@ -705,17 +700,17 @@ class TestNVIDIAErrorPaths:
     def test_memory_pool_operations(self):
         """Test memory pool allocation and cleanup."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         # Allocate tensor with pool
         tensor1 = memory_manager.allocate_tensor((10, 10), pool_id="test_pool")
         assert tensor1 is not None
-        
+
         # Return to pool
         memory_manager.return_to_pool(tensor1, "test_pool")
-        
+
         # Clear pool
         memory_manager.clear_pool("test_pool")
-        
+
         # Clear all pools
         memory_manager.clear_pool()
 
@@ -724,10 +719,10 @@ class TestNVIDIAErrorPaths:
         config = KernelPyTorchConfig()
         config.hardware.nvidia.architecture = NVIDIAArchitecture.AMPERE  # Not Hopper/Blackwell
         config.hardware.nvidia.fp8_enabled = True
-        
+
         compiler = FP8Compiler(config)
         model = nn.Linear(128, 128)
-        
+
         # Should return model unchanged with warning
         result = compiler.prepare_for_fp8(model)
         assert result is model  # Should be same object, unchanged
@@ -736,17 +731,17 @@ class TestNVIDIAErrorPaths:
         """Test that backend properly integrates with kernel registry."""
         config = KernelPyTorchConfig()
         config.kernel.enabled = True
-        
+
         backend = NVIDIABackend(config)
         assert backend.kernel_registry is not None
-        
+
         # Should have registered default kernels
         # (exact count depends on CUDA availability and hardware)
 
     def test_memory_allocation_safety_margin(self):
         """Test that safety margin is applied in OOM protection."""
         memory_manager = NVIDIAMemoryManager()
-        
+
         # Mock check to verify safety margin is applied
         with patch.object(memory_manager, 'check_memory_available') as mock_check:
             mock_check.return_value = True
@@ -757,9 +752,9 @@ class TestNVIDIAErrorPaths:
                         dtype=torch.float32,
                         safety_margin=1.5  # 50% margin
                     )
-                except:
+                except Exception:
                     pass  # May fail on actual allocation, we're testing the check
-                
+
                 # Verify check was called with margin applied
                 if mock_check.called:
                     assert mock_check.call_args[0][0] == 150.0  # 100.0 * 1.5

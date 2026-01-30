@@ -17,15 +17,16 @@ Success Criteria:
 """
 
 import copy
+
 import pytest
 import torch
 
 from .conftest import (
-    requires_transformers,
-    requires_cuda,
-    benchmark_function,
-    assert_speedup,
     assert_output_close,
+    assert_speedup,
+    benchmark_function,
+    requires_cuda,
+    requires_transformers,
 )
 
 
@@ -64,7 +65,11 @@ class TestRealBERTOptimization:
 
     def test_bert_optimization_speedup_cpu(self, bert_model_and_tokenizer, sample_text_inputs):
         """Test BERT optimization produces speedup on CPU."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = bert_model_and_tokenizer
         device = torch.device("cpu")
@@ -123,7 +128,7 @@ class TestRealBERTOptimization:
         # Calculate speedup
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nBERT CPU Optimization Results:")
+        print("\nBERT CPU Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -137,7 +142,7 @@ class TestRealBERTOptimization:
         # The critical test is that outputs are correct (test_bert_output_correctness)
         if speedup < 0.5:
             print(f"  Note: Significant slowdown detected ({speedup:.2f}x)")
-            print(f"        This may be expected on some CPU architectures (e.g., TPU VM)")
+            print("        This may be expected on some CPU architectures (e.g., TPU VM)")
 
         # Only fail on extreme slowdowns that indicate a bug
         assert speedup >= 0.2, f"Extreme slowdown suggests a bug: {speedup:.2f}x"
@@ -145,7 +150,11 @@ class TestRealBERTOptimization:
     @requires_cuda
     def test_bert_optimization_speedup_cuda(self, bert_model_and_tokenizer, sample_text_inputs):
         """Test BERT optimization produces speedup on CUDA."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = bert_model_and_tokenizer
         device = torch.device("cuda")
@@ -205,7 +214,7 @@ class TestRealBERTOptimization:
             message="BERT CUDA optimization"
         )
 
-        print(f"\nBERT CUDA Optimization Results:")
+        print("\nBERT CUDA Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")
@@ -221,7 +230,11 @@ class TestRealBERTOptimization:
         optimizations. Differences of 0.1-0.5 in hidden states are expected and
         acceptable for inference quality.
         """
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = bert_model_and_tokenizer
 
@@ -268,7 +281,12 @@ class TestRealBERTOptimization:
     def test_bert_classification_task(self, e2e_device, sample_text_inputs):
         """Test BERT optimization for classification task."""
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model_name = "bert-base-uncased"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -317,7 +335,11 @@ class TestRealBERTOptimization:
 
     def test_bert_batch_throughput(self, bert_model_and_tokenizer, e2e_device):
         """Test BERT optimization improves batch throughput."""
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model, tokenizer = bert_model_and_tokenizer
 
@@ -357,8 +379,8 @@ class TestRealBERTOptimization:
         # Calculate throughput
         samples_per_second = (16 * 1000) / result.mean_time_ms
 
-        print(f"\nBERT Batch Throughput:")
-        print(f"  Batch size: 16")
+        print("\nBERT Batch Throughput:")
+        print("  Batch size: 16")
         print(f"  Latency: {result.mean_time_ms:.2f}ms")
         print(f"  Throughput: {samples_per_second:.1f} samples/sec")
 
@@ -376,7 +398,12 @@ class TestRealDistilBERTOptimization:
     def test_distilbert_optimization(self, e2e_device, sample_text_inputs):
         """Test DistilBERT optimization produces speedup."""
         from transformers import AutoModel, AutoTokenizer
-        from kernel_pytorch.models.text import TextModelOptimizer, TextModelConfig, OptimizationMode
+
+        from kernel_pytorch.models.text import (
+            OptimizationMode,
+            TextModelConfig,
+            TextModelOptimizer,
+        )
 
         model_name = "distilbert-base-uncased"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -430,7 +457,7 @@ class TestRealDistilBERTOptimization:
 
         speedup = baseline_result.mean_time_ms / optimized_result.mean_time_ms
 
-        print(f"\nDistilBERT Optimization Results:")
+        print("\nDistilBERT Optimization Results:")
         print(f"  Baseline: {baseline_result.mean_time_ms:.2f}ms")
         print(f"  Optimized: {optimized_result.mean_time_ms:.2f}ms")
         print(f"  Speedup: {speedup:.2f}x")

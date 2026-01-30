@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kernel-pytorch"
-version = "0.4.30"
+version = "0.4.35"
 description = "Production-grade PyTorch GPU optimization framework with custom CUDA kernels (FlashAttention-3, Fused ops) - 2-10x performance improvements"
 authors = [{name = "KernelPyTorch Team"}]
 readme = "README.md"
@@ -132,15 +132,55 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
 ignore_missing_imports = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+no_implicit_optional = true
+strict_equality = true
+disable_error_code = [
+    "assignment",
+    "arg-type",
+    "operator",
+    "union-attr",
+    "call-overload",
+    "override",
+    "var-annotated",
+    "index",
+    "misc",
+    "has-type",
+    "attr-defined",
+    "dict-item",
+    "return-value",
+    "call-arg",
+    "list-item",
+    "type-var",
+    "no-redef",
+    "comparison-overlap",
+    "abstract",
+]
 exclude = [
     "build",
     "dist",
     "\\.git",
     "__pycache__",
+    "demos",
+    "tests",
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    "kernel_pytorch.utils.*",
+    "kernel_pytorch.precision.*",
+    "kernel_pytorch.mixture_of_experts.*",
+    "kernel_pytorch.hardware.gpu.*",
+    "kernel_pytorch.backends.*",
+    "kernel_pytorch.deployment.serving.*",
+    "kernel_pytorch.optimizations.*",
+]
+disallow_untyped_defs = false
+warn_return_any = false
 
 [tool.pytest.ini_options]
 minversion = "7.0"

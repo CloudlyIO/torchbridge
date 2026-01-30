@@ -2,15 +2,13 @@
 Tests for the main CLI interface.
 """
 
-import pytest
 import subprocess
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 from kernel_pytorch.cli import main
-from kernel_pytorch.cli.optimize import OptimizeCommand
-from kernel_pytorch.cli.benchmark import BenchmarkCommand
-from kernel_pytorch.cli.doctor import DoctorCommand
 
 
 class TestCLIMain:

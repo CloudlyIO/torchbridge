@@ -6,16 +6,13 @@ for Intel XPU devices using Intel Extension for PyTorch (IPEX).
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
-import warnings
 
 import torch
 
 from .intel_exceptions import (
-    XPUNotAvailableError,
-    IPEXNotInstalledError,
     XPUDeviceError,
+    XPUNotAvailableError,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,7 +45,7 @@ class XPUDeviceInfo:
     name: str
     total_memory: int  # bytes
     driver_version: str
-    compute_capability: Tuple[int, int]
+    compute_capability: tuple[int, int]
     supports_amx: bool
     supports_fp16: bool
     supports_bf16: bool
@@ -71,7 +68,7 @@ class XPUDeviceManager:
         self.device_id = device_id
         self._device_count = 0
         self._current_device = None
-        self._device_infos: Dict[int, XPUDeviceInfo] = {}
+        self._device_infos: dict[int, XPUDeviceInfo] = {}
 
         self._initialize()
 
@@ -159,7 +156,7 @@ class XPUDeviceManager:
         return self._device_count
 
     @property
-    def current_device(self) -> Optional[torch.device]:
+    def current_device(self) -> torch.device | None:
         """Get current XPU device."""
         return self._current_device
 
@@ -252,7 +249,7 @@ class XPUOptimizations:
         self,
         model: torch.nn.Module,
         dtype: torch.dtype = torch.float32,
-        sample_input: Optional[torch.Tensor] = None
+        sample_input: torch.Tensor | None = None
     ) -> torch.nn.Module:
         """
         Optimize model for inference using IPEX.
@@ -296,7 +293,7 @@ class XPUOptimizations:
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         dtype: torch.dtype = torch.float32
-    ) -> Tuple[torch.nn.Module, torch.optim.Optimizer]:
+    ) -> tuple[torch.nn.Module, torch.optim.Optimizer]:
         """
         Optimize model and optimizer for training using IPEX.
 
@@ -325,7 +322,7 @@ class XPUOptimizations:
                 level="O1",
             )
 
-            logger.info(f"Model and optimizer optimized with IPEX for training")
+            logger.info("Model and optimizer optimized with IPEX for training")
             return model, optimizer
 
         except Exception as e:
@@ -381,7 +378,7 @@ def is_ipex_available() -> bool:
     return IPEX_AVAILABLE
 
 
-def get_ipex_version() -> Optional[str]:
+def get_ipex_version() -> str | None:
     """Get the IPEX version if available."""
     if not IPEX_AVAILABLE:
         return None

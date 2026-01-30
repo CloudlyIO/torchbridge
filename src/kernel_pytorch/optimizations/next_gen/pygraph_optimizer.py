@@ -10,13 +10,14 @@ Implementation of advanced CUDA Graph automation with:
 Based on latest PyTorch developments and CUDA Graph best practices.
 """
 
-import torch
-import torch.nn as nn
-from typing import Dict, List, Optional, Callable, Any, Tuple
-import functools
+import gc
 import warnings
 from collections import defaultdict
-import gc
+from collections.abc import Callable
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 
 class CUDAGraphManager:
@@ -62,13 +63,13 @@ class CUDAGraphManager:
             self.memory_pool = torch.cuda.graph_pool_handle()
             torch.cuda.set_per_process_memory_fraction(0.9)  # Reserve some memory
         except Exception as e:
-            warnings.warn(f"Could not setup CUDA graph memory pool: {e}")
+            warnings.warn(f"Could not setup CUDA graph memory pool: {e}", stacklevel=2)
             self.enable_memory_pool = False
 
     def capture_graph(
         self,
         func: Callable,
-        example_inputs: Tuple,
+        example_inputs: tuple,
         graph_id: str,
         warmup_steps: int = 3,
         enable_indirection: bool = True
@@ -122,7 +123,7 @@ class CUDAGraphManager:
         self,
         graph_id: str,
         func: Callable,
-        example_inputs: Tuple
+        example_inputs: tuple
     ):
         """Setup parameter indirection tables for dynamic execution"""
         # Create parameter lookup table
@@ -146,7 +147,7 @@ class CUDAGraphManager:
     def execute_graph(
         self,
         graph_id: str,
-        inputs: Optional[Tuple] = None,
+        inputs: tuple | None = None,
         update_parameters: bool = True
     ) -> torch.Tensor:
         """Execute captured graph with optional parameter updates"""
@@ -158,7 +159,7 @@ class CUDAGraphManager:
 
         graph_info = self.graphs[graph_id]
         graph = graph_info['graph']
-        stream = graph_info['stream']
+        graph_info['stream']
 
         # Update parameters through indirection if needed
         if update_parameters and graph_id in self.parameter_tables:
@@ -183,12 +184,12 @@ class CUDAGraphManager:
         param_table = self.parameter_tables.get(graph_id, {})
 
         # Update parameters in-place (this is where indirection helps)
-        for name, param in param_table.items():
+        for _name, param in param_table.items():
             if param.grad is not None:
                 # Apply gradient updates or other parameter modifications
                 pass  # Handled by optimizer
 
-    def _update_graph_inputs(self, graph_id: str, new_inputs: Tuple):
+    def _update_graph_inputs(self, graph_id: str, new_inputs: tuple):
         """Update graph inputs with shape validation"""
         if graph_id not in self.graphs:
             return
@@ -200,12 +201,12 @@ class CUDAGraphManager:
         for i, (original, new) in enumerate(zip(original_inputs, new_inputs)):
             if torch.is_tensor(original) and torch.is_tensor(new):
                 if original.shape != new.shape:
-                    warnings.warn(f"Input {i} shape mismatch: {original.shape} vs {new.shape}")
+                    warnings.warn(f"Input {i} shape mismatch: {original.shape} vs {new.shape}", stacklevel=2)
 
                 # Copy data in-place
                 original.copy_(new)
 
-    def get_graph_statistics(self, graph_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_graph_statistics(self, graph_id: str | None = None) -> dict[str, Any]:
         """Get performance statistics for graphs"""
         if graph_id:
             return dict(self.graph_stats[graph_id])
@@ -268,9 +269,9 @@ class SelectiveCUDAGraphs:
         self,
         operation_id: str,
         func: Callable,
-        inputs: Tuple,
+        inputs: tuple,
         profile_steps: int = 20
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Profile operation to determine if it benefits from CUDA graphs"""
         import time
 
@@ -310,7 +311,7 @@ class SelectiveCUDAGraphs:
                 # Clean up
                 self.graph_manager.clear_graph(graph_id)
 
-            except Exception as e:
+            except Exception:
                 # Graph capture failed
                 avg_graph_time = float('inf')
                 speedup = 0.0
@@ -326,7 +327,7 @@ class SelectiveCUDAGraphs:
             'benefits_from_graph': speedup > self.speedup_threshold
         }
 
-    def auto_optimize_model(self, sample_inputs: Tuple) -> Dict[str, Any]:
+    def auto_optimize_model(self, sample_inputs: tuple) -> dict[str, Any]:
         """Automatically optimize model with selective graph capture"""
         optimization_results = {}
 
@@ -336,7 +337,7 @@ class SelectiveCUDAGraphs:
                 try:
                     # Create wrapper function for module
                     def module_func(*inputs):
-                        return module(*inputs)
+                        return module(*inputs)  # noqa: B023
 
                     # Profile the module
                     profile_results = self.profile_operation(
@@ -350,14 +351,14 @@ class SelectiveCUDAGraphs:
                         self.graph_candidates.add(name)
 
                 except Exception as e:
-                    warnings.warn(f"Could not profile module {name}: {e}")
+                    warnings.warn(f"Could not profile module {name}: {e}", stacklevel=2)
 
         # Apply optimizations to beneficial operations
         self._apply_selective_optimizations(sample_inputs)
 
         return optimization_results
 
-    def _apply_selective_optimizations(self, sample_inputs: Tuple):
+    def _apply_selective_optimizations(self, sample_inputs: tuple):
         """Apply graph optimizations to beneficial operations"""
         for module_name in self.graph_candidates:
             if module_name in self.captured_graphs:
@@ -369,7 +370,7 @@ class SelectiveCUDAGraphs:
 
                 # Create graph for this module
                 def module_func(*inputs):
-                    return module(*inputs)
+                    return module(*inputs)  # noqa: B023
 
                 graph_id = f"optimized_{module_name}"
                 self.graph_manager.capture_graph(
@@ -379,7 +380,7 @@ class SelectiveCUDAGraphs:
                 self.captured_graphs.add(module_name)
 
             except Exception as e:
-                warnings.warn(f"Could not optimize module {module_name}: {e}")
+                warnings.warn(f"Could not optimize module {module_name}: {e}", stacklevel=2)
 
 
 class AutoGraphCapture:
@@ -411,8 +412,8 @@ class AutoGraphCapture:
     def track_execution(
         self,
         func: Callable,
-        inputs: Tuple,
-        pattern_id: Optional[str] = None
+        inputs: tuple,
+        pattern_id: str | None = None
     ) -> Any:
         """Track execution patterns and auto-capture frequent ones"""
         # Generate pattern signature
@@ -430,7 +431,7 @@ class AutoGraphCapture:
             try:
                 self._auto_capture_pattern(pattern_id, func, inputs)
             except Exception as e:
-                warnings.warn(f"Auto-capture failed for pattern {pattern_id}: {e}")
+                warnings.warn(f"Auto-capture failed for pattern {pattern_id}: {e}", stacklevel=2)
 
         # Execute (using graph if available)
         if pattern_id in self.auto_captured_graphs:
@@ -441,7 +442,7 @@ class AutoGraphCapture:
     def _generate_pattern_signature(
         self,
         func: Callable,
-        inputs: Tuple
+        inputs: tuple
     ) -> str:
         """Generate unique signature for execution pattern"""
         func_name = getattr(func, '__name__', str(func))
@@ -469,7 +470,7 @@ class AutoGraphCapture:
         self,
         pattern_id: str,
         func: Callable,
-        inputs: Tuple
+        inputs: tuple
     ):
         """Auto-capture a frequently executed pattern"""
         # Estimate memory usage
@@ -483,7 +484,7 @@ class AutoGraphCapture:
         self.auto_captured_graphs.add(pattern_id)
         self.graph_memory_usage += estimated_memory
 
-    def _estimate_graph_memory(self, inputs: Tuple) -> int:
+    def _estimate_graph_memory(self, inputs: tuple) -> int:
         """Estimate memory usage for graph capture"""
         memory_estimate = 0
 
@@ -496,7 +497,7 @@ class AutoGraphCapture:
 
         return memory_estimate
 
-    def get_auto_optimization_stats(self) -> Dict[str, Any]:
+    def get_auto_optimization_stats(self) -> dict[str, Any]:
         """Get statistics about auto-optimization"""
         total_executions = sum(self.execution_patterns.values())
         graph_executions = sum(
@@ -563,7 +564,7 @@ class PyGraphOptimizer:
         """Auto-detect and apply optimizations"""
         # Check if model is suitable for graph optimization
         if hasattr(self.model, 'training') and self.model.training:
-            warnings.warn("Graph optimization works best in eval mode")
+            warnings.warn("Graph optimization works best in eval mode", stacklevel=2)
 
         # Enable automatic tracking
         self._wrap_model_forward()
@@ -585,9 +586,9 @@ class PyGraphOptimizer:
     def optimize_module(
         self,
         module_name: str,
-        sample_inputs: Tuple,
+        sample_inputs: tuple,
         force_capture: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Manually optimize specific module"""
         if module_name not in dict(self.model.named_modules()):
             raise ValueError(f"Module {module_name} not found in model")
@@ -612,7 +613,7 @@ class PyGraphOptimizer:
 
         return {"status": "optimized", "graph_id": graph_id}
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """Get comprehensive optimization summary"""
         return {
             'graph_manager_stats': self.graph_manager.get_graph_statistics(),
@@ -641,7 +642,7 @@ class PyGraphOptimizer:
 
 def create_pygraph_optimizer(
     model: nn.Module,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     optimization_level: str = "balanced",
     **kwargs
 ) -> PyGraphOptimizer:
@@ -650,7 +651,7 @@ def create_pygraph_optimizer(
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if device.type != 'cuda':
-        warnings.warn("PyGraph optimization requires CUDA")
+        warnings.warn("PyGraph optimization requires CUDA", stacklevel=2)
 
     return PyGraphOptimizer(
         model=model,
@@ -700,7 +701,7 @@ if __name__ == "__main__":
 
     # Auto-optimization through repeated execution
     print("\nTesting auto-optimization...")
-    for i in range(10):
+    for _i in range(10):
         output = model(x)
 
     # Get optimization summary

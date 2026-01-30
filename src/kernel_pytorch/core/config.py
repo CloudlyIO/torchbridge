@@ -6,8 +6,9 @@ replacing the scattered 36+ config classes throughout the codebase.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Tuple, Union
 from enum import Enum
+from typing import Any
+
 import torch
 
 
@@ -173,7 +174,7 @@ class MemoryConfig:
     offloading_enabled: bool = False
 
     # Memory thresholds
-    max_memory_gb: Optional[float] = None
+    max_memory_gb: float | None = None
     memory_fraction: float = 0.8
     fragmentation_threshold: float = 0.1
 
@@ -303,7 +304,7 @@ class TPUConfig:
 
     # Compilation settings
     compilation_mode: TPUCompilationMode = TPUCompilationMode.TORCH_XLA
-    xla_flags: Optional[str] = None
+    xla_flags: str | None = None
 
     # Performance settings
     precision: str = "bfloat16"
@@ -327,8 +328,8 @@ class TPUConfig:
 
     # Memory management settings
     allocation_history_retention_seconds: int = 3600  # Keep allocation history for 1 hour
-    v6e_memory_gb: Optional[float] = None  # Override TPU v6e memory capacity (default: 32.0)
-    v7_memory_gb: Optional[float] = None  # Override TPU v7 memory capacity (default: 128.0)
+    v6e_memory_gb: float | None = None  # Override TPU v6e memory capacity (default: 32.0)
+    v7_memory_gb: float | None = None  # Override TPU v7 memory capacity (default: 128.0)
 
     # Validation settings
     enable_strict_validation: bool = False  # Raise errors instead of warnings for validation failures
@@ -668,7 +669,7 @@ class IntelConfig:
 class HardwareConfig:
     """Unified hardware optimization configuration."""
     backend: HardwareBackend = HardwareBackend.CUDA
-    device_id: Optional[int] = None
+    device_id: int | None = None
     multi_gpu: bool = False
 
     # Hardware-specific configurations
@@ -1060,7 +1061,7 @@ class KernelPyTorchConfig:
         config.optimization_level = OptimizationLevel.CONSERVATIVE
         return config
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         def _convert_value(value, visited=None):
             if visited is None:

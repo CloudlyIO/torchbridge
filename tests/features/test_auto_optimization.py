@@ -4,11 +4,16 @@ Tests for auto-optimization and hardware detection.
 Tests Stage 3A: Intelligent Optimization Selection
 """
 
+from unittest.mock import patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import MagicMock, patch
 
+from kernel_pytorch.core.config import (
+    NVIDIAArchitecture,
+    TPUVersion,
+)
 from kernel_pytorch.core.hardware_detector import (
     HardwareDetector,
     HardwareProfile,
@@ -16,11 +21,6 @@ from kernel_pytorch.core.hardware_detector import (
     OptimizationCapability,
     detect_hardware,
     get_optimal_backend,
-)
-from kernel_pytorch.core.config import (
-    KernelPyTorchConfig,
-    NVIDIAArchitecture,
-    TPUVersion,
 )
 from kernel_pytorch.core.management import UnifiedManager, get_manager
 
@@ -443,8 +443,8 @@ class TestAutoOptimizationIntegration:
         manager = get_manager()
 
         # Optimize twice
-        model1 = manager.auto_optimize(simple_model)
-        model2 = manager.auto_optimize(simple_model)
+        manager.auto_optimize(simple_model)
+        manager.auto_optimize(simple_model)
 
         # Should use same backend
         profile = manager.get_hardware_profile()

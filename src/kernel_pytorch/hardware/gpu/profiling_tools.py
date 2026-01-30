@@ -16,19 +16,14 @@ This module provides:
 Author: KernelPyTorch Team
 """
 
+import time
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.profiler
-import torch.utils.benchmark as benchmark
-from typing import Dict, List, Tuple, Optional, Any, Union, Callable
-import time
-import matplotlib.pyplot as plt
-import numpy as np
-from dataclasses import dataclass, asdict
-from contextlib import contextmanager
-import psutil
-import gc
-from collections import defaultdict, OrderedDict
 
 
 @dataclass
@@ -42,8 +37,8 @@ class KernelProfile:
     occupancy: float
     registers_per_thread: int
     shared_memory_usage: int
-    grid_size: Tuple[int, int, int]
-    block_size: Tuple[int, int, int]
+    grid_size: tuple[int, int, int]
+    block_size: tuple[int, int, int]
 
 
 @dataclass
@@ -70,7 +65,7 @@ class GPUProfiler:
     """
 
     def __init__(self,
-                 device: Optional[torch.device] = None,
+                 device: torch.device | None = None,
                  warmup_runs: int = 5,
                  benchmark_runs: int = 100):
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -162,9 +157,9 @@ class GPUProfiler:
 
     def profile_model(self,
                      model: nn.Module,
-                     sample_inputs: Union[torch.Tensor, Tuple[torch.Tensor, ...]],
+                     sample_inputs: torch.Tensor | tuple[torch.Tensor, ...],
                      include_backward: bool = True,
-                     detailed_kernels: bool = False) -> Dict[str, Any]:
+                     detailed_kernels: bool = False) -> dict[str, Any]:
         """
         Profile a complete model with detailed layer-by-layer analysis.
 
@@ -235,9 +230,9 @@ class GPUProfiler:
         return profiling_results
 
     def benchmark_implementations(self,
-                                implementations: Dict[str, Callable],
+                                implementations: dict[str, Callable],
                                 *args,
-                                **kwargs) -> Dict[str, PerformanceMetrics]:
+                                **kwargs) -> dict[str, PerformanceMetrics]:
         """
         Benchmark multiple implementations of the same operation.
 
@@ -262,7 +257,7 @@ class GPUProfiler:
 
         return results
 
-    def _get_model_info(self, model: nn.Module) -> Dict[str, Any]:
+    def _get_model_info(self, model: nn.Module) -> dict[str, Any]:
         """Get basic model information."""
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -274,7 +269,7 @@ class GPUProfiler:
             'num_layers': len(list(model.modules())) - 1  # Exclude root module
         }
 
-    def _profile_layers(self, model: nn.Module, sample_inputs) -> Dict[str, Dict[str, Any]]:
+    def _profile_layers(self, model: nn.Module, sample_inputs) -> dict[str, dict[str, Any]]:
         """Profile individual layers of the model."""
         layer_profiles = {}
 
@@ -325,7 +320,7 @@ class GPUProfiler:
 
         return layer_profiles
 
-    def _analyze_memory_patterns(self, model: nn.Module, sample_inputs) -> Dict[str, Any]:
+    def _analyze_memory_patterns(self, model: nn.Module, sample_inputs) -> dict[str, Any]:
         """Analyze memory usage patterns."""
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
@@ -359,7 +354,7 @@ class GPUProfiler:
 
     def _generate_recommendations(self,
                                 forward_metrics: PerformanceMetrics,
-                                backward_metrics: Optional[PerformanceMetrics] = None) -> List[str]:
+                                backward_metrics: PerformanceMetrics | None = None) -> list[str]:
         """Generate optimization recommendations based on profiling results."""
         recommendations = []
 
@@ -419,7 +414,7 @@ class GPUProfiler:
         """Estimate operations for a PyTorch module."""
         total_ops = 0
 
-        for name, layer in module.named_modules():
+        for _name, layer in module.named_modules():
             if isinstance(layer, nn.Linear):
                 input_size = layer.in_features
                 output_size = layer.out_features
@@ -471,7 +466,7 @@ class PerformanceBenchmark:
     Provides standardized benchmarks for common operations and optimization techniques.
     """
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self, device: torch.device | None = None):
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.profiler = GPUProfiler(device)
 
@@ -479,7 +474,7 @@ class PerformanceBenchmark:
                                           batch_size: int = 8,
                                           seq_len: int = 512,
                                           embed_dim: int = 512,
-                                          num_heads: int = 8) -> Dict[str, PerformanceMetrics]:
+                                          num_heads: int = 8) -> dict[str, PerformanceMetrics]:
         """Benchmark different attention implementations."""
 
         # Create test data
@@ -525,7 +520,7 @@ class PerformanceBenchmark:
     def benchmark_normalization_implementations(self,
                                               batch_size: int = 32,
                                               seq_len: int = 512,
-                                              embed_dim: int = 512) -> Dict[str, PerformanceMetrics]:
+                                              embed_dim: int = 512) -> dict[str, PerformanceMetrics]:
         """Benchmark different normalization implementations."""
 
         x = torch.randn(batch_size, seq_len, embed_dim, device=self.device)
@@ -558,7 +553,7 @@ class PerformanceBenchmark:
     def benchmark_activation_functions(self,
                                      batch_size: int = 32,
                                      seq_len: int = 512,
-                                     embed_dim: int = 512) -> Dict[str, PerformanceMetrics]:
+                                     embed_dim: int = 512) -> dict[str, PerformanceMetrics]:
         """Benchmark different activation function implementations."""
 
         x = torch.randn(batch_size, seq_len, embed_dim, device=self.device)
@@ -578,7 +573,7 @@ def demonstrate_profiling_tools():
     """
     Comprehensive demonstration of GPU profiling tools.
     """
-    print("📊 Advanced GPU Profiling Tools Demonstration")
+    print(" Advanced GPU Profiling Tools Demonstration")
     print("=" * 60)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -619,18 +614,18 @@ def demonstrate_profiling_tools():
     model = ProfilingTestModel().to(device)
     sample_input = torch.randn(8, 128, 512, device=device)
 
-    print(f"\n🏗️ Model Architecture:")
-    print(f"  Embed dimension: 512")
-    print(f"  Number of heads: 8")
+    print("\n Model Architecture:")
+    print("  Embed dimension: 512")
+    print("  Number of heads: 8")
     print(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Model profiling
-    print(f"\n🔍 Comprehensive Model Profiling:")
+    print("\n Comprehensive Model Profiling:")
     profile_results = profiler.profile_model(model, sample_input, include_backward=True, detailed_kernels=True)
 
     # Display results
     forward_metrics = profile_results['forward_pass']
-    print(f"  Forward pass:")
+    print("  Forward pass:")
     print(f"    Time: {forward_metrics['gpu_time_ms']:.2f} ms")
     print(f"    Memory: {forward_metrics['peak_memory_mb']:.1f} MB peak")
     print(f"    Compute efficiency: {forward_metrics['compute_efficiency']:.1%}")
@@ -638,13 +633,13 @@ def demonstrate_profiling_tools():
 
     if 'backward_pass' in profile_results:
         backward_metrics = profile_results['backward_pass']
-        print(f"  Backward pass:")
+        print("  Backward pass:")
         print(f"    Time: {backward_metrics['gpu_time_ms']:.2f} ms")
         print(f"    Memory: {backward_metrics['peak_memory_mb']:.1f} MB peak")
 
     # Display layer profiling
     if profile_results['layer_profiles']:
-        print(f"\n⚙️ Layer-by-Layer Profiling:")
+        print("\n Layer-by-Layer Profiling:")
         sorted_layers = sorted(
             profile_results['layer_profiles'].items(),
             key=lambda x: x[1]['duration_ms'],
@@ -656,12 +651,12 @@ def demonstrate_profiling_tools():
                   f"({layer_prof['relative_time']:.1%})")
 
     # Optimization recommendations
-    print(f"\n💡 Optimization Recommendations:")
+    print("\n Optimization Recommendations:")
     for rec in profile_results['optimization_recommendations']:
         print(f"    • {rec}")
 
     # Attention benchmarks
-    print(f"\n⚡ Attention Implementation Benchmark:")
+    print("\n Attention Implementation Benchmark:")
     attention_results = benchmark.benchmark_attention_implementations()
 
     for impl_name, metrics in attention_results.items():
@@ -676,21 +671,21 @@ def demonstrate_profiling_tools():
         print(f"    Best: {best_attention[0]} ({speedup:.2f}x speedup)")
 
     # Normalization benchmarks
-    print(f"\n🔢 Normalization Implementation Benchmark:")
+    print("\n Normalization Implementation Benchmark:")
     norm_results = benchmark.benchmark_normalization_implementations()
 
     for impl_name, metrics in norm_results.items():
         print(f"    {impl_name.replace('_', ' ').title():>15}: {metrics.gpu_time_ms:.2f} ms")
 
     # Activation function benchmarks
-    print(f"\n🎯 Activation Function Benchmark:")
+    print("\n Activation Function Benchmark:")
     activation_results = benchmark.benchmark_activation_functions()
 
     for impl_name, metrics in activation_results.items():
         print(f"    {impl_name.upper():>8}: {metrics.gpu_time_ms:.2f} ms")
 
     # Memory analysis
-    print(f"\n💾 Memory Analysis:")
+    print("\n Memory Analysis:")
     memory_analysis = profile_results['memory_analysis']
     print(f"    Forward peak: {memory_analysis['forward_peak_mb']:.1f} MB")
     print(f"    Backward peak: {memory_analysis['backward_peak_mb']:.1f} MB")
@@ -698,7 +693,7 @@ def demonstrate_profiling_tools():
     print(f"    Memory efficiency: {memory_analysis['memory_efficiency']:.1%}")
 
     # Performance comparison with torch.compile
-    print(f"\n🚀 torch.compile Performance Comparison:")
+    print("\n torch.compile Performance Comparison:")
 
     # Original model
     original_metrics = profiler.profile_function(model, sample_input)
@@ -715,13 +710,13 @@ def demonstrate_profiling_tools():
     print(f"    Speedup: {speedup:.2f}x")
     print(f"    Memory change: {memory_reduction:+.1f}%")
 
-    print(f"\n✅ GPU profiling demonstration complete!")
-    print(f"Key insights:")
-    print(f"  • Comprehensive performance analysis across multiple dimensions")
-    print(f"  • Layer-by-layer profiling for bottleneck identification")
-    print(f"  • Implementation comparison for optimization selection")
-    print(f"  • Automated optimization recommendations")
-    print(f"  • torch.compile impact measurement")
+    print("\n GPU profiling demonstration complete!")
+    print("Key insights:")
+    print("  • Comprehensive performance analysis across multiple dimensions")
+    print("  • Layer-by-layer profiling for bottleneck identification")
+    print("  • Implementation comparison for optimization selection")
+    print("  • Automated optimization recommendations")
+    print("  • torch.compile impact measurement")
 
 
 if __name__ == "__main__":

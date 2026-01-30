@@ -8,22 +8,24 @@ Supports training across thousands of GPUs with advanced optimizations:
 - Advanced gradient synchronization with compression
 """
 
+import logging
+import os
+import time
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
-from typing import Dict, List, Optional, Any, Tuple, Union
-import logging
-import time
-import os
-from dataclasses import dataclass
-from collections import defaultdict
-import numpy as np
 
 # Import our next-gen optimizations
 from ..optimizations.next_gen import (
-    FSDP2Manager, FSDP2Config, create_fsdp2_manager,
-    create_pygraph_optimizer, PyGraphOptimizer,
-    create_structured_sparsity_optimizer
+    FSDP2Config,
+    create_fsdp2_manager,
+    create_pygraph_optimizer,
+    create_structured_sparsity_optimizer,
 )
 
 
@@ -32,7 +34,7 @@ class ClusterConfig:
     """Configuration for large-scale cluster training"""
     total_nodes: int
     gpus_per_node: int
-    node_types: Dict[str, int]  # {"h100": 16, "a100": 8}
+    node_types: dict[str, int]  # {"h100": 16, "a100": 8}
     interconnect_type: str = "infiniband"  # or "ethernet"
     network_bandwidth_gbps: float = 400.0
     memory_per_gpu_gb: float = 80.0
@@ -90,7 +92,7 @@ class TrainingMetrics:
     network_utilization_percent: float
     gradient_norm: float
     model_flops_utilization: float
-    power_consumption_watts: Optional[float] = None
+    power_consumption_watts: float | None = None
     thermal_throttling_events: int = 0
 
 
@@ -103,7 +105,7 @@ class AdvancedFSDPManager:
         self,
         model: nn.Module,
         cluster_config: ClusterConfig,
-        training_config: Optional[Dict] = None
+        training_config: dict | None = None
     ):
         self.model = model
         self.cluster_config = cluster_config
@@ -159,7 +161,7 @@ class AdvancedFSDPManager:
             else:
                 self.device = torch.device("cpu")
 
-        except Exception as e:
+        except Exception:
             # Fallback to single process
             self.rank = 0
             self.local_rank = 0
@@ -255,7 +257,7 @@ class AdvancedFSDPManager:
         self.logger.info("Model setup completed")
         return self.model
 
-    def optimize_for_training(self, sample_input: torch.Tensor) -> Dict[str, Any]:
+    def optimize_for_training(self, sample_input: torch.Tensor) -> dict[str, Any]:
         """Optimize model configuration for distributed training"""
         if self.fsdp_manager is None:
             raise RuntimeError("Model must be setup first")
@@ -294,7 +296,7 @@ class HeterogenousClusterManager:
         self.load_balancing_weights = {}
         self.logger = logging.getLogger("HeterogenousCluster")
 
-    def analyze_cluster_topology(self) -> Dict[str, Any]:
+    def analyze_cluster_topology(self) -> dict[str, Any]:
         """Analyze cluster topology and device capabilities"""
         topology = {
             'total_nodes': self.cluster_config.total_nodes,
@@ -320,8 +322,8 @@ class HeterogenousClusterManager:
     def create_adaptive_sharding_strategy(
         self,
         model: nn.Module,
-        memory_constraints: Dict[str, float]
-    ) -> Dict[str, Any]:
+        memory_constraints: dict[str, float]
+    ) -> dict[str, Any]:
         """Create adaptive sharding strategy for heterogeneous hardware"""
 
         # Analyze model for sharding opportunities
@@ -351,7 +353,7 @@ class HeterogenousClusterManager:
     def _analyze_model_for_heterogeneous_sharding(
         self,
         model: nn.Module
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """Analyze model layers for optimal heterogeneous sharding"""
         analysis = {
             'large_layers': [],
@@ -382,7 +384,7 @@ class MultiNodeTrainingManager:
         self,
         model: nn.Module,
         cluster_config: ClusterConfig,
-        training_config: Optional[Dict] = None
+        training_config: dict | None = None
     ):
         self.model = model
         self.cluster_config = cluster_config
@@ -403,7 +405,7 @@ class MultiNodeTrainingManager:
 
         self.logger = logging.getLogger("MultiNodeTraining")
 
-    def initialize_training(self, sample_input: torch.Tensor) -> Dict[str, Any]:
+    def initialize_training(self, sample_input: torch.Tensor) -> dict[str, Any]:
         """Initialize distributed training environment"""
         self.logger.info(f"Initializing training across {self.cluster_config.total_gpus} GPUs")
 
@@ -417,7 +419,7 @@ class MultiNodeTrainingManager:
         topology = self.heterogenous_manager.analyze_cluster_topology()
 
         # Create adaptive sharding strategy for heterogeneous hardware
-        memory_constraints = {node: 80.0 for node in self.cluster_config.node_types}
+        memory_constraints = dict.fromkeys(self.cluster_config.node_types, 80.0)
         sharding_strategy = self.heterogenous_manager.create_adaptive_sharding_strategy(
             self.model, memory_constraints
         )
@@ -437,7 +439,7 @@ class MultiNodeTrainingManager:
 
     def training_step(
         self,
-        batch: Dict[str, torch.Tensor],
+        batch: dict[str, torch.Tensor],
         optimizer: torch.optim.Optimizer,
         loss_fn: callable
     ) -> TrainingMetrics:
@@ -500,7 +502,7 @@ class MultiNodeTrainingManager:
 
         return metrics
 
-    def get_training_statistics(self) -> Dict[str, Any]:
+    def get_training_statistics(self) -> dict[str, Any]:
         """Get comprehensive training statistics"""
         if not self.metrics_history:
             return {}
@@ -526,7 +528,7 @@ class MultiNodeTrainingManager:
 def create_multi_node_trainer(
     model: nn.Module,
     cluster_config: ClusterConfig,
-    training_config: Optional[Dict] = None
+    training_config: dict | None = None
 ) -> MultiNodeTrainingManager:
     """Factory function to create multi-node training manager"""
     return MultiNodeTrainingManager(model, cluster_config, training_config)
@@ -548,7 +550,7 @@ if __name__ == "__main__":
         use_mixed_precision="bf16"
     )
 
-    print(f"Cluster Configuration:")
+    print("Cluster Configuration:")
     print(f"  Total GPUs: {cluster_config.total_gpus}")
     print(f"  Total Nodes: {cluster_config.total_nodes}")
     print(f"  Node Types: {cluster_config.node_types}")
@@ -582,6 +584,6 @@ if __name__ == "__main__":
         "enable_profiling": True
     }
 
-    print("\n✅ Multi-node training manager ready for deployment!")
-    print(f"✅ Model parameters: {sum(p.numel() for p in demo_model.parameters()):,}")
-    print(f"✅ Estimated model memory: {sum(p.numel() * p.element_size() for p in demo_model.parameters()) / (1024**3):.1f}GB")
+    print("\n Multi-node training manager ready for deployment!")
+    print(f" Model parameters: {sum(p.numel() for p in demo_model.parameters()):,}")
+    print(f" Estimated model memory: {sum(p.numel() * p.element_size() for p in demo_model.parameters()) / (1024**3):.1f}GB")

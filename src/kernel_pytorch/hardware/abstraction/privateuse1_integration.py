@@ -5,16 +5,18 @@ Provides seamless integration of custom hardware devices with PyTorch using the
 PrivateUse1 mechanism while maintaining full backward compatibility with existing code.
 """
 
-import torch
 import logging
-from typing import Dict, List, Optional, Any, Callable
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import threading
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+import torch
 
 # Import existing hardware discovery types for compatibility
 from ...distributed_scale.hardware_discovery import (
-    HardwareVendor, DeviceInfo, DeviceCapability, ThermalState
+    HardwareVendor,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,9 +28,9 @@ class PrivateUse1Config:
     device_name: str
     vendor: HardwareVendor
     backend_library: str
-    kernel_registrations: Dict[str, Callable] = None
-    generator_class: Optional[type] = None
-    guard_class: Optional[type] = None
+    kernel_registrations: dict[str, Callable] = None
+    generator_class: type | None = None
+    guard_class: type | None = None
     enable_autograd: bool = True
     enable_compilation: bool = True
 
@@ -45,7 +47,7 @@ class CustomDeviceBackend(ABC):
         self.device_name = device_name
         self.vendor = vendor
         self.is_registered = False
-        self._kernel_registry: Dict[str, Callable] = {}
+        self._kernel_registry: dict[str, Callable] = {}
 
     @abstractmethod
     def initialize_device(self, device_id: int) -> bool:
@@ -58,7 +60,7 @@ class CustomDeviceBackend(ABC):
         pass
 
     @abstractmethod
-    def get_device_properties(self, device_id: int) -> Dict[str, Any]:
+    def get_device_properties(self, device_id: int) -> dict[str, Any]:
         """Get device properties and capabilities"""
         pass
 
@@ -77,7 +79,7 @@ class CustomDeviceBackend(ABC):
         self._kernel_registry[operation_name] = kernel_impl
         logger.debug(f"Registered kernel {operation_name} for {self.device_name}")
 
-    def get_kernel(self, operation_name: str) -> Optional[Callable]:
+    def get_kernel(self, operation_name: str) -> Callable | None:
         """Get registered kernel implementation"""
         return self._kernel_registry.get(operation_name)
 
@@ -91,8 +93,8 @@ class PrivateUse1Manager:
     """
 
     def __init__(self):
-        self.registered_devices: Dict[str, CustomDeviceBackend] = {}
-        self.device_mappings: Dict[HardwareVendor, str] = {}
+        self.registered_devices: dict[str, CustomDeviceBackend] = {}
+        self.device_mappings: dict[HardwareVendor, str] = {}
         self._lock = threading.Lock()
 
     def register_device_backend(self,
@@ -161,11 +163,11 @@ class PrivateUse1Manager:
             logger.error(f"PyTorch PrivateUse1 registration failed: {e}")
             return False
 
-    def _register_kernels(self, device_name: str, kernel_registry: Dict[str, Callable]) -> None:
+    def _register_kernels(self, device_name: str, kernel_registry: dict[str, Callable]) -> None:
         """Register custom kernels for device"""
         try:
             # Register kernels using TORCH_LIBRARY_IMPL
-            for op_name, kernel_impl in kernel_registry.items():
+            for op_name, _kernel_impl in kernel_registry.items():
                 # This would use TORCH_LIBRARY_IMPL in actual implementation
                 # For now, we store the registration info
                 logger.debug(f"Registering kernel {op_name} for {device_name}")
@@ -207,15 +209,15 @@ class PrivateUse1Manager:
         """Check if custom device is available"""
         return device_name in self.registered_devices
 
-    def get_device_backend(self, device_name: str) -> Optional[CustomDeviceBackend]:
+    def get_device_backend(self, device_name: str) -> CustomDeviceBackend | None:
         """Get registered device backend"""
         return self.registered_devices.get(device_name)
 
-    def get_device_for_vendor(self, vendor: HardwareVendor) -> Optional[str]:
+    def get_device_for_vendor(self, vendor: HardwareVendor) -> str | None:
         """Get device name for hardware vendor"""
         return self.device_mappings.get(vendor)
 
-    def list_registered_devices(self) -> List[str]:
+    def list_registered_devices(self) -> list[str]:
         """Get list of registered device names"""
         return list(self.registered_devices.keys())
 
@@ -301,7 +303,7 @@ def supports_privateuse1() -> bool:
         return False
 
 
-def validate_privateuse1_setup() -> Dict[str, Any]:
+def validate_privateuse1_setup() -> dict[str, Any]:
     """Validate PrivateUse1 setup and return status"""
     status = {
         'pytorch_version': torch.__version__,

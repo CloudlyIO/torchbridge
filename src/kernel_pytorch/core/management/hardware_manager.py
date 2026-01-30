@@ -15,10 +15,11 @@ Consolidates functionality from:
 Version: 0.3.11
 """
 
-import torch
-from typing import Any, Dict, Optional
+from typing import Any
 
-from .base import BaseManager, ManagerType, ManagerState
+import torch
+
+from .base import BaseManager, ManagerState, ManagerType
 
 
 class HardwareManager(BaseManager):
@@ -49,7 +50,7 @@ class HardwareManager(BaseManager):
         self.memory_pool = self._setup_memory_pool()
 
         # Initialize distributed coordination if enabled
-        self.distributed_state: Optional[Dict] = None
+        self.distributed_state: dict | None = None
         if self.config.distributed.enabled:
             self.distributed_state = self._setup_distributed()
 
@@ -72,9 +73,9 @@ class HardwareManager(BaseManager):
         else:
             raise ValueError(f"Unknown optimization type: {optimization_type}")
 
-    def _detect_device_capabilities(self) -> Dict[str, Any]:
+    def _detect_device_capabilities(self) -> dict[str, Any]:
         """Detect device capabilities."""
-        capabilities: Dict[str, Any] = {
+        capabilities: dict[str, Any] = {
             'device_type': self.context.device.type,
             'device_name': 'unknown',
             'tensor_cores': False,
@@ -93,7 +94,7 @@ class HardwareManager(BaseManager):
 
         return capabilities
 
-    def _setup_memory_pool(self) -> Optional[Dict[str, Any]]:
+    def _setup_memory_pool(self) -> dict[str, Any] | None:
         """Setup memory pooling."""
         if self.memory_config.memory_pool_enabled:
             return {
@@ -104,7 +105,7 @@ class HardwareManager(BaseManager):
             }
         return None
 
-    def _setup_distributed(self) -> Optional[Dict[str, Any]]:
+    def _setup_distributed(self) -> dict[str, Any] | None:
         """Setup distributed coordination."""
         if self.config.distributed.enabled:
             return {
@@ -131,7 +132,7 @@ class HardwareManager(BaseManager):
         # Distributed optimization logic
         return target
 
-    def get_memory_info(self) -> Dict[str, Any]:
+    def get_memory_info(self) -> dict[str, Any]:
         """Get current memory usage information."""
         info = {
             'pool_enabled': self.memory_pool is not None,
@@ -147,6 +148,6 @@ class HardwareManager(BaseManager):
 
         return info
 
-    def get_distributed_info(self) -> Optional[Dict[str, Any]]:
+    def get_distributed_info(self) -> dict[str, Any] | None:
         """Get distributed coordination info."""
         return self.distributed_state

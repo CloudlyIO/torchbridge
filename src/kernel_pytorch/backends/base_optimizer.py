@@ -13,7 +13,7 @@ Version: 0.4.8
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -31,14 +31,14 @@ class KernelConfig:
     Used by kernel optimizers to tune operations for specific hardware.
     """
     algorithm: str = "auto"
-    tile_sizes: Tuple[int, ...] = (32, 32, 32)
+    tile_sizes: tuple[int, ...] = (32, 32, 32)
     num_warps: int = 4
     num_stages: int = 2
     use_tensor_cores: bool = True
     memory_format: str = "contiguous"
-    extra_params: Dict[str, Any] = field(default_factory=dict)
+    extra_params: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'algorithm': self.algorithm,
@@ -58,11 +58,11 @@ class OptimizationStrategy:
     """
     name: str
     description: str
-    applicable_levels: List[OptimizationLevel]
+    applicable_levels: list[OptimizationLevel]
     speedup_estimate: float = 1.0  # 1.0 = no speedup
     memory_impact: float = 1.0  # < 1.0 = less memory, > 1.0 = more memory
     precision_impact: str = "none"  # "none", "minor", "significant"
-    requires: List[str] = field(default_factory=list)  # Required features
+    requires: list[str] = field(default_factory=list)  # Required features
 
     def is_applicable(self, level: OptimizationLevel) -> bool:
         """Check if this strategy is applicable for the given level."""
@@ -92,7 +92,7 @@ class BaseOptimizer(ABC):
     # Default optimization level
     DEFAULT_LEVEL: OptimizationLevel = OptimizationLevel.O2
 
-    def __init__(self, config: Any = None, device: Optional[torch.device] = None):
+    def __init__(self, config: Any = None, device: torch.device | None = None):
         """
         Initialize the optimizer.
 
@@ -104,10 +104,10 @@ class BaseOptimizer(ABC):
         self.device = device or torch.device('cpu')
 
         # Optimization history tracking
-        self._optimization_history: List[Dict[str, Any]] = []
+        self._optimization_history: list[dict[str, Any]] = []
 
         # Cache for optimization results
-        self._cache: Dict[str, OptimizationResult] = {}
+        self._cache: dict[str, OptimizationResult] = {}
 
         logger.debug(
             "%s initialized: device=%s",
@@ -124,9 +124,9 @@ class BaseOptimizer(ABC):
         self,
         model: nn.Module,
         level: OptimizationLevel,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Apply optimizations for the given level.
 
@@ -142,7 +142,7 @@ class BaseOptimizer(ABC):
         pass
 
     @abstractmethod
-    def get_available_strategies(self) -> List[OptimizationStrategy]:
+    def get_available_strategies(self) -> list[OptimizationStrategy]:
         """
         Get list of available optimization strategies.
 
@@ -158,12 +158,12 @@ class BaseOptimizer(ABC):
     def optimize(
         self,
         model: nn.Module,
-        level: Optional[Union[str, OptimizationLevel]] = None,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None,
+        level: str | OptimizationLevel | None = None,
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None,
         for_inference: bool = False,
         for_training: bool = False
-    ) -> Tuple[nn.Module, OptimizationResult]:
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model for the given level.
 
@@ -226,10 +226,10 @@ class BaseOptimizer(ABC):
     def optimize_for_inference(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        level: Optional[Union[str, OptimizationLevel]] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        sample_input: torch.Tensor | None = None,
+        level: str | OptimizationLevel | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model specifically for inference.
 
@@ -253,9 +253,9 @@ class BaseOptimizer(ABC):
     def optimize_for_training(
         self,
         model: nn.Module,
-        level: Optional[Union[str, OptimizationLevel]] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        level: str | OptimizationLevel | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model specifically for training.
 
@@ -277,8 +277,8 @@ class BaseOptimizer(ABC):
     def _apply_inference_optimizations(
         self,
         model: nn.Module,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Apply inference-specific optimizations.
@@ -305,7 +305,7 @@ class BaseOptimizer(ABC):
     def _apply_training_optimizations(
         self,
         model: nn.Module,
-        dtype: Optional[torch.dtype] = None
+        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Apply training-specific optimizations.
@@ -328,7 +328,7 @@ class BaseOptimizer(ABC):
         self,
         model: nn.Module,
         target_use: str = "inference"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get optimization recommendations for a model.
 
@@ -363,9 +363,9 @@ class BaseOptimizer(ABC):
                         'type': 'dimension_alignment',
                         'priority': 'medium',
                         'layer': name,
-                        'message': f'Linear layer dimensions not aligned for tensor cores',
+                        'message': 'Linear layer dimensions not aligned for tensor cores',
                         'current': f'{module.in_features}x{module.out_features}',
-                        'suggestion': f'Pad to multiples of 8'
+                        'suggestion': 'Pad to multiples of 8'
                     })
 
             # Check for BatchNorm after Conv (can be fused)
@@ -387,7 +387,7 @@ class BaseOptimizer(ABC):
                     'name': strategy.name,
                     'description': strategy.description,
                     'speedup_estimate': f'{strategy.speedup_estimate:.1f}x',
-                    'applicable_levels': [l.value for l in strategy.applicable_levels]
+                    'applicable_levels': [l.value for l in strategy.applicable_levels]  # noqa: E741
                 })
 
         return recommendations
@@ -395,7 +395,7 @@ class BaseOptimizer(ABC):
     def get_strategies_for_level(
         self,
         level: OptimizationLevel
-    ) -> List[OptimizationStrategy]:
+    ) -> list[OptimizationStrategy]:
         """
         Get strategies applicable for a specific level.
 
@@ -425,7 +425,7 @@ class BaseOptimizer(ABC):
             'errors': len(result.errors)
         })
 
-    def get_optimization_history(self) -> List[Dict[str, Any]]:
+    def get_optimization_history(self) -> list[dict[str, Any]]:
         """Get optimization history."""
         return self._optimization_history.copy()
 
@@ -453,7 +453,7 @@ class BaseKernelOptimizer(ABC):
 
     OPTIMIZER_NAME: str = "base_kernel"
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self, device: torch.device | None = None):
         """
         Initialize the kernel optimizer.
 
@@ -461,7 +461,7 @@ class BaseKernelOptimizer(ABC):
             device: Target device for optimization
         """
         self.device = device or torch.device('cpu')
-        self._config_cache: Dict[str, KernelConfig] = {}
+        self._config_cache: dict[str, KernelConfig] = {}
 
     @abstractmethod
     def get_optimal_gemm_config(
@@ -488,7 +488,7 @@ class BaseKernelOptimizer(ABC):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int, ...],
+        kernel_size: tuple[int, ...],
         dtype: torch.dtype = torch.float32
     ) -> KernelConfig:
         """
@@ -527,7 +527,7 @@ class BaseKernelOptimizer(ABC):
         """
         pass
 
-    def get_cached_config(self, key: str) -> Optional[KernelConfig]:
+    def get_cached_config(self, key: str) -> KernelConfig | None:
         """Get cached configuration."""
         return self._config_cache.get(key)
 
@@ -553,9 +553,9 @@ class CPUOptimizer(BaseOptimizer):
         self,
         model: nn.Module,
         level: OptimizationLevel,
-        sample_input: Optional[torch.Tensor] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Tuple[nn.Module, OptimizationResult]:
+        sample_input: torch.Tensor | None = None,
+        dtype: torch.dtype | None = None
+    ) -> tuple[nn.Module, OptimizationResult]:
         """Apply CPU optimizations."""
         optimizations = []
         warnings = []
@@ -601,7 +601,7 @@ class CPUOptimizer(BaseOptimizer):
             warnings=warnings
         )
 
-    def get_available_strategies(self) -> List[OptimizationStrategy]:
+    def get_available_strategies(self) -> list[OptimizationStrategy]:
         """Get CPU optimization strategies."""
         return [
             OptimizationStrategy(

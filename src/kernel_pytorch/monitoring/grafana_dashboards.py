@@ -28,9 +28,8 @@ Version: 0.3.10
 """
 
 import json
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -40,12 +39,12 @@ class DashboardPanel:
     title: str
     panel_type: str = "graph"  # graph, gauge, stat, table, heatmap
     datasource: str = "Prometheus"
-    targets: List[Dict[str, Any]] = field(default_factory=list)
-    grid_pos: Dict[str, int] = field(default_factory=lambda: {"x": 0, "y": 0, "w": 12, "h": 8})
-    options: Dict[str, Any] = field(default_factory=dict)
-    field_config: Dict[str, Any] = field(default_factory=dict)
+    targets: list[dict[str, Any]] = field(default_factory=list)
+    grid_pos: dict[str, int] = field(default_factory=lambda: {"x": 0, "y": 0, "w": 12, "h": 8})
+    options: dict[str, Any] = field(default_factory=dict)
+    field_config: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Grafana panel JSON format."""
         panel = {
             "title": self.title,
@@ -71,12 +70,12 @@ class GrafanaDashboard:
     title: str
     uid: str = ""
     description: str = ""
-    tags: List[str] = field(default_factory=lambda: ["kernelpytorch", "inference"])
-    panels: List[DashboardPanel] = field(default_factory=list)
+    tags: list[str] = field(default_factory=lambda: ["kernelpytorch", "inference"])
+    panels: list[DashboardPanel] = field(default_factory=list)
     refresh: str = "5s"
     time_from: str = "now-1h"
     time_to: str = "now"
-    variables: List[Dict[str, Any]] = field(default_factory=list)
+    variables: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.uid:
@@ -86,7 +85,7 @@ class GrafanaDashboard:
         """Add a panel to the dashboard."""
         self.panels.append(panel)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Grafana dashboard JSON format."""
         return {
             "dashboard": {
@@ -136,7 +135,7 @@ def _create_prometheus_target(
     expr: str,
     legend: str = "",
     ref_id: str = "A",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a Prometheus query target."""
     return {
         "expr": expr,

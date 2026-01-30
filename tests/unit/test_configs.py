@@ -7,8 +7,9 @@ to ensure proper test efficacy while maintaining performance.
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Dict, Any
+
 import torch
+
 
 @dataclass
 class TestDataConfig:
@@ -32,7 +33,7 @@ class TestDataConfig:
         """Total memory for Q, K, V tensors"""
         return self.memory_mb * 3
 
-    def create_tensors(self, device: str = 'cpu') -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def create_tensors(self, device: str = 'cpu') -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Create Q, K, V tensors with this configuration"""
         device = torch.device(device)
         q = torch.randn(self.batch_size, self.num_heads, self.seq_len, self.head_dim, device=device)
@@ -129,7 +130,7 @@ def get_config_for_test_type(test_type: str) -> TestDataConfig:
 
 def print_config_summary():
     """Print summary of all test configurations"""
-    print("🧪 Test Data Configuration Summary")
+    print(" Test Data Configuration Summary")
     print("=" * 80)
 
     print(f"{'Config':<12} {'Dims (B×H×S×D)':<20} {'Memory':<10} {'Target':<10} {'Use Case'}")
@@ -142,7 +143,7 @@ def print_config_summary():
         print(f"{name:<12} {dims:<20} {memory:<10} {config.target_time:<10} {config.use_case}")
 
     print()
-    print("📊 Test Category Recommendations:")
+    print(" Test Category Recommendations:")
     print("• Unit tests:        micro, small configs")
     print("• Integration tests: medium, realistic configs")
     print("• Stress tests:      large, xlarge configs")

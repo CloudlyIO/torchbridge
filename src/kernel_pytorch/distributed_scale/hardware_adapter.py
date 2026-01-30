@@ -9,22 +9,28 @@ Main orchestrator for hardware adaptation and optimization in large-scale traini
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+from contextlib import contextmanager
+from typing import Any
+
 import numpy as np
 import torch
 from torch.distributed._tensor import DeviceMesh
-from contextlib import contextmanager
 
-from .hardware_discovery import (
-    HardwareTopologyManager, HardwareVendor, DeviceInfo, ClusterTopology
-)
-from .thermal_power_management import ThermalAwareScheduler, PowerEfficiencyOptimizer
 from .fault_tolerance import HardwareHealthMonitor
+from .hardware_discovery import (
+    DeviceInfo,
+    HardwareTopologyManager,
+    HardwareVendor,
+)
+from .thermal_power_management import PowerEfficiencyOptimizer, ThermalAwareScheduler
 
 # Import new Hardware Abstraction Layer (HAL) - optional for backward compatibility
 try:
     from ..hardware.abstraction.hal_core import HardwareAbstractionLayer
-    from ..hardware.abstraction.vendor_adapters import auto_detect_best_adapter, get_available_vendors
+    from ..hardware.abstraction.vendor_adapters import (
+        auto_detect_best_adapter,  # noqa: F401
+        get_available_vendors,
+    )
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False
@@ -44,7 +50,7 @@ class HardwareAdapter:
         self,
         enable_monitoring: bool = True,
         thermal_threshold: float = 85.0,
-        power_budget_w: Optional[float] = None,
+        power_budget_w: float | None = None,
         enable_hal: bool = True
     ):
         # Core components (maintain backward compatibility)
@@ -99,7 +105,7 @@ class HardwareAdapter:
         self,
         memory_requirement_gb: float,
         compute_requirement_tflops: float,
-        prefer_vendor: Optional[HardwareVendor] = None
+        prefer_vendor: HardwareVendor | None = None
     ):
         """Context manager for optimal device placement"""
         optimal_devices = self.get_optimal_device_placement(
@@ -124,8 +130,8 @@ class HardwareAdapter:
         self,
         memory_requirement_gb: float,
         compute_requirement_tflops: float,
-        prefer_vendor: Optional[HardwareVendor] = None
-    ) -> List[int]:
+        prefer_vendor: HardwareVendor | None = None
+    ) -> list[int]:
         """
         Get optimal device placement for given requirements
 
@@ -201,7 +207,7 @@ class HardwareAdapter:
 
         return score
 
-    def get_cluster_statistics(self) -> Dict[str, Any]:
+    def get_cluster_statistics(self) -> dict[str, Any]:
         """Get comprehensive cluster statistics"""
         if not self.topology_manager.cluster_topology:
             return {}
@@ -216,7 +222,7 @@ class HardwareAdapter:
 
         return stats
 
-    def get_available_devices(self) -> List[Dict[str, Any]]:
+    def get_available_devices(self) -> list[dict[str, Any]]:
         """Get list of available devices for backward compatibility"""
         if self.hal and self.hal.devices:
             # Return HAL devices if available
@@ -237,7 +243,7 @@ class HardwareAdapter:
             # Return empty list if no devices available
             return []
 
-    def get_cluster_status(self) -> Dict[str, Any]:
+    def get_cluster_status(self) -> dict[str, Any]:
         """Get cluster status for backward compatibility"""
         devices = self.get_available_devices()
         return {
@@ -247,7 +253,7 @@ class HardwareAdapter:
             'hal_enabled': hasattr(self, 'hal') and self.hal is not None
         }
 
-    def _get_topology_stats(self) -> Dict[str, Any]:
+    def _get_topology_stats(self) -> dict[str, Any]:
         """Get topology statistics"""
         if not self.topology_manager.cluster_topology:
             return {}
@@ -259,7 +265,7 @@ class HardwareAdapter:
             'capability_distribution': dict(self.topology_manager.cluster_topology.capability_distribution),
         }
 
-    def _get_power_stats(self) -> Dict[str, Any]:
+    def _get_power_stats(self) -> dict[str, Any]:
         """Get power consumption statistics"""
         if not self.topology_manager.cluster_topology:
             return {}
@@ -281,7 +287,7 @@ class HardwareAdapter:
             'power_efficiency': efficiency
         }
 
-    def _get_performance_stats(self) -> Dict[str, Any]:
+    def _get_performance_stats(self) -> dict[str, Any]:
         """Get performance statistics"""
         if not self.topology_manager.cluster_topology:
             return {}
@@ -314,7 +320,7 @@ class HardwareAdapter:
         required_devices: int,
         estimated_power_per_device: float = 300.0,
         thermal_sensitivity: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Optimize cluster for specific workload"""
         # Use thermal scheduler for job scheduling
         scheduling_result = self.thermal_scheduler.schedule_job(
@@ -339,18 +345,18 @@ class HardwareAdapter:
         world_size: int,
         tensor_parallel_size: int = 1,
         pipeline_parallel_size: int = 1,
-        data_parallel_size: Optional[int] = None
+        data_parallel_size: int | None = None
     ) -> DeviceMesh:
         """Create optimal device mesh for distributed training"""
         return self.mesh_optimizer.create_optimal_mesh(
             world_size, tensor_parallel_size, pipeline_parallel_size, data_parallel_size
         )
 
-    def get_health_report(self, hours: int = 1) -> Dict[str, Any]:
+    def get_health_report(self, hours: int = 1) -> dict[str, Any]:
         """Get comprehensive health report"""
         return self.health_monitor.get_performance_report(hours=hours)
 
-    def get_hal(self) -> Optional[Any]:
+    def get_hal(self) -> Any | None:
         """
         Get Hardware Abstraction Layer instance
 
@@ -366,7 +372,7 @@ class HardwareAdapter:
     def get_optimal_device_hal(self,
                               memory_requirement_gb: float,
                               compute_requirement_tflops: float,
-                              preferred_vendors: Optional[List[HardwareVendor]] = None) -> Optional[Any]:
+                              preferred_vendors: list[HardwareVendor] | None = None) -> Any | None:
         """
         Get optimal device using HAL (enhanced version)
 
@@ -409,7 +415,7 @@ class HardwareAdapter:
                 preferred_vendors[0] if preferred_vendors else None
             )
 
-    def get_cross_vendor_capabilities(self) -> Dict[str, Any]:
+    def get_cross_vendor_capabilities(self) -> dict[str, Any]:
         """
         Get capabilities across all vendors (HAL-enhanced feature)
 
@@ -445,7 +451,7 @@ class HardwareAdapter:
 
     def create_cross_vendor_mesh(self,
                                 world_size: int,
-                                preferred_vendors: Optional[List[HardwareVendor]] = None,
+                                preferred_vendors: list[HardwareVendor] | None = None,
                                 **kwargs) -> DeviceMesh:
         """
         Create device mesh across multiple vendors (HAL-enhanced feature)
@@ -494,9 +500,9 @@ class HardwareAdapter:
             return self.create_optimal_device_mesh(world_size, **kwargs)
 
     def create_cross_vendor_mesh_hal(self,
-                                    devices: List[Any],
+                                    devices: list[Any],
                                     mesh_id: str,
-                                    topology: str = "ring") -> Optional[Any]:
+                                    topology: str = "ring") -> Any | None:
         """
         Create cross-vendor device mesh using HAL (new enhanced feature)
 
@@ -521,7 +527,7 @@ class HardwareAdapter:
             logger.error(f"Cross-vendor mesh creation failed: {e}")
             return None
 
-    def get_vendor_capabilities_hal(self) -> Optional[Dict[str, Any]]:
+    def get_vendor_capabilities_hal(self) -> dict[str, Any] | None:
         """
         Get aggregated vendor capabilities using HAL
 
@@ -547,7 +553,7 @@ class HardwareAdapter:
             logger.error(f"Failed to get vendor capabilities: {e}")
             return None
 
-    def auto_detect_hardware_hal(self) -> Dict[str, List[Any]]:
+    def auto_detect_hardware_hal(self) -> dict[str, list[Any]]:
         """
         Auto-detect all available hardware using HAL
 
@@ -603,14 +609,14 @@ class DeviceMeshOptimizer:
 
     def __init__(self, topology_manager: HardwareTopologyManager):
         self.topology_manager = topology_manager
-        self.mesh_cache: Dict[str, DeviceMesh] = {}
+        self.mesh_cache: dict[str, DeviceMesh] = {}
 
     def create_optimal_mesh(
         self,
         world_size: int,
         tensor_parallel_size: int = 1,
         pipeline_parallel_size: int = 1,
-        data_parallel_size: Optional[int] = None
+        data_parallel_size: int | None = None
     ) -> DeviceMesh:
         """
         Create optimal device mesh for given parallelism configuration
@@ -672,8 +678,8 @@ class DeviceMeshOptimizer:
 
     def _optimize_device_ordering(
         self,
-        device_ids: List[int],
-        mesh_shape: List[int]
+        device_ids: list[int],
+        mesh_shape: list[int]
     ) -> np.ndarray:
         """Optimize device ordering for communication efficiency"""
         if not self.topology_manager.cluster_topology:
@@ -698,7 +704,7 @@ class DeviceMeshOptimizer:
         total_devices = len(device_ids)
         devices_assigned = 0
 
-        for node_id, node_devices in node_groups.items():
+        for _node_id, node_devices in node_groups.items():
             available = min(len(node_devices), total_devices - devices_assigned)
             optimized_order.extend(node_devices[:available])
             devices_assigned += available

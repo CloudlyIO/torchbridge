@@ -2,13 +2,12 @@
 Tests for package installation and import functionality.
 """
 
-import pytest
+import importlib
 import subprocess
 import sys
-import importlib
-import tempfile
-import os
 from pathlib import Path
+
+import pytest
 
 
 class TestPackageInstallation:
@@ -33,9 +32,9 @@ class TestPackageInstallation:
     def test_import_cli_modules(self):
         """Test that CLI modules can be imported."""
         from kernel_pytorch.cli import main
-        from kernel_pytorch.cli.optimize import OptimizeCommand
         from kernel_pytorch.cli.benchmark import BenchmarkCommand
         from kernel_pytorch.cli.doctor import DoctorCommand
+        from kernel_pytorch.cli.optimize import OptimizeCommand
 
         assert callable(main)
         assert hasattr(OptimizeCommand, 'execute')
@@ -49,9 +48,9 @@ class TestPackageInstallation:
         assert callable(cli_main)
 
         # Test individual commands
-        from kernel_pytorch.cli.optimize import main as optimize_main
         from kernel_pytorch.cli.benchmark import main as benchmark_main
         from kernel_pytorch.cli.doctor import main as doctor_main
+        from kernel_pytorch.cli.optimize import main as optimize_main
 
         assert callable(optimize_main)
         assert callable(benchmark_main)
@@ -184,7 +183,7 @@ class TestInstallationRequirements:
 
             # Parse version (e.g., "2.1.0+cu118" -> [2, 1, 0])
             version_parts = version.split('+')[0].split('.')
-            major, minor = int(version_parts[0]), int(version_parts[1])
+            major, _minor = int(version_parts[0]), int(version_parts[1])
 
             # Check minimum PyTorch version (2.0+)
             assert major >= 2, f"Expected PyTorch 2.0+, got {version}"
@@ -261,14 +260,12 @@ class TestImportPerformance:
     def test_import_time_reasonable(self):
         """Test that package import time is reasonable."""
         import time
-        import importlib
 
         # Reload the module to measure import time
         if 'kernel_pytorch' in sys.modules:
             del sys.modules['kernel_pytorch']
 
         start_time = time.time()
-        import kernel_pytorch
         import_time = time.time() - start_time
 
         # Import should be reasonably fast (< 5 seconds)
@@ -280,7 +277,6 @@ class TestImportPerformance:
 
         # CLI import should be fast
         start_time = time.time()
-        from kernel_pytorch.cli import main
         cli_import_time = time.time() - start_time
 
         # CLI import should be very fast
@@ -289,7 +285,6 @@ class TestImportPerformance:
     def test_heavy_dependencies_lazy_loaded(self):
         """Test that heavy dependencies are lazy loaded."""
         # Import base package
-        import kernel_pytorch
 
         # Heavy dependencies should not be loaded yet
         heavy_modules = [

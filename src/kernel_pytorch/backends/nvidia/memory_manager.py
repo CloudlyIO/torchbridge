@@ -5,14 +5,18 @@ GPU memory allocation and optimization for NVIDIA devices.
 Inherits from BaseMemoryManager for shared functionality.
 """
 
+import gc
 import logging
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Tuple
-import gc
 
+from kernel_pytorch.backends.base_memory_manager import (
+    BaseMemoryManager,
+)
 from kernel_pytorch.core.config import KernelPyTorchConfig
-from kernel_pytorch.backends.base_memory_manager import BaseMemoryManager, BaseMemoryStats
+
 from .nvidia_exceptions import MemoryAllocationError, OutOfMemoryError
 
 logger = logging.getLogger(__name__)
@@ -26,7 +30,7 @@ class NVIDIAMemoryManager(BaseMemoryManager):
     strategies for NVIDIA GPUs with Tensor Core awareness.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize NVIDIA memory manager.
 
@@ -85,7 +89,7 @@ class NVIDIAMemoryManager(BaseMemoryManager):
     # NVIDIA-specific methods
     # =========================================================================
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """
         Get current memory statistics.
 
@@ -145,7 +149,7 @@ class NVIDIAMemoryManager(BaseMemoryManager):
 
     def allocate_with_oom_protection(
         self,
-        shape: Tuple[int, ...],
+        shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
         safety_margin: float = 1.2
@@ -199,7 +203,7 @@ class NVIDIAMemoryManager(BaseMemoryManager):
             else:
                 raise MemoryAllocationError("allocation", str(e)) from e
 
-    def optimize_model_memory(self, model: nn.Module) -> Dict[str, Any]:
+    def optimize_model_memory(self, model: nn.Module) -> dict[str, Any]:
         """
         Analyze and optimize model memory usage for NVIDIA GPUs.
 
@@ -242,7 +246,7 @@ class NVIDIAMemoryManager(BaseMemoryManager):
                 import os
                 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:512'
 
-    def _estimate_tensor_size(self, shape: Tuple[int, ...], dtype: torch.dtype) -> float:
+    def _estimate_tensor_size(self, shape: tuple[int, ...], dtype: torch.dtype) -> float:
         """
         Estimate tensor size in megabytes (backward compatibility alias).
 

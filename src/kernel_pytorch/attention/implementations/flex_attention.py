@@ -12,24 +12,23 @@ Key Features:
 - Full integration with KernelPyTorch attention registry
 """
 
-import math
-from typing import Optional, Callable, Tuple, Dict, Any, Union
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import warnings
-from functools import partial
+from collections.abc import Callable
+from typing import Any
 
-from ..core.base import BaseAttention, AttentionWithCache
+import torch
+import torch.nn.functional as F
+
+from ..core.base import AttentionWithCache
 from ..core.config import AttentionConfig, AttentionPatterns
 from ..core.registry import register_attention
 
 # Check for FlexAttention availability (PyTorch 2.5+)
 try:
     from torch.nn.attention.flex_attention import (
-        flex_attention,
         create_block_mask,
         create_mask,
+        flex_attention,
     )
     FLEX_ATTENTION_AVAILABLE = True
 except ImportError:
@@ -44,7 +43,7 @@ try:
     TORCH_COMPILE_AVAILABLE = True
 except AttributeError:
     TORCH_COMPILE_AVAILABLE = False
-    torch_compile = lambda f, **kwargs: f
+    torch_compile = lambda f, **kwargs: f  # noqa: E731
 
 
 class FlexAttentionScoreMods:
@@ -92,7 +91,7 @@ class FlexAttentionScoreMods:
         return score_mod
 
     @staticmethod
-    def alibi(num_heads: int, alibi_slopes: Optional[torch.Tensor] = None):
+    def alibi(num_heads: int, alibi_slopes: torch.Tensor | None = None):
         """ALiBi positional bias"""
         if alibi_slopes is None:
             # Default ALiBi slopes: geometric sequence
@@ -231,7 +230,7 @@ class FlexAttentionLayer(AttentionWithCache):
     def __init__(
         self,
         config: AttentionConfig,
-        score_mod: Optional[Union[str, Callable]] = None,
+        score_mod: str | Callable | None = None,
         use_block_mask: bool = True,
         compile_score_mod: bool = True,
     ):
@@ -250,7 +249,7 @@ class FlexAttentionLayer(AttentionWithCache):
             self._compiled_score_mod = self._score_mod_fn
 
         # Cache for block masks
-        self._block_mask_cache: Dict[Tuple, Any] = {}
+        self._block_mask_cache: dict[tuple, Any] = {}
 
         # Track FlexAttention availability
         self.flex_attention_available = FLEX_ATTENTION_AVAILABLE
@@ -258,14 +257,15 @@ class FlexAttentionLayer(AttentionWithCache):
         if not FLEX_ATTENTION_AVAILABLE:
             warnings.warn(
                 "FlexAttention not available (requires PyTorch 2.5+). "
-                "Falling back to standard attention implementation."
+                "Falling back to standard attention implementation.",
+            stacklevel=2,
             )
 
     def _resolve_score_mod(
         self,
-        score_mod: Optional[Union[str, Callable]],
+        score_mod: str | Callable | None,
         config: AttentionConfig
-    ) -> Optional[Callable]:
+    ) -> Callable | None:
         """Resolve score_mod from string name or callable"""
 
         # If explicit score_mod provided
@@ -306,7 +306,7 @@ class FlexAttentionLayer(AttentionWithCache):
         batch_size: int,
         seq_len: int,
         device: torch.device
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Get or create cached block mask"""
         if not self.use_block_mask:
             return None
@@ -337,7 +337,7 @@ class FlexAttentionLayer(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Compute attention using FlexAttention or fallback.
@@ -370,7 +370,7 @@ class FlexAttentionLayer(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """FlexAttention forward pass using PyTorch native API"""
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -390,7 +390,7 @@ class FlexAttentionLayer(AttentionWithCache):
             return output
 
         except Exception as e:
-            warnings.warn(f"FlexAttention failed: {e}. Falling back to standard attention.")
+            warnings.warn(f"FlexAttention failed: {e}. Falling back to standard attention.", stacklevel=2)
             return self._standard_attention_forward(q, k, v, attention_mask)
 
     def _standard_attention_forward(
@@ -398,7 +398,7 @@ class FlexAttentionLayer(AttentionWithCache):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
+        attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Standard attention fallback implementation"""
         batch_size, num_heads, seq_len, head_dim = q.shape
@@ -432,7 +432,7 @@ class FlexAttentionLayer(AttentionWithCache):
         """Clear the block mask cache"""
         self._block_mask_cache.clear()
 
-    def get_attention_stats(self) -> Dict[str, Any]:
+    def get_attention_stats(self) -> dict[str, Any]:
         """Get attention statistics including FlexAttention info"""
         stats = super().get_attention_stats()
         stats.update({
@@ -471,7 +471,7 @@ def create_flex_attention(
     embed_dim: int,
     num_heads: int,
     pattern: str = 'full',
-    score_mod: Optional[Union[str, Callable]] = None,
+    score_mod: str | Callable | None = None,
     **kwargs
 ) -> FlexAttentionLayer:
     """
@@ -525,7 +525,7 @@ def is_flex_attention_available() -> bool:
     return FLEX_ATTENTION_AVAILABLE
 
 
-def get_flex_attention_info() -> Dict[str, Any]:
+def get_flex_attention_info() -> dict[str, Any]:
     """Get information about FlexAttention availability and features"""
     return {
         'available': FLEX_ATTENTION_AVAILABLE,

@@ -7,15 +7,17 @@ XLA compilation, and TPU-specific optimizations.
 
 import logging
 import warnings
+from dataclasses import dataclass
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, Any, Optional, Union, List, Tuple
-from dataclasses import dataclass
 
-from kernel_pytorch.core.config import KernelPyTorchConfig, TPUConfig
+from kernel_pytorch.core.config import KernelPyTorchConfig
+
 from .tpu_backend import TPUBackend
+from .tpu_exceptions import TPUValidationError, raise_or_warn
 from .xla_compiler import XLACompiler
-from .tpu_exceptions import TPUOptimizationError, TPUValidationError, raise_or_warn
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +29,8 @@ class TPUOptimizationResult:
     backend: TPUBackend
     compiler: XLACompiler
     optimization_time: float
-    memory_usage: Dict[str, Any]
-    performance_metrics: Dict[str, Any]
+    memory_usage: dict[str, Any]
+    performance_metrics: dict[str, Any]
 
 
 class TPUOptimizer:
@@ -39,7 +41,7 @@ class TPUOptimizer:
     strategies to provide the best performance for TPU deployments.
     """
 
-    def __init__(self, config: Optional[KernelPyTorchConfig] = None):
+    def __init__(self, config: KernelPyTorchConfig | None = None):
         """
         Initialize TPU optimizer.
 
@@ -57,7 +59,7 @@ class TPUOptimizer:
         self._optimization_history = []
 
     def optimize(self, model: nn.Module,
-                sample_inputs: Optional[Union[torch.Tensor, tuple]] = None,
+                sample_inputs: torch.Tensor | tuple | None = None,
                 optimization_level: str = "balanced") -> TPUOptimizationResult:
         """
         Optimize model for TPU execution.
@@ -223,7 +225,8 @@ class TPUOptimizer:
                     if head_dim and head_dim % 8 != 0:
                         warnings.warn(
                             f"Attention head dimension {head_dim} not optimal for TPU. "
-                            "Consider using dimensions divisible by 8."
+                            "Consider using dimensions divisible by 8.",
+                        stacklevel=2,
                         )
 
         return model
@@ -273,13 +276,14 @@ class TPUOptimizer:
                 if module.in_channels % 8 != 0 or module.out_channels % 8 != 0:
                     warnings.warn(
                         f"Convolution channels ({module.in_channels}→{module.out_channels}) "
-                        "not optimal for TPU. Consider using multiples of 8."
+                        "not optimal for TPU. Consider using multiples of 8.",
+                    stacklevel=2,
                     )
 
         return model
 
     def _validate_optimization(self, model: nn.Module,
-                             sample_inputs: Optional[Union[torch.Tensor, tuple]]) -> None:
+                             sample_inputs: torch.Tensor | tuple | None) -> None:
         """Validate that optimization was successful."""
 
         if sample_inputs is None:
@@ -312,7 +316,7 @@ class TPUOptimizer:
             # Test forward pass
             model.eval()
             with torch.no_grad():
-                output = model(sample_inputs)
+                model(sample_inputs)
 
             # Synchronize TPU operations
             self.backend.synchronize()
@@ -329,7 +333,7 @@ class TPUOptimizer:
             )
 
     def optimize_for_inference(self, model: nn.Module,
-                             sample_inputs: Optional[Union[torch.Tensor, tuple]] = None) -> TPUOptimizationResult:
+                             sample_inputs: torch.Tensor | tuple | None = None) -> TPUOptimizationResult:
         """
         Optimize model specifically for inference.
 
@@ -354,7 +358,7 @@ class TPUOptimizer:
         return result
 
     def optimize_for_training(self, model: nn.Module,
-                            sample_inputs: Optional[Union[torch.Tensor, tuple]] = None) -> TPUOptimizationResult:
+                            sample_inputs: torch.Tensor | tuple | None = None) -> TPUOptimizationResult:
         """
         Optimize model specifically for training.
 
@@ -375,7 +379,7 @@ class TPUOptimizer:
 
         return result
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """Get optimization statistics."""
         total_optimizations = len(self._optimization_history)
 

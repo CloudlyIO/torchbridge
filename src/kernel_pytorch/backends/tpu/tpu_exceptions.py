@@ -7,19 +7,18 @@ inheriting from the shared base_exceptions module.
 Version: 0.3.7
 """
 
-from typing import Optional, Any, Dict
 import logging
+from typing import Any
 
 from kernel_pytorch.backends.base_exceptions import (
     BackendError,
-    DeviceNotAvailableError,
-    MemoryError,
-    MemoryAllocationError,
-    MemoryPoolError,
     CompilationError,
-    OptimizationError,
     ConfigurationError,
     DeviceError,
+    DeviceNotAvailableError,
+    MemoryError,
+    MemoryPoolError,
+    OptimizationError,
     raise_or_warn,
 )
 
@@ -58,14 +57,14 @@ class XLACompilationTimeoutError(XLACompilationError):
 class TPUMemoryError(MemoryError, TPUBackendError):
     """Base exception for TPU memory-related errors."""
 
-    def __init__(self, message: str = "", details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str = "", details: dict[str, Any] | None = None):
         MemoryError.__init__(self, message, details)
 
 
 class TPUOutOfMemoryError(TPUMemoryError):
     """Raised when TPU runs out of memory during allocation."""
 
-    def __init__(self, required_bytes: Optional[int] = None, available_bytes: Optional[int] = None):
+    def __init__(self, required_bytes: int | None = None, available_bytes: int | None = None):
         if required_bytes is not None and available_bytes is not None:
             message = f"Out of TPU memory: required {required_bytes/1e6:.1f}MB, available {available_bytes/1e6:.1f}MB"
         else:

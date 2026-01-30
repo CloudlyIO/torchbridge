@@ -6,20 +6,23 @@ with intelligent request routing and real-time optimization.
 """
 
 import asyncio
-import time
-import uuid
 import logging
-from typing import Dict, List, Optional, Any, Union, Tuple, Callable
+import threading
+import time
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from contextlib import asynccontextmanager
-import threading
-from collections import deque
 
-from ..hardware.abstraction.hal_core import DeviceSpec, HardwareVendor, HardwareAbstractionLayer
+from ..hardware.abstraction.hal_core import (
+    DeviceSpec,
+    HardwareAbstractionLayer,
+    HardwareVendor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +48,14 @@ class InferenceRequest:
     """Request for model inference"""
     request_id: str
     model_id: str
-    inputs: Dict[str, torch.Tensor]
+    inputs: dict[str, torch.Tensor]
     priority: RequestPriority = RequestPriority.NORMAL
-    max_latency_ms: Optional[float] = None
-    preferred_vendors: Optional[List[HardwareVendor]] = None
-    precision_requirements: Optional[List[str]] = None
+    max_latency_ms: float | None = None
+    preferred_vendors: list[HardwareVendor] | None = None
+    precision_requirements: list[str] | None = None
     batch_compatible: bool = True
-    callback_url: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    callback_url: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -60,15 +63,15 @@ class InferenceRequest:
 class InferenceResponse:
     """Response from model inference"""
     request_id: str
-    outputs: Dict[str, torch.Tensor]
+    outputs: dict[str, torch.Tensor]
     latency_ms: float
     device_used: DeviceSpec
     model_version: str
-    confidence_scores: Optional[Dict[str, float]] = None
-    execution_stats: Dict[str, Any] = field(default_factory=dict)
+    confidence_scores: dict[str, float] | None = None
+    execution_stats: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     success: bool = True
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -77,7 +80,7 @@ class RequestProfile:
     estimated_memory_gb: float
     estimated_compute_tflops: float
     expected_latency_ms: float
-    input_shapes: List[Tuple[int, ...]]
+    input_shapes: list[tuple[int, ...]]
     batch_size: int
     sequence_length: int
     complexity_score: float
@@ -97,15 +100,15 @@ class ModelVariant:
     expected_latency_ms: float
     memory_requirement_gb: float
     throughput_rps: float
-    accuracy_metrics: Dict[str, float] = field(default_factory=dict)
+    accuracy_metrics: dict[str, float] = field(default_factory=dict)
 
 
 class ModelRegistry:
     """Registry for managing model variants across hardware"""
 
     def __init__(self):
-        self.models: Dict[str, Dict[str, ModelVariant]] = {}  # model_id -> variant_id -> variant
-        self.hardware_compatibility: Dict[str, List[HardwareVendor]] = {}
+        self.models: dict[str, dict[str, ModelVariant]] = {}  # model_id -> variant_id -> variant
+        self.hardware_compatibility: dict[str, list[HardwareVendor]] = {}
         self._lock = threading.RLock()
 
     def register_model_variant(self, variant: ModelVariant) -> None:
@@ -126,14 +129,14 @@ class ModelRegistry:
     def get_optimal_variant(self,
                            model_id: str,
                            device: DeviceSpec,
-                           latency_requirement: Optional[float] = None,
-                           memory_limit: Optional[float] = None) -> Optional[ModelVariant]:
+                           latency_requirement: float | None = None,
+                           memory_limit: float | None = None) -> ModelVariant | None:
         """Get optimal model variant for device and requirements"""
         if model_id not in self.models:
             return None
 
         candidates = []
-        for variant_id, variant in self.models[model_id].items():
+        for _variant_id, variant in self.models[model_id].items():
             # Check hardware compatibility
             if variant.target_hardware.vendor != device.vendor:
                 continue
@@ -159,7 +162,7 @@ class ModelRegistry:
     def _calculate_variant_score(self,
                                 variant: ModelVariant,
                                 device: DeviceSpec,
-                                latency_requirement: Optional[float]) -> float:
+                                latency_requirement: float | None) -> float:
         """Calculate variant suitability score"""
         score = 0.0
 
@@ -184,11 +187,11 @@ class ModelRegistry:
 
         return score
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of available model IDs"""
         return list(self.models.keys())
 
-    def get_model_variants(self, model_id: str) -> List[ModelVariant]:
+    def get_model_variants(self, model_id: str) -> list[ModelVariant]:
         """Get all variants for a model"""
         if model_id not in self.models:
             return []
@@ -200,9 +203,9 @@ class HardwarePool:
 
     def __init__(self, hal: HardwareAbstractionLayer):
         self.hal = hal
-        self.available_devices: Dict[int, DeviceSpec] = {}
-        self.device_queues: Dict[int, asyncio.Queue] = {}
-        self.device_metrics: Dict[int, Dict[str, float]] = {}
+        self.available_devices: dict[int, DeviceSpec] = {}
+        self.device_queues: dict[int, asyncio.Queue] = {}
+        self.device_metrics: dict[int, dict[str, float]] = {}
         self._lock = threading.RLock()
 
     async def initialize(self) -> None:
@@ -212,7 +215,7 @@ class HardwarePool:
         device_counter = 0
 
         with self._lock:
-            for vendor, devices in hardware_inventory.items():
+            for _vendor, devices in hardware_inventory.items():
                 for device in devices:
                     device.device_id = device_counter
                     self.available_devices[device_counter] = device
@@ -222,15 +225,15 @@ class HardwarePool:
 
         logger.info(f"Initialized hardware pool with {len(self.available_devices)} devices")
 
-    def get_available_devices(self) -> List[DeviceSpec]:
+    def get_available_devices(self) -> list[DeviceSpec]:
         """Get list of available devices"""
         return [device for device in self.available_devices.values() if device.is_available]
 
-    def get_device_by_id(self, device_id: int) -> Optional[DeviceSpec]:
+    def get_device_by_id(self, device_id: int) -> DeviceSpec | None:
         """Get device by ID"""
         return self.available_devices.get(device_id)
 
-    async def allocate_device(self, requirements: RequestProfile) -> Optional[DeviceSpec]:
+    async def allocate_device(self, requirements: RequestProfile) -> DeviceSpec | None:
         """Allocate optimal device for request"""
         optimal_device = self.hal.get_optimal_device(
             memory_requirement_gb=requirements.estimated_memory_gb,
@@ -249,7 +252,7 @@ class HardwarePool:
         """Release device back to pool"""
         device.current_utilization = max(0.0, device.current_utilization - 0.1)
 
-    def update_device_metrics(self, device_id: int, metrics: Dict[str, float]) -> None:
+    def update_device_metrics(self, device_id: int, metrics: dict[str, float]) -> None:
         """Update real-time device metrics"""
         if device_id in self.device_metrics:
             self.device_metrics[device_id].update(metrics)
@@ -259,8 +262,8 @@ class RequestProfiler:
     """Profiler for analyzing inference request characteristics"""
 
     def __init__(self):
-        self.profile_cache: Dict[str, RequestProfile] = {}
-        self.model_stats: Dict[str, Dict[str, float]] = {}
+        self.profile_cache: dict[str, RequestProfile] = {}
+        self.model_stats: dict[str, dict[str, float]] = {}
 
     def profile_request(self, request: InferenceRequest) -> RequestProfile:
         """Profile inference request to estimate resource requirements"""
@@ -273,7 +276,7 @@ class RequestProfiler:
         max_sequence_length = 0
         input_shapes = []
 
-        for name, tensor in request.inputs.items():
+        for _name, tensor in request.inputs.items():
             elements = tensor.numel()
             total_elements += elements
             input_shapes.append(tensor.shape)
@@ -317,7 +320,7 @@ class RequestProfiler:
         shapes_str = ",".join([str(tensor.shape) for tensor in request.inputs.values()])
         return f"{request.model_id}:{shapes_str}"
 
-    def _estimate_memory_usage(self, model_id: str, input_shapes: List[Tuple[int, ...]]) -> float:
+    def _estimate_memory_usage(self, model_id: str, input_shapes: list[tuple[int, ...]]) -> float:
         """Estimate memory usage in GB"""
         # Simple estimation based on model size and input size
         if model_id in self.model_stats and 'memory_gb' in self.model_stats[model_id]:
@@ -353,7 +356,7 @@ class RequestProfiler:
         else:
             return 2.0   # Default 2GB
 
-    def _estimate_compute_requirements(self, model_id: str, input_shapes: List[Tuple[int, ...]]) -> float:
+    def _estimate_compute_requirements(self, model_id: str, input_shapes: list[tuple[int, ...]]) -> float:
         """Estimate compute requirements in TFLOPS"""
         # Estimate based on model size and sequence length
         if input_shapes:
@@ -376,7 +379,7 @@ class RequestProfiler:
         total_flops = model_flops_per_token * sequence_length * batch_size
         return total_flops / 1e12  # Convert to TFLOPS
 
-    def _estimate_latency(self, model_id: str, input_shapes: List[Tuple[int, ...]]) -> float:
+    def _estimate_latency(self, model_id: str, input_shapes: list[tuple[int, ...]]) -> float:
         """Estimate latency in milliseconds"""
         # Base latency from model stats or defaults
         if model_id in self.model_stats and 'latency_ms' in self.model_stats[model_id]:
@@ -432,19 +435,19 @@ class UniversalInferenceEngine:
         self.max_concurrent_requests = max_concurrent_requests
 
         # Request management
-        self.active_requests: Dict[str, InferenceRequest] = {}
+        self.active_requests: dict[str, InferenceRequest] = {}
         self.request_queue = asyncio.Queue(maxsize=max_concurrent_requests)
         self.profiler = RequestProfiler()
 
         # Performance tracking
-        self.request_metrics: Dict[str, List[float]] = {
+        self.request_metrics: dict[str, list[float]] = {
             'latency_ms': deque(maxlen=1000),
             'throughput_rps': deque(maxlen=100),
             'queue_size': deque(maxlen=1000)
         }
 
         # Background tasks
-        self._background_tasks: List[asyncio.Task] = []
+        self._background_tasks: list[asyncio.Task] = []
         self._shutdown_event = asyncio.Event()
 
     async def initialize(self) -> None:
@@ -558,8 +561,8 @@ class UniversalInferenceEngine:
 
     async def _execute_inference(self,
                                 model_variant: ModelVariant,
-                                inputs: Dict[str, torch.Tensor],
-                                device: DeviceSpec) -> Dict[str, torch.Tensor]:
+                                inputs: dict[str, torch.Tensor],
+                                device: DeviceSpec) -> dict[str, torch.Tensor]:
         """Execute inference on specific device"""
         # Move model and inputs to device
         device_str = f"cuda:{device.device_id}"
@@ -608,7 +611,7 @@ class UniversalInferenceEngine:
                     )
 
                     # Process request
-                    response = await self.serve_request(request)
+                    await self.serve_request(request)
 
                     # Mark task as done
                     self.request_queue.task_done()
@@ -634,7 +637,7 @@ class UniversalInferenceEngine:
                 self.request_metrics['queue_size'].append(queue_size)
 
                 # Calculate throughput (requests per second)
-                current_time = time.time()
+                time.time()
                 recent_latencies = [lat for lat in self.request_metrics['latency_ms']
                                   if lat > 0]  # Filter out invalid latencies
 
@@ -646,7 +649,7 @@ class UniversalInferenceEngine:
         except asyncio.CancelledError:
             logger.info("Metrics collector cancelled")
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get current performance metrics"""
         metrics = {}
 

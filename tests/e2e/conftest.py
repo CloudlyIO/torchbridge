@@ -15,12 +15,11 @@ Markers:
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Tuple
 
 import pytest
 import torch
-
 
 # =============================================================================
 # Skip Conditions
@@ -29,7 +28,7 @@ import torch
 def _check_transformers():
     """Check if transformers is available."""
     try:
-        import transformers
+        import transformers  # noqa: F401
         return True
     except ImportError:
         return False
@@ -38,7 +37,7 @@ def _check_transformers():
 def _check_torchvision():
     """Check if torchvision is available."""
     try:
-        import torchvision
+        import torchvision  # noqa: F401
         return True
     except ImportError:
         return False
@@ -190,48 +189,55 @@ def cuda_device():
 # Model Loading Fixtures
 # =============================================================================
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def bert_model_and_tokenizer():
-    """Load real BERT model and tokenizer."""
+    """Load real BERT model and tokenizer (session-scoped to avoid re-downloading)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
     from transformers import AutoModel, AutoTokenizer
 
     model_name = "bert-base-uncased"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
+    except Exception as e:
+        pytest.skip(f"Failed to load BERT model: {e}")
     model.eval()
 
     return model, tokenizer
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def gpt2_model_and_tokenizer():
-    """Load real GPT-2 model and tokenizer."""
+    """Load real GPT-2 model and tokenizer (session-scoped to avoid re-downloading)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
     from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
     model_name = "gpt2"
-    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-    tokenizer.pad_token = tokenizer.eos_token
-    model = GPT2LMHeadModel.from_pretrained(model_name)
+    try:
+        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        tokenizer.pad_token = tokenizer.eos_token
+        model = GPT2LMHeadModel.from_pretrained(model_name)
+    except Exception as e:
+        pytest.skip(f"Failed to load GPT-2 model: {e}")
     model.eval()
 
     return model, tokenizer
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def resnet50_model():
-    """Load real ResNet-50 model."""
+    """Load real ResNet-50 model (session-scoped)."""
     if not _check_torchvision():
         pytest.skip("torchvision not available")
 
-    from torchvision.models import resnet50, ResNet50_Weights
-    import urllib.error
     import ssl
+    import urllib.error
+
+    from torchvision.models import ResNet50_Weights, resnet50
 
     try:
         model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
@@ -241,17 +247,20 @@ def resnet50_model():
         pytest.skip(f"Cannot download ResNet-50 weights: {e}")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def clip_model_and_processor():
-    """Load real CLIP model and processor."""
+    """Load real CLIP model and processor (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
     from transformers import CLIPModel, CLIPProcessor
 
     model_name = "openai/clip-vit-base-patch32"
-    processor = CLIPProcessor.from_pretrained(model_name)
-    model = CLIPModel.from_pretrained(model_name)
+    try:
+        processor = CLIPProcessor.from_pretrained(model_name)
+        model = CLIPModel.from_pretrained(model_name)
+    except Exception as e:
+        pytest.skip(f"Failed to load CLIP model: {e}")
     model.eval()
 
     return model, processor
@@ -282,8 +291,8 @@ def sample_image_tensor():
 def sample_pil_images():
     """Sample PIL images for multimodal models."""
     try:
-        from PIL import Image
         import numpy as np
+        from PIL import Image
     except ImportError:
         pytest.skip("PIL not available")
 
