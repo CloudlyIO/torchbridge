@@ -1,5 +1,5 @@
 #!/bin/bash
-# TorchBridge v0.4.40 — Cloud GPU Use Case Validation
+# TorchBridge v0.4.41 — Cloud GPU Use Case Validation
 # Runs all 5 use case scripts on NVIDIA GPU hardware (AWS or GCP)
 #
 # Tested platforms:
@@ -7,7 +7,7 @@
 #   GCP: g2-standard-4 (L4 24GB) — pytorch-2-7-cu128-ubuntu-2404-nvidia-570
 #
 # Usage:
-#   SSH mode:    Copy to instance, then: bash v0440_gpu_validation.sh
+#   SSH mode:    Copy to instance, then: bash v0441_gpu_validation.sh
 #   Startup:     Pass as user-data (AWS) or startup-script (GCP)
 #
 # Prerequisites:
@@ -18,13 +18,13 @@
 
 set -uo pipefail  # no -e: let individual use cases fail without killing the script
 
-GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation-v0440/torchbridge_v0440.tar.gz}"
+GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation-v0441/torchbridge_v0441.tar.gz}"
 LOG=/tmp/torchbridge_validation.log
 
 exec > >(tee "$LOG") 2>&1
 
 echo "============================================================"
-echo "TorchBridge v0.4.40 Cloud GPU Validation"
+echo "TorchBridge v0.4.41 Cloud GPU Validation"
 echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Hostname:  $(hostname)"
 echo "============================================================"
@@ -245,7 +245,7 @@ echo "Total: $TOTAL_PASS/5 passed"
 # Upload log to GCS (best-effort)
 TIMESTAMP=$(date +%s)
 gsutil cp "$LOG" \
-    "gs://torchbridge-validation-v0440/logs/${PROVIDER}_${INSTANCE}_${TIMESTAMP}.log" 2>/dev/null || true
+    "gs://torchbridge-validation-v0441/logs/${PROVIDER}_${INSTANCE}_${TIMESTAMP}.log" 2>/dev/null || true
 
 echo ""
 echo "Log: $LOG"

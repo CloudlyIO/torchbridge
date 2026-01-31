@@ -9,7 +9,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("torchbridge")
 except PackageNotFoundError:
-    __version__ = "0.4.40"  # Fallback for development
+    __version__ = "0.4.41"  # Fallback for development
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing

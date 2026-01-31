@@ -8,7 +8,60 @@
 
 ## **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.40 (TorchBridge Rebrand)
+**Current Version**: v0.4.41 (Cloud-Validated HAL Release)
+
+---
+
+## [0.4.41] - 2026-01-31 - Cloud-Validated HAL Release
+
+### **Summary**
+
+Cloud-validated release of the TorchBridge HAL identity. All 5 end-to-end use
+cases pass on real GPU hardware across AWS (A10G) and GCP (L4). Documentation
+consolidated from 55 files to 19 with consistent HAL messaging. Optional
+dependency handling ensures clean imports on minimal cloud environments.
+
+### **Added**
+
+- **5 end-to-end use case examples** validated on real cloud GPUs:
+  - `usecase1_export_pipeline.py` — TorchScript, ONNX, SafeTensors export with validation
+  - `usecase2_llm_optimization.py` — GPT-2 optimization with BetterTransformer
+  - `usecase3_cicd_validation.py` — Diagnostics, benchmarks, cross-backend checks
+  - `usecase4_backend_agnostic_training.py` — AMP training with auto backend detection
+  - `usecase5_cross_backend_validation.py` — Model, hardware, config, and output consistency
+- **Cloud validation script** (`scripts/cloud_validation.sh`) with multi-strategy
+  Python/pip detection for AWS Deep Learning AMIs and GCP DL VMs
+- **Cloud validation results** (`docs/reference/cloud-validation.md`) with full
+  benchmarks for AWS A10G and GCP L4
+- **README badges** for cloud GPU validation status (5/5 pass), AWS A10G, GCP L4
+
+### **Fixed**
+
+- **Optional imports**: `psutil` made optional in 5 source files to prevent import
+  chain failures on cloud VMs without it pre-installed:
+  - `utils/profiling.py`, `distributed_scale/communication_profiling.py`,
+    `distributed_scale/hardware_discovery.py`, `validation/unified_validator.py`,
+    `hardware/abstraction/vendor_adapters.py`
+- **Lazy matplotlib**: Moved `matplotlib.pyplot` import from module-level to
+  inside `plot_comparison()` method in `utils/profiling.py`
+- **GPU precision tolerance**: Relaxed `atol` from `1e-5` to `1e-3` in export
+  validation and cross-backend checks (GPU floating-point differences are normal)
+- **SafeTensors export error handling**: Added `try/except` and `os.path.exists`
+  guards in use case 4 for environments where safetensors is not installed
+
+### **Changed**
+
+- **Documentation overhaul**: Consolidated from ~55 doc files to 19 with
+  consistent HAL identity (removed "GPU optimization framework" references,
+  scaffold module documentation, and internal planning docs)
+- **README**: Rewritten for HAL positioning — "Write once, run on any accelerator"
+
+### **Platforms Validated**
+
+| Platform | GPU | PyTorch | Use Cases |
+|----------|-----|---------|-----------|
+| AWS g5.xlarge | NVIDIA A10G 24GB | 2.9.1+cu130 | 5/5 PASS |
+| GCP g2-standard-4 | NVIDIA L4 24GB | 2.7.1+cu128 | 5/5 PASS |
 
 ---
 

@@ -1,4 +1,4 @@
-# TorchBridge v0.4.40 — Cloud GPU Validation Results
+# TorchBridge v0.4.41 — Cloud GPU Validation Results
 
 **Date**: 2026-01-31
 **Status**: ALL PASS (5/5 on both platforms)
@@ -89,5 +89,5 @@
 
 ## Validation Script
 
-See [`v0440_gpu_validation.sh`](./v0440_gpu_validation.sh) for the full validation script.
+See [`scripts/cloud_validation.sh`](../../scripts/cloud_validation.sh) for the full validation script.
 Handles both AWS Deep Learning AMIs and GCP DL VMs automatically.
