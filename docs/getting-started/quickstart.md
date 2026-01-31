@@ -1,123 +1,129 @@
-# 🚀 Quick Start Guide (v0.4.18)
+# Quick Start
 
-Get up and running with **TorchBridge** in under 5 minutes.
+Get running with TorchBridge in three steps: install, detect hardware, run your model.
 
-> For detailed installation options, see [Installation Guide](installation.md).
-
-## 1. Setup
+## 1. Install
 
 ```bash
-# Clone and install
 git clone https://github.com/your-org/torchbridge.git
 cd torchbridge
 pip install -r requirements.txt
-
-# Verify installation
-PYTHONPATH=src python3 -c "import torchbridge; print(f'✅ v{torchbridge.__version__} ready!')"
 ```
 
-## 2. Basic Usage
+## 2. Detect Your Hardware
+
+```python
+from torchbridge.backends import BackendFactory, detect_best_backend
+
+backend = BackendFactory.create(detect_best_backend())
+print(f"Backend: {backend}")
+```
+
+TorchBridge automatically detects NVIDIA CUDA, AMD ROCm, Intel XPU, Google TPU, or falls back to CPU.
+
+## 3. Optimize and Run
 
 ```python
 import torch
 from torchbridge import TorchBridgeConfig, UnifiedManager
 
-# Your PyTorch model
+config = TorchBridgeConfig.for_training()
+manager = UnifiedManager(config)
+
+# Your model -- no hardware-specific code needed
 model = torch.nn.Sequential(
     torch.nn.Linear(768, 3072),
     torch.nn.GELU(),
-    torch.nn.Linear(3072, 768)
+    torch.nn.Linear(3072, 768),
 )
 
-# Optimize with unified manager
-config = TorchBridgeConfig.for_development()
-manager = UnifiedManager(config)
+# Optimize for detected hardware
 optimized_model = manager.optimize(model)
-
-# Run inference
-x = torch.randn(32, 128, 768)
-y = optimized_model(x)
-print(f"✓ Output shape: {y.shape}")
 ```
 
-## 3. Configuration Presets
+## Configuration Presets
+
+TorchBridge provides presets for common workloads:
 
 ```python
-from torchbridge import TorchBridgeConfig
-
-# Development (debugging, verbose)
+# Development -- fast iteration, minimal optimization
 config = TorchBridgeConfig.for_development()
 
-# Training (optimized for training loops)
+# Training -- balanced speed and memory
 config = TorchBridgeConfig.for_training()
 
-# Inference (maximum performance)
+# Inference -- maximum throughput
 config = TorchBridgeConfig.for_inference()
-
-# Production (balanced, production-ready)
-config = TorchBridgeConfig.for_production()
 ```
 
-## 4. NVIDIA GPU Optimization
+## Training with AMP
+
+A training loop using PyTorch native automatic mixed precision:
 
 ```python
-from torchbridge import TorchBridgeConfig, UnifiedManager
+import torch
+from torchbridge.backends import BackendFactory, detect_best_backend
 
-# Auto-detects NVIDIA hardware
-config = TorchBridgeConfig.for_training()
+# Auto-detect hardware
+backend = BackendFactory.create(detect_best_backend())
+device = backend.device
 
-# Check detected configuration
-print(f"Architecture: {config.hardware.nvidia.architecture.value}")
-print(f"FP8 enabled: {config.hardware.nvidia.fp8_enabled}")
+model = YourModel().to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+scaler = torch.amp.GradScaler(device.type)
 
-# Optimize model
-manager = UnifiedManager(config)
-optimized_model = manager.optimize(your_model)
+for inputs, targets in train_loader:
+    inputs, targets = inputs.to(device), targets.to(device)
+    with torch.amp.autocast(device.type):
+        loss = criterion(model(inputs), targets)
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+    optimizer.zero_grad()
 ```
 
-> For detailed NVIDIA backend documentation, see [NVIDIA Backend](../backends/nvidia.md).
+## Model Validation
 
-## 5. Validation
+Verify your model works correctly on the current backend:
 
 ```python
-from torchbridge.validation import UnifiedValidator
+from torchbridge import UnifiedValidator
 
 validator = UnifiedValidator()
-results = validator.validate_model(model, input_shape=(32, 128, 768))
-print(f"Validation: {results.passed}/{results.total_tests} passed")
+results = validator.validate_model(model, input_shape=(1, 768))
+print(f"Passed: {results.passed}/{results.total_tests}")
 ```
 
-## 6. Run Tests
+## Model Export
 
-```bash
-# Quick validation
-PYTHONPATH=src python3 -m pytest tests/test_configs.py -v
+Export to portable formats for deployment:
 
-# Full test suite
-PYTHONPATH=src python3 -m pytest tests/ --tb=short -q
+```python
+from torchbridge.deployment import export_to_torchscript, export_to_onnx, export_to_safetensors
+
+sample = torch.randn(1, 768)
+
+export_to_torchscript(model, sample, "model.pt")
+export_to_onnx(model, sample, "model.onnx", opset_version=17)
+export_to_safetensors(model, "model.safetensors")
 ```
 
-## 7. Run Demos
+## CLI Tools
 
 ```bash
-# All demos
-PYTHONPATH=src python3 demos/run_all_demos.py --quick
+# System diagnostics
+torchbridge doctor
 
-# NVIDIA demo
-PYTHONPATH=src python3 demos/nvidia_configuration_demo.py --quick
+# Optimize a saved model
+torchbridge optimize --model model.pt --level production
+
+# Benchmark
+torchbridge benchmark --model model.pt --batch-sizes 1,8,32
 ```
 
 ## Next Steps
 
-| Topic | Link |
-|-------|------|
-| Detailed installation | [Installation Guide](installation.md) |
-| NVIDIA backend | [NVIDIA Backend](../backends/nvidia.md) |
-| TPU backend | [TPU Backend](../backends/tpu.md) |
-| Architecture overview | [Architecture](../capabilities/architecture.md) |
-| Testing | [Testing Guide](../guides/testing_guide.md) |
-| API reference | [API.md](../../API.md) |
-
----
-
-**Need help?** See [Troubleshooting](troubleshooting.md) or check the [Testing Guide](../guides/testing_guide.md).
+- [Backends Overview](../backends/overview.md) -- how the hardware abstraction layer works
+- [Backend Selection](../guides/backend-selection.md) -- choosing and configuring backends
+- [Distributed Training](../guides/distributed-training.md) -- multi-GPU and multi-node
+- [Deployment](../guides/deployment.md) -- serving and containerization

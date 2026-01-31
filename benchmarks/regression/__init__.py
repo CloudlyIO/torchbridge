@@ -3,7 +3,7 @@
 Performance Regression Testing Framework
 
 Enterprise-grade performance regression detection and baseline management
-for PyTorch optimization frameworks. Provides statistical analysis,
+for PyTorch workloads. Provides statistical analysis,
 automated threshold management, historical analysis, reporting, and CI integration.
 
 Phase 1: Core Infrastructure (✅ Complete)

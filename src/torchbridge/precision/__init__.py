@@ -13,7 +13,7 @@ Key Features:
 - 2x training speedup on H100/Blackwell hardware
 - Maintained accuracy with <1% loss
 - Production reliability and deployment readiness
-- Integration with existing optimization framework
+- Integration with TorchBridge hardware abstraction layer
 - Real FP8 quantization and GEMM operations
 """
 

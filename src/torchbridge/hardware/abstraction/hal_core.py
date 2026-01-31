@@ -1,7 +1,7 @@
 """
 Core Hardware Abstraction Layer (HAL) Implementation
 
-Provides universal hardware abstraction for PyTorch optimization framework,
+Provides universal hardware abstraction for PyTorch,
 enabling seamless integration of proprietary GPUs and AI chips.
 """
 
@@ -104,7 +104,7 @@ class VendorAdapter(ABC):
     Abstract adapter for vendor-specific hardware implementations
 
     Enables pluggable support for different hardware vendors while
-    maintaining a consistent interface for the optimization framework.
+    maintaining a consistent interface for the abstraction layer.
     """
 
     def __init__(self, vendor: HardwareVendor):

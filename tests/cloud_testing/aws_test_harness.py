@@ -183,7 +183,7 @@ class AWSTestHarness:
             cloudwatch_namespace: CloudWatch namespace for metrics
         """
         self.config = config
-        self.s3_bucket = s3_bucket or os.environ.get("KERNELPYTORCH_S3_BUCKET")
+        self.s3_bucket = s3_bucket or os.environ.get("TORCHBRIDGE_S3_BUCKET")
         self.cloudwatch_namespace = cloudwatch_namespace
         self.instance_id: str | None = None
         self.public_ip: str | None = None

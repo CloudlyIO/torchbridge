@@ -1,235 +1,187 @@
-# 🤝 Contributing to TorchBridge
+# Contributing to TorchBridge
 
-**Guide for developers contributing to the PyTorch GPU optimization framework.**
+Guide for developers contributing to the hardware abstraction layer for PyTorch.
 
-## 🚀 Quick Start for Contributors
+## Prerequisites
 
-### **Prerequisites**
-- Python 3.9+
+- Python 3.10+
 - PyTorch 2.0+
-- CUDA 12.0+ (for GPU features)
-- Git with proper SSH/HTTPS setup
+- Git
 
-### **Development Setup**
+Optional (for GPU backend development):
+- CUDA 12.0+ and NVCC (NVIDIA)
+- ROCm 5.6+ (AMD)
+- Intel Extension for PyTorch (Intel)
+- PyTorch/XLA (TPU)
+
+## Development Setup
+
 ```bash
-# Clone and setup
+# Clone and install
 git clone https://github.com/your-org/torchbridge.git
 cd torchbridge
 pip install -r requirements.txt
 
-# Validate setup
-python3 -c "import torchbridge; print('✅ Setup successful')"
+# Validate
+PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
 
 # Run tests
-PYTHONPATH=src python3 -m pytest tests/ -v
+PYTHONPATH=src python3 -m pytest tests/ -q
 ```
 
-## 🎯 Project Architecture
+### Editable Install (alternative)
 
-### **Core Components**
+```bash
+pip install -e .[dev,all]
+```
+
+## Building CUDA Extensions
+
+If you're working on NVIDIA-specific backend code that includes custom CUDA kernels:
+
+```bash
+# Verify CUDA
+python3 -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, version: {torch.version.cuda}')"
+nvcc --version
+
+# Install build dependencies
+pip install pybind11 ninja
+
+# Build extensions
+python setup.py build_ext --inplace
+
+# Or editable install
+pip install -e .
+```
+
+### Build troubleshooting
+
+**nvcc not found:**
+```bash
+export PATH=/usr/local/cuda/bin:$PATH
+export CUDA_HOME=/usr/local/cuda
+```
+
+**Compilation errors:**
+```bash
+python setup.py clean --all
+rm -rf build/ dist/ *.egg-info
+python setup.py build_ext --inplace -v
+```
+
+**GCC version:** Requires GCC 9+ or Clang 10+ with C++17 support.
+
+## Project Architecture
+
 ```
 src/torchbridge/
-├── attention/              # Unified attention framework (Ring, Sparse, Context Parallel)
-├── precision/              # FP8 training and quantization
-├── hardware_abstraction/   # Multi-vendor GPU/CPU support
-├── compiler_integration/   # FlashLight, PyGraph, TorchInductor
-├── components/             # Core optimized layers
-├── utils/                  # Profiling and optimization tools
-└── testing_framework/      # Validation and benchmarking
+├── backends/          # Vendor-specific backend implementations
+│   ├── nvidia/        #   NVIDIA CUDA
+│   ├── amd/           #   AMD ROCm
+│   ├── intel/         #   Intel IPEX
+│   └── tpu/           #   Google TPU/XLA
+├── hardware/          # Hardware detection and abstraction layer
+├── precision/         # Mixed-precision training
+├── attention/         # Attention mechanisms (unified API)
+├── advanced_memory/   # Memory optimization
+├── distributed_scale/ # Distributed training
+├── deployment/        # Model export and serving
+├── monitoring/        # Metrics and logging
+├── optimizations/     # Optimization patterns
+├── core/              # Core components and layers
+├── cli/               # Command-line tools
+├── models/            # Model implementations
+├── mixture_of_experts/ # MoE support
+├── validation/        # Cross-backend validation
+└── utils/             # Utilities
 ```
 
-### **Key Features Implemented**
-- ✅ **Ring Attention**: Million-token sequences with O(N) memory
-- ✅ **Sparse Attention**: 90% compute reduction with dynamic patterns
-- ✅ **FP8 Training**: 2x speedup on H100/Blackwell hardware
-- ✅ **Hardware Abstraction**: Multi-vendor GPU optimization
-- ✅ **Compiler Integration**: FlashLight and PyGraph optimizations
+### Key Abstractions
 
-## 🧪 Development Workflow
+- **`BaseBackend`** -- Abstract interface all backends implement
+- **`BackendFactory`** -- Automatic hardware detection and backend creation
+- **`TorchBridgeConfig`** -- Unified configuration
+- **`UnifiedManager`** -- High-level optimization API
+- **`UnifiedValidator`** -- Cross-backend validation
 
-### **1. Making Changes**
+## Development Workflow
+
+### 1. Create a Branch
+
 ```bash
-# Create feature branch
 git checkout -b feature/your-feature-name
-
-# Make changes following naming conventions (see below)
-# Classes: PascalCase (e.g., RingAttentionLayer)
-# Functions: snake_case (e.g., create_ring_attention)
-# Constants: UPPER_SNAKE_CASE (e.g., MAX_SEQUENCE_LENGTH)
-
-# Add comprehensive tests
-# Edit files in tests/ to cover new functionality
 ```
 
-### **2. Testing Requirements**
+### 2. Make Changes
+
+Follow naming conventions:
+- Classes: `PascalCase` (e.g., `NVIDIABackend`)
+- Functions: `snake_case` (e.g., `detect_best_backend`)
+- Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_SEQUENCE_LENGTH`)
+
+### 3. Test
+
 ```bash
-# WORKING: Run specific test modules (recommended)
-PYTHONPATH=src python3 -m pytest tests/test_advanced_memory.py -v          # 22/22 pass ✅
-PYTHONPATH=src python3 -m pytest tests/test_advanced_memory_benchmarks.py -v  # 5/8 pass ⚠️
+# Run full suite
+PYTHONPATH=src python3 -m pytest tests/ -q
 
-# WORKING: Run demos to validate integration
-cd demos && PYTHONPATH=../src python3 run_all_demos.py --quick           # 5/5 working ✅
+# Run specific module
+PYTHONPATH=src python3 -m pytest tests/test_backends.py -v
 
-# NOTE: Full test suite (PYTHONPATH=src python3 -m pytest tests/) has hanging tests
-# Use specific modules instead for reliable testing
+# Run single test
+PYTHONPATH=src python3 -m pytest tests/test_backends.py::TestNVIDIA::test_device_info -v -s
+
+# Lint
+ruff check src/ tests/
 ```
 
-### **3. Code Quality Standards**
+### 4. Submit PR
 
-#### **Naming Conventions (PEP 8)**
-```python
-# ✅ Correct Examples
-class RingAttentionLayer(nn.Module):          # Classes: PascalCase
-    pass
+Before submitting:
+- [ ] Tests pass: `PYTHONPATH=src python3 -m pytest tests/ -q`
+- [ ] Linting clean: `ruff check src/ tests/`
+- [ ] No hardcoded device assumptions (support CPU fallback)
+- [ ] Documentation updated if adding new features
+- [ ] Imports verified: test your public API imports
 
-def create_ring_attention() -> RingAttentionLayer:  # Functions: snake_case
-    pass
+## Contribution Areas
 
-MAX_SEQUENCE_LENGTH = 1_000_000               # Constants: UPPER_SNAKE_CASE
+### Backend Development
+Improving vendor-specific backends -- better hardware detection, optimization strategies, memory management, precision support.
 
-# ❌ Avoid
-class ring_attention_layer:  # Wrong casing
-def CreateRingAttention():   # Wrong casing
-```
+### Cross-Backend Consistency
+Ensuring the unified API behaves identically across backends. Adding validation tests that run on multiple hardware types.
 
-#### **Documentation Requirements**
-```python
-def create_ring_attention(d_model: int, num_heads: int) -> RingAttentionLayer:
-    """
-    Create Ring Attention layer for million-token sequences.
+### Distributed Training
+Extending tensor/pipeline/data parallelism support across backend types.
 
-    Args:
-        d_model: Model dimension size
-        num_heads: Number of attention heads
+### Documentation
+Improving guides, adding examples, keeping hardware matrix current.
 
-    Returns:
-        Configured RingAttentionLayer instance
+## Code Quality
 
-    Example:
-        >>> attention = create_ring_attention(512, 8)
-        >>> output = attention(long_sequence)
-    """
-```
+- **PEP 8** naming conventions
+- **Type hints** on all public APIs
+- **Docstrings** for public functions and classes
+- **Tests** for new functionality
+- **Device-agnostic patterns:**
+  ```python
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  ```
 
-#### **Testing Requirements**
-```python
-class TestRingAttention:
-    def test_linear_memory_complexity(self):
-        """Test O(N) memory usage vs O(N²) baseline"""
-        pass
+## Common Issues
 
-    def test_million_token_support(self):
-        """Test handling of 1M+ token sequences"""
-        pass
-```
-
-### **4. Performance Requirements**
-- **No regressions**: New code must not slow down existing functionality
-- **Benchmark validation**: Run benchmarks to verify improvements
-- **Memory efficiency**: Optimize for both speed and memory usage
-- **Hardware compatibility**: Test on both CPU and GPU when available
-
-## 📋 Submission Process
-
-### **Before Submitting PR**
-- [ ] Specific tests passing: `PYTHONPATH=src python -m pytest tests/test_advanced_memory.py -v`
-- [ ] All demos working: `PYTHONPATH=src python demos/run_all_demos.py --quick`
-- [ ] Core benchmarks operational: Check `demos/` performance output
-- [ ] Code follows naming conventions
-- [ ] Documentation updated for new features
-- [ ] No hardcoded device assumptions (support both CPU/GPU)
-- [ ] Verify imports work: Test your API imports before submission
-
-### **PR Requirements**
-1. **Clear description** of what the PR accomplishes
-2. **Test results** showing all validations pass
-3. **Performance impact** (if applicable) with benchmark results
-4. **Breaking changes** clearly documented (if any)
-5. **Documentation updates** included
-
-### **Review Process**
-- PRs require passing CI/CD checks
-- Code review focuses on correctness, performance, and maintainability
-- Large changes may require design discussion before implementation
-
-## 🎯 Focus Areas for Contributors
-
-### **High-Priority Areas**
-1. **Ultra-Precision Quantization** (FP4/MXFP building on FP8 success)
-2. **Structured Sparsity** (2:4 patterns for Tensor Core acceleration)
-3. **Hardware-Specific Optimizations** (NVIDIA generation-aware tuning)
-4. **Performance Benchmarking** (Comprehensive validation framework)
-
-### **Technical Debt & Improvements**
-1. **HAL Unification** (Consistent hardware abstraction across vendors)
-2. **Demo Simplification** (Clearer, more focused examples)
-3. **Documentation Consolidation** (Reduce verbosity, improve clarity)
-4. **Test Coverage** (Expand edge case and integration testing)
-
-## 🔧 Development Tools
-
-### **Useful Commands**
+### Import Errors
 ```bash
-# Test verified working imports
-PYTHONPATH=src python -c "from torchbridge.advanced_memory import DeepOptimizerStates; print('✅ Advanced Memory available')"
-PYTHONPATH=src python -c "from torchbridge.optimizations.next_gen import create_advanced_flex_attention; print('✅ Next-gen optimizations available')"
-PYTHONPATH=src python -c "from torchbridge.precision import create_fp8_trainer; print('✅ FP8 Training available')"
-
-# Test import that may have issues
-PYTHONPATH=src python -c "
-try:
-    from torchbridge.attention import create_attention
-    print('✅ Attention framework available')
-except ImportError as e:
-    print(f'⚠️ Attention import issue: {e}')
-"
-
-# Run working performance tests
-cd demos && PYTHONPATH=../src python3 memory/deep_states.py --quick
-```
-
-### **IDE Setup Recommendations**
-- **PyCharm/VSCode**: Configured with Python 3.9+ interpreter
-- **Type checking**: Enable MyPy or Pylance for type validation
-- **Code formatting**: Black or similar for consistent style
-- **Import organization**: isort for clean import structure
-
-## 🚨 Common Issues & Solutions
-
-### **Import Errors**
-```bash
-# Always set PYTHONPATH for testing
+# Always set PYTHONPATH for development
 export PYTHONPATH=src
-# Or use inline: PYTHONPATH=src python <command>
 ```
 
-### **CUDA/GPU Issues**
-```bash
-# Code must work on CPU-only systems
-# Use device-agnostic patterns:
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-```
+### Test Failures
+Platform-specific tests are automatically skipped when hardware isn't available. This is expected behavior.
 
-### **Test Failures**
-```bash
-# Run single test file for debugging
-PYTHONPATH=src python -m pytest tests/test_specific_file.py::TestClass::test_method -v -s
-```
+## Getting Help
 
-## 📞 Getting Help
-
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Discussions**: Technical questions and design discussions
-- **Code Review**: Submit PRs for collaborative development
-
-## 📜 Code of Conduct
-
-- **Respectful collaboration** in all interactions
-- **Constructive feedback** in code reviews
-- **Quality focus** over speed of delivery
-- **Documentation** as important as code
-- **Testing** as essential as implementation
-
----
-
-**Ready to contribute?** Start with running the test suite and exploring the demos to understand the codebase architecture. 🚀
+- **Issues:** Report bugs via GitHub Issues
+- **Discussions:** Technical questions and design discussions
+- **Code Review:** Submit PRs for collaborative development

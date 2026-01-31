@@ -2,7 +2,7 @@
 """
 Comprehensive Framework Validation
 
-This script validates the current PyTorch optimization framework:
+This script validates the current TorchBridge installation:
 1. Compiler integration components work correctly
 2. Next-generation optimizations are functional
 3. Documentation is accessible and accurate

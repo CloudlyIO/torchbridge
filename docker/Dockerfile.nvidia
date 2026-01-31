@@ -1,11 +1,11 @@
-# KernelPyTorch NVIDIA GPU Container
+# TorchBridge NVIDIA GPU Container
 # Optimized for production inference with CUDA support
 #
 # Build:
-#   docker build -f docker/Dockerfile.nvidia -t kernelpytorch:nvidia .
+#   docker build -f docker/Dockerfile.nvidia -t torchbridge:nvidia .
 #
 # Run:
-#   docker run --gpus all -p 8000:8000 kernelpytorch:nvidia
+#   docker run --gpus all -p 8000:8000 torchbridge:nvidia
 #
 # Version: 0.3.10
 
@@ -48,7 +48,7 @@ RUN pip install fastapi uvicorn prometheus-client psutil
 COPY src/ ./src/
 COPY pyproject.toml ./
 
-# Install KernelPyTorch
+# Install TorchBridge
 RUN pip install -e .
 
 # Create non-root user
@@ -66,11 +66,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health/live || exit 1
 
 # Default command: Run FastAPI server
-CMD ["python", "-m", "uvicorn", "kernel_pytorch.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Labels
-LABEL org.opencontainers.image.title="KernelPyTorch NVIDIA" \
+LABEL org.opencontainers.image.title="TorchBridge NVIDIA" \
       org.opencontainers.image.description="Production inference container with NVIDIA GPU support" \
       org.opencontainers.image.version="0.3.10" \
-      org.opencontainers.image.vendor="KernelPyTorch" \
-      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch"
+      org.opencontainers.image.vendor="TorchBridge" \
+      org.opencontainers.image.source="https://github.com/your-org/torchbridge"

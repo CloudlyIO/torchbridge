@@ -114,7 +114,7 @@ class GPUSetupValidator:
             return False
 
     def validate_framework(self) -> bool:
-        """Validate our optimization framework components"""
+        """Validate TorchBridge components"""
         try:
             # Test core package import
             import torchbridge  # noqa: F401

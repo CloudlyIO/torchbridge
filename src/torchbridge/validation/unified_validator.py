@@ -6,7 +6,6 @@ into a single, comprehensive validation system.
 
 Replaces validation functions from:
 - utils/validation_framework.py (7 functions)
-- testing_framework/validation_tools.py (4 functions)
 - utils/type_validator.py (1 function)
 - And scattered validation across 14 files
 """

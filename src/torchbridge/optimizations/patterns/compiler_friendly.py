@@ -19,7 +19,7 @@ when code follows compiler-friendly patterns:
 - Memory layout consistency: Use consistent tensor formats and strides
 
 Learn to write PyTorch code that leverages automatic compiler optimizations
-for 2-5x performance improvements with minimal code changes.
+for improved performance with minimal code changes.
 """
 
 import inspect

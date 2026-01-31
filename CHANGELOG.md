@@ -1,6 +1,6 @@
 # 📝 TorchBridge Changelog
 
-**Version history and release notes for the PyTorch GPU optimization framework.**
+**Version history and release notes for the hardware abstraction layer for PyTorch.**
 
 > **Note**: This changelog reflects actual implemented and tested functionality. Performance claims are based on measured results from working demos and tests.
 

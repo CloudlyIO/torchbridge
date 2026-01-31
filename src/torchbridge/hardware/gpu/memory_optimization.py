@@ -39,7 +39,7 @@ class MemoryProfile:
 
 class MemoryOptimizer:
     """
-    Advanced GPU memory optimization framework for PyTorch models.
+    Advanced GPU memory optimization for PyTorch models.
 
     Provides comprehensive memory optimization strategies including:
     - Memory-efficient operation patterns

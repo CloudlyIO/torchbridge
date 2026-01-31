@@ -9,9 +9,18 @@ import warnings
 from typing import Any
 
 from ..core import AttentionConfig, AttentionPatterns, FP8AttentionConfig
-from ..distributed.context_parallel import ContextParallelAttention
-from ..distributed.ring_attention import RingAttentionLayer
-from ..fusion.neural_operator import create_unified_attention_fusion
+
+try:
+    from ..distributed.context_parallel import ContextParallelAttention
+    from ..distributed.ring_attention import RingAttentionLayer
+except ImportError:
+    ContextParallelAttention = None
+    RingAttentionLayer = None
+
+try:
+    from ..fusion.neural_operator import create_unified_attention_fusion
+except ImportError:
+    create_unified_attention_fusion = None
 
 # Import all components for re-export
 from ..implementations.flash_attention import FlashAttention2, FlashAttention3

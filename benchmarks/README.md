@@ -112,4 +112,4 @@ python3 benchmarks/tpu_integration_benchmark.py
 
 Results are saved to `benchmarks/results/` (gitignored).
 
-For detailed analysis, see [BENCHMARKS.md](../BENCHMARKS.md).
+For detailed analysis, see [Hardware Matrix](../docs/reference/hardware-matrix.md).

@@ -229,7 +229,7 @@ Thumbs.db
 *.dll
 
 # Build artifacts for custom CUDA extensions
-kernel_pytorch_cuda.cpython-*
+torchbridge_cuda.cpython-*
 
 # Project-specific temporary files
 pipeline_report_*.json
@@ -292,9 +292,6 @@ SCRATCH.local
 # - README.md (MUST remain)
 # - CHANGELOG.md (MUST remain)
 # - CONTRIBUTING.md (MUST remain)
-# - BUILD.md (MUST remain)
-# - API.md (MUST remain)
-# - BENCHMARKS.md (MUST remain)
 #
 # ALL other root .md files are blocked - move to /local
 
@@ -317,7 +314,6 @@ test_results_local/
 # ===================================================================
 
 # All validation reports (belong in ~/Documents/shahmod-reports-backup/)
-docs/validation-reports/
 **/validation-reports/
 **/validation_reports/
 

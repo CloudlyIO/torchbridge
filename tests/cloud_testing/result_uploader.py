@@ -483,9 +483,9 @@ def upload_results(
     """
     # Auto-detect provider
     if cloud_provider == "auto":
-        if os.environ.get("KERNELPYTORCH_S3_BUCKET"):
+        if os.environ.get("TORCHBRIDGE_S3_BUCKET"):
             cloud_provider = "s3"
-        elif os.environ.get("KERNELPYTORCH_GCS_BUCKET"):
+        elif os.environ.get("TORCHBRIDGE_GCS_BUCKET"):
             cloud_provider = "gcs"
         else:
             cloud_provider = "s3"  # Default
@@ -493,9 +493,9 @@ def upload_results(
     # Get bucket
     if bucket is None:
         if cloud_provider == "s3":
-            bucket = os.environ.get("KERNELPYTORCH_S3_BUCKET", "torchbridge-results")
+            bucket = os.environ.get("TORCHBRIDGE_S3_BUCKET", "torchbridge-results")
         else:
-            bucket = os.environ.get("KERNELPYTORCH_GCS_BUCKET", "torchbridge-results")
+            bucket = os.environ.get("TORCHBRIDGE_GCS_BUCKET", "torchbridge-results")
 
     # Generate path
     if path is None:

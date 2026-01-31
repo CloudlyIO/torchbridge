@@ -1,4 +1,4 @@
-# Development Docker image for KernelPyTorch
+# Development Docker image for TorchBridge
 # Includes all development tools and optional dependencies
 
 FROM nvidia/cuda:11.8-devel-ubuntu22.04
@@ -44,7 +44,7 @@ WORKDIR /workspace
 # Copy source code
 COPY . .
 
-# Install KernelPyTorch in development mode with all dependencies
+# Install TorchBridge in development mode with all dependencies
 RUN pip install -e .[all,dev,cloud,serving,monitoring,benchmark]
 
 # Install additional development tools
@@ -76,12 +76,12 @@ CMD ["/bin/bash"]
 
 # Add helpful development aliases
 RUN echo 'alias ll="ls -la"' >> ~/.bashrc \
-    && echo 'alias kpt="kernelpytorch"' >> ~/.bashrc \
+    && echo 'alias kpt="torchbridge"' >> ~/.bashrc \
     && echo 'alias pytest="python -m pytest"' >> ~/.bashrc \
     && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> ~/.bashrc
 
 # Metadata
-LABEL maintainer="KernelPyTorch Team" \
+LABEL maintainer="TorchBridge Team" \
       version="0.1.55-dev" \
-      description="Development environment for KernelPyTorch GPU optimization framework" \
-      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch"
+      description="Development environment for TorchBridge hardware abstraction layer for PyTorch" \
+      org.opencontainers.image.source="https://github.com/your-org/torchbridge"

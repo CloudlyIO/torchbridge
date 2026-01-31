@@ -1,17 +1,17 @@
-# Production Dockerfile for KernelPyTorch Inference Server
+# Production Dockerfile for TorchBridge Inference Server
 # v0.4.22 - Production Serving
 #
 # Build:
-#   docker build -f docker/Dockerfile.serving -t kernelpytorch-serving:latest .
+#   docker build -f docker/Dockerfile.serving -t torchbridge-serving:latest .
 #
 # Run:
-#   docker run -p 8000:8000 --gpus all kernelpytorch-serving:latest
+#   docker run -p 8000:8000 --gpus all torchbridge-serving:latest
 #
 # Run with specific model:
 #   docker run -p 8000:8000 --gpus all \
 #     -e MODEL_NAME=gpt2 \
 #     -e QUANTIZATION=int8 \
-#     kernelpytorch-serving:latest
+#     torchbridge-serving:latest
 
 FROM nvidia/cuda:12.1-runtime-ubuntu22.04
 

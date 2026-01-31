@@ -228,7 +228,7 @@ class GCPTestHarness:
             monitoring_namespace: Cloud Monitoring namespace
         """
         self.config = config
-        self.gcs_bucket = gcs_bucket or os.environ.get("KERNELPYTORCH_GCS_BUCKET")
+        self.gcs_bucket = gcs_bucket or os.environ.get("TORCHBRIDGE_GCS_BUCKET")
         self.monitoring_namespace = monitoring_namespace
         self.instance_name: str | None = None
         self.external_ip: str | None = None

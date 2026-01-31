@@ -1,4 +1,4 @@
-# Production Docker image for KernelPyTorch
+# Production Docker image for TorchBridge
 # Multi-stage build for optimized production deployment
 
 # Build stage
@@ -61,7 +61,7 @@ RUN pip install --no-cache-dir \
 # Copy wheels from build stage
 COPY --from=builder /build/wheels/*.whl /tmp/wheels/
 
-# Install KernelPyTorch
+# Install TorchBridge
 RUN pip install --no-cache-dir /tmp/wheels/*.whl \
     && rm -rf /tmp/wheels
 
@@ -84,16 +84,16 @@ USER appuser
 
 # Set default command
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["kernelpytorch", "doctor", "--verbose"]
+CMD ["torchbridge", "doctor", "--verbose"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import kernel_pytorch; print('✓ Healthy')" || exit 1
+    CMD python -c "import torchbridge; print('✓ Healthy')" || exit 1
 
 # Metadata
-LABEL maintainer="KernelPyTorch Team" \
+LABEL maintainer="TorchBridge Team" \
       version="0.1.55" \
-      description="Production-ready KernelPyTorch GPU optimization framework" \
-      org.opencontainers.image.source="https://github.com/KernelPyTorch/kernel-pytorch" \
-      org.opencontainers.image.documentation="https://kernel-pytorch.readthedocs.io" \
+      description="Production-ready TorchBridge hardware abstraction layer for PyTorch" \
+      org.opencontainers.image.source="https://github.com/your-org/torchbridge" \
+      org.opencontainers.image.documentation="https://torchbridge.readthedocs.io" \
       org.opencontainers.image.licenses="MIT"

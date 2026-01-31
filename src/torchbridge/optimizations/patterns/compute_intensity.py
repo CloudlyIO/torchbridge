@@ -18,7 +18,7 @@ Arithmetic intensity (FLOPs per byte) is crucial for GPU performance optimizatio
 - Mixed precision: Use lower precision where appropriate to increase throughput
 
 Learn to identify compute bottlenecks and transform memory-bound operations
-into compute-bound operations for 2-10x performance improvements.
+into compute-bound operations for improved throughput.
 """
 
 from dataclasses import dataclass

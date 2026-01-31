@@ -13,7 +13,7 @@ GPU memory hierarchy optimization is critical for high-performance computing:
 - Registers: 65K 32-bit registers per SM, fastest memory tier
 
 Learn to identify memory bottlenecks in your models and apply proven patterns
-that lead to 2-10x performance improvements through better memory utilization.
+that improve throughput through better memory utilization.
 """
 
 from collections.abc import Callable

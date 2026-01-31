@@ -12,9 +12,6 @@ Approved root .md files (MUST remain constant):
 - README.md
 - CHANGELOG.md
 - CONTRIBUTING.md
-- BUILD.md
-- API.md
-- BENCHMARKS.md
 
 Version: 0.3.4
 """
@@ -29,9 +26,6 @@ APPROVED_ROOT_MD_FILES = {
     "README.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
-    "BUILD.md",
-    "API.md",
-    "BENCHMARKS.md",
 }
 
 # Patterns for files that MUST go to /local
