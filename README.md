@@ -2,7 +2,7 @@
 
 **Hardware Abstraction Layer for PyTorch** -- Write once, run on any accelerator.
 
-[![Version](https://img.shields.io/badge/version-0.4.40-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1600%20passed-blue)](./docs/reference/hardware-matrix.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/badge/version-0.4.40-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1600%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-5%2F5%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP L4](https://img.shields.io/badge/GCP%20L4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
@@ -183,12 +183,30 @@ src/torchbridge/
 └── utils/             # Utilities and profiling
 ```
 
+## Cloud GPU Validation
+
+All 5 use cases validated on real GPU hardware across AWS and GCP:
+
+| Use Case | AWS A10G | GCP L4 | Description |
+|----------|----------|--------|-------------|
+| Export Pipeline | PASS | PASS | TorchScript, ONNX, SafeTensors export with validation |
+| LLM Optimization | PASS | PASS | GPT-2 optimization with BetterTransformer |
+| CI/CD Validation | PASS | PASS | Diagnostics, benchmarks, cross-backend checks |
+| Backend Training | PASS | PASS | AMP training with auto backend detection |
+| Cross-Backend Validation | PASS | PASS | Model, hardware, config, and output consistency |
+
+**Platforms tested:**
+- **AWS g5.xlarge** -- NVIDIA A10G 24GB, PyTorch 2.9.1+cu130
+- **GCP g2-standard-4** -- NVIDIA L4 24GB, PyTorch 2.7.1+cu128
+
+See [full validation report](./docs/reference/cloud-validation.md) for detailed benchmarks and results.
+
 ## Quality
 
 - **1600+ tests** passing across all modules
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on NVIDIA (GCP L4, AWS A10G), AMD, TPU (GCP v5e)
+- **Cloud validated** on NVIDIA A10G (AWS) and L4 (GCP) -- 5/5 use cases pass
 - **Cross-platform** tested on macOS, Linux, AWS, GCP
 
 ```bash

@@ -251,6 +251,8 @@ docs/immediate_tasks.md
 checkpoints/
 reports/
 benchmark_results/
+examples/export_output/
+examples/training_output/
 
 # ===================================================================
 # LOCAL DEVELOPMENT FILES - Keep repo clean

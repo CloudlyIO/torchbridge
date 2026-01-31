@@ -16,7 +16,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-import psutil
+try:
+    import psutil
+    _psutil_available = True
+except ImportError:
+    _psutil_available = False
+
 import torch
 
 logger = logging.getLogger(__name__)
@@ -190,8 +195,9 @@ class HardwareTopologyManager:
 
         # Get system information
         hostname = socket.gethostname()
-        cpu_count = psutil.cpu_count()
-        memory_gb = psutil.virtual_memory().total / (1024**3)
+        import os as _os
+        cpu_count = psutil.cpu_count() if _psutil_available else (_os.cpu_count() or 1)
+        memory_gb = psutil.virtual_memory().total / (1024**3) if _psutil_available else 0.0
         storage_type = self._detect_storage_type()
         network_interfaces = self._get_network_interfaces()
 
@@ -422,6 +428,9 @@ class HardwareTopologyManager:
 
     def _get_network_interfaces(self) -> list[str]:
         """Get network interface information"""
+        if not _psutil_available:
+            return []
+
         interfaces = []
         net_io = psutil.net_io_counters(pernic=True)
 

@@ -14,8 +14,13 @@ from contextlib import contextmanager
 from typing import Any
 
 import numpy as np
-import psutil
 import torch
+
+try:
+    import psutil
+    _psutil_available = True
+except ImportError:
+    _psutil_available = False
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +76,7 @@ class CommunicationProfiler:
         if torch.cuda.is_available():
             return torch.cuda.memory_allocated()
         else:
-            return psutil.Process().memory_info().rss
+            return psutil.Process().memory_info().rss if _psutil_available else 0
 
     def identify_bottlenecks(self) -> list[dict[str, Any]]:
         """Identify communication bottlenecks"""

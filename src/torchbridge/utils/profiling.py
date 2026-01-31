@@ -13,10 +13,14 @@ from collections.abc import Callable
 from contextlib import contextmanager
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
-import psutil
 import torch
+
+try:
+    import psutil
+    _psutil_available = True
+except ImportError:
+    _psutil_available = False
 
 
 class KernelProfiler:
@@ -69,7 +73,7 @@ class KernelProfiler:
             memory_before = torch.cuda.memory_allocated()  # Active GPU memory
             torch.cuda.reset_peak_memory_stats()  # Reset peak tracker
         else:
-            memory_before = psutil.virtual_memory().used
+            memory_before = psutil.virtual_memory().used if _psutil_available else 0
 
         # ⏱ STEP 3: Start high-precision timing
         start_time = time.perf_counter()
@@ -85,7 +89,7 @@ class KernelProfiler:
                 memory_after = torch.cuda.memory_allocated()
                 peak_memory = torch.cuda.max_memory_allocated()
             else:
-                memory_after = psutil.virtual_memory().used
+                memory_after = psutil.virtual_memory().used if _psutil_available else 0
                 peak_memory = memory_after
 
             self.results[operation_name].append({
@@ -210,7 +214,16 @@ class KernelProfiler:
     ):
         """
         Create visualization of performance comparison.
+
+        Requires matplotlib: pip install matplotlib
         """
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError as err:
+            raise ImportError(
+                "matplotlib is required for plotting. Install with: pip install matplotlib"
+            ) from err
+
         names = list(comparison_results.keys())
         values = [comparison_results[name][metric] for name in names]
 

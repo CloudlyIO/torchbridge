@@ -6,11 +6,17 @@ providing a unified interface while leveraging vendor-specific optimizations.
 """
 
 import logging
+import os
 from typing import Any
 
 import numpy as np
-import psutil
 import torch
+
+try:
+    import psutil
+    _psutil_available = True
+except ImportError:
+    _psutil_available = False
 
 # Import existing hardware discovery for compatibility
 from ...distributed_scale.hardware_discovery import (
@@ -868,11 +874,12 @@ class IntelAdapter(VendorAdapter):
         """Initialize Intel device (CPU or XPU)"""
         if device_id == 0:
             # CPU device
+            _memory_gb = psutil.virtual_memory().total / (1024**3) if _psutil_available else 0.0
             capabilities = HardwareCapabilities(
                 vendor=HardwareVendor.INTEL,
                 device_name=self._get_cpu_info(),
                 compute_capability="cpu",
-                memory_gb=psutil.virtual_memory().total / (1024**3),
+                memory_gb=_memory_gb,
                 peak_flops_fp32=self._estimate_cpu_flops(),
                 peak_flops_fp16=self._estimate_cpu_flops() * 0.5,  # AVX-512 can help
                 memory_bandwidth_gbps=100,  # Typical DDR4/DDR5
@@ -997,23 +1004,24 @@ class IntelAdapter(VendorAdapter):
         try:
             if device_id == 0:  # CPU
                 # CPU metrics
-                cpu_percent = psutil.cpu_percent(interval=0.1)
-                memory = psutil.virtual_memory()
+                if _psutil_available:
+                    cpu_percent = psutil.cpu_percent(interval=0.1)
+                    memory = psutil.virtual_memory()
 
-                metrics.update({
-                    'utilization': cpu_percent,
-                    'memory_used_gb': (memory.total - memory.available) / (1024**3),
-                    'memory_total_gb': memory.total / (1024**3)
-                })
+                    metrics.update({
+                        'utilization': cpu_percent,
+                        'memory_used_gb': (memory.total - memory.available) / (1024**3),
+                        'memory_total_gb': memory.total / (1024**3)
+                    })
 
-                # Try to get CPU temperature
-                try:
-                    temps = psutil.sensors_temperatures()
-                    if 'coretemp' in temps:
-                        avg_temp = np.mean([t.current for t in temps['coretemp']])
-                        metrics['temperature_c'] = avg_temp
-                except Exception:
-                    pass
+                    # Try to get CPU temperature
+                    try:
+                        temps = psutil.sensors_temperatures()
+                        if 'coretemp' in temps:
+                            avg_temp = np.mean([t.current for t in temps['coretemp']])
+                            metrics['temperature_c'] = avg_temp
+                    except Exception:
+                        pass
 
             elif self.xpu_available:
                 # FUTURE: Intel XPU metrics require Level Zero API (ze_api.h) and Intel
@@ -1034,7 +1042,8 @@ class IntelAdapter(VendorAdapter):
         """Get CPU information"""
         try:
             import platform
-            return f"{platform.processor()} ({psutil.cpu_count()} cores)"
+            core_count = psutil.cpu_count() if _psutil_available else (os.cpu_count() or 1)
+            return f"{platform.processor()} ({core_count} cores)"
         except Exception:
             return "Intel CPU"
 
@@ -1042,7 +1051,10 @@ class IntelAdapter(VendorAdapter):
         """Estimate CPU FLOPS"""
         # Rough estimation based on core count and frequency
         try:
-            core_count = psutil.cpu_count(logical=False)  # Physical cores
+            if _psutil_available:
+                core_count = psutil.cpu_count(logical=False) or (os.cpu_count() or 1)
+            else:
+                core_count = os.cpu_count() or 1
             # Assume base frequency of ~3 GHz for modern Intel CPUs
             base_freq = 3.0e9  # 3 GHz
             # Assume ~32 FLOPS per cycle for AVX-512
@@ -1095,11 +1107,12 @@ class CPUAdapter(VendorAdapter):
         if device_id != 0:
             raise RuntimeError("CPU adapter only supports device ID 0")
 
+        _memory_gb = psutil.virtual_memory().total / (1024**3) if _psutil_available else 0.0
         capabilities = HardwareCapabilities(
             vendor=HardwareVendor.INTEL,
             device_name=self._get_cpu_name(),
             compute_capability="cpu",
-            memory_gb=psutil.virtual_memory().total / (1024**3),
+            memory_gb=_memory_gb,
             peak_flops_fp32=self._estimate_cpu_flops(),
             peak_flops_fp16=self._estimate_cpu_flops() * 0.5,
             memory_bandwidth_gbps=50,  # Conservative estimate
@@ -1156,15 +1169,18 @@ class CPUAdapter(VendorAdapter):
     def get_device_metrics(self, device_id: int) -> dict[str, float]:
         """Get CPU metrics"""
         try:
-            cpu_percent = psutil.cpu_percent(interval=0.1)
-            memory = psutil.virtual_memory()
+            if _psutil_available:
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
 
-            return {
-                'utilization': cpu_percent,
-                'memory_used_gb': (memory.total - memory.available) / (1024**3),
-                'memory_total_gb': memory.total / (1024**3),
-                'temperature_c': 0.0  # Not easily available
-            }
+                return {
+                    'utilization': cpu_percent,
+                    'memory_used_gb': (memory.total - memory.available) / (1024**3),
+                    'memory_total_gb': memory.total / (1024**3),
+                    'temperature_c': 0.0  # Not easily available
+                }
+            else:
+                return {'utilization': 0.0, 'memory_used_gb': 0.0, 'memory_total_gb': 0.0, 'temperature_c': 0.0}
         except Exception as e:
             logger.error(f"Error getting CPU metrics: {e}")
             return {'utilization': 0.0, 'memory_used_gb': 0.0, 'memory_total_gb': 0.0}
@@ -1180,7 +1196,10 @@ class CPUAdapter(VendorAdapter):
     def _estimate_cpu_flops(self) -> float:
         """Estimate CPU FLOPS"""
         try:
-            core_count = psutil.cpu_count(logical=False)
+            if _psutil_available:
+                core_count = psutil.cpu_count(logical=False) or (os.cpu_count() or 1)
+            else:
+                core_count = os.cpu_count() or 1
             # Conservative estimate: 2.5 GHz base, 8 FLOPS per cycle
             return core_count * 2.5e9 * 8
         except Exception:

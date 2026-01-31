@@ -16,7 +16,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-import psutil
+try:
+    import psutil
+    _psutil_available = True
+except ImportError:
+    _psutil_available = False
+
 import torch
 import torch.nn as nn
 
@@ -508,8 +513,11 @@ class UnifiedValidator:
                     self._add_success(f"Sufficient GPU memory: {memory_gb:.1f}GB")
             else:
                 # Check system memory
-                memory_gb = psutil.virtual_memory().total / (1024**3)
-                self._add_success(f"System memory: {memory_gb:.1f}GB")
+                if _psutil_available:
+                    memory_gb = psutil.virtual_memory().total / (1024**3)
+                    self._add_success(f"System memory: {memory_gb:.1f}GB")
+                else:
+                    self._add_warning("System memory check unavailable (psutil not installed)")
         except Exception as e:
             self._add_failure(f"Memory availability validation failed: {e}")
 
@@ -555,8 +563,10 @@ class UnifiedValidator:
         """Get current memory usage in bytes."""
         if torch.cuda.is_available():
             return torch.cuda.memory_allocated()
-        else:
+        elif _psutil_available:
             return psutil.Process().memory_info().rss
+        else:
+            return 0
 
     def _add_success(self, message: str, metadata: dict | None = None) -> None:
         """Add successful validation result."""
