@@ -247,6 +247,11 @@ demo_outputs/
 IMMEDIATE_TASK_LIST.md.archive/
 docs/immediate_tasks.md
 
+# Runtime artifacts (not source)
+checkpoints/
+reports/
+benchmark_results/
+
 # ===================================================================
 # LOCAL DEVELOPMENT FILES - Keep repo clean
 # ===================================================================
