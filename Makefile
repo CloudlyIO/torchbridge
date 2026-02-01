@@ -1,3 +1,5 @@
+PYTHON ?= $(shell command -v python3 || command -v python)
+
 .PHONY: test test-unit test-gpu lint format typecheck validate validate-full doctor benchmark docker-build docker-test clean install release
 
 # ---- Installation ----
@@ -28,25 +30,25 @@ typecheck:
 
 # ---- Validation ----
 validate:
-	PYTHONPATH=src python -m torchbridge.cli.validate --level quick
+	PYTHONPATH=src $(PYTHON) -m torchbridge.cli.validate --level quick
 
 validate-full:
-	PYTHONPATH=src python -m torchbridge.cli.validate --level full
+	PYTHONPATH=src $(PYTHON) -m torchbridge.cli.validate --level full
 
 # ---- Doctor ----
 doctor:
-	PYTHONPATH=src python -m torchbridge.cli.doctor
+	PYTHONPATH=src $(PYTHON) -m torchbridge.cli.doctor
 
 # ---- Benchmarking ----
 benchmark:
-	PYTHONPATH=src python -m torchbridge.cli.benchmark --predefined optimization --quick
+	PYTHONPATH=src $(PYTHON) -m torchbridge.cli.benchmark --predefined optimization --quick
 
 # ---- Docker ----
 docker-build:
 	docker build -t torchbridge:latest -f docker/Dockerfile .
 
 docker-test:
-	docker run --rm torchbridge:latest python -m pytest tests/ -v --tb=short \
+	docker run --rm torchbridge:latest python3 -m pytest tests/ -v --tb=short \
 		-m "not gpu and not slow and not tpu and not amd and not intel"
 
 # ---- Cleanup ----
@@ -59,6 +61,6 @@ clean:
 
 # ---- Release ----
 release:
-	python -m build
+	$(PYTHON) -m build
 	@echo "Built distribution in dist/"
 	@echo "To upload: twine upload dist/*"
