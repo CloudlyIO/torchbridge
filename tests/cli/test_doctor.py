@@ -310,6 +310,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]  # Should complete, may have warnings
@@ -322,6 +323,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]
@@ -334,6 +336,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]
@@ -346,6 +349,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]
@@ -358,6 +362,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]
@@ -370,6 +375,7 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         result = DoctorCommand.execute(args)
         assert result in [0, 1]
@@ -381,6 +387,7 @@ class TestDoctorCommand:
         args.full_report = False
         args.fix = False
         args.verbose = False
+        args.ci = False
 
         with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
             args.output = f.name
@@ -400,8 +407,133 @@ class TestDoctorCommand:
         args.fix = False
         args.output = None
         args.verbose = False
+        args.ci = False
 
         # Mock the category check to raise an exception
         with patch.object(DoctorCommand, '_check_basic_requirements', side_effect=Exception("Test error")):
             result = DoctorCommand.execute(args)
             assert result == 1
+
+
+class TestDoctorCIMode:
+    """Test the --ci flag for CI/CD integration."""
+
+    def test_ci_mode_all_pass(self, capsys):
+        """Test CI mode with all passing results."""
+        results = [
+            DiagnosticResult("Test 1", "pass", "OK"),
+            DiagnosticResult("Test 2", "pass", "OK"),
+        ]
+
+        exit_code = DoctorCommand._output_ci_json(results)
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['summary']['total'] == 2
+        assert data['summary']['passed'] == 2
+        assert data['summary']['failures'] == 0
+        assert data['summary']['warnings'] == 0
+
+    def test_ci_mode_with_failures(self, capsys):
+        """Test CI mode returns exit code 1 on failures."""
+        results = [
+            DiagnosticResult("Test 1", "pass", "OK"),
+            DiagnosticResult("Test 2", "fail", "Bad"),
+        ]
+
+        exit_code = DoctorCommand._output_ci_json(results)
+        assert exit_code == 1
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['summary']['failures'] == 1
+
+    def test_ci_mode_warnings_only(self, capsys):
+        """Test CI mode returns exit code 2 on warnings only."""
+        results = [
+            DiagnosticResult("Test 1", "pass", "OK"),
+            DiagnosticResult("Test 2", "warning", "Warn"),
+        ]
+
+        exit_code = DoctorCommand._output_ci_json(results)
+        assert exit_code == 2
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['summary']['warnings'] == 1
+        assert data['summary']['failures'] == 0
+
+    def test_ci_mode_json_structure(self, capsys):
+        """Test CI mode outputs valid JSON with expected structure."""
+        results = [
+            DiagnosticResult("Check", "pass", "Msg", details="Det", recommendation="Rec"),
+        ]
+
+        DoctorCommand._output_ci_json(results)
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'timestamp' in data
+        assert 'system_info' in data
+        assert 'diagnostics' in data
+        assert 'summary' in data
+        assert data['diagnostics'][0]['name'] == 'Check'
+        assert data['diagnostics'][0]['details'] == 'Det'
+        assert data['diagnostics'][0]['recommendation'] == 'Rec'
+
+    def test_ci_mode_suppresses_print(self, capsys):
+        """Test CI mode suppresses normal print output."""
+        args = MagicMock()
+        args.category = 'basic'
+        args.full_report = False
+        args.fix = False
+        args.output = None
+        args.verbose = False
+        args.ci = True
+
+        DoctorCommand.execute(args)
+
+        captured = capsys.readouterr()
+        # Should not contain the normal header
+        assert "TorchBridge System Diagnostics" not in captured.out
+        # Should be valid JSON
+        data = json.loads(captured.out)
+        assert 'diagnostics' in data
+
+    def test_ci_mode_error_returns_json(self, capsys):
+        """Test CI mode returns JSON even on error."""
+        args = MagicMock()
+        args.category = 'basic'
+        args.full_report = False
+        args.fix = False
+        args.output = None
+        args.verbose = False
+        args.ci = True
+
+        with patch.object(
+            DoctorCommand, '_check_basic_requirements',
+            side_effect=Exception("Test error"),
+        ):
+            result = DoctorCommand.execute(args)
+            assert result == 1
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'error' in data
+
+    def test_execute_without_ci_flag(self, capsys):
+        """Test that execute without --ci still works normally."""
+        args = MagicMock()
+        args.category = 'basic'
+        args.full_report = False
+        args.fix = False
+        args.output = None
+        args.verbose = False
+        args.ci = False
+
+        result = DoctorCommand.execute(args)
+        assert result in [0, 1]
+
+        captured = capsys.readouterr()
+        assert "TorchBridge System Diagnostics" in captured.out

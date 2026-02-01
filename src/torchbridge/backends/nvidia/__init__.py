@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 # Version compatibility
-__version__ = "0.4.41"
+__version__ = "0.4.42"
 __nvidia_support__ = True
 
 try:

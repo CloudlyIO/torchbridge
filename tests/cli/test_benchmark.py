@@ -317,6 +317,9 @@ class TestBenchmarkCommand:
         args.runs = 5
         args.output = None
         args.quick = True
+        args.format = 'json'
+        args.compare_baseline = None
+        args.regression_threshold = 0.15
 
         result = BenchmarkCommand.execute(args)
         assert result == 0
@@ -331,6 +334,9 @@ class TestBenchmarkCommand:
         args.runs = 5
         args.output = None
         args.quick = True
+        args.format = 'json'
+        args.compare_baseline = None
+        args.regression_threshold = 0.15
 
         result = BenchmarkCommand.execute(args)
         assert result == 0
@@ -342,6 +348,227 @@ class TestBenchmarkCommand:
         args.model = None  # Will cause error
         args.predefined = None
         args.verbose = False
+        args.format = 'json'
+        args.compare_baseline = None
+        args.regression_threshold = 0.15
 
         result = BenchmarkCommand.execute(args)
         assert result == 1
+
+
+class TestBenchmarkCSVOutput:
+    """Test CSV output for benchmark results."""
+
+    def test_save_results_csv(self):
+        """Test saving results to CSV file."""
+        import csv
+
+        results = [
+            BenchmarkResult(
+                name="test_model",
+                mean_time_ms=10.5,
+                std_time_ms=1.2,
+                throughput_ops_per_sec=95.2,
+                memory_usage_mb=128.0,
+            ),
+            BenchmarkResult(
+                name="test_model_2",
+                mean_time_ms=20.3,
+                std_time_ms=2.1,
+                throughput_ops_per_sec=49.3,
+                memory_usage_mb=256.0,
+            ),
+        ]
+
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as f:
+            try:
+                BenchmarkCommand._save_results_csv(results, f.name, verbose=False)
+                assert os.path.exists(f.name)
+
+                with open(f.name) as csv_file:
+                    reader = csv.reader(csv_file)
+                    rows = list(reader)
+
+                # Header + 2 data rows
+                assert len(rows) == 3
+                assert rows[0][0] == 'name'
+                assert rows[1][0] == 'test_model'
+                assert rows[2][0] == 'test_model_2'
+                assert float(rows[1][1]) == 10.5
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+
+    def test_execute_with_csv_format(self):
+        """Test execute with --format csv and --output."""
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as f:
+            try:
+                args = MagicMock()
+                args.type = 'model'
+                args.model = 'linear_stress_test'
+                args.input_shape = '16,1024'
+                args.predefined = None
+                args.verbose = False
+                args.warmup = 2
+                args.runs = 5
+                args.output = f.name
+                args.quick = True
+                args.format = 'csv'
+                args.compare_baseline = None
+                args.regression_threshold = 0.15
+
+                result = BenchmarkCommand.execute(args)
+                assert result == 0
+                assert os.path.exists(f.name)
+
+                # Verify it's a CSV, not JSON
+                with open(f.name) as csv_file:
+                    first_line = csv_file.readline()
+                assert 'name' in first_line
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+
+
+class TestBenchmarkBaseline:
+    """Test baseline comparison for benchmark results."""
+
+    def test_compare_with_baseline_no_regression(self, capsys):
+        """Test comparison with no regressions."""
+        results = [
+            BenchmarkResult(
+                name="test_model",
+                mean_time_ms=10.0,
+                std_time_ms=1.0,
+                throughput_ops_per_sec=100.0,
+                memory_usage_mb=64.0,
+            ),
+        ]
+
+        baseline_data = {
+            'benchmark_results': [
+                {'name': 'test_model', 'mean_time_ms': 10.0},
+            ],
+        }
+
+        with tempfile.NamedTemporaryFile(
+            suffix='.json', delete=False, mode='w'
+        ) as f:
+            json.dump(baseline_data, f)
+            f.flush()
+            try:
+                has_regression = BenchmarkCommand._compare_with_baseline(
+                    results, f.name, 0.15, verbose=False
+                )
+                assert has_regression is False
+
+                captured = capsys.readouterr()
+                assert 'OK' in captured.out
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+
+    def test_compare_with_baseline_regression(self, capsys):
+        """Test comparison detects regressions."""
+        results = [
+            BenchmarkResult(
+                name="test_model",
+                mean_time_ms=20.0,  # 100% slower
+                std_time_ms=1.0,
+                throughput_ops_per_sec=50.0,
+                memory_usage_mb=64.0,
+            ),
+        ]
+
+        baseline_data = {
+            'benchmark_results': [
+                {'name': 'test_model', 'mean_time_ms': 10.0},
+            ],
+        }
+
+        with tempfile.NamedTemporaryFile(
+            suffix='.json', delete=False, mode='w'
+        ) as f:
+            json.dump(baseline_data, f)
+            f.flush()
+            try:
+                has_regression = BenchmarkCommand._compare_with_baseline(
+                    results, f.name, 0.15, verbose=False
+                )
+                assert has_regression is True
+
+                captured = capsys.readouterr()
+                assert 'REGRESSION' in captured.out
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+
+    def test_compare_with_baseline_improved(self, capsys):
+        """Test comparison detects improvements."""
+        results = [
+            BenchmarkResult(
+                name="test_model",
+                mean_time_ms=5.0,  # 50% faster
+                std_time_ms=0.5,
+                throughput_ops_per_sec=200.0,
+                memory_usage_mb=64.0,
+            ),
+        ]
+
+        baseline_data = {
+            'benchmark_results': [
+                {'name': 'test_model', 'mean_time_ms': 10.0},
+            ],
+        }
+
+        with tempfile.NamedTemporaryFile(
+            suffix='.json', delete=False, mode='w'
+        ) as f:
+            json.dump(baseline_data, f)
+            f.flush()
+            try:
+                has_regression = BenchmarkCommand._compare_with_baseline(
+                    results, f.name, 0.15, verbose=False
+                )
+                assert has_regression is False
+
+                captured = capsys.readouterr()
+                assert 'IMPROVED' in captured.out
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+
+    def test_compare_with_baseline_new_benchmark(self, capsys):
+        """Test comparison handles new benchmarks not in baseline."""
+        results = [
+            BenchmarkResult(
+                name="new_model",
+                mean_time_ms=10.0,
+                std_time_ms=1.0,
+                throughput_ops_per_sec=100.0,
+                memory_usage_mb=64.0,
+            ),
+        ]
+
+        baseline_data = {
+            'benchmark_results': [
+                {'name': 'old_model', 'mean_time_ms': 10.0},
+            ],
+        }
+
+        with tempfile.NamedTemporaryFile(
+            suffix='.json', delete=False, mode='w'
+        ) as f:
+            json.dump(baseline_data, f)
+            f.flush()
+            try:
+                has_regression = BenchmarkCommand._compare_with_baseline(
+                    results, f.name, 0.15, verbose=False
+                )
+                assert has_regression is False
+
+                captured = capsys.readouterr()
+                assert 'new' in captured.out
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)

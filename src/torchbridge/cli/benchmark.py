@@ -124,6 +124,27 @@ Examples:
             help='Enable verbose output'
         )
 
+        parser.add_argument(
+            '--format',
+            choices=['json', 'csv'],
+            default='json',
+            help='Output format (default: json)'
+        )
+
+        parser.add_argument(
+            '--compare-baseline',
+            type=str,
+            metavar='BASELINE_FILE',
+            help='Compare results against a baseline JSON file'
+        )
+
+        parser.add_argument(
+            '--regression-threshold',
+            type=float,
+            default=0.15,
+            help='Regression threshold as fraction (default: 0.15 = 15%%)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the benchmark command."""
@@ -157,7 +178,22 @@ Examples:
 
             # Save results if requested
             if args.output:
-                BenchmarkCommand._save_results(results, args.output, args.verbose)
+                fmt = getattr(args, 'format', 'json')
+                if fmt == 'csv':
+                    BenchmarkCommand._save_results_csv(results, args.output, args.verbose)
+                else:
+                    BenchmarkCommand._save_results(results, args.output, args.verbose)
+
+            # Compare with baseline if requested
+            baseline_path = getattr(args, 'compare_baseline', None)
+            if baseline_path:
+                threshold = getattr(args, 'regression_threshold', 0.15)
+                has_regression = BenchmarkCommand._compare_with_baseline(
+                    results, baseline_path, threshold, args.verbose
+                )
+                if has_regression:
+                    print("\n Regressions detected!")
+                    return 1
 
             print("\n Benchmarking completed successfully!")
             return 0
@@ -498,6 +534,81 @@ Examples:
         if verbose:
             print(f"   Results saved ({len(results)} benchmarks)")
 
+    @staticmethod
+    def _save_results_csv(results: list[BenchmarkResult], output_path: str, verbose: bool) -> None:
+        """Save results to CSV file."""
+        import csv
+
+        if verbose:
+            print(f" Saving CSV results to: {output_path}")
+
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                'name', 'mean_time_ms', 'std_time_ms',
+                'throughput_ops_per_sec', 'memory_usage_mb',
+                'gpu_utilization_percent',
+            ])
+            for r in results:
+                writer.writerow([
+                    r.name, r.mean_time_ms, r.std_time_ms,
+                    r.throughput_ops_per_sec, r.memory_usage_mb,
+                    r.gpu_utilization_percent,
+                ])
+
+        if verbose:
+            print(f"   CSV results saved ({len(results)} benchmarks)")
+
+    @staticmethod
+    def _compare_with_baseline(
+        results: list[BenchmarkResult],
+        baseline_path: str,
+        threshold: float,
+        verbose: bool,
+    ) -> bool:
+        """Compare results against a baseline JSON file.
+
+        Returns True if regressions are found exceeding the threshold.
+        """
+        if verbose:
+            print(f" Comparing with baseline: {baseline_path}")
+
+        with open(baseline_path) as f:
+            baseline_data = json.load(f)
+
+        baseline_map = {
+            b['name']: b['mean_time_ms']
+            for b in baseline_data.get('benchmark_results', [])
+        }
+
+        has_regression = False
+        print("\n Baseline Comparison:")
+        print("-" * 80)
+        print(f"{'Name':<30} {'Baseline (ms)':<15} {'Current (ms)':<15} {'Change':<12} {'Status':<10}")
+        print("-" * 80)
+
+        for result in results:
+            baseline_time = baseline_map.get(result.name)
+            if baseline_time is None:
+                print(f"{result.name:<30} {'N/A':<15} {result.mean_time_ms:<15.2f} {'new':<12} {'--':<10}")
+                continue
+
+            change = (result.mean_time_ms - baseline_time) / baseline_time
+            change_str = f"{change:+.1%}"
+
+            if change > threshold:
+                status = "REGRESSION"
+                has_regression = True
+            elif change < -threshold:
+                status = "IMPROVED"
+            else:
+                status = "OK"
+
+            print(f"{result.name:<30} {baseline_time:<15.2f} {result.mean_time_ms:<15.2f} {change_str:<12} {status:<10}")
+
+        return has_regression
+
 
 def main():
     """Standalone entry point for tb-benchmark."""
@@ -567,6 +678,24 @@ def main():
         '--verbose', '-v',
         action='store_true',
         help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--format',
+        choices=['json', 'csv'],
+        default='json',
+        help='Output format (default: json)'
+    )
+    parser.add_argument(
+        '--compare-baseline',
+        type=str,
+        metavar='BASELINE_FILE',
+        help='Compare results against a baseline JSON file'
+    )
+    parser.add_argument(
+        '--regression-threshold',
+        type=float,
+        default=0.15,
+        help='Regression threshold as fraction (default: 0.15 = 15%%)'
     )
 
     args = parser.parse_args()

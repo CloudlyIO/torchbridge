@@ -111,6 +111,10 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=60
 
+      - name: Run TorchBridge validation
+        run: python -m torchbridge.cli.validate --ci --level quick
+        continue-on-error: true
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'

@@ -12,8 +12,10 @@ from typing import Optional  # noqa: F401
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
+from .init import InitCommand
 from .optimize import OptimizeCommand
 from .profile import ProfileCommand
+from .validate import ValidateCommand
 
 
 def main(args: list[str] | None = None) -> int:
@@ -43,7 +45,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.4.30'
+        version='%(prog)s 0.4.42'
     )
 
     # Add subcommands
@@ -59,6 +61,8 @@ For command-specific help:
     ExportCommand.register(subparsers)
     ProfileCommand.register(subparsers)
     DoctorCommand.register(subparsers)
+    InitCommand.register(subparsers)
+    ValidateCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -86,6 +90,10 @@ For command-specific help:
             return ProfileCommand.execute(parsed_args)
         elif parsed_args.command == 'doctor':
             return DoctorCommand.execute(parsed_args)
+        elif parsed_args.command == 'init':
+            return InitCommand.execute(parsed_args)
+        elif parsed_args.command == 'validate':
+            return ValidateCommand.execute(parsed_args)
         else:
             parser.print_help()
             return 1

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge"
-version = "0.4.41"
+version = "0.4.42"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Intel, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -44,6 +44,8 @@ tb-benchmark = "torchbridge.cli.benchmark:main"
 tb-export = "torchbridge.cli.export:main"
 tb-profile = "torchbridge.cli.profile:main"
 tb-doctor = "torchbridge.cli.doctor:main"
+tb-init = "torchbridge.cli.init:main"
+tb-validate = "torchbridge.cli.validate:main"
 
 [project.optional-dependencies]
 dev = [

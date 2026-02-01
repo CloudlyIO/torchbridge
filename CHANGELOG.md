@@ -8,7 +8,65 @@
 
 ## **v0.4.x - Production Release Series**
 
-**Current Version**: v0.4.41 (Cloud-Validated HAL Release)
+**Current Version**: v0.4.42 (CLI Enhancements + CI/CD Integration)
+
+---
+
+## [0.4.42] - 2026-02-01 - CLI Enhancements + CI/CD Integration
+
+### **Summary**
+
+Feature release adding two new CLI commands (`tb-init`, `tb-validate`), CI/CD
+integration for `tb-doctor` and `tb-benchmark`, a project `Makefile`, and a
+reusable GitHub Actions workflow template. Prepares the 0.4.x train for
+promotion to v0.5.0 once stable on AMD/Intel hardware.
+
+### **Added**
+
+- **`tb-validate` command** — structured validation pipeline with four levels:
+  - `--level quick` — hardware detection + import checks (reuses `DoctorCommand`)
+  - `--level standard` — quick + model validation + export format checks
+  - `--level full` — standard + benchmark smoke test + cross-backend consistency
+  - `--level cloud` — runs cloud validation use case scripts via subprocess
+  - `--ci` flag for JSON output and structured exit codes (0/1/2)
+  - `--format json|yaml|text` and `--output FILE` for report persistence
+- **`tb-init` command** — scaffolds backend-agnostic projects from templates:
+  - Templates: `training`, `inference`, `distributed`, `serving`
+  - Generates `train.py`/`serve.py`, `config.yaml`, `requirements.txt`,
+    `Dockerfile`, `README.md`, `.gitignore`
+  - `--backend` hint (auto/nvidia/amd/intel/tpu/cpu) flows into config
+  - `--force` flag for overwriting existing directories
+- **`tb-doctor --ci`** — CI mode emits JSON to stdout, suppresses human-readable
+  output, returns structured exit codes: 0 = all pass, 1 = failures, 2 = warnings only
+- **`tb-benchmark --format csv`** — CSV output via `--format csv` alongside existing JSON
+- **`tb-benchmark --compare-baseline`** — compare results against a baseline JSON
+  file with `--regression-threshold` (default 15%), prints comparison table,
+  returns non-zero on regressions
+- **`Makefile`** with 15 targets: `test`, `test-unit`, `test-gpu`, `lint`,
+  `format`, `typecheck`, `validate`, `validate-full`, `doctor`, `benchmark`,
+  `docker-build`, `docker-test`, `clean`, `install`, `release`
+- **GitHub Actions template** (`templates/github-actions/torchbridge-validate.yml`)
+  — reusable workflow users can copy into their projects
+- **`templates/README.md`** — explains how to use the CI/CD templates
+- **CI workflow update** — added `tb-validate --ci --level quick` step to
+  `.github/workflows/ci.yml` after test runs
+
+### **Changed**
+
+- CLI version string updated from `0.4.30` to `0.4.42` in `cli/__init__.py`
+- New entry points in `pyproject.toml`: `tb-init`, `tb-validate`
+- All sub-package `__version__` strings synced to `0.4.42`
+
+### **Tests**
+
+- `tests/cli/test_doctor.py` — added `TestDoctorCIMode` class (8 tests)
+- `tests/cli/test_benchmark.py` — added `TestBenchmarkCSVOutput` (2 tests) and
+  `TestBenchmarkBaseline` (4 tests)
+- `tests/cli/test_validate.py` — new file (20 tests)
+- `tests/cli/test_init.py` — new file (14 tests)
+- `tests/cli/test_cli_main.py` — added routing + entry-point tests for
+  `init` and `validate` commands (5 tests)
+- **Total new tests: 53** — all passing
 
 ---
 

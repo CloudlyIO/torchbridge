@@ -1,5 +1,5 @@
 #!/bin/bash
-# TorchBridge v0.4.41 — Cloud GPU Use Case Validation
+# TorchBridge v0.4.42 — Cloud GPU Use Case Validation
 # Runs all 5 use case scripts on NVIDIA GPU hardware (AWS or GCP)
 #
 # Tested platforms:
@@ -18,13 +18,13 @@
 
 set -uo pipefail  # no -e: let individual use cases fail without killing the script
 
-GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation-v0441/torchbridge_v0441.tar.gz}"
+GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation-v0442/torchbridge_v0442.tar.gz}"
 LOG=/tmp/torchbridge_validation.log
 
 exec > >(tee "$LOG") 2>&1
 
 echo "============================================================"
-echo "TorchBridge v0.4.41 Cloud GPU Validation"
+echo "TorchBridge v0.4.42 Cloud GPU Validation"
 echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Hostname:  $(hostname)"
 echo "============================================================"

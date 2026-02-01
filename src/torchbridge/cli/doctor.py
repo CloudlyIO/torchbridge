@@ -81,11 +81,20 @@ Examples:
             help='Enable verbose output'
         )
 
+        parser.add_argument(
+            '--ci',
+            action='store_true',
+            help='CI mode: JSON to stdout, no color, structured exit codes'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the doctor command."""
-        print(" TorchBridge System Diagnostics")
-        print("=" * 50)
+        ci_mode = getattr(args, 'ci', False)
+
+        if not ci_mode:
+            print(" TorchBridge System Diagnostics")
+            print("=" * 50)
 
         try:
             results = []
@@ -112,6 +121,10 @@ Examples:
                 results.extend(DoctorCommand._check_basic_requirements(args.verbose))
                 results.extend(DoctorCommand._check_hardware(args.verbose))
 
+            # CI mode: JSON output and structured exit codes
+            if ci_mode:
+                return DoctorCommand._output_ci_json(results)
+
             # Display results
             DoctorCommand._display_results(results, args.verbose)
 
@@ -132,6 +145,10 @@ Examples:
             return 1 if has_failures else 0
 
         except Exception as e:
+            if ci_mode:
+                import json
+                print(json.dumps({"error": str(e)}))
+                return 1
             print(f" Diagnostics failed: {e}")
             if args.verbose:
                 import traceback
@@ -482,6 +499,53 @@ Examples:
         return results
 
     @staticmethod
+    def _output_ci_json(results: list[DiagnosticResult]) -> int:
+        """Output results as JSON for CI mode with structured exit codes.
+
+        Exit codes: 0=all pass, 1=failures, 2=warnings only.
+        """
+        import json
+        import time
+
+        report = {
+            'timestamp': time.time(),
+            'system_info': {
+                'platform': platform.platform(),
+                'python_version': platform.python_version(),
+                'pytorch_version': torch.__version__,
+                'cuda_available': torch.cuda.is_available(),
+                'gpu_name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+            },
+            'diagnostics': [
+                {
+                    'name': r.name,
+                    'status': r.status,
+                    'message': r.message,
+                    'details': r.details,
+                    'recommendation': r.recommendation,
+                }
+                for r in results
+            ],
+            'summary': {
+                'total': len(results),
+                'passed': sum(1 for r in results if r.status == 'pass'),
+                'warnings': sum(1 for r in results if r.status == 'warning'),
+                'failures': sum(1 for r in results if r.status == 'fail'),
+            },
+        }
+
+        print(json.dumps(report, indent=2))
+
+        has_failures = any(r.status == 'fail' for r in results)
+        has_warnings = any(r.status == 'warning' for r in results)
+
+        if has_failures:
+            return 1
+        if has_warnings:
+            return 2
+        return 0
+
+    @staticmethod
     def _display_results(results: list[DiagnosticResult], verbose: bool) -> None:
         """Display diagnostic results in a formatted way."""
         print("\n Diagnostic Results:")
@@ -617,6 +681,11 @@ def main():
         '--verbose', '-v',
         action='store_true',
         help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--ci',
+        action='store_true',
+        help='CI mode: JSON to stdout, no color, structured exit codes'
     )
 
     args = parser.parse_args()

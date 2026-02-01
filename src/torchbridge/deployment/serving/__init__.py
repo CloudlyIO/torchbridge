@@ -71,7 +71,7 @@ from .triton_config import (
     generate_triton_model_repository,
 )
 
-__version__ = "0.4.41"
+__version__ = "0.4.42"
 
 __all__ = [
     # TorchServe
