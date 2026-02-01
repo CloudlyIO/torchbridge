@@ -50,9 +50,8 @@ __all__ = [
 ]
 
 # Version compatibility
-__version__ = "0.4.19"
+__version__ = "0.4.41"
 __tpu_support__ = True
-__phase__ = "Phase 4C-Pre Complete"
 
 try:
     import torch_xla

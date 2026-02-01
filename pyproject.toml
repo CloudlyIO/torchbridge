@@ -10,7 +10,7 @@ authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-keywords = ["pytorch", "gpu", "optimization", "cuda", "triton", "machine-learning", "deep-learning", "performance"]
+keywords = ["pytorch", "hardware-abstraction", "multi-backend", "cuda", "amd", "intel", "tpu", "machine-learning", "deep-learning"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

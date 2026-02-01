@@ -69,7 +69,7 @@ from .xpu_utilities import (
     xpu_synchronize,
 )
 
-__version__ = "0.4.19"
+__version__ = "0.4.41"
 
 __all__ = [
     # Main backend

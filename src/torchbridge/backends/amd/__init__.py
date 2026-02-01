@@ -32,4 +32,4 @@ __all__ = [
     "HIPUtilities",
 ]
 
-__version__ = "0.4.19"
+__version__ = "0.4.41"
