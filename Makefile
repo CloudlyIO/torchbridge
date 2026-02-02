@@ -1,6 +1,6 @@
 PYTHON ?= $(shell command -v python3 || command -v python)
 
-.PHONY: test test-unit test-gpu lint format typecheck validate validate-full doctor benchmark docker-build docker-test clean install release
+.PHONY: test test-unit test-gpu test-amd test-intel lint format typecheck validate validate-full doctor benchmark docker-build docker-build-amd docker-build-intel docker-test clean install release
 
 # ---- Installation ----
 install:
@@ -16,6 +16,12 @@ test-unit:
 
 test-gpu:
 	PYTHONPATH=src pytest tests/ -v --tb=short -m "gpu"
+
+test-amd:
+	PYTHONPATH=src pytest tests/ -v --tb=short -m "amd"
+
+test-intel:
+	PYTHONPATH=src pytest tests/ -v --tb=short -m "intel"
 
 # ---- Linting & Formatting ----
 lint:
@@ -45,10 +51,16 @@ benchmark:
 
 # ---- Docker ----
 docker-build:
-	docker build -t torchbridge:latest -f docker/Dockerfile .
+	docker build -t torchbridge:cpu -f docker/Dockerfile.cpu .
+
+docker-build-amd:
+	docker build -t torchbridge:amd -f docker/Dockerfile.amd .
+
+docker-build-intel:
+	docker build -t torchbridge:intel -f docker/Dockerfile.intel .
 
 docker-test:
-	docker run --rm torchbridge:latest python3 -m pytest tests/ -v --tb=short \
+	docker run --rm torchbridge:cpu python3 -m pytest tests/ -v --tb=short \
 		-m "not gpu and not slow and not tpu and not amd and not intel"
 
 # ---- Cleanup ----

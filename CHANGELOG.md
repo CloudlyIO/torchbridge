@@ -45,17 +45,27 @@ promotion to v0.5.0 once stable on AMD/Intel hardware.
 - **`Makefile`** with 15 targets: `test`, `test-unit`, `test-gpu`, `lint`,
   `format`, `typecheck`, `validate`, `validate-full`, `doctor`, `benchmark`,
   `docker-build`, `docker-test`, `clean`, `install`, `release`
+- **`Dockerfile.amd`** — ROCm 6.0 container for AMD Instinct GPUs (MI250X, MI300X)
+- **`Dockerfile.intel`** — Intel IPEX container for Intel Data Center GPU Max / Arc
+- **AMD GPU CI workflow** (`.github/workflows/amd-gpu-test.yml`) — scheduled weekly
+  on Mondays, runs AMD-marked tests, benchmarks, validation, and Docker build
+- **Intel GPU CI workflow** (`.github/workflows/intel-gpu-test.yml`) — scheduled
+  weekly on Tuesdays, runs Intel-marked tests, benchmarks, validation, and Docker build
 - **GitHub Actions template** (`templates/github-actions/torchbridge-validate.yml`)
   — reusable workflow users can copy into their projects
 - **`templates/README.md`** — explains how to use the CI/CD templates
 - **CI workflow update** — added `tb-validate --ci --level quick` step to
   `.github/workflows/ci.yml` after test runs
+- **Makefile** new targets: `test-amd`, `test-intel`, `docker-build-amd`,
+  `docker-build-intel`
 
 ### **Changed**
 
 - CLI version string updated from `0.4.30` to `0.4.42` in `cli/__init__.py`
 - New entry points in `pyproject.toml`: `tb-init`, `tb-validate`
 - All sub-package `__version__` strings synced to `0.4.42`
+- Docker workflow (`.github/workflows/docker.yml`) now builds + scans AMD and Intel images
+- `docker-compose.yml` adds `inference-amd` and `inference-intel` services (profiles: `amd`, `intel`)
 
 ### **Tests**
 

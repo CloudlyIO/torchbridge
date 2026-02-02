@@ -97,6 +97,65 @@ services:
       - prometheus
 
   # =============================================================================
+  # Inference AMD GPU
+  # =============================================================================
+  inference-amd:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.amd
+    image: torchbridge:amd
+    container_name: torchbridge-inference-amd
+    profiles:
+      - amd
+    ports:
+      - "8002:8000"
+      - "9092:9090"
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-model}
+      - MODEL_PATH=${MODEL_PATH:-/models/model.pt}
+      - DEVICE=${DEVICE:-cuda}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    restart: unless-stopped
+    networks:
+      - torchbridge-net
+
+  # =============================================================================
+  # Inference Intel GPU
+  # =============================================================================
+  inference-intel:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.intel
+    image: torchbridge:intel
+    container_name: torchbridge-inference-intel
+    profiles:
+      - intel
+    ports:
+      - "8003:8000"
+      - "9093:9090"
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-model}
+      - MODEL_PATH=${MODEL_PATH:-/models/model.pt}
+      - DEVICE=${DEVICE:-xpu}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - render
+    restart: unless-stopped
+    networks:
+      - torchbridge-net
+
+  # =============================================================================
   # Inference CPU (Alternative)
   # =============================================================================
   inference-cpu:

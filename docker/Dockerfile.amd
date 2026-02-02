@@ -1,0 +1,76 @@
+# TorchBridge AMD GPU Container
+# ROCm-based container for AMD GPU inference and training
+#
+# Build:
+#   docker build -f docker/Dockerfile.amd -t torchbridge:amd .
+#
+# Run:
+#   docker run --device=/dev/kfd --device=/dev/dri --group-add video \
+#     -p 8000:8000 torchbridge:amd
+#
+# Tested on: AMD Instinct MI250X, MI300X
+# Version: 0.4.42
+
+# ROCm 6.0 base image with PyTorch support
+FROM rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=UTF-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HSA_OVERRIDE_GFX_VERSION=11.0.0
+
+# Install additional system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# Install optional serving dependencies
+RUN pip install fastapi uvicorn prometheus-client psutil
+
+# Copy application code
+COPY src/ ./src/
+COPY pyproject.toml ./
+
+# Install TorchBridge
+RUN pip install -e .
+
+# Verify ROCm + PyTorch integration
+RUN python -c "import torch; print(f'PyTorch {torch.__version__}'); print(f'ROCm available: {torch.cuda.is_available()}'); print(f'HIP version: {torch.version.hip}')" || true
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose ports
+# 8000: FastAPI inference server
+# 9090: Prometheus metrics
+EXPOSE 8000 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
+# Default command: Run FastAPI server
+CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Labels
+LABEL org.opencontainers.image.title="TorchBridge AMD" \
+      org.opencontainers.image.description="Production inference container with AMD ROCm GPU support" \
+      org.opencontainers.image.version="0.4.42" \
+      org.opencontainers.image.vendor="TorchBridge" \
+      org.opencontainers.image.source="https://github.com/your-org/torchbridge"
