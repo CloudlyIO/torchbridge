@@ -411,7 +411,8 @@ class TestHardwareAdaptation:
         """Test hardware topology discovery"""
         with patch('torch.cuda.is_available', return_value=True), \
              patch('torch.cuda.device_count', return_value=2), \
-             patch('torch.cuda.get_device_properties') as mock_props:
+             patch('torch.cuda.get_device_properties') as mock_props, \
+             patch('torch.cuda.memory_allocated', return_value=0):
 
             # Mock device properties
             mock_props.return_value = Mock(
@@ -426,7 +427,10 @@ class TestHardwareAdaptation:
             topology = manager.discover_topology()
 
             assert topology.total_devices == 2
-            assert HardwareVendor.NVIDIA in topology.vendor_distribution
+            # Vendor depends on whether running on ROCm or CUDA
+            is_rocm = hasattr(torch.version, 'hip') and torch.version.hip is not None
+            expected_vendor = HardwareVendor.AMD if is_rocm else HardwareVendor.NVIDIA
+            assert expected_vendor in topology.vendor_distribution
 
     def test_device_mesh_optimizer(self):
         """Test device mesh optimizer"""

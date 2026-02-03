@@ -327,9 +327,14 @@ class TestAMDMemoryManager:
         """Test memory statistics."""
         stats = memory_manager.get_memory_stats()
 
-        assert hasattr(stats, "total_mb")
-        assert hasattr(stats, "allocated_mb")
-        assert hasattr(stats, "free_mb")
+        if isinstance(stats, dict):
+            assert "total_mb" in stats
+            assert "allocated_mb" in stats
+            assert "free_mb" in stats
+        else:
+            assert hasattr(stats, "total_mb")
+            assert hasattr(stats, "allocated_mb")
+            assert hasattr(stats, "free_mb")
 
     def test_allocation_summary(self, memory_manager):
         """Test allocation summary."""

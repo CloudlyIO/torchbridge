@@ -156,13 +156,18 @@ class UnifiedManager:
                 model, sample_inputs, optimization_level, for_inference
             )
 
-        # Extract model from result (backends return result objects)
-        if hasattr(result, 'optimized_model'):
+        # Extract model from result (backends return different types)
+        if isinstance(result, tuple):
+            # BaseOptimizer returns (model, OptimizationResult)
+            return result[0]
+        elif isinstance(result, nn.Module):
+            # AMD optimizer returns model directly
+            return result
+        elif hasattr(result, 'optimized_model'):
             return result.optimized_model
         elif hasattr(result, 'model'):
             return result.model
         else:
-            # Fallback: result is already the model
             return result
 
     def _optimize_with_nvidia(
@@ -181,11 +186,11 @@ class UnifiedManager:
 
             if for_inference:
                 result = self._nvidia_optimizer.optimize_for_inference(
-                    model, sample_inputs, optimization_level
+                    model, sample_input=sample_inputs, level=optimization_level
                 )
             else:
                 result = self._nvidia_optimizer.optimize_for_training(
-                    model, sample_inputs, optimization_level
+                    model, level=optimization_level
                 )
 
             return result
@@ -228,13 +233,19 @@ class UnifiedManager:
         """Optimize model using AMD ROCm backend."""
         try:
             from ...backends.amd import AMDOptimizer
+            from ...core.config import AMDConfig
 
             if self._amd_optimizer is None:
-                self._amd_optimizer = AMDOptimizer(self.config)
+                amd_config = AMDConfig(optimization_level=optimization_level)
+                self._amd_optimizer = AMDOptimizer(amd_config)
 
             result = self._amd_optimizer.optimize(
-                model, sample_inputs, optimization_level, for_inference
+                model, level=optimization_level
             )
+
+            # Set eval mode for inference
+            if for_inference and isinstance(result, nn.Module):
+                result.eval()
 
             return result
 

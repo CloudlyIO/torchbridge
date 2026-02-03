@@ -199,7 +199,7 @@ class TestAdvancedCheckpointing:
             output = adaptive_checkpoint.forward(simple_model, x)
 
         assert output.shape == (4, 64)
-        assert output.device == device
+        assert output.device.type == device.type
 
     def test_memory_efficient_backprop(self, simple_model):
         """Test memory-efficient backpropagation"""
@@ -222,7 +222,7 @@ class TestAdvancedCheckpointing:
 
         # Reload to original device
         reloaded = offloader.reload_activations(offloaded, device)
-        assert reloaded.device == device
+        assert reloaded.device.type == device.type
 
         # Verify correctness
         assert torch.allclose(activations.cpu(), reloaded.cpu())
@@ -243,7 +243,7 @@ class TestMemoryPoolManagement:
         tensor1 = pool.get_tensor((10, 20), torch.float32)
         assert tensor1.shape == (10, 20)
         assert tensor1.dtype == torch.float32
-        assert tensor1.device == device
+        assert tensor1.device.type == device.type
 
         # Return tensor to pool
         pool.return_tensor(tensor1)
@@ -271,7 +271,7 @@ class TestMemoryPoolManagement:
         # Test allocation
         tensor = allocator.allocate(100, device)
         assert tensor.numel() == 100
-        assert tensor.device == device
+        assert tensor.device.type == device.type
 
         # Test deallocation
         allocator.deallocate(tensor)

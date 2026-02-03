@@ -41,7 +41,7 @@ class AdaptiveCheckpointing:
     def forward(self, func: Callable, *args, **kwargs):
         """Apply adaptive checkpointing"""
         if self.enabled and torch.cuda.is_available():
-            return torch.utils.checkpoint.checkpoint(func, *args, **kwargs)
+            return torch.utils.checkpoint.checkpoint(func, *args, use_reentrant=False, **kwargs)
         else:
             return func(*args, **kwargs)
 

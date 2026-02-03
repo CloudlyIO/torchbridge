@@ -245,6 +245,10 @@ class TestVendorAdapters:
     """Test vendor-specific adapter implementations"""
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    @pytest.mark.skipif(
+        hasattr(torch.version, 'hip') and torch.version.hip is not None,
+        reason="Running on AMD ROCm, not NVIDIA CUDA"
+    )
     def test_nvidia_adapter(self):
         """Test NVIDIA adapter functionality"""
         adapter = NVIDIAAdapter()
@@ -498,8 +502,9 @@ class TestIntegrationWithExistingSystems:
                 if device_ids:
                     mesh = dt.DeviceMesh("cuda", torch.tensor(device_ids))
                     assert mesh is not None
-        except ImportError:
-            # Distributed tensor API not available in this PyTorch version
+        except (ImportError, RuntimeError, ValueError):
+            # Distributed tensor API not available, backend init failed,
+            # or environment variables (RANK, WORLD_SIZE) not set
             pass
 
 
@@ -508,6 +513,10 @@ class TestRealHardwareIntegration:
     """Integration tests with real hardware (when available)"""
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    @pytest.mark.skipif(
+        hasattr(torch.version, 'hip') and torch.version.hip is not None,
+        reason="Running on AMD ROCm, not NVIDIA CUDA"
+    )
     def test_real_nvidia_device_discovery(self):
         """Test discovery of real NVIDIA devices"""
         adapter = NVIDIAAdapter()

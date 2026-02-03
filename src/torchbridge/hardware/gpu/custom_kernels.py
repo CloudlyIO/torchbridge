@@ -854,7 +854,9 @@ class FusedLinearGELU(nn.Module):
 
     def _pytorch_fallback(self, x: torch.Tensor) -> torch.Tensor:
         """Fallback PyTorch implementation."""
-        linear_out = F.linear(x, self.weight, self.bias)
+        weight = self.weight.to(x.device)
+        bias = self.bias.to(x.device) if self.bias is not None else None
+        linear_out = F.linear(x, weight, bias)
         return F.gelu(linear_out)
 
     def extra_repr(self) -> str:

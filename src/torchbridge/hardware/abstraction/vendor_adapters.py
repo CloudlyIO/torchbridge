@@ -312,7 +312,8 @@ class NVIDIAAdapter(VendorAdapter):
         flops_per_sm = base_flops_per_sm.get(key, 64)  # Default
 
         # Base clock in Hz * cores per SM * number of SMs * FLOPs per core per clock
-        estimated_flops = props.clock_rate * 1000 * flops_per_sm * props.multi_processor_count
+        clock_rate = getattr(props, 'clock_rate', 1000)  # Default 1GHz if unavailable (e.g. ROCm)
+        estimated_flops = clock_rate * 1000 * flops_per_sm * props.multi_processor_count
 
         return estimated_flops
 

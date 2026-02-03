@@ -305,7 +305,7 @@ class DynamicShapeBucketing:
                 "device_name": props.name,
                 "compute_capability": (props.major, props.minor),
                 "warp_size": 32,  # Standard for NVIDIA
-                "max_threads_per_block": props.max_threads_per_block,
+                "max_threads_per_block": getattr(props, 'max_threads_per_block', 1024),
                 "memory_bandwidth_gb_s": self._estimate_memory_bandwidth(props),
                 "tensor_core_available": props.major >= 7  # Volta and later
             })

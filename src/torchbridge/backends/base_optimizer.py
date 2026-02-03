@@ -244,7 +244,7 @@ class BaseOptimizer(ABC):
         """
         return self.optimize(
             model=model,
-            level=level or OptimizationLevel.O2,
+            level=level if level is not None else OptimizationLevel.O2,
             sample_input=sample_input,
             dtype=dtype,
             for_inference=True
@@ -269,7 +269,7 @@ class BaseOptimizer(ABC):
         """
         return self.optimize(
             model=model,
-            level=level or OptimizationLevel.O1,
+            level=level if level is not None else OptimizationLevel.O1,
             dtype=dtype,
             for_training=True
         )

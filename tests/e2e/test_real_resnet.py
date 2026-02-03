@@ -61,7 +61,7 @@ class TestRealResNetOptimization:
         )
 
         device = torch.device("cpu")
-        model = resnet50_model.to(device)
+        model = copy.deepcopy(resnet50_model).to(device)
         images = sample_image_tensor.to(device)
 
         def run_baseline():
@@ -130,8 +130,8 @@ class TestRealResNetOptimization:
             with torch.no_grad():
                 return baseline_model(images)
 
-        # Optimize original model with full CUDA optimizations
-        model = resnet50_model.to(device)
+        # Optimize from fresh copy to avoid mutating session fixture
+        model = copy.deepcopy(resnet50_model).to(device)
         config = VisionOptimizationConfig(
             optimization_level=OptimizationLevel.O3,
             enable_cudnn_benchmark=True,
@@ -249,7 +249,7 @@ class TestRealResNetOptimization:
         batch_size = 32
         images = torch.randn(batch_size, 3, 224, 224, device=e2e_device)
 
-        # Optimize for throughput
+        # Optimize for throughput (use copy to avoid mutating session fixture)
         config = VisionOptimizationConfig(
             optimization_level=OptimizationLevel.O2,
             batch_size=batch_size,
@@ -257,7 +257,7 @@ class TestRealResNetOptimization:
             compile_model=False,
         )
         optimizer = ResNetOptimizer(config)
-        optimized_model = optimizer.optimize(resnet50_model)
+        optimized_model = optimizer.optimize(copy.deepcopy(resnet50_model))
         optimized_model = optimized_model.to(e2e_device)
 
         images_opt = images.to(memory_format=torch.channels_last)
@@ -419,8 +419,8 @@ class TestResNetCUDAOptimizations:
             with torch.no_grad():
                 return fp32_model(images)
 
-        # Optimize with FP16 (use original model)
-        model = resnet50_model.to(device)
+        # Optimize with FP16 (use copy to avoid mutating session fixture)
+        model = copy.deepcopy(resnet50_model).to(device)
         config = VisionOptimizationConfig(
             optimization_level=OptimizationLevel.O3,
             channels_last=True,
@@ -460,7 +460,7 @@ class TestResNetCUDAOptimizations:
         )
 
         device = torch.device("cuda")
-        model = resnet50_model.to(device)
+        model = copy.deepcopy(resnet50_model).to(device)
         images = sample_image_tensor.to(device)
 
         def run_baseline():

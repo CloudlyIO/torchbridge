@@ -365,9 +365,9 @@ class HIPUtilities:
             "total_memory_gb": props.total_memory / (1024**3),
             "multi_processor_count": props.multi_processor_count,
             "compute_capability": f"{props.major}.{props.minor}",
-            "max_threads_per_block": props.max_threads_per_block,
-            "max_threads_per_multi_processor": props.max_threads_per_multi_processor,
-            "warp_size": props.warp_size,
+            "max_threads_per_block": getattr(props, 'max_threads_per_block', 1024),
+            "max_threads_per_multi_processor": getattr(props, 'max_threads_per_multi_processor', 2048),
+            "warp_size": getattr(props, 'warp_size', 64),
         }
 
     def get_memory_info(

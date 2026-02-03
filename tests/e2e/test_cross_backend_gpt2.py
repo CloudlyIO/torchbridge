@@ -225,38 +225,57 @@ class TestCrossBackendGPT2:
         """Test GPT-2 generation matches baseline on AMD."""
         from torchbridge.backends.amd import AMDBackend
 
-        backend = AMDBackend()
-        model = gpt2_baseline["model"]
-        tokenizer = gpt2_baseline["tokenizer"]
-        inputs = gpt2_baseline["inputs"]
-        baseline_text = gpt2_baseline["baseline_text"]
+        # Save and restore global precision state. Use math-only SDPA for
+        # cross-device comparison — ROCm's flash attention produces different
+        # numerics than CPU's math kernel.
+        tf32_matmul = torch.backends.cuda.matmul.allow_tf32
+        tf32_cudnn = torch.backends.cudnn.allow_tf32
+        flash_sdp = torch.backends.cuda.flash_sdp_enabled()
+        mem_sdp = torch.backends.cuda.mem_efficient_sdp_enabled()
 
-        # Prepare model for AMD
-        prepared_model = backend.prepare_model(model)
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
 
-        # Move inputs to ROCm device
-        device = backend.device
-        amd_inputs = {k: v.to(device) for k, v in inputs.items()}
+        try:
+            backend = AMDBackend()
+            model = copy.deepcopy(gpt2_baseline["model"])
+            tokenizer = gpt2_baseline["tokenizer"]
+            inputs = gpt2_baseline["inputs"]
+            baseline_text = gpt2_baseline["baseline_text"]
 
-        # Generate text
-        with torch.no_grad():
-            amd_generated = prepared_model.generate(
-                **amd_inputs,
-                max_new_tokens=10,
-                do_sample=False,
-                pad_token_id=tokenizer.eos_token_id
-            )
-        amd_text = tokenizer.batch_decode(amd_generated, skip_special_tokens=True)
+            # Prepare model for AMD
+            prepared_model = backend.prepare_model(model)
 
-        # Compare
-        print("\nGPT-2 AMD Generation Test:")
-        for i, (baseline, amd) in enumerate(zip(baseline_text, amd_text)):
-            print(f"  Sample {i+1}:")
-            print(f"    Baseline: {baseline}")
-            print(f"    AMD:      {amd}")
-            assert baseline == amd, f"Generation mismatch at sample {i+1}"
+            # Move inputs to ROCm device
+            device = backend.device
+            amd_inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        print("  Generation match: PASS")
+            # Generate text
+            with torch.no_grad():
+                amd_generated = prepared_model.generate(
+                    **amd_inputs,
+                    max_new_tokens=10,
+                    do_sample=False,
+                    pad_token_id=tokenizer.eos_token_id
+                )
+            amd_text = tokenizer.batch_decode(amd_generated, skip_special_tokens=True)
+
+            # Compare generated text
+            print("\nGPT-2 AMD Generation Test:")
+            for i, (baseline, amd) in enumerate(zip(baseline_text, amd_text)):
+                print(f"  Sample {i+1}:")
+                print(f"    Baseline: {baseline}")
+                print(f"    AMD:      {amd}")
+                assert baseline == amd, f"Generation mismatch at sample {i+1}"
+
+            print("  Generation match: PASS")
+        finally:
+            torch.backends.cuda.matmul.allow_tf32 = tf32_matmul
+            torch.backends.cudnn.allow_tf32 = tf32_cudnn
+            torch.backends.cuda.enable_flash_sdp(flash_sdp)
+            torch.backends.cuda.enable_mem_efficient_sdp(mem_sdp)
 
     @requires_amd
     def test_gpt2_amd_speedup(self, gpt2_baseline):
@@ -566,26 +585,43 @@ class TestCrossBackendGPT2Perplexity:
         """Test GPT-2 perplexity matches on AMD."""
         from torchbridge.backends.amd import AMDBackend
 
-        backend = AMDBackend()
-        model = perplexity_setup["model"]
-        inputs = perplexity_setup["inputs"]
-        baseline_perplexity = perplexity_setup["baseline_perplexity"]
+        # Save and restore global precision state
+        tf32_matmul = torch.backends.cuda.matmul.allow_tf32
+        tf32_cudnn = torch.backends.cudnn.allow_tf32
+        flash_sdp = torch.backends.cuda.flash_sdp_enabled()
+        mem_sdp = torch.backends.cuda.mem_efficient_sdp_enabled()
 
-        # Run on AMD
-        prepared_model = backend.prepare_model(model)
-        device = backend.device
-        amd_inputs = {k: v.to(device) for k, v in inputs.items()}
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
 
-        with torch.no_grad():
-            outputs = prepared_model(**amd_inputs, labels=amd_inputs["input_ids"])
-            amd_loss = outputs.loss.item()
-            amd_perplexity = torch.exp(torch.tensor(amd_loss)).item()
+        try:
+            backend = AMDBackend()
+            model = copy.deepcopy(perplexity_setup["model"])
+            inputs = perplexity_setup["inputs"]
+            baseline_perplexity = perplexity_setup["baseline_perplexity"]
 
-        perplexity_diff = abs(amd_perplexity - baseline_perplexity) / baseline_perplexity
+            # Run on AMD
+            prepared_model = backend.prepare_model(model)
+            device = backend.device
+            amd_inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        print("\nGPT-2 Perplexity Consistency (AMD):")
-        print(f"  Baseline perplexity: {baseline_perplexity:.4f}")
-        print(f"  AMD perplexity: {amd_perplexity:.4f}")
-        print(f"  Difference: {perplexity_diff*100:.2f}%")
+            with torch.no_grad():
+                outputs = prepared_model(**amd_inputs, labels=amd_inputs["input_ids"])
+                amd_loss = outputs.loss.item()
+                amd_perplexity = torch.exp(torch.tensor(amd_loss)).item()
 
-        assert perplexity_diff < 0.01, f"Perplexity differs by {perplexity_diff*100:.2f}% (max 1%)"
+            perplexity_diff = abs(amd_perplexity - baseline_perplexity) / baseline_perplexity
+
+            print("\nGPT-2 Perplexity Consistency (AMD):")
+            print(f"  Baseline perplexity: {baseline_perplexity:.4f}")
+            print(f"  AMD perplexity: {amd_perplexity:.4f}")
+            print(f"  Difference: {perplexity_diff*100:.2f}%")
+
+            assert perplexity_diff < 0.01, f"Perplexity differs by {perplexity_diff*100:.2f}% (max 1%)"
+        finally:
+            torch.backends.cuda.matmul.allow_tf32 = tf32_matmul
+            torch.backends.cudnn.allow_tf32 = tf32_cudnn
+            torch.backends.cuda.enable_flash_sdp(flash_sdp)
+            torch.backends.cuda.enable_mem_efficient_sdp(mem_sdp)

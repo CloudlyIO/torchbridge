@@ -22,6 +22,15 @@ from torchbridge.core.hardware_detector import (
     detect_hardware,
     get_optimal_backend,
 )
+
+# All valid hardware types and backends (for assertion checks)
+ALL_HARDWARE_TYPES = [
+    HardwareType.NVIDIA_GPU,
+    HardwareType.AMD_GPU,
+    HardwareType.TPU,
+    HardwareType.CPU,
+]
+ALL_BACKENDS = ['nvidia', 'amd', 'tpu', 'cpu']
 from torchbridge.core.management import UnifiedManager, get_manager
 
 
@@ -63,11 +72,7 @@ class TestHardwareDetector:
         profile = detector.detect()
 
         assert isinstance(profile, HardwareProfile)
-        assert profile.hardware_type in [
-            HardwareType.NVIDIA_GPU,
-            HardwareType.TPU,
-            HardwareType.CPU
-        ]
+        assert profile.hardware_type in ALL_HARDWARE_TYPES
         assert profile.device_name is not None
         assert profile.device_count >= 1
 
@@ -352,11 +357,7 @@ class TestAutoOptimization:
         profile = manager.get_hardware_profile()
 
         assert isinstance(profile, HardwareProfile)
-        assert profile.hardware_type in [
-            HardwareType.NVIDIA_GPU,
-            HardwareType.TPU,
-            HardwareType.CPU
-        ]
+        assert profile.hardware_type in ALL_HARDWARE_TYPES
 
     def test_get_optimization_recommendations(self):
         """Test getting optimization recommendations."""
@@ -411,7 +412,7 @@ class TestConvenienceFunctions:
         backend = get_optimal_backend()
 
         assert isinstance(backend, str)
-        assert backend in ['nvidia', 'tpu', 'cpu']
+        assert backend in ALL_BACKENDS
 
 
 # Integration Tests
@@ -436,7 +437,7 @@ class TestAutoOptimizationIntegration:
 
         # Get recommendations
         recommendations = manager.get_optimization_recommendations()
-        assert recommendations['backend'] in ['nvidia', 'tpu', 'cpu']
+        assert recommendations['backend'] in ALL_BACKENDS
 
     def test_auto_optimization_consistency(self, simple_model):
         """Test that auto-optimization is consistent."""
@@ -450,7 +451,7 @@ class TestAutoOptimizationIntegration:
         profile = manager.get_hardware_profile()
         backend = manager.hardware_detector.get_optimal_backend(profile)
 
-        assert backend in ['nvidia', 'tpu', 'cpu']
+        assert backend in ALL_BACKENDS
 
 
 if __name__ == "__main__":

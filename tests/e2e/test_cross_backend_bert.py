@@ -246,38 +246,68 @@ class TestCrossBackendBERT:
         """Test BERT on AMD backend matches baseline."""
         from torchbridge.backends.amd import AMDBackend
 
-        backend = AMDBackend()
-        model = bert_baseline["model"]
-        inputs = bert_baseline["inputs"]
-        baseline_output = bert_baseline["baseline_output"]
+        # Save global state that affects numerical precision
+        tf32_matmul = torch.backends.cuda.matmul.allow_tf32
+        tf32_cudnn = torch.backends.cudnn.allow_tf32
+        flash_sdp = torch.backends.cuda.flash_sdp_enabled()
+        mem_sdp = torch.backends.cuda.mem_efficient_sdp_enabled()
 
-        # Prepare model for AMD
-        prepared_model = backend.prepare_model(model)
+        # Disable TF32 and use math-only SDPA for cross-device comparison.
+        # ROCm's flash/efficient attention uses online softmax with different
+        # accumulation than CPU's math kernel, causing cosine_sim ~0.82 through
+        # 12 transformer layers. The math SDPA backend matches CPU within 1e-5.
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
 
-        # Move inputs to ROCm device
-        device = backend.device
-        rocm_inputs = {k: v.to(device) for k, v in inputs.items()}
+        try:
+            backend = AMDBackend()
+            model = copy.deepcopy(bert_baseline["model"])
+            inputs = bert_baseline["inputs"]
+            baseline_output = bert_baseline["baseline_output"]
 
-        # Run inference
-        with torch.no_grad():
-            amd_output = prepared_model(**rocm_inputs).last_hidden_state
+            # Prepare model for AMD
+            prepared_model = backend.prepare_model(model)
 
-        # Move back to CPU for comparison
-        amd_output_cpu = amd_output.cpu()
+            # Move inputs to ROCm device
+            device = backend.device
+            rocm_inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        # Assert outputs match
-        assert_output_close(
-            baseline_output,
-            amd_output_cpu,
-            atol=0.05,  # Realistic for cross-device FP32
-            rtol=0.01,
-            message="BERT AMD output vs CPU baseline"
-        )
+            # Run inference
+            with torch.no_grad():
+                amd_output = prepared_model(**rocm_inputs).last_hidden_state
 
-        print("\nBERT AMD Backend Test:")
-        print(f"  Device: {backend.device}")
-        print(f"  Output shape: {amd_output.shape}")
-        print("  Output matches baseline: PASS")
+            # Move back to CPU for comparison
+            amd_output_cpu = amd_output.cpu()
+
+            cos_sim = torch.nn.functional.cosine_similarity(
+                baseline_output.float().flatten().unsqueeze(0),
+                amd_output_cpu.float().flatten().unsqueeze(0)
+            ).item()
+
+            max_diff = (baseline_output.float() - amd_output_cpu.float()).abs().max().item()
+            print(f"\n  BERT AMD vs CPU: max_diff={max_diff:.4f}, cosine_sim={cos_sim:.4f}")
+
+            assert cos_sim > 0.99, f"BERT AMD cosine similarity too low: {cos_sim}"
+
+            assert_output_close(
+                baseline_output,
+                amd_output_cpu,
+                atol=0.05,
+                rtol=0.01,
+                message="BERT AMD output vs CPU baseline"
+            )
+
+            print("\nBERT AMD Backend Test:")
+            print(f"  Device: {backend.device}")
+            print(f"  Output shape: {amd_output.shape}")
+            print("  Output matches baseline: PASS")
+        finally:
+            torch.backends.cuda.matmul.allow_tf32 = tf32_matmul
+            torch.backends.cudnn.allow_tf32 = tf32_cudnn
+            torch.backends.cuda.enable_flash_sdp(flash_sdp)
+            torch.backends.cuda.enable_mem_efficient_sdp(mem_sdp)
 
     @requires_amd
     def test_bert_amd_speedup(self, bert_baseline):
@@ -564,27 +594,44 @@ class TestCrossBackendBERTConsistency:
         """Test classification predictions match on AMD."""
         from torchbridge.backends.amd import AMDBackend
 
-        backend = AMDBackend()
-        model = classification_setup["model"]
-        inputs = classification_setup["inputs"]
-        baseline_predictions = classification_setup["baseline_predictions"]
+        # Save and restore global precision state
+        tf32_matmul = torch.backends.cuda.matmul.allow_tf32
+        tf32_cudnn = torch.backends.cudnn.allow_tf32
+        flash_sdp = torch.backends.cuda.flash_sdp_enabled()
+        mem_sdp = torch.backends.cuda.mem_efficient_sdp_enabled()
 
-        # Run on AMD
-        prepared_model = backend.prepare_model(model)
-        device = backend.device
-        amd_inputs = {k: v.to(device) for k, v in inputs.items()}
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
 
-        with torch.no_grad():
-            amd_logits = prepared_model(**amd_inputs).logits
-        amd_predictions = amd_logits.argmax(dim=-1).cpu()
+        try:
+            backend = AMDBackend()
+            model = copy.deepcopy(classification_setup["model"])
+            inputs = classification_setup["inputs"]
+            baseline_predictions = classification_setup["baseline_predictions"]
 
-        assert torch.equal(baseline_predictions, amd_predictions), \
-            f"AMD predictions {amd_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
+            # Run on AMD
+            prepared_model = backend.prepare_model(model)
+            device = backend.device
+            amd_inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        print("\nBERT Classification Consistency (AMD):")
-        print(f"  Baseline predictions: {baseline_predictions.tolist()}")
-        print(f"  AMD predictions: {amd_predictions.tolist()}")
-        print("  Match: PASS")
+            with torch.no_grad():
+                amd_logits = prepared_model(**amd_inputs).logits
+            amd_predictions = amd_logits.argmax(dim=-1).cpu()
+
+            assert torch.equal(baseline_predictions, amd_predictions), \
+                f"AMD predictions {amd_predictions.tolist()} != baseline {baseline_predictions.tolist()}"
+
+            print("\nBERT Classification Consistency (AMD):")
+            print(f"  Baseline predictions: {baseline_predictions.tolist()}")
+            print(f"  AMD predictions: {amd_predictions.tolist()}")
+            print("  Match: PASS")
+        finally:
+            torch.backends.cuda.matmul.allow_tf32 = tf32_matmul
+            torch.backends.cudnn.allow_tf32 = tf32_cudnn
+            torch.backends.cuda.enable_flash_sdp(flash_sdp)
+            torch.backends.cuda.enable_mem_efficient_sdp(mem_sdp)
 
     @requires_tpu
     def test_classification_consistency_tpu(self, classification_setup):

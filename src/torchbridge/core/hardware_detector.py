@@ -115,7 +115,9 @@ class HardwareDetector:
             return self._cached_profile
 
         # Try detection in order of preference
+        # Check AMD first since ROCm exposes CUDA API
         profile = (
+            self._detect_amd_gpu() or
             self._detect_nvidia_gpu() or
             self._detect_tpu() or
             self._detect_cpu()
@@ -123,6 +125,44 @@ class HardwareDetector:
 
         self._cached_profile = profile
         return profile
+
+    def _detect_amd_gpu(self) -> HardwareProfile | None:
+        """Detect AMD GPU hardware via ROCm/HIP."""
+        if not torch.cuda.is_available():
+            return None
+
+        # Check if running on ROCm (HIP backend)
+        is_rocm = hasattr(torch.version, 'hip') and torch.version.hip is not None
+
+        if not is_rocm:
+            return None
+
+        try:
+            device_count = torch.cuda.device_count()
+            props = torch.cuda.get_device_properties(0)
+
+            # AMD capabilities
+            capabilities = [
+                OptimizationCapability.MIXED_PRECISION,
+                OptimizationCapability.KERNEL_FUSION,
+            ]
+
+            # CDNA2+ (MI200/MI300) have Matrix Cores
+            if props.major >= 9:
+                capabilities.append(OptimizationCapability.TENSOR_CORES)
+
+            return HardwareProfile(
+                hardware_type=HardwareType.AMD_GPU,
+                device_name=props.name,
+                device_count=device_count,
+                compute_capability=(props.major, props.minor),
+                capabilities=capabilities,
+                total_memory_gb=props.total_memory / 1024**3,
+                cuda_version=torch.version.hip,
+            )
+
+        except Exception:
+            return None
 
     def _detect_nvidia_gpu(self) -> HardwareProfile | None:
         """Detect NVIDIA GPU hardware."""
@@ -268,6 +308,8 @@ class HardwareDetector:
 
         if profile.hardware_type == HardwareType.NVIDIA_GPU:
             return 'nvidia'
+        elif profile.hardware_type == HardwareType.AMD_GPU:
+            return 'amd'
         elif profile.hardware_type == HardwareType.TPU:
             return 'tpu'
         else:

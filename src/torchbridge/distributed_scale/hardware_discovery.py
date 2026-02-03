@@ -248,8 +248,8 @@ class HardwareTopologyManager:
             # Get additional device info via nvidia-ml-py if available
             temp, power, utilization = self._get_nvidia_device_status(device_id)
 
-        except (AssertionError, RuntimeError):
-            # CUDA not available, return mock device info
+        except (AssertionError, RuntimeError, ValueError):
+            # CUDA not available or invalid device, return mock device info
             return DeviceInfo(
                 device_id=device_id,
                 vendor=HardwareVendor.NVIDIA,
@@ -273,9 +273,13 @@ class HardwareTopologyManager:
                 peak_tensor_flops=50000.0
             )
 
+        # Detect vendor — ROCm devices show up via CUDA API but are AMD
+        is_rocm = hasattr(torch.version, 'hip') and torch.version.hip is not None
+        vendor = HardwareVendor.AMD if is_rocm else HardwareVendor.NVIDIA
+
         return DeviceInfo(
             device_id=device_id,
-            vendor=HardwareVendor.NVIDIA,
+            vendor=vendor,
             name=device_props.name,
             capability=capability,
             memory_gb=device_props.total_memory / (1024**3),
