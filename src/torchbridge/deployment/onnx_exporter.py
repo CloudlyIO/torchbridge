@@ -335,7 +335,38 @@ class ONNXExporter:
             warnings.filterwarnings('ignore', category=torch.jit.TracerWarning)
             warnings.filterwarnings('ignore', category=UserWarning)
 
-            torch.onnx.export(model, sample_input, **export_kwargs)
+            try:
+                torch.onnx.export(model, sample_input, **export_kwargs)
+            except Exception as e:
+                error_msg = str(e)
+                # PyTorch 2.9+ uses dynamo-based export which enforces that
+                # dimensions marked as dynamic are not specialized to constants
+                # in the model (e.g. Linear input features). Fall back to
+                # batch-only dynamic axes, then to no dynamic axes.
+                if "Constraints violated" in error_msg or "specialized" in error_msg:
+                    logger.info(
+                        "Dynamic axes conflict with model constraints, "
+                        "retrying with batch-only dynamic axes"
+                    )
+                    batch_only_axes = {}
+                    for name, axes in dynamic_axes.items():
+                        batch_axes = {k: v for k, v in axes.items() if k == 0}
+                        if batch_axes:
+                            batch_only_axes[name] = batch_axes
+                    export_kwargs['dynamic_axes'] = batch_only_axes or None
+                    if not batch_only_axes:
+                        export_kwargs.pop('dynamic_axes', None)
+                    try:
+                        torch.onnx.export(model, sample_input, **export_kwargs)
+                    except Exception:
+                        logger.info(
+                            "Batch-only dynamic axes also failed, "
+                            "retrying without dynamic axes"
+                        )
+                        export_kwargs.pop('dynamic_axes', None)
+                        torch.onnx.export(model, sample_input, **export_kwargs)
+                else:
+                    raise
 
     def _add_metadata_to_onnx(
         self,

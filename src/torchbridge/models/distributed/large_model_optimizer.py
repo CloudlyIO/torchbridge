@@ -317,7 +317,7 @@ class DistributedLLMOptimizer:
 
     def _create_mock_model(self) -> nn.Module:
         """Create a mock model for testing without transformers."""
-        specs = self.MODEL_SPECS.get(self.model_type, {"layers": 80, "hidden": 8192})
+        specs = self.MODEL_SPECS.get(self.model_type, {"layers": 4, "hidden": 512})
 
         class MockTransformerLayer(nn.Module):
             def __init__(self, hidden_size):

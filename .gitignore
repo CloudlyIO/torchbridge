@@ -348,3 +348,6 @@ test_results_local/
 
 # Archive directories that might contain reports
 **/archive/v*/
+
+# Presentations
+*.pptx

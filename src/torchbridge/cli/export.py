@@ -340,17 +340,35 @@ Examples:
             }
 
         # Export using torch.onnx.export (works without onnxscript)
-        with torch.no_grad():
-            torch.onnx.export(
-                model,
-                sample_input,
-                str(output_path),
-                opset_version=opset,
-                input_names=['input'],
-                output_names=['output'],
-                dynamic_axes=axes_config,
-                do_constant_folding=True,
-            )
+        import warnings as _warnings
+        with torch.no_grad(), _warnings.catch_warnings():
+            _warnings.filterwarnings('ignore', category=UserWarning)
+            export_kwargs = {
+                'opset_version': opset,
+                'input_names': ['input'],
+                'output_names': ['output'],
+                'dynamic_axes': axes_config,
+                'do_constant_folding': True,
+            }
+            try:
+                torch.onnx.export(model, sample_input, str(output_path), **export_kwargs)
+            except Exception as e:
+                error_msg = str(e)
+                if "Constraints violated" in error_msg or "specialized" in error_msg:
+                    # PyTorch 2.9+ dynamo export rejects dynamic axes that the
+                    # model specializes to constants. Retry with batch-only axes.
+                    batch_only = {
+                        'input': {0: 'batch_size'},
+                        'output': {0: 'batch_size'},
+                    } if axes_config else None
+                    export_kwargs['dynamic_axes'] = batch_only
+                    try:
+                        torch.onnx.export(model, sample_input, str(output_path), **export_kwargs)
+                    except Exception:
+                        export_kwargs.pop('dynamic_axes', None)
+                        torch.onnx.export(model, sample_input, str(output_path), **export_kwargs)
+                else:
+                    raise
 
         result = {
             'success': True,
