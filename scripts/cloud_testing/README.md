@@ -32,7 +32,7 @@ Each backend has a single `run_validation.sh` script that performs:
 
 ```bash
 # Clone repository
-git clone https://github.com/shahmodthesecond/torchbridge.git
+git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
 
 # Set work directory

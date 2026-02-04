@@ -15,7 +15,7 @@ The following table lists the versions of TorchBridge currently receiving securi
 
 If you discover a security vulnerability in TorchBridge, please report it through one of the following channels:
 
-1. **GitHub Security Advisories (preferred):** Submit a report at [https://github.com/TorchBridge/torchbridge/security/advisories/new](https://github.com/TorchBridge/torchbridge/security/advisories/new).
+1. **GitHub Security Advisories (preferred):** Submit a report at [https://github.com/CloudlyIO/torchbridge/security/advisories/new](https://github.com/CloudlyIO/torchbridge/security/advisories/new).
 2. **Email:** Send a detailed report to [security@torchbridge.dev](mailto:security@torchbridge.dev).
 
 When reporting, please include as much of the following information as possible:
@@ -37,7 +37,7 @@ We will keep you informed of our progress throughout the remediation process and
 This security policy applies to the following components of the TorchBridge project:
 
 - **PyPI package:** [torchbridge](https://pypi.org/project/torchbridge/)
-- **GitHub repository:** [TorchBridge/torchbridge](https://github.com/TorchBridge/torchbridge)
+- **GitHub repository:** [CloudlyIO/torchbridge](https://github.com/CloudlyIO/torchbridge)
 
 ## Disclosure Policy
 

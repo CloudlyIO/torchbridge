@@ -151,7 +151,7 @@ echo "=============================================="
 # 1. Environment Setup
 echo "[1/7] Setting up environment..."
 cd /tmp
-git clone https://github.com/shahrahman/shahmod.git torchbridge 2>/dev/null || true
+git clone https://github.com/CloudlyIO/torchbridge.git torchbridge 2>/dev/null || true
 cd torchbridge
 pip install -e ".[dev]" -q
 

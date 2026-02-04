@@ -378,7 +378,7 @@ def _readme(name: str, template: str) -> str:
     return f"""\
 # {name}
 
-A backend-agnostic PyTorch project scaffolded with [TorchBridge](https://github.com/TorchBridge/torchbridge).
+A backend-agnostic PyTorch project scaffolded with [TorchBridge](https://github.com/CloudlyIO/torchbridge).
 
 ## Quickstart
 

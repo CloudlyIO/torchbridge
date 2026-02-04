@@ -73,4 +73,4 @@ LABEL org.opencontainers.image.title="TorchBridge AMD" \
       org.opencontainers.image.description="Production inference container with AMD ROCm GPU support" \
       org.opencontainers.image.version="0.4.42" \
       org.opencontainers.image.vendor="TorchBridge" \
-      org.opencontainers.image.source="https://github.com/your-org/torchbridge"
+      org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

@@ -94,6 +94,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 LABEL maintainer="TorchBridge Team" \
       version="0.1.55" \
       description="Production-ready TorchBridge hardware abstraction layer for PyTorch" \
-      org.opencontainers.image.source="https://github.com/your-org/torchbridge" \
+      org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge" \
       org.opencontainers.image.documentation="https://torchbridge.readthedocs.io" \
       org.opencontainers.image.licenses="MIT"

@@ -5,7 +5,7 @@ Get running with TorchBridge in three steps: install, detect hardware, run your 
 ## 1. Install
 
 ```bash
-git clone https://github.com/your-org/torchbridge.git
+git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
 pip install -r requirements.txt
 ```

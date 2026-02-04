@@ -32,10 +32,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TorchBridge/torchbridge"
+Homepage = "https://github.com/CloudlyIO/torchbridge"
 Documentation = "https://torchbridge.readthedocs.io"
-Repository = "https://github.com/TorchBridge/torchbridge"
-"Bug Tracker" = "https://github.com/TorchBridge/torchbridge/issues"
+Repository = "https://github.com/CloudlyIO/torchbridge"
+"Bug Tracker" = "https://github.com/CloudlyIO/torchbridge/issues"
 
 [project.scripts]
 torchbridge = "torchbridge.cli:main"
