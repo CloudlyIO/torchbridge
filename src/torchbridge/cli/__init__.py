@@ -13,6 +13,7 @@ from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
 from .init import InitCommand
+from .migrate import MigrateCommand
 from .optimize import OptimizeCommand
 from .profile import ProfileCommand
 from .validate import ValidateCommand
@@ -63,6 +64,7 @@ For command-specific help:
     DoctorCommand.register(subparsers)
     InitCommand.register(subparsers)
     ValidateCommand.register(subparsers)
+    MigrateCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -94,6 +96,8 @@ For command-specific help:
             return InitCommand.execute(parsed_args)
         elif parsed_args.command == 'validate':
             return ValidateCommand.execute(parsed_args)
+        elif parsed_args.command == 'migrate':
+            return MigrateCommand.execute(parsed_args)
         else:
             parser.print_help()
             return 1
