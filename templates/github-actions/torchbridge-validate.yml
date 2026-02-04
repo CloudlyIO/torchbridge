@@ -1,0 +1,67 @@
+# TorchBridge Validation Workflow
+#
+# Copy this file to your project's .github/workflows/ directory to add
+# TorchBridge validation to your CI/CD pipeline.
+#
+# See templates/README.md for usage instructions.
+
+name: TorchBridge Validate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: TorchBridge Validation
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run TorchBridge doctor (CI mode)
+        run: tb-doctor --ci
+
+      - name: Run TorchBridge validation (quick)
+        run: tb-validate --ci --level quick
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short \
+            -m "not gpu and not slow and not tpu and not amd and not intel"
+
+  # Optional: GPU validation on self-hosted runners
+  validate-gpu:
+    name: GPU Validation
+    runs-on: [self-hosted, gpu, linux]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run full validation
+        run: tb-validate --ci --level full
+
+      - name: Run GPU benchmarks
+        run: |
+          tb-benchmark --predefined optimization --quick \
+            --format json --output benchmark_results.json

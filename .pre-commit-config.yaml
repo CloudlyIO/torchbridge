@@ -1,0 +1,66 @@
+# Pre-commit hooks for TorchBridge
+# Ensures code quality and version consistency
+
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-json
+      - id: pretty-format-json
+        args: ['--autofix', '--no-sort-keys']
+
+  # Ruff - Fast Python linter and formatter (replaces Black, isort, flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Local custom hooks for version/doc validation
+  - repo: local
+    hooks:
+      # Check version consistency across files
+      - id: check-version-consistency
+        name: Check version consistency
+        entry: python3 scripts/check_version_consistency.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # Check CHANGELOG.md updated
+      - id: check-changelog-updated
+        name: Check CHANGELOG.md updated
+        entry: python3 scripts/check_changelog_updated.py
+        language: system
+        files: ^(src/|tests/|benchmarks/|demos/)
+
+      # Check documentation updated
+      - id: check-docs-updated
+        name: Check documentation updated
+        entry: python3 scripts/check_docs_updated.py
+        language: system
+        files: ^src/torchbridge/backends/
+
+      # Check documentation versions match __version__
+      - id: sync-doc-versions
+        name: Sync documentation versions
+        entry: python3 scripts/sync_doc_versions.py
+        language: system
+        pass_filenames: false
+        files: ^src/torchbridge/__init__\.py$
+
+      # Check documentation policy (no unauthorized .md files)
+      - id: check-documentation-policy
+        name: Check documentation policy
+        entry: python3 scripts/check_documentation_policy.py
+        language: system
+        pass_filenames: false
+        types: [markdown]
