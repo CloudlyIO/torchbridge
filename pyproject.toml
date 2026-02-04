@@ -46,6 +46,7 @@ tb-profile = "torchbridge.cli.profile:main"
 tb-doctor = "torchbridge.cli.doctor:main"
 tb-init = "torchbridge.cli.init:main"
 tb-validate = "torchbridge.cli.validate:main"
+tb-migrate = "torchbridge.cli.migrate:main"
 
 [project.optional-dependencies]
 dev = [
