@@ -50,7 +50,7 @@ __all__ = [
 ]
 
 # Version compatibility
-__version__ = "0.4.42"
+__version__ = "0.5.0"
 __tpu_support__ = True
 
 try:

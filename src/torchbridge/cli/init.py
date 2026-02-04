@@ -54,13 +54,13 @@ tensorboard_runs/
 
 _REQUIREMENTS_BASE = """\
 torch>=2.0.0
-torchbridge>=0.4.42
+torchbridge>=0.5.0
 numpy>=1.21.0
 """
 
 _REQUIREMENTS_DISTRIBUTED = """\
 torch>=2.0.0
-torchbridge>=0.4.42
+torchbridge>=0.5.0
 numpy>=1.21.0
 # For distributed training with NCCL backend, ensure NCCL is installed:
 # pip install torch with CUDA support, NCCL is bundled.
@@ -68,7 +68,7 @@ numpy>=1.21.0
 
 _REQUIREMENTS_SERVING = """\
 torch>=2.0.0
-torchbridge>=0.4.42
+torchbridge>=0.5.0
 numpy>=1.21.0
 fastapi>=0.103.0
 uvicorn[standard]>=0.23.0

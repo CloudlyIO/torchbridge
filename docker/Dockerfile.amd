@@ -9,7 +9,7 @@
 #     -p 8000:8000 torchbridge:amd
 #
 # Tested on: AMD Instinct MI250X, MI300X
-# Version: 0.4.42
+# Version: 0.5.0
 
 # ROCm 6.0 base image with PyTorch support
 FROM rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 AS base
@@ -71,6 +71,6 @@ CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:a
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge AMD" \
       org.opencontainers.image.description="Production inference container with AMD ROCm GPU support" \
-      org.opencontainers.image.version="0.4.42" \
+      org.opencontainers.image.version="0.5.0" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

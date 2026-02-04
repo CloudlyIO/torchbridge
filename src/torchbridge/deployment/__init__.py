@@ -92,7 +92,7 @@ from .torchscript_exporter import (
     load_torchscript,
 )
 
-__version__ = "0.4.42"
+__version__ = "0.5.0"
 
 # Serving module (v0.3.9)
 from .serving import (

@@ -21,7 +21,7 @@ cp templates/github-actions/torchbridge-validate.yml .github/workflows/
 
 ```
 # requirements.txt or pyproject.toml
-torchbridge>=0.4.42
+torchbridge>=0.5.0
 ```
 
 3. Push to GitHub. The workflow will run automatically.

@@ -1,4 +1,4 @@
-# TorchBridge v0.4.42 — Cloud GPU Validation Results
+# TorchBridge v0.5.0 — Cloud GPU Validation Results
 
 **Date**: 2026-02-01
 **Status**: ALL PASS (5/5 on both platforms)

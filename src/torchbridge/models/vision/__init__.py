@@ -82,4 +82,4 @@ __all__ = [
     "create_sdxl_optimized",
 ]
 
-__version__ = "0.4.42"
+__version__ = "0.5.0"
