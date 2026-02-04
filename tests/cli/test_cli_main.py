@@ -76,6 +76,14 @@ class TestCLIMain:
         assert result == 0
         mock_execute.assert_called_once()
 
+    @patch('torchbridge.cli.MigrateCommand.execute')
+    def test_cli_migrate_command(self, mock_execute):
+        """Test migrate command routing."""
+        mock_execute.return_value = 0
+        result = main(['migrate', '.'])
+        assert result == 0
+        mock_execute.assert_called_once()
+
     def test_cli_keyboard_interrupt(self):
         """Test keyboard interrupt handling."""
         with patch('torchbridge.cli.OptimizeCommand.execute') as mock_execute:
@@ -186,4 +194,14 @@ class TestCLIScriptEntryPoints:
             from torchbridge.cli.validate import main as validate_main
             with patch('sys.argv', ['tb-validate']):
                 result = validate_main()
+                assert result == 0
+
+    def test_migrate_entry_point(self):
+        """Test tb-migrate entry point."""
+        with patch('torchbridge.cli.migrate.MigrateCommand.execute') as mock_execute:
+            mock_execute.return_value = 0
+
+            from torchbridge.cli.migrate import main as migrate_main
+            with patch('sys.argv', ['tb-migrate', '.']):
+                result = migrate_main()
                 assert result == 0
