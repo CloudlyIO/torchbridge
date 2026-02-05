@@ -6,9 +6,58 @@
 
 ---
 
-## **v0.4.x - Production Release Series**
+## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.4.42 (CLI Enhancements + CI/CD Integration)
+**Current Version**: v0.5.0 (PyPI Release + Migration Tools)
+
+---
+
+## [0.5.0] - 2026-02-05 - PyPI Release + Migration Tools
+
+### **Summary**
+
+First public release on PyPI as `torchbridge-ml`. Adds `tb-migrate` CLI for
+CUDA-to-HAL code migration, cross-backend benchmark report script, SDPA
+divergence blog post, and project governance files. All URLs updated to
+CloudlyIO/torchbridge.
+
+### **Added**
+
+- **PyPI distribution** — package now available as `pip install torchbridge-ml`
+- **`tb-migrate` command** — scans Python files for CUDA-specific patterns and
+  suggests TorchBridge hardware-agnostic replacements:
+  - Detects: `torch.cuda.is_available()`, `.cuda()`, `torch.device("cuda")`,
+    hardcoded `"nccl"`, `torch.cuda.amp`, `torch.cuda.synchronize`,
+    `torch.cuda.memory_allocated`
+  - Output formats: `--format json` or `--format markdown`
+  - CI mode: `--ci` exits 1 if suggestions found
+  - Directory scanning with `--exclude` patterns
+- **Cross-backend benchmark report script** (`scripts/cross_backend_benchmark_report.py`)
+  — detects available backends, runs forward-pass benchmarks, generates markdown
+  or JSON reports with latency, throughput, memory, and speedup tables
+- **SDPA divergence blog post** (`docs/blog/sdpa-divergence-rocm.md`) — technical
+  writeup on flash attention numerical differences between NVIDIA and AMD backends
+- **`SECURITY.md`** — responsible disclosure policy (48h acknowledgment, 90-day fix)
+- **`CODE_OF_CONDUCT.md`** — Contributor Covenant v2.1
+
+### **Changed**
+
+- **Package name**: `torchbridge` → `torchbridge-ml` (original name unavailable on PyPI)
+- **GitHub URLs**: all references updated to `CloudlyIO/torchbridge`
+- **Version**: 0.4.42 → 0.5.0 across all 20+ files
+- **README hero section**: rewritten to lead with pain point (vendor lock-in) and
+  cross-backend validation as killer feature
+- **Release workflow**: PyPI publishing enabled with TestPyPI safety step
+
+### **Tests**
+
+- 32 new tests for `tb-migrate` command covering all pattern types, output formats,
+  CI mode, directory scanning, and entry points
+- All 209 CLI tests passing
+
+---
+
+## **v0.4.x - Production Release Series**
 
 ---
 
