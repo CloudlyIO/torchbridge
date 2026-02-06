@@ -3,6 +3,16 @@ Vendor-Specific Hardware Adapters
 
 Concrete implementations of vendor adapters for different hardware types,
 providing a unified interface while leveraging vendor-specific optimizations.
+
+NOTE: This file contains all vendor adapters in one place for historical reasons.
+Future refactoring should split into separate modules:
+- nvidia_adapter.py (NVIDIAAdapter)
+- amd_adapter.py (AMDAdapter)
+- intel_adapter.py (IntelAdapter)
+- cpu_adapter.py (CPUAdapter)
+- custom_adapter.py (CustomHardwareAdapter)
+
+See: https://github.com/CloudlyIO/torchbridge/issues/TBD
 """
 
 import logging
