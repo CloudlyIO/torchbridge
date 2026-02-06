@@ -8,7 +8,20 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.1 (Cleanup + Consolidation)
+**Current Version**: v0.5.2 (PyPI Release Fix)
+
+---
+
+## [0.5.2] - 2026-02-06 - PyPI Release Fix
+
+### **Summary**
+
+Fixes release workflow attestation conflict that prevented v0.5.1 from
+publishing to PyPI.
+
+### **Fixed**
+
+- Release workflow: disabled attestations to fix TestPyPI/PyPI conflict
 
 ---
 
