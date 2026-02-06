@@ -6,15 +6,13 @@ This script helps identify slow tests in the current codebase and suggests optim
 Profiles tests from the actual test suite to identify performance bottlenecks.
 """
 
+import re
 import subprocess
 import time
-import sys
-import re
-from typing import List, Dict, Tuple
 from pathlib import Path
 
 
-def profile_test_file(test_file: str) -> Dict[str, float]:
+def profile_test_file(test_file: str) -> dict[str, float]:
     """Profile all tests in a test file and return timing results"""
     print(f"📊 Profiling {test_file}...")
 
@@ -79,13 +77,13 @@ def profile_test_file(test_file: str) -> Dict[str, float]:
     return test_timings
 
 
-def analyze_timings(timings: Dict[str, float], file_name: str) -> None:
+def analyze_timings(timings: dict[str, float], file_name: str) -> None:
     """Analyze test timings and provide recommendations"""
     if not timings:
         print(f"No timing data available for {file_name}")
         return
 
-    print(f"\n" + "="*60)
+    print("\n" + "="*60)
     print(f"📈 PERFORMANCE ANALYSIS - {file_name}")
     print("="*60)
 
@@ -111,7 +109,7 @@ def analyze_timings(timings: Dict[str, float], file_name: str) -> None:
         print(f"  {priority:12} {test_name:50} {duration:8.3f}s ({percentage:5.1f}%)")
 
 
-def suggest_optimizations(test_name: str, duration: float) -> List[str]:
+def suggest_optimizations(test_name: str, duration: float) -> list[str]:
     """Suggest optimizations based on test name and duration"""
     suggestions = []
 
@@ -149,7 +147,7 @@ def suggest_optimizations(test_name: str, duration: float) -> List[str]:
     return suggestions
 
 
-def get_current_test_files() -> List[str]:
+def get_current_test_files() -> list[str]:
     """Get list of current test files in the repository"""
     test_files = []
 
@@ -217,7 +215,7 @@ def main():
         total_tests = sum(len(timings) for timings in file_summaries.values())
         total_time = sum(sum(timings.values()) for timings in file_summaries.values())
 
-        print(f"\n📊 OVERALL STATISTICS:")
+        print("\n📊 OVERALL STATISTICS:")
         print(f"   Total tests profiled: {total_tests}")
         print(f"   Total execution time: {total_time:.3f}s")
         print(f"   Average test time: {total_time/total_tests:.3f}s")
@@ -229,12 +227,12 @@ def main():
         print(f"   Tests > 5s: {slow_tests}")
         print(f"   Tests > 10s: {very_slow_tests}")
 
-    print(f"\n💡 OPTIMIZATION TIPS:")
-    print(f"   • Run 'pytest -m \"not slow\"' to skip slow tests")
-    print(f"   • Use 'pytest --durations=10' to see slowest tests")
-    print(f"   • Add @pytest.mark.slow to tests > 5s")
-    print(f"   • Mock expensive operations in unit tests")
-    print(f"   • Use smaller dimensions for faster testing")
+    print("\n💡 OPTIMIZATION TIPS:")
+    print("   • Run 'pytest -m \"not slow\"' to skip slow tests")
+    print("   • Use 'pytest --durations=10' to see slowest tests")
+    print("   • Add @pytest.mark.slow to tests > 5s")
+    print("   • Mock expensive operations in unit tests")
+    print("   • Use smaller dimensions for faster testing")
 
 
 if __name__ == "__main__":

@@ -17,9 +17,7 @@ Usage:
 
 import argparse
 import json
-import subprocess
-import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -232,7 +230,7 @@ class CostOptimizedValidator:
                     "cell_type": "markdown",
                     "metadata": {},
                     "source": [
-                        f"# TorchBridge v0.4.34 Validation\n",
+                        "# TorchBridge v0.4.34 Validation\n",
                         f"**Platform**: {resource.name}\n",
                         f"**Backend**: {resource.backend}\n",
                         f"**Generated**: {datetime.now().isoformat()}\n"
@@ -480,7 +478,7 @@ EOF
         plan = self.create_validation_plan(tier)
 
         print(f"\n{'='*60}")
-        print(f"TorchBridge Cost-Optimized Validation")
+        print("TorchBridge Cost-Optimized Validation")
         print(f"{'='*60}")
         print(f"Tier: {tier.value.upper()}")
         print(f"Estimated Cost: ${plan.estimated_cost}")

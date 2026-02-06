@@ -6,24 +6,25 @@ Provides long-term performance trend analysis, anomaly detection,
 and performance drift identification for regression testing.
 """
 
-import json
-import numpy as np
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from pathlib import Path
 import glob
-import warnings
-from enum import Enum
-import statistics
+import json
 
 # Import from existing components
 import os
+import statistics
 import sys
+import warnings
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
+
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from ..framework.benchmark_runner import PerformanceMetrics
-from .baseline_manager import BaselineManager, BaselineMetrics
+from .baseline_manager import BaselineManager
 
 
 class TrendDirection(Enum):
@@ -55,7 +56,7 @@ class TrendAnalysis:
     data_points: int
     time_period_days: int
     analysis_date: datetime
-    raw_data: List[Tuple[datetime, float]] = field(default_factory=list)
+    raw_data: list[tuple[datetime, float]] = field(default_factory=list)
 
     def is_significant_trend(self, threshold: float = 2.0) -> bool:
         """Check if trend is statistically significant"""
@@ -74,7 +75,7 @@ class AnomalyReport:
     deviation_percent: float
     severity_score: float  # 0-1 scale
     time_window: str
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -105,8 +106,8 @@ class PerformanceSummary:
     reliability_score: float  # 0-1, higher = more reliable
 
     # Identified issues
-    anomalies: List[AnomalyReport] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    anomalies: list[AnomalyReport] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class HistoricalAnalyzer:
@@ -130,7 +131,7 @@ class HistoricalAnalyzer:
         model_name: str,
         days: int = 90,
         results_dir: str = "benchmarks/results"
-    ) -> Dict[str, TrendAnalysis]:
+    ) -> dict[str, TrendAnalysis]:
         """
         Analyze performance trends over specified time period.
 
@@ -185,7 +186,7 @@ class HistoricalAnalyzer:
         window_days: int = 30,
         drift_threshold: float = 5.0,
         results_dir: str = "benchmarks/results"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detect gradual performance drift over time.
 
@@ -241,7 +242,7 @@ class HistoricalAnalyzer:
         days: int = 30,
         sensitivity: float = 2.0,
         results_dir: str = "benchmarks/results"
-    ) -> List[AnomalyReport]:
+    ) -> list[AnomalyReport]:
         """
         Identify performance anomalies using statistical analysis.
 
@@ -365,7 +366,7 @@ class HistoricalAnalyzer:
         model_name: str,
         days: int,
         results_dir: str
-    ) -> List[Tuple[datetime, PerformanceMetrics]]:
+    ) -> list[tuple[datetime, PerformanceMetrics]]:
         """Load historical benchmark data for a model"""
         pattern = f"{results_dir}/{model_name}_*_*.json"
         result_files = glob.glob(pattern)
@@ -375,7 +376,7 @@ class HistoricalAnalyzer:
 
         for file_path in result_files:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     data = json.load(f)
 
                 # Extract timestamp and metrics
@@ -395,7 +396,7 @@ class HistoricalAnalyzer:
         self,
         model_name: str,
         metric_name: str,
-        data_points: List[Tuple[datetime, float]],
+        data_points: list[tuple[datetime, float]],
         time_period_days: int
     ) -> TrendAnalysis:
         """Calculate trend analysis for a specific metric"""
@@ -482,11 +483,11 @@ class HistoricalAnalyzer:
 
     def _calculate_metric_drift(
         self,
-        values: List[float],
+        values: list[float],
         window_days: int,
         drift_threshold: float,
         metric_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate drift analysis for a specific metric"""
         if len(values) < window_days * 2:
             return {"error": "Insufficient data for drift calculation"}
@@ -529,10 +530,10 @@ class HistoricalAnalyzer:
         self,
         model_name: str,
         metric_name: str,
-        data_points: List[Tuple[datetime, float]],
+        data_points: list[tuple[datetime, float]],
         sensitivity: float,
         higher_is_better: bool = False
-    ) -> List[AnomalyReport]:
+    ) -> list[AnomalyReport]:
         """Detect anomalies in metric data using statistical methods"""
         if len(data_points) < 10:
             return []
@@ -587,9 +588,9 @@ class HistoricalAnalyzer:
 
     def _calculate_stability_score(
         self,
-        latency_values: List[float],
-        throughput_values: List[float],
-        memory_values: List[float]
+        latency_values: list[float],
+        throughput_values: list[float],
+        memory_values: list[float]
     ) -> float:
         """Calculate overall performance stability score (0-1)"""
         stability_scores = []
@@ -608,8 +609,8 @@ class HistoricalAnalyzer:
 
     def _calculate_reliability_score(
         self,
-        historical_data: List[Tuple[datetime, PerformanceMetrics]],
-        anomalies: List[AnomalyReport]
+        historical_data: list[tuple[datetime, PerformanceMetrics]],
+        anomalies: list[AnomalyReport]
     ) -> float:
         """Calculate performance reliability score (0-1)"""
         if not historical_data:
@@ -625,11 +626,11 @@ class HistoricalAnalyzer:
 
     def _generate_performance_recommendations(
         self,
-        trends: Dict[str, TrendAnalysis],
-        anomalies: List[AnomalyReport],
+        trends: dict[str, TrendAnalysis],
+        anomalies: list[AnomalyReport],
         stability_score: float,
         reliability_score: float
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate actionable performance recommendations"""
         recommendations = []
 

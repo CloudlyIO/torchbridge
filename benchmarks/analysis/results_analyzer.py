@@ -6,25 +6,27 @@ Advanced analysis tools for processing benchmark results and generating
 comprehensive performance reports with statistical validation.
 """
 
-import os
+import glob
 import json
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from typing import Dict, List, Any, Tuple, Optional
+import os
 from dataclasses import dataclass
 from datetime import datetime
-import glob
+from typing import Any
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
 
 @dataclass
 class BenchmarkAnalysis:
     """Structured analysis results"""
-    summary: Dict[str, Any]
-    statistical_tests: Dict[str, Any]
-    performance_rankings: Dict[str, List[str]]
-    scaling_analysis: Dict[str, Any]
-    recommendations: List[str]
+    summary: dict[str, Any]
+    statistical_tests: dict[str, Any]
+    performance_rankings: dict[str, list[str]]
+    scaling_analysis: dict[str, Any]
+    recommendations: list[str]
 
 class ResultsAnalyzer:
     """
@@ -37,7 +39,7 @@ class ResultsAnalyzer:
         self.analysis_output_dir = os.path.join(results_dir, "analysis")
         os.makedirs(self.analysis_output_dir, exist_ok=True)
 
-    def load_benchmark_results(self, pattern: str = "*.json") -> List[Dict[str, Any]]:
+    def load_benchmark_results(self, pattern: str = "*.json") -> list[dict[str, Any]]:
         """Load all benchmark results matching pattern"""
 
         results_files = glob.glob(os.path.join(self.results_dir, pattern))
@@ -45,7 +47,7 @@ class ResultsAnalyzer:
 
         for file_path in results_files:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     data = json.load(f)
                     data['file_path'] = file_path
                     results.append(data)
@@ -55,7 +57,7 @@ class ResultsAnalyzer:
         print(f"📊 Loaded {len(results)} benchmark result files")
         return results
 
-    def create_performance_dataframe(self, results: List[Dict[str, Any]]) -> pd.DataFrame:
+    def create_performance_dataframe(self, results: list[dict[str, Any]]) -> pd.DataFrame:
         """Create structured DataFrame from benchmark results"""
 
         rows = []
@@ -85,7 +87,7 @@ class ResultsAnalyzer:
 
         return pd.DataFrame(rows)
 
-    def perform_comprehensive_analysis(self, results: List[Dict[str, Any]]) -> BenchmarkAnalysis:
+    def perform_comprehensive_analysis(self, results: list[dict[str, Any]]) -> BenchmarkAnalysis:
         """Perform comprehensive analysis of benchmark results"""
 
         print("🔍 Performing Comprehensive Analysis...")
@@ -124,7 +126,7 @@ class ResultsAnalyzer:
             recommendations=recommendations
         )
 
-    def _generate_summary_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _generate_summary_statistics(self, df: pd.DataFrame) -> dict[str, Any]:
         """Generate comprehensive summary statistics"""
 
         summary = {
@@ -170,7 +172,7 @@ class ResultsAnalyzer:
 
         return summary
 
-    def _perform_statistical_tests(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _perform_statistical_tests(self, df: pd.DataFrame) -> dict[str, Any]:
         """Perform statistical significance testing"""
 
         from scipy import stats
@@ -224,7 +226,7 @@ class ResultsAnalyzer:
 
         return tests
 
-    def _generate_performance_rankings(self, df: pd.DataFrame) -> Dict[str, List[str]]:
+    def _generate_performance_rankings(self, df: pd.DataFrame) -> dict[str, list[str]]:
         """Generate performance rankings across different metrics"""
 
         rankings = {}
@@ -263,7 +265,7 @@ class ResultsAnalyzer:
 
         return rankings
 
-    def _analyze_scaling_characteristics(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _analyze_scaling_characteristics(self, df: pd.DataFrame) -> dict[str, Any]:
         """Analyze scaling characteristics across different model sizes"""
 
         scaling_analysis = {}
@@ -285,7 +287,7 @@ class ResultsAnalyzer:
 
         return scaling_analysis
 
-    def _generate_recommendations(self, df: pd.DataFrame, statistical_tests: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, df: pd.DataFrame, statistical_tests: dict[str, Any]) -> list[str]:
         """Generate optimization recommendations based on analysis"""
 
         recommendations = []
@@ -309,7 +311,7 @@ class ResultsAnalyzer:
                 speedup = test_result['speedup']
                 recommendations.append(f"🚀 Our optimizations achieve {speedup:.2f}x speedup with statistical significance")
             else:
-                recommendations.append(f"⚠️  Our optimizations show improvement but not statistically significant")
+                recommendations.append("⚠️  Our optimizations show improvement but not statistically significant")
 
         # Memory efficiency recommendations
         memory_efficient = df.loc[df['peak_memory_mb'].idxmin(), 'implementation']
@@ -505,12 +507,12 @@ def main():
     analysis = analyzer.perform_comprehensive_analysis(results)
 
     # Display key findings
-    print(f"\n🎯 Analysis Summary:")
+    print("\n🎯 Analysis Summary:")
     print(f"   Benchmarks analyzed: {analysis.summary.get('total_benchmarks', 'N/A')}")
     print(f"   Implementations tested: {analysis.summary.get('total_implementations', 'N/A')}")
 
     if 'speedups_vs_baseline' in analysis.summary:
-        print(f"\n🏆 Top Performance Improvements:")
+        print("\n🏆 Top Performance Improvements:")
         speedups = analysis.summary['speedups_vs_baseline']
         top_speedups = sorted(speedups.items(), key=lambda x: x[1], reverse=True)[:3]
 
@@ -518,7 +520,7 @@ def main():
             significance = "✅" if impl in analysis.statistical_tests and analysis.statistical_tests[impl]['statistically_significant'] else "📊"
             print(f"   {impl}: {speedup:.2f}x {significance}")
 
-    print(f"\n💡 Key Recommendations:")
+    print("\n💡 Key Recommendations:")
     for rec in analysis.recommendations[:3]:
         print(f"   • {rec}")
 

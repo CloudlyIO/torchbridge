@@ -6,12 +6,10 @@ Automated cleanup of temporary files, old test results, and build artifacts.
 Safe to run regularly during development.
 """
 
-import os
-import glob
-import shutil
 import argparse
-from typing import List
-from pathlib import Path
+import glob
+import os
+import shutil
 
 
 def cleanup_python_cache():
@@ -31,12 +29,12 @@ def cleanup_python_cache():
         os.remove(file)
         print(f"   Removed: {file}")
 
-    print(f"   ✅ Python cache cleanup complete")
+    print("   ✅ Python cache cleanup complete")
 
 
 def cleanup_temp_reports():
     """Clean up temporary report files that may be left in root directory"""
-    print(f"🧪 Cleaning temporary report files...")
+    print("🧪 Cleaning temporary report files...")
 
     temp_patterns = [
         'integration_test_report_*.json',
@@ -123,7 +121,7 @@ def cleanup_gpu_cache():
             except PermissionError:
                 print(f"   ⚠️ Permission denied: {cache_dir}")
 
-    print(f"   ✅ GPU cache cleanup complete")
+    print("   ✅ GPU cache cleanup complete")
 
 
 def main():

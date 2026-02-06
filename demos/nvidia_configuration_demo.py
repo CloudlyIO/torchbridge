@@ -5,22 +5,18 @@ Demonstrates the new unified NVIDIA configuration system for hardware detection,
 optimization selection, and automatic performance tuning.
 """
 
-import torch
-import torch.nn as nn
 import argparse
-from pathlib import Path
 import sys
 import warnings
+from pathlib import Path
+
+import torch
+import torch.nn as nn
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from torchbridge.core.config import (
-    TorchBridgeConfig,
-    NVIDIAArchitecture,
-    OptimizationLevel,
-    HardwareBackend
-)
+from torchbridge.core.config import OptimizationLevel, TorchBridgeConfig
 from torchbridge.validation.unified_validator import UnifiedValidator
 
 
@@ -130,7 +126,7 @@ class NVIDIAConfigurationDemo:
             with torch.no_grad():
                 output = model(test_input)
 
-            print(f"   ✅ Model execution successful")
+            print("   ✅ Model execution successful")
             print(f"   ✅ Output shape: {output.shape}")
             print(f"   ✅ NVIDIA settings preserved: {config.hardware.nvidia.enabled}")
             print()
@@ -277,9 +273,9 @@ class NVIDIAConfigurationDemo:
         print("=" * 20)
         print(f"✅ Hardware detection: {config.hardware.nvidia.architecture.value}")
         print(f"✅ Configuration modes: {len(configs)} tested")
-        print(f"✅ Validation: Comprehensive testing completed")
-        print(f"✅ Serialization: Working properly")
-        print(f"✅ Performance: Multiple optimization levels tested")
+        print("✅ Validation: Comprehensive testing completed")
+        print("✅ Serialization: Working properly")
+        print("✅ Performance: Multiple optimization levels tested")
         print()
         print("🎯 NVIDIA Integration Demo Complete!")
 

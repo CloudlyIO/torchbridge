@@ -11,28 +11,32 @@ Usage:
     python3 run_comprehensive_benchmark.py --baseline flash_attention
 """
 
-import sys
-import os
 import argparse
+import os
+import sys
+
 import torch
-from typing import List, Dict, Any
 
 # Add src to path for our optimizations
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from framework.benchmark_runner import (
-    BenchmarkRunner, BenchmarkConfig, BenchmarkType, create_simple_gpt_config
-)
 from framework.baseline_implementations import (
-    PyTorchNativeBaseline,
-    PyTorchOptimizedBaseline,
     FlashAttentionBaseline,
     HuggingFaceBaseline,
-    create_our_optimized_implementation
+    PyTorchNativeBaseline,
+    PyTorchOptimizedBaseline,
+    create_our_optimized_implementation,
+)
+from framework.benchmark_runner import (
+    BenchmarkConfig,
+    BenchmarkRunner,
+    BenchmarkType,
+    create_simple_gpt_config,
 )
 
-def create_benchmark_suite() -> List[BenchmarkConfig]:
+
+def create_benchmark_suite() -> list[BenchmarkConfig]:
     """Create comprehensive benchmark suite"""
 
     # Model configurations for testing
@@ -70,7 +74,7 @@ def create_benchmark_suite() -> List[BenchmarkConfig]:
 
     return benchmark_configs
 
-def create_quick_benchmark_suite() -> List[BenchmarkConfig]:
+def create_quick_benchmark_suite() -> list[BenchmarkConfig]:
     """Create quick benchmark suite for fast validation"""
 
     model_config = create_simple_gpt_config(hidden_size=512, num_layers=6, num_heads=8)
@@ -125,10 +129,10 @@ def setup_benchmark_runner() -> BenchmarkRunner:
 
     return runner
 
-def run_inference_benchmarks(runner: BenchmarkRunner, benchmark_configs: List[BenchmarkConfig]):
+def run_inference_benchmarks(runner: BenchmarkRunner, benchmark_configs: list[BenchmarkConfig]):
     """Run inference benchmarks"""
 
-    print(f"\n🚀 Running Inference Benchmarks")
+    print("\n🚀 Running Inference Benchmarks")
     print("=" * 50)
 
     inference_configs = [config for config in benchmark_configs if config.benchmark_type == BenchmarkType.INFERENCE]
@@ -142,10 +146,10 @@ def run_inference_benchmarks(runner: BenchmarkRunner, benchmark_configs: List[Be
 
     return all_results
 
-def run_memory_benchmarks(runner: BenchmarkRunner, benchmark_configs: List[BenchmarkConfig]):
+def run_memory_benchmarks(runner: BenchmarkRunner, benchmark_configs: list[BenchmarkConfig]):
     """Run memory benchmarks"""
 
-    print(f"\n🧠 Running Memory Benchmarks")
+    print("\n🧠 Running Memory Benchmarks")
     print("=" * 50)
 
     memory_configs = [config for config in benchmark_configs if config.benchmark_type == BenchmarkType.MEMORY]
@@ -159,10 +163,10 @@ def run_memory_benchmarks(runner: BenchmarkRunner, benchmark_configs: List[Bench
 
     return all_results
 
-def generate_summary_report(inference_results: Dict, memory_results: Dict):
+def generate_summary_report(inference_results: dict, memory_results: dict):
     """Generate comprehensive summary report"""
 
-    print(f"\n📈 Comprehensive Benchmark Summary")
+    print("\n📈 Comprehensive Benchmark Summary")
     print("=" * 80)
 
     # Aggregate results across all benchmarks
@@ -170,7 +174,7 @@ def generate_summary_report(inference_results: Dict, memory_results: Dict):
     for results in inference_results.values():
         all_implementations.update(results.keys())
 
-    print(f"\n🏆 Performance Summary Across All Benchmarks:")
+    print("\n🏆 Performance Summary Across All Benchmarks:")
     print(f"   Implementations tested: {len(all_implementations)}")
 
     # Find our optimization results
@@ -193,10 +197,10 @@ def generate_summary_report(inference_results: Dict, memory_results: Dict):
         avg_baseline_latency = sum(baseline_results) / len(baseline_results)
         overall_speedup = avg_baseline_latency / avg_our_latency
 
-        print(f"\n🎯 Key Results:")
+        print("\n🎯 Key Results:")
         print(f"   Our Optimizations vs PyTorch Native: {overall_speedup:.2f}x average speedup")
         print(f"   Tested across {len(inference_results)} different model configurations")
-        print(f"   Consistent performance improvements across all scales")
+        print("   Consistent performance improvements across all scales")
 
     # Top performing implementation
     best_implementations = {}
@@ -205,7 +209,7 @@ def generate_summary_report(inference_results: Dict, memory_results: Dict):
             best_impl = min(results.items(), key=lambda x: x[1].latency_ms if x[1] else float('inf'))
             best_implementations[benchmark_name] = best_impl
 
-    print(f"\n🏅 Best Performing Implementation by Benchmark:")
+    print("\n🏅 Best Performing Implementation by Benchmark:")
     for benchmark_name, (impl_name, metrics) in best_implementations.items():
         if metrics:
             print(f"   {benchmark_name}: {impl_name} ({metrics.latency_ms:.2f}ms)")
@@ -224,7 +228,7 @@ def validate_environment():
         print(f"   CUDA: Available ({torch.cuda.get_device_name()}) ✅")
         print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory // 1024**3}GB")
     else:
-        print(f"   CUDA: Not available (CPU only) ⚠️")
+        print("   CUDA: Not available (CPU only) ⚠️")
 
     # Check torch.compile
     try:
@@ -232,17 +236,17 @@ def validate_environment():
         compiled_fn = torch.compile(test_fn)
         test_input = torch.randn(10)
         compiled_fn(test_input)
-        print(f"   torch.compile: Available ✅")
+        print("   torch.compile: Available ✅")
     except Exception:
-        print(f"   torch.compile: Not available ⚠️")
+        print("   torch.compile: Not available ⚠️")
 
     # Check our optimizations
     try:
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
         from torchbridge.compiler_optimized import FusedGELU
-        print(f"   Our Optimizations: Available ✅")
+        print("   Our Optimizations: Available ✅")
     except ImportError:
-        print(f"   Our Optimizations: Limited (fallback mode) ⚠️")
+        print("   Our Optimizations: Limited (fallback mode) ⚠️")
 
     print()
 
@@ -287,14 +291,14 @@ def main():
         # Generate summary
         generate_summary_report(inference_results, memory_results)
 
-        print(f"\n🎉 Benchmark Suite Completed Successfully!")
+        print("\n🎉 Benchmark Suite Completed Successfully!")
         print(f"   Results saved in: {args.output_dir}")
         print(f"   Total configurations tested: {len(benchmark_configs)}")
 
         return True
 
     except KeyboardInterrupt:
-        print(f"\n❌ Benchmark interrupted by user")
+        print("\n❌ Benchmark interrupted by user")
         return False
 
     except Exception as e:

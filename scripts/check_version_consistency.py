@@ -59,7 +59,7 @@ def main():
     # Check critical version consistency
     unique_critical = set(critical_versions.values())
     if len(unique_critical) > 1:
-        print(f"\n❌ CRITICAL: Version mismatch in critical files!")
+        print("\n❌ CRITICAL: Version mismatch in critical files!")
         print(f"   Found versions: {sorted(unique_critical)}")
         for version in sorted(unique_critical):
             files = [f for f, v in critical_versions.items() if v == version]
@@ -69,7 +69,7 @@ def main():
         canonical_version = list(unique_critical)[0]
         print(f"\n✅ Critical files consistent: v{canonical_version}")
     else:
-        print(f"\n❌ No versions found in critical files!")
+        print("\n❌ No versions found in critical files!")
         exit_code = 1
         canonical_version = None
 
@@ -89,7 +89,7 @@ def main():
     if exit_code == 0:
         print(f"\n✅ Version check passed: v{canonical_version}")
     else:
-        print(f"\n❌ Version check failed! Fix critical files before commit.")
+        print("\n❌ Version check failed! Fix critical files before commit.")
 
     return exit_code
 

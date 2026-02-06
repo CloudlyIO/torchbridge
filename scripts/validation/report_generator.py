@@ -655,7 +655,7 @@ This report documents security analysis results for TorchBridge v{self.version}.
         else:
             report += "*No known vulnerabilities in dependencies.*\n"
 
-        report += f"""
+        report += """
 ---
 
 ## 3. Input Validation Coverage

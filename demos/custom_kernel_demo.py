@@ -12,20 +12,20 @@ Usage:
     python demos/custom_kernel_demo.py [--device cuda|cpu] [--quick]
 """
 
-import torch
-import torch.nn as nn
 import argparse
 import sys
+
+import torch
+import torch.nn as nn
 
 # Add src to path
 sys.path.insert(0, 'src')
 
-from torchbridge.core.config import TorchBridgeConfig, PrecisionFormat
-from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
-from torchbridge.core.kernel_registry import KernelType
-
 # Use shared utilities
 from demos.shared.utils import print_section
+
+from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
+from torchbridge.core.config import PrecisionFormat, TorchBridgeConfig
 
 
 def demo_kernel_registry():
@@ -74,7 +74,7 @@ def demo_flash_attention(backend: NVIDIABackend, quick: bool = False):
     seq_len = 128 if quick else 512
     head_dim = 64
 
-    print(f"Attention parameters:")
+    print("Attention parameters:")
     print(f"  Batch size: {batch_size}")
     print(f"  Num heads: {num_heads}")
     print(f"  Sequence length: {seq_len}")
@@ -86,7 +86,7 @@ def demo_flash_attention(backend: NVIDIABackend, quick: bool = False):
     K = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
     V = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device)
 
-    print(f"\nInput shapes:")
+    print("\nInput shapes:")
     print(f"  Q, K, V: {Q.shape}")
 
     # Get optimal kernel
@@ -106,11 +106,11 @@ def demo_flash_attention(backend: NVIDIABackend, quick: bool = False):
             output = fa_layer(Q, K, V)
 
         print(f"Output shape: {output.shape}")
-        print(f"✅ FlashAttention-3 executed successfully!")
+        print("✅ FlashAttention-3 executed successfully!")
 
     else:
-        print(f"\n⚠️  No optimal kernel available")
-        print(f"   Using PyTorch fallback")
+        print("\n⚠️  No optimal kernel available")
+        print("   Using PyTorch fallback")
 
         # PyTorch fallback
         scale = 1.0 / (head_dim ** 0.5)
@@ -131,7 +131,9 @@ def demo_fused_linear_activation(backend: NVIDIABackend):
 
     try:
         from torchbridge.hardware.gpu.custom_kernels import (
-            FusedLinearGELU, FusedLinearSiLU, create_fused_ffn_layer
+            FusedLinearGELU,
+            FusedLinearSiLU,
+            create_fused_ffn_layer,
         )
 
         # Parameters
@@ -140,7 +142,7 @@ def demo_fused_linear_activation(backend: NVIDIABackend):
         in_features = 512
         hidden_features = 2048
 
-        print(f"FFN parameters:")
+        print("FFN parameters:")
         print(f"  Batch size: {batch_size}")
         print(f"  Sequence length: {seq_len}")
         print(f"  Input features: {in_features}")
@@ -155,27 +157,27 @@ def demo_fused_linear_activation(backend: NVIDIABackend):
         print(f"Flattened: {x_flat.shape}")
 
         # Demo 1: Fused Linear+GELU
-        print(f"\n--- Fused Linear+GELU ---")
+        print("\n--- Fused Linear+GELU ---")
         fused_gelu = FusedLinearGELU(in_features, hidden_features).to(device)
 
         with torch.no_grad():
             output_gelu = fused_gelu(x_flat)
 
         print(f"Output shape: {output_gelu.shape}")
-        print(f"✅ Fused Linear+GELU executed successfully!")
+        print("✅ Fused Linear+GELU executed successfully!")
 
         # Demo 2: Fused Linear+SiLU
-        print(f"\n--- Fused Linear+SiLU ---")
+        print("\n--- Fused Linear+SiLU ---")
         fused_silu = FusedLinearSiLU(in_features, hidden_features).to(device)
 
         with torch.no_grad():
             output_silu = fused_silu(x_flat)
 
         print(f"Output shape: {output_silu.shape}")
-        print(f"✅ Fused Linear+SiLU executed successfully!")
+        print("✅ Fused Linear+SiLU executed successfully!")
 
         # Demo 3: Complete FFN with factory function
-        print(f"\n--- Complete FFN Layer ---")
+        print("\n--- Complete FFN Layer ---")
         ffn = create_fused_ffn_layer(
             in_features=in_features,
             hidden_features=hidden_features,
@@ -186,11 +188,11 @@ def demo_fused_linear_activation(backend: NVIDIABackend):
             output_ffn = ffn(x_flat)
 
         print(f"Output shape: {output_ffn.shape}")
-        print(f"✅ Complete FFN layer executed successfully!")
+        print("✅ Complete FFN layer executed successfully!")
 
     except ImportError as e:
         print(f"⚠️  Fused kernels not available: {e}")
-        print(f"   Compile CUDA kernels for full functionality")
+        print("   Compile CUDA kernels for full functionality")
 
 
 def demo_model_optimization(backend: NVIDIABackend):
@@ -219,13 +221,13 @@ def demo_model_optimization(backend: NVIDIABackend):
     model = SimpleFFN()
     print(model)
 
-    print(f"\nApplying custom kernel optimizations...")
+    print("\nApplying custom kernel optimizations...")
 
     # Prepare model with backend
     model = backend.prepare_model(model)
     model = backend.prepare_model_with_custom_kernels(model)
 
-    print(f"\nOptimized model:")
+    print("\nOptimized model:")
     print(model)
 
     # Test forward pass
@@ -235,7 +237,7 @@ def demo_model_optimization(backend: NVIDIABackend):
     with torch.no_grad():
         output = model(x)
 
-    print(f"\nForward pass successful!")
+    print("\nForward pass successful!")
     print(f"  Input shape: {x.shape}")
     print(f"  Output shape: {output.shape}")
 
@@ -252,7 +254,7 @@ def demo_validation():
     print("Running kernel validation...")
     result = validate_custom_kernels(config)
 
-    print(f"\nValidation results:")
+    print("\nValidation results:")
     print(f"  Total tests: {result.total_tests}")
     print(f"  Passed: {result.passed}")
     print(f"  Warnings: {result.warnings}")
@@ -260,9 +262,9 @@ def demo_validation():
     print(f"  Success rate: {result.success_rate:.1%}")
 
     if result.failed == 0:
-        print(f"\n✅ All validation checks passed!")
+        print("\n✅ All validation checks passed!")
     else:
-        print(f"\n⚠️  Some validation checks failed")
+        print("\n⚠️  Some validation checks failed")
 
 
 def main():
@@ -309,10 +311,10 @@ def main():
     print("  ✓ Kernel validation")
 
     if backend.is_cuda_available:
-        print(f"\n🚀 All demos completed successfully on CUDA!")
+        print("\n🚀 All demos completed successfully on CUDA!")
     else:
-        print(f"\n💡 Demos completed on CPU")
-        print(f"   For best performance, run with CUDA GPU")
+        print("\n💡 Demos completed on CPU")
+        print("   For best performance, run with CUDA GPU")
 
     print("\n" + "#" * 80 + "\n")
 

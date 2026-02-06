@@ -15,12 +15,12 @@ Output includes:
 - IPEX optimization impact
 """
 
-import time
 import json
 import sys
+import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -28,15 +28,15 @@ import torch.nn as nn
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from torchbridge.core.config import TorchBridgeConfig
 from torchbridge.backends.intel import (
     IntelBackend,
-    IntelOptimizer,
     IntelMemoryManager,
-    is_xpu_available,
-    is_ipex_available,
+    IntelOptimizer,
     get_ipex_version,
+    is_ipex_available,
+    is_xpu_available,
 )
+from torchbridge.core.config import TorchBridgeConfig
 
 
 @dataclass
@@ -49,7 +49,7 @@ class BenchmarkResult:
     throughput: float
     memory_mb: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def print_section(title: str) -> None:
@@ -239,7 +239,7 @@ def benchmark_precision(
         )
 
 
-def benchmark_memory_manager() -> Dict[str, Any]:
+def benchmark_memory_manager() -> dict[str, Any]:
     """Benchmark memory management operations."""
     try:
         config = TorchBridgeConfig()
@@ -283,7 +283,7 @@ def benchmark_memory_manager() -> Dict[str, Any]:
         }
 
 
-def benchmark_ipex_optimization() -> Dict[str, Any]:
+def benchmark_ipex_optimization() -> dict[str, Any]:
     """Benchmark IPEX optimization impact."""
     results = {
         "ipex_available": is_ipex_available(),
@@ -357,7 +357,7 @@ def benchmark_ipex_optimization() -> Dict[str, Any]:
     return results
 
 
-def run_all_benchmarks() -> Dict[str, Any]:
+def run_all_benchmarks() -> dict[str, Any]:
     """Run all Intel XPU benchmarks."""
     print_section("Intel XPU Backend Benchmarks (v0.4.10)")
 

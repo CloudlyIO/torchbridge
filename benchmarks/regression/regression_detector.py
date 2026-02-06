@@ -6,20 +6,21 @@ Statistical detection of performance regressions with configurable thresholds,
 significance testing, and severity classification.
 """
 
-import numpy as np
-from datetime import datetime
-from typing import List, Optional, Tuple
-from dataclasses import dataclass
-from enum import Enum
-import warnings
-
 # Import from existing benchmark framework
 import os
 import sys
+import warnings
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from ..framework.benchmark_runner import PerformanceMetrics
 from .baseline_manager import BaselineMetrics
+
 
 class RegressionSeverity(Enum):
     """Severity levels for performance regressions"""
@@ -325,7 +326,7 @@ class RegressionDetector:
 
         return " ".join(recommendations)
 
-    def analyze_trend(self, historical_metrics: List[PerformanceMetrics]) -> dict:
+    def analyze_trend(self, historical_metrics: list[PerformanceMetrics]) -> dict:
         """
         Analyze performance trends over time.
 
@@ -380,9 +381,9 @@ class RegressionDetector:
 
     def batch_analyze(
         self,
-        measurements: List[Tuple[str, PerformanceMetrics]],
+        measurements: list[tuple[str, PerformanceMetrics]],
         baselines: dict
-    ) -> List[RegressionResult]:
+    ) -> list[RegressionResult]:
         """
         Analyze multiple measurements for regressions.
 

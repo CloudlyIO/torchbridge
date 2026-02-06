@@ -12,16 +12,17 @@ Hardware: Educational demo - works on all devices
 Runtime: 2-3 minutes
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import argparse
+import time
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-from typing import Dict, List, Tuple, Optional
 
 
 class SimpleTransformerBlock(nn.Module):
@@ -92,7 +93,7 @@ def simulate_fp8_quantization(tensor: torch.Tensor, format_type: str) -> torch.T
 
 def demonstrate_fp8_formats():
     """Demonstrate FP8 format characteristics."""
-    print(f"\n📊 FP8 Format Analysis")
+    print("\n📊 FP8 Format Analysis")
     print("-" * 40)
 
     formats = {
@@ -128,16 +129,16 @@ def demonstrate_fp8_formats():
     for format_name, specs in formats.items():
         print(f"{format_name:<8} {specs['bits']:<6} {specs['exponent']:<4} {specs['mantissa']:<4} {specs['range']:<12} {specs['use_case']}")
 
-    print(f"\nKey Insights:")
-    print(f"• E4M3 optimized for precision (activations, weights)")
-    print(f"• E5M2 optimized for range (gradients, optimizer states)")
-    print(f"• Different formats for forward vs backward pass")
-    print(f"• Automatic scaling prevents overflow")
+    print("\nKey Insights:")
+    print("• E4M3 optimized for precision (activations, weights)")
+    print("• E5M2 optimized for range (gradients, optimizer states)")
+    print("• Different formats for forward vs backward pass")
+    print("• Automatic scaling prevents overflow")
 
 
-def demonstrate_numerical_stability(device: torch.device, config: Dict):
+def demonstrate_numerical_stability(device: torch.device, config: dict):
     """Demonstrate FP8 numerical stability considerations."""
-    print(f"\n🔬 FP8 Numerical Stability Analysis")
+    print("\n🔬 FP8 Numerical Stability Analysis")
     print("-" * 45)
 
     d_model = config['d_model']
@@ -154,7 +155,7 @@ def demonstrate_numerical_stability(device: torch.device, config: Dict):
         ])),
     ]
 
-    print(f"Testing E4M3 and E5M2 formats with different value ranges:")
+    print("Testing E4M3 and E5M2 formats with different value ranges:")
 
     for name, test_data in test_cases:
         print(f"\n{name}:")
@@ -179,16 +180,16 @@ def demonstrate_numerical_stability(device: torch.device, config: Dict):
 
         # Recommendation
         if overflow_e4m3.item() > 0.01:  # > 1% overflow
-            print(f"  💡 Recommendation: Use E5M2 for this data range")
+            print("  💡 Recommendation: Use E5M2 for this data range")
         elif mse_e4m3.item() < mse_e5m2.item():
-            print(f"  💡 Recommendation: E4M3 provides better precision")
+            print("  💡 Recommendation: E4M3 provides better precision")
         else:
-            print(f"  💡 Recommendation: Both formats suitable")
+            print("  💡 Recommendation: Both formats suitable")
 
 
-def simulate_training_performance(device: torch.device, config: Dict):
+def simulate_training_performance(device: torch.device, config: dict):
     """Simulate FP8 vs FP16 training performance."""
-    print(f"\n⚡ FP8 vs FP16 Training Performance Simulation")
+    print("\n⚡ FP8 vs FP16 Training Performance Simulation")
     print("-" * 50)
 
     d_model, d_ff, num_heads = config['d_model'], config['d_ff'], config['num_heads']
@@ -198,7 +199,7 @@ def simulate_training_performance(device: torch.device, config: Dict):
     model = SimpleTransformerBlock(d_model, d_ff, num_heads).to(device)
     inputs = torch.randn(batch_size, seq_len, d_model, device=device)
 
-    print(f"Model configuration:")
+    print("Model configuration:")
     print(f"  Parameters: {sum(p.numel() for p in model.parameters())//1000}K")
     print(f"  Input shape: {inputs.shape}")
 
@@ -210,7 +211,7 @@ def simulate_training_performance(device: torch.device, config: Dict):
     warmup_runs = 3
     benchmark_runs = 10
 
-    print(f"\n🧮 Performance Benchmarking:")
+    print("\n🧮 Performance Benchmarking:")
 
     # FP16 timing
     for _ in range(warmup_runs):
@@ -249,7 +250,7 @@ def simulate_training_performance(device: torch.device, config: Dict):
 
     fp8_mean = fp16_mean / speedup
 
-    print(f"\n📊 Performance Results:")
+    print("\n📊 Performance Results:")
     print(f"{'Format':<8} {'Time (ms)':<12} {'Speedup':<10} {'Support'}")
     print("-" * 45)
     print(f"{'FP16':<8} {fp16_mean:.2f}        {'1.0x':<10} Standard")
@@ -257,7 +258,7 @@ def simulate_training_performance(device: torch.device, config: Dict):
 
     # Memory analysis
     memory_reduction = 0.5  # 50% memory reduction with FP8
-    print(f"\n💾 Memory Analysis:")
+    print("\n💾 Memory Analysis:")
     if device.type == 'cuda':
         current_memory = torch.cuda.max_memory_allocated() / 1024**2  # MB
         fp8_memory = current_memory * memory_reduction
@@ -269,7 +270,7 @@ def simulate_training_performance(device: torch.device, config: Dict):
 
 def explain_production_benefits():
     """Explain production benefits of FP8 training."""
-    print(f"\n🚀 Production FP8 Training Benefits")
+    print("\n🚀 Production FP8 Training Benefits")
     print("-" * 40)
 
     benefits = {
@@ -300,11 +301,11 @@ def explain_production_benefits():
         for item in items:
             print(f"  • {item}")
 
-    print(f"\n💡 Implementation Considerations:")
-    print(f"  • Automatic scaling to prevent numerical instability")
-    print(f"  • Mixed E4M3/E5M2 formats for optimal precision/range balance")
-    print(f"  • Gradual rollout with validation checkpoints")
-    print(f"  • Monitor convergence and accuracy metrics")
+    print("\n💡 Implementation Considerations:")
+    print("  • Automatic scaling to prevent numerical instability")
+    print("  • Mixed E4M3/E5M2 formats for optimal precision/range balance")
+    print("  • Gradual rollout with validation checkpoints")
+    print("  • Monitor convergence and accuracy metrics")
 
 
 def main():
@@ -353,16 +354,16 @@ def main():
     simulate_training_performance(device, config)
     explain_production_benefits()
 
-    print(f"\n🎉 FP8 Training Demo Completed!")
-    print(f"\n💡 Key Takeaways:")
-    print(f"   • FP8 provides 1.9-2.0x speedup on H100/Blackwell hardware")
-    print(f"   • E4M3 format optimal for forward pass (higher precision)")
-    print(f"   • E5M2 format optimal for backward pass (wider range)")
-    print(f"   • 50% memory reduction enables larger models and batch sizes")
-    print(f"   • Automatic scaling maintains numerical stability")
-    print(f"   • Production-ready with proper implementation considerations")
+    print("\n🎉 FP8 Training Demo Completed!")
+    print("\n💡 Key Takeaways:")
+    print("   • FP8 provides 1.9-2.0x speedup on H100/Blackwell hardware")
+    print("   • E4M3 format optimal for forward pass (higher precision)")
+    print("   • E5M2 format optimal for backward pass (wider range)")
+    print("   • 50% memory reduction enables larger models and batch sizes")
+    print("   • Automatic scaling maintains numerical stability")
+    print("   • Production-ready with proper implementation considerations")
 
-    print(f"\n✅ Demo completed! Try --quick for faster testing.")
+    print("\n✅ Demo completed! Try --quick for faster testing.")
 
 
 if __name__ == "__main__":

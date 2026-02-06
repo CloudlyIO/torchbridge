@@ -13,19 +13,23 @@ Can be run standalone or integrated with pytest:
     pytest scripts/test_nvidia_integration.py            # Run as pytest
 """
 
+import subprocess
 import sys
 import time
-import subprocess
 from pathlib import Path
+
 import torch
-from typing import Dict, Any, List
 
 # Add src to path for standalone execution
 repo_root = Path(__file__).parent.parent
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture, OptimizationLevel
+from torchbridge.core.config import (
+    NVIDIAArchitecture,
+    OptimizationLevel,
+    TorchBridgeConfig,
+)
 from torchbridge.validation.unified_validator import UnifiedValidator
 
 
@@ -316,7 +320,7 @@ class NVIDIAIntegrationTester:
         else:
             return NVIDIAArchitecture.PASCAL
 
-    def run_all_tests(self) -> Dict[str, bool]:
+    def run_all_tests(self) -> dict[str, bool]:
         """Run all test suites and return results."""
         print("🚀 NVIDIA Integration Test Suite")
         print("="*60)

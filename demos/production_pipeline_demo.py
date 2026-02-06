@@ -13,20 +13,20 @@ This demo shows:
 4. Best practices for production deployment
 """
 
+import warnings
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-import warnings
-from typing import Optional, Dict, Any
-from pathlib import Path
-
-from torchbridge.core.management import get_manager
-from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
-from torchbridge.core.performance_tracker import get_performance_tracker
-from torchbridge.validation.unified_validator import UnifiedValidator
-from torchbridge.core.config import TorchBridgeConfig
 
 # Use shared utilities
 from demos.shared.utils import print_section
+
+from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
+from torchbridge.core.management import get_manager
+from torchbridge.core.performance_tracker import get_performance_tracker
+from torchbridge.validation.unified_validator import UnifiedValidator
 
 
 # Production Model Example
@@ -91,7 +91,7 @@ class ProductionPipeline:
     def __init__(
         self,
         model_name: str,
-        checkpoint_dir: Optional[str] = None,
+        checkpoint_dir: str | None = None,
         enable_regression_detection: bool = True
     ):
         """
@@ -117,7 +117,7 @@ class ProductionPipeline:
         self.hardware_profile = detect_hardware()
         self.optimal_backend = get_optimal_backend()
 
-        print(f"🚀 Production Pipeline Initialized")
+        print("🚀 Production Pipeline Initialized")
         print(f"   Model: {model_name}")
         print(f"   Hardware: {self.hardware_profile.hardware_type.value}")
         print(f"   Backend: {self.optimal_backend}")
@@ -140,7 +140,7 @@ class ProductionPipeline:
         Returns:
             Optimized model
         """
-        print(f"\n📊 Optimizing for Training")
+        print("\n📊 Optimizing for Training")
         print(f"   Optimization Level: {optimization_level}")
 
         # Auto-optimize
@@ -189,7 +189,7 @@ class ProductionPipeline:
         Returns:
             Optimized model
         """
-        print(f"\n🎯 Optimizing for Inference")
+        print("\n🎯 Optimizing for Inference")
 
         # Get baseline if exists
         baseline = None
@@ -256,7 +256,7 @@ class ProductionPipeline:
         Returns:
             True if validation passes
         """
-        print(f"\n✓ Validating Optimized Model")
+        print("\n✓ Validating Optimized Model")
 
         model.eval()
         original_model.eval()
@@ -279,9 +279,9 @@ class ProductionPipeline:
     def save_checkpoint(
         self,
         model: nn.Module,
-        optimizer: Optional[torch.optim.Optimizer] = None,
+        optimizer: torch.optim.Optimizer | None = None,
         epoch: int = 0,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ):
         """
         Save model checkpoint with metadata.
@@ -312,7 +312,7 @@ class ProductionPipeline:
         self,
         model: nn.Module,
         checkpoint_path: str,
-        optimizer: Optional[torch.optim.Optimizer] = None
+        optimizer: torch.optim.Optimizer | None = None
     ) -> int:
         """
         Load model checkpoint.
@@ -341,7 +341,7 @@ class ProductionPipeline:
 
         return epoch
 
-    def get_recommendations(self) -> Dict[str, Any]:
+    def get_recommendations(self) -> dict[str, Any]:
         """
         Get optimization recommendations for the current hardware.
 

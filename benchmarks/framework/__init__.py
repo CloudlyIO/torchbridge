@@ -7,29 +7,29 @@ against state-of-the-art implementations.
 Version: 0.3.6
 """
 
-from .benchmark_runner import BenchmarkRunner, BenchmarkConfig
 from .baseline_implementations import (
-    PyTorchNativeBaseline,
     FlashAttentionBaseline,
-    HuggingFaceBaseline
+    HuggingFaceBaseline,
+    PyTorchNativeBaseline,
 )
+from .benchmark_runner import BenchmarkConfig, BenchmarkRunner
 from .metrics_collector import MetricsCollector, PerformanceMetrics
 
 # Timing utilities (v0.3.6)
 from .timing_utils import (
     TimingResult,
-    run_timed_iterations,
     benchmark_function,
-    timer,
-    track_memory,
-    timed,
-    get_cuda_memory_snapshot,
     calculate_throughput,
     calculate_tokens_per_second,
     compare_results,
-    print_section_header,
-    print_result,
     create_summary_table,
+    get_cuda_memory_snapshot,
+    print_result,
+    print_section_header,
+    run_timed_iterations,
+    timed,
+    timer,
+    track_memory,
 )
 
 # Optional import for advanced analysis

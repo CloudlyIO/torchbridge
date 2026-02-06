@@ -6,17 +6,18 @@ Comprehensive benchmarking against state-of-the-art implementations with
 statistical analysis and production-grade measurement methodology.
 """
 
-import sys
-import os
-import time
-import torch
-import numpy as np
-from typing import Dict, List, Any, Optional, Callable, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
 import json
+import os
+import sys
+import time
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Any
+
+import numpy as np
 import psutil
+import torch
 
 # Add src to path for our optimizations
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
@@ -33,9 +34,9 @@ class BenchmarkConfig:
     """Configuration for benchmark execution"""
     name: str
     benchmark_type: BenchmarkType
-    model_config: Dict[str, Any]
-    batch_sizes: List[int] = field(default_factory=lambda: [1, 4, 8, 16, 32])
-    sequence_lengths: List[int] = field(default_factory=lambda: [128, 512, 1024, 2048])
+    model_config: dict[str, Any]
+    batch_sizes: list[int] = field(default_factory=lambda: [1, 4, 8, 16, 32])
+    sequence_lengths: list[int] = field(default_factory=lambda: [128, 512, 1024, 2048])
     num_trials: int = 100
     warmup_trials: int = 10
     device: str = "auto"
@@ -52,7 +53,7 @@ class PerformanceMetrics:
     memory_efficiency: float
     accuracy_loss: float
     statistical_significance: bool
-    confidence_interval_95: Tuple[float, float]
+    confidence_interval_95: tuple[float, float]
 
 class BaseImplementation:
     """Base class for benchmark implementations"""
@@ -61,7 +62,7 @@ class BaseImplementation:
         self.name = name
         self.device = device
 
-    def setup_model(self, model_config: Dict[str, Any]) -> torch.nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> torch.nn.Module:
         """Setup the model for benchmarking"""
         raise NotImplementedError
 
@@ -93,7 +94,7 @@ class BenchmarkRunner:
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
 
-        print(f"🏁 Benchmark Runner initialized")
+        print("🏁 Benchmark Runner initialized")
         print(f"   Device: {self.device}")
         print(f"   Output: {output_dir}")
 
@@ -119,7 +120,7 @@ class BenchmarkRunner:
         self.baselines[name] = implementation
         print(f"   🚀 Registered optimization: {name}")
 
-    def run_comprehensive_benchmark(self, config: BenchmarkConfig) -> Dict[str, PerformanceMetrics]:
+    def run_comprehensive_benchmark(self, config: BenchmarkConfig) -> dict[str, PerformanceMetrics]:
         """Run comprehensive benchmark across all registered implementations"""
 
         print(f"\n🏁 Running Comprehensive Benchmark: {config.name}")
@@ -152,7 +153,7 @@ class BenchmarkRunner:
                 benchmark_results[impl_name] = None
 
         # Statistical analysis
-        print(f"\n   📊 Statistical Analysis:")
+        print("\n   📊 Statistical Analysis:")
         analysis_results = self._perform_statistical_analysis(benchmark_results)
 
         # Save results
@@ -333,7 +334,7 @@ class BenchmarkRunner:
         # Placeholder for scaling benchmark
         return self._benchmark_inference(implementation, config)
 
-    def _perform_statistical_analysis(self, results: Dict[str, PerformanceMetrics]) -> Dict[str, Any]:
+    def _perform_statistical_analysis(self, results: dict[str, PerformanceMetrics]) -> dict[str, Any]:
         """Perform statistical analysis on benchmark results"""
 
         valid_results = {k: v for k, v in results.items() if v is not None}
@@ -391,7 +392,7 @@ class BenchmarkRunner:
 
         return analysis
 
-    def _save_benchmark_results(self, config: BenchmarkConfig, results: Dict[str, PerformanceMetrics], analysis: Dict[str, Any]):
+    def _save_benchmark_results(self, config: BenchmarkConfig, results: dict[str, PerformanceMetrics], analysis: dict[str, Any]):
         """Save benchmark results to file"""
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -442,7 +443,7 @@ class BenchmarkRunner:
                 status = "🚀 SIGNIFICANT" if comp["significant"] else "📊 MEASURED"
                 print(f"      {name}: {comp['speedup']:.2f}x speedup, {comp['throughput_improvement_pct']:+.1f}% throughput {status}")
 
-def create_simple_gpt_config(hidden_size: int = 768, num_layers: int = 12, num_heads: int = 12) -> Dict[str, Any]:
+def create_simple_gpt_config(hidden_size: int = 768, num_layers: int = 12, num_heads: int = 12) -> dict[str, Any]:
     """Create a simple GPT-style model configuration"""
     return {
         "hidden_size": hidden_size,

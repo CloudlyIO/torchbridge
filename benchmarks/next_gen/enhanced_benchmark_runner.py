@@ -6,36 +6,37 @@ Comprehensive benchmarking suite that compares our optimizations against
 the absolute latest industry developments (2025-2026).
 """
 
-import sys
-import os
-import time
-import torch
-import torch.nn as nn
-import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
 import json
+import os
+import sys
+import time
 import warnings
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+import torch
+import torch.nn as nn
 
 # Add paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'framework'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from benchmark_runner import BenchmarkRunner, BenchmarkConfig, PerformanceMetrics
 from cutting_edge_baselines import create_cutting_edge_baselines
+
 
 @dataclass
 class AdvancedBenchmarkConfig:
     """Configuration for advanced benchmark scenarios"""
 
     # Model configurations
-    model_configs: Dict[str, Dict[str, Any]]
+    model_configs: dict[str, dict[str, Any]]
 
     # Benchmark scenarios
-    scenarios: List[str]
+    scenarios: list[str]
 
     # Performance targets
-    performance_targets: Dict[str, float]
+    performance_targets: dict[str, float]
 
     # Advanced settings
     enable_long_context: bool = True
@@ -65,17 +66,20 @@ class EnhancedBenchmarkRunner:
         # Initialize our optimizations
         self.our_optimizations = self._load_our_optimizations()
 
-        print(f"🚀 Enhanced Benchmark Runner Initialized")
+        print("🚀 Enhanced Benchmark Runner Initialized")
         print(f"   Device: {self.device}")
         print(f"   Cutting-edge baselines: {len(self.cutting_edge_baselines)}")
         print(f"   Our optimizations: {len(self.our_optimizations)}")
 
-    def _load_our_optimizations(self) -> List:
+    def _load_our_optimizations(self) -> list:
         """Load our optimization implementations"""
         optimizations = []
 
         try:
-            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm  # noqa: F401
+            from torchbridge.compiler_optimized import (  # noqa: F401
+                FusedGELU,
+                OptimizedLayerNorm,
+            )
 
             # Our implementations would be wrapped in baseline-compatible interface
             # For now, create placeholder implementations
@@ -86,7 +90,7 @@ class EnhancedBenchmarkRunner:
 
         return optimizations
 
-    def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """Run comprehensive benchmark against all implementations"""
 
         print("\n🏁 Running Comprehensive Cutting-Edge Benchmark")
@@ -111,7 +115,7 @@ class EnhancedBenchmarkRunner:
 
         return results
 
-    def _run_scenario(self, scenario: str) -> Dict[str, Any]:
+    def _run_scenario(self, scenario: str) -> dict[str, Any]:
         """Run a specific benchmark scenario"""
 
         scenario_config = self._get_scenario_config(scenario)
@@ -147,7 +151,7 @@ class EnhancedBenchmarkRunner:
 
         return scenario_results
 
-    def _test_implementation(self, implementation, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _test_implementation(self, implementation, config: dict[str, Any]) -> dict[str, Any]:
         """Test a specific implementation"""
 
         # Setup model
@@ -207,7 +211,7 @@ class EnhancedBenchmarkRunner:
             }
         }
 
-    def _generate_test_data(self, config: Dict[str, Any]) -> Dict[str, torch.Tensor]:
+    def _generate_test_data(self, config: dict[str, Any]) -> dict[str, torch.Tensor]:
         """Generate test data for benchmarking"""
 
         model_config = config['model_config']
@@ -229,7 +233,7 @@ class EnhancedBenchmarkRunner:
 
         return {'inputs': inputs}
 
-    def _get_scenario_config(self, scenario: str) -> Dict[str, Any]:
+    def _get_scenario_config(self, scenario: str) -> dict[str, Any]:
         """Get configuration for a specific scenario"""
 
         base_config = {
@@ -275,7 +279,7 @@ class EnhancedBenchmarkRunner:
 
         return scenario_configs.get(scenario, base_config)
 
-    def _compare_implementations(self, implementations: Dict[str, Any]) -> Dict[str, Any]:
+    def _compare_implementations(self, implementations: dict[str, Any]) -> dict[str, Any]:
         """Compare implementations and generate analysis"""
 
         successful_impls = {
@@ -319,7 +323,7 @@ class EnhancedBenchmarkRunner:
             }
         }
 
-    def _identify_baseline(self, implementations: Dict[str, Any]) -> str:
+    def _identify_baseline(self, implementations: dict[str, Any]) -> str:
         """Identify the baseline implementation for comparison"""
         # Prefer PyTorch native or Flash Attention as baseline
         priority_order = ['PyTorch Native', 'Flash Attention 2', 'Flash Attention 3', 'vLLM Production']
@@ -331,7 +335,7 @@ class EnhancedBenchmarkRunner:
         # Fallback to first available
         return list(implementations.keys())[0]
 
-    def _generate_summary(self, scenarios: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(self, scenarios: dict[str, Any]) -> dict[str, Any]:
         """Generate overall benchmark summary"""
 
         summary = {
@@ -367,7 +371,7 @@ class EnhancedBenchmarkRunner:
 
         return summary
 
-    def _generate_recommendations(self, summary: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, summary: dict[str, Any]) -> list[str]:
         """Generate recommendations based on benchmark results"""
 
         recommendations = []
@@ -402,7 +406,7 @@ class EnhancedBenchmarkRunner:
 
         return recommendations
 
-    def _get_benchmark_info(self) -> Dict[str, Any]:
+    def _get_benchmark_info(self) -> dict[str, Any]:
         """Get benchmark environment information"""
 
         return {
@@ -419,7 +423,7 @@ class EnhancedBenchmarkRunner:
         """Count model parameters"""
         return sum(p.numel() for p in model.parameters())
 
-    def save_results(self, results: Dict[str, Any], filename: str = None):
+    def save_results(self, results: dict[str, Any], filename: str = None):
         """Save benchmark results to file"""
 
         if filename is None:
@@ -443,7 +447,7 @@ class OurOptimizationsBaseline:
         self.name = "Our Optimizations (Compiled)"
         self.device = device
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup our optimized model"""
         try:
             from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
@@ -471,7 +475,7 @@ class OurOptimizationsBaseline:
 class OptimizedTransformerModel(nn.Module):
     """Transformer model using our optimizations"""
 
-    def __init__(self, hidden_size: int, num_layers: int, config: Dict[str, Any]):
+    def __init__(self, hidden_size: int, num_layers: int, config: dict[str, Any]):
         super().__init__()
 
         try:
@@ -548,7 +552,7 @@ class OptimizedTransformerBlock(nn.Module):
 class StandardTransformerModel(nn.Module):
     """Standard transformer for fallback"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         hidden_size = config.get('hidden_size', 768)
         num_layers = config.get('num_layers', 12)

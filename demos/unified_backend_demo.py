@@ -23,7 +23,7 @@ Usage:
 import argparse
 import sys
 import time
-from typing import Dict, Any
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -40,15 +40,15 @@ def print_result(name: str, status: str, details: str = "") -> None:
         print(f"     {details}")
 
 
-def demo_backend_factory() -> Dict[str, Any]:
+def demo_backend_factory() -> dict[str, Any]:
     """Demonstrate BackendFactory automatic backend selection."""
     print_section("BackendFactory Auto-Detection")
 
     from torchbridge.backends import (
         BackendFactory,
         BackendType,
-        get_backend,
         detect_best_backend,
+        get_backend,
         list_available_backends,
     )
 
@@ -136,7 +136,7 @@ def demo_backend_factory() -> Dict[str, Any]:
     return results
 
 
-def demo_optimization_levels() -> Dict[str, Any]:
+def demo_optimization_levels() -> dict[str, Any]:
     """Demonstrate OptimizationLevel enum and aliases."""
     print_section("Optimization Levels")
 
@@ -203,7 +203,7 @@ def demo_optimization_levels() -> Dict[str, Any]:
     return results
 
 
-def demo_device_info() -> Dict[str, Any]:
+def demo_device_info() -> dict[str, Any]:
     """Demonstrate standardized DeviceInfo format."""
     print_section("Standardized DeviceInfo")
 
@@ -263,11 +263,11 @@ def demo_device_info() -> Dict[str, Any]:
     return results
 
 
-def demo_unified_interface() -> Dict[str, Any]:
+def demo_unified_interface() -> dict[str, Any]:
     """Demonstrate unified interface across all backends."""
     print_section("Unified Backend Interface")
 
-    from torchbridge.backends import get_backend, DeviceInfo
+    from torchbridge.backends import DeviceInfo, get_backend
 
     results = {"passed": 0, "total": 0}
 
@@ -362,7 +362,7 @@ def demo_unified_interface() -> Dict[str, Any]:
     return results
 
 
-def demo_backend_inheritance() -> Dict[str, Any]:
+def demo_backend_inheritance() -> dict[str, Any]:
     """Demonstrate that all backends inherit from BaseBackend."""
     print_section("Backend Inheritance")
 
@@ -405,7 +405,7 @@ def demo_backend_inheritance() -> Dict[str, Any]:
     return results
 
 
-def demo_context_manager() -> Dict[str, Any]:
+def demo_context_manager() -> dict[str, Any]:
     """Demonstrate backend context manager usage."""
     print_section("Context Manager Usage")
 
@@ -448,11 +448,11 @@ def demo_context_manager() -> Dict[str, Any]:
     return results
 
 
-def demo_optimizer_integration() -> Dict[str, Any]:
+def demo_optimizer_integration() -> dict[str, Any]:
     """Demonstrate unified optimizer interface."""
     print_section("Optimizer Integration")
 
-    from torchbridge.backends import get_optimizer, OptimizationLevel
+    from torchbridge.backends import OptimizationLevel, get_optimizer
 
     results = {"passed": 0, "total": 0}
 
@@ -508,7 +508,7 @@ def demo_optimizer_integration() -> Dict[str, Any]:
     return results
 
 
-def demo_full_workflow(quick: bool = False) -> Dict[str, Any]:
+def demo_full_workflow(quick: bool = False) -> dict[str, Any]:
     """Demonstrate complete unified backend workflow."""
     print_section("Complete Unified Workflow")
 
@@ -516,7 +516,6 @@ def demo_full_workflow(quick: bool = False) -> Dict[str, Any]:
         BackendFactory,
         BackendType,
         OptimizationLevel,
-        get_backend,
     )
 
     results = {"passed": 0, "total": 0}
@@ -552,11 +551,11 @@ def demo_full_workflow(quick: bool = False) -> Dict[str, Any]:
         d_model = 256 if not quick else 128
         model = SimpleTransformer(d_model=d_model)
         prepared_model = backend.prepare_model(model, OptimizationLevel.O2)
-        print(f"  Step 3: Model prepared with O2 optimization")
+        print("  Step 3: Model prepared with O2 optimization")
 
         # Step 4: Optimize for inference
         optimized_model = backend.optimize_for_inference(prepared_model)
-        print(f"  Step 4: Model optimized for inference")
+        print("  Step 4: Model optimized for inference")
 
         # Step 5: Run inference
         batch_size = 4 if not quick else 2
@@ -572,14 +571,14 @@ def demo_full_workflow(quick: bool = False) -> Dict[str, Any]:
         backend.synchronize()
         elapsed = (time.perf_counter() - start) * 1000
 
-        print(f"  Step 5: Inference complete")
+        print("  Step 5: Inference complete")
         print(f"     Input: {x.shape}")
         print(f"     Output: {output.shape}")
         print(f"     Time: {elapsed:.2f}ms")
 
         # Step 6: Cleanup
         backend.empty_cache()
-        print(f"  Step 6: Cache cleared")
+        print("  Step 6: Cache cleared")
 
         print_result(
             "Complete workflow",

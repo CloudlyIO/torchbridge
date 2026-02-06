@@ -20,11 +20,11 @@ Usage:
 
 import argparse
 import gc
+import json
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional
-import json
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -40,9 +40,9 @@ class BenchmarkResult:
     unit: str
     iterations: int = 1
     std_dev: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'name': self.name,
             'backend': self.backend,
@@ -58,19 +58,19 @@ class BenchmarkResult:
 @dataclass
 class BenchmarkSuite:
     """Collection of benchmark results."""
-    results: List[BenchmarkResult] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    results: list[BenchmarkResult] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add(self, result: BenchmarkResult):
         self.results.append(result)
 
-    def get_by_backend(self, backend: str) -> List[BenchmarkResult]:
+    def get_by_backend(self, backend: str) -> list[BenchmarkResult]:
         return [r for r in self.results if r.backend == backend]
 
-    def get_by_metric(self, metric: str) -> List[BenchmarkResult]:
+    def get_by_metric(self, metric: str) -> list[BenchmarkResult]:
         return [r for r in self.results if r.metric == metric]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'metadata': self.metadata,
             'results': [r.to_dict() for r in self.results],
@@ -130,7 +130,7 @@ def create_test_model(size: str = "medium") -> nn.Module:
     return BenchmarkModel()
 
 
-def benchmark_initialization(suite: BenchmarkSuite, backends: List[str], iterations: int = 5):
+def benchmark_initialization(suite: BenchmarkSuite, backends: list[str], iterations: int = 5):
     """Benchmark backend initialization time."""
     from torchbridge.backends import BackendFactory, BackendType
 
@@ -171,7 +171,7 @@ def benchmark_initialization(suite: BenchmarkSuite, backends: List[str], iterati
 
 def benchmark_model_preparation(
     suite: BenchmarkSuite,
-    backends: List[str],
+    backends: list[str],
     model_size: str = "medium",
     iterations: int = 5
 ):
@@ -219,7 +219,7 @@ def benchmark_model_preparation(
 
 def benchmark_inference_latency(
     suite: BenchmarkSuite,
-    backends: List[str],
+    backends: list[str],
     model_size: str = "medium",
     batch_size: int = 8,
     warmup: int = 3,
@@ -287,7 +287,7 @@ def benchmark_inference_latency(
 
 def benchmark_optimization_overhead(
     suite: BenchmarkSuite,
-    backends: List[str],
+    backends: list[str],
     model_size: str = "medium",
     iterations: int = 5
 ):
@@ -338,7 +338,7 @@ def benchmark_optimization_overhead(
             print(f"    {backend_name}: Failed - {e}")
 
 
-def benchmark_device_info_overhead(suite: BenchmarkSuite, backends: List[str], iterations: int = 100):
+def benchmark_device_info_overhead(suite: BenchmarkSuite, backends: list[str], iterations: int = 100):
     """Benchmark device info retrieval overhead."""
     from torchbridge.backends import BackendFactory, BackendType
 
@@ -376,9 +376,9 @@ def benchmark_device_info_overhead(suite: BenchmarkSuite, backends: List[str], i
 
 def benchmark_throughput(
     suite: BenchmarkSuite,
-    backends: List[str],
+    backends: list[str],
     model_size: str = "medium",
-    batch_sizes: List[int] = None,
+    batch_sizes: list[int] = None,
     duration_seconds: float = 2.0
 ):
     """Benchmark throughput (samples/second)."""
@@ -447,7 +447,7 @@ def benchmark_throughput(
             print(f"    {backend_name}: Failed - {e}")
 
 
-def get_available_backends() -> List[str]:
+def get_available_backends() -> list[str]:
     """Get list of available backends for benchmarking."""
     from torchbridge.backends import BackendFactory, BackendType
 

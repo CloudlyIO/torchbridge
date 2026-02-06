@@ -7,9 +7,9 @@ Version: 0.4.3
 """
 
 import argparse
-import torch
-from typing import Dict, Any, Optional
+from typing import Any
 
+import torch
 
 # ============================================================================
 # Printing Utilities
@@ -49,7 +49,7 @@ def print_error(message: str) -> None:
     print(f"❌ {message}")
 
 
-def print_metrics(metrics: Dict[str, Any], indent: int = 3) -> None:
+def print_metrics(metrics: dict[str, Any], indent: int = 3) -> None:
     """Print a dictionary of metrics in a formatted way."""
     prefix = " " * indent
     for key, value in metrics.items():
@@ -95,7 +95,7 @@ def get_device(prefer: str = "auto") -> torch.device:
     return torch.device("cpu")
 
 
-def get_device_info(device: Optional[torch.device] = None) -> Dict[str, Any]:
+def get_device_info(device: torch.device | None = None) -> dict[str, Any]:
     """
     Get detailed information about a device.
 

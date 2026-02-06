@@ -12,10 +12,10 @@ Usage:
     python demos/intel_xpu_demo.py
 """
 
+import time
+
 import torch
 import torch.nn as nn
-import time
-from typing import Optional
 
 
 def print_section(title: str):
@@ -30,12 +30,12 @@ def demo_device_detection():
     print_section("1. Device Detection")
 
     from torchbridge.backends.intel import (
-        is_xpu_available,
-        is_ipex_available,
+        IPEX_AVAILABLE,
+        XPU_AVAILABLE,
         get_ipex_version,
         get_xpu_device_count,
-        XPU_AVAILABLE,
-        IPEX_AVAILABLE,
+        is_ipex_available,
+        is_xpu_available,
     )
 
     print(f"XPU Available: {XPU_AVAILABLE}")
@@ -142,7 +142,7 @@ def demo_inference_optimization():
     """Demonstrate inference optimization."""
     print_section("6. Inference Optimization")
 
-    from torchbridge.backends.intel import IntelBackend, XPU_AVAILABLE
+    from torchbridge.backends.intel import XPU_AVAILABLE, IntelBackend
 
     # Create model
     model = nn.Sequential(
@@ -183,8 +183,8 @@ def demo_optimizer():
     print_section("7. Intel Optimizer")
 
     from torchbridge.backends.intel import (
-        IntelOptimizer,
         IntelOptimizationLevel,
+        IntelOptimizer,
     )
 
     # Create model
@@ -254,7 +254,6 @@ def demo_config():
     from torchbridge.core.config import (
         IntelArchitecture,
         IntelConfig,
-        HardwareConfig,
         TorchBridgeConfig,
     )
 
@@ -290,7 +289,7 @@ def demo_benchmark():
     """Run a simple benchmark."""
     print_section("10. Simple Benchmark")
 
-    from torchbridge.backends.intel import IntelBackend, XPU_AVAILABLE
+    from torchbridge.backends.intel import IntelBackend
 
     # Create larger model for benchmarking
     model = nn.Sequential(

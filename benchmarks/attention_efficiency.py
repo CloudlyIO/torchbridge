@@ -18,8 +18,8 @@ v0.4.23 - Complete Placeholder Implementations
 import argparse
 import json
 import time
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
+from dataclasses import asdict, dataclass
+
 import torch
 import torch.nn as nn
 
@@ -37,9 +37,9 @@ class BenchmarkResult:
     embed_dim: int
     throughput: float  # samples/sec
     latency_ms: float  # milliseconds
-    memory_mb: Optional[float]  # MB, only on CUDA
+    memory_mb: float | None  # MB, only on CUDA
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def measure_memory():
@@ -130,11 +130,11 @@ def benchmark_model(
 
 
 def benchmark_sliced_attention(
-    seq_lengths: List[int],
+    seq_lengths: list[int],
     batch_size: int = 4,
     embed_dim: int = 768,
     num_heads: int = 12,
-) -> List[BenchmarkResult]:
+) -> list[BenchmarkResult]:
     """Benchmark SlicedMultiheadAttention."""
     results = []
 
@@ -165,20 +165,20 @@ def benchmark_sliced_attention(
 
 
 def benchmark_sparse_attention(
-    seq_lengths: List[int],
+    seq_lengths: list[int],
     batch_size: int = 4,
     embed_dim: int = 768,
     num_heads: int = 12,
-) -> List[BenchmarkResult]:
+) -> list[BenchmarkResult]:
     """Benchmark sparse attention implementations."""
     results = []
 
     try:
+        from torchbridge.attention.core.config import AttentionConfig
         from torchbridge.attention.implementations.sparse import (
             BlockSparseAttention,
             StridedSparseAttention,
         )
-        from torchbridge.attention.core.config import AttentionConfig
     except ImportError as e:
         print(f"Could not import sparse attention: {e}")
         return results
@@ -224,21 +224,21 @@ def benchmark_sparse_attention(
 
 
 def benchmark_memory_efficient_attention(
-    seq_lengths: List[int],
+    seq_lengths: list[int],
     batch_size: int = 4,
     embed_dim: int = 768,
     num_heads: int = 12,
-) -> List[BenchmarkResult]:
+) -> list[BenchmarkResult]:
     """Benchmark memory-efficient attention implementations."""
     results = []
 
     try:
+        from torchbridge.attention.core.config import AttentionConfig
         from torchbridge.attention.implementations.memory_efficient import (
-            MemoryEfficientAttention,
             ChunkedAttention,
             LongSequenceAttention,
+            MemoryEfficientAttention,
         )
-        from torchbridge.attention.core.config import AttentionConfig
     except ImportError as e:
         print(f"Could not import memory-efficient attention: {e}")
         return results
@@ -299,11 +299,11 @@ def benchmark_memory_efficient_attention(
 
 
 def benchmark_standard_attention(
-    seq_lengths: List[int],
+    seq_lengths: list[int],
     batch_size: int = 4,
     embed_dim: int = 768,
     num_heads: int = 12,
-) -> List[BenchmarkResult]:
+) -> list[BenchmarkResult]:
     """Benchmark standard PyTorch attention for comparison."""
     results = []
 
@@ -326,7 +326,7 @@ def benchmark_standard_attention(
 
 
 def run_benchmarks(
-    seq_lengths: List[int] = None,
+    seq_lengths: list[int] = None,
     batch_size: int = 4,
     output_file: str = None,
 ):

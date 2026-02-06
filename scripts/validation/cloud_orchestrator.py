@@ -16,7 +16,6 @@ Usage:
 
 import argparse
 import json
-import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -287,28 +286,28 @@ echo "=============================================="
 
         # This would use boto3 in a real implementation
         commands = [
-            f"# Create EC2 instance",
-            f"aws ec2 run-instances \\",
+            "# Create EC2 instance",
+            "aws ec2 run-instances \\",
             f"  --instance-type {config.instance_type} \\",
-            f"  --image-id ami-xxxxx \\",  # Deep Learning AMI
-            f"  --key-name torchbridge-validation \\",
-            f"  --security-group-ids sg-xxxxx \\",
+            "  --image-id ami-xxxxx \\",  # Deep Learning AMI
+            "  --key-name torchbridge-validation \\",
+            "  --security-group-ids sg-xxxxx \\",
             f"  --region {config.region}",
             "",
-            f"# Wait for instance to be running",
-            f"aws ec2 wait instance-running --instance-ids $INSTANCE_ID",
+            "# Wait for instance to be running",
+            "aws ec2 wait instance-running --instance-ids $INSTANCE_ID",
             "",
-            f"# Copy validation script",
-            f"scp validation_script.sh ec2-user@$INSTANCE_IP:/tmp/",
+            "# Copy validation script",
+            "scp validation_script.sh ec2-user@$INSTANCE_IP:/tmp/",
             "",
-            f"# Run validation",
-            f"ssh ec2-user@$INSTANCE_IP 'bash /tmp/validation_script.sh'",
+            "# Run validation",
+            "ssh ec2-user@$INSTANCE_IP 'bash /tmp/validation_script.sh'",
             "",
-            f"# Collect results",
-            f"scp ec2-user@$INSTANCE_IP:/tmp/reports/*.json reports/",
+            "# Collect results",
+            "scp ec2-user@$INSTANCE_IP:/tmp/reports/*.json reports/",
             "",
-            f"# Terminate instance",
-            f"aws ec2 terminate-instances --instance-ids $INSTANCE_ID",
+            "# Terminate instance",
+            "aws ec2 terminate-instances --instance-ids $INSTANCE_ID",
         ]
 
         return {
@@ -324,38 +323,38 @@ echo "=============================================="
 
         if config.backend == HardwareBackend.TPU_XLA:
             commands = [
-                f"# Create TPU VM",
-                f"gcloud compute tpus tpu-vm create torchbridge-validation \\",
+                "# Create TPU VM",
+                "gcloud compute tpus tpu-vm create torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --accelerator-type={config.instance_type} \\",
-                f"  --version=tpu-ubuntu2204-base",
+                "  --version=tpu-ubuntu2204-base",
                 "",
-                f"# SSH and run validation",
-                f"gcloud compute tpus tpu-vm ssh torchbridge-validation \\",
+                "# SSH and run validation",
+                "gcloud compute tpus tpu-vm ssh torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
-                f"  --command='bash /tmp/validation_script.sh'",
+                "  --command='bash /tmp/validation_script.sh'",
                 "",
-                f"# Delete TPU VM",
-                f"gcloud compute tpus tpu-vm delete torchbridge-validation \\",
+                "# Delete TPU VM",
+                "gcloud compute tpus tpu-vm delete torchbridge-validation \\",
                 f"  --zone={config.region}-a",
             ]
         else:
             commands = [
-                f"# Create GPU VM",
-                f"gcloud compute instances create torchbridge-validation \\",
+                "# Create GPU VM",
+                "gcloud compute instances create torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
                 f"  --machine-type={config.instance_type} \\",
                 f"  --accelerator=type=nvidia-h100-80gb,count={config.gpu_count} \\",
-                f"  --image-family=pytorch-latest-gpu \\",
-                f"  --image-project=deeplearning-platform-release",
+                "  --image-family=pytorch-latest-gpu \\",
+                "  --image-project=deeplearning-platform-release",
                 "",
-                f"# Run validation",
-                f"gcloud compute ssh torchbridge-validation \\",
+                "# Run validation",
+                "gcloud compute ssh torchbridge-validation \\",
                 f"  --zone={config.region}-a \\",
-                f"  --command='bash /tmp/validation_script.sh'",
+                "  --command='bash /tmp/validation_script.sh'",
                 "",
-                f"# Delete instance",
-                f"gcloud compute instances delete torchbridge-validation \\",
+                "# Delete instance",
+                "gcloud compute instances delete torchbridge-validation \\",
                 f"  --zone={config.region}-a",
             ]
 
@@ -371,17 +370,17 @@ echo "=============================================="
         print(f"Deploying to Intel DevCloud {config.instance_type}...")
 
         commands = [
-            f"# Connect to Intel DevCloud",
-            f"ssh devcloud",
+            "# Connect to Intel DevCloud",
+            "ssh devcloud",
             "",
             f"# Request {config.instance_type} node",
             f"qsub -l nodes=1:{config.instance_type}:ppn=2 -d . validation_script.sh",
             "",
-            f"# Monitor job",
-            f"qstat",
+            "# Monitor job",
+            "qstat",
             "",
-            f"# Retrieve results",
-            f"cat validation_script.sh.o*",
+            "# Retrieve results",
+            "cat validation_script.sh.o*",
         ]
 
         return {

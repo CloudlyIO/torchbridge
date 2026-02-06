@@ -10,24 +10,24 @@ Basic demonstration of advanced memory optimizations:
 This is a simplified version that focuses on core functionality.
 """
 
+import argparse
+import os
+import sys
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-import sys
-import os
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from torchbridge.advanced_memory import (
-    DeepOptimizerStates,
-    InterleaveOffloadingOptimizer,
-    MemoryConfig,
     AdaptiveCheckpointing,
+    DeepOptimizerStates,
     DynamicMemoryPool,
-    LossyGradientCompression
+    LossyGradientCompression,
+    MemoryConfig,
 )
 
 
@@ -252,7 +252,7 @@ def demo_gradient_compression(device, quick_mode=False):
 
 def run_comprehensive_demo(device, quick_mode=False):
     """Run all advanced memory demos"""
-    print(f"🚀 Advanced Memory Optimization: Comprehensive Demo")
+    print("🚀 Advanced Memory Optimization: Comprehensive Demo")
     print(f"📱 Device: {device}")
     print(f"⚡ Mode: {'Quick' if quick_mode else 'Full'}")
     print("=" * 60)

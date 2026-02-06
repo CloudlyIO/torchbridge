@@ -16,10 +16,8 @@ Approved root .md files (MUST remain constant):
 Version: 0.3.4
 """
 
-import sys
 import subprocess
-from pathlib import Path
-from typing import List, Tuple
+import sys
 
 # Approved root-level .md files (these are the ONLY allowed ones)
 APPROVED_ROOT_MD_FILES = {
@@ -41,7 +39,7 @@ REPORT_PATTERNS = [
 ]
 
 
-def get_staged_files() -> List[str]:
+def get_staged_files() -> list[str]:
     """Get list of staged files."""
     result = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=A"],
@@ -51,7 +49,7 @@ def get_staged_files() -> List[str]:
     return [f for f in result.stdout.strip().split("\n") if f]
 
 
-def check_root_md_files(staged_files: List[str]) -> Tuple[bool, List[str]]:
+def check_root_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for unauthorized root .md files."""
     violations = []
 
@@ -64,7 +62,7 @@ def check_root_md_files(staged_files: List[str]) -> Tuple[bool, List[str]]:
     return len(violations) == 0, violations
 
 
-def check_report_files(staged_files: List[str]) -> Tuple[bool, List[str]]:
+def check_report_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for report files that should be in /local."""
     violations = []
 
@@ -78,7 +76,7 @@ def check_report_files(staged_files: List[str]) -> Tuple[bool, List[str]]:
     return len(violations) == 0, violations
 
 
-def check_docs_md_files(staged_files: List[str]) -> Tuple[bool, List[str]]:
+def check_docs_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for new .md files in docs/ directory."""
     new_docs = []
 

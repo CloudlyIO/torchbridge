@@ -13,22 +13,24 @@ Hardware: Works on all platforms with educational focus
 Runtime: 3-4 minutes
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import argparse
+import time
+from typing import Any
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-from typing import Dict, List, Tuple, Optional, Any
 
 
 class ProductionModel(nn.Module):
     """Representative production model for optimization demonstration."""
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         super().__init__()
         self.config = config
 
@@ -123,9 +125,9 @@ class ProductionOptimizationPipeline:
         self.device = device
         self.optimization_history = []
 
-    def analyze_model(self, model: nn.Module) -> Dict[str, Any]:
+    def analyze_model(self, model: nn.Module) -> dict[str, Any]:
         """Analyze model for optimization opportunities."""
-        print(f"\n🔍 Model Analysis Phase")
+        print("\n🔍 Model Analysis Phase")
         print("-" * 30)
 
         analysis = {
@@ -152,11 +154,11 @@ class ProductionOptimizationPipeline:
 
         analysis['optimization_opportunities'] = opportunities
 
-        print(f"  📊 Model Statistics:")
+        print("  📊 Model Statistics:")
         print(f"     Total parameters: {analysis['total_parameters']:,}")
         print(f"     Model size: {analysis['model_size_mb']:.1f} MB")
         print(f"     Linear layers: {analysis['linear_layers']}")
-        print(f"  🎯 Optimization opportunities:")
+        print("  🎯 Optimization opportunities:")
         for opportunity in opportunities:
             print(f"     • {opportunity}")
 
@@ -203,7 +205,7 @@ class ProductionOptimizationPipeline:
         return optimized_model
 
     def benchmark_performance(self, original_model: nn.Module, optimized_model: nn.Module,
-                             sample_input: torch.Tensor, strategy: str) -> Dict:
+                             sample_input: torch.Tensor, strategy: str) -> dict:
         """Benchmark original vs optimized model performance."""
         print(f"\n📊 Performance Benchmarking: {strategy}")
         print("-" * 40)
@@ -257,7 +259,7 @@ class ProductionOptimizationPipeline:
 
         speedup = original_perf['mean_time_ms'] / optimized_perf['mean_time_ms']
 
-        print(f"\n  📈 Results:")
+        print("\n  📈 Results:")
         print(f"     Original:  {original_perf['mean_time_ms']:.2f}ms ± {original_perf['std_time_ms']:.1f}")
         print(f"     Optimized: {optimized_perf['mean_time_ms']:.2f}ms ± {optimized_perf['std_time_ms']:.1f}")
         print(f"     Speedup:   {speedup:.2f}x")
@@ -272,7 +274,7 @@ class ProductionOptimizationPipeline:
 
 def demonstrate_deployment_strategies():
     """Demonstrate different deployment optimization strategies."""
-    print(f"\n🚀 Deployment Strategy Overview")
+    print("\n🚀 Deployment Strategy Overview")
     print("-" * 40)
 
     strategies = {
@@ -335,7 +337,7 @@ def demonstrate_deployment_strategies():
 
 def simulate_production_monitoring():
     """Simulate production monitoring and alerting."""
-    print(f"\n📊 Production Monitoring Simulation")
+    print("\n📊 Production Monitoring Simulation")
     print("-" * 40)
 
     # Simulate 24-hour metrics
@@ -375,25 +377,25 @@ def simulate_production_monitoring():
         for metric, value in category_metrics.items():
             print(f"  {metric}: {value}")
 
-    print(f"\n🚨 Alert Conditions:")
-    print(f"  • P99 Latency > 60ms: ✅ Normal")
-    print(f"  • Error Rate > 0.1%: ✅ Normal")
-    print(f"  • GPU Util < 30%: ✅ Normal")
-    print(f"  • Memory > 20GB: ✅ Normal")
+    print("\n🚨 Alert Conditions:")
+    print("  • P99 Latency > 60ms: ✅ Normal")
+    print("  • Error Rate > 0.1%: ✅ Normal")
+    print("  • GPU Util < 30%: ✅ Normal")
+    print("  • Memory > 20GB: ✅ Normal")
 
-    print(f"\n💡 Optimization Recommendations:")
-    print(f"  • GPU utilization could be increased for better cost efficiency")
-    print(f"  • Consider batch size tuning for improved throughput")
-    print(f"  • Monitor for potential auto-scaling optimization")
+    print("\n💡 Optimization Recommendations:")
+    print("  • GPU utilization could be increased for better cost efficiency")
+    print("  • Consider batch size tuning for improved throughput")
+    print("  • Monitor for potential auto-scaling optimization")
 
 
-def demonstrate_optimization_workflow(device: torch.device, config: Dict):
+def demonstrate_optimization_workflow(device: torch.device, config: dict):
     """Demonstrate complete optimization workflow."""
-    print(f"\n🔧 Production Optimization Workflow")
+    print("\n🔧 Production Optimization Workflow")
     print("=" * 50)
 
     # Create production model
-    print(f"\n1️⃣ Model Creation and Analysis")
+    print("\n1️⃣ Model Creation and Analysis")
     model = ProductionModel(config).to(device)
 
     total_params = sum(p.numel() for p in model.parameters())
@@ -411,14 +413,14 @@ def demonstrate_optimization_workflow(device: torch.device, config: Dict):
     seq_len = config['seq_len']
     input_ids = torch.randint(0, config['vocab_size'], (batch_size, seq_len), device=device)
 
-    print(f"\n2️⃣ Optimization Strategy Selection")
+    print("\n2️⃣ Optimization Strategy Selection")
     # Test different strategies
     strategies = ["development", "staging", "production"]
 
     all_results = []
 
     for strategy in strategies:
-        print(f"\n" + "="*60)
+        print("\n" + "="*60)
         print(f"Testing {strategy.upper()} Strategy")
         print("="*60)
 
@@ -433,7 +435,7 @@ def demonstrate_optimization_workflow(device: torch.device, config: Dict):
         all_results.append(perf_results)
 
     # Summary comparison
-    print(f"\n" + "="*60)
+    print("\n" + "="*60)
     print("3️⃣ Strategy Comparison Summary")
     print("="*60)
 
@@ -500,16 +502,16 @@ def main():
     demonstrate_deployment_strategies()
     simulate_production_monitoring()
 
-    print(f"\n🎉 Production Deployment Demo Completed!")
-    print(f"\n💡 Key Production Insights:")
-    print(f"   • Choose optimization strategy based on deployment stage")
-    print(f"   • Development prioritizes iteration speed over performance")
-    print(f"   • Staging balances performance with debuggability")
-    print(f"   • Production maximizes performance with comprehensive monitoring")
-    print(f"   • Monitor performance, resource usage, and cost efficiency")
-    print(f"   • Implement automated alerting and optimization recommendations")
+    print("\n🎉 Production Deployment Demo Completed!")
+    print("\n💡 Key Production Insights:")
+    print("   • Choose optimization strategy based on deployment stage")
+    print("   • Development prioritizes iteration speed over performance")
+    print("   • Staging balances performance with debuggability")
+    print("   • Production maximizes performance with comprehensive monitoring")
+    print("   • Monitor performance, resource usage, and cost efficiency")
+    print("   • Implement automated alerting and optimization recommendations")
 
-    print(f"\n✅ Demo completed! Try --quick for faster testing.")
+    print("\n✅ Demo completed! Try --quick for faster testing.")
 
 
 if __name__ == "__main__":

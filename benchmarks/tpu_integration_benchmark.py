@@ -11,36 +11,37 @@ Usage:
 """
 
 import argparse
-import time
-import torch
-import torch.nn as nn
-import traceback
 import gc
 import os
 import sys
-from typing import Dict, Any, List, Tuple, Optional
+import time
+import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+import torch
+import torch.nn as nn
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion, TPUTopology
 from torchbridge.backends.tpu import (
     TPUBackend,
+    TPUMemoryManager,
     TPUOptimizer,
     XLACompiler,
-    TPUMemoryManager,
     XLADeviceManager,
     XLADistributedTraining,
     XLAOptimizations,
     XLAUtilities,
-    create_xla_integration
+    create_xla_integration,
 )
+from torchbridge.core.config import TorchBridgeConfig
 from torchbridge.validation.unified_validator import (
     validate_tpu_configuration,
-    validate_tpu_model
+    validate_tpu_model,
 )
 
 
@@ -50,14 +51,14 @@ class BenchmarkResult:
     name: str
     duration: float
     success: bool
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    metrics: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
 
 @dataclass
 class BenchmarkSuite:
     """Complete benchmark suite results."""
-    results: List[BenchmarkResult] = field(default_factory=list)
+    results: list[BenchmarkResult] = field(default_factory=list)
     total_duration: float = 0.0
 
     @property
@@ -88,7 +89,7 @@ class TPUBenchmarkRunner:
         self.quick_mode = quick_mode
         self.config = TorchBridgeConfig()
 
-        print(f"🚀 TPU Integration Benchmark Suite")
+        print("🚀 TPU Integration Benchmark Suite")
         print(f"   Device: {device}")
         print(f"   Quick mode: {quick_mode}")
         print(f"   TPU Version: {self.config.hardware.tpu.version.value}")
@@ -635,12 +636,12 @@ class TPUBenchmarkRunner:
         print("🎯 TPU Integration Benchmark Results")
         print("="*70)
 
-        print(f"📈 Overall Statistics:")
+        print("📈 Overall Statistics:")
         print(f"   Total time: {suite.total_duration:.3f}s")
         print(f"   Success rate: {suite.success_rate:.1%}")
         print(f"   Successful tests: {suite.successful_tests}/{len(suite.results)}")
 
-        print(f"\n📋 Individual Results:")
+        print("\n📋 Individual Results:")
         for result in suite.results:
             status = "✅" if result.success else "❌"
             print(f"   {status} {result.name}: {result.duration:.3f}s")
@@ -660,7 +661,7 @@ class TPUBenchmarkRunner:
             elif not result.success:
                 print(f"      Error: {result.error}")
 
-        print(f"\n🎉 Benchmark completed!")
+        print("\n🎉 Benchmark completed!")
 
 
 def main():

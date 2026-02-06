@@ -9,10 +9,11 @@ Demonstrates the MoE implementation including:
 - Training with auxiliary losses
 """
 
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
 
 
 def demo_basic_moe():
@@ -57,8 +58,12 @@ def demo_moe_types():
     print("=" * 60)
 
     from torchbridge import (
-        MoEConfig, MoELayer, SparseMoELayer,
-        SwitchTransformerMoE, GLaMStyleMoE, create_moe_layer
+        GLaMStyleMoE,
+        MoEConfig,
+        MoELayer,
+        SparseMoELayer,
+        SwitchTransformerMoE,
+        create_moe_layer,
     )
     from torchbridge.mixture_of_experts.moe_layers import AdaptiveMoELayer
 
@@ -109,9 +114,12 @@ def demo_routing_strategies():
     print("Demo 3: Routing Strategies")
     print("=" * 60)
 
-    from torchbridge import TopKRouter, SwitchRouter
+    from torchbridge import SwitchRouter, TopKRouter
     from torchbridge.mixture_of_experts.routing import (
-        HashRouter, LearnedRouter, DynamicCapacityRouter, create_router
+        DynamicCapacityRouter,
+        HashRouter,
+        LearnedRouter,
+        create_router,
     )
 
     hidden_size = 256
@@ -122,20 +130,20 @@ def demo_routing_strategies():
     # TopK Router (standard)
     topk_router = TopKRouter(hidden_size, num_experts, top_k=2)
     output = topk_router(x)
-    print(f"TopK Router:")
+    print("TopK Router:")
     print(f"  Expert indices shape: {output['expert_indices'].shape}")
     print(f"  Expert weights shape: {output['expert_weights'].shape}")
 
     # Switch Router (top-1)
     switch_router = SwitchRouter(hidden_size, num_experts)
     output = switch_router(x)
-    print(f"Switch Router (top-1):")
+    print("Switch Router (top-1):")
     print(f"  Expert indices shape: {output['expert_indices'].shape}")
 
     # Hash Router (deterministic)
     hash_router = HashRouter(hidden_size, num_experts, top_k=2)
     output = hash_router(x)
-    print(f"Hash Router:")
+    print("Hash Router:")
     print(f"  Deterministic expert assignment: {output['expert_indices'][:5].tolist()}")
 
     # Learned Router (neural network gating)
@@ -144,7 +152,7 @@ def demo_routing_strategies():
         router_hidden_size=128, num_router_layers=2
     )
     output = learned_router(x)
-    print(f"Learned Router:")
+    print("Learned Router:")
     print(f"  Router features shape: {output['router_features'].shape}")
 
     # Dynamic Capacity Router
@@ -153,7 +161,7 @@ def demo_routing_strategies():
         initial_capacity_factor=1.25
     )
     output = dynamic_router(x)
-    print(f"Dynamic Capacity Router:")
+    print("Dynamic Capacity Router:")
     print(f"  Complexity scores shape: {output['complexity_scores'].shape}")
 
     # Using factory
@@ -173,7 +181,9 @@ def demo_expert_networks():
 
     from torchbridge import FeedForwardExpert
     from torchbridge.mixture_of_experts.expert_networks import (
-        ConvolutionalExpert, AttentionExpert, ParameterEfficientExpert
+        AttentionExpert,
+        ConvolutionalExpert,
+        ParameterEfficientExpert,
     )
 
     hidden_size = 256
@@ -265,7 +275,7 @@ def demo_load_balancing():
     x = torch.randn(4, 32, 256)
 
     output, aux_losses = moe(x, return_router_logits=True)
-    print(f"\nMoE with auxiliary losses:")
+    print("\nMoE with auxiliary losses:")
     for name, loss in aux_losses.items():
         if loss.numel() == 1:  # Only scalar losses
             print(f"  {name}: {loss.item():.6f}")
@@ -338,7 +348,7 @@ def demo_training():
 
     # Check expert utilization
     stats = model.moe.get_expert_utilization_stats()
-    print(f"\nExpert utilization after training:")
+    print("\nExpert utilization after training:")
     print(f"  Balance: {stats['expert_balance']:.3f}")
     print(f"  Efficiency: {stats['expert_efficiency']:.3f}")
 
@@ -427,7 +437,7 @@ def demo_transformer_integration():
     input_ids = torch.randint(0, 1000, (2, 32))
     logits, aux_losses = model(input_ids, return_aux_loss=True)
 
-    print(f"MoE Transformer:")
+    print("MoE Transformer:")
     print(f"  Input: {input_ids.shape}")
     print(f"  Output logits: {logits.shape}")
     print(f"  Auxiliary losses: {len(aux_losses)} items")
@@ -494,11 +504,11 @@ def demo_performance():
     ffn_params = sum(p.numel() for p in ffn_layer.parameters())
 
     print(f"Input shape: ({batch_size}, {seq_len}, {hidden_size})")
-    print(f"\nStandard FFN:")
+    print("\nStandard FFN:")
     print(f"  Parameters: {ffn_params:,}")
     print(f"  Time: {ffn_time:.2f} ms")
 
-    print(f"\nMoE (8 experts, top-2):")
+    print("\nMoE (8 experts, top-2):")
     print(f"  Parameters: {moe_params:,}")
     print(f"  Time: {moe_time:.2f} ms")
     print(f"  Parameter ratio: {moe_params/ffn_params:.1f}x")

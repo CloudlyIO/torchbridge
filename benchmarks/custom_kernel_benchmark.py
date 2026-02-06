@@ -13,21 +13,20 @@ Performance Targets:
 - Overall Phase 4A: 5-10x improvement for target operations
 """
 
+import statistics
+import sys
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import statistics
-from dataclasses import dataclass
-from typing import List, Dict, Optional, Callable, Tuple
-import sys
 
 # Add src to path if running directly
 if __name__ == "__main__":
     sys.path.insert(0, 'src')
 
-from torchbridge.core.config import TorchBridgeConfig
-from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
 
 
 @dataclass
@@ -40,7 +39,7 @@ class BenchmarkResult:
     max_ms: float
     median_ms: float
     iterations: int
-    speedup_vs_baseline: Optional[float] = None
+    speedup_vs_baseline: float | None = None
 
 
 class KernelBenchmarkSuite:
@@ -70,7 +69,7 @@ class KernelBenchmarkSuite:
         self.warmup_iterations = warmup_iterations
         self.benchmark_iterations = benchmark_iterations
         self.verbose = verbose
-        self.results: List[BenchmarkResult] = []
+        self.results: list[BenchmarkResult] = []
 
     def benchmark_function(
         self,
@@ -168,8 +167,8 @@ def benchmark_flash_attention(
     seq_len: int = 512,
     head_dim: int = 64,
     device: torch.device = torch.device('cpu'),
-    benchmark_suite: Optional[KernelBenchmarkSuite] = None
-) -> Dict[str, BenchmarkResult]:
+    benchmark_suite: KernelBenchmarkSuite | None = None
+) -> dict[str, BenchmarkResult]:
     """
     Benchmark FlashAttention-3 vs PyTorch SDPA.
 
@@ -188,7 +187,7 @@ def benchmark_flash_attention(
         benchmark_suite = KernelBenchmarkSuite(device)
 
     print(f"\n{'=' * 80}")
-    print(f"FlashAttention Benchmark")
+    print("FlashAttention Benchmark")
     print(f"  Shape: [{batch_size}, {num_heads}, {seq_len}, {head_dim}]")
     print(f"  Device: {device}")
     print(f"{'=' * 80}")
@@ -233,11 +232,11 @@ def benchmark_flash_attention(
             print(f"\n✅ Performance target met: {speedup:.2f}x >= 2.0x")
         else:
             print(f"\n⚠️  Performance target not met: {speedup:.2f}x < 2.0x")
-            print(f"   Note: May be due to overhead on CPU or small problem size")
+            print("   Note: May be due to overhead on CPU or small problem size")
 
     except ImportError as e:
         print(f"\n⚠️  FlashAttention-3 not available: {e}")
-        print(f"   Skipping custom kernel benchmark")
+        print("   Skipping custom kernel benchmark")
 
     return results
 
@@ -250,8 +249,8 @@ def benchmark_fused_linear_activation(
     out_features: int = 4096,
     activation: str = "gelu",
     device: torch.device = torch.device('cpu'),
-    benchmark_suite: Optional[KernelBenchmarkSuite] = None
-) -> Dict[str, BenchmarkResult]:
+    benchmark_suite: KernelBenchmarkSuite | None = None
+) -> dict[str, BenchmarkResult]:
     """
     Benchmark Fused Linear+Activation vs separate operations.
 
@@ -329,18 +328,18 @@ def benchmark_fused_linear_activation(
             print(f"\n✅ Performance target met: {speedup:.2f}x >= 1.8x")
         else:
             print(f"\n⚠️  Performance target not met: {speedup:.2f}x < 1.8x")
-            print(f"   Note: May be due to overhead on CPU or small problem size")
+            print("   Note: May be due to overhead on CPU or small problem size")
 
     except ImportError as e:
         print(f"\n⚠️  Fused {activation.upper()} not available: {e}")
-        print(f"   Skipping custom kernel benchmark")
+        print("   Skipping custom kernel benchmark")
 
     return results
 
 
 # ===== Main Benchmark Runner =====
 
-def run_all_benchmarks(device: Optional[torch.device] = None):
+def run_all_benchmarks(device: torch.device | None = None):
     """
     Run all custom kernel benchmarks.
 
@@ -352,9 +351,9 @@ def run_all_benchmarks(device: Optional[torch.device] = None):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     print(f"\n{'#' * 80}")
-    print(f"# Custom Kernel Benchmark Suite")
+    print("# Custom Kernel Benchmark Suite")
     print(f"# Device: {device}")
-    print(f"# Warmup: 10 iterations, Benchmark: 100 iterations")
+    print("# Warmup: 10 iterations, Benchmark: 100 iterations")
     print(f"{'#' * 80}")
 
     benchmark_suite = KernelBenchmarkSuite(
@@ -431,17 +430,17 @@ def run_all_benchmarks(device: Optional[torch.device] = None):
         print(f"\nAverage speedup across all benchmarks: {avg_speedup:.2f}x")
 
         if avg_speedup >= 2.0:
-            print(f"✅ Overall performance target met!")
+            print("✅ Overall performance target met!")
         else:
-            print(f"⚠️  Overall performance target not met on this device")
+            print("⚠️  Overall performance target not met on this device")
             if device.type == 'cpu':
-                print(f"   Note: Significant speedups typically observed on CUDA GPUs")
+                print("   Note: Significant speedups typically observed on CUDA GPUs")
     else:
-        print(f"\n⚠️  No custom kernels were benchmarked")
-        print(f"   This may be because:")
-        print(f"   - CUDA is not available")
-        print(f"   - Custom kernels not compiled")
-        print(f"   - Running on CPU")
+        print("\n⚠️  No custom kernels were benchmarked")
+        print("   This may be because:")
+        print("   - CUDA is not available")
+        print("   - Custom kernels not compiled")
+        print("   - Running on CPU")
 
     return all_results
 
@@ -451,5 +450,5 @@ if __name__ == "__main__":
     results = run_all_benchmarks()
 
     print(f"\n{'#' * 80}")
-    print(f"# Benchmark complete!")
+    print("# Benchmark complete!")
     print(f"{'#' * 80}\n")

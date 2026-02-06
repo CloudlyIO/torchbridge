@@ -28,7 +28,7 @@ import os
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -100,8 +100,8 @@ class SmallModelBenchmark:
 
     def __init__(
         self,
-        batch_sizes: List[int] = None,
-        seq_lengths: List[int] = None,
+        batch_sizes: list[int] = None,
+        seq_lengths: list[int] = None,
         warmup_iterations: int = 10,
         benchmark_iterations: int = 100,
         output_dir: str = "benchmark_results"
@@ -113,12 +113,12 @@ class SmallModelBenchmark:
         self.output_dir = output_dir
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.results: List[BenchmarkResult] = []
-        self.comparisons: List[ComparisonResult] = []
+        self.results: list[BenchmarkResult] = []
+        self.comparisons: list[ComparisonResult] = []
 
         os.makedirs(output_dir, exist_ok=True)
 
-    def _get_memory_stats(self) -> Dict[str, float]:
+    def _get_memory_stats(self) -> dict[str, float]:
         """Get current memory statistics."""
         if self.device.type == "cuda":
             return {
@@ -139,7 +139,7 @@ class SmallModelBenchmark:
         self,
         batch_size: int,
         seq_length: int
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """Create inputs for encoder models (BERT, DistilBERT)."""
         return {
             "input_ids": torch.randint(0, 30000, (batch_size, seq_length), device=self.device),
@@ -150,7 +150,7 @@ class SmallModelBenchmark:
         self,
         batch_size: int,
         seq_length: int
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """Create inputs for decoder models (GPT-2)."""
         return {
             "input_ids": torch.randint(0, 50000, (batch_size, seq_length), device=self.device),
@@ -159,9 +159,9 @@ class SmallModelBenchmark:
     def _benchmark_model(
         self,
         model: nn.Module,
-        inputs: Dict[str, torch.Tensor],
+        inputs: dict[str, torch.Tensor],
         is_generation: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run benchmark on a model."""
         latencies = []
 
@@ -276,9 +276,9 @@ class SmallModelBenchmark:
 
         try:
             from torchbridge.models.text import (
-                TextModelOptimizer,
+                OptimizationMode,
                 TextModelConfig,
-                OptimizationMode
+                TextModelOptimizer,
             )
 
             config = TextModelConfig(
@@ -426,7 +426,7 @@ class SmallModelBenchmark:
             logger.error(f"Decoder baseline benchmark failed: {e}")
             raise
 
-    def run_encoder_benchmarks(self, models: List[str] = None) -> List[BenchmarkResult]:
+    def run_encoder_benchmarks(self, models: list[str] = None) -> list[BenchmarkResult]:
         """Run all encoder model benchmarks."""
         models = models or self.ENCODER_MODELS
         results = []
@@ -477,7 +477,7 @@ class SmallModelBenchmark:
         self.results.extend(results)
         return results
 
-    def run_decoder_benchmarks(self, models: List[str] = None) -> List[BenchmarkResult]:
+    def run_decoder_benchmarks(self, models: list[str] = None) -> list[BenchmarkResult]:
         """Run all decoder model benchmarks."""
         models = models or self.DECODER_MODELS
         results = []

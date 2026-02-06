@@ -6,10 +6,10 @@ Quick demonstration of our enhanced benchmark framework comparing
 against the absolute latest industry developments (latest).
 """
 
-import sys
-import os
-import time
 import argparse
+import os
+import sys
+import time
 
 # Add paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
@@ -27,7 +27,10 @@ def quick_cutting_edge_demo():
     print()
 
     try:
-        from enhanced_benchmark_runner import EnhancedBenchmarkRunner, create_default_config
+        from enhanced_benchmark_runner import (
+            EnhancedBenchmarkRunner,
+            create_default_config,
+        )
 
         # Create lightweight configuration for quick demo
         config = create_default_config()
@@ -57,7 +60,7 @@ def quick_cutting_edge_demo():
 
         # Show performance comparison
         if summary['average_speedups']:
-            print(f"\n🏆 Performance Comparison:")
+            print("\n🏆 Performance Comparison:")
             print("-" * 30)
 
             sorted_impls = sorted(
@@ -72,7 +75,7 @@ def quick_cutting_edge_demo():
                 print(f"   {status_emoji} {impl_name}: {speedup:.2f}x speedup")
 
         # Show cutting-edge analysis
-        print(f"\n🔬 Cutting-Edge Technology Analysis:")
+        print("\n🔬 Cutting-Edge Technology Analysis:")
         print("-" * 40)
 
         cutting_edge_techs = {
@@ -93,13 +96,13 @@ def quick_cutting_edge_demo():
                 print(f"   📋 {tech}: {description} (Available)")
 
         # Show recommendations
-        print(f"\n💡 Technology Recommendations:")
+        print("\n💡 Technology Recommendations:")
         print("-" * 35)
         for rec in results['recommendations']:
             print(f"   {rec}")
 
         # Highlight cutting-edge features
-        print(f"\n🌟 Cutting-Edge Features Demonstrated:")
+        print("\n🌟 Cutting-Edge Features Demonstrated:")
         print("-" * 45)
         print("   🔄 Latest latest optimization techniques")
         print("   📊 Production-scale performance comparison")
@@ -122,8 +125,8 @@ def validate_framework():
     print("=" * 50)
 
     try:
-        from cutting_edge_baselines import create_cutting_edge_baselines
         import torch
+        from cutting_edge_baselines import create_cutting_edge_baselines
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -149,13 +152,15 @@ def validate_framework():
 
         # Test framework import
         print("\n📦 Testing enhanced framework import...")
-        from enhanced_benchmark_runner import EnhancedBenchmarkRunner, create_default_config
+        from enhanced_benchmark_runner import (
+            create_default_config,
+        )
 
         config = create_default_config()
-        print(f"   ✅ Enhanced benchmark runner available")
+        print("   ✅ Enhanced benchmark runner available")
         print(f"   ✅ Default config: {len(config.scenarios)} scenarios")
 
-        print(f"\n🎉 Cutting-Edge Framework Validation Complete!")
+        print("\n🎉 Cutting-Edge Framework Validation Complete!")
         print("   Framework ready for state-of-the-art comparison")
         return True
 
@@ -183,7 +188,7 @@ def main():
         success = quick_cutting_edge_demo()
 
     if success:
-        print(f"\n🚀 Ready for cutting-edge benchmarking!")
+        print("\n🚀 Ready for cutting-edge benchmarking!")
         print("   This framework compares against the absolute latest:")
         print("     • Flash Attention 3 (current)")
         print("     • vLLM production inference")
@@ -191,7 +196,7 @@ def main():
         print("     • Mamba O(n) architectures")
         print("   Use enhanced_benchmark_runner.py for full analysis")
     else:
-        print(f"\n⚠️ Some components need attention")
+        print("\n⚠️ Some components need attention")
         print("   Framework is available but may need dependency installation")
 
     return success

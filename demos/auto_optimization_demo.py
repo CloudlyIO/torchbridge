@@ -12,16 +12,17 @@ This demo shows:
 5. Simple one-line model optimization
 """
 
+import time
+from typing import Any
+
 import torch
 import torch.nn as nn
-import time
-from typing import Dict, Any
-
-from torchbridge.core.management import get_manager
-from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
 
 # Use shared utilities
 from demos.shared.utils import print_section
+
+from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
+from torchbridge.core.management import get_manager
 
 
 # Simple test models
@@ -79,7 +80,7 @@ def print_hardware_info(profile):
     if profile.total_memory_gb > 0:
         print(f"Total Memory: {profile.total_memory_gb:.2f} GB")
 
-    print(f"\nCapabilities:")
+    print("\nCapabilities:")
     if profile.capabilities:
         for cap in profile.capabilities:
             print(f"  ✓ {cap.value}")
@@ -87,14 +88,14 @@ def print_hardware_info(profile):
         print("  None (CPU fallback)")
 
 
-def print_recommendations(recommendations: Dict[str, Any]):
+def print_recommendations(recommendations: dict[str, Any]):
     """Print optimization recommendations."""
     print(f"Detected Hardware: {recommendations['hardware_type']}")
     print(f"Device: {recommendations['device_name']}")
     print(f"Recommended Backend: {recommendations['backend']}")
     print(f"Recommended Optimization Level: {recommendations['optimization_level']}")
 
-    print(f"\nCapabilities:")
+    print("\nCapabilities:")
     if recommendations['capabilities']:
         for cap in recommendations['capabilities']:
             print(f"  ✓ {cap}")
@@ -102,7 +103,7 @@ def print_recommendations(recommendations: Dict[str, Any]):
         print("  None (CPU fallback)")
 
     if recommendations['optimizations']:
-        print(f"\nAvailable Optimizations:")
+        print("\nAvailable Optimizations:")
         for opt in recommendations['optimizations']:
             print(f"  • {opt['type']}: {opt['benefit']}")
             print(f"    Requirement: {opt['requirement']}")
@@ -175,7 +176,7 @@ def demo_3_auto_optimize_simple():
     manager = get_manager()
     optimized_model = manager.auto_optimize(model)
 
-    print(f"\n✅ Model optimized!")
+    print("\n✅ Model optimized!")
     print(f"Backend used: {manager.get_hardware_profile().hardware_type.value}")
 
     # Test the optimized model
@@ -209,8 +210,8 @@ def demo_4_auto_optimize_with_options():
         for_inference=True
     )
 
-    print(f"✅ Model optimized for inference!")
-    print(f"Optimization level: aggressive")
+    print("✅ Model optimized for inference!")
+    print("Optimization level: aggressive")
     print(f"Training mode: {optimized_model.training}")
 
     # Test the optimized model
@@ -278,7 +279,7 @@ def demo_6_multiple_models():
         optimized_model = manager.auto_optimize(model)
         optimized_models[name] = optimized_model
 
-        print(f"    ✅ Optimized!")
+        print("    ✅ Optimized!")
 
     print(f"\n✅ All {len(models)} models optimized successfully!")
     print(f"Backend used: {manager.get_hardware_profile().hardware_type.value}")
@@ -304,7 +305,7 @@ def demo_7_inference_mode():
         for_inference=True
     )
 
-    print(f"\n✅ Model optimized for inference!")
+    print("\n✅ Model optimized for inference!")
     print(f"Training mode: {optimized_model.training}")
 
     # Verify inference works

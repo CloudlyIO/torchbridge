@@ -18,26 +18,30 @@ Phase 2: Historical Analysis & Reporting (✅ Complete)
 """
 
 from .baseline_manager import BaselineManager, BaselineMetrics
-from .regression_detector import RegressionDetector, RegressionResult, RegressionSeverity
-from .threshold_manager import ThresholdManager, ThresholdConfig
 from .historical_analyzer import (
-    HistoricalAnalyzer,
-    TrendAnalysis,
     AnomalyReport,
+    AnomalyType,
+    HistoricalAnalyzer,
     PerformanceSummary,
+    TrendAnalysis,
     TrendDirection,
-    AnomalyType
+)
+from .regression_detector import (
+    RegressionDetector,
+    RegressionResult,
+    RegressionSeverity,
 )
 from .reporting import (
-    RegressionReporter,
-    DashboardGenerator,
-    Report,
+    ChartType,
     CISummary,
-    ExecutiveSummary,
     Dashboard,
+    DashboardGenerator,
+    ExecutiveSummary,
+    RegressionReporter,
+    Report,
     ReportFormat,
-    ChartType
 )
+from .threshold_manager import ThresholdConfig, ThresholdManager
 
 __all__ = [
     # Phase 1 - Core Infrastructure

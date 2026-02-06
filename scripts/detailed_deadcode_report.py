@@ -6,11 +6,9 @@ for removal and cleanup.
 """
 
 import ast
-import re
-from pathlib import Path
-from typing import Dict, List, Set, Tuple
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -28,9 +26,9 @@ class DetailedDeadCodeAnalyzer:
 
     def __init__(self, src_path: str = "src"):
         self.src_path = Path(src_path)
-        self.issues: List[DeadCodeIssue] = []
+        self.issues: list[DeadCodeIssue] = []
 
-    def analyze(self) -> Dict[str, List[DeadCodeIssue]]:
+    def analyze(self) -> dict[str, list[DeadCodeIssue]]:
         """Run detailed analysis"""
         print("🔍 Running detailed dead code analysis...")
 
@@ -66,10 +64,10 @@ class DetailedDeadCodeAnalyzer:
                         self.issues.append(DeadCodeIssue(
                             file_path=str(file_path),
                             issue_type="legacy_file",
-                            issue_description=f"Legacy file that appears unused",
+                            issue_description="Legacy file that appears unused",
                             line_number=1,
                             code_snippet=f"File: {file_path.name}",
-                            recommendation=f"Consider removing if not needed"
+                            recommendation="Consider removing if not needed"
                         ))
 
     def _find_dead_code_patterns(self):
@@ -79,7 +77,7 @@ class DetailedDeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
                     lines = content.split('\n')
 
@@ -114,7 +112,7 @@ class DetailedDeadCodeAnalyzer:
                             recommendation="Remove debug prints or complete TODOs"
                         ))
 
-            except Exception as e:
+            except Exception:
                 continue
 
     def _find_excessive_unused_imports(self):
@@ -124,7 +122,7 @@ class DetailedDeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -167,7 +165,7 @@ class DetailedDeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -205,7 +203,7 @@ class DetailedDeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -243,7 +241,7 @@ class DetailedDeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 if file_name in content:
@@ -265,7 +263,7 @@ class DetailedDeadCodeAnalyzer:
                 return True
         return False
 
-    def _categorize_issues(self) -> Dict[str, List[DeadCodeIssue]]:
+    def _categorize_issues(self) -> dict[str, list[DeadCodeIssue]]:
         """Categorize issues by type"""
         categorized = defaultdict(list)
 
@@ -274,7 +272,7 @@ class DetailedDeadCodeAnalyzer:
 
         return categorized
 
-    def generate_cleanup_plan(self) -> List[str]:
+    def generate_cleanup_plan(self) -> list[str]:
         """Generate specific cleanup actions"""
         categorized = self._categorize_issues()
         actions = []
@@ -307,7 +305,7 @@ def create_detailed_report():
     analyzer = DetailedDeadCodeAnalyzer()
     categorized_issues = analyzer.analyze()
 
-    print(f"\n📋 DETAILED DEAD CODE ANALYSIS")
+    print("\n📋 DETAILED DEAD CODE ANALYSIS")
     print("=" * 50)
 
     total_issues = sum(len(issues) for issues in categorized_issues.values())
@@ -325,7 +323,7 @@ def create_detailed_report():
         if len(issues) > 3:
             print(f"     ... and {len(issues) - 3} more")
 
-    print(f"\n🎯 CLEANUP PLAN")
+    print("\n🎯 CLEANUP PLAN")
     print("=" * 30)
 
     cleanup_actions = analyzer.generate_cleanup_plan()

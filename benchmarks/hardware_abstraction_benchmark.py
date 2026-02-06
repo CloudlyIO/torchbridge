@@ -12,35 +12,42 @@ Comprehensive benchmarking suite for the Hardware Abstraction Layer:
 This benchmark validates that HAL provides value without significant overhead.
 """
 
+import argparse
+import logging
+import statistics
 import sys
 import time
-import statistics
-import argparse
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
-import logging
+from typing import Any
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
-    import numpy as np
+
+    # Import optimization components
+    from torchbridge.core.components import (
+        OptimizedMultiHeadAttention as AttentionLayer,
+    )
+    from torchbridge.core.optimized_layers import FusedGELU
+    from torchbridge.distributed_scale.hardware_adapter import HardwareAdapter
 
     # Hardware abstraction imports
     from torchbridge.hardware.abstraction.hal_core import (
-        HardwareAbstractionLayer, DeviceSpec, HardwareCapabilities,
-        HardwareVendor, ComputeCapability
+        ComputeCapability,
+        DeviceSpec,
+        HardwareAbstractionLayer,
+        HardwareCapabilities,
+        HardwareVendor,
     )
     from torchbridge.hardware.abstraction.vendor_adapters import (
-        NVIDIAAdapter, IntelAdapter, CPUAdapter
+        CPUAdapter,
+        IntelAdapter,
+        NVIDIAAdapter,
     )
-    from torchbridge.distributed_scale.hardware_adapter import HardwareAdapter
-
-    # Import optimization components
-    from torchbridge.core.components import OptimizedMultiHeadAttention as AttentionLayer
-    from torchbridge.core.optimized_layers import FusedGELU
 
 except ImportError as e:
     print(f"❌ Import error: {e}")
@@ -71,14 +78,14 @@ class HALBenchmarkSuite:
         print(f" {title}")
         print(f"{'=' * 80}")
 
-    def measure_execution_time(self, func, *args, **kwargs) -> Tuple[Any, float]:
+    def measure_execution_time(self, func, *args, **kwargs) -> tuple[Any, float]:
         """Measure function execution time with high precision"""
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         return result, end_time - start_time
 
-    def benchmark_hal_overhead(self) -> Dict[str, Any]:
+    def benchmark_hal_overhead(self) -> dict[str, Any]:
         """Benchmark HAL overhead vs direct operations"""
         self.print_header("🔍 HAL Overhead Analysis")
 
@@ -167,19 +174,19 @@ class HALBenchmarkSuite:
             'capability_query': capability_overhead
         }
 
-        print(f"\n📈 Overhead Analysis Results:")
-        print(f"   Device Lookup:")
+        print("\n📈 Overhead Analysis Results:")
+        print("   Device Lookup:")
         print(f"     HAL: {hal_lookup_avg:.2f} μs")
         print(f"     Direct: {direct_lookup_avg:.2f} μs")
         print(f"     Overhead: {lookup_overhead:.1f}%")
-        print(f"   Capability Query:")
+        print("   Capability Query:")
         print(f"     HAL: {hal_capability_avg:.2f} μs")
         print(f"     Direct: {direct_capability_avg:.2f} μs")
         print(f"     Overhead: {capability_overhead:.1f}%")
 
         return results
 
-    def benchmark_device_discovery(self) -> Dict[str, Any]:
+    def benchmark_device_discovery(self) -> dict[str, Any]:
         """Benchmark hardware discovery performance"""
         self.print_header("🔍 Hardware Discovery Performance")
 
@@ -225,7 +232,7 @@ class HALBenchmarkSuite:
             fallback_std = statistics.stdev(results['fallback_discovery_times']) * 1000 if len(results['fallback_discovery_times']) > 1 else 0
             results['discovery_methods']['fallback'] = {'avg_ms': fallback_avg, 'std_ms': fallback_std}
 
-        print(f"\n📈 Discovery Performance Results:")
+        print("\n📈 Discovery Performance Results:")
         if 'hal' in results['discovery_methods']:
             hal_metrics = results['discovery_methods']['hal']
             print(f"   HAL Discovery: {hal_metrics['avg_ms']:.1f} ± {hal_metrics['std_ms']:.1f} ms")
@@ -240,7 +247,7 @@ class HALBenchmarkSuite:
 
         return results
 
-    def _fallback_device_discovery(self) -> Dict[str, List]:
+    def _fallback_device_discovery(self) -> dict[str, list]:
         """Fallback device discovery for comparison"""
         devices = {}
 
@@ -256,7 +263,7 @@ class HALBenchmarkSuite:
 
         return devices
 
-    def benchmark_mesh_creation(self) -> Dict[str, Any]:
+    def benchmark_mesh_creation(self) -> dict[str, Any]:
         """Benchmark device mesh creation performance"""
         self.print_header("🕸️  Device Mesh Creation Performance")
 
@@ -339,7 +346,7 @@ class HALBenchmarkSuite:
             results['topology_performance'][topology] = topology_times
 
         # Print results
-        print(f"\n📈 Mesh Creation Performance Results:")
+        print("\n📈 Mesh Creation Performance Results:")
         for topology, times in results['topology_performance'].items():
             print(f"   {topology.capitalize()} Topology:")
             for mesh_size, avg_time in times:
@@ -351,7 +358,7 @@ class HALBenchmarkSuite:
 
         return results
 
-    def benchmark_memory_optimization(self) -> Dict[str, Any]:
+    def benchmark_memory_optimization(self) -> dict[str, Any]:
         """Benchmark memory optimization effectiveness"""
         self.print_header("💾 Memory Optimization Performance")
 
@@ -437,13 +444,13 @@ class HALBenchmarkSuite:
             overall_avg_time = statistics.mean(results['optimization_times']) * 1e6
             overall_avg_reduction = statistics.mean(results['memory_reduction'])
 
-            print(f"\n📈 Memory Optimization Results:")
+            print("\n📈 Memory Optimization Results:")
             print(f"   Average optimization time: {overall_avg_time:.1f} μs")
             print(f"   Average memory impact: {overall_avg_reduction:.1f}%")
 
         return results
 
-    def benchmark_communication_backend_selection(self) -> Dict[str, Any]:
+    def benchmark_communication_backend_selection(self) -> dict[str, Any]:
         """Benchmark communication backend selection"""
         self.print_header("📡 Communication Backend Selection Performance")
 
@@ -514,12 +521,12 @@ class HALBenchmarkSuite:
         # Overall statistics
         if results['selection_times']:
             overall_avg = statistics.mean(results['selection_times']) * 1e6
-            print(f"\n📈 Backend Selection Results:")
+            print("\n📈 Backend Selection Results:")
             print(f"   Average selection time: {overall_avg:.1f} μs")
 
         return results
 
-    def benchmark_end_to_end_workflow(self) -> Dict[str, Any]:
+    def benchmark_end_to_end_workflow(self) -> dict[str, Any]:
         """Benchmark complete end-to-end HAL workflow"""
         self.print_header("🔄 End-to-End Workflow Performance")
 
@@ -576,9 +583,9 @@ class HALBenchmarkSuite:
             results['total_workflow_time'] = workflow_total
             results['success'] = True
 
-            print(f"\n📈 End-to-End Workflow Results:")
+            print("\n📈 End-to-End Workflow Results:")
             print(f"   Total workflow time: {workflow_total * 1000:.1f} ms")
-            print(f"   Component breakdown:")
+            print("   Component breakdown:")
             for component, comp_time in results['component_times'].items():
                 percentage = (comp_time / workflow_total) * 100
                 print(f"     {component}: {comp_time * 1000:.1f} ms ({percentage:.1f}%)")
@@ -590,7 +597,7 @@ class HALBenchmarkSuite:
 
         return results
 
-    def generate_benchmark_report(self) -> Dict[str, Any]:
+    def generate_benchmark_report(self) -> dict[str, Any]:
         """Generate comprehensive benchmark report"""
         self.print_header("📋 HAL Benchmark Report")
 
@@ -621,7 +628,7 @@ class HALBenchmarkSuite:
             'performance_summary': self._generate_performance_summary()
         }
 
-        print(f"\n📊 Benchmark Summary:")
+        print("\n📊 Benchmark Summary:")
         print(f"   Total benchmark time: {total_benchmark_time:.1f} seconds")
         print(f"   HAL overhead: {summary['performance_summary'].get('hal_overhead_avg', 'N/A')}")
         print(f"   Discovery performance: {summary['performance_summary'].get('discovery_performance', 'N/A')}")
@@ -629,7 +636,7 @@ class HALBenchmarkSuite:
 
         return summary
 
-    def _generate_performance_summary(self) -> Dict[str, Any]:
+    def _generate_performance_summary(self) -> dict[str, Any]:
         """Generate performance summary from benchmark results"""
         summary = {}
 

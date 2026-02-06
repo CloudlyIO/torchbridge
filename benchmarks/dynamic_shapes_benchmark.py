@@ -25,31 +25,26 @@ Expected Performance Targets:
 """
 
 import argparse
-import time
 import json
-import sys
-import os
-from pathlib import Path
-from typing import List, Dict, Any, Tuple, Optional
-from dataclasses import dataclass, asdict
 import statistics
+import sys
+import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from torch.profiler import profile, record_function, ProfilerActivity
 
 from torchbridge.optimizations.patterns.dynamic_shapes import (
-    DynamicShapeBucketing,
     BucketingStrategy,
-    PaddingStrategy,
     DynamicShapeModule,
     create_optimal_bucketing_system,
-    benchmark_dynamic_shapes
 )
 
 
@@ -59,8 +54,8 @@ class BenchmarkConfig:
     name: str
     num_iterations: int
     warmup_iterations: int
-    input_shapes: List[Tuple[int, ...]]
-    model_config: Dict[str, Any]
+    input_shapes: list[tuple[int, ...]]
+    model_config: dict[str, Any]
     device: str
     precision: torch.dtype = torch.float32
 
@@ -78,9 +73,9 @@ class BenchmarkResult:
     throughput_samples_per_sec: float
     memory_usage_mb: float
     gpu_utilization: float
-    cache_hit_rate: Optional[float] = None
-    bucket_efficiency: Optional[float] = None
-    padding_overhead: Optional[float] = None
+    cache_hit_rate: float | None = None
+    bucket_efficiency: float | None = None
+    padding_overhead: float | None = None
 
 
 class StaticShapeBatching:
@@ -95,7 +90,7 @@ class StaticShapeBatching:
         self.max_batch_size = max_batch_size
         self.shape_batches = {}
 
-    def process_batch(self, model: nn.Module, inputs: List[torch.Tensor]) -> List[torch.Tensor]:
+    def process_batch(self, model: nn.Module, inputs: list[torch.Tensor]) -> list[torch.Tensor]:
         """Process inputs using static shape batching."""
         # Group by exact shape
         shape_groups = {}
@@ -155,7 +150,7 @@ class ManualOptimization:
             (8, 512), (16, 256), (32, 128), (64, 64)
         ]
 
-    def find_best_shape(self, input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    def find_best_shape(self, input_shape: tuple[int, ...]) -> tuple[int, ...]:
         """Find the best shape for the given input."""
         if input_shape in self.optimal_shapes:
             return self.optimal_shapes[input_shape]
@@ -207,7 +202,7 @@ class ManualOptimization:
         return padded_output[unpad_slices]
 
 
-def create_test_model(config: Dict[str, Any]) -> nn.Module:
+def create_test_model(config: dict[str, Any]) -> nn.Module:
     """Create test model based on configuration."""
     model_type = config.get("type", "transformer")
 
@@ -252,11 +247,11 @@ def create_test_model(config: Dict[str, Any]) -> nn.Module:
 
 
 def generate_benchmark_inputs(
-    shapes: List[Tuple[int, ...]],
+    shapes: list[tuple[int, ...]],
     num_samples_per_shape: int = 10,
     device: str = "cpu",
     dtype: torch.dtype = torch.float32
-) -> List[torch.Tensor]:
+) -> list[torch.Tensor]:
     """Generate benchmark inputs with specified shapes."""
     inputs = []
 
@@ -292,7 +287,7 @@ def measure_gpu_utilization() -> float:
 
 def run_baseline_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     config: BenchmarkConfig
 ) -> BenchmarkResult:
     """Run baseline benchmark without optimizations."""
@@ -352,7 +347,7 @@ def run_baseline_benchmark(
 
 def run_static_batching_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     config: BenchmarkConfig
 ) -> BenchmarkResult:
     """Run static shape batching benchmark."""
@@ -418,7 +413,7 @@ def run_static_batching_benchmark(
 
 def run_manual_optimization_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     config: BenchmarkConfig
 ) -> BenchmarkResult:
     """Run manual optimization benchmark."""
@@ -489,7 +484,7 @@ def run_manual_optimization_benchmark(
 
 def run_dynamic_bucketing_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     config: BenchmarkConfig,
     strategy: BucketingStrategy = BucketingStrategy.HARDWARE_AWARE
 ) -> BenchmarkResult:
@@ -567,7 +562,7 @@ def run_dynamic_bucketing_benchmark(
     )
 
 
-def create_benchmark_configs() -> List[BenchmarkConfig]:
+def create_benchmark_configs() -> list[BenchmarkConfig]:
     """Create benchmark configurations for different scenarios."""
     configs = []
 
@@ -651,7 +646,7 @@ def create_benchmark_configs() -> List[BenchmarkConfig]:
 def run_comprehensive_benchmark(
     config: BenchmarkConfig,
     quick_mode: bool = False
-) -> Dict[str, BenchmarkResult]:
+) -> dict[str, BenchmarkResult]:
     """Run comprehensive benchmark comparing all methods."""
     print(f"\n{'='*60}")
     print(f"🧪 BENCHMARKING: {config.name}")
@@ -672,7 +667,7 @@ def run_comprehensive_benchmark(
         dtype=config.precision
     )
 
-    print(f"📊 Test Configuration:")
+    print("📊 Test Configuration:")
     print(f"  Model: {config.model_config['type']}")
     print(f"  Device: {config.device}")
     print(f"  Input shapes: {len(config.input_shapes)} unique shapes")
@@ -712,14 +707,14 @@ def run_comprehensive_benchmark(
     return results
 
 
-def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) -> None:
+def print_benchmark_summary(all_results: dict[str, dict[str, BenchmarkResult]]) -> None:
     """Print comprehensive benchmark summary."""
     print("\n" + "="*100)
     print("🏆 DYNAMIC SHAPE BUCKETING BENCHMARK SUMMARY")
     print("="*100)
 
     # Performance comparison table
-    print(f"\n📊 PERFORMANCE COMPARISON (Average Time per Sample)")
+    print("\n📊 PERFORMANCE COMPARISON (Average Time per Sample)")
     print(f"{'Configuration':<20} {'Baseline':<12} {'Static':<12} {'Manual':<12} {'Geometric':<12} {'HW-Aware':<12}")
     print("-" * 100)
 
@@ -743,7 +738,7 @@ def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) 
         print(row)
 
     # Speedup summary
-    print(f"\n🚀 SPEEDUP SUMMARY")
+    print("\n🚀 SPEEDUP SUMMARY")
     print(f"{'Configuration':<20} {'Best Method':<20} {'Best Speedup':<15} {'Target Met':<12}")
     print("-" * 80)
 
@@ -766,7 +761,7 @@ def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) 
         print(f"{config_name:<20} {best_method:<20} {best_speedup:<14.2f}x {target_met}")
 
     # Memory efficiency summary
-    print(f"\n💾 MEMORY EFFICIENCY")
+    print("\n💾 MEMORY EFFICIENCY")
     print(f"{'Configuration':<20} {'Method':<20} {'Memory Usage':<15} {'GPU Util':<12}")
     print("-" * 80)
 
@@ -776,7 +771,7 @@ def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) 
                 print(f"{config_name:<20} {method:<20} {result.memory_usage_mb:<14.1f}MB {result.gpu_utilization*100:<11.1f}%")
 
     # Cache and bucket efficiency
-    print(f"\n⚙️  BUCKETING SYSTEM EFFICIENCY")
+    print("\n⚙️  BUCKETING SYSTEM EFFICIENCY")
     print(f"{'Configuration':<20} {'Method':<20} {'Cache Hit Rate':<15} {'Bucket Efficiency':<18}")
     print("-" * 85)
 
@@ -788,7 +783,7 @@ def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) 
                 print(f"{config_name:<20} {method:<20} {cache_rate:<15} {bucket_eff}")
 
     # Overall validation
-    print(f"\n🎯 VALIDATION SUMMARY")
+    print("\n🎯 VALIDATION SUMMARY")
 
     total_configs = len(all_results)
     configs_meeting_target = 0
@@ -828,7 +823,7 @@ def print_benchmark_summary(all_results: Dict[str, Dict[str, BenchmarkResult]]) 
 
 
 def save_benchmark_results(
-    results: Dict[str, Dict[str, BenchmarkResult]],
+    results: dict[str, dict[str, BenchmarkResult]],
     output_file: str = "dynamic_shapes_benchmark_results.json"
 ) -> None:
     """Save benchmark results to JSON file."""

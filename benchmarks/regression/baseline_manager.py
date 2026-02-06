@@ -6,21 +6,24 @@ Manages performance baselines with versioning, validation, and automatic
 baseline establishment from historical benchmark data.
 """
 
-import os
-import json
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict, field
-from pathlib import Path
 import glob
-import warnings
+import json
+import os
 
 # Import from existing benchmark framework
 import sys
+import warnings
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from ..framework.benchmark_runner import PerformanceMetrics
+
 
 @dataclass
 class BaselineMetrics:
@@ -33,13 +36,13 @@ class BaselineMetrics:
     mean_memory_mb: float
     std_memory_mb: float
     sample_count: int
-    confidence_interval_95: Tuple[float, float]
+    confidence_interval_95: tuple[float, float]
     established_date: datetime
     last_validated_date: datetime
-    environment: Dict[str, str] = field(default_factory=dict)
+    environment: dict[str, str] = field(default_factory=dict)
     version: str = "0.1.59"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         data = asdict(self)
         # Convert datetime to ISO format
@@ -48,7 +51,7 @@ class BaselineMetrics:
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BaselineMetrics':
+    def from_dict(cls, data: dict[str, Any]) -> 'BaselineMetrics':
         """Create from dictionary (JSON deserialization)"""
         # Convert ISO format back to datetime
         data['established_date'] = datetime.fromisoformat(data['established_date'])
@@ -77,7 +80,7 @@ class BaselineManager:
     def _load_registry(self):
         """Load the baseline registry"""
         if self.registry_file.exists():
-            with open(self.registry_file, 'r') as f:
+            with open(self.registry_file) as f:
                 self.registry = json.load(f)
         else:
             self.registry = {
@@ -99,7 +102,7 @@ class BaselineManager:
         results_dir: str = "benchmarks/results",
         window_days: int = 30,
         min_samples: int = 10
-    ) -> Optional[BaselineMetrics]:
+    ) -> BaselineMetrics | None:
         """
         Establish baseline from historical benchmark data.
 
@@ -126,7 +129,7 @@ class BaselineManager:
 
         for file_path in result_files:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     data = json.load(f)
 
                 # Extract timestamp from filename or data
@@ -147,7 +150,7 @@ class BaselineManager:
         # Calculate baseline statistics
         return self._calculate_baseline_statistics(model_name, valid_results)
 
-    def _extract_timestamp(self, file_path: str, data: Dict[str, Any]) -> Optional[datetime]:
+    def _extract_timestamp(self, file_path: str, data: dict[str, Any]) -> datetime | None:
         """Extract timestamp from filename or benchmark data"""
         try:
             # Try to extract from filename (format: *_YYYYMMDD_HHMMSS.json)
@@ -170,7 +173,7 @@ class BaselineManager:
 
         return None
 
-    def _extract_metrics_from_result(self, data: Dict[str, Any], model_name: str) -> Optional[PerformanceMetrics]:
+    def _extract_metrics_from_result(self, data: dict[str, Any], model_name: str) -> PerformanceMetrics | None:
         """Extract performance metrics from benchmark result data"""
         try:
             # Look for results in the data structure
@@ -199,7 +202,7 @@ class BaselineManager:
     def _calculate_baseline_statistics(
         self,
         model_name: str,
-        metrics_list: List[PerformanceMetrics]
+        metrics_list: list[PerformanceMetrics]
     ) -> BaselineMetrics:
         """Calculate baseline statistics from metrics list"""
         # Extract latency values
@@ -272,7 +275,7 @@ class BaselineManager:
 
         return self._store_baseline(baseline)
 
-    def get_baseline(self, model_name: str) -> Optional[BaselineMetrics]:
+    def get_baseline(self, model_name: str) -> BaselineMetrics | None:
         """
         Get the current baseline for a model.
 
@@ -288,7 +291,7 @@ class BaselineManager:
             return None
 
         try:
-            with open(baseline_file, 'r') as f:
+            with open(baseline_file) as f:
                 data = json.load(f)
             return BaselineMetrics.from_dict(data)
         except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -381,7 +384,7 @@ class BaselineManager:
 
         return True
 
-    def get_historical_baselines(self, model_name: str, days: int = 30) -> List[BaselineMetrics]:
+    def get_historical_baselines(self, model_name: str, days: int = 30) -> list[BaselineMetrics]:
         """
         Get historical baselines for a model.
 
@@ -397,11 +400,11 @@ class BaselineManager:
         current = self.get_baseline(model_name)
         return [current] if current else []
 
-    def list_available_models(self) -> List[str]:
+    def list_available_models(self) -> list[str]:
         """Get list of models with established baselines"""
         return list(self.registry["models"].keys())
 
-    def get_baseline_summary(self) -> Dict[str, Any]:
+    def get_baseline_summary(self) -> dict[str, Any]:
         """Get summary of all baselines"""
         summary = {
             "total_models": len(self.registry["models"]),

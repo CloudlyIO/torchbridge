@@ -8,14 +8,16 @@ environment-aware threshold adjustments.
 """
 
 import json
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from pathlib import Path
 import warnings
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import numpy as np
 
 from .baseline_manager import BaselineMetrics
+
 
 @dataclass
 class ThresholdConfig:
@@ -34,7 +36,7 @@ class ThresholdConfig:
     last_updated: datetime = None
     version: str = "0.1.59"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         data = asdict(self)
         if self.last_updated:
@@ -42,13 +44,13 @@ class ThresholdConfig:
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ThresholdConfig':
+    def from_dict(cls, data: dict[str, Any]) -> 'ThresholdConfig':
         """Create from dictionary (JSON deserialization)"""
         if 'last_updated' in data and data['last_updated']:
             data['last_updated'] = datetime.fromisoformat(data['last_updated'])
         return cls(**data)
 
-    def get_severity_thresholds(self) -> Tuple[float, float, float]:
+    def get_severity_thresholds(self) -> tuple[float, float, float]:
         """Get (minor, major, critical) threshold tuple"""
         return (
             self.minor_threshold_percent,
@@ -78,7 +80,7 @@ class ThresholdManager:
         """Load threshold configurations from disk"""
         if self.config_file.exists():
             try:
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file) as f:
                     data = json.load(f)
 
                 for model_name, config_data in data.get('models', {}).items():
@@ -195,7 +197,7 @@ class ThresholdManager:
     def update_thresholds_from_history(
         self,
         model_name: str,
-        historical_variances: List[float],
+        historical_variances: list[float],
         environment: str = "default"
     ) -> ThresholdConfig:
         """
@@ -242,7 +244,7 @@ class ThresholdManager:
 
         return updated_config
 
-    def validate_threshold_sensitivity(self, model_name: str, environment: str = "default") -> Dict[str, Any]:
+    def validate_threshold_sensitivity(self, model_name: str, environment: str = "default") -> dict[str, Any]:
         """
         Validate threshold sensitivity for a model.
 
@@ -299,7 +301,7 @@ class ThresholdManager:
 
         return validation
 
-    def get_environment_multipliers(self, environment: str) -> Dict[str, float]:
+    def get_environment_multipliers(self, environment: str) -> dict[str, float]:
         """
         Get environment-specific threshold multipliers.
 
@@ -353,7 +355,7 @@ class ThresholdManager:
 
         return adjusted_config
 
-    def export_threshold_config(self) -> Dict[str, Any]:
+    def export_threshold_config(self) -> dict[str, Any]:
         """
         Export all threshold configurations.
 
@@ -370,7 +372,7 @@ class ThresholdManager:
             }
         }
 
-    def import_threshold_config(self, config_data: Dict[str, Any]) -> bool:
+    def import_threshold_config(self, config_data: dict[str, Any]) -> bool:
         """
         Import threshold configurations from external source.
 
@@ -411,7 +413,7 @@ class ThresholdManager:
         if to_remove:
             self._save_configurations()
 
-    def get_threshold_summary(self) -> Dict[str, Any]:
+    def get_threshold_summary(self) -> dict[str, Any]:
         """Get summary of all threshold configurations"""
         summary = {
             "total_models": len(self.model_configs),

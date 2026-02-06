@@ -13,25 +13,29 @@ Usage:
 """
 
 import argparse
-import time
 import json
-import tempfile
-import shutil
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
-import numpy as np
-import statistics
-
 import os
+import shutil
+import statistics
 import sys
+import tempfile
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from benchmarks.regression.baseline_manager import BaselineManager, BaselineMetrics
-from benchmarks.regression.regression_detector import RegressionDetector, RegressionSeverity
-from benchmarks.regression.threshold_manager import ThresholdManager
 from benchmarks.framework.benchmark_runner import PerformanceMetrics
+from benchmarks.regression.baseline_manager import BaselineManager, BaselineMetrics
+from benchmarks.regression.regression_detector import (
+    RegressionDetector,
+    RegressionSeverity,
+)
+from benchmarks.regression.threshold_manager import ThresholdManager
 
 
 class RegressionFrameworkBenchmark:
@@ -52,7 +56,7 @@ class RegressionFrameworkBenchmark:
         if self.temp_dir and self.temp_dir.exists():
             shutil.rmtree(self.temp_dir)
 
-    def create_test_data(self, num_models: int, samples_per_model: int) -> Dict[str, List[PerformanceMetrics]]:
+    def create_test_data(self, num_models: int, samples_per_model: int) -> dict[str, list[PerformanceMetrics]]:
         """Create test performance data for benchmarking"""
         test_data = {}
 
@@ -86,7 +90,7 @@ class RegressionFrameworkBenchmark:
 
         return test_data
 
-    def create_historical_files(self, test_data: Dict[str, List[PerformanceMetrics]]) -> Path:
+    def create_historical_files(self, test_data: dict[str, list[PerformanceMetrics]]) -> Path:
         """Create historical benchmark files for baseline establishment testing"""
         results_dir = self.temp_dir / "historical_results"
         results_dir.mkdir(exist_ok=True)
@@ -118,7 +122,7 @@ class RegressionFrameworkBenchmark:
 
         return results_dir
 
-    def benchmark_baseline_establishment(self, test_data: Dict[str, List[PerformanceMetrics]]) -> Dict[str, Any]:
+    def benchmark_baseline_establishment(self, test_data: dict[str, list[PerformanceMetrics]]) -> dict[str, Any]:
         """Benchmark baseline establishment performance"""
         print("\n📊 Benchmarking baseline establishment...")
 
@@ -167,7 +171,7 @@ class RegressionFrameworkBenchmark:
             "established_baselines": established_baselines
         }
 
-    def benchmark_regression_detection(self, established_baselines: Dict[str, BaselineMetrics]) -> Dict[str, Any]:
+    def benchmark_regression_detection(self, established_baselines: dict[str, BaselineMetrics]) -> dict[str, Any]:
         """Benchmark regression detection performance and accuracy"""
         print("\n🔍 Benchmarking regression detection...")
 
@@ -264,7 +268,7 @@ class RegressionFrameworkBenchmark:
             "trend_analysis_success": "error" not in trend_analysis
         }
 
-    def benchmark_threshold_management(self, established_baselines: Dict[str, BaselineMetrics]) -> Dict[str, Any]:
+    def benchmark_threshold_management(self, established_baselines: dict[str, BaselineMetrics]) -> dict[str, Any]:
         """Benchmark threshold management performance"""
         print("\n⚙️  Benchmarking threshold management...")
 
@@ -332,7 +336,7 @@ class RegressionFrameworkBenchmark:
             "total_configurations": summary["total_models"]
         }
 
-    def benchmark_statistical_accuracy(self, test_data: Dict[str, List[PerformanceMetrics]]) -> Dict[str, Any]:
+    def benchmark_statistical_accuracy(self, test_data: dict[str, list[PerformanceMetrics]]) -> dict[str, Any]:
         """Benchmark statistical accuracy of the regression detection"""
         print("\n🧮 Benchmarking statistical accuracy...")
 
@@ -379,7 +383,7 @@ class RegressionFrameworkBenchmark:
             "confidence_interval_width": computed_baseline.confidence_interval_95[1] - computed_baseline.confidence_interval_95[0]
         }
 
-    def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """Run comprehensive benchmark suite"""
         print("🚀 Starting comprehensive regression framework benchmark...")
 
@@ -421,21 +425,21 @@ class RegressionFrameworkBenchmark:
 
         return overall_results
 
-    def print_results(self, results: Dict[str, Any]):
+    def print_results(self, results: dict[str, Any]):
         """Print formatted benchmark results"""
         print("\n" + "=" * 60)
         print("🎯 REGRESSION FRAMEWORK BENCHMARK RESULTS")
         print("=" * 60)
 
         config = results["benchmark_config"]
-        print(f"\nConfiguration:")
+        print("\nConfiguration:")
         print(f"  Mode: {'Quick' if config['quick_mode'] else 'Comprehensive'}")
         print(f"  Models tested: {config['num_models']}")
         print(f"  Samples per model: {config['samples_per_model']}")
 
         # Baseline establishment results
         baseline = results["baseline_establishment"]
-        print(f"\n📊 Baseline Establishment:")
+        print("\n📊 Baseline Establishment:")
         print(f"  Mean establishment time: {baseline['mean_establishment_time']*1000:.2f}ms")
         print(f"  Baselines established: {baseline['total_baselines_established']}")
         print(f"  Summary generation time: {baseline['summary_generation_time']*1000:.2f}ms")
@@ -443,7 +447,7 @@ class RegressionFrameworkBenchmark:
 
         # Regression detection results
         regression = results["regression_detection"]
-        print(f"\n🔍 Regression Detection:")
+        print("\n🔍 Regression Detection:")
         print(f"  Mean detection time: {regression['mean_detection_time']*1000:.2f}ms")
         print(f"  Detection accuracy: {regression['accuracy_rate']*100:.1f}%")
         print(f"  Batch analysis time: {regression['batch_analysis_time']*1000:.2f}ms")
@@ -452,7 +456,7 @@ class RegressionFrameworkBenchmark:
 
         # Threshold management results
         threshold = results["threshold_management"]
-        print(f"\n⚙️  Threshold Management:")
+        print("\n⚙️  Threshold Management:")
         print(f"  Mean retrieval time: {threshold['mean_retrieval_time']*1000:.2f}ms")
         print(f"  Mean update time: {threshold['mean_update_time']*1000:.2f}ms")
         print(f"  Mean validation time: {threshold['mean_validation_time']*1000:.2f}ms")
@@ -464,14 +468,14 @@ class RegressionFrameworkBenchmark:
         # Statistical accuracy results
         if "skipped" not in results["statistical_accuracy"]:
             stats = results["statistical_accuracy"]
-            print(f"\n🧮 Statistical Accuracy:")
+            print("\n🧮 Statistical Accuracy:")
             print(f"  Mean accuracy error: {stats['mean_accuracy_error_percent']:.3f}%")
             print(f"  Std accuracy error: {stats['std_accuracy_error_percent']:.3f}%")
             print(f"  False positive rate: {stats['false_positive_rate_percent']:.1f}%")
             print(f"  Confidence interval width: {stats['confidence_interval_width']:.3f}ms")
 
         # Performance summary
-        print(f"\n🎯 Performance Summary:")
+        print("\n🎯 Performance Summary:")
         total_time = (baseline['mean_establishment_time'] +
                      regression['mean_detection_time'] +
                      threshold['mean_update_time'])
@@ -479,11 +483,11 @@ class RegressionFrameworkBenchmark:
         print(f"  Throughput: {1/total_time:.1f} models/sec")
 
         # Quality metrics
-        print(f"\n📈 Quality Metrics:")
+        print("\n📈 Quality Metrics:")
         print(f"  Detection accuracy: {regression['accuracy_rate']*100:.1f}%")
         if "false_positive_rate_percent" in results["statistical_accuracy"]:
             print(f"  False positive rate: {results['statistical_accuracy']['false_positive_rate_percent']:.1f}%")
-        print(f"  Framework components: ✅ All operational")
+        print("  Framework components: ✅ All operational")
 
 
 def main():
@@ -502,7 +506,7 @@ def main():
         benchmark.print_results(results)
 
         if args.detailed:
-            print(f"\n📋 Detailed Results:")
+            print("\n📋 Detailed Results:")
             print(json.dumps(results, indent=2, default=str))
 
         if args.output:
@@ -519,7 +523,7 @@ def main():
     finally:
         benchmark.teardown()
 
-    print(f"\n✅ Benchmark completed successfully!")
+    print("\n✅ Benchmark completed successfully!")
     return 0
 
 

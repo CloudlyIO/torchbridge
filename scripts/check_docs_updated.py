@@ -7,6 +7,7 @@ Ensures docs stay in sync with implementation.
 import subprocess
 import sys
 
+
 def get_staged_files():
     """Get list of staged files."""
     try:
@@ -42,16 +43,16 @@ def main():
         return 0
 
     print("⚠️  Warning: Backend code changed but no documentation updated")
-    print(f"\n   Changed backend files:")
+    print("\n   Changed backend files:")
     for f in backend_files[:3]:
         print(f"      - {f}")
     if len(backend_files) > 3:
         print(f"      ... and {len(backend_files) - 3} more")
 
-    print(f"\n💡 Consider updating:")
-    print(f"   - docs/unified_roadmap.md")
-    print(f"   - docs/immediate_tasks.md")
-    print(f"   - README.md (if API changed)")
+    print("\n💡 Consider updating:")
+    print("   - docs/unified_roadmap.md")
+    print("   - docs/immediate_tasks.md")
+    print("   - README.md (if API changed)")
 
     # Warning only, don't fail
     return 0

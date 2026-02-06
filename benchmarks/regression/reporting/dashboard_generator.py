@@ -7,23 +7,26 @@ regression testing results and historical performance analysis.
 """
 
 import json
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from pathlib import Path
-from enum import Enum
-import statistics
-import warnings
 
 # Import from existing components
 import os
+import statistics
 import sys
+import warnings
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
-from ..regression_detector import RegressionResult, RegressionSeverity
-from ..historical_analyzer import HistoricalAnalyzer, PerformanceSummary, TrendAnalysis, AnomalyReport
 from ..baseline_manager import BaselineManager
-from .regression_reporter import Report
+from ..historical_analyzer import (
+    HistoricalAnalyzer,
+    PerformanceSummary,
+)
+from ..regression_detector import RegressionResult, RegressionSeverity
 
 
 class ChartType(Enum):
@@ -42,8 +45,8 @@ class ChartData:
     chart_id: str
     title: str
     chart_type: ChartType
-    data: Dict[str, Any]
-    config: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any]
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -53,12 +56,12 @@ class Dashboard:
     subtitle: str
     generated_at: datetime
     time_period: str
-    charts: List[ChartData]
-    summary_stats: Dict[str, Any]
-    alerts: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    charts: list[ChartData]
+    summary_stats: dict[str, Any]
+    alerts: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert dashboard to dictionary for serialization"""
         return {
             "title": self.title,
@@ -100,7 +103,7 @@ class DashboardGenerator:
 
     def create_performance_dashboard(
         self,
-        models: List[str],
+        models: list[str],
         time_period: str = "30d",
         include_trends: bool = True,
         include_anomalies: bool = True
@@ -195,7 +198,7 @@ class DashboardGenerator:
 
     def create_regression_dashboard(
         self,
-        regression_results: List[RegressionResult],
+        regression_results: list[RegressionResult],
         title: str = "Regression Analysis Dashboard"
     ) -> Dashboard:
         """
@@ -297,7 +300,7 @@ class DashboardGenerator:
             warnings.warn(f"Failed to export dashboard: {e}")
             return False
 
-    def _create_performance_overview_chart(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_performance_overview_chart(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create performance overview bar chart"""
         models = [s.model_name for s in summaries]
         latencies = [s.mean_latency_ms for s in summaries]
@@ -346,7 +349,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_stability_gauge_chart(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_stability_gauge_chart(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create stability gauge chart"""
         avg_stability = statistics.mean([s.stability_score for s in summaries]) * 100
 
@@ -377,7 +380,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_latency_trends_chart(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_latency_trends_chart(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create latency trends line chart"""
         models = []
         trend_data = []
@@ -418,7 +421,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_throughput_trends_chart(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_throughput_trends_chart(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create throughput trends line chart"""
         models = []
         trend_data = []
@@ -458,7 +461,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_anomaly_heatmap(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_anomaly_heatmap(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create anomaly count heatmap"""
         models = [s.model_name for s in summaries]
         anomaly_counts = [s.anomaly_count for s in summaries]
@@ -485,7 +488,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_model_health_chart(self, summaries: List[PerformanceSummary]) -> ChartData:
+    def _create_model_health_chart(self, summaries: list[PerformanceSummary]) -> ChartData:
         """Create model health comparison chart"""
         models = [s.model_name for s in summaries]
         stability_scores = [s.stability_score * 100 for s in summaries]
@@ -522,7 +525,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_regression_severity_chart(self, regression_results: List[RegressionResult]) -> ChartData:
+    def _create_regression_severity_chart(self, regression_results: list[RegressionResult]) -> ChartData:
         """Create regression severity distribution pie chart"""
         severity_counts = {}
         for severity in RegressionSeverity:
@@ -546,7 +549,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_performance_delta_scatter(self, regression_results: List[RegressionResult]) -> ChartData:
+    def _create_performance_delta_scatter(self, regression_results: list[RegressionResult]) -> ChartData:
         """Create performance delta scatter plot"""
         data = []
         for result in regression_results:
@@ -576,7 +579,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_model_comparison_chart(self, regression_results: List[RegressionResult]) -> ChartData:
+    def _create_model_comparison_chart(self, regression_results: list[RegressionResult]) -> ChartData:
         """Create model comparison bar chart"""
         model_data = {}
         for result in regression_results:
@@ -610,7 +613,7 @@ class DashboardGenerator:
             }
         )
 
-    def _create_regression_timeline(self, regression_results: List[RegressionResult]) -> ChartData:
+    def _create_regression_timeline(self, regression_results: list[RegressionResult]) -> ChartData:
         """Create regression timeline chart"""
         # Group by day and count regressions
         daily_counts = {}
@@ -646,7 +649,7 @@ class DashboardGenerator:
             }
         )
 
-    def _calculate_dashboard_summary(self, summaries: List[PerformanceSummary]) -> Dict[str, Any]:
+    def _calculate_dashboard_summary(self, summaries: list[PerformanceSummary]) -> dict[str, Any]:
         """Calculate summary statistics for dashboard"""
         if not summaries:
             return {}

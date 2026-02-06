@@ -16,7 +16,7 @@ Usage:
 import argparse
 import sys
 import time
-from typing import Dict, Any
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -33,11 +33,11 @@ def print_result(name: str, status: str, details: str = "") -> None:
         print(f"     {details}")
 
 
-def demo_amd_configuration() -> Dict[str, Any]:
+def demo_amd_configuration() -> dict[str, Any]:
     """Demonstrate AMD configuration options."""
     print_section("AMD Configuration")
 
-    from torchbridge.core.config import AMDConfig, AMDArchitecture
+    from torchbridge.core.config import AMDArchitecture, AMDConfig
 
     results = {"passed": 0, "total": 0}
 
@@ -109,12 +109,12 @@ def demo_amd_configuration() -> Dict[str, Any]:
     return results
 
 
-def demo_amd_optimizer() -> Dict[str, Any]:
+def demo_amd_optimizer() -> dict[str, Any]:
     """Demonstrate AMD optimizer functionality."""
     print_section("AMD Optimizer")
 
-    from torchbridge.core.config import AMDConfig, AMDArchitecture
     from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.core.config import AMDArchitecture, AMDConfig
 
     results = {"passed": 0, "total": 0}
 
@@ -198,12 +198,12 @@ def demo_amd_optimizer() -> Dict[str, Any]:
     return results
 
 
-def demo_rocm_compiler() -> Dict[str, Any]:
+def demo_rocm_compiler() -> dict[str, Any]:
     """Demonstrate ROCm compiler functionality."""
     print_section("ROCm Compiler")
 
-    from torchbridge.core.config import AMDConfig, AMDArchitecture
     from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
+    from torchbridge.core.config import AMDArchitecture, AMDConfig
 
     results = {"passed": 0, "total": 0}
 
@@ -278,12 +278,12 @@ def demo_rocm_compiler() -> Dict[str, Any]:
     return results
 
 
-def demo_hip_utilities() -> Dict[str, Any]:
+def demo_hip_utilities() -> dict[str, Any]:
     """Demonstrate HIP utilities functionality."""
     print_section("HIP Utilities")
 
-    from torchbridge.core.config import AMDConfig
     from torchbridge.backends.amd.hip_utilities import HIPUtilities
+    from torchbridge.core.config import AMDConfig
 
     results = {"passed": 0, "total": 0}
 
@@ -371,12 +371,12 @@ def demo_hip_utilities() -> Dict[str, Any]:
     return results
 
 
-def demo_memory_manager() -> Dict[str, Any]:
+def demo_memory_manager() -> dict[str, Any]:
     """Demonstrate memory manager functionality."""
     print_section("Memory Manager")
 
-    from torchbridge.core.config import AMDConfig
     from torchbridge.backends.amd.memory_manager import AMDMemoryManager
+    from torchbridge.core.config import AMDConfig
 
     results = {"passed": 0, "total": 0}
 
@@ -425,13 +425,13 @@ def demo_memory_manager() -> Dict[str, Any]:
     return results
 
 
-def demo_full_pipeline(quick: bool = False) -> Dict[str, Any]:
+def demo_full_pipeline(quick: bool = False) -> dict[str, Any]:
     """Demonstrate full AMD optimization pipeline."""
     print_section("Full Optimization Pipeline")
 
-    from torchbridge.core.config import AMDConfig, AMDArchitecture
     from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
     from torchbridge.backends.amd.hip_utilities import HIPUtilities
+    from torchbridge.core.config import AMDArchitecture, AMDConfig
 
     results = {"passed": 0, "total": 0}
 

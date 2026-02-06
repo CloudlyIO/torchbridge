@@ -12,15 +12,15 @@ Based on "Deep Optimizer States: Towards Scalable Training of Transformer Models
 Using Interleaved Offloading" research.
 """
 
+import argparse
+import json
+import os
+import sys
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-import json
-from typing import Dict, Any
-import sys
-import os
 
 # Add src to path for imports
 repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -28,11 +28,12 @@ src_path = os.path.join(repo_root, 'src')
 sys.path.insert(0, src_path)
 
 from torchbridge.advanced_memory import (
+    CPUGPUHybridOptimizer,
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,
     MemoryConfig,
-    CPUGPUHybridOptimizer
 )
+
 # Performance benchmarking utilities would be imported if available
 
 
@@ -275,7 +276,7 @@ def demonstrate_cpu_gpu_hybrid(device):
 
 def run_comprehensive_demo(device, quick_mode=False):
     """Run comprehensive deep optimizer states demo"""
-    print(f"🚀 Advanced Memory Optimization: Deep Optimizer States Demo")
+    print("🚀 Advanced Memory Optimization: Deep Optimizer States Demo")
     print(f"📱 Device: {device}")
     print(f"⚡ Mode: {'Quick' if quick_mode else 'Full'}")
     print("=" * 60)
@@ -342,8 +343,8 @@ def run_comprehensive_demo(device, quick_mode=False):
     print("=" * 60)
     print(f"✅ Best speedup achieved: {best_speedup:.2f}x")
     print(f"✅ Best memory usage: {best_memory:.2f}GB")
-    print(f"✅ All optimizations working correctly")
-    print(f"✅ Deep Optimizer States: 2.5x speedup validated")
+    print("✅ All optimizations working correctly")
+    print("✅ Deep Optimizer States: 2.5x speedup validated")
 
     return results
 

@@ -7,21 +7,20 @@ that provides consistent benchmarking across all optimization levels with
 statistical analysis and production-grade measurement methodology.
 """
 
-import sys
-import os
-import time
 import json
-import warnings
+import os
 import statistics
-from typing import Dict, List, Any, Optional, Callable, Tuple, Union
+import sys
+import time
+import warnings
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
-from pathlib import Path
-import numpy as np
+from enum import Enum
+from typing import Any
+
 import torch
 import torch.nn as nn
-import psutil
 
 # Add src to path for our optimizations
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -59,9 +58,9 @@ class BenchmarkConfig:
     benchmark_type: BenchmarkType
 
     # Test parameters
-    batch_sizes: List[int] = field(default_factory=lambda: [1, 4, 8, 16])
-    sequence_lengths: List[int] = field(default_factory=lambda: [128, 512, 1024])
-    model_configs: Dict[str, Any] = field(default_factory=dict)
+    batch_sizes: list[int] = field(default_factory=lambda: [1, 4, 8, 16])
+    sequence_lengths: list[int] = field(default_factory=lambda: [128, 512, 1024])
+    model_configs: dict[str, Any] = field(default_factory=dict)
 
     # Measurement parameters
     warmup_iterations: int = 10
@@ -110,7 +109,7 @@ class PerformanceMetrics:
     precision: str = "unknown"
     compilation_enabled: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary for serialization"""
         return {
             'latency_ms': self.latency_ms,
@@ -135,10 +134,10 @@ class PerformanceMetrics:
 class BenchmarkResult:
     """Complete benchmark result with context"""
     config: BenchmarkConfig
-    baseline_metrics: Optional[PerformanceMetrics] = None
-    optimized_metrics: Optional[PerformanceMetrics] = None
-    comparison_metrics: Dict[str, PerformanceMetrics] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    baseline_metrics: PerformanceMetrics | None = None
+    optimized_metrics: PerformanceMetrics | None = None
+    comparison_metrics: dict[str, PerformanceMetrics] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
     def get_speedup(self) -> float:
@@ -157,7 +156,7 @@ class BenchmarkResult:
                 return (baseline_mem - optimized_mem) / baseline_mem
         return 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary for serialization"""
         return {
             'config': {
@@ -189,10 +188,10 @@ class UnifiedBenchmarkRunner:
     - Statistical significance testing
     """
 
-    def __init__(self, config: Optional[BenchmarkConfig] = None):
+    def __init__(self, config: BenchmarkConfig | None = None):
         self.config = config or BenchmarkConfig(name="default", benchmark_type=BenchmarkType.INFERENCE)
         self.device = self._setup_device()
-        self._benchmark_results: List[BenchmarkResult] = []
+        self._benchmark_results: list[BenchmarkResult] = []
 
     def _setup_device(self) -> torch.device:
         """Setup and return the appropriate device"""
@@ -210,9 +209,9 @@ class UnifiedBenchmarkRunner:
 
     def benchmark_function(self,
                           func: Callable,
-                          inputs: List[torch.Tensor],
+                          inputs: list[torch.Tensor],
                           name: str = "function",
-                          reference_func: Optional[Callable] = None) -> PerformanceMetrics:
+                          reference_func: Callable | None = None) -> PerformanceMetrics:
         """
         Benchmark a single function with comprehensive metrics collection.
         """
@@ -316,8 +315,8 @@ class UnifiedBenchmarkRunner:
 
     def benchmark_component(self,
                            optimized_component: nn.Module,
-                           reference_component: Optional[nn.Module] = None,
-                           test_inputs: Optional[List[torch.Tensor]] = None) -> BenchmarkResult:
+                           reference_component: nn.Module | None = None,
+                           test_inputs: list[torch.Tensor] | None = None) -> BenchmarkResult:
         """
         Comprehensive benchmarking of a neural network component.
         """
@@ -367,8 +366,8 @@ class UnifiedBenchmarkRunner:
 
     def run_scaling_benchmark(self,
                              component: nn.Module,
-                             batch_sizes: Optional[List[int]] = None,
-                             sequence_lengths: Optional[List[int]] = None) -> Dict[str, List[PerformanceMetrics]]:
+                             batch_sizes: list[int] | None = None,
+                             sequence_lengths: list[int] | None = None) -> dict[str, list[PerformanceMetrics]]:
         """
         Run scaling benchmark across different input sizes.
         """
@@ -398,7 +397,7 @@ class UnifiedBenchmarkRunner:
 
         return scaling_results
 
-    def get_benchmark_summary(self) -> Dict[str, Any]:
+    def get_benchmark_summary(self) -> dict[str, Any]:
         """Get comprehensive summary of all benchmark results"""
         if not self._benchmark_results:
             return {'message': 'No benchmark results available'}
@@ -415,7 +414,7 @@ class UnifiedBenchmarkRunner:
             'results': [result.to_dict() for result in self._benchmark_results]
         }
 
-    def save_results(self, filepath: Optional[str] = None) -> str:
+    def save_results(self, filepath: str | None = None) -> str:
         """Save benchmark results to file"""
         if filepath is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -431,14 +430,14 @@ class UnifiedBenchmarkRunner:
 
 
 # Convenience functions for easy usage
-def create_benchmark_runner(config: Optional[BenchmarkConfig] = None) -> UnifiedBenchmarkRunner:
+def create_benchmark_runner(config: BenchmarkConfig | None = None) -> UnifiedBenchmarkRunner:
     """Create a unified benchmark runner"""
     return UnifiedBenchmarkRunner(config)
 
 
 def quick_benchmark(optimized_component: nn.Module,
-                   reference_component: Optional[nn.Module] = None,
-                   device: Optional[torch.device] = None) -> Dict[str, Any]:
+                   reference_component: nn.Module | None = None,
+                   device: torch.device | None = None) -> dict[str, Any]:
     """Quick benchmark for a component with minimal configuration"""
     config = BenchmarkConfig(
         name=f"{optimized_component.__class__.__name__}_quick",
