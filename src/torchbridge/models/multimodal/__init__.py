@@ -84,4 +84,4 @@ __all__ = [
     "create_whisper_large_optimized",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
