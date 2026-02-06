@@ -312,11 +312,11 @@ class BackendComparisonBenchmark:
         model = MediumModel()
 
         # NVIDIA memory
-        nvidia_model = self.nvidia_backend.prepare_model(model)
+        _nvidia_model = self.nvidia_backend.prepare_model(model)  # noqa: F841
         nvidia_stats = self.nvidia_backend.get_memory_stats()
 
         # TPU memory
-        tpu_model = self.tpu_backend.prepare_model(model)
+        _tpu_model = self.tpu_backend.prepare_model(model)  # noqa: F841
         tpu_stats = self.tpu_backend.get_memory_stats()
 
         results = {
@@ -526,7 +526,7 @@ def main():
 
     try:
         benchmark = BackendComparisonBenchmark(quick_mode=args.quick)
-        results = benchmark.run_all_benchmarks()
+        _results = benchmark.run_all_benchmarks()  # noqa: F841
 
         print("\n🎉 Benchmark suite completed successfully!")
         sys.exit(0)
