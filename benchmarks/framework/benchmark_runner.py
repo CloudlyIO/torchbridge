@@ -99,13 +99,19 @@ class BenchmarkRunner:
         print(f"   Output: {output_dir}")
 
     def _detect_optimal_device(self) -> torch.device:
-        """Detect the best available device for benchmarking"""
-        if torch.cuda.is_available():
-            device = torch.device("cuda:0")
+        """Detect the best available device for benchmarking (backend-agnostic)"""
+        from .timing_utils import get_best_device
+
+        device = get_best_device()
+
+        if device.type == "cuda":
             print(f"   GPU: {torch.cuda.get_device_name()}")
             print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory // 1024**3}GB")
+        elif device.type == "xpu" and hasattr(torch, "xpu"):
+            print(f"   Intel XPU detected")
+        elif device.type == "mps":
+            print("   Apple MPS detected")
         else:
-            device = torch.device("cpu")
             print(f"   CPU: {psutil.cpu_count()} cores")
 
         return device
@@ -182,14 +188,16 @@ class BenchmarkRunner:
                     device=self.device
                 )
 
+                # Import backend-agnostic sync
+                from .timing_utils import synchronize_device
+
                 # Warmup
                 for _ in range(config.warmup_trials):
                     with torch.no_grad():
                         _ = implementation.run_inference(model, inputs)
-                        if self.device.type == 'cuda':
-                            torch.cuda.synchronize()
+                        synchronize_device(self.device)
 
-                # Memory tracking
+                # Memory tracking (CUDA-specific for now)
                 if self.device.type == 'cuda':
                     torch.cuda.reset_peak_memory_stats()
 
@@ -201,8 +209,7 @@ class BenchmarkRunner:
                     with torch.no_grad():
                         output = implementation.run_inference(model, inputs)
 
-                    if self.device.type == 'cuda':
-                        torch.cuda.synchronize()
+                    synchronize_device(self.device)
 
                     end_time = time.perf_counter()
                     times.append(end_time - start_time)
@@ -268,12 +275,12 @@ class BenchmarkRunner:
             loss = implementation.run_training_step(model, inputs, targets)
 
         # Benchmark
+        from .timing_utils import synchronize_device
         times = []
         for _ in range(min(config.num_trials, 20)):  # Fewer trials for training
             start_time = time.perf_counter()
             loss = implementation.run_training_step(model, inputs, targets)
-            if self.device.type == 'cuda':
-                torch.cuda.synchronize()
+            synchronize_device(self.device)
             times.append(time.perf_counter() - start_time)
 
         avg_time = np.mean(times)
