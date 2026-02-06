@@ -31,7 +31,8 @@ try:
     TRANSFORMER_ENGINE_AVAILABLE = True
 except ImportError:
     TRANSFORMER_ENGINE_AVAILABLE = False
-    warnings.warn("Transformer Engine not available - FP8 training will use fallback implementations", stacklevel=2)
+    # Note: FP8 training will use fallback implementations when Transformer Engine
+    # is not installed. This is normal for most users - only warn when FP8 is used.
 
 try:
     from ..hardware.abstraction.hal_core import HardwareAbstractionLayer
