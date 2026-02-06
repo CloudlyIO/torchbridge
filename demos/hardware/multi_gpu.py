@@ -13,16 +13,17 @@ Hardware: Works on all platforms with automatic adaptation
 Runtime: 2-3 minutes
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import argparse
+import platform
+import time
 
 import torch
 import torch.nn as nn
-import time
-import argparse
-import platform
-from typing import Dict, List, Tuple, Optional
 
 
 class TestModel(nn.Module):
@@ -47,7 +48,7 @@ class TestModel(nn.Module):
 
 def detect_hardware_info():
     """Detect and display comprehensive hardware information."""
-    print(f"\n🔍 Hardware Detection and Capabilities")
+    print("\n🔍 Hardware Detection and Capabilities")
     print("-" * 50)
 
     # System information
@@ -67,9 +68,9 @@ def detect_hardware_info():
         print(f"CPU: {os.cpu_count()} cores")
 
     # CUDA/GPU information
-    print(f"\nGPU Information:")
+    print("\nGPU Information:")
     if torch.cuda.is_available():
-        print(f"  CUDA Available: Yes")
+        print("  CUDA Available: Yes")
         print(f"  CUDA Version: {torch.version.cuda}")
         print(f"  Device Count: {torch.cuda.device_count()}")
 
@@ -81,10 +82,10 @@ def detect_hardware_info():
             print(f"    Compute: {props.major}.{props.minor}")
             print(f"    Multiprocessors: {props.multi_processor_count}")
     else:
-        print(f"  CUDA Available: No")
+        print("  CUDA Available: No")
 
     # PyTorch backend information
-    print(f"\nPyTorch Backend Information:")
+    print("\nPyTorch Backend Information:")
     print(f"  PyTorch Version: {torch.__version__}")
     print(f"  MPS Available: {torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False}")
     print(f"  MKLDNN: {torch.backends.mkldnn.is_available()}")
@@ -104,7 +105,7 @@ def detect_gpu_vendor(gpu_name: str) -> str:
         return 'Unknown'
 
 
-def benchmark_on_device(device: torch.device, config: Dict, optimization_level: str = "baseline") -> Dict:
+def benchmark_on_device(device: torch.device, config: dict, optimization_level: str = "baseline") -> dict:
     """Benchmark model performance on specific device with different optimization levels."""
 
     input_size = config['input_size']
@@ -120,7 +121,7 @@ def benchmark_on_device(device: torch.device, config: Dict, optimization_level: 
     if optimization_level == "torch_compile" and device.type == 'cuda':
         try:
             model = torch.compile(model, mode='default')
-            print(f"    ✅ torch.compile optimization applied")
+            print("    ✅ torch.compile optimization applied")
         except Exception as e:
             print(f"    ⚠️ torch.compile failed: {e}")
             optimization_level = "baseline"
@@ -177,16 +178,16 @@ def benchmark_on_device(device: torch.device, config: Dict, optimization_level: 
     }
 
 
-def compare_hardware_performance(config: Dict):
+def compare_hardware_performance(config: dict):
     """Compare performance across different hardware and optimization levels."""
-    print(f"\n🏁 Multi-Hardware Performance Comparison")
+    print("\n🏁 Multi-Hardware Performance Comparison")
     print("-" * 50)
 
     results = []
 
     # Test CPU
     cpu_device = torch.device('cpu')
-    print(f"\nTesting CPU...")
+    print("\nTesting CPU...")
     try:
         cpu_result = benchmark_on_device(cpu_device, config, "baseline")
         results.append(cpu_result)
@@ -221,7 +222,7 @@ def compare_hardware_performance(config: Dict):
 
     # Print comparison table
     if results:
-        print(f"\n📊 Performance Summary:")
+        print("\n📊 Performance Summary:")
         print(f"{'Device':<20} {'Optimization':<12} {'Time (ms)':<12} {'Speedup':<10} {'Memory (MB)'}")
         print("-" * 75)
 
@@ -246,7 +247,7 @@ def compare_hardware_performance(config: Dict):
 
 def explain_vendor_optimizations():
     """Explain vendor-specific optimization strategies."""
-    print(f"\n🏭 Vendor-Specific Optimization Strategies")
+    print("\n🏭 Vendor-Specific Optimization Strategies")
     print("-" * 50)
 
     vendor_optimizations = {
@@ -305,20 +306,20 @@ def explain_vendor_optimizations():
 
     for vendor, optimizations in vendor_optimizations.items():
         print(f"\n{vendor}:")
-        print(f"  Hardware Features:")
+        print("  Hardware Features:")
         for feature in optimizations["hardware_features"]:
             print(f"    • {feature}")
-        print(f"  Software Stack:")
+        print("  Software Stack:")
         for software in optimizations["software_stack"]:
             print(f"    • {software}")
-        print(f"  PyTorch Optimizations:")
+        print("  PyTorch Optimizations:")
         for opt in optimizations["pytorch_optimizations"]:
             print(f"    • {opt}")
 
 
 def explain_cross_platform_deployment():
     """Explain cross-platform deployment strategies."""
-    print(f"\n🌍 Cross-Platform Deployment Strategies")
+    print("\n🌍 Cross-Platform Deployment Strategies")
     print("-" * 45)
 
     deployment_strategies = {
@@ -353,11 +354,11 @@ def explain_cross_platform_deployment():
         for detail in details:
             print(f"  • {detail}")
 
-    print(f"\n💡 Best Practices:")
-    print(f"  • Test on target hardware during development")
-    print(f"  • Use hardware-agnostic optimization where possible")
-    print(f"  • Implement graceful degradation for unsupported features")
-    print(f"  • Monitor performance across different hardware configurations")
+    print("\n💡 Best Practices:")
+    print("  • Test on target hardware during development")
+    print("  • Use hardware-agnostic optimization where possible")
+    print("  • Implement graceful degradation for unsupported features")
+    print("  • Monitor performance across different hardware configurations")
 
 
 def main():
@@ -396,16 +397,16 @@ def main():
     explain_vendor_optimizations()
     explain_cross_platform_deployment()
 
-    print(f"\n🎉 Hardware Abstraction Demo Completed!")
-    print(f"\n💡 Key Takeaways:")
-    print(f"   • Hardware abstraction enables cross-vendor optimization")
-    print(f"   • Each GPU vendor has unique optimization opportunities")
-    print(f"   • torch.compile provides significant speedups across vendors")
-    print(f"   • Production deployment requires vendor-specific strategies")
-    print(f"   • Monitoring and fallback mechanisms ensure reliability")
-    print(f"   • Cost optimization through multi-vendor deployment")
+    print("\n🎉 Hardware Abstraction Demo Completed!")
+    print("\n💡 Key Takeaways:")
+    print("   • Hardware abstraction enables cross-vendor optimization")
+    print("   • Each GPU vendor has unique optimization opportunities")
+    print("   • torch.compile provides significant speedups across vendors")
+    print("   • Production deployment requires vendor-specific strategies")
+    print("   • Monitoring and fallback mechanisms ensure reliability")
+    print("   • Cost optimization through multi-vendor deployment")
 
-    print(f"\n✅ Demo completed! Try --quick for faster testing.")
+    print("\n✅ Demo completed! Try --quick for faster testing.")
 
 
 if __name__ == "__main__":

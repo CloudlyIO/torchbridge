@@ -10,26 +10,22 @@ Analyzes the codebase for:
 """
 
 import ast
-import os
-import importlib
-import sys
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Any
-from dataclasses import dataclass
 from collections import defaultdict
-import inspect
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
 class DeadCodeResult:
     """Result of dead code analysis"""
     file_path: str
-    unused_imports: List[str]
-    unused_functions: List[str]
-    unused_classes: List[str]
-    unreachable_code: List[str]
-    redundant_code: List[str]
-    deprecated_usage: List[str]
+    unused_imports: list[str]
+    unused_functions: list[str]
+    unused_classes: list[str]
+    unreachable_code: list[str]
+    redundant_code: list[str]
+    deprecated_usage: list[str]
 
 
 class DeadCodeAnalyzer:
@@ -37,11 +33,11 @@ class DeadCodeAnalyzer:
 
     def __init__(self, src_path: str = "src"):
         self.src_path = Path(src_path)
-        self.results: List[DeadCodeResult] = []
+        self.results: list[DeadCodeResult] = []
         self.global_usage = defaultdict(set)
         self.defined_names = defaultdict(set)
 
-    def analyze_codebase(self) -> Dict[str, Any]:
+    def analyze_codebase(self) -> dict[str, Any]:
         """Perform comprehensive dead code analysis"""
         print("🔍 Starting dead code analysis...")
 
@@ -66,7 +62,7 @@ class DeadCodeAnalyzer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -86,7 +82,7 @@ class DeadCodeAnalyzer:
     def _analyze_file(self, file_path: Path) -> DeadCodeResult:
         """Analyze a single file for dead code"""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -105,7 +101,7 @@ class DeadCodeAnalyzer:
             print(f"Warning: Could not analyze {file_path}: {e}")
             return None
 
-    def _find_unused_imports(self, tree: ast.AST, content: str) -> List[str]:
+    def _find_unused_imports(self, tree: ast.AST, content: str) -> list[str]:
         """Find imports that are not used in the file"""
         unused_imports = []
         imported_names = set()
@@ -148,7 +144,7 @@ class DeadCodeAnalyzer:
 
         return unused_imports
 
-    def _find_unused_functions(self, tree: ast.AST, file_path: Path) -> List[str]:
+    def _find_unused_functions(self, tree: ast.AST, file_path: Path) -> list[str]:
         """Find functions that are never called"""
         unused_functions = []
 
@@ -167,7 +163,7 @@ class DeadCodeAnalyzer:
 
         return unused_functions
 
-    def _find_unused_classes(self, tree: ast.AST, file_path: Path) -> List[str]:
+    def _find_unused_classes(self, tree: ast.AST, file_path: Path) -> list[str]:
         """Find classes that are never instantiated"""
         unused_classes = []
 
@@ -185,7 +181,7 @@ class DeadCodeAnalyzer:
 
         return unused_classes
 
-    def _find_unreachable_code(self, tree: ast.AST) -> List[str]:
+    def _find_unreachable_code(self, tree: ast.AST) -> list[str]:
         """Find unreachable code patterns"""
         unreachable = []
 
@@ -207,7 +203,7 @@ class DeadCodeAnalyzer:
 
         return unreachable
 
-    def _find_redundant_code(self, tree: ast.AST, content: str) -> List[str]:
+    def _find_redundant_code(self, tree: ast.AST, content: str) -> list[str]:
         """Find redundant code patterns"""
         redundant = []
 
@@ -230,7 +226,7 @@ class DeadCodeAnalyzer:
 
         return redundant
 
-    def _find_deprecated_usage(self, tree: ast.AST, content: str) -> List[str]:
+    def _find_deprecated_usage(self, tree: ast.AST, content: str) -> list[str]:
         """Find usage of deprecated features"""
         deprecated = []
 
@@ -251,7 +247,7 @@ class DeadCodeAnalyzer:
 
         return deprecated
 
-    def _generate_summary(self) -> Dict[str, Any]:
+    def _generate_summary(self) -> dict[str, Any]:
         """Generate summary of dead code analysis"""
         summary = {
             "total_files_analyzed": len(self.results),
@@ -270,7 +266,7 @@ class DeadCodeAnalyzer:
 
         return summary
 
-    def generate_cleanup_recommendations(self) -> List[str]:
+    def generate_cleanup_recommendations(self) -> list[str]:
         """Generate specific cleanup recommendations"""
         recommendations = []
 
@@ -309,7 +305,7 @@ def analyze_dead_code(src_path: str = "src") -> None:
     analyzer = DeadCodeAnalyzer(src_path)
     results = analyzer.analyze_codebase()
 
-    print(f"\n📊 Dead Code Analysis Summary:")
+    print("\n📊 Dead Code Analysis Summary:")
     print(f"Files analyzed: {results['total_files_analyzed']}")
     print(f"Files with issues: {results['files_with_issues']}")
     print(f"Unused imports: {results['total_unused_imports']}")
@@ -319,14 +315,14 @@ def analyze_dead_code(src_path: str = "src") -> None:
     print(f"Redundant code: {results['total_redundant_code']}")
     print(f"Deprecated usage: {results['total_deprecated_usage']}")
 
-    print(f"\n🎯 Cleanup Recommendations:")
+    print("\n🎯 Cleanup Recommendations:")
     recommendations = analyzer.generate_cleanup_recommendations()
     for rec in recommendations:
         print(f"  {rec}")
 
     # Show detailed results for files with issues
     if results['files_with_issues'] > 0:
-        print(f"\n📋 Detailed Issues (Top 10 files):")
+        print("\n📋 Detailed Issues (Top 10 files):")
         issue_files = [r for r in results['detailed_results'] if any([
             r.unused_imports, r.unused_functions, r.unused_classes,
             r.unreachable_code, r.redundant_code, r.deprecated_usage

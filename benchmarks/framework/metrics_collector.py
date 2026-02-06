@@ -5,13 +5,14 @@ Comprehensive metrics collection including hardware monitoring,
 statistical analysis, and performance profiling.
 """
 
-import torch
 import time
-import psutil
-import numpy as np
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
 from contextlib import contextmanager
+from dataclasses import dataclass
+
+import numpy as np
+import psutil
+import torch
+
 
 @dataclass
 class PerformanceMetrics:

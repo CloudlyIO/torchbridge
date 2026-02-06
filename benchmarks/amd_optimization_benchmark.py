@@ -15,13 +15,12 @@ Output includes:
 - Architecture-specific performance differences
 """
 
-import time
 import json
 import sys
+import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
-import statistics
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -29,11 +28,11 @@ import torch.nn as nn
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from torchbridge.core.config import AMDConfig, AMDArchitecture
 from torchbridge.backends.amd.amd_backend import AMDBackend
 from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
-from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 from torchbridge.backends.amd.memory_manager import AMDMemoryManager
+from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
+from torchbridge.core.config import AMDArchitecture, AMDConfig
 
 
 @dataclass
@@ -47,7 +46,7 @@ class BenchmarkResult:
     memory_mb: float
     fusion_count: int
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def print_section(title: str) -> None:
@@ -156,7 +155,7 @@ def benchmark_optimization_level(
         )
 
 
-def benchmark_compilation_cache() -> Dict[str, Any]:
+def benchmark_compilation_cache() -> dict[str, Any]:
     """Benchmark HIP kernel compilation caching."""
     config = AMDConfig()
     compiler = ROCmCompiler(config)
@@ -196,7 +195,7 @@ def benchmark_compilation_cache() -> Dict[str, Any]:
     }
 
 
-def benchmark_memory_management() -> Dict[str, Any]:
+def benchmark_memory_management() -> dict[str, Any]:
     """Benchmark AMD memory management operations."""
     config = AMDConfig(memory_pool_size_gb=1.0)
     manager = AMDMemoryManager(config)
@@ -246,7 +245,7 @@ def benchmark_memory_management() -> Dict[str, Any]:
     }
 
 
-def run_all_benchmarks() -> Dict[str, Any]:
+def run_all_benchmarks() -> dict[str, Any]:
     """Run all AMD optimization benchmarks."""
     print_section("AMD Backend Optimization Benchmarks (v0.4.9)")
 
@@ -349,7 +348,7 @@ def run_all_benchmarks() -> Dict[str, Any]:
     total = len(opt_level_results)
     print(f"  Optimization benchmarks: {successful}/{total} successful")
     print(f"  Cache hit rate: {cache_results['cache_hit_rate']:.1f}%")
-    print(f"  Memory management: OK")
+    print("  Memory management: OK")
 
     # Save results
     output_path = Path(__file__).parent / "results" / "amd_optimization_results.json"

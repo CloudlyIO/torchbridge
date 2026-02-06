@@ -12,8 +12,8 @@ Features:
 - Integration with TorchBridge attention system
 """
 
-import sys
 import os
+import sys
 import time
 
 # Add src to path
@@ -37,12 +37,10 @@ from torchbridge.attention import (
     create_attention,
 )
 from torchbridge.attention.implementations.flex_attention import (
-    FlexAttentionLayer,
     FlexAttentionCausal,
-    FlexAttentionSlidingWindow,
     FlexAttentionScoreMods,
+    FlexAttentionSlidingWindow,
     create_flex_attention,
-    is_flex_attention_available,
     get_flex_attention_info,
 )
 
@@ -55,7 +53,7 @@ def demo_flex_attention_availability():
     print(f"PyTorch Version: {info['torch_version']}")
     print(f"FlexAttention Available: {info['available']}")
     print(f"torch.compile Available: {info['torch_compile_available']}")
-    print(f"\nSupported Patterns:")
+    print("\nSupported Patterns:")
     for pattern in info['supported_patterns']:
         print(f"  - {pattern}")
 
@@ -109,9 +107,9 @@ def demo_causal_attention():
     x = torch.randn(2, 64, 256, device=device)
     output = layer(x)
 
-    print(f"Pattern: Causal (autoregressive)")
+    print("Pattern: Causal (autoregressive)")
     print(f"Input: {x.shape} -> Output: {output.shape}")
-    print(f"Use case: Language modeling, text generation")
+    print("Use case: Language modeling, text generation")
 
     return True
 
@@ -134,8 +132,8 @@ def demo_sliding_window_attention():
 
     print(f"Pattern: Sliding Window (size={window_size})")
     print(f"Input: {x.shape} -> Output: {output.shape}")
-    print(f"Use case: Long sequence processing with local context")
-    print(f"Memory: O(N*W) vs O(N^2) for full attention")
+    print("Use case: Long sequence processing with local context")
+    print("Memory: O(N*W) vs O(N^2) for full attention")
 
     return True
 
@@ -217,7 +215,7 @@ def demo_performance_comparison():
         implementation='flash_attention3'
     ).to(device)
 
-    print(f"Comparing FlexAttention vs FlashAttention-3")
+    print("Comparing FlexAttention vs FlashAttention-3")
     print(f"Device: {device}, Batch: {batch_size}, Embed: {embed_dim}, Heads: {num_heads}")
     print()
 
@@ -292,9 +290,9 @@ def demo_transformer_block():
     x = torch.randn(2, 64, 256, device=device)
     output = block(x)
 
-    print(f"Transformer block with FlexAttention causal pattern")
+    print("Transformer block with FlexAttention causal pattern")
     print(f"Input: {x.shape} -> Output: {output.shape}")
-    print(f"Components: LayerNorm -> FlexAttention -> LayerNorm -> FFN")
+    print("Components: LayerNorm -> FlexAttention -> LayerNorm -> FFN")
 
     # Test gradient flow
     x.requires_grad = True
@@ -312,8 +310,7 @@ def demo_registry_integration():
     print_section("Registry Integration")
 
     from torchbridge.attention.core.registry import (
-        get_attention_registry,
-        list_available_attention
+        list_available_attention,
     )
 
     # List available implementations

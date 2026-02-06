@@ -4,24 +4,25 @@ NVIDIA Integration Benchmark
 Comprehensive performance benchmarking for NVIDIA backend.
 """
 
+import time
+from typing import Any
+
 import torch
 import torch.nn as nn
-import time
-from typing import Dict, Any
 
-from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
 from torchbridge.backends.nvidia import (
-    NVIDIABackend,
-    NVIDIAOptimizer,
-    FP8Compiler,
-    NVIDIAMemoryManager,
-    FlashAttention3,
     CUDADeviceManager,
-    CUDAOptimizations
+    CUDAOptimizations,
+    FlashAttention3,
+    FP8Compiler,
+    NVIDIABackend,
+    NVIDIAMemoryManager,
+    NVIDIAOptimizer,
 )
+from torchbridge.core.config import NVIDIAArchitecture, TorchBridgeConfig
 
 
-def benchmark_nvidia_backend() -> Dict[str, Any]:
+def benchmark_nvidia_backend() -> dict[str, Any]:
     """Benchmark NVIDIA backend performance."""
     print("\n" + "=" * 70)
     print("NVIDIA Backend Benchmark")
@@ -76,7 +77,7 @@ def benchmark_nvidia_backend() -> Dict[str, Any]:
     return results
 
 
-def benchmark_nvidia_optimizer() -> Dict[str, Any]:
+def benchmark_nvidia_optimizer() -> dict[str, Any]:
     """Benchmark NVIDIA optimizer performance."""
     print("\n" + "=" * 70)
     print("NVIDIA Optimizer Benchmark")
@@ -131,7 +132,7 @@ def benchmark_nvidia_optimizer() -> Dict[str, Any]:
     return results
 
 
-def benchmark_fp8_compiler() -> Dict[str, Any]:
+def benchmark_fp8_compiler() -> dict[str, Any]:
     """Benchmark FP8 compiler performance."""
     print("\n" + "=" * 70)
     print("FP8 Compiler Benchmark")
@@ -185,7 +186,7 @@ def benchmark_fp8_compiler() -> Dict[str, Any]:
     return results
 
 
-def benchmark_memory_manager() -> Dict[str, Any]:
+def benchmark_memory_manager() -> dict[str, Any]:
     """Benchmark NVIDIA memory manager performance."""
     print("\n" + "=" * 70)
     print("NVIDIA Memory Manager Benchmark")
@@ -236,7 +237,7 @@ def benchmark_memory_manager() -> Dict[str, Any]:
     return results
 
 
-def benchmark_flash_attention() -> Dict[str, Any]:
+def benchmark_flash_attention() -> dict[str, Any]:
     """Benchmark FlashAttention-3 performance."""
     print("\n" + "=" * 70)
     print("FlashAttention-3 Benchmark")
@@ -268,7 +269,7 @@ def benchmark_flash_attention() -> Dict[str, Any]:
     return results
 
 
-def benchmark_cuda_utilities() -> Dict[str, Any]:
+def benchmark_cuda_utilities() -> dict[str, Any]:
     """Benchmark CUDA utilities performance."""
     print("\n" + "=" * 70)
     print("CUDA Utilities Benchmark")
@@ -307,7 +308,7 @@ def benchmark_cuda_utilities() -> Dict[str, Any]:
     return results
 
 
-def run_all_benchmarks() -> Dict[str, Any]:
+def run_all_benchmarks() -> dict[str, Any]:
     """Run all NVIDIA integration benchmarks."""
     print("\n" + "=" * 70)
     print("NVIDIA INTEGRATION COMPREHENSIVE BENCHMARK")
@@ -335,8 +336,8 @@ def run_all_benchmarks() -> Dict[str, Any]:
     )
 
     print(f"✅ Total benchmark tests: {total_tests}")
-    print(f"✅ All benchmarks completed successfully")
-    print(f"✅ NVIDIA backend ready for production use")
+    print("✅ All benchmarks completed successfully")
+    print("✅ NVIDIA backend ready for production use")
 
     return all_results
 

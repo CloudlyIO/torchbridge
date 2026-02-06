@@ -12,14 +12,12 @@ Usage:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -43,7 +41,7 @@ class AWSConfig:
     vpc_id: str = "vpc-0f15c7f58720f216f"
 
     # Instance types to test
-    instance_types: Dict[str, dict] = None
+    instance_types: dict[str, dict] = None
 
     def __post_init__(self):
         self.instance_types = {
@@ -85,13 +83,13 @@ class AWSConfig:
 @dataclass
 class GCPConfig:
     """GCP configuration."""
-    project_id: Optional[str] = None
+    project_id: str | None = None
 
     # Zones with GPU availability (T4 is most widely available)
-    zones: Dict[str, List[str]] = None
+    zones: dict[str, list[str]] = None
 
     # Machine types to test
-    machine_types: Dict[str, dict] = None
+    machine_types: dict[str, dict] = None
 
     def __post_init__(self):
         self.zones = {
@@ -222,7 +220,7 @@ def run_aws_validation(
     instance_type: str = "g5.xlarge",
     spot: bool = True,
     dry_run: bool = False,
-) -> Dict:
+) -> dict:
     """Run validation on AWS EC2 instance."""
     config = AWSConfig()
 
@@ -338,7 +336,7 @@ def run_gcp_validation(
     machine_type: str = "n1-standard-4",
     preemptible: bool = True,
     dry_run: bool = False,
-) -> Dict:
+) -> dict:
     """Run validation on GCP Compute Engine instance."""
     config = GCPConfig()
 

@@ -6,11 +6,10 @@ This module provides common model architectures used across demo scripts.
 Version: 0.3.6
 """
 
+from typing import Literal
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Literal
-
 
 # ============================================================================
 # Simple Models
@@ -76,7 +75,7 @@ class SimpleTransformer(nn.Module):
         d_model: int = 512,
         nhead: int = 8,
         num_layers: int = 6,
-        dim_feedforward: Optional[int] = None,
+        dim_feedforward: int | None = None,
         dropout: float = 0.1,
         max_seq_len: int = 1000,
     ):
@@ -135,8 +134,8 @@ class SimpleAttention(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        key: Optional[torch.Tensor] = None,
-        value: Optional[torch.Tensor] = None,
+        key: torch.Tensor | None = None,
+        value: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if key is None:
             key = x

@@ -15,7 +15,6 @@ Integrates with pre-commit hooks to prevent version drift.
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Dict
 
 # Root of the repository
 REPO_ROOT = Path(__file__).parent.parent
@@ -63,7 +62,7 @@ def get_current_version() -> str:
     return match.group(1)
 
 
-def get_doc_files() -> List[Path]:
+def get_doc_files() -> list[Path]:
     """Get all documentation files to check."""
     files = []
     for pattern in DOC_PATTERNS:
@@ -78,7 +77,7 @@ def get_doc_files() -> List[Path]:
     return sorted(set(files))
 
 
-def check_file_versions(file_path: Path, current_version: str) -> List[Tuple[int, str, str]]:
+def check_file_versions(file_path: Path, current_version: str) -> list[tuple[int, str, str]]:
     """
     Check a file for outdated version references.
 
@@ -172,7 +171,7 @@ def main():
 
     if fix_mode:
         if total_mismatches > 0:
-            print(f"FIXED: Updated version references in documentation")
+            print("FIXED: Updated version references in documentation")
             print(f"       Total changes: {total_mismatches}")
             return 0
         else:

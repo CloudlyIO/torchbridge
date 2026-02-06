@@ -6,18 +6,19 @@ Implementation of the absolute latest optimization techniques and frameworks
 for comprehensive state-of-the-art comparison.
 """
 
-import sys
 import os
+import sys
+import warnings
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import warnings
-from typing import Dict, Any, Optional, List, Tuple
-import time
 
 # Add framework path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'framework'))
 from benchmark_runner import BaseImplementation
+
 
 class vLLMBaseline(BaseImplementation):
     """
@@ -40,23 +41,22 @@ class vLLMBaseline(BaseImplementation):
             warnings.warn("vLLM not available - using optimized simulation")
             return False
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup vLLM model or simulation"""
         if self.vllm_available:
             return self._setup_real_vllm_model(model_config)
         else:
             return self._setup_vllm_simulation(model_config)
 
-    def _setup_real_vllm_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def _setup_real_vllm_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup actual vLLM model"""
-        from vllm import LLM, SamplingParams
 
         # vLLM model configuration
         # Note: In practice, vLLM works with specific model checkpoints
         # Here we create a simulation since we're benchmarking architectures
         return self._setup_vllm_simulation(model_config)
 
-    def _setup_vllm_simulation(self, model_config: Dict[str, Any]) -> nn.Module:
+    def _setup_vllm_simulation(self, model_config: dict[str, Any]) -> nn.Module:
         """Simulate vLLM optimizations with PyTorch"""
         return vLLMSimulationModel(model_config).to(self.device)
 
@@ -83,7 +83,7 @@ class FlashAttention3Baseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("Flash Attention 3", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup model with Flash Attention 3"""
         return FlashAttention3Model(model_config).to(self.device)
 
@@ -121,7 +121,7 @@ class RingAttentionBaseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("Ring Attention (Long Context)", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup model with Ring Attention"""
         return RingAttentionModel(model_config).to(self.device)
 
@@ -146,7 +146,7 @@ class MambaStateSpaceBaseline(BaseImplementation):
     def __init__(self, device: torch.device):
         super().__init__("Mamba (State Space)", device)
 
-    def setup_model(self, model_config: Dict[str, Any]) -> nn.Module:
+    def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup Mamba model"""
         return MambaModel(model_config).to(self.device)
 
@@ -166,7 +166,7 @@ class vLLMSimulationModel(nn.Module):
     Simulation of vLLM optimizations including PagedAttention patterns
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -279,7 +279,7 @@ class FlashAttention3Model(nn.Module):
     Flash Attention 3 Model with latest optimizations
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -372,7 +372,7 @@ class RingAttentionModel(nn.Module):
     Ring Attention model for extreme long sequences (2M+ tokens)
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -478,7 +478,7 @@ class MambaModel(nn.Module):
     Mamba State Space Model - O(n) complexity architecture
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__()
         self.hidden_size = config.get('hidden_size', 768)
         self.num_layers = config.get('num_layers', 12)
@@ -565,7 +565,7 @@ class SelectiveStateSpace(nn.Module):
         return output
 
 
-def create_cutting_edge_baselines(device: torch.device) -> List[BaseImplementation]:
+def create_cutting_edge_baselines(device: torch.device) -> list[BaseImplementation]:
     """Create all cutting-edge baseline implementations"""
 
     return [

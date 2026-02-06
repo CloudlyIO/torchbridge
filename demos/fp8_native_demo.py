@@ -20,10 +20,9 @@ Hardware:
 - Works on all hardware with simulation fallback
 """
 
-import sys
-import os
-import time
 import argparse
+import os
+import sys
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -42,24 +41,21 @@ except ImportError:
         print('='*60)
 
 from torchbridge.precision import (
-    # Native FP8
-    FP8Dtype,
-    NativeFP8Linear,
-    FP8InferenceEngine,
-    is_fp8_available,
-    get_fp8_info,
-    compute_fp8_scale,
-    quantize_to_fp8,
-    dequantize_from_fp8,
-    convert_model_to_native_fp8,
-    benchmark_fp8_layer,
-    FP8_NATIVE_AVAILABLE,
     FP8_DTYPES_AVAILABLE,
     # Training
-    FP8TrainingEngine,
     FP8Config,
+    # Native FP8
+    FP8Dtype,
     FP8Format,
+    FP8InferenceEngine,
+    NativeFP8Linear,
+    benchmark_fp8_layer,
+    compute_fp8_scale,
+    convert_model_to_native_fp8,
     create_fp8_trainer,
+    dequantize_from_fp8,
+    get_fp8_info,
+    quantize_to_fp8,
 )
 
 
@@ -125,15 +121,15 @@ def demo_fp8_availability():
     print(f"FP8 scaled_mm Available: {info['fp8_scaled_mm_available']}")
 
     if info['supported_formats']:
-        print(f"\nSupported FP8 Formats:")
+        print("\nSupported FP8 Formats:")
         for fmt in info['supported_formats']:
             print(f"  - {fmt}")
 
-    print(f"\nFP8 Format Specifications:")
+    print("\nFP8 Format Specifications:")
     print(f"  E4M3FN max value: {info['e4m3_max_value']}")
     print(f"  E5M2 max value: {info['e5m2_max_value']}")
 
-    print(f"\nRecommended Usage:")
+    print("\nRecommended Usage:")
     for fmt, usage in info['recommended_use'].items():
         print(f"  {fmt}: {usage}")
 
@@ -158,7 +154,7 @@ def demo_fp8_quantization():
     dequantized_e4m3 = dequantize_from_fp8(quantized_e4m3, scale_e4m3)
 
     mse_e4m3 = F.mse_loss(x, dequantized_e4m3)
-    print(f"\nE4M3 Quantization:")
+    print("\nE4M3 Quantization:")
     print(f"  Scale: {scale_e4m3.item():.4f}")
     print(f"  MSE: {mse_e4m3.item():.6f}")
     print(f"  Relative error: {(mse_e4m3.sqrt() / x.std()).item()*100:.4f}%")
@@ -169,7 +165,7 @@ def demo_fp8_quantization():
     dequantized_e5m2 = dequantize_from_fp8(quantized_e5m2, scale_e5m2)
 
     mse_e5m2 = F.mse_loss(x, dequantized_e5m2)
-    print(f"\nE5M2 Quantization:")
+    print("\nE5M2 Quantization:")
     print(f"  Scale: {scale_e5m2.item():.4f}")
     print(f"  MSE: {mse_e5m2.item():.6f}")
     print(f"  Relative error: {(mse_e5m2.sqrt() / x.std()).item()*100:.4f}%")
@@ -195,12 +191,12 @@ def demo_native_fp8_linear():
         device=device
     )
 
-    print(f"\nLayer configuration:")
+    print("\nLayer configuration:")
     print(f"  {layer}")
 
     # Get FP8 info
     info = layer.get_fp8_info()
-    print(f"\nFP8 Layer Info:")
+    print("\nFP8 Layer Info:")
     print(f"  Weight format: {info['weight_format']}")
     print(f"  Activation format: {info['activation_format']}")
     print(f"  Weight scale: {info['weight_scale']:.4f}")
@@ -211,7 +207,7 @@ def demo_native_fp8_linear():
     x = torch.randn(4, 512, device=device)
     output = layer(x)
 
-    print(f"\nForward pass:")
+    print("\nForward pass:")
     print(f"  Input shape: {x.shape}")
     print(f"  Output shape: {output.shape}")
     print(f"  Output finite: {torch.isfinite(output).all()}")
@@ -253,7 +249,7 @@ def demo_fp8_inference_engine():
 
     # Get memory savings
     savings = engine.get_memory_savings()
-    print(f"\nMemory Analysis:")
+    print("\nMemory Analysis:")
     print(f"  FP32 memory: {savings['fp32_memory_mb']:.2f} MB")
     print(f"  FP8 memory: {savings['fp8_memory_mb']:.2f} MB")
     print(f"  Savings: {savings['savings_percent']:.1f}%")
@@ -263,7 +259,7 @@ def demo_fp8_inference_engine():
     x = torch.randn(2, 32, 256, device=device)
     output = engine.infer(x)
 
-    print(f"\nInference:")
+    print("\nInference:")
     print(f"  Input shape: {x.shape}")
     print(f"  Output shape: {output.shape}")
     print(f"  Output finite: {torch.isfinite(output).all()}")
@@ -296,7 +292,7 @@ def demo_model_conversion():
     x = torch.randn(2, 32, 256, device=device)
     output = fp8_model(x)
 
-    print(f"\nForward pass after conversion:")
+    print("\nForward pass after conversion:")
     print(f"  Input: {x.shape}")
     print(f"  Output: {output.shape}")
     print(f"  Output finite: {torch.isfinite(output).all()}")
@@ -360,7 +356,7 @@ def demo_fp8_training():
 
     # Get stats
     stats = trainer.get_training_statistics()
-    print(f"\nTraining Statistics:")
+    print("\nTraining Statistics:")
     print(f"  Steps: {stats['steps']}")
     print(f"  Overflows: {stats['overflows']}")
     print(f"  FP8 enabled: {stats['fp8_enabled']}")
@@ -383,7 +379,7 @@ def demo_benchmark():
         (2048, 2048, 16),
     ]
 
-    print(f"\nBenchmarking FP8 vs Standard Linear layers:")
+    print("\nBenchmarking FP8 vs Standard Linear layers:")
     print(f"{'In':>6} {'Out':>6} {'Batch':>6} {'FP8 (ms)':>10} {'Std (ms)':>10} {'Speedup':>8}")
     print("-" * 50)
 
@@ -421,7 +417,7 @@ def demo_numerical_stability():
         ("Very large", 100.0),
     ]
 
-    print(f"Testing FP8 quantization stability:")
+    print("Testing FP8 quantization stability:")
     print(f"{'Case':<15} {'Scale':>8} {'E4M3 Error':>12} {'E5M2 Error':>12} {'Recommended':<10}")
     print("-" * 60)
 
@@ -444,8 +440,8 @@ def demo_numerical_stability():
 
         print(f"{name:<15} {magnitude:>8.2f} {error_e4m3:>12.6f} {error_e5m2:>12.6f} {recommended:<10}")
 
-    print(f"\nConclusion: E4M3 is generally preferred for activations (higher precision)")
-    print(f"            E5M2 is better for gradients (wider dynamic range)")
+    print("\nConclusion: E4M3 is generally preferred for activations (higher precision)")
+    print("            E5M2 is better for gradients (wider dynamic range)")
 
     return True
 
@@ -500,7 +496,7 @@ def main():
         status = "PASS" if result == 'PASSED' or result is True else "FAIL"
         print(f"  [{status}] {name}")
 
-    print(f"\nFP8 Support Status:")
+    print("\nFP8 Support Status:")
     print(f"  Native FP8 types: {'Available' if FP8_DTYPES_AVAILABLE else 'Simulated'}")
     print(f"  PyTorch version: {torch.__version__}")
 
@@ -508,7 +504,7 @@ def main():
         print(f"  GPU: {torch.cuda.get_device_name()}")
         capability = torch.cuda.get_device_capability()
         if capability[0] >= 9:
-            print(f"  Hardware FP8: Supported (Hopper/Blackwell)")
+            print("  Hardware FP8: Supported (Hopper/Blackwell)")
         else:
             print(f"  Hardware FP8: Limited (Compute {capability[0]}.{capability[1]})")
 

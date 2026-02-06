@@ -6,9 +6,10 @@ Basic test to validate the benchmark framework functionality
 without external dependencies.
 """
 
-import sys
 import os
+import sys
 import time
+
 import torch
 
 # Add paths
@@ -181,7 +182,7 @@ def main():
     total_time = time.time() - start_time
 
     # Summary
-    print(f"\n📊 Test Summary")
+    print("\n📊 Test Summary")
     print("-" * 30)
     print(f"   Basic optimization patterns: {'✅' if test1 else '❌'}")
     print(f"   Our optimization components: {'✅' if test2 else '⚠️'}")
@@ -189,13 +190,13 @@ def main():
     print(f"   Total time: {total_time:.1f}s")
 
     if test1 and test3:
-        print(f"\n🎉 Benchmark framework is functional!")
-        print(f"   Ready for production benchmarking")
-        print(f"   Framework supports comparative analysis")
+        print("\n🎉 Benchmark framework is functional!")
+        print("   Ready for production benchmarking")
+        print("   Framework supports comparative analysis")
         print(f"   Optimization components {'available' if test2 else 'partially available'}")
         return True
     else:
-        print(f"\n⚠️  Some tests failed - check implementation")
+        print("\n⚠️  Some tests failed - check implementation")
         return False
 
 if __name__ == "__main__":

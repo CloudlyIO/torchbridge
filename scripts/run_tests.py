@@ -8,9 +8,10 @@ with appropriate configurations and reporting.
 
 import argparse
 import subprocess
-import time
 import sys
+import time
 from pathlib import Path
+
 
 def run_command(cmd, description=""):
     """Run a command and return timing/results"""

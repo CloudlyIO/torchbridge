@@ -6,15 +6,17 @@ Fast validation of the benchmark framework and our optimizations.
 Perfect for CI/CD and quick development feedback.
 """
 
-import sys
 import os
+import sys
 
 # Add paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.insert(0, os.path.dirname(__file__))
 
-import torch
 import time
+
+import torch
+
 
 def quick_environment_check():
     """Quick environment validation"""
@@ -36,22 +38,22 @@ def quick_environment_check():
         compiled_fn = torch.compile(test_fn)
         test_input = torch.randn(10, device=device)
         compiled_fn(test_input)
-        print(f"   torch.compile: ✅ Working")
+        print("   torch.compile: ✅ Working")
     except Exception as e:
         print(f"   torch.compile: ❌ Failed ({e})")
 
     # Our optimizations
     try:
         from torchbridge.compiler_optimized import FusedGELU
-        print(f"   Our Optimizations: ✅ Available")
+        print("   Our Optimizations: ✅ Available")
     except ImportError:
-        print(f"   Our Optimizations: ⚠️  Limited")
+        print("   Our Optimizations: ⚠️  Limited")
 
     return device
 
 def quick_performance_test(device):
     """Quick performance validation"""
-    print(f"\n⚡ Quick Performance Test")
+    print("\n⚡ Quick Performance Test")
     print("-" * 30)
 
     # Test data
@@ -108,12 +110,20 @@ def quick_performance_test(device):
 
 def quick_framework_test():
     """Quick test of our benchmark framework"""
-    print(f"\n🏁 Framework Test")
+    print("\n🏁 Framework Test")
     print("-" * 30)
 
     try:
-        from framework.benchmark_runner import BenchmarkRunner, BenchmarkConfig, BenchmarkType, create_simple_gpt_config
-        from framework.baseline_implementations import PyTorchNativeBaseline, create_our_optimized_implementation
+        from framework.baseline_implementations import (
+            PyTorchNativeBaseline,
+            create_our_optimized_implementation,
+        )
+        from framework.benchmark_runner import (
+            BenchmarkConfig,
+            BenchmarkRunner,
+            BenchmarkType,
+            create_simple_gpt_config,
+        )
 
         # Create simple runner
         runner = BenchmarkRunner()
@@ -133,7 +143,7 @@ def quick_framework_test():
             warmup_trials=2
         )
 
-        print(f"   Running quick benchmark...")
+        print("   Running quick benchmark...")
         results = runner.run_comprehensive_benchmark(config)
 
         if results and len(results) >= 2:
@@ -147,14 +157,14 @@ def quick_framework_test():
                     speedup = baseline_latency / our_latency
                     print(f"   Speedup achieved: {speedup:.2f}x")
                 elif our_latency == 0:
-                    print(f"   ⚠️  Our optimization latency is zero - potential measurement issue")
+                    print("   ⚠️  Our optimization latency is zero - potential measurement issue")
                 elif baseline_latency == 0:
-                    print(f"   ⚠️  Baseline latency is zero - potential measurement issue")
+                    print("   ⚠️  Baseline latency is zero - potential measurement issue")
                 return True
 
             return True
         else:
-            print(f"   ❌ Framework test failed")
+            print("   ❌ Framework test failed")
             return False
 
     except Exception as e:
@@ -180,19 +190,19 @@ def main():
     # Summary
     total_time = time.time() - start_time
 
-    print(f"\n📊 Validation Summary")
+    print("\n📊 Validation Summary")
     print("-" * 30)
-    print(f"   Environment: ✅")
+    print("   Environment: ✅")
     print(f"   Performance: {'✅' if perf_ok else '⚠️'}")
     print(f"   Framework: {'✅' if framework_ok else '❌'}")
     print(f"   Total time: {total_time:.1f}s")
 
     if perf_ok and framework_ok:
-        print(f"\n🎉 Benchmark framework ready for production use!")
-        print(f"   Run: python3 benchmarks/run_comprehensive_benchmark.py --quick")
+        print("\n🎉 Benchmark framework ready for production use!")
+        print("   Run: python3 benchmarks/run_comprehensive_benchmark.py --quick")
         return True
     else:
-        print(f"\n⚠️  Some issues detected - check logs above")
+        print("\n⚠️  Some issues detected - check logs above")
         return False
 
 if __name__ == "__main__":

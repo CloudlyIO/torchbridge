@@ -4,18 +4,17 @@ CLI Performance Benchmarking
 Benchmarks for CLI tool performance, import times, and packaging efficiency.
 """
 
-import time
+import json
+import os
 import subprocess
 import sys
-import os
-import json
 import tempfile
+import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Any
-from dataclasses import dataclass, asdict
+from typing import Any
 
 import torch
-import pytest
 
 
 @dataclass
@@ -34,10 +33,10 @@ class CLIPerformanceBenchmark:
     """Benchmark CLI tools performance."""
 
     def __init__(self):
-        self.results: List[CLIBenchmarkResult] = []
+        self.results: list[CLIBenchmarkResult] = []
         self.python_executable = sys.executable
 
-    def benchmark_cli_command(self, command: List[str], timeout: int = 60) -> CLIBenchmarkResult:
+    def benchmark_cli_command(self, command: list[str], timeout: int = 60) -> CLIBenchmarkResult:
         """Benchmark a single CLI command."""
         start_time = time.time()
 
@@ -77,7 +76,7 @@ class CLIPerformanceBenchmark:
                 success=False
             )
 
-        except Exception as e:
+        except Exception:
             benchmark_result = CLIBenchmarkResult(
                 command=' '.join(command),
                 execution_time_ms=0.0,
@@ -91,7 +90,7 @@ class CLIPerformanceBenchmark:
         self.results.append(benchmark_result)
         return benchmark_result
 
-    def benchmark_import_performance(self) -> Dict[str, float]:
+    def benchmark_import_performance(self) -> dict[str, float]:
         """Benchmark import performance for CLI modules."""
         import_benchmarks = {}
 
@@ -113,12 +112,12 @@ class CLIPerformanceBenchmark:
             try:
                 exec(f"import {module}")
                 import_benchmarks[module] = (time.time() - start_time) * 1000
-            except ImportError as e:
+            except ImportError:
                 import_benchmarks[module] = -1  # Import failed
 
         return import_benchmarks
 
-    def benchmark_cli_help_commands(self) -> List[CLIBenchmarkResult]:
+    def benchmark_cli_help_commands(self) -> list[CLIBenchmarkResult]:
         """Benchmark CLI help commands."""
         help_commands = [
             ['-m', 'torchbridge.cli', '--help'],
@@ -174,7 +173,7 @@ class CLIPerformanceBenchmark:
             '--quick'
         ], timeout=180)
 
-    def run_all_benchmarks(self) -> Dict[str, Any]:
+    def run_all_benchmarks(self) -> dict[str, Any]:
         """Run all CLI benchmarks."""
         print("🚀 Running CLI Performance Benchmarks")
         print("=" * 50)
@@ -215,7 +214,7 @@ class CLIPerformanceBenchmark:
 
         return all_results
 
-    def display_results(self, results: Dict[str, Any]) -> None:
+    def display_results(self, results: dict[str, Any]) -> None:
         """Display benchmark results."""
         print("\n📊 CLI Performance Benchmark Results")
         print("=" * 60)
@@ -268,7 +267,7 @@ class CLIPerformanceBenchmark:
             print(f"  Average import time: {avg_import_time:.2f} ms")
             print(f"  Slowest import: {max_import_time:.2f} ms")
 
-    def save_results(self, results: Dict[str, Any], output_file: str) -> None:
+    def save_results(self, results: dict[str, Any], output_file: str) -> None:
         """Save benchmark results to file."""
         results_with_metadata = {
             'timestamp': time.time(),
@@ -289,7 +288,7 @@ class PackagingBenchmark:
     def __init__(self):
         self.package_root = Path(__file__).parent.parent
 
-    def benchmark_package_size(self) -> Dict[str, Any]:
+    def benchmark_package_size(self) -> dict[str, Any]:
         """Benchmark package size metrics."""
         size_metrics = {}
 
@@ -328,7 +327,7 @@ class PackagingBenchmark:
 
         return size_metrics
 
-    def benchmark_wheel_build_time(self) -> Dict[str, Any]:
+    def benchmark_wheel_build_time(self) -> dict[str, Any]:
         """Benchmark wheel building performance."""
         try:
             start_time = time.time()
