@@ -18,33 +18,30 @@ demonstrating the complete integration stack.
 """
 
 import argparse
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import time
-import sys
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from torchbridge.core.config import TorchBridgeConfig, TPUConfig, TPUVersion, TPUTopology
 from torchbridge.backends.tpu import (
     TPUBackend,
+    TPUMemoryManager,
     TPUOptimizer,
     XLACompiler,
-    TPUMemoryManager,
-    XLADeviceManager,
-    XLADistributedTraining,
-    XLAOptimizations,
     XLAUtilities,
-    create_xla_integration
+    create_xla_integration,
 )
+from torchbridge.core.config import TorchBridgeConfig
 from torchbridge.validation.unified_validator import (
     validate_tpu_configuration,
-    validate_tpu_model
+    validate_tpu_model,
 )
 
 
@@ -128,7 +125,7 @@ class TPUIntegrationDemo:
         print(f"   Quick mode: {quick_mode}")
         print()
 
-    def demo_tpu_configuration(self) -> Dict[str, Any]:
+    def demo_tpu_configuration(self) -> dict[str, Any]:
         """Demonstrate TPU configuration capabilities."""
         print("📋 Demo 1: TPU Configuration and Hardware Detection")
         print("-" * 50)
@@ -161,7 +158,7 @@ class TPUIntegrationDemo:
             }
 
         # Test configuration validation
-        print(f"\n   ✅ Configuration Validation:")
+        print("\n   ✅ Configuration Validation:")
         validation_results = validate_tpu_configuration(configs['default'])
         print(f"      Tests passed: {validation_results.passed}/{validation_results.total_tests}")
         print(f"      Success rate: {validation_results.success_rate:.1%}")
@@ -175,7 +172,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ TPU Configuration Demo Complete\n")
         return results
 
-    def demo_tpu_backend(self) -> Dict[str, Any]:
+    def demo_tpu_backend(self) -> dict[str, Any]:
         """Demonstrate TPU backend operations."""
         print("🔧 Demo 2: TPU Backend and Device Management")
         print("-" * 50)
@@ -186,7 +183,7 @@ class TPUIntegrationDemo:
         config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
-        print(f"   🎮 Backend Information:")
+        print("   🎮 Backend Information:")
         print(f"      Device: {backend.device}")
         print(f"      World size: {backend.world_size}")
         print(f"      Rank: {backend.rank}")
@@ -205,7 +202,7 @@ class TPUIntegrationDemo:
             SimpleCNN(num_classes=10) if not self.quick_mode else nn.Sequential(nn.Linear(32, 16), nn.ReLU(), nn.Linear(16, 8))
         ]
 
-        print(f"\n   📦 Model Preparation:")
+        print("\n   📦 Model Preparation:")
         model_results = []
 
         for i, model in enumerate(models):
@@ -230,7 +227,7 @@ class TPUIntegrationDemo:
         results['model_preparation'] = model_results
 
         # Demonstrate data preparation
-        print(f"\n   💾 Data Preparation:")
+        print("\n   💾 Data Preparation:")
         test_data = [
             torch.randn(8, 64),
             {'input': torch.randn(4, 3, 32, 32), 'target': torch.randint(0, 10, (4,))}
@@ -255,7 +252,7 @@ class TPUIntegrationDemo:
 
         # Memory statistics
         memory_stats = backend.get_memory_stats()
-        print(f"\n   📊 Memory Statistics:")
+        print("\n   📊 Memory Statistics:")
         print(f"      Models cached: {memory_stats.get('models_cached', 0)}")
         print(f"      Compilations cached: {memory_stats.get('compilations_cached', 0)}")
 
@@ -264,7 +261,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ TPU Backend Demo Complete\n")
         return results
 
-    def demo_tpu_optimization(self) -> Dict[str, Any]:
+    def demo_tpu_optimization(self) -> dict[str, Any]:
         """Demonstrate TPU optimization capabilities."""
         print("⚡ Demo 3: TPU Model Optimization and XLA Compilation")
         print("-" * 50)
@@ -285,7 +282,7 @@ class TPUIntegrationDemo:
             sample_input = torch.randint(0, 1000, (4, 32))  # batch_size=4, seq_len=32
 
         param_count = sum(p.numel() for p in model.parameters())
-        print(f"   🧠 Model Information:")
+        print("   🧠 Model Information:")
         print(f"      Type: {type(model).__name__}")
         print(f"      Parameters: {param_count:,}")
         print(f"      Input shape: {sample_input.shape}")
@@ -297,7 +294,7 @@ class TPUIntegrationDemo:
         }
 
         # Test different optimization levels
-        print(f"\n   🔥 Optimization Levels:")
+        print("\n   🔥 Optimization Levels:")
         optimization_results = {}
 
         for level in ['conservative', 'balanced', 'aggressive']:
@@ -327,7 +324,7 @@ class TPUIntegrationDemo:
         results['optimization_levels'] = optimization_results
 
         # Test specialized optimizations
-        print(f"\n   🎯 Specialized Optimizations:")
+        print("\n   🎯 Specialized Optimizations:")
 
         # Inference optimization
         inference_start = time.perf_counter()
@@ -351,7 +348,7 @@ class TPUIntegrationDemo:
         }
 
         # XLA compilation tests
-        print(f"\n   🔧 XLA Compilation:")
+        print("\n   🔧 XLA Compilation:")
 
         # Direct compilation
         compile_start = time.perf_counter()
@@ -375,7 +372,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ TPU Optimization Demo Complete\n")
         return results
 
-    def demo_memory_management(self) -> Dict[str, Any]:
+    def demo_memory_management(self) -> dict[str, Any]:
         """Demonstrate TPU memory management."""
         print("💾 Demo 4: TPU Memory Management")
         print("-" * 50)
@@ -386,7 +383,7 @@ class TPUIntegrationDemo:
         config = TorchBridgeConfig()
         memory_manager = TPUMemoryManager(config.hardware.tpu)
 
-        print(f"   🏗️ Memory Manager Information:")
+        print("   🏗️ Memory Manager Information:")
         print(f"      TPU Version: {config.hardware.tpu.version.value}")
         print(f"      Memory Fraction: {config.hardware.tpu.memory_fraction}")
 
@@ -396,7 +393,7 @@ class TPUIntegrationDemo:
         }
 
         # Test tensor allocation
-        print(f"\n   📦 Tensor Allocation:")
+        print("\n   📦 Tensor Allocation:")
         tensor_shapes = [(64, 64), (128, 128)] if self.quick_mode else [(64, 64), (128, 128), (256, 256)]
         allocation_results = []
 
@@ -419,7 +416,7 @@ class TPUIntegrationDemo:
         results['tensor_allocation'] = allocation_results
 
         # Test tensor layout optimization
-        print(f"\n   ⚙️ Tensor Layout Optimization:")
+        print("\n   ⚙️ Tensor Layout Optimization:")
         test_tensor = torch.randn(63, 31)  # Non-optimal dimensions
 
         opt_start = time.perf_counter()
@@ -437,7 +434,7 @@ class TPUIntegrationDemo:
         }
 
         # Test memory pools
-        print(f"\n   🏊 Memory Pool Operations:")
+        print("\n   🏊 Memory Pool Operations:")
         pool_id = memory_manager.create_memory_pool(5, (32, 32))
 
         # Get and return tensor
@@ -460,7 +457,7 @@ class TPUIntegrationDemo:
 
         # Memory statistics
         memory_stats = memory_manager.get_memory_stats()
-        print(f"\n   📊 Memory Statistics:")
+        print("\n   📊 Memory Statistics:")
         print(f"      Allocated memory: {memory_stats.allocated_memory/1e6:.1f}MB")
         print(f"      Active tensors: {memory_stats.active_tensors}")
         print(f"      Memory fraction: {memory_stats.memory_fraction}")
@@ -474,7 +471,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ Memory Management Demo Complete\n")
         return results
 
-    def demo_xla_integration(self) -> Dict[str, Any]:
+    def demo_xla_integration(self) -> dict[str, Any]:
         """Demonstrate XLA integration components."""
         print("🔗 Demo 5: XLA Integration and Distributed Features")
         print("-" * 50)
@@ -485,7 +482,7 @@ class TPUIntegrationDemo:
         config = TorchBridgeConfig()
         device_mgr, dist_training, optimizations = create_xla_integration(config.hardware.tpu)
 
-        print(f"   🎮 XLA Device Manager:")
+        print("   🎮 XLA Device Manager:")
         device_stats = device_mgr.get_device_stats()
         print(f"      Current device: {device_mgr.device}")
         print(f"      World size: {device_mgr.world_size}")
@@ -499,7 +496,7 @@ class TPUIntegrationDemo:
             'stats': device_stats
         }
 
-        print(f"\n   🌐 Distributed Training Setup:")
+        print("\n   🌐 Distributed Training Setup:")
         print(f"      Is distributed: {dist_training.is_distributed}")
 
         # Test model wrapping
@@ -515,7 +512,7 @@ class TPUIntegrationDemo:
             'model_device': str(next(wrapped_model.parameters()).device)
         }
 
-        print(f"\n   ⚙️ XLA Optimizations:")
+        print("\n   ⚙️ XLA Optimizations:")
 
         # Test model optimization
         opt_start = time.perf_counter()
@@ -536,7 +533,7 @@ class TPUIntegrationDemo:
             'dynamic_shapes': dynamic_model is not None
         }
 
-        print(f"\n   🛠️ XLA Utilities:")
+        print("\n   🛠️ XLA Utilities:")
 
         # Environment information
         env_info = XLAUtilities.get_xla_env_info()
@@ -555,7 +552,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ XLA Integration Demo Complete\n")
         return results
 
-    def demo_validation_and_testing(self) -> Dict[str, Any]:
+    def demo_validation_and_testing(self) -> dict[str, Any]:
         """Demonstrate validation and testing capabilities."""
         print("✅ Demo 6: Validation and Performance Testing")
         print("-" * 50)
@@ -565,7 +562,7 @@ class TPUIntegrationDemo:
         config = TorchBridgeConfig()
 
         # Configuration validation
-        print(f"   📋 Configuration Validation:")
+        print("   📋 Configuration Validation:")
         config_validation = validate_tpu_configuration(config)
 
         print(f"      Tests run: {config_validation.total_tests}")
@@ -585,7 +582,7 @@ class TPUIntegrationDemo:
         }
 
         # Model validation
-        print(f"\n   🧠 Model Validation:")
+        print("\n   🧠 Model Validation:")
 
         # Test with optimally-sized model
         optimal_model = nn.Sequential(
@@ -597,7 +594,7 @@ class TPUIntegrationDemo:
 
         optimal_validation = validate_tpu_model(optimal_model, config.hardware.tpu, optimal_input)
 
-        print(f"      Optimal model validation:")
+        print("      Optimal model validation:")
         print(f"         Tests: {optimal_validation.total_tests}")
         print(f"         Passed: {optimal_validation.passed}")
         print(f"         Warnings: {optimal_validation.warnings}")
@@ -612,11 +609,11 @@ class TPUIntegrationDemo:
 
         suboptimal_validation = validate_tpu_model(suboptimal_model, config.hardware.tpu, suboptimal_input)
 
-        print(f"      Suboptimal model validation:")
+        print("      Suboptimal model validation:")
         print(f"         Tests: {suboptimal_validation.total_tests}")
         print(f"         Passed: {suboptimal_validation.passed}")
         print(f"         Warnings: {suboptimal_validation.warnings}")
-        print(f"         (Expected warnings for non-optimal dimensions)")
+        print("         (Expected warnings for non-optimal dimensions)")
 
         results['model_validation'] = {
             'optimal': {
@@ -632,7 +629,7 @@ class TPUIntegrationDemo:
         }
 
         # Performance characteristics
-        print(f"\n   📊 Performance Insights:")
+        print("\n   📊 Performance Insights:")
 
         # Compare model sizes
         optimal_params = sum(p.numel() for p in optimal_model.parameters())
@@ -658,7 +655,7 @@ class TPUIntegrationDemo:
         print("\n" + "✅ Validation and Testing Demo Complete\n")
         return results
 
-    def run_complete_demo(self) -> Dict[str, Any]:
+    def run_complete_demo(self) -> dict[str, Any]:
         """Run the complete TPU integration demonstration."""
         print("🎯 Starting Comprehensive TPU Integration Demo")
         print("=" * 60)
@@ -686,13 +683,13 @@ class TPUIntegrationDemo:
             print(f"   Quick mode: {self.quick_mode}")
 
             # Key achievements
-            print(f"\n   ✅ Key Achievements:")
-            print(f"      • TPU configuration system operational")
-            print(f"      • Backend and device management working")
-            print(f"      • Model optimization and compilation functional")
-            print(f"      • Memory management and pooling active")
-            print(f"      • XLA integration components ready")
-            print(f"      • Validation and testing comprehensive")
+            print("\n   ✅ Key Achievements:")
+            print("      • TPU configuration system operational")
+            print("      • Backend and device management working")
+            print("      • Model optimization and compilation functional")
+            print("      • Memory management and pooling active")
+            print("      • XLA integration components ready")
+            print("      • Validation and testing comprehensive")
 
             demo_results['summary'] = {
                 'total_time': total_time,
@@ -702,7 +699,7 @@ class TPUIntegrationDemo:
                 'success': True
             }
 
-            print(f"\n🚀 TPU Integration Demo Successfully Completed!")
+            print("\n🚀 TPU Integration Demo Successfully Completed!")
             print("   Ready for production TPU deployment with actual hardware!")
 
         except Exception as e:

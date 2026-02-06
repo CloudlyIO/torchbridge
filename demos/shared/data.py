@@ -6,9 +6,8 @@ This module provides common data generation functions used across demo scripts.
 Version: 0.3.6
 """
 
-import torch
-from typing import Dict, Tuple, Optional
 
+import torch
 
 # ============================================================================
 # Input Data Generators
@@ -17,7 +16,7 @@ from typing import Dict, Tuple, Optional
 def create_linear_input(
     batch_size: int = 32,
     features: int = 128,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """
@@ -42,7 +41,7 @@ def create_transformer_input(
     batch_size: int = 8,
     seq_length: int = 64,
     vocab_size: int = 1000,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
 ) -> torch.Tensor:
     """
     Create sample input for transformer models (token IDs).
@@ -66,7 +65,7 @@ def create_transformer_embedding_input(
     batch_size: int = 8,
     seq_length: int = 64,
     d_model: int = 256,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """
@@ -93,7 +92,7 @@ def create_vision_input(
     channels: int = 3,
     height: int = 224,
     width: int = 224,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """
@@ -121,9 +120,9 @@ def create_attention_input(
     seq_length: int = 64,
     num_heads: int = 8,
     head_dim: int = 64,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Create sample Q, K, V tensors for attention testing.
 
@@ -159,9 +158,9 @@ def create_sample_batch(
     model_type: str = "mlp",
     batch_size: int = 32,
     num_classes: int = 10,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     **kwargs,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """
     Create a sample training batch for different model types.
 

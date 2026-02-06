@@ -14,27 +14,27 @@ Usage:
 """
 
 import argparse
-import torch
-import torch.nn as nn
-import time
-import sys
 import statistics
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
+import sys
+import time
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import torch.nn as nn
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from torchbridge.core.config import AMDConfig, AMDArchitecture
 from torchbridge.backends.amd import (
     AMDBackend,
-    AMDOptimizer,
-    ROCmCompiler,
     AMDMemoryManager,
+    AMDOptimizer,
     HIPUtilities,
+    ROCmCompiler,
 )
+from torchbridge.core.config import AMDArchitecture, AMDConfig
 
 
 @dataclass
@@ -148,7 +148,7 @@ class TransformerBlock(nn.Module):
 # AMD Backend Benchmarks
 # ============================================================================
 
-def benchmark_amd_backend(iterations: int = 100) -> Dict[str, BenchmarkResult]:
+def benchmark_amd_backend(iterations: int = 100) -> dict[str, BenchmarkResult]:
     """Benchmark AMD backend operations."""
     print_section("AMD Backend Benchmarks")
 
@@ -197,7 +197,7 @@ def benchmark_amd_backend(iterations: int = 100) -> Dict[str, BenchmarkResult]:
     return results
 
 
-def benchmark_amd_optimizer(iterations: int = 50) -> Dict[str, BenchmarkResult]:
+def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
     """Benchmark AMD optimizer performance."""
     print_section("AMD Optimizer Benchmarks")
 
@@ -236,7 +236,7 @@ def benchmark_amd_optimizer(iterations: int = 50) -> Dict[str, BenchmarkResult]:
     return results
 
 
-def benchmark_rocm_compiler(iterations: int = 50) -> Dict[str, BenchmarkResult]:
+def benchmark_rocm_compiler(iterations: int = 50) -> dict[str, BenchmarkResult]:
     """Benchmark ROCm compiler performance."""
     print_section("ROCm Compiler Benchmarks")
 
@@ -296,7 +296,7 @@ def benchmark_rocm_compiler(iterations: int = 50) -> Dict[str, BenchmarkResult]:
 
     # Print cache statistics
     stats = compiler.get_compilation_stats()
-    print(f"\n  Cache Statistics:")
+    print("\n  Cache Statistics:")
     print(f"    Total compilations: {stats['total_compilations']}")
     print(f"    Cache hits: {stats['cache_hits']}")
     print(f"    Cache hit rate: {stats['cache_hit_rate_percent']:.1f}%")
@@ -304,7 +304,7 @@ def benchmark_rocm_compiler(iterations: int = 50) -> Dict[str, BenchmarkResult]:
     return results
 
 
-def benchmark_hip_utilities(iterations: int = 100) -> Dict[str, BenchmarkResult]:
+def benchmark_hip_utilities(iterations: int = 100) -> dict[str, BenchmarkResult]:
     """Benchmark HIP utilities performance."""
     print_section("HIP Utilities Benchmarks")
 
@@ -363,7 +363,7 @@ def benchmark_hip_utilities(iterations: int = 100) -> Dict[str, BenchmarkResult]
     return results
 
 
-def benchmark_memory_manager(iterations: int = 50) -> Dict[str, BenchmarkResult]:
+def benchmark_memory_manager(iterations: int = 50) -> dict[str, BenchmarkResult]:
     """Benchmark AMD memory manager performance."""
     print_section("Memory Manager Benchmarks")
 
@@ -412,7 +412,7 @@ def benchmark_memory_manager(iterations: int = 50) -> Dict[str, BenchmarkResult]
 # Cross-Architecture Comparison
 # ============================================================================
 
-def benchmark_architecture_comparison(iterations: int = 30) -> Dict[str, Any]:
+def benchmark_architecture_comparison(iterations: int = 30) -> dict[str, Any]:
     """Compare performance across AMD architectures."""
     print_section("Architecture Comparison")
 

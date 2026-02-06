@@ -10,9 +10,7 @@ Systematically removes identified dead code including:
 
 import os
 import re
-import ast
 from pathlib import Path
-from typing import List, Set, Dict
 
 
 class DeadCodeCleaner:
@@ -48,7 +46,7 @@ class DeadCodeCleaner:
             "src/torchbridge/utils/compiler_assistant_legacy.py"
         ]
 
-        print(f"\n🗑️  Removing legacy files...")
+        print("\n🗑️  Removing legacy files...")
         for file_path in legacy_files:
             if Path(file_path).exists():
                 if self.dry_run:
@@ -60,7 +58,7 @@ class DeadCodeCleaner:
 
     def _clean_debug_prints(self):
         """Remove debug print statements"""
-        print(f"\n🔧 Cleaning debug prints...")
+        print("\n🔧 Cleaning debug prints...")
 
         debug_patterns = [
             r'^\s*print\(f?".*FlexAttention.*\).*$',
@@ -78,7 +76,7 @@ class DeadCodeCleaner:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     lines = f.readlines()
 
                 new_lines = []
@@ -109,7 +107,7 @@ class DeadCodeCleaner:
 
     def _clean_unused_imports(self):
         """Remove obviously unused imports"""
-        print(f"\n📦 Cleaning unused imports...")
+        print("\n📦 Cleaning unused imports...")
 
         # Focus on commonly unused imports
         common_unused = {
@@ -122,7 +120,7 @@ class DeadCodeCleaner:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
                     lines = content.split('\n')
 
@@ -160,14 +158,14 @@ class DeadCodeCleaner:
 
     def _clean_redundant_pass(self):
         """Remove redundant pass statements"""
-        print(f"\n✂️  Cleaning redundant pass statements...")
+        print("\n✂️  Cleaning redundant pass statements...")
 
         for py_file in self.src_path.rglob("*.py"):
             if "__pycache__" in str(py_file):
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     lines = f.readlines()
 
                 new_lines = []
@@ -203,7 +201,7 @@ class DeadCodeCleaner:
 
 def run_cleanup(dry_run=True):
     """Run the cleanup process"""
-    print(f"🧹 DEAD CODE CLEANUP")
+    print("🧹 DEAD CODE CLEANUP")
     print(f"Mode: {'DRY RUN (preview only)' if dry_run else 'LIVE (making changes)'}")
     print("=" * 50)
 
@@ -211,9 +209,9 @@ def run_cleanup(dry_run=True):
     cleaner.cleanup_all()
 
     if dry_run:
-        print(f"\n💡 To apply these changes, run with dry_run=False")
+        print("\n💡 To apply these changes, run with dry_run=False")
     else:
-        print(f"\n🎉 Cleanup complete! Repository cleaned.")
+        print("\n🎉 Cleanup complete! Repository cleaned.")
 
 
 if __name__ == "__main__":

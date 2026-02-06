@@ -5,10 +5,11 @@ Advanced statistical analysis including significance testing,
 effect size calculation, and performance regression analysis.
 """
 
-import numpy as np
-from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
+
+import numpy as np
 from scipy import stats
+
 
 @dataclass
 class StatisticalAnalysis:
@@ -16,7 +17,7 @@ class StatisticalAnalysis:
     mean_difference: float
     p_value: float
     effect_size: float
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     statistically_significant: bool
     practical_significance: bool
 
@@ -27,8 +28,8 @@ class AnalysisEngine:
         self.significance_threshold = significance_threshold
         self.effect_size_threshold = effect_size_threshold
 
-    def compare_implementations(self, baseline_metrics: List[float],
-                               optimized_metrics: List[float]) -> StatisticalAnalysis:
+    def compare_implementations(self, baseline_metrics: list[float],
+                               optimized_metrics: list[float]) -> StatisticalAnalysis:
         """Compare two implementations with statistical rigor"""
 
         # Convert to numpy arrays

@@ -9,25 +9,25 @@ Demonstrates sophisticated checkpointing strategies for memory optimization:
 - Memory-efficient backpropagation
 """
 
+import argparse
+import gc
+import json
+import os
+import sys
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-import json
-from typing import Dict, Any, List
-import sys
-import os
-import gc
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from torchbridge.advanced_memory import (
-    SelectiveGradientCheckpointing,
     AdaptiveCheckpointing,
+    DynamicActivationOffloading,
     MemoryEfficientBackprop,
-    DynamicActivationOffloading
+    SelectiveGradientCheckpointing,
 )
 
 
@@ -358,7 +358,7 @@ def demonstrate_memory_efficient_backprop(model, device):
 
 def run_comprehensive_demo(device, quick_mode=False):
     """Run comprehensive advanced checkpointing demo"""
-    print(f"🚀 Advanced Memory Optimization: Checkpointing Demo")
+    print("🚀 Advanced Memory Optimization: Checkpointing Demo")
     print(f"📱 Device: {device}")
     print(f"⚡ Mode: {'Quick' if quick_mode else 'Full'}")
     print("=" * 60)
@@ -446,9 +446,9 @@ def run_comprehensive_demo(device, quick_mode=False):
 
     print(f"✅ ResNet memory reduction: {resnet_memory_reduction:.1f}%")
     print(f"✅ Transformer memory reduction: {transformer_memory_reduction:.1f}%")
-    print(f"✅ All checkpointing strategies working")
-    print(f"✅ Dynamic activation offloading functional")
-    print(f"✅ Memory-efficient backprop enabled")
+    print("✅ All checkpointing strategies working")
+    print("✅ Dynamic activation offloading functional")
+    print("✅ Memory-efficient backprop enabled")
 
     return {'resnet': resnet_results, 'transformer': transformer_results}
 

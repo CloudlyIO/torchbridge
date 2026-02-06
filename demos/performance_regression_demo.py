@@ -12,20 +12,20 @@ This demo shows:
 5. Performance history tracking
 """
 
-import torch
-import torch.nn as nn
-from typing import List
 import warnings
 
-from torchbridge.core.performance_tracker import (
-    get_performance_tracker,
-    PerformanceMetrics,
-    RegressionSeverity,
-)
-from torchbridge.core.management import get_manager
+import torch
+import torch.nn as nn
 
 # Use shared utilities
 from demos.shared.utils import print_section
+
+from torchbridge.core.management import get_manager
+from torchbridge.core.performance_tracker import (
+    PerformanceMetrics,
+    RegressionSeverity,
+    get_performance_tracker,
+)
 
 
 # Test models
@@ -76,7 +76,7 @@ def print_metrics(metrics: PerformanceMetrics, label: str = "Metrics"):
     print(f"  Timestamp: {metrics.timestamp}")
 
 
-def print_regression_results(regressions: List):
+def print_regression_results(regressions: list):
     """Print regression detection results."""
     if not regressions:
         print("✅ No regressions detected!")
@@ -169,7 +169,7 @@ def demo_2_detect_improvement():
     if improvement_pct > 0:
         print(f"\n✅ Performance improved by {improvement_pct:.1f}%!")
     else:
-        print(f"\nℹ️  Performance similar (expected on CPU)")
+        print("\nℹ️  Performance similar (expected on CPU)")
 
 
 def demo_3_detect_regression():

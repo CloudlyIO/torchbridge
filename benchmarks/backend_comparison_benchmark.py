@@ -12,23 +12,22 @@ Usage:
 """
 
 import argparse
+import statistics
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-import time
-import sys
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
-import statistics
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-from torchbridge.core.config import TorchBridgeConfig
-from torchbridge.core.hardware_detector import HardwareDetector
 from torchbridge.backends.nvidia import NVIDIABackend
 from torchbridge.backends.tpu import TPUBackend
-
+from torchbridge.core.config import TorchBridgeConfig
 
 # ============================================================================
 # Benchmark Models
@@ -108,7 +107,7 @@ class BackendComparisonBenchmark:
             'comparison': {}
         }
 
-    def benchmark_model_preparation(self) -> Dict[str, Any]:
+    def benchmark_model_preparation(self) -> dict[str, Any]:
         """Benchmark model preparation time."""
         print("\n📊 Benchmark 1/7: Model Preparation Time")
         print("-" * 50)
@@ -157,7 +156,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Model Preparation Benchmark Complete")
         return results
 
-    def benchmark_forward_pass_latency(self) -> Dict[str, Any]:
+    def benchmark_forward_pass_latency(self) -> dict[str, Any]:
         """Benchmark forward pass latency."""
         print("\n📊 Benchmark 2/7: Forward Pass Latency")
         print("-" * 50)
@@ -234,7 +233,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Forward Pass Latency Benchmark Complete")
         return results
 
-    def benchmark_throughput(self) -> Dict[str, Any]:
+    def benchmark_throughput(self) -> dict[str, Any]:
         """Benchmark throughput (batches/second)."""
         print("\n📊 Benchmark 3/7: Throughput (batches/second)")
         print("-" * 50)
@@ -305,7 +304,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Throughput Benchmark Complete")
         return results
 
-    def benchmark_memory_usage(self) -> Dict[str, Any]:
+    def benchmark_memory_usage(self) -> dict[str, Any]:
         """Benchmark memory usage."""
         print("\n📊 Benchmark 4/7: Memory Usage")
         print("-" * 50)
@@ -325,11 +324,11 @@ class BackendComparisonBenchmark:
             'tpu': tpu_stats
         }
 
-        print(f"   NVIDIA Memory Stats:")
+        print("   NVIDIA Memory Stats:")
         for key, value in nvidia_stats.items():
             print(f"      {key}: {value}")
 
-        print(f"   TPU Memory Stats:")
+        print("   TPU Memory Stats:")
         for key, value in tpu_stats.items():
             print(f"      {key}: {value}")
 
@@ -339,7 +338,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Memory Usage Benchmark Complete")
         return results
 
-    def benchmark_synchronization_overhead(self) -> Dict[str, Any]:
+    def benchmark_synchronization_overhead(self) -> dict[str, Any]:
         """Benchmark synchronization overhead."""
         print("\n📊 Benchmark 5/7: Synchronization Overhead")
         print("-" * 50)
@@ -370,14 +369,14 @@ class BackendComparisonBenchmark:
         print("   ✅ Synchronization Overhead Benchmark Complete")
         return results
 
-    def benchmark_device_info(self) -> Dict[str, Any]:
+    def benchmark_device_info(self) -> dict[str, Any]:
         """Get device information."""
         print("\n📊 Benchmark 6/7: Device Information")
         print("-" * 50)
 
         # NVIDIA info
         nvidia_info = self.nvidia_backend.get_device_info()
-        print(f"   NVIDIA Device:")
+        print("   NVIDIA Device:")
         for key, value in nvidia_info.items():
             print(f"      {key}: {value}")
 
@@ -388,7 +387,7 @@ class BackendComparisonBenchmark:
             'rank': self.tpu_backend.rank,
             'is_distributed': self.tpu_backend.is_distributed
         }
-        print(f"   TPU Device:")
+        print("   TPU Device:")
         for key, value in tpu_info.items():
             print(f"      {key}: {value}")
 
@@ -398,7 +397,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Device Information Benchmark Complete")
         return {'nvidia': nvidia_info, 'tpu': tpu_info}
 
-    def benchmark_batch_sizes_scaling(self) -> Dict[str, Any]:
+    def benchmark_batch_sizes_scaling(self) -> dict[str, Any]:
         """Benchmark performance scaling with batch size."""
         print("\n📊 Benchmark 7/7: Batch Size Scaling")
         print("-" * 50)
@@ -461,7 +460,7 @@ class BackendComparisonBenchmark:
         print("   ✅ Batch Size Scaling Benchmark Complete")
         return results
 
-    def generate_summary(self) -> Dict[str, Any]:
+    def generate_summary(self) -> dict[str, Any]:
         """Generate benchmark summary."""
         print("\n" + "=" * 60)
         print("🎯 Backend Comparison Summary")
@@ -475,7 +474,7 @@ class BackendComparisonBenchmark:
             'iterations': self.benchmark_iterations
         }
 
-        print(f"\n📊 Configuration:")
+        print("\n📊 Configuration:")
         print(f"   NVIDIA Device: {summary['nvidia_device']}")
         print(f"   TPU Device: {summary['tpu_device']}")
         print(f"   Quick Mode: {self.quick_mode}")
@@ -485,7 +484,7 @@ class BackendComparisonBenchmark:
 
         return summary
 
-    def run_all_benchmarks(self) -> Dict[str, Any]:
+    def run_all_benchmarks(self) -> dict[str, Any]:
         """Run all benchmarks."""
         print("🚀 Backend Performance Comparison Benchmark Suite")
         print("=" * 60)

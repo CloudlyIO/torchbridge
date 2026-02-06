@@ -22,31 +22,27 @@ Usage:
 """
 
 import argparse
-import time
 import sys
-import os
+import time
 from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import gc
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import List, Dict, Any, Tuple
 import psutil
-import gc
+import torch
+import torch.nn as nn
 
 from torchbridge.optimizations.patterns.dynamic_shapes import (
-    DynamicShapeBucketing,
     BucketingStrategy,
-    PaddingStrategy,
+    DynamicShapeBucketing,
     DynamicShapeModule,
     create_optimal_bucketing_system,
-    benchmark_dynamic_shapes,
-    print_bucketing_analysis
 )
 
 
@@ -123,7 +119,7 @@ def generate_variable_inputs(
     batch_size: int = 8,
     d_model: int = 512,
     device: str = "cpu"
-) -> List[torch.Tensor]:
+) -> list[torch.Tensor]:
     """
     Generate variable-size input tensors that simulate real-world workloads.
 
@@ -164,7 +160,7 @@ def generate_variable_inputs(
     return inputs
 
 
-def measure_memory_usage() -> Dict[str, float]:
+def measure_memory_usage() -> dict[str, float]:
     """Measure current memory usage."""
     memory_info = {}
 
@@ -185,10 +181,10 @@ def measure_memory_usage() -> Dict[str, float]:
 
 def run_baseline_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     num_iterations: int = 50,
     warmup_iterations: int = 10
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run baseline benchmark without dynamic shape optimization.
 
@@ -262,11 +258,11 @@ def run_baseline_benchmark(
 
 def run_bucketed_benchmark(
     model: nn.Module,
-    inputs: List[torch.Tensor],
+    inputs: list[torch.Tensor],
     bucketing_strategy: BucketingStrategy = BucketingStrategy.HARDWARE_AWARE,
     num_iterations: int = 50,
     warmup_iterations: int = 10
-) -> Tuple[Dict[str, Any], DynamicShapeBucketing]:
+) -> tuple[dict[str, Any], DynamicShapeBucketing]:
     """
     Run benchmark with dynamic shape bucketing optimization.
 
@@ -364,8 +360,8 @@ def run_bucketed_benchmark(
 
 
 def visualize_results(
-    baseline_results: Dict[str, Any],
-    bucketed_results: Dict[str, Any],
+    baseline_results: dict[str, Any],
+    bucketed_results: dict[str, Any],
     bucketing_strategy: BucketingStrategy,
     save_plots: bool = True
 ) -> None:
@@ -499,10 +495,10 @@ def visualize_results(
 
 def run_strategy_comparison(
     model: nn.Module,
-    inputs: List[torch.Tensor],
-    strategies: List[BucketingStrategy],
+    inputs: list[torch.Tensor],
+    strategies: list[BucketingStrategy],
     num_iterations: int = 30
-) -> Dict[BucketingStrategy, Dict[str, Any]]:
+) -> dict[BucketingStrategy, dict[str, Any]]:
     """
     Compare different bucketing strategies to find the best approach.
     """
@@ -531,8 +527,8 @@ def run_strategy_comparison(
 
 
 def print_comprehensive_analysis(
-    baseline_results: Dict[str, Any],
-    bucketed_results: Dict[str, Any],
+    baseline_results: dict[str, Any],
+    bucketed_results: dict[str, Any],
     bucketing_strategy: BucketingStrategy
 ) -> None:
     """
@@ -547,11 +543,11 @@ def print_comprehensive_analysis(
     throughput_improvement = (bucketed_results["throughput_inputs_per_sec"] /
                              baseline_results["throughput_inputs_per_sec"])
 
-    print(f"\n📊 PERFORMANCE RESULTS:")
+    print("\n📊 PERFORMANCE RESULTS:")
     print(f"  Strategy: {bucketing_strategy.value}")
     print(f"  🚀 Overall Speedup: {speedup:.2f}x ({(speedup-1)*100:.1f}% faster)")
     print(f"  📈 Throughput Improvement: {throughput_improvement:.2f}x")
-    print(f"  ⏱️  Average Time per Input:")
+    print("  ⏱️  Average Time per Input:")
     print(f"     Baseline: {baseline_results['avg_time_per_input']*1000:.2f}ms")
     print(f"     Bucketed: {bucketed_results['avg_time_per_input']*1000:.2f}ms")
 
@@ -560,8 +556,8 @@ def print_comprehensive_analysis(
         memory_reduction = (1 - bucketed_results["peak_memory_mb"] / baseline_results["peak_memory_mb"]) * 100
     else:
         memory_reduction = 0.0
-    print(f"\n💾 MEMORY EFFICIENCY:")
-    print(f"  Peak Memory Usage:")
+    print("\n💾 MEMORY EFFICIENCY:")
+    print("  Peak Memory Usage:")
     print(f"     Baseline: {baseline_results['peak_memory_mb']:.1f} MB")
     print(f"     Bucketed: {bucketed_results['peak_memory_mb']:.1f} MB")
     if memory_reduction > 0:
@@ -572,7 +568,7 @@ def print_comprehensive_analysis(
     # Bucketing system statistics
     if "bucketing_stats" in bucketed_results:
         stats = bucketed_results["bucketing_stats"]
-        print(f"\n⚙️  BUCKETING SYSTEM STATISTICS:")
+        print("\n⚙️  BUCKETING SYSTEM STATISTICS:")
         print(f"  Total Buckets: {stats['total_buckets']}")
         print(f"  Cache Hit Rate: {stats['cache_hit_rate']*100:.1f}%")
         print(f"  Average Bucketing Time: {stats['average_bucketing_time_us']:.1f} μs")
@@ -580,7 +576,7 @@ def print_comprehensive_analysis(
         print(f"  Total Bucket Memory: {stats['total_bucket_memory_mb']:.1f} MB")
 
         # Performance targets validation
-        print(f"\n🎯 TARGET VALIDATION:")
+        print("\n🎯 TARGET VALIDATION:")
         print(f"  ✅ 3x Speedup Target: {'PASSED' if speedup >= 2.5 else 'FAILED'} ({speedup:.2f}x)")
         print(f"  ✅ <10% Memory Overhead: {'PASSED' if abs(memory_reduction) < 10 or memory_reduction > 0 else 'FAILED'}")
         print(f"  ✅ >90% Cache Hit Rate: {'PASSED' if stats['cache_hit_rate'] > 0.9 else 'FAILED'} ({stats['cache_hit_rate']*100:.1f}%)")
@@ -591,8 +587,8 @@ def print_comprehensive_analysis(
     cv_bucketed = bucketed_results["std_time_per_input"] / bucketed_results["avg_time_per_input"]
     consistency_improvement = (cv_baseline - cv_bucketed) / cv_baseline * 100
 
-    print(f"\n📈 CONSISTENCY ANALYSIS:")
-    print(f"  Coefficient of Variation:")
+    print("\n📈 CONSISTENCY ANALYSIS:")
+    print("  Coefficient of Variation:")
     print(f"     Baseline: {cv_baseline*100:.1f}%")
     print(f"     Bucketed: {cv_bucketed*100:.1f}%")
     print(f"  🎯 Consistency Improvement: {consistency_improvement:.1f}%")
@@ -713,7 +709,7 @@ def main():
     # Final validation
     speedup = baseline_results["avg_time_per_input"] / bucketed_results["avg_time_per_input"]
 
-    print(f"\n🎯 DEMO VALIDATION:")
+    print("\n🎯 DEMO VALIDATION:")
     if speedup >= 2.5:
         print(f"  ✅ SUCCESS: Achieved {speedup:.2f}x speedup (target: 3x)")
     elif speedup >= 2.0:
