@@ -8,7 +8,23 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.2 (PyPI Release Fix)
+**Current Version**: v0.5.3 (Clean CLI Output)
+
+---
+
+## [0.5.3] - 2026-02-06 - Clean CLI Output
+
+### **Summary**
+
+Suppresses noisy platform-specific warnings in CLI output for a cleaner
+user experience. Hardware status is properly reported via `torchbridge doctor`.
+
+### **Fixed**
+
+- Suppress PyTorch distributed elastic warnings on macOS/Windows
+- Remove FP8/Transformer Engine warning at import time (now only warns when used)
+- Suppress pynvml deprecation warning
+- Clean CLI output without noisy informational warnings
 
 ---
 

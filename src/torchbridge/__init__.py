@@ -4,12 +4,27 @@ TorchBridge — Hardware Abstraction Layer for PyTorch
 Unified optimization across NVIDIA, AMD, Intel, and TPU backends.
 """
 
+# Suppress noisy platform-specific warnings before importing torch
+# These are informational notes, not errors - hardware status is reported via CLI
+import logging
+import os
+import warnings
+
+# Suppress PyTorch distributed elastic logging on non-Linux (macOS/Windows)
+logging.getLogger("torch.distributed.elastic").setLevel(logging.ERROR)
+
+# Suppress pynvml deprecation warning (PyTorch issue, not ours)
+os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
+
+# Filter specific warnings that are informational, not actionable errors
+warnings.filterwarnings("ignore", message=".*Redirects are currently not supported.*")
+
 from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("torchbridge")
 except PackageNotFoundError:
-    __version__ = "0.5.2"  # Fallback for development
+    __version__ = "0.5.3"  # Fallback for development
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing
