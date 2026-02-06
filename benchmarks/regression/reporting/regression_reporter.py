@@ -6,24 +6,28 @@ Generates comprehensive reports for performance regression testing results,
 including human-readable summaries, CI integration reports, and executive dashboards.
 """
 
-import json
 import csv
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any, Union, Tuple
-from dataclasses import dataclass, field
-from pathlib import Path
-from enum import Enum
-import statistics
-import warnings
+import json
 
 # Import from existing components
 import os
+import statistics
 import sys
+import warnings
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
-from ..regression_detector import RegressionResult, RegressionSeverity
-from ..historical_analyzer import HistoricalAnalyzer, PerformanceSummary, TrendAnalysis, AnomalyReport
 from ..baseline_manager import BaselineManager
+from ..historical_analyzer import (
+    HistoricalAnalyzer,
+    PerformanceSummary,
+)
+from ..regression_detector import RegressionResult, RegressionSeverity
 
 
 class ReportFormat(Enum):
@@ -41,13 +45,13 @@ class Report:
     title: str
     generated_at: datetime
     time_period: str
-    summary: Dict[str, Any]
-    regression_results: List[RegressionResult]
-    performance_summaries: List[PerformanceSummary]
-    recommendations: List[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    summary: dict[str, Any]
+    regression_results: list[RegressionResult]
+    performance_summaries: list[PerformanceSummary]
+    recommendations: list[str]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary for serialization"""
         return {
             "title": self.title,
@@ -60,7 +64,7 @@ class Report:
             "metadata": self.metadata
         }
 
-    def _summary_to_dict(self, summary: PerformanceSummary) -> Dict[str, Any]:
+    def _summary_to_dict(self, summary: PerformanceSummary) -> dict[str, Any]:
         """Convert PerformanceSummary to dictionary"""
         return {
             "model_name": summary.model_name,
@@ -84,8 +88,8 @@ class CISummary:
     overall_status: str  # "PASS", "WARNING", "FAIL"
     blocking_regressions: int
     total_regressions: int
-    models_tested: List[str]
-    recommendations: List[str]
+    models_tested: list[str]
+    recommendations: list[str]
     execution_time_seconds: float
     generated_at: datetime
 
@@ -93,7 +97,7 @@ class CISummary:
         """Check if CI should pass"""
         return self.overall_status == "PASS"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "overall_status": self.overall_status,
             "blocking_regressions": self.blocking_regressions,
@@ -110,13 +114,13 @@ class ExecutiveSummary:
     """High-level executive summary"""
     period: str
     performance_health: str  # "EXCELLENT", "GOOD", "CONCERNING", "CRITICAL"
-    key_metrics: Dict[str, float]
-    trends: Dict[str, str]
-    action_items: List[str]
-    success_highlights: List[str]
+    key_metrics: dict[str, float]
+    trends: dict[str, str]
+    action_items: list[str]
+    success_highlights: list[str]
     generated_at: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "period": self.period,
             "performance_health": self.performance_health,
@@ -147,7 +151,7 @@ class RegressionReporter:
 
     def generate_regression_report(
         self,
-        regression_results: List[RegressionResult],
+        regression_results: list[RegressionResult],
         time_period: str = "Current",
         include_historical: bool = True,
         include_trends: bool = True
@@ -209,7 +213,7 @@ class RegressionReporter:
 
     def export_ci_summary(
         self,
-        regression_results: List[RegressionResult],
+        regression_results: list[RegressionResult],
         execution_time_seconds: float = 0.0
     ) -> CISummary:
         """
@@ -261,7 +265,7 @@ class RegressionReporter:
     def generate_executive_summary(
         self,
         time_period: str = "30d",
-        models: Optional[List[str]] = None
+        models: list[str] | None = None
     ) -> ExecutiveSummary:
         """
         Generate executive-level performance summary.
@@ -387,7 +391,7 @@ class RegressionReporter:
             warnings.warn(f"Failed to export report: {e}")
             return False
 
-    def _generate_summary_statistics(self, regression_results: List[RegressionResult]) -> Dict[str, Any]:
+    def _generate_summary_statistics(self, regression_results: list[RegressionResult]) -> dict[str, Any]:
         """Generate summary statistics from regression results"""
         if not regression_results:
             return {
@@ -426,9 +430,9 @@ class RegressionReporter:
 
     def _generate_overall_recommendations(
         self,
-        regression_results: List[RegressionResult],
-        performance_summaries: List[PerformanceSummary]
-    ) -> List[str]:
+        regression_results: list[RegressionResult],
+        performance_summaries: list[PerformanceSummary]
+    ) -> list[str]:
         """Generate overall recommendations from analysis results"""
         recommendations = []
 
@@ -457,7 +461,7 @@ class RegressionReporter:
 
         return recommendations
 
-    def _calculate_executive_metrics(self, summaries: List[PerformanceSummary]) -> Dict[str, float]:
+    def _calculate_executive_metrics(self, summaries: list[PerformanceSummary]) -> dict[str, float]:
         """Calculate key metrics for executive summary"""
         if not summaries:
             return {}
@@ -481,7 +485,7 @@ class RegressionReporter:
             "total_models_tracked": total_models
         }
 
-    def _determine_performance_health(self, summaries: List[PerformanceSummary]) -> str:
+    def _determine_performance_health(self, summaries: list[PerformanceSummary]) -> str:
         """Determine overall performance health level"""
         if not summaries:
             return "UNKNOWN"
@@ -504,7 +508,7 @@ class RegressionReporter:
         else:
             return "CRITICAL"
 
-    def _extract_executive_trends(self, summaries: List[PerformanceSummary]) -> Dict[str, str]:
+    def _extract_executive_trends(self, summaries: list[PerformanceSummary]) -> dict[str, str]:
         """Extract trend information for executive summary"""
         trends = {}
 
@@ -532,7 +536,7 @@ class RegressionReporter:
 
         return trends
 
-    def _generate_executive_insights(self, summaries: List[PerformanceSummary]) -> Tuple[List[str], List[str]]:
+    def _generate_executive_insights(self, summaries: list[PerformanceSummary]) -> tuple[list[str], list[str]]:
         """Generate action items and success highlights for executives"""
         action_items = []
         success_highlights = []

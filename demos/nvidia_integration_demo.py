@@ -10,25 +10,25 @@ Demonstrates comprehensive NVIDIA backend functionality including:
 - CUDA utilities and profiling
 """
 
-import torch
-import torch.nn as nn
 import argparse
 
-from torchbridge.core.config import TorchBridgeConfig, NVIDIAArchitecture
-from torchbridge.backends.nvidia import (
-    NVIDIABackend,
-    NVIDIAOptimizer,
-    FP8Compiler,
-    NVIDIAMemoryManager,
-    FlashAttention3,
-    create_flash_attention_3,
-    CUDADeviceManager,
-    CUDAOptimizations,
-    create_cuda_integration
-)
+import torch
+import torch.nn as nn
 
 # Use shared utilities
 from demos.shared.utils import print_section
+
+from torchbridge.backends.nvidia import (
+    CUDADeviceManager,
+    CUDAOptimizations,
+    FlashAttention3,
+    FP8Compiler,
+    NVIDIABackend,
+    NVIDIAMemoryManager,
+    NVIDIAOptimizer,
+    create_flash_attention_3,
+)
+from torchbridge.core.config import NVIDIAArchitecture, TorchBridgeConfig
 
 
 def demo_nvidia_backend():
@@ -40,7 +40,7 @@ def demo_nvidia_backend():
 
     # Display device information (use dict format for display)
     info = backend.get_device_info_dict()
-    print(f"\n✅ Backend initialized successfully")
+    print("\n✅ Backend initialized successfully")
     print(f"   CUDA available: {info['cuda_available']}")
     print(f"   Device: {info['device']}")
     print(f"   Device count: {info['device_count']}")
@@ -60,12 +60,12 @@ def demo_nvidia_backend():
     )
 
     prepared_model = backend.prepare_model(model)
-    print(f"\n✅ Model prepared for NVIDIA GPU")
+    print("\n✅ Model prepared for NVIDIA GPU")
     print(f"   Model device: {next(prepared_model.parameters()).device}")
 
     # Get memory stats
     memory_stats = backend.get_memory_stats()
-    print(f"\n📊 Memory Statistics:")
+    print("\n📊 Memory Statistics:")
     for key, value in memory_stats.items():
         if isinstance(value, float):
             print(f"   {key}: {value:.2f}")
@@ -110,7 +110,7 @@ def demo_nvidia_optimizer():
     recommendations = optimizer.get_optimization_recommendations(model)
     print(f"   Architecture: {recommendations['architecture']}")
     print(f"   Suggested level: {recommendations['suggested_level']}")
-    print(f"   Available optimizations:")
+    print("   Available optimizations:")
     for opt in recommendations['optimizations'][:3]:  # Show top 3
         print(f"      - {opt['type']}: {opt['benefit']}")
 
@@ -129,7 +129,7 @@ def demo_fp8_compiler():
         nn.Linear(256, 128)
     )
 
-    print(f"\n✅ FP8 Compiler initialized")
+    print("\n✅ FP8 Compiler initialized")
     print(f"   FP8 supported: {compiler._fp8_supported}")
     print(f"   Architecture: {compiler.nvidia_config.architecture.value}")
 
@@ -145,7 +145,7 @@ def demo_fp8_compiler():
 
     # Estimate speedup
     speedup = compiler.estimate_speedup(prepared_model)
-    print(f"\n📈 Performance Estimate:")
+    print("\n📈 Performance Estimate:")
     print(f"   Base speedup: {speedup['base_speedup']}x")
     print(f"   Estimated speedup: {speedup['estimated_speedup']:.2f}x")
     print(f"   Architecture: {speedup['architecture']}")
@@ -187,7 +187,7 @@ def demo_memory_manager():
     print(f"   Total memory: {memory_results['total_mb']:.2f} MB")
 
     if memory_results['recommendations']:
-        print(f"\n💡 Recommendations:")
+        print("\n💡 Recommendations:")
         for rec in memory_results['recommendations'][:3]:  # Show top 3
             print(f"      - {rec['type']}: {rec.get('reason', 'N/A')}")
 
@@ -206,7 +206,7 @@ def demo_flash_attention():
     # Create FlashAttention module
     attn = FlashAttention3(embed_dim=512, num_heads=8, dropout=0.1)
 
-    print(f"\n✅ FlashAttention-3 initialized")
+    print("\n✅ FlashAttention-3 initialized")
     print(f"   Embed dim: {attn.embed_dim}")
     print(f"   Num heads: {attn.num_heads}")
     print(f"   Head dim: {attn.head_dim}")
@@ -247,7 +247,7 @@ def demo_cuda_utilities():
 
     if device_manager.device_count > 0:
         props = device_manager.get_device_properties(0)
-        print(f"   Device 0 properties:")
+        print("   Device 0 properties:")
         for key, value in props.items():
             if isinstance(value, tuple):
                 print(f"      {key}: {value}")
@@ -260,7 +260,7 @@ def demo_cuda_utilities():
     print("\n⚡ CUDA Optimizations:")
     cuda_opts = CUDAOptimizations()
     config = cuda_opts.get_cuda_optimization_config()
-    print(f"   Configuration:")
+    print("   Configuration:")
     for key, value in config.items():
         print(f"      {key}: {value}")
 
@@ -299,7 +299,7 @@ def demo_integration():
         nn.Linear(256, 128)
     )
 
-    print(f"   Model created with FlashAttention-3")
+    print("   Model created with FlashAttention-3")
 
     # Prepare model
     prepared_model = backend.prepare_model(model)
@@ -313,7 +313,7 @@ def demo_integration():
     memory_analysis = memory_manager.optimize_model_memory(model)
     print(f"   Total model memory: {memory_analysis['total_mb']:.2f} MB")
 
-    print(f"\n✅ Full integration pipeline completed successfully")
+    print("\n✅ Full integration pipeline completed successfully")
 
 
 def main():

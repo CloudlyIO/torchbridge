@@ -5,22 +5,19 @@ Benchmarks the new unified NVIDIA configuration system to demonstrate
 hardware detection, optimization selection, and performance impact.
 """
 
+import argparse
+import sys
 import time
+from pathlib import Path
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, List, Tuple, Any
-import argparse
-from pathlib import Path
-import sys
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from torchbridge.core.config import (
-    TorchBridgeConfig,
-    NVIDIAArchitecture,
-    OptimizationLevel
-)
+from torchbridge.core.config import OptimizationLevel, TorchBridgeConfig
 from torchbridge.validation.unified_validator import UnifiedValidator
 
 
@@ -31,7 +28,7 @@ class NVIDIAConfigBenchmark:
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.results = {}
 
-    def benchmark_config_creation_performance(self) -> Dict[str, float]:
+    def benchmark_config_creation_performance(self) -> dict[str, float]:
         """Benchmark configuration creation and hardware detection performance."""
         print("📊 Benchmarking NVIDIA Configuration Creation Performance...")
 
@@ -79,7 +76,7 @@ class NVIDIAConfigBenchmark:
 
         return results
 
-    def benchmark_configuration_validation(self) -> Dict[str, Any]:
+    def benchmark_configuration_validation(self) -> dict[str, Any]:
         """Benchmark configuration validation performance."""
         print("🔍 Benchmarking Configuration Validation...")
 
@@ -118,7 +115,7 @@ class NVIDIAConfigBenchmark:
 
         return results
 
-    def benchmark_optimization_levels(self) -> Dict[str, Any]:
+    def benchmark_optimization_levels(self) -> dict[str, Any]:
         """Benchmark different optimization levels."""
         print("⚡ Benchmarking Optimization Levels...")
 
@@ -167,7 +164,7 @@ class NVIDIAConfigBenchmark:
 
         return results
 
-    def benchmark_nvidia_specific_features(self) -> Dict[str, Any]:
+    def benchmark_nvidia_specific_features(self) -> dict[str, Any]:
         """Benchmark NVIDIA-specific configuration features."""
         print("🔧 Benchmarking NVIDIA-Specific Features...")
 
@@ -205,7 +202,7 @@ class NVIDIAConfigBenchmark:
 
         return results
 
-    def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """Run all benchmarks and return comprehensive results."""
         print("🚀 Running Comprehensive NVIDIA Configuration Benchmarks")
         print("=" * 70)
@@ -233,7 +230,7 @@ class NVIDIAConfigBenchmark:
 
         return all_results
 
-    def _print_summary(self, results: Dict[str, Any]):
+    def _print_summary(self, results: dict[str, Any]):
         """Print benchmark summary."""
         print("📊 BENCHMARK SUMMARY")
         print("=" * 40)

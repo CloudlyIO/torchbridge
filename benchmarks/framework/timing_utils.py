@@ -7,14 +7,15 @@ for consistent benchmarking across all backends (NVIDIA, TPU, AMD).
 Version: 0.3.6
 """
 
-import time
-import statistics
-import torch
-from dataclasses import dataclass, field
-from typing import Callable, Dict, Any, List, Optional, Tuple
-from contextlib import contextmanager
 import functools
+import statistics
+import time
+from collections.abc import Callable
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any
 
+import torch
 
 # ============================================================================
 # Data Classes
@@ -30,7 +31,7 @@ class TimingResult:
     min_time_ms: float
     max_time_ms: float
     std_dev_ms: float
-    percentiles: Dict[str, float] = field(default_factory=dict)
+    percentiles: dict[str, float] = field(default_factory=dict)
 
     def __str__(self) -> str:
         return (
@@ -41,7 +42,7 @@ class TimingResult:
             f"  Std Dev:    {self.std_dev_ms:.4f} ms"
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "name": self.name,
@@ -62,7 +63,7 @@ class BenchmarkConfig:
     warmup: int = 10
     sync_cuda: bool = True
     compute_percentiles: bool = True
-    percentile_values: Tuple[int, ...] = (50, 90, 95, 99)
+    percentile_values: tuple[int, ...] = (50, 90, 95, 99)
 
 
 # ============================================================================
@@ -98,7 +99,7 @@ def run_timed_iterations(
             torch.cuda.synchronize()
 
     # Benchmark
-    times: List[float] = []
+    times: list[float] = []
     for _ in range(iterations):
         start = time.perf_counter()
         func()
@@ -140,7 +141,7 @@ def benchmark_function(
     *args,
     iterations: int = 100,
     warmup: int = 10,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> TimingResult:
     """
@@ -271,7 +272,7 @@ class MemorySnapshot:
     device: str
 
 
-def get_cuda_memory_snapshot(device: int = 0) -> Optional[MemorySnapshot]:
+def get_cuda_memory_snapshot(device: int = 0) -> MemorySnapshot | None:
     """
     Get current CUDA memory usage snapshot.
 
@@ -310,8 +311,8 @@ def track_memory(device: int = 0, reset_peak: bool = True):
     """
     class MemoryTracker:
         def __init__(self):
-            self.before: Optional[MemorySnapshot] = None
-            self.after: Optional[MemorySnapshot] = None
+            self.before: MemorySnapshot | None = None
+            self.after: MemorySnapshot | None = None
             self.peak_allocated_mb: float = 0.0
             self.delta_mb: float = 0.0
 
@@ -387,7 +388,7 @@ def compare_results(
     baseline: TimingResult,
     optimized: TimingResult,
     print_comparison: bool = True,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Compare two timing results.
 
@@ -446,7 +447,7 @@ def print_result(result: TimingResult, indent: int = 2) -> None:
 
 
 def create_summary_table(
-    results: List[TimingResult],
+    results: list[TimingResult],
     title: str = "Benchmark Results"
 ) -> str:
     """

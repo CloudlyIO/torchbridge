@@ -12,17 +12,18 @@ Hardware: Works on both CPU and GPU with educational focus
 Runtime: 2-3 minutes
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import argparse
+import math
+import time
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-import math
-from typing import Dict, List, Tuple, Optional
 
 
 class StandardAttention(nn.Module):
@@ -82,7 +83,7 @@ class SparseAttention(nn.Module):
         return output
 
 
-def benchmark_attention(attention_fn, inputs, name: str, warmup: int = 3, trials: int = 10) -> Dict:
+def benchmark_attention(attention_fn, inputs, name: str, warmup: int = 3, trials: int = 10) -> dict:
     """Benchmark attention mechanism."""
 
     # Warmup
@@ -130,9 +131,9 @@ def benchmark_attention(attention_fn, inputs, name: str, warmup: int = 3, trials
     }
 
 
-def demonstrate_memory_scaling(device: torch.device, config: Dict):
+def demonstrate_memory_scaling(device: torch.device, config: dict):
     """Demonstrate memory scaling of different attention mechanisms."""
-    print(f"\n💾 Attention Memory Scaling Analysis")
+    print("\n💾 Attention Memory Scaling Analysis")
     print("-" * 50)
 
     d_model, num_heads = config['d_model'], config['num_heads']
@@ -177,9 +178,9 @@ def demonstrate_memory_scaling(device: torch.device, config: Dict):
                 break
 
 
-def demonstrate_sparse_patterns(device: torch.device, config: Dict):
+def demonstrate_sparse_patterns(device: torch.device, config: dict):
     """Demonstrate different sparse attention patterns."""
-    print(f"\n🕸️ Sparse Attention Pattern Analysis")
+    print("\n🕸️ Sparse Attention Pattern Analysis")
     print("-" * 50)
 
     d_model, num_heads = config['d_model'], config['num_heads']
@@ -204,7 +205,7 @@ def demonstrate_sparse_patterns(device: torch.device, config: Dict):
         results.append(sparse_results)
 
     # Print comparison
-    print(f"\n📊 Sparse Attention Performance:")
+    print("\n📊 Sparse Attention Performance:")
     print(f"{'Method':<20} {'Time (ms)':<12} {'Theoretical Speedup':<15} {'Memory (MB)'}")
     print("-" * 70)
 
@@ -221,7 +222,7 @@ def demonstrate_sparse_patterns(device: torch.device, config: Dict):
 
 def explain_ring_attention():
     """Explain Ring Attention concept."""
-    print(f"\n🔄 Ring Attention Concept Overview")
+    print("\n🔄 Ring Attention Concept Overview")
     print("-" * 40)
 
     print("Ring Attention enables processing of extremely long sequences by:")
@@ -254,7 +255,7 @@ def explain_ring_attention():
 
 def explain_production_applications():
     """Explain real-world applications of advanced attention."""
-    print(f"\n🌍 Production Applications")
+    print("\n🌍 Production Applications")
     print("-" * 30)
 
     applications = {
@@ -328,15 +329,15 @@ def main():
     explain_ring_attention()
     explain_production_applications()
 
-    print(f"\n🎉 Advanced Attention Demo Completed!")
-    print(f"\n💡 Key Takeaways:")
-    print(f"   • Standard attention has O(N²) memory complexity - limits sequence length")
-    print(f"   • Sparse attention reduces compute by 50-90% with pattern-based approaches")
-    print(f"   • Ring attention enables million-token sequences with O(N) memory")
-    print(f"   • These techniques enable previously impossible applications")
-    print(f"   • Production implementations provide significant performance improvements")
+    print("\n🎉 Advanced Attention Demo Completed!")
+    print("\n💡 Key Takeaways:")
+    print("   • Standard attention has O(N²) memory complexity - limits sequence length")
+    print("   • Sparse attention reduces compute by 50-90% with pattern-based approaches")
+    print("   • Ring attention enables million-token sequences with O(N) memory")
+    print("   • These techniques enable previously impossible applications")
+    print("   • Production implementations provide significant performance improvements")
 
-    print(f"\n✅ Demo completed! Try --quick for faster testing.")
+    print("\n✅ Demo completed! Try --quick for faster testing.")
 
 
 if __name__ == "__main__":

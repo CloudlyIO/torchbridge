@@ -5,18 +5,13 @@ Provides comprehensive reporting and visualization capabilities for
 performance regression testing results.
 """
 
+from .dashboard_generator import ChartType, Dashboard, DashboardGenerator
 from .regression_reporter import (
-    RegressionReporter,
-    ReportFormat,
-    Report,
     CISummary,
-    ExecutiveSummary
-)
-
-from .dashboard_generator import (
-    DashboardGenerator,
-    Dashboard,
-    ChartType
+    ExecutiveSummary,
+    RegressionReporter,
+    Report,
+    ReportFormat,
 )
 
 __all__ = [

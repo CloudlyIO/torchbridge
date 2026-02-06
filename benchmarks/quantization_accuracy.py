@@ -15,10 +15,9 @@ Targets:
 import argparse
 import json
 import time
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
 import warnings
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -32,13 +31,13 @@ class QuantizationResult:
     quantization_mode: str
 
     # Quality metrics
-    baseline_perplexity: Optional[float] = None
-    quantized_perplexity: Optional[float] = None
-    perplexity_increase_pct: Optional[float] = None
+    baseline_perplexity: float | None = None
+    quantized_perplexity: float | None = None
+    perplexity_increase_pct: float | None = None
 
-    baseline_accuracy: Optional[float] = None
-    quantized_accuracy: Optional[float] = None
-    accuracy_drop_pct: Optional[float] = None
+    baseline_accuracy: float | None = None
+    quantized_accuracy: float | None = None
+    accuracy_drop_pct: float | None = None
 
     # Memory metrics
     baseline_memory_mb: float = 0.0
@@ -92,7 +91,7 @@ class BenchmarkConfig:
     model_type: str = "causal-lm"  # causal-lm, masked-lm, classification
 
     # Quantization modes to test
-    quantization_modes: List[str] = field(default_factory=lambda: ["int8", "fp8"])
+    quantization_modes: list[str] = field(default_factory=lambda: ["int8", "fp8"])
 
     # Evaluation settings
     num_samples: int = 100
@@ -119,7 +118,7 @@ def calculate_perplexity(
     dataloader: DataLoader,
     device: torch.device,
     max_samples: int = 100
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Calculate perplexity for a language model.
 
@@ -207,7 +206,7 @@ def calculate_classification_accuracy(
 
 def measure_latency(
     model: nn.Module,
-    sample_input: Dict[str, torch.Tensor],
+    sample_input: dict[str, torch.Tensor],
     num_runs: int = 10,
     warmup_runs: int = 3
 ) -> float:
@@ -291,11 +290,14 @@ class QuantizationBenchmark:
     def __init__(self, config: BenchmarkConfig):
         self.config = config
         self.device = torch.device(config.device)
-        self.results: List[QuantizationResult] = []
+        self.results: list[QuantizationResult] = []
 
     def load_model(self, model_name: str) -> nn.Module:
         """Load a model for benchmarking."""
-        from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification
+        from transformers import (
+            AutoModelForCausalLM,
+            AutoModelForSequenceClassification,
+        )
 
         if self.config.model_type == "causal-lm":
             model = AutoModelForCausalLM.from_pretrained(model_name)
@@ -372,7 +374,7 @@ class QuantizationBenchmark:
         )
 
         # Baseline metrics
-        print(f"  Measuring baseline metrics...")
+        print("  Measuring baseline metrics...")
         result.baseline_memory_mb = get_model_size_mb(baseline_model)
         result.baseline_perplexity, _ = calculate_perplexity(
             baseline_model, dataloader, self.device, self.config.num_samples
@@ -399,7 +401,7 @@ class QuantizationBenchmark:
             # INT4 via BitsAndBytes (requires reloading)
             quantized_model = quantize_model_int4_bitsandbytes(model_name, self.device)
             if quantized_model is None:
-                warnings.warn(f"INT4 quantization not available")
+                warnings.warn("INT4 quantization not available")
                 return result
 
         else:
@@ -407,7 +409,7 @@ class QuantizationBenchmark:
             return result
 
         # Quantized metrics
-        print(f"  Measuring quantized metrics...")
+        print("  Measuring quantized metrics...")
         result.quantized_memory_mb = get_model_size_mb(quantized_model)
 
         try:
@@ -445,10 +447,10 @@ class QuantizationBenchmark:
 
         return result
 
-    def run(self) -> List[QuantizationResult]:
+    def run(self) -> list[QuantizationResult]:
         """Run the full benchmark suite."""
         print(f"\n{'='*60}")
-        print(f"Quantization Accuracy Benchmark")
+        print("Quantization Accuracy Benchmark")
         print(f"{'='*60}")
         print(f"Model: {self.config.model_name}")
         print(f"Device: {self.device}")

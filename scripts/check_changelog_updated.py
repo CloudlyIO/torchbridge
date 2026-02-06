@@ -6,8 +6,8 @@ Prevents commits without changelog updates.
 
 import subprocess
 import sys
-from pathlib import Path
 from datetime import datetime
+
 
 def get_staged_files():
     """Get list of staged files."""
@@ -43,17 +43,17 @@ def main():
         return 0
 
     print("❌ Error: Code changes detected but CHANGELOG.md not updated!")
-    print(f"\n   Changed code files:")
+    print("\n   Changed code files:")
     for f in code_files[:5]:  # Show first 5
         print(f"      - {f}")
     if len(code_files) > 5:
         print(f"      ... and {len(code_files) - 5} more")
 
-    print(f"\n💡 Please update CHANGELOG.md with:")
+    print("\n💡 Please update CHANGELOG.md with:")
     print(f"   - Date: {datetime.now().strftime('%Y-%m-%d')}")
-    print(f"   - Version: (increment as needed)")
-    print(f"   - Description of changes")
-    print(f"\n   Then stage CHANGELOG.md: git add CHANGELOG.md")
+    print("   - Version: (increment as needed)")
+    print("   - Description of changes")
+    print("\n   Then stage CHANGELOG.md: git add CHANGELOG.md")
 
     return 1
 

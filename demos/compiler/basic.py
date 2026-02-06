@@ -13,16 +13,17 @@ Hardware: Works on both CPU and GPU (GPU recommended for best results)
 Runtime: 2-3 minutes
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+import argparse
+import time
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-import argparse
-from typing import Dict, List, Tuple
 
 # Import optimization components
 try:
@@ -88,7 +89,7 @@ class FusedModel(nn.Module):
         return x
 
 
-def benchmark_model(model, inputs, name: str, warmup: int = 5, trials: int = 20) -> Dict:
+def benchmark_model(model, inputs, name: str, warmup: int = 5, trials: int = 20) -> dict:
     """Benchmark model performance with statistical analysis."""
     model.eval()
 
@@ -124,7 +125,7 @@ def benchmark_model(model, inputs, name: str, warmup: int = 5, trials: int = 20)
     }
 
 
-def compare_implementations(device: torch.device, config: Dict):
+def compare_implementations(device: torch.device, config: dict):
     """Compare baseline vs optimized implementations."""
     print(f"\n🎯 Benchmarking on {device}")
     print(f"   Configuration: {config}")
@@ -164,7 +165,7 @@ def compare_implementations(device: torch.device, config: Dict):
         results.append(compiled_results)
 
     # Print results
-    print(f"\n📊 Performance Results:")
+    print("\n📊 Performance Results:")
     print(f"{'Model':<20} {'Time (ms)':<12} {'Speedup':<10} {'Output Shape'}")
     print("-" * 60)
 
@@ -178,7 +179,7 @@ def compare_implementations(device: torch.device, config: Dict):
 
 def demonstrate_memory_optimization(device: torch.device):
     """Demonstrate memory-efficient operations."""
-    print(f"\n🧠 Memory Optimization Techniques")
+    print("\n🧠 Memory Optimization Techniques")
 
     if device.type != 'cuda':
         print("⚠️ Memory profiling requires CUDA")
@@ -253,20 +254,20 @@ def main():
         fused_time = results[1]['mean_time_ms']
         speedup = baseline_time / fused_time
 
-        print(f"\n🎉 Key Results:")
+        print("\n🎉 Key Results:")
         print(f"   Fused optimizations: {speedup:.1f}x speedup")
         if len(results) >= 3:
             compiled_time = results[2]['mean_time_ms']
             total_speedup = baseline_time / compiled_time
             print(f"   Combined optimizations: {total_speedup:.1f}x speedup")
 
-        print(f"\n💡 Optimization Impact:")
+        print("\n💡 Optimization Impact:")
         print(f"   • Kernel fusion provides {speedup:.1f}x improvement")
-        print(f"   • torch.compile adds additional optimization on GPU")
-        print(f"   • Memory optimizations reduce peak usage")
-        print(f"   • Combined techniques achieve significant performance gains")
+        print("   • torch.compile adds additional optimization on GPU")
+        print("   • Memory optimizations reduce peak usage")
+        print("   • Combined techniques achieve significant performance gains")
 
-    print(f"\n✅ Demo completed! Try --quick for faster testing.")
+    print("\n✅ Demo completed! Try --quick for faster testing.")
 
 
 if __name__ == "__main__":
