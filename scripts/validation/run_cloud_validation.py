@@ -36,7 +36,7 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 class AWSConfig:
     """AWS configuration with your specific setup."""
     region: str = "us-east-1"
-    key_name: str = "shahmod-gpu-key-east1"
+    key_name: str = "torchbridge-gpu-key"  # Set via AWS_KEY_NAME env var
     ami_id: str = "ami-069562671a65789b9"  # Deep Learning PyTorch 2.9
     vpc_id: str = "vpc-0f15c7f58720f216f"
 
