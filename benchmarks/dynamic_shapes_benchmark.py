@@ -316,7 +316,7 @@ def run_baseline_benchmark(
             for tensor in inputs:
                 start_time = time.perf_counter()
 
-                output = model(tensor)
+                _output = model(tensor)  # noqa: F841
 
                 if torch.cuda.is_available():
                     torch.cuda.synchronize()

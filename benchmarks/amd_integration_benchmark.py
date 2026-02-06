@@ -209,7 +209,7 @@ def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
         optimizer = AMDOptimizer(config)
 
         result = run_timed_iterations(
-            lambda: optimizer.optimize(model),
+            lambda opt=optimizer: opt.optimize(model),
             iterations=iterations,
         )
         result.name = f"{level.capitalize()} Optimization"
@@ -226,7 +226,7 @@ def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
         optimizer = AMDOptimizer(config)
 
         result = run_timed_iterations(
-            lambda: optimizer.optimize(model),
+            lambda opt=optimizer: opt.optimize(model),
             iterations=iterations // 2,
         )
         result.name = f"Matrix Cores ({arch.value})"
@@ -433,7 +433,7 @@ def benchmark_architecture_comparison(iterations: int = 30) -> dict[str, Any]:
         optimizer = AMDOptimizer(config)
 
         result = run_timed_iterations(
-            lambda: optimizer.optimize(model),
+            lambda opt=optimizer: opt.optimize(model),
             iterations=iterations,
         )
         result.name = f"{arch.value.upper()} Optimization"

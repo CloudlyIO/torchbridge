@@ -22,6 +22,7 @@ from torchbridge.core.hardware_detector import (
     detect_hardware,
     get_optimal_backend,
 )
+from torchbridge.core.management import UnifiedManager, get_manager
 
 # All valid hardware types and backends (for assertion checks)
 ALL_HARDWARE_TYPES = [
@@ -31,7 +32,6 @@ ALL_HARDWARE_TYPES = [
     HardwareType.CPU,
 ]
 ALL_BACKENDS = ['nvidia', 'amd', 'tpu', 'cpu']
-from torchbridge.core.management import UnifiedManager, get_manager
 
 
 # Test fixtures
