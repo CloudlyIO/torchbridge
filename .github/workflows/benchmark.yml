@@ -39,10 +39,10 @@ jobs:
     name: CPU Benchmarks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -72,7 +72,7 @@ jobs:
             || echo "Benchmark report generation skipped"
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark-results-cpu
           path: ${{ env.BENCHMARK_RESULTS_DIR }}/
@@ -80,7 +80,7 @@ jobs:
 
       - name: Comment benchmark results on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -126,7 +126,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run GPU benchmarks
         run: |
@@ -142,7 +142,7 @@ jobs:
             || true
 
       - name: Upload GPU benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark-results-gpu
           path: ${{ env.BENCHMARK_RESULTS_DIR }}/
@@ -154,21 +154,21 @@ jobs:
     needs: benchmark-cpu
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Download current benchmark results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: benchmark-results-cpu
           path: current-results/
 
       - name: Download baseline benchmarks
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v14
         with:
           workflow: benchmark.yml
           branch: main
@@ -239,7 +239,7 @@ jobs:
 
       - name: Post regression report
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const body = `### Performance Regression Check
