@@ -12,7 +12,7 @@ Future refactoring should split into separate modules:
 - cpu_adapter.py (CPUAdapter)
 - custom_adapter.py (CustomHardwareAdapter)
 
-See: https://github.com/CloudlyIO/torchbridge/issues/TBD
+Tracking: vendor adapter modularization planned for v0.6.0
 """
 
 import logging
