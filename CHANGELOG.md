@@ -8,7 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.0 (PyPI Release + Migration Tools)
+**Current Version**: v0.5.1 (Cleanup + Consolidation)
+
+---
+
+## [0.5.1] - 2026-02-06 - Cleanup + Consolidation
+
+### **Summary**
+
+Post-release cleanup consolidating development to CloudlyIO org, fixing demo
+imports, and updating all version references. Cloud-validated on AWS and GCP.
+
+### **Changed**
+
+- **Repository consolidation**: development now uses single `CloudlyIO/torchbridge` repo
+- **Demo imports fixed**: all demos now work with `PYTHONPATH=src python3 demos/<demo>.py`
+- **Version references**: updated to 0.5.1 across all packages, demos, and benchmarks
+- **GitHub ISSUE_TEMPLATE**: updated discussion URL to CloudlyIO org
+- **Dependabot**: merged GitHub Actions dependency updates
+
+### **Fixed**
+
+- Demo path setup for `demos.shared` module imports
+- TBD issue link replaced with roadmap note in vendor_adapters.py
+
+### **Validated**
+
+- AWS g5.xlarge (A10G): 56 unit + 66 NVIDIA backend tests passed
+- GCP g2-standard-4 (L4): 55 unit + 66 NVIDIA backend tests passed
+- AMD MI300X: 1611 tests passed (validated Feb 3)
 
 ---
 
