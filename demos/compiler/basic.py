@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 Basic PyTorch Optimizations Demo
+🚀 Basic PyTorch Optimizations Demo (v0.5.0)
 
 Demonstrates core PyTorch optimization techniques with measurable performance improvements:
 - Kernel fusion for 2-3x speedup
@@ -16,7 +16,8 @@ Runtime: 2-3 minutes
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import argparse
 import time
@@ -24,6 +25,19 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+# Import shared utilities for HAL-aware device handling
+try:
+    from shared.utils import get_device, synchronize
+except ImportError:
+    def get_device(prefer="auto"):
+        if prefer != "cpu" and torch.cuda.is_available():
+            return torch.device("cuda")
+        return torch.device("cpu")
+
+    def synchronize(device=None):
+        if device and device.type == "cuda":
+            torch.cuda.synchronize()
 
 # Import optimization components
 try:
@@ -92,15 +106,15 @@ class FusedModel(nn.Module):
 def benchmark_model(model, inputs, name: str, warmup: int = 5, trials: int = 20) -> dict:
     """Benchmark model performance with statistical analysis."""
     model.eval()
+    device = next(model.parameters()).device
 
     # Warmup
     for _ in range(warmup):
         with torch.no_grad():
             _ = model(inputs)
 
-    # Synchronize for accurate timing
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
+    # Synchronize for accurate timing (backend-agnostic)
+    synchronize(device)
 
     # Benchmark
     times = []
@@ -108,8 +122,7 @@ def benchmark_model(model, inputs, name: str, warmup: int = 5, trials: int = 20)
         start_time = time.perf_counter()
         with torch.no_grad():
             output = model(inputs)
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
+        synchronize(device)  # Backend-agnostic sync
         end_time = time.perf_counter()
         times.append((end_time - start_time) * 1000)  # Convert to ms
 
@@ -214,11 +227,11 @@ def main():
     print("=" * 60)
     print("Demonstrating core optimization techniques with measurable performance impact\n")
 
-    # Device setup
+    # Device setup (using HAL-aware get_device)
     if args.device:
         device = torch.device(args.device)
     else:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = get_device()
 
     print(f"🎯 Device: {device}")
 
