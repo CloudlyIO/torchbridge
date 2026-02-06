@@ -342,7 +342,7 @@ def demo_registry_integration():
 def main():
     """Run all demos"""
     print("\n" + "="*60)
-    print("  FlexAttention Demo - TorchBridge v0.4.4")
+    print("  FlexAttention Demo - TorchBridge v0.5.0")
     print("="*60)
 
     results = {}

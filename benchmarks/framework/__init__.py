@@ -4,7 +4,7 @@ PyTorch Optimization Benchmark Framework
 Comprehensive benchmarking suite for comparing optimization techniques
 against state-of-the-art implementations.
 
-Version: 0.3.6
+Version: 0.5.0
 """
 
 from .baseline_implementations import (
@@ -15,7 +15,7 @@ from .baseline_implementations import (
 from .benchmark_runner import BenchmarkConfig, BenchmarkRunner
 from .metrics_collector import MetricsCollector, PerformanceMetrics
 
-# Timing utilities (v0.3.6)
+# Timing utilities
 from .timing_utils import (
     TimingResult,
     benchmark_function,
@@ -41,7 +41,7 @@ except ImportError:
     StatisticalAnalysis = None
     ADVANCED_ANALYSIS_AVAILABLE = False
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 __all__ = [
     # Runner and config
     "BenchmarkRunner",

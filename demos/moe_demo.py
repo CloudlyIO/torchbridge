@@ -522,7 +522,7 @@ def main():
     """Run all demos"""
     print("=" * 60)
     print("Mixture of Experts (MoE) Demonstrations")
-    print("torchbridge v0.4.6")
+    print("torchbridge v0.5.0")
     print("=" * 60)
 
     demos = [

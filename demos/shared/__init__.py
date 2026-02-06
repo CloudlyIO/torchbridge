@@ -7,7 +7,7 @@ This module provides reusable components for demonstration scripts:
 - Device detection helpers
 - Sample data generators
 
-Version: 0.3.6
+Version: 0.5.0
 """
 
 from .data import (
@@ -39,7 +39,7 @@ from .utils import (
     setup_demo_args,
 )
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 
 __all__ = [
     # Printing utilities
