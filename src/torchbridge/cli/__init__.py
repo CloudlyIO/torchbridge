@@ -6,8 +6,23 @@ model export, and system validation.
 """
 
 import argparse
+import logging
+import os
 import sys
+import warnings
 from typing import Optional  # noqa: F401
+
+# Suppress noisy warnings before any imports that trigger them
+# These are informational, not errors - we report hardware status via 'doctor' command
+warnings.filterwarnings("ignore", message=".*Redirects are currently not supported.*")
+warnings.filterwarnings("ignore", message=".*Transformer Engine not available.*")
+warnings.filterwarnings("ignore", category=UserWarning, module="torchbridge.precision")
+
+# Suppress PyTorch distributed elastic logging noise on non-Linux platforms
+logging.getLogger("torch.distributed.elastic").setLevel(logging.ERROR)
+
+# Suppress pynvml deprecation warning
+os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
@@ -46,7 +61,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.5.2'
+        version='%(prog)s 0.5.3'
     )
 
     # Add subcommands
