@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Native FP8 Demo (v0.4.5)
+Native FP8 Demo (v0.5.0)
 
 Demonstrates full FP8 capabilities including:
 - Native PyTorch FP8 types (float8_e4m3fn, float8_e5m2)
@@ -453,7 +453,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "=" * 60)
-    print("  Native FP8 Demo - TorchBridge v0.4.5")
+    print("  Native FP8 Demo - TorchBridge v0.5.0")
     print("  Full FP8 with Native PyTorch Types")
     print("=" * 60)
 
