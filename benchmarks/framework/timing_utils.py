@@ -2,9 +2,9 @@
 Shared timing utilities for TorchBridge benchmarks.
 
 This module provides standardized timing and measurement utilities
-for consistent benchmarking across all backends (NVIDIA, TPU, AMD).
+for consistent benchmarking across all backends (NVIDIA, TPU, AMD, Intel).
 
-Version: 0.3.6
+Version: 0.5.0
 """
 
 import functools
@@ -16,6 +16,59 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import torch
+
+
+# ============================================================================
+# Backend-Agnostic Device Utilities
+# ============================================================================
+
+def synchronize_device(device: torch.device | None = None) -> None:
+    """
+    Backend-agnostic device synchronization for accurate timing.
+
+    Ensures all pending operations on the device have completed before
+    returning. This is essential for accurate benchmark measurements.
+
+    Args:
+        device: Device to synchronize. If None, syncs all available accelerators.
+    """
+    if device is None:
+        # Sync all available accelerators
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            torch.xpu.synchronize()
+        if hasattr(torch, "mps") and hasattr(torch.mps, "synchronize"):
+            torch.mps.synchronize()
+        return
+
+    device_type = device.type if hasattr(device, "type") else str(device).split(":")[0]
+
+    if device_type == "cuda":
+        torch.cuda.synchronize(device)
+    elif device_type == "xpu" and hasattr(torch, "xpu"):
+        torch.xpu.synchronize(device)
+    elif device_type == "mps" and hasattr(torch.mps, "synchronize"):
+        torch.mps.synchronize()
+    # CPU doesn't need synchronization
+
+
+def get_best_device() -> torch.device:
+    """
+    Get the best available compute device.
+
+    Priority: CUDA > XPU > MPS > CPU
+
+    Returns:
+        torch.device for the best available backend
+    """
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if hasattr(torch, "xpu") and torch.xpu.is_available():
+        return torch.device("xpu")
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
 
 # ============================================================================
 # Data Classes
@@ -77,6 +130,7 @@ def run_timed_iterations(
     name: str = "benchmark",
     sync_cuda: bool = True,
     compute_percentiles: bool = True,
+    device: torch.device | None = None,
 ) -> TimingResult:
     """
     Run a function multiple times and collect timing statistics.
@@ -86,8 +140,9 @@ def run_timed_iterations(
         iterations: Number of timed iterations
         warmup: Number of warmup iterations (not timed)
         name: Name for the benchmark result
-        sync_cuda: Whether to sync CUDA after each iteration
+        sync_cuda: Whether to sync device after each iteration (backend-agnostic)
         compute_percentiles: Whether to compute p50/p90/p95/p99
+        device: Specific device to synchronize (None = auto-detect)
 
     Returns:
         TimingResult with comprehensive timing statistics
@@ -95,16 +150,16 @@ def run_timed_iterations(
     # Warmup
     for _ in range(warmup):
         func()
-        if sync_cuda and torch.cuda.is_available():
-            torch.cuda.synchronize()
+        if sync_cuda:
+            synchronize_device(device)
 
     # Benchmark
     times: list[float] = []
     for _ in range(iterations):
         start = time.perf_counter()
         func()
-        if sync_cuda and torch.cuda.is_available():
-            torch.cuda.synchronize()
+        if sync_cuda:
+            synchronize_device(device)
         elapsed = (time.perf_counter() - start) * 1000  # Convert to ms
         times.append(elapsed)
 
