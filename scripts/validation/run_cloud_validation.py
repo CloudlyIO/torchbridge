@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -36,7 +37,7 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 class AWSConfig:
     """AWS configuration with your specific setup."""
     region: str = "us-east-1"
-    key_name: str = "torchbridge-gpu-key"  # Set via AWS_KEY_NAME env var
+    key_name: str = os.environ.get("AWS_KEY_NAME", "shahmod-gpu-key-east1")
     ami_id: str = "ami-069562671a65789b9"  # Deep Learning PyTorch 2.9
     vpc_id: str = "vpc-0f15c7f58720f216f"
 
@@ -374,7 +375,7 @@ def run_gcp_validation(
         "gcloud", "compute", "instances", "create", instance_name,
         "--zone", zone,
         "--machine-type", machine_type,
-        "--image-family", "pytorch-latest-gpu",
+        "--image-family", "pytorch-2-7-cu128-ubuntu-2404-nvidia-570",
         "--image-project", "deeplearning-platform-release",
         "--boot-disk-size", "100GB",
         "--boot-disk-type", "pd-ssd",
