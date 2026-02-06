@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FlexAttention Demo (v0.4.4)
+FlexAttention Demo (v0.5.0)
 
 Demonstrates FlexAttention integration with PyTorch 2.5+ for flexible
 attention patterns with FlashAttention-like performance.
@@ -22,14 +22,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import torch
 import torch.nn as nn
 
-# Import shared utilities
+# Import shared utilities with HAL-aware device handling
 try:
-    from shared.utils import print_section
+    from shared.utils import print_section, get_device, synchronize
 except ImportError:
     def print_section(title: str):
         print(f"\n{'='*60}")
         print(f"  {title}")
         print('='*60)
+
+    def get_device(prefer: str = "auto") -> torch.device:
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        return torch.device("cpu")
+
+    def synchronize(device=None):
+        if device and device.type == "cuda":
+            torch.cuda.synchronize()
 
 from torchbridge.attention import (
     AttentionConfig,
@@ -64,7 +73,7 @@ def demo_basic_flex_attention():
     """Demo: Basic FlexAttention usage"""
     print_section("Basic FlexAttention")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     print(f"Device: {device}")
 
     # Create FlexAttention layer
@@ -92,7 +101,7 @@ def demo_causal_attention():
     """Demo: Causal/autoregressive attention"""
     print_section("Causal Attention Pattern")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Create causal attention
     config = AttentionConfig(
@@ -118,7 +127,7 @@ def demo_sliding_window_attention():
     """Demo: Sliding window attention"""
     print_section("Sliding Window Attention")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Create sliding window attention
     window_size = 32
@@ -142,7 +151,7 @@ def demo_custom_score_mod():
     """Demo: Custom score modification"""
     print_section("Custom Score Modification")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Example: Soft capping for Gemma 2 style attention
     def soft_cap_score_mod(score, b, h, q_idx, kv_idx):
@@ -169,7 +178,7 @@ def demo_alibi_attention():
     """Demo: ALiBi positional bias"""
     print_section("ALiBi Attention")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Create attention with ALiBi
     alibi_mod = FlexAttentionScoreMods.alibi(num_heads=4)
@@ -193,7 +202,7 @@ def demo_performance_comparison():
     """Demo: Performance comparison"""
     print_section("Performance Comparison")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Setup
     embed_dim, num_heads = 512, 8
@@ -256,7 +265,7 @@ def demo_transformer_block():
     """Demo: FlexAttention in a transformer block"""
     print_section("Transformer Block with FlexAttention")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     class FlexTransformerBlock(nn.Module):
         """Transformer block using FlexAttention"""

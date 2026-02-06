@@ -1,15 +1,24 @@
 """
 Shared utility functions for TorchBridge demos.
 
-This module provides common utility functions used across demo scripts.
+This module provides common utility functions used across demo scripts,
+with TorchBridge HAL integration for backend-agnostic device handling.
 
-Version: 0.4.3
+Version: 0.5.0
 """
 
 import argparse
 from typing import Any
 
 import torch
+
+# Try to import TorchBridge HAL for backend-agnostic device handling
+try:
+    from torchbridge.core.hardware_detector import detect_hardware, get_optimal_backend
+    from torchbridge.backends import detect_best_backend
+    _HAS_TORCHBRIDGE_HAL = True
+except ImportError:
+    _HAS_TORCHBRIDGE_HAL = False
 
 # ============================================================================
 # Printing Utilities
@@ -68,7 +77,7 @@ def print_metrics(metrics: dict[str, Any], indent: int = 3) -> None:
 
 def get_device(prefer: str = "auto") -> torch.device:
     """
-    Get the best available device.
+    Get the best available device using TorchBridge HAL when available.
 
     Args:
         prefer: Preference for device ("auto", "cuda", "mps", "cpu")
@@ -76,6 +85,14 @@ def get_device(prefer: str = "auto") -> torch.device:
     Returns:
         torch.device for the selected device
     """
+    # Use TorchBridge HAL for auto detection when available
+    if prefer == "auto" and _HAS_TORCHBRIDGE_HAL:
+        try:
+            backend = detect_best_backend()
+            return backend.device
+        except Exception:
+            pass  # Fall through to manual detection
+
     if prefer == "auto":
         if torch.cuda.is_available():
             return torch.device("cuda")
@@ -134,6 +151,50 @@ def get_device_info(device: torch.device | None = None) -> dict[str, Any]:
         info["cpu_only"] = True
 
     return info
+
+
+def synchronize(device: torch.device | None = None) -> None:
+    """
+    Synchronize device for accurate timing measurements.
+
+    This is a backend-agnostic synchronization utility that ensures
+    all pending operations on the device have completed.
+
+    Args:
+        device: Device to synchronize (None = auto-detect)
+    """
+    if device is None:
+        device = get_device()
+
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    elif device.type == "xpu" and hasattr(torch, "xpu"):
+        torch.xpu.synchronize(device)
+    elif device.type == "mps" and hasattr(torch, "mps"):
+        # MPS synchronization (PyTorch 2.0+)
+        if hasattr(torch.mps, "synchronize"):
+            torch.mps.synchronize()
+    # CPU doesn't need synchronization
+
+
+def get_memory_allocated(device: torch.device | None = None) -> int:
+    """
+    Get memory allocated on device in bytes.
+
+    Args:
+        device: Device to query (None = auto-detect)
+
+    Returns:
+        Memory allocated in bytes, or 0 if not applicable
+    """
+    if device is None:
+        device = get_device()
+
+    if device.type == "cuda":
+        return torch.cuda.memory_allocated(device)
+    elif device.type == "xpu" and hasattr(torch, "xpu"):
+        return torch.xpu.memory_allocated(device)
+    return 0  # CPU memory tracking not supported this way
 
 
 # ============================================================================
