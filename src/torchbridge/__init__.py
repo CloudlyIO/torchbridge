@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", message=".*Redirects are currently not support
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("torchbridge")
+    __version__ = version("torchbridge-ml")
 except PackageNotFoundError:
     __version__ = "0.5.3"  # Fallback for development
 

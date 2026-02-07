@@ -335,7 +335,7 @@ def run_benchmarks(
         seq_lengths = [64, 128, 256, 512]
 
     print("=" * 60)
-    print("Attention Efficiency Benchmarks (v0.4.23)")
+    print("Attention Efficiency Benchmarks (v0.5.3)")
     print("=" * 60)
     print(f"Device: {DEVICE}")
     print(f"Batch size: {batch_size}")

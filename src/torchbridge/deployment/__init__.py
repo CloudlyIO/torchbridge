@@ -61,7 +61,7 @@ from .optimization_metadata import (
     create_metadata,
 )
 
-# Production validation (v0.4.25)
+# Production validation
 from .production_validator import (
     ProductionRequirements,
     ProductionValidationResult,
@@ -72,7 +72,7 @@ from .production_validator import (
     validate_production_readiness,
 )
 
-# SafeTensors export (v0.4.25)
+# SafeTensors export
 from .safetensors_exporter import (
     SafeTensorsExportConfig,
     SafeTensorsExporter,
@@ -136,14 +136,14 @@ __all__ = [
     "ExportMethod",
     "export_to_torchscript",
     "load_torchscript",
-    # SafeTensors (v0.4.25)
+    # SafeTensors
     "SafeTensorsExporter",
     "SafeTensorsExportConfig",
     "SafeTensorsExportResult",
     "export_to_safetensors",
     "load_safetensors",
     "load_model_safetensors",
-    # Production Validation (v0.4.25)
+    # Production Validation
     "ProductionValidator",
     "ProductionRequirements",
     "ProductionValidationResult",

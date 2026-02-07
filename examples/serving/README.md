@@ -152,4 +152,4 @@ The LLM server uses:
 
 ### Version
 
-v0.4.22 - Production Serving Release
+v0.5.3 - Production Serving Release

@@ -1,5 +1,5 @@
 """
-Distributed Training Tests (v0.4.24)
+Distributed Training Tests (v0.5.3)
 
 Tests for distributed training infrastructure including:
 - Tensor parallelism

@@ -7,7 +7,7 @@ and integration with PyTorch/XLA for Google Cloud TPUs.
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging

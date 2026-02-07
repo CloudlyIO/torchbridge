@@ -11,7 +11,7 @@ Alert Categories:
 - SLO violation alerts
 - Availability alerts
 
-Version: 0.4.34
+Version: 0.5.3
 
 Example:
     ```python

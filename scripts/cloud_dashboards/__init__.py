@@ -4,7 +4,7 @@ Cloud Monitoring Dashboards for TorchBridge.
 This module provides dashboard configurations and comparison tools
 for monitoring TorchBridge performance across cloud platforms.
 
-Version: 0.3.7
+Version: 0.5.3
 """
 
 from .cross_platform_comparison import (
@@ -14,7 +14,7 @@ from .cross_platform_comparison import (
     create_comparison_chart,
 )
 
-__version__ = "0.3.7"
+__version__ = "0.5.3"
 
 __all__ = [
     "CrossPlatformComparison",

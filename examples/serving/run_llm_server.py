@@ -56,7 +56,7 @@ Sample curl commands after starting server:
     # Metrics
     curl http://localhost:8000/metrics
 
-Version: 0.4.22
+Version: 0.5.3
 """
 
 import argparse
