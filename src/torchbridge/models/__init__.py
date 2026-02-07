@@ -6,16 +6,16 @@ and other sources. Supports automatic backend selection and optimization
 across NVIDIA, AMD, TPU, and Intel hardware.
 
 Model Categories:
-- text: BERT, GPT-2, DistilBERT, and other text models (v0.4.11)
-- llm: Llama, Mistral, Phi, and other LLMs (v0.4.12)
-- distributed: Large-scale distributed models (v0.4.13 - IN PROGRESS)
-- vision: ResNet, ViT, Stable Diffusion (v0.4.14 - PLANNED)
-- multimodal: CLIP, LLaVA, Whisper (v0.4.15 - PLANNED)
+- text: BERT, GPT-2, DistilBERT, and other text models
+- llm: Llama, Mistral, Phi, and other LLMs
+- distributed: Large-scale distributed models
+- vision: ResNet, ViT, Stable Diffusion
+- multimodal: CLIP, LLaVA, Whisper
 
-Version: 0.4.12
+Version: 0.5.3
 """
 
-# Distributed models (v0.4.13)
+# Distributed models
 from .distributed import (
     ColumnParallelLinear,
     DistributedConfig,
@@ -71,13 +71,13 @@ from .text import (
 )
 
 __all__ = [
-    # Text models (v0.4.11)
+    # Text models
     "TextModelOptimizer",
     "OptimizedBERT",
     "OptimizedGPT2",
     "OptimizedDistilBERT",
     "create_optimized_text_model",
-    # LLM models (v0.4.12)
+    # LLM models
     "LLMOptimizer",
     "LLMConfig",
     "OptimizedLlama",
@@ -89,7 +89,7 @@ __all__ = [
     "KVCacheManager",
     "PagedKVCache",
     "SlidingWindowCache",
-    # Distributed models (v0.4.13)
+    # Distributed models
     "TensorParallelConfig",
     "TensorParallelLinear",
     "TensorParallelEmbedding",

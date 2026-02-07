@@ -1,5 +1,5 @@
 """
-Tests for Distributed Model Integration (v0.4.13)
+Tests for Distributed Model Integration
 
 Tests tensor parallelism, pipeline parallelism, model sharding,
 and large model optimization without requiring actual multi-GPU setup.

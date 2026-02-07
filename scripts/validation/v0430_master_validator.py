@@ -424,7 +424,7 @@ class MasterValidator:
     def save_summary(self):
         """Save validation summary to JSON."""
         summary = {
-            "version": "0.4.30",
+            "version": "0.5.3",
             "timestamp": datetime.now().isoformat(),
             "phases": []
         }

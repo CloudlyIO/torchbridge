@@ -6,7 +6,7 @@ Provides optimized key-value cache management for LLM inference:
 - Paged attention (vLLM-style)
 - Sliding window cache for efficient long contexts
 
-Version: 0.4.12
+Version: 0.5.3
 """
 
 import logging

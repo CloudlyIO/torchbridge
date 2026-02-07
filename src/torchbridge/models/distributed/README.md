@@ -1,4 +1,4 @@
-# TorchBridge Distributed Models (v0.4.13)
+# TorchBridge Distributed Models (v0.5.3)
 
 Multi-GPU training and inference support for large language models (70B+ parameters).
 
@@ -126,6 +126,6 @@ Single-GPU tests use mocked distributed operations.
 
 ## Version
 
-Part of TorchBridge v0.4.13 - Large Model Integration
+Part of TorchBridge v0.5.3 - Large Model Integration
 
 For more details, see the main documentation.

@@ -18,7 +18,7 @@ Key Features:
 
 Inherits from BaseMemoryManager for shared functionality.
 
-Version: 0.4.9
+Version: 0.5.3
 """
 
 import gc

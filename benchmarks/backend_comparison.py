@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Backend Comparison Benchmarks (v0.4.8)
+Backend Comparison Benchmarks (v0.5.3)
 
 Benchmarks for comparing performance across unified backends (NVIDIA, AMD, TPU,
 Intel, CPU) using the standardized BaseBackend interface.
@@ -489,7 +489,7 @@ def main():
         args.model_size = "small"
 
     print("\n" + "=" * 60)
-    print("  Backend Comparison Benchmarks (v0.4.8)")
+    print("  Backend Comparison Benchmarks (v0.5.3)")
     print("  TorchBridge - Unified Backend Performance")
     print("=" * 60)
 
@@ -504,7 +504,7 @@ def main():
 
     # Create benchmark suite
     suite = BenchmarkSuite(metadata={
-        'version': '0.4.8',
+        'version': '0.5.3',
         'model_size': args.model_size,
         'warmup': args.warmup,
         'iterations': args.iterations,

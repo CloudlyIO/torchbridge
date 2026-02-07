@@ -1,5 +1,5 @@
 """
-Intel XPU Backend Benchmarks (v0.4.10)
+Intel XPU Backend Benchmarks (v0.5.3)
 
 Comprehensive benchmark suite for Intel XPU backend optimization.
 Measures performance across different optimization levels, precisions,
@@ -359,7 +359,7 @@ def benchmark_ipex_optimization() -> dict[str, Any]:
 
 def run_all_benchmarks() -> dict[str, Any]:
     """Run all Intel XPU benchmarks."""
-    print_section("Intel XPU Backend Benchmarks (v0.4.10)")
+    print_section("Intel XPU Backend Benchmarks (v0.5.3)")
 
     results = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

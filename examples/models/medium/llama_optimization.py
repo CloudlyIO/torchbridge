@@ -22,7 +22,7 @@ Hardware requirements:
 Usage:
     python llama_optimization.py [--model meta-llama/Llama-2-7b-hf]
 
-Version: 0.4.12
+Version: 0.5.3
 """
 
 import argparse
@@ -321,7 +321,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("Llama Optimization with TorchBridge v0.4.12")
+    print_section("Llama Optimization with TorchBridge v0.5.3")
 
     # Check dependencies
     deps = check_dependencies()
