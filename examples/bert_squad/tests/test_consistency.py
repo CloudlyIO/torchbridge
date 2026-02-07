@@ -19,11 +19,15 @@ def tokenizer():
 
 
 @pytest.fixture(scope="module")
-def base_model():
-    """Load model once for all tests."""
+def reference_state_dict():
+    """
+    Load model once and save state dict.
+    This ensures all tests use identical weights (including randomly initialized QA head).
+    """
     model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
     model.eval()
-    return model
+    # Clone state dict to ensure it's not modified
+    return {k: v.clone() for k, v in model.state_dict().items()}
 
 
 @pytest.fixture
@@ -68,6 +72,15 @@ def synchronize_device(device: torch.device):
         torch.xpu.synchronize()
 
 
+def create_model_with_weights(state_dict: dict, device: torch.device) -> torch.nn.Module:
+    """Create a model with specific weights on a device."""
+    model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
+    model.load_state_dict(state_dict)
+    model = model.to(device)
+    model.eval()
+    return model
+
+
 @pytest.fixture(params=get_available_devices())
 def device(request):
     """Parametrized fixture for all available devices."""
@@ -77,22 +90,17 @@ def device(request):
 class TestCrossBackendConsistency:
     """Tests for cross-backend numerical consistency."""
 
-    def test_model_loads_on_device(self, base_model, device):
+    def test_model_loads_on_device(self, reference_state_dict, device):
         """Test that model can be loaded on each device."""
-        model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        model = model.to(device)
-        model.eval()
+        model = create_model_with_weights(reference_state_dict, device)
 
         # Check model is on correct device
         param = next(model.parameters())
         assert param.device.type == device.type
 
-    def test_inference_runs_on_device(self, base_model, sample_input, device):
+    def test_inference_runs_on_device(self, reference_state_dict, sample_input, device):
         """Test that inference runs on each device."""
-        model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        model = model.to(device)
-        model.eval()
-
+        model = create_model_with_weights(reference_state_dict, device)
         inputs = {k: v.to(device) for k, v in sample_input.items()}
 
         with torch.no_grad():
@@ -103,23 +111,19 @@ class TestCrossBackendConsistency:
         assert outputs.start_logits.shape == (1, 384)
         assert outputs.end_logits.shape == (1, 384)
 
-    def test_output_consistency_vs_cpu(self, base_model, sample_input, device):
+    def test_output_consistency_vs_cpu(self, reference_state_dict, sample_input, device):
         """Test that outputs match CPU within tolerance."""
         tolerance = 1e-4
 
-        # Get CPU reference
-        cpu_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        cpu_model.eval()
+        # Get CPU reference (using same weights)
+        cpu_model = create_model_with_weights(reference_state_dict, torch.device("cpu"))
         with torch.no_grad():
             cpu_outputs = cpu_model(**sample_input)
         cpu_start = cpu_outputs.start_logits
         cpu_end = cpu_outputs.end_logits
 
-        # Get device outputs
-        device_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        device_model = device_model.to(device)
-        device_model.eval()
-
+        # Get device outputs (using same weights)
+        device_model = create_model_with_weights(reference_state_dict, device)
         inputs = {k: v.to(device) for k, v in sample_input.items()}
         with torch.no_grad():
             device_outputs = device_model(**inputs)
@@ -133,23 +137,19 @@ class TestCrossBackendConsistency:
         assert start_diff < tolerance, f"Start logits diff {start_diff} exceeds tolerance"
         assert end_diff < tolerance, f"End logits diff {end_diff} exceeds tolerance"
 
-    def test_cosine_similarity_vs_cpu(self, base_model, sample_input, device):
+    def test_cosine_similarity_vs_cpu(self, reference_state_dict, sample_input, device):
         """Test that outputs have high cosine similarity to CPU."""
         min_similarity = 0.9999
 
-        # Get CPU reference
-        cpu_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        cpu_model.eval()
+        # Get CPU reference (using same weights)
+        cpu_model = create_model_with_weights(reference_state_dict, torch.device("cpu"))
         with torch.no_grad():
             cpu_outputs = cpu_model(**sample_input)
         cpu_start = cpu_outputs.start_logits.flatten()
         cpu_end = cpu_outputs.end_logits.flatten()
 
-        # Get device outputs
-        device_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        device_model = device_model.to(device)
-        device_model.eval()
-
+        # Get device outputs (using same weights)
+        device_model = create_model_with_weights(reference_state_dict, device)
         inputs = {k: v.to(device) for k, v in sample_input.items()}
         with torch.no_grad():
             device_outputs = device_model(**inputs)
@@ -163,21 +163,17 @@ class TestCrossBackendConsistency:
         assert start_sim >= min_similarity, f"Start cosine sim {start_sim} below threshold"
         assert end_sim >= min_similarity, f"End cosine sim {end_sim} below threshold"
 
-    def test_answer_prediction_matches(self, base_model, sample_input, device, tokenizer):
+    def test_answer_prediction_matches(self, reference_state_dict, sample_input, device):
         """Test that predicted answer is the same across backends."""
-        # Get CPU answer
-        cpu_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        cpu_model.eval()
+        # Get CPU answer (using same weights)
+        cpu_model = create_model_with_weights(reference_state_dict, torch.device("cpu"))
         with torch.no_grad():
             cpu_outputs = cpu_model(**sample_input)
         cpu_start_idx = cpu_outputs.start_logits.argmax().item()
         cpu_end_idx = cpu_outputs.end_logits.argmax().item()
 
-        # Get device answer
-        device_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        device_model = device_model.to(device)
-        device_model.eval()
-
+        # Get device answer (using same weights)
+        device_model = create_model_with_weights(reference_state_dict, device)
         inputs = {k: v.to(device) for k, v in sample_input.items()}
         with torch.no_grad():
             device_outputs = device_model(**inputs)
@@ -192,7 +188,7 @@ class TestBatchConsistency:
     """Test consistency with different batch sizes."""
 
     @pytest.mark.parametrize("batch_size", [1, 2, 4, 8])
-    def test_batch_size_consistency(self, tokenizer, device, batch_size):
+    def test_batch_size_consistency(self, reference_state_dict, tokenizer, device, batch_size):
         """Test outputs are consistent across batch sizes."""
         question = "What is the capital?"
         context = "Paris is the capital of France."
@@ -211,9 +207,7 @@ class TestBatchConsistency:
             return_tensors="pt"
         )
 
-        model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        model = model.to(device)
-        model.eval()
+        model = create_model_with_weights(reference_state_dict, device)
 
         single_input = {k: v.to(device) for k, v in single_input.items()}
         batch_input = {k: v.to(device) for k, v in batch_input.items()}
@@ -238,12 +232,9 @@ class TestBatchConsistency:
 class TestDeterminism:
     """Test deterministic behavior."""
 
-    def test_multiple_runs_same_output(self, base_model, sample_input, device):
+    def test_multiple_runs_same_output(self, reference_state_dict, sample_input, device):
         """Test that multiple runs produce identical outputs."""
-        model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
-        model = model.to(device)
-        model.eval()
-
+        model = create_model_with_weights(reference_state_dict, device)
         inputs = {k: v.to(device) for k, v in sample_input.items()}
 
         outputs = []
