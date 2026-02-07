@@ -12,7 +12,7 @@
 #   cp .githooks/commit-msg .git/hooks/commit-msg
 #   chmod +x .git/hooks/commit-msg
 #
-# Or use: ./scripts/install-hooks.sh
+# Or use: ./scripts/install_hooks.sh
 #
 # Created: 2025-12-26
 # Version: 1.0

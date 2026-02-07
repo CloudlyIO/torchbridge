@@ -329,7 +329,7 @@ class ROCmCompiler:
             ])
 
         # Add architecture-specific flags
-        if self.config.architecture in [AMDArchitecture.CDNA2, AMDArchitecture.CDNA3]:
+        if self.config.architecture in [AMDArchitecture.CDNA2, AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
             # Enable Matrix Core instructions
             if self.config.enable_matrix_cores:
                 flags.append("-mwavefrontsize64")
@@ -346,8 +346,9 @@ class ROCmCompiler:
         """
         # Map architectures to GPU targets
         target_map = {
-            AMDArchitecture.CDNA2: "gfx90a",  # MI210, MI250, MI250X
-            AMDArchitecture.CDNA3: "gfx940",  # MI300A, MI300X
+            AMDArchitecture.CDNA2: "gfx90a",   # MI210, MI250, MI250X
+            AMDArchitecture.CDNA3: "gfx942",   # MI300A, MI300X, MI325X
+            AMDArchitecture.CDNA4: "gfx950",   # MI350X, MI355X
             AMDArchitecture.RDNA2: "gfx1030",  # RX 6000 series
             AMDArchitecture.RDNA3: "gfx1100",  # RX 7000 series
         }
