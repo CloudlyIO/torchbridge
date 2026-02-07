@@ -68,11 +68,23 @@ gcloud compute instances create tb-val-$(date +%s) \
 gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --quiet
 ```
 
-### AMD ROCm (MI300X) - AMD Developer Cloud
+### AMD ROCm - CONFIGURATION NEEDED
 
-Access: https://www.amd.com/en/developer/resources/ai-cloud.html
+**Previous validation (Feb 3, 2026):**
+- Device: AMD Instinct MI300X VF (gfx942, CDNA3, 192GB VRAM)
+- Result: 1611 passed, 76 skipped, 0 failed
+- Commit: 9faf7c4
+
+**AWS AMD GPU options:**
+- g4ad.xlarge (Radeon Pro V520) - requires vCPU quota increase
+- Request quota at: https://aws.amazon.com/contact-us/ec2-request
+
+**AMD Developer Cloud:**
+- Access: https://www.amd.com/en/developer/resources/ai-cloud.html
 - $100 credits via AI Developer Program
 - MI300X instances with 192GB HBM3
+
+**TODO: Add AMD cloud SSH access details here when available**
 
 ```bash
 # After getting access, run:
