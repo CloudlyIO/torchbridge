@@ -129,7 +129,7 @@ python3 -c "import torch; print(f'ROCm available: {torch.cuda.is_available()}')"
 
 ## Troubleshooting
 
-See [Troubleshooting](../getting-started/troubleshooting.md#amd-issues) for common AMD issues.
+See [Troubleshooting](../getting_started/troubleshooting.md#amd-issues) for common AMD issues.
 
 ## See Also
 

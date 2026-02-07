@@ -149,7 +149,7 @@ python3 -c "import torch_xla.core.xla_model as xm; print(xm.xla_device())"
 
 ## Troubleshooting
 
-See [Troubleshooting](../getting-started/troubleshooting.md#tpu-issues) for common TPU issues.
+See [Troubleshooting](../getting_started/troubleshooting.md#tpu-issues) for common TPU issues.
 
 ## See Also
 

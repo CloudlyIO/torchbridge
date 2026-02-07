@@ -116,7 +116,7 @@ The NVIDIA backend provides specific exceptions:
 
 ## Troubleshooting
 
-See [Troubleshooting](../getting-started/troubleshooting.md#nvidia-issues) for common NVIDIA issues.
+See [Troubleshooting](../getting_started/troubleshooting.md#nvidia-issues) for common NVIDIA issues.
 
 ## See Also
 

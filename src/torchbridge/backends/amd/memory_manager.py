@@ -8,6 +8,8 @@ monitoring strategies.
 HBM (High Bandwidth Memory) Characteristics:
 - HBM2e (MI200): ~1.6 TB/s bandwidth, 32-64 GB capacity
 - HBM3 (MI300): ~5.3 TB/s bandwidth, up to 192 GB capacity
+- HBM3e (MI325X): ~6 TB/s bandwidth, 256 GB capacity
+- HBM3e (MI350X/MI355X): ~8 TB/s bandwidth, 288 GB capacity
 
 Key Features:
 - Memory pooling for reduced allocation overhead

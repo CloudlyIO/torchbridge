@@ -557,7 +557,9 @@ class AMDAdapter(VendorAdapter):
             'gfx906': 'Vega 20',      # Radeon VII, MI50/60
             'gfx908': 'CDNA',         # MI100
             'gfx90a': 'CDNA2',        # MI200 series
-            'gfx940': 'CDNA3',        # MI300 series
+            'gfx940': 'CDNA3',        # MI300A, MI300X
+            'gfx942': 'CDNA3',        # MI325X (256GB HBM3e)
+            'gfx950': 'CDNA4',        # MI350X, MI355X (288GB HBM3e)
             'gfx1030': 'RDNA2',       # RX 6000 series
             'gfx1100': 'RDNA3',       # RX 7000 series
         }
@@ -729,7 +731,7 @@ class AMDAdapter(VendorAdapter):
         architecture = device.capabilities.compute_capability
 
         # CDNA architectures prefer certain precisions
-        if 'cdna' in architecture.lower() or 'gfx90' in architecture:
+        if 'cdna' in architecture.lower() or 'gfx90' in architecture or 'gfx94' in architecture or 'gfx950' in architecture:
             if tensor.dtype == torch.float32:
                 # Convert to bfloat16 for better performance on CDNA
                 tensor = tensor.bfloat16()
@@ -816,6 +818,8 @@ class AMDAdapter(VendorAdapter):
 
         # FLOPS estimates based on known AMD architectures
         flops_estimates = {
+            'gfx950': 240e12,   # MI350X - ~240 TF FP32
+            'gfx942': 165e12,   # MI325X - ~165 TF FP32
             'gfx940': 165e12,   # MI300X - ~165 TF FP32
             'gfx90a': 47.9e12,  # MI250X - ~47.9 TF FP32
             'gfx908': 23.1e12,  # MI100 - ~23.1 TF FP32
@@ -832,6 +836,8 @@ class AMDAdapter(VendorAdapter):
 
         # Memory bandwidth estimates
         bandwidth_estimates = {
+            'gfx950': 8000,     # MI350X - HBM3e
+            'gfx942': 6000,     # MI325X - HBM3e
             'gfx940': 5300,     # MI300X - HBM3
             'gfx90a': 1600,     # MI250X - HBM2E
             'gfx908': 1200,     # MI100 - HBM2
@@ -847,23 +853,42 @@ class AMDAdapter(VendorAdapter):
         architecture = props.get('compute_capability', 'unknown')
         precisions = [ComputeCapability.FP32]
 
-        # CDNA architectures have extensive precision support
-        if 'gfx90' in architecture:  # CDNA/CDNA2
+        # CDNA4 (MI350X/MI355X) — FP4, FP8, full precision stack
+        if 'gfx950' in architecture:
             precisions.extend([
                 ComputeCapability.FP16,
                 ComputeCapability.BF16,
                 ComputeCapability.MIXED_PRECISION,
-                ComputeCapability.INT8
+                ComputeCapability.INT8,
+                ComputeCapability.INT4,
             ])
 
-            if 'gfx90a' in architecture or 'gfx940' in architecture:  # CDNA2/CDNA3
+        # CDNA3 (MI300X/MI325X) — FP8 capable
+        elif 'gfx94' in architecture or 'gfx940' in architecture:
+            precisions.extend([
+                ComputeCapability.FP16,
+                ComputeCapability.BF16,
+                ComputeCapability.MIXED_PRECISION,
+                ComputeCapability.INT8,
+                ComputeCapability.INT4,
+            ])
+
+        # CDNA/CDNA2
+        elif 'gfx90' in architecture:
+            precisions.extend([
+                ComputeCapability.FP16,
+                ComputeCapability.BF16,
+                ComputeCapability.MIXED_PRECISION,
+                ComputeCapability.INT8,
+            ])
+            if 'gfx90a' in architecture:  # CDNA2 has INT4
                 precisions.append(ComputeCapability.INT4)
 
         # RDNA architectures
         elif 'gfx1' in architecture:  # RDNA2/RDNA3
             precisions.extend([
                 ComputeCapability.FP16,
-                ComputeCapability.MIXED_PRECISION
+                ComputeCapability.MIXED_PRECISION,
             ])
 
         return precisions
@@ -873,14 +898,14 @@ class AMDAdapter(VendorAdapter):
         architecture = props.get('compute_capability', 'unknown')
 
         # CDNA architectures have Matrix Core Units
-        return 'gfx90' in architecture or 'gfx940' in architecture
+        return 'gfx90' in architecture or 'gfx94' in architecture or 'gfx950' in architecture
 
     def _get_amd_interconnect_type(self, props: dict) -> str:
         """Determine interconnect type for AMD device"""
         architecture = props.get('compute_capability', 'unknown')
 
-        # MI200/MI300 series have Infinity Fabric
-        if 'gfx90a' in architecture or 'gfx940' in architecture:
+        # MI200/MI300/MI350 series have Infinity Fabric
+        if 'gfx90a' in architecture or 'gfx94' in architecture or 'gfx950' in architecture:
             return "Infinity Fabric"
         else:
             return "PCIe"

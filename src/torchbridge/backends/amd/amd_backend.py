@@ -282,10 +282,11 @@ class AMDBackend(BaseBackend):
         total_memory_gb = properties.total_memory / (1024**3)
 
         # Determine if Matrix Cores are available
-        # CDNA2 and CDNA3 have Matrix Cores
+        # CDNA2, CDNA3, and CDNA4 have Matrix Cores
         matrix_cores_available = architecture in [
             AMDArchitecture.CDNA2,
             AMDArchitecture.CDNA3,
+            AMDArchitecture.CDNA4,
         ]
 
         # Get compute capability (ROCm version)
@@ -316,8 +317,12 @@ class AMDBackend(BaseBackend):
         """
         device_name_upper = device_name.upper()
 
-        # Check for specific architectures
-        if "MI300" in device_name_upper:
+        # Check for specific architectures (order matters — most specific first)
+        # MI350X/MI355X (CDNA4, gfx950) — check before MI300 patterns
+        if any(marker in device_name_upper for marker in ["MI350", "MI355"]):
+            return AMDArchitecture.CDNA4
+        # MI325X / MI300 series (CDNA3, gfx940/gfx942)
+        elif any(marker in device_name_upper for marker in ["MI325", "MI300"]):
             return AMDArchitecture.CDNA3
         elif any(marker in device_name_upper for marker in ["MI200", "MI250", "MI210"]):
             return AMDArchitecture.CDNA2
