@@ -11,7 +11,8 @@ Optimization Levels:
 
 Supported Architectures:
 - CDNA2 (MI200 series): Matrix Cores, HBM2e
-- CDNA3 (MI300 series): Matrix Cores v2, HBM3
+- CDNA3 (MI300 series, MI325X): Matrix Cores v2, HBM3/HBM3e
+- CDNA4 (MI350X, MI355X): Matrix Cores v3, HBM3e, FP4/FP8
 
 """
 
@@ -250,10 +251,10 @@ class AMDOptimizer:
                 f"Aggressively fused {fused_count} kernel patterns"
             )
 
-        # 9. FP8 support for CDNA3
-        if self.config.architecture == AMDArchitecture.CDNA3:
+        # 9. FP8 support for CDNA3/CDNA4
+        if self.config.architecture in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
             if self._prepare_fp8_quantization(model):
-                result.optimizations_applied.append("Prepared FP8 quantization (MI300)")
+                result.optimizations_applied.append("Prepared FP8 quantization (MI300/MI350)")
                 result.warnings.append("FP8 is experimental and may affect accuracy")
 
         logger.debug("Aggressive optimizations: %d applied", len(result.optimizations_applied))
@@ -450,10 +451,11 @@ class AMDOptimizer:
         Raises:
             MatrixCoreError: If Matrix Core setup fails
         """
-        # Only CDNA2 and CDNA3 have Matrix Cores
+        # Only CDNA2, CDNA3, and CDNA4 have Matrix Cores
         if self.config.architecture not in [
             AMDArchitecture.CDNA2,
             AMDArchitecture.CDNA3,
+            AMDArchitecture.CDNA4,
         ]:
             logger.warning(
                 "Matrix Cores not available on %s", self.config.architecture.value
@@ -503,9 +505,9 @@ class AMDOptimizer:
                 return True
 
             elif precision == "fp8":
-                # FP8 (CDNA3 only)
-                if self.config.architecture != AMDArchitecture.CDNA3:
-                    logger.warning("FP8 only supported on CDNA3 (MI300)")
+                # FP8 (CDNA3/CDNA4)
+                if self.config.architecture not in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
+                    logger.warning("FP8 only supported on CDNA3+ (MI300/MI350)")
                     return False
                 logger.info("FP8 precision configured (experimental)")
                 return True
@@ -629,14 +631,14 @@ class AMDOptimizer:
         Returns:
             True if FP8 preparation successful (CDNA3), False otherwise
         """
-        if self.config.architecture != AMDArchitecture.CDNA3:
-            logger.warning("FP8 only supported on CDNA3 (MI300)")
+        if self.config.architecture not in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
+            logger.warning("FP8 only supported on CDNA3+ (MI300/MI350)")
             return False
 
         try:
             # FP8 preparation: Mark model as FP8-ready
             # Full quantization pending ROCm FP8 library support
-            logger.info("FP8 quantization prepared (experimental, CDNA3)")
+            logger.info("FP8 quantization prepared (experimental, CDNA3/CDNA4)")
             return True
 
         except Exception as e:

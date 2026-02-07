@@ -5,7 +5,7 @@
 # This script installs custom git hooks from .githooks/ to .git/hooks/
 #
 # Usage:
-#   ./scripts/install-hooks.sh [--force]
+#   ./scripts/install_hooks.sh [--force]
 #
 # Options:
 #   --force    Overwrite existing hooks without prompting

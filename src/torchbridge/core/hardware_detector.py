@@ -148,9 +148,14 @@ class HardwareDetector:
                 OptimizationCapability.KERNEL_FUSION,
             ]
 
-            # CDNA2+ (MI200/MI300) have Matrix Cores
+            # CDNA2+ (MI200/MI300/MI350) have Matrix Cores
             if props.major >= 9:
                 capabilities.append(OptimizationCapability.TENSOR_CORES)
+
+            # CDNA3+ (MI300X/MI325X/MI350X) support FP8
+            device_name_upper = props.name.upper()
+            if any(name in device_name_upper for name in ["MI300", "MI325", "MI350", "MI355"]):
+                capabilities.append(OptimizationCapability.FP8_TRAINING)
 
             return HardwareProfile(
                 hardware_type=HardwareType.AMD_GPU,

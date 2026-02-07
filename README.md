@@ -228,9 +228,9 @@ ruff check src/ tests/
 
 | Document | Description |
 |----------|-------------|
-| [Installation](./docs/getting-started/installation.md) | Setup and requirements |
-| [Quick Start](./docs/getting-started/quickstart.md) | First steps with TorchBridge |
-| [Troubleshooting](./docs/getting-started/troubleshooting.md) | Common issues and fixes |
+| [Installation](./docs/getting_started/installation.md) | Setup and requirements |
+| [Quick Start](./docs/getting_started/quickstart.md) | First steps with TorchBridge |
+| [Troubleshooting](./docs/getting_started/troubleshooting.md) | Common issues and fixes |
 | [Backends Overview](./docs/backends/overview.md) | How the HAL works |
 | [Backend Selection](./docs/guides/backend-selection.md) | Choosing the right backend |
 | [Hardware Setup](./docs/guides/hardware-setup.md) | Driver and toolkit installation |
