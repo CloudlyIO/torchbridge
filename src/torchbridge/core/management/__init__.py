@@ -24,7 +24,6 @@ Usage:
     # Convenience function
     optimized_model = get_manager().optimize(model)
 
-Version: 0.3.11
 """
 
 # Base classes and types

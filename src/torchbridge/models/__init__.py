@@ -12,7 +12,6 @@ Model Categories:
 - vision: ResNet, ViT, Stable Diffusion
 - multimodal: CLIP, LLaVA, Whisper
 
-Version: 0.5.3
 """
 
 # Distributed models

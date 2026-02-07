@@ -14,7 +14,6 @@ Key Features:
 - Memory transfer utilities
 - Multi-GPU coordination
 
-Version: 0.3.6
 """
 
 import logging
@@ -28,7 +27,6 @@ import torch
 from torchbridge.core.config import AMDConfig
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class HIPEvent:
@@ -67,7 +65,6 @@ class HIPEvent:
             return self._event.elapsed_time(end_event._event)
         return 0.0
 
-
 @dataclass
 class HIPStream:
     """Represents a HIP stream for concurrent operations."""
@@ -95,7 +92,6 @@ class HIPStream:
     def stream(self) -> torch.cuda.Stream | None:
         """Get the underlying CUDA/HIP stream."""
         return self._stream
-
 
 class HIPUtilities:
     """
@@ -438,7 +434,6 @@ class HIPUtilities:
             f"profiling={self._profiling_enabled})"
         )
 
-
 # Null context manager for when CUDA is not available
 class nullcontext:
     """Null context manager for fallback."""
@@ -448,6 +443,5 @@ class nullcontext:
 
     def __exit__(self, *args):
         pass
-
 
 __all__ = ["HIPUtilities", "HIPEvent", "HIPStream"]

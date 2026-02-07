@@ -22,7 +22,6 @@ Example:
             return super().preprocess(data)
     ```
 
-Version: 0.3.9
 """
 
 import json
@@ -41,7 +40,6 @@ import torch
 import torch.nn as nn
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class HandlerConfig:
@@ -72,7 +70,6 @@ class HandlerConfig:
     def from_dict(cls, data: dict[str, Any]) -> "HandlerConfig":
         """Create from dictionary."""
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
-
 
 class BaseHandler(ABC):
     """
@@ -293,7 +290,6 @@ class BaseHandler(ABC):
             "last_inference_time_ms": self._last_inference_time * 1000,
         }
 
-
 class TorchBridgeHandler(BaseHandler):
     """
     Default TorchBridge handler for TorchServe.
@@ -367,7 +363,6 @@ class TorchBridgeHandler(BaseHandler):
 
         return results
 
-
 def create_torchserve_handler(
     handler_class: type = TorchBridgeHandler,
     config: HandlerConfig | None = None,
@@ -387,7 +382,6 @@ def create_torchserve_handler(
         handler.config = config
     return handler
 
-
 @dataclass
 class TorchServePackageConfig:
     """Configuration for TorchServe model packaging."""
@@ -401,7 +395,6 @@ class TorchServePackageConfig:
 
     # Handler config to embed
     handler_config: HandlerConfig | None = None
-
 
 def package_for_torchserve(
     model: nn.Module,

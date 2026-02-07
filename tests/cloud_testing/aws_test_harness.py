@@ -11,7 +11,6 @@ Features:
 - Cost tracking and optimization
 - Multi-instance parallel testing
 
-Version: 0.3.7
 """
 
 import logging
@@ -24,7 +23,6 @@ from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # Configuration Classes
@@ -50,14 +48,12 @@ class AWSInstanceType(Enum):
     # CPU Instances (fallback)
     C6I_8XLARGE = "c6i.8xlarge"      # 32 vCPU, 64GB RAM
 
-
 class AWSRegion(Enum):
     """AWS regions with GPU availability."""
     US_EAST_1 = "us-east-1"
     US_WEST_2 = "us-west-2"
     EU_WEST_1 = "eu-west-1"
     AP_NORTHEAST_1 = "ap-northeast-1"
-
 
 @dataclass
 class AWSInstanceConfig:
@@ -95,7 +91,6 @@ class AWSInstanceConfig:
             AWSRegion.US_WEST_2: "ami-0123456789abcdef0",  # Placeholder
         }
         return ami_map.get(self.region, "ami-0123456789abcdef0")
-
 
 @dataclass
 class AWSTestResult:
@@ -135,7 +130,6 @@ class AWSTestResult:
             "success": self.success,
             "error_message": self.error_message,
         }
-
 
 # ============================================================================
 # AWS Test Harness
@@ -506,7 +500,6 @@ class AWSTestHarness:
         # For now, return structure
 
         return results
-
 
 # ============================================================================
 # Factory Function

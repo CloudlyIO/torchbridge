@@ -26,7 +26,6 @@ Example:
     exporter.record_inference(latency_ms=5.2, batch_size=32)
     ```
 
-Version: 0.3.10
 """
 
 from .enhanced_health import (

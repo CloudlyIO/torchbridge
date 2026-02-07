@@ -4,7 +4,6 @@ PyTorch Optimization Benchmark Framework
 Comprehensive benchmarking suite for comparing optimization techniques
 against state-of-the-art implementations.
 
-Version: 0.5.0
 """
 
 from .baseline_implementations import (

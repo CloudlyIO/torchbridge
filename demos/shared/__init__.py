@@ -7,7 +7,6 @@ This module provides reusable components for demonstration scripts:
 - Device detection helpers
 - Sample data generators
 
-Version: 0.5.0
 """
 
 from .data import (

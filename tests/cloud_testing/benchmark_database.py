@@ -10,7 +10,6 @@ Features:
 - Compare results across platforms
 - Detect performance regressions
 
-Version: 0.3.7
 """
 
 import json
@@ -22,7 +21,6 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # Data Classes
@@ -117,7 +115,6 @@ class BenchmarkRecord:
             metadata=data.get("metadata", {}),
         )
 
-
 @dataclass
 class ComparisonResult:
     """Result of comparing benchmarks across platforms."""
@@ -139,7 +136,6 @@ class ComparisonResult:
             f"  Memory ratio: {self.memory_ratio:.2f}x\n"
             f"  Cost ratio: {self.cost_ratio:.2f}x"
         )
-
 
 # ============================================================================
 # Benchmark Database
@@ -419,7 +415,6 @@ class BenchmarkDatabase:
             "count": row[4] or 0,
         }
 
-
 # ============================================================================
 # Comparison Functions
 # ============================================================================
@@ -479,7 +474,6 @@ def compare_platforms(
         records_a=len(records_a),
         records_b=len(records_b),
     )
-
 
 def query_benchmarks(
     db_path: str = "benchmarks.db",

@@ -26,7 +26,6 @@ Example:
         print("Service is ready")
     ```
 
-Version: 0.3.10
 """
 
 import logging
@@ -43,7 +42,6 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
-
 class HealthStatus(Enum):
     """Health status levels."""
 
@@ -51,7 +49,6 @@ class HealthStatus(Enum):
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
     UNKNOWN = "unknown"
-
 
 @dataclass
 class ComponentHealth:
@@ -74,7 +71,6 @@ class ComponentHealth:
             "latency_ms": self.latency_ms,
             "details": self.details,
         }
-
 
 @dataclass
 class HealthCheck:
@@ -101,7 +97,6 @@ class HealthCheck:
             "uptime_seconds": self.uptime_seconds,
             "components": [c.to_dict() for c in self.components],
         }
-
 
 class HealthMonitor:
     """
@@ -367,7 +362,6 @@ class HealthMonitor:
     def get_uptime(self) -> float:
         """Get uptime in seconds."""
         return time.time() - self._start_time
-
 
 def create_health_monitor(
     model: nn.Module | None = None,

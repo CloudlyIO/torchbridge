@@ -7,5 +7,4 @@ in production using TorchBridge's deployment features.
 Available examples:
 - run_llm_server.py: LLM inference server with streaming and batching
 
-Version: 0.5.3
 """

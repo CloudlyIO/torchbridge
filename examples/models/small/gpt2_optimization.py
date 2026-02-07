@@ -16,13 +16,12 @@ Usage:
 Requirements:
     pip install transformers
 
-Version: 0.5.3
 """
 
 import argparse
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Any
 
 import torch
 
@@ -33,13 +32,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 def print_section(title: str) -> None:
     """Print a formatted section header."""
     print(f"\n{'='*60}")
     print(f"  {title}")
     print(f"{'='*60}\n")
-
 
 def check_dependencies() -> bool:
     """Check if required dependencies are installed."""
@@ -51,7 +48,6 @@ def check_dependencies() -> bool:
         logger.error("transformers not installed. Run: pip install transformers")
         return False
 
-
 def benchmark_generation(
     model,
     tokenizer,
@@ -59,7 +55,7 @@ def benchmark_generation(
     device: torch.device,
     max_new_tokens: int = 50,
     num_iterations: int = 10
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Benchmark text generation."""
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
 
@@ -106,12 +102,11 @@ def benchmark_generation(
         "total_tokens_generated": total_tokens,
     }
 
-
-def run_baseline(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str, Any]:
+def run_baseline(model_name: str, prompt: str, max_new_tokens: int) -> dict[str, Any]:
     """Run baseline PyTorch model without optimization."""
     print_section(f"Baseline PyTorch - {model_name}")
 
-    from transformers import AutoTokenizer, AutoModelForCausalLM
+    from transformers import AutoModelForCausalLM, AutoTokenizer
 
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -150,8 +145,7 @@ def run_baseline(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str,
         **results
     }
 
-
-def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str, Any]:
+def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> dict[str, Any]:
     """Run TorchBridge optimized model."""
     print_section(f"TorchBridge Optimized - {model_name}")
 
@@ -160,10 +154,10 @@ def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str
     # Import TorchBridge
     try:
         from torchbridge.models.text import (
-            TextModelOptimizer,
-            TextModelConfig,
             OptimizationMode,
-            TextModelType
+            TextModelConfig,
+            TextModelOptimizer,
+            TextModelType,
         )
 
         # Create optimized config
@@ -234,7 +228,6 @@ def run_optimized(model_name: str, prompt: str, max_new_tokens: int) -> Dict[str
         **results
     }
 
-
 def run_interactive_demo(model_name: str):
     """Run an interactive text generation demo."""
     print_section("Interactive Text Generation Demo")
@@ -288,7 +281,6 @@ def run_interactive_demo(model_name: str):
     except ImportError as e:
         logger.warning(f"Demo skipped: {e}")
 
-
 def run_batch_generation_demo(model_name: str):
     """Demonstrate batch text generation."""
     print_section("Batch Generation Demo")
@@ -334,7 +326,6 @@ def run_batch_generation_demo(model_name: str):
 
     except ImportError as e:
         logger.warning(f"Batch demo skipped: {e}")
-
 
 def main():
     """Main entry point."""
@@ -415,7 +406,6 @@ def main():
     run_batch_generation_demo(args.model)
 
     print_section("Complete!")
-
 
 if __name__ == "__main__":
     main()

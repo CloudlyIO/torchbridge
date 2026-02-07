@@ -13,7 +13,6 @@ Features:
 - Memory-efficient generation
 - Multi-GPU support (tensor parallelism)
 
-Version: 0.5.3
 """
 
 from .kv_cache import (

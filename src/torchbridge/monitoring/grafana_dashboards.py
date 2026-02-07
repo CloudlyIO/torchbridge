@@ -24,7 +24,6 @@ Example:
     export_dashboard_json(dashboard, "dashboard.json")
     ```
 
-Version: 0.3.10
 """
 
 import json
@@ -61,7 +60,6 @@ class DashboardPanel:
             panel["fieldConfig"] = self.field_config
 
         return panel
-
 
 @dataclass
 class GrafanaDashboard:
@@ -130,7 +128,6 @@ class GrafanaDashboard:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=indent)
 
-
 def _create_prometheus_target(
     expr: str,
     legend: str = "",
@@ -143,7 +140,6 @@ def _create_prometheus_target(
         "refId": ref_id,
         "datasource": {"type": "prometheus", "uid": "Prometheus"},
     }
-
 
 def create_inference_dashboard(
     model_name: str = "model",
@@ -305,7 +301,6 @@ def create_inference_dashboard(
 
     return dashboard
 
-
 def create_system_dashboard(
     namespace: str = "torchbridge",
 ) -> GrafanaDashboard:
@@ -393,7 +388,6 @@ def create_system_dashboard(
 
     return dashboard
 
-
 def create_full_dashboard(
     model_name: str = "model",
     namespace: str = "torchbridge",
@@ -437,7 +431,6 @@ def create_full_dashboard(
         full_dashboard.add_panel(adjusted_panel)
 
     return full_dashboard
-
 
 def export_dashboard_json(
     dashboard: GrafanaDashboard,

@@ -7,7 +7,6 @@ using Intel Extension for PyTorch (IPEX) for optimizations.
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.5.3
 """
 
 import logging
@@ -33,7 +32,6 @@ from .xpu_utilities import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 class IntelBackend(BaseBackend):
     """
@@ -460,7 +458,6 @@ class IntelBackend(BaseBackend):
         if self._memory_manager:
             return self._memory_manager.get_memory_summary()
         return "Memory manager not initialized"
-
 
 __all__ = [
     'IntelBackend',

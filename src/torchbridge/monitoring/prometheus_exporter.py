@@ -30,7 +30,6 @@ Example:
     exporter.record_inference(latency_ms=5.2, batch_size=32)
     ```
 
-Version: 0.3.10
 """
 
 import json
@@ -62,7 +61,6 @@ except ImportError:
     # Stub classes for when prometheus_client is not available
     CollectorRegistry = object
 
-
 @dataclass
 class MetricsConfig:
     """Configuration for metrics collection."""
@@ -86,7 +84,6 @@ class MetricsConfig:
         default_factory=lambda: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
     )
 
-
 @dataclass
 class InferenceMetrics:
     """Inference-related metrics snapshot."""
@@ -100,7 +97,6 @@ class InferenceMetrics:
     p99_latency_ms: float = 0.0
     throughput_samples_per_second: float = 0.0
 
-
 @dataclass
 class SystemMetrics:
     """System resource metrics snapshot."""
@@ -110,7 +106,6 @@ class SystemMetrics:
     gpu_memory_used_mb: float = 0.0
     gpu_memory_total_mb: float = 0.0
     gpu_utilization_percent: float = 0.0
-
 
 @dataclass
 class ModelMetrics:
@@ -122,7 +117,6 @@ class ModelMetrics:
     precision: str = ""
     device: str = ""
     is_compiled: bool = False
-
 
 class MetricsExporter:
     """
@@ -390,7 +384,6 @@ class MetricsExporter:
             self._total_samples = 0
             self._total_errors = 0
 
-
 class MetricsHTTPHandler(BaseHTTPRequestHandler):
     """HTTP handler for Prometheus metrics endpoint."""
 
@@ -428,7 +421,6 @@ class MetricsHTTPHandler(BaseHTTPRequestHandler):
         """Suppress default logging."""
         pass
 
-
 def start_metrics_server(
     exporter: MetricsExporter,
     port: int | None = None,
@@ -463,7 +455,6 @@ def start_metrics_server(
         return None
     else:
         return server
-
 
 def create_metrics_exporter(
     model_name: str = "model",

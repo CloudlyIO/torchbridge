@@ -13,7 +13,6 @@ Features:
 - Memory-efficient inference
 - Batch optimization
 
-Version: 0.5.3
 """
 
 import logging
@@ -26,7 +25,6 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
-
 class TextModelType(Enum):
     """Supported text model types."""
     BERT = "bert"
@@ -36,14 +34,12 @@ class TextModelType(Enum):
     ALBERT = "albert"
     CUSTOM = "custom"
 
-
 class OptimizationMode(Enum):
     """Optimization modes for text models."""
     INFERENCE = "inference"      # Optimized for low-latency inference
     THROUGHPUT = "throughput"    # Optimized for high-throughput batch processing
     MEMORY = "memory"            # Optimized for minimal memory usage
     BALANCED = "balanced"        # Balance between speed and memory
-
 
 @dataclass
 class TextModelConfig:
@@ -72,7 +68,6 @@ class TextModelConfig:
     # Additional options
     warmup_steps: int = 3
     enable_profiling: bool = False
-
 
 class TextModelOptimizer:
     """
@@ -410,7 +405,6 @@ class TextModelOptimizer:
             "efficient_attention": self.config.enable_memory_efficient_attention,
         }
 
-
 class OptimizedBERT(nn.Module):
     """
     Optimized BERT wrapper with automatic optimization.
@@ -471,7 +465,6 @@ class OptimizedBERT(nn.Module):
 
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
-
 
 class OptimizedGPT2(nn.Module):
     """
@@ -540,7 +533,6 @@ class OptimizedGPT2(nn.Module):
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
-
 class OptimizedDistilBERT(nn.Module):
     """
     Optimized DistilBERT wrapper with automatic optimization.
@@ -604,7 +596,6 @@ class OptimizedDistilBERT(nn.Module):
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
-
 def create_optimized_text_model(
     model_name: str,
     task: str | None = None,
@@ -645,7 +636,6 @@ def create_optimized_text_model(
 
     optimizer = TextModelOptimizer(config)
     return optimizer.optimize(model_name, task=task, **kwargs)
-
 
 __all__ = [
     "TextModelType",

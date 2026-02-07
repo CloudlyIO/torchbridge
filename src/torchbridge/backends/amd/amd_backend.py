@@ -20,7 +20,6 @@ Key Features:
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.5.3
 """
 
 import logging
@@ -45,7 +44,6 @@ from .amd_exceptions import (
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class AMDDeviceInfoLegacy:
     """Information about an AMD GPU device."""
@@ -57,7 +55,6 @@ class AMDDeviceInfoLegacy:
     total_memory_gb: float
     matrix_cores_available: bool
     rocm_version: str
-
 
 class AMDBackend(BaseBackend):
     """
@@ -536,7 +533,6 @@ class AMDBackend(BaseBackend):
                 f"memory={self._current_amd_device.total_memory_gb:.2f}GB)"
             )
         return "AMDBackend(no device)"
-
 
 # Alias for backward compatibility
 AMDDeviceInfo = AMDDeviceInfoLegacy

@@ -4,7 +4,6 @@ Test Suite for Small Model Integration (v0.5.3)
 Tests for BERT, GPT-2, and DistilBERT optimization wrappers.
 Validates optimization, inference, and backend integration.
 
-Version: 0.5.3
 """
 
 import pytest
@@ -34,7 +33,6 @@ class TestTextModelTypes:
         assert TextModelType.GPT2.value == "gpt2"
         assert TextModelType.DISTILBERT.value == "distilbert"
 
-
 class TestOptimizationMode:
     """Tests for OptimizationMode enum."""
 
@@ -55,7 +53,6 @@ class TestOptimizationMode:
         assert OptimizationMode.THROUGHPUT.value == "throughput"
         assert OptimizationMode.MEMORY.value == "memory"
         assert OptimizationMode.BALANCED.value == "balanced"
-
 
 class TestTextModelConfig:
     """Tests for TextModelConfig dataclass."""
@@ -107,7 +104,6 @@ class TestTextModelConfig:
         assert config.optimization_mode == OptimizationMode.THROUGHPUT
         assert config.use_torch_compile is False
         assert config.dtype == torch.float16
-
 
 class TestTextModelOptimizer:
     """Tests for TextModelOptimizer class."""
@@ -194,7 +190,6 @@ class TestTextModelOptimizer:
         # Model should be in eval mode for inference optimization
         assert not optimized.training
 
-
 class TestModelTypeDetection:
     """Tests for automatic model type detection."""
 
@@ -270,7 +265,6 @@ class TestModelTypeDetection:
         detected_type = optimizer._detect_model_type(model)
         assert detected_type == TextModelType.CUSTOM
 
-
 class TestOptimizationModes:
     """Tests for different optimization modes."""
 
@@ -317,7 +311,6 @@ class TestOptimizationModes:
         assert optimized is not None
         assert not optimized.training
 
-
 class TestOptimizedBERT:
     """Tests for OptimizedBERT wrapper."""
 
@@ -335,7 +328,6 @@ class TestOptimizedBERT:
 
         optimizer = TextModelOptimizer()
         assert hasattr(optimizer, 'device')
-
 
 class TestOptimizedGPT2:
     """Tests for OptimizedGPT2 wrapper."""
@@ -356,7 +348,6 @@ class TestOptimizedGPT2:
 
         assert config.compile_mode == "reduce-overhead"
 
-
 class TestOptimizedDistilBERT:
     """Tests for OptimizedDistilBERT wrapper."""
 
@@ -375,7 +366,6 @@ class TestOptimizedDistilBERT:
         )
 
         assert config.optimization_mode == OptimizationMode.INFERENCE
-
 
 class TestFactoryFunction:
     """Tests for create_optimized_text_model factory function."""
@@ -406,7 +396,6 @@ class TestFactoryFunction:
                 optimization_mode=mode_map.get(mode_str, OptimizationMode.INFERENCE)
             )
             assert config.optimization_mode == mode_enum
-
 
 class TestDtypeHandling:
     """Tests for dtype conversion and handling."""
@@ -450,7 +439,6 @@ class TestDtypeHandling:
 
         assert optimized is not None
 
-
 class TestModuleExports:
     """Tests for module exports and __all__."""
 
@@ -478,7 +466,6 @@ class TestModuleExports:
 
         assert TextModelOptimizer is not None
 
-
 class TestBackendIntegration:
     """Tests for backend integration."""
 
@@ -505,7 +492,6 @@ class TestBackendIntegration:
 
         # Should still work on CPU
         assert optimizer.device.type in ["cpu", "cuda", "xpu", "hip"]
-
 
 class TestWarmup:
     """Tests for model warmup functionality."""
@@ -548,7 +534,6 @@ class TestWarmup:
 
         assert optimized is not None
 
-
 class TestErrorHandling:
     """Tests for error handling."""
 
@@ -570,7 +555,6 @@ class TestErrorHandling:
         model = nn.Linear(10, 2)
         result = optimizer.optimize(model)
         assert result is not None
-
 
 # Integration tests that require transformers
 class TestTransformersIntegration:
@@ -599,7 +583,6 @@ class TestTransformersIntegration:
     def test_load_gpt2_model(self):
         """Test loading GPT-2 from HuggingFace."""
         pytest.skip("Skipping model download in tests")
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

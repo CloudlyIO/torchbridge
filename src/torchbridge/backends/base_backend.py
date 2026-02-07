@@ -7,7 +7,6 @@ defining the common interface and shared functionality.
 Backends (NVIDIA, AMD, TPU, Intel) inherit from this base and implement
 device-specific optimizations while maintaining a consistent API.
 
-Version: 0.5.3
 """
 
 import logging
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Type variable for config types
 ConfigT = TypeVar('ConfigT')
-
 
 class OptimizationLevel(Enum):
     """
@@ -75,7 +73,6 @@ class OptimizationLevel(Enum):
             logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
             return cls.O2
 
-
 @dataclass
 class DeviceInfo:
     """
@@ -117,7 +114,6 @@ class DeviceInfo:
             'properties': self.properties
         }
 
-
 @dataclass
 class OptimizationResult:
     """
@@ -148,7 +144,6 @@ class OptimizationResult:
             'errors': self.errors,
             'metrics': self.metrics
         }
-
 
 class BaseBackend(ABC):
     """
@@ -526,7 +521,6 @@ class BaseBackend(ABC):
         self.cleanup()
         return False
 
-
 class CPUBackend(BaseBackend):
     """
     CPU backend implementation.
@@ -601,7 +595,6 @@ class CPUBackend(BaseBackend):
         if optimizer:
             return model, optimizer
         return model
-
 
 __all__ = [
     'BaseBackend',

@@ -10,8 +10,6 @@ Key Concepts:
 - Error Budget: The acceptable amount of unreliability (100% - SLO target)
 - Compliance: Whether the SLO is being met over a time window
 
-Version: 0.5.3
-
 Example:
     ```python
     from torchbridge.monitoring import (
@@ -60,7 +58,6 @@ from .structured_logging import correlation_context, get_logger
 
 logger = get_logger(__name__)
 
-
 class SLIType(Enum):
     """Types of Service Level Indicators."""
     LATENCY_P50 = "latency_p50"
@@ -73,7 +70,6 @@ class SLIType(Enum):
     SATURATION = "saturation"
     CUSTOM = "custom"
 
-
 class ComplianceStatus(Enum):
     """SLO compliance status."""
     COMPLIANT = "compliant"
@@ -81,14 +77,12 @@ class ComplianceStatus(Enum):
     VIOLATED = "violated"
     INSUFFICIENT_DATA = "insufficient_data"
 
-
 class BudgetStatus(Enum):
     """Error budget status."""
     HEALTHY = "healthy"       # > 50% budget remaining
     WARNING = "warning"       # 10-50% budget remaining
     CRITICAL = "critical"     # < 10% budget remaining
     EXHAUSTED = "exhausted"   # 0% budget remaining
-
 
 @dataclass
 class SLOConfig:
@@ -121,7 +115,6 @@ class SLOConfig:
         else:
             self.comparison = "lte"  # Want latency/error_rate <= target
 
-
 @dataclass
 class SLIMeasurement:
     """A single SLI measurement."""
@@ -129,7 +122,6 @@ class SLIMeasurement:
     value: float
     sli_type: SLIType
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class SLOStatus:
@@ -172,7 +164,6 @@ class SLOStatus:
             "is_compliant": self.is_compliant,
         }
 
-
 @dataclass
 class ComplianceReport:
     """Full SLO compliance report."""
@@ -201,7 +192,6 @@ class ComplianceReport:
             "recommendations": self.recommendations,
             "slos": [s.to_dict() for s in self.slo_statuses],
         }
-
 
 class SLICollector:
     """Collects and aggregates SLI measurements."""
@@ -377,7 +367,6 @@ class SLICollector:
             return sorted_data[-1]
         weight = index - lower
         return sorted_data[lower] * (1 - weight) + sorted_data[upper] * weight
-
 
 class SLOManager:
     """
@@ -732,7 +721,6 @@ class SLOManager:
 
         return reports
 
-
 def create_slo_manager(
     max_measurements: int = 100000,
     default_slos: bool = True,
@@ -776,7 +764,6 @@ def create_slo_manager(
         ))
 
     return manager
-
 
 # Export all public APIs
 __all__ = [

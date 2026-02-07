@@ -4,7 +4,6 @@ NVIDIA Backend Custom Exceptions
 Custom exception hierarchy for NVIDIA backend error handling,
 inheriting from the shared base_exceptions module.
 
-Version: 0.3.7
 """
 
 from typing import Any
@@ -40,13 +39,11 @@ class NVIDIABackendError(BackendError):
     """Base exception for all NVIDIA backend errors."""
     pass
 
-
 class CUDANotAvailableError(DeviceNotAvailableError):
     """CUDA is not available on this system."""
 
     def __init__(self, message: str = "CUDA not available"):
         super().__init__("CUDA", message)
-
 
 class CUDADeviceError(DeviceError):
     """Error related to CUDA device operations."""
@@ -54,13 +51,11 @@ class CUDADeviceError(DeviceError):
     def __init__(self, device_id: int = 0, operation: str = "", error_message: str = ""):
         super().__init__(device_id, operation, error_message)
 
-
 class FP8CompilationError(CompilationError):
     """Error during FP8 model compilation."""
 
     def __init__(self, error_message: str):
         super().__init__("FP8", error_message)
-
 
 class FlashAttentionError(NVIDIABackendError):
     """Error in FlashAttention operations."""
@@ -69,11 +64,9 @@ class FlashAttentionError(NVIDIABackendError):
         message = f"FlashAttention {operation} failed: {error_message}"
         super().__init__(message, {"operation": operation, "error": error_message})
 
-
 class MemoryAllocationError(BaseMemoryAllocationError):
     """Error allocating GPU memory."""
     pass
-
 
 class OutOfMemoryError(BaseOutOfMemoryError):
     """GPU out of memory error."""
@@ -89,7 +82,6 @@ class OutOfMemoryError(BaseOutOfMemoryError):
         else:
             super().__init__(required_bytes, available_bytes, "cuda")
 
-
 class InvalidComputeCapabilityError(NVIDIABackendError):
     """Invalid or unsupported compute capability."""
 
@@ -100,11 +92,9 @@ class InvalidComputeCapabilityError(NVIDIABackendError):
             "required": required
         })
 
-
 class KernelLaunchError(BaseKernelLaunchError):
     """Error launching CUDA kernel."""
     pass
-
 
 class ModelOptimizationError(BaseModelOptimizationError):
     """Error during model optimization."""
@@ -112,20 +102,17 @@ class ModelOptimizationError(BaseModelOptimizationError):
     def __init__(self, model_name: str = "", optimization_type: str = "", error_message: str = ""):
         super().__init__(model_name, optimization_type, error_message)
 
-
 class InvalidArchitectureError(BaseInvalidArchitectureError):
     """Invalid or unsupported NVIDIA GPU architecture."""
 
     def __init__(self, architecture: str, supported: list[str] | None = None):
         super().__init__(architecture, supported or [])
 
-
 class ConfigurationError(BaseConfigurationError):
     """Error in NVIDIA backend configuration."""
 
     def __init__(self, parameter: str = "", value: Any = None, reason: str = ""):
         super().__init__(parameter, value, reason)
-
 
 __all__ = [
     "NVIDIABackendError",

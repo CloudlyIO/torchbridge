@@ -13,7 +13,6 @@ Supported Architectures:
 - CDNA2 (MI200 series): Matrix Cores, HBM2e
 - CDNA3 (MI300 series): Matrix Cores v2, HBM3
 
-Version: 0.5.3
 """
 
 import logging
@@ -28,7 +27,6 @@ from .amd_exceptions import AMDOptimizationError, MatrixCoreError
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class OptimizationResult:
     """Results from applying optimizations."""
@@ -41,7 +39,6 @@ class OptimizationResult:
     def __post_init__(self):
         if self.warnings is None:
             self.warnings = []
-
 
 class AMDOptimizer:
     """
@@ -661,6 +658,5 @@ class AMDOptimizer:
             "mixed_precision": self.config.enable_mixed_precision,
             "operator_fusion": self.config.enable_operator_fusion,
         }
-
 
 __all__ = ["AMDOptimizer", "OptimizationResult"]

@@ -3,9 +3,7 @@ Shared data generation utilities for TorchBridge demos.
 
 This module provides common data generation functions used across demo scripts.
 
-Version: 0.3.6
 """
-
 
 import torch
 
@@ -36,7 +34,6 @@ def create_linear_input(
         x = x.to(device)
     return x
 
-
 def create_transformer_input(
     batch_size: int = 8,
     seq_length: int = 64,
@@ -59,7 +56,6 @@ def create_transformer_input(
     if device is not None:
         x = x.to(device)
     return x
-
 
 def create_transformer_embedding_input(
     batch_size: int = 8,
@@ -85,7 +81,6 @@ def create_transformer_embedding_input(
     if device is not None:
         x = x.to(device)
     return x
-
 
 def create_vision_input(
     batch_size: int = 16,
@@ -113,7 +108,6 @@ def create_vision_input(
     if device is not None:
         x = x.to(device)
     return x
-
 
 def create_attention_input(
     batch_size: int = 8,
@@ -148,7 +142,6 @@ def create_attention_input(
         v = v.to(device)
 
     return q, k, v
-
 
 # ============================================================================
 # Training Data Generators

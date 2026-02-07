@@ -11,7 +11,6 @@ Consolidates functionality from:
 - LongSequenceOptimizer, AdaptiveCompressionOptimizer
 - FP8Optimizer, and 15+ other optimization managers
 
-Version: 0.3.11
 """
 
 import warnings

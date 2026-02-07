@@ -14,7 +14,6 @@ Key Features:
 - Kernel performance profiling
 - Error handling and diagnostics
 
-Version: 0.5.3
 """
 
 import hashlib
@@ -31,7 +30,6 @@ from .amd_exceptions import HIPCompilationError
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class CompiledKernel:
     """Represents a compiled HIP kernel."""
@@ -42,7 +40,6 @@ class CompiledKernel:
     architecture: AMDArchitecture
     optimization_flags: list[str]
     compile_time_ms: float
-
 
 class ROCmCompiler:
     """
@@ -529,6 +526,5 @@ class ROCmCompiler:
             f"cache_size={stats['cache_size']}, "
             f"hit_rate={stats['cache_hit_rate_percent']:.1f}%)"
         )
-
 
 __all__ = ["ROCmCompiler", "CompiledKernel", "LRUCache"]

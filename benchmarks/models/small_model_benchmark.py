@@ -17,7 +17,6 @@ Usage:
 Requirements:
     pip install transformers
 
-Version: 0.5.3
 """
 
 import argparse
@@ -35,7 +34,6 @@ import torch.nn as nn
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class BenchmarkResult:
@@ -66,7 +64,6 @@ class BenchmarkResult:
     warmup_iterations: int
     benchmark_iterations: int
 
-
 @dataclass
 class ComparisonResult:
     """Comparison between baseline and optimized."""
@@ -83,7 +80,6 @@ class ComparisonResult:
     throughput_speedup: float
 
     memory_reduction_pct: float
-
 
 class SmallModelBenchmark:
     """Benchmark suite for small text models."""
@@ -555,7 +551,6 @@ class SmallModelBenchmark:
             avg_speedup = sum(c.latency_speedup for c in self.comparisons) / len(self.comparisons)
             print(f"\nAverage speedup: {avg_speedup:.2f}x")
 
-
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Small Model Benchmark Suite")
@@ -614,7 +609,6 @@ def main():
     # Save and print results
     benchmark.save_results()
     benchmark.print_summary()
-
 
 if __name__ == "__main__":
     main()

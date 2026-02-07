@@ -39,7 +39,6 @@ Example:
     server = create_fastapi_server(model, model_name="my_model")
     ```
 
-Version: 0.3.9
 """
 
 # Optimization metadata

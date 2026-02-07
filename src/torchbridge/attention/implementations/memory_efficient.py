@@ -10,9 +10,7 @@ Implements:
 - FlashAttention-style memory patterns
 - Long sequence attention with linear memory
 
-Version: 0.5.3
 """
-
 
 import torch
 import torch.nn.functional as F
@@ -123,7 +121,6 @@ class MemoryEfficientAttention(BaseAttention):
             output[:, :, q_start:q_end, :] = torch.matmul(attn_weights, v)
 
         return output
-
 
 @register_attention('chunked_attention')
 class ChunkedAttention(BaseAttention):
@@ -242,7 +239,6 @@ class ChunkedAttention(BaseAttention):
             output[:, :, q_start:q_end, :] = chunk_output
 
         return output
-
 
 @register_attention('long_sequence_attention')
 class LongSequenceAttention(AttentionWithCache):
@@ -382,7 +378,6 @@ class LongSequenceAttention(AttentionWithCache):
 
         return output
 
-
 class GradientCheckpointedAttention(BaseAttention):
     """Attention with gradient checkpointing for training memory efficiency.
 
@@ -438,7 +433,6 @@ class GradientCheckpointedAttention(BaseAttention):
                 use_reentrant=False
             )
         return self._attention_core(q, k, v, attention_mask)
-
 
 class SlidingWindowAttention(BaseAttention):
     """Sliding window attention for linear memory complexity.

@@ -18,7 +18,6 @@ Exception Hierarchy:
   - ConfigurationError: Configuration validation errors
   - KernelError: Kernel execution errors
 
-Version: 0.3.11
 """
 
 import logging
@@ -27,7 +26,6 @@ from typing import Any
 from torchbridge.core.errors import TorchBridgeError
 
 logger = logging.getLogger(__name__)
-
 
 class BackendError(TorchBridgeError):
     """
@@ -57,7 +55,6 @@ class BackendError(TorchBridgeError):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r}, details={self.details!r})"
 
-
 # =============================================================================
 # Device Availability Errors
 # =============================================================================
@@ -71,7 +68,6 @@ class DeviceNotAvailableError(BackendError):
             message = f"{message}: {reason}"
         super().__init__(message, {"backend": backend, "reason": reason})
 
-
 class DeviceError(BackendError):
     """Raised when device operations fail."""
 
@@ -83,7 +79,6 @@ class DeviceError(BackendError):
             "error": error_message
         })
 
-
 # =============================================================================
 # Memory Errors
 # =============================================================================
@@ -91,7 +86,6 @@ class DeviceError(BackendError):
 class MemoryError(BackendError):
     """Base exception for memory-related errors."""
     pass
-
 
 class OutOfMemoryError(MemoryError):
     """Raised when device runs out of memory."""
@@ -115,14 +109,12 @@ class OutOfMemoryError(MemoryError):
             "device": device
         })
 
-
 class MemoryAllocationError(MemoryError):
     """Raised when memory allocation fails."""
 
     def __init__(self, operation: str, error_message: str):
         message = f"Memory allocation failed during {operation}: {error_message}"
         super().__init__(message, {"operation": operation, "error": error_message})
-
 
 class MemoryPoolError(MemoryError):
     """Raised when memory pool operations fail."""
@@ -135,7 +127,6 @@ class MemoryPoolError(MemoryError):
             "error": error_message
         })
 
-
 # =============================================================================
 # Compilation Errors
 # =============================================================================
@@ -146,7 +137,6 @@ class CompilationError(BackendError):
     def __init__(self, compiler: str, error_message: str):
         message = f"{compiler} compilation failed: {error_message}"
         super().__init__(message, {"compiler": compiler, "error": error_message})
-
 
 class KernelCompilationError(CompilationError):
     """Raised when kernel compilation fails."""
@@ -161,7 +151,6 @@ class KernelCompilationError(CompilationError):
             "error": error_message
         })
 
-
 # =============================================================================
 # Optimization Errors
 # =============================================================================
@@ -172,7 +161,6 @@ class OptimizationError(BackendError):
     def __init__(self, optimization_type: str, error_message: str):
         message = f"Optimization ({optimization_type}) failed: {error_message}"
         super().__init__(message, {"type": optimization_type, "error": error_message})
-
 
 class ModelOptimizationError(OptimizationError):
     """Raised when model optimization fails."""
@@ -186,7 +174,6 @@ class ModelOptimizationError(OptimizationError):
             "error": error_message
         })
 
-
 # =============================================================================
 # Configuration Errors
 # =============================================================================
@@ -198,7 +185,6 @@ class ConfigurationError(BackendError):
         message = f"Invalid configuration for '{parameter}': {value} - {reason}"
         super().__init__(message, {"parameter": parameter, "value": value, "reason": reason})
 
-
 class InvalidArchitectureError(ConfigurationError):
     """Raised when an unsupported architecture is specified."""
 
@@ -208,7 +194,6 @@ class InvalidArchitectureError(ConfigurationError):
             "architecture": architecture,
             "supported": supported
         })
-
 
 # =============================================================================
 # Kernel Errors
@@ -228,11 +213,9 @@ class KernelError(BackendError):
             "error": error_message
         })
 
-
 class KernelLaunchError(KernelError):
     """Raised when kernel launch fails."""
     pass
-
 
 # =============================================================================
 # Utility Functions
@@ -265,7 +248,6 @@ def raise_or_warn(
     else:
         log_instance = log or logger
         log_instance.warning(f"{exception_class.__name__}: {message}")
-
 
 __all__ = [
     # Base

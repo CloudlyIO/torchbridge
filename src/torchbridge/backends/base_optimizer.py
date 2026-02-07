@@ -7,7 +7,6 @@ defining the common interface and shared functionality for model optimization.
 Backends (NVIDIA, AMD, TPU, Intel) implement optimizers inheriting from this base
 while providing device-specific optimization strategies.
 
-Version: 0.5.3
 """
 
 import logging
@@ -21,7 +20,6 @@ import torch.nn as nn
 from .base_backend import OptimizationLevel, OptimizationResult
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class KernelConfig:
@@ -50,7 +48,6 @@ class KernelConfig:
             **self.extra_params
         }
 
-
 @dataclass
 class OptimizationStrategy:
     """
@@ -67,7 +64,6 @@ class OptimizationStrategy:
     def is_applicable(self, level: OptimizationLevel) -> bool:
         """Check if this strategy is applicable for the given level."""
         return level in self.applicable_levels
-
 
 class BaseOptimizer(ABC):
     """
@@ -442,7 +438,6 @@ class BaseOptimizer(ABC):
             f"optimizations_performed={len(self._optimization_history)})"
         )
 
-
 class BaseKernelOptimizer(ABC):
     """
     Abstract base class for kernel-level optimizers.
@@ -539,7 +534,6 @@ class BaseKernelOptimizer(ABC):
         """Clear configuration cache."""
         self._config_cache.clear()
 
-
 class CPUOptimizer(BaseOptimizer):
     """
     CPU optimizer implementation.
@@ -634,7 +628,6 @@ class CPUOptimizer(BaseOptimizer):
                 requires=['mkl']
             )
         ]
-
 
 __all__ = [
     'BaseOptimizer',

@@ -4,7 +4,6 @@ Shared timing utilities for TorchBridge benchmarks.
 This module provides standardized timing and measurement utilities
 for consistent benchmarking across all backends (NVIDIA, TPU, AMD, Intel).
 
-Version: 0.5.0
 """
 
 import functools
@@ -16,7 +15,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import torch
-
 
 # ============================================================================
 # Backend-Agnostic Device Utilities
@@ -51,7 +49,6 @@ def synchronize_device(device: torch.device | None = None) -> None:
     elif device_type == "mps" and hasattr(torch.mps, "synchronize"):
         torch.mps.synchronize()
     # CPU doesn't need synchronization
-
 
 def get_best_device() -> torch.device:
     """
@@ -108,7 +105,6 @@ class TimingResult:
             "percentiles": self.percentiles,
         }
 
-
 @dataclass
 class BenchmarkConfig:
     """Configuration for benchmark runs."""
@@ -117,7 +113,6 @@ class BenchmarkConfig:
     sync_cuda: bool = True
     compute_percentiles: bool = True
     percentile_values: tuple[int, ...] = (50, 90, 95, 99)
-
 
 # ============================================================================
 # Core Timing Functions
@@ -190,7 +185,6 @@ def run_timed_iterations(
         percentiles=percentiles,
     )
 
-
 def benchmark_function(
     func: Callable[..., Any],
     *args,
@@ -225,7 +219,6 @@ def benchmark_function(
         warmup=warmup,
         name=name,
     )
-
 
 # ============================================================================
 # Context Manager for Timing
@@ -265,7 +258,6 @@ def timer(name: str = "operation", print_result: bool = False):
 
         if print_result:
             print(f"⏱️  {name}: {ctx.elapsed_ms:.4f} ms")
-
 
 # ============================================================================
 # Decorator for Timing
@@ -313,7 +305,6 @@ def timed(iterations: int = 1, warmup: int = 0, print_result: bool = True):
         return wrapper
     return decorator
 
-
 # ============================================================================
 # Memory Tracking
 # ============================================================================
@@ -325,7 +316,6 @@ class MemorySnapshot:
     reserved_mb: float
     max_allocated_mb: float
     device: str
-
 
 def get_cuda_memory_snapshot(device: int = 0) -> MemorySnapshot | None:
     """
@@ -348,7 +338,6 @@ def get_cuda_memory_snapshot(device: int = 0) -> MemorySnapshot | None:
         max_allocated_mb=torch.cuda.max_memory_allocated(device) / 1024 / 1024,
         device=f"cuda:{device}",
     )
-
 
 @contextmanager
 def track_memory(device: int = 0, reset_peak: bool = True):
@@ -387,7 +376,6 @@ def track_memory(device: int = 0, reset_peak: bool = True):
                 tracker.peak_allocated_mb = tracker.after.max_allocated_mb
                 tracker.delta_mb = tracker.after.allocated_mb - tracker.before.allocated_mb
 
-
 # ============================================================================
 # Throughput Calculation
 # ============================================================================
@@ -414,7 +402,6 @@ def calculate_throughput(
     samples_per_ms = batch_size / result.avg_time_ms
     return samples_per_ms * 1000  # Convert to per-second
 
-
 def calculate_tokens_per_second(
     result: TimingResult,
     batch_size: int,
@@ -433,7 +420,6 @@ def calculate_tokens_per_second(
     """
     total_tokens = batch_size * sequence_length
     return calculate_throughput(result, total_tokens, unit="tokens/sec")
-
 
 # ============================================================================
 # Comparison Utilities
@@ -475,7 +461,6 @@ def compare_results(
 
     return comparison
 
-
 # ============================================================================
 # Reporting Utilities
 # ============================================================================
@@ -485,7 +470,6 @@ def print_section_header(title: str, width: int = 70) -> None:
     print(f"\n{'=' * width}")
     print(f"  {title}")
     print(f"{'=' * width}\n")
-
 
 def print_result(result: TimingResult, indent: int = 2) -> None:
     """Print a formatted benchmark result."""
@@ -499,7 +483,6 @@ def print_result(result: TimingResult, indent: int = 2) -> None:
     if result.percentiles:
         percentile_str = ", ".join(f"{k}: {v:.4f}ms" for k, v in result.percentiles.items())
         print(f"{prefix}  Percentiles: {percentile_str}")
-
 
 def create_summary_table(
     results: list[TimingResult],
@@ -539,7 +522,6 @@ def create_summary_table(
     lines.append("-" * (name_width + 50))
 
     return "\n".join(lines)
-
 
 # ============================================================================
 # Export

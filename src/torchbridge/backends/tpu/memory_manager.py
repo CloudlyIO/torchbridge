@@ -6,7 +6,6 @@ for efficient TPU model execution.
 
 Inherits from BaseMemoryManager for shared functionality.
 
-Version: 0.3.7
 """
 
 import gc
@@ -27,7 +26,6 @@ from . import xla_compat
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class TPUMemoryStats:
     """TPU-specific memory statistics."""
@@ -38,7 +36,6 @@ class TPUMemoryStats:
     memory_fraction: float
     active_tensors: int
     peak_memory: int
-
 
 class TPUMemoryManager(BaseMemoryManager):
     """
@@ -475,6 +472,5 @@ class TPUMemoryManager(BaseMemoryManager):
             f"pools={len(self._tpu_memory_pool)}, "
             f"fraction={self._tpu_config.memory_fraction})"
         )
-
 
 __all__ = ["TPUMemoryManager", "TPUMemoryStats"]

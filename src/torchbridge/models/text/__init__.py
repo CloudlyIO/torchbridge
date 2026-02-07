@@ -13,7 +13,6 @@ Features:
 - FlashAttention integration
 - Memory-efficient inference
 
-Version: 0.5.3
 """
 
 from .text_model_optimizer import (
