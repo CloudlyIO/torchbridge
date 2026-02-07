@@ -6,7 +6,7 @@ This module provides optimizations for ViT models including:
 - Patch embedding optimization
 - Memory-efficient inference
 
-v0.4.23 - Complete attention slicing implementation
+Version: 0.5.3
 """
 
 import math

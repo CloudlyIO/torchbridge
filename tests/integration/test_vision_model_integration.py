@@ -1,5 +1,5 @@
 """
-Integration tests for vision model optimization (v0.4.14).
+Integration tests for vision model optimization.
 
 Tests cover:
 - ResNet optimization

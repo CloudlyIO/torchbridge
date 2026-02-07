@@ -1,5 +1,5 @@
 """
-Vision Model Optimization (v0.4.14)
+Vision Model Optimization (v0.5.3)
 
 This module provides optimized inference for computer vision models:
 - ResNet (ResNet-50/152): Image classification

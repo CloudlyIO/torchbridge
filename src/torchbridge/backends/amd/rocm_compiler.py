@@ -14,7 +14,7 @@ Key Features:
 - Kernel performance profiling
 - Error handling and diagnostics
 
-Version: 0.4.9
+Version: 0.5.3
 """
 
 import hashlib

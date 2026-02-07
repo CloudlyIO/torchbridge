@@ -18,9 +18,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 from torchbridge.advanced_memory import (
     DeepOptimizerStates,
     InterleaveOffloadingOptimizer,

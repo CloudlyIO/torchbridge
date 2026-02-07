@@ -1,4 +1,4 @@
-"""Integration tests for multi-modal model optimization (v0.4.15)."""
+"""Integration tests for multi-modal model optimization."""
 
 import pytest
 import torch

@@ -15,7 +15,7 @@ Supported Hardware:
 - AMD MI200 series (CDNA2): MI210, MI250, MI250X
 - AMD MI300 series (CDNA3): MI300A, MI300X
 
-Version: 0.4.19
+Version: 0.5.3
 """
 
 from .amd_backend import AMDBackend

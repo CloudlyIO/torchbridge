@@ -339,7 +339,6 @@ class InterleavedScheduler(PipelineScheduler):
     - GPipe: Stores all N micro-batch activations
     - 1F1B: Stores at most (num_stages) activations at any time
 
-    v0.4.23: Added run_forward() and run_backward() implementations
     """
 
     def __init__(self, stages: list[PipelineStage], config: PipelineParallelConfig):

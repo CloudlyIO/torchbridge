@@ -4,7 +4,7 @@ XLA Compatibility Layer for torch_xla 2.9.0+
 This module provides backward-compatible wrappers for deprecated
 torch_xla APIs, supporting both old (2.x) and new (2.9+) versions.
 
-Version: 0.4.2
+Version: 0.5.3
 """
 
 
