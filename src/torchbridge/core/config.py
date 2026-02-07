@@ -84,7 +84,8 @@ class AMDArchitecture(Enum):
     AUTO = "auto"
     CDNA = "cdna"        # MI50, MI60 (1st gen)
     CDNA2 = "cdna2"      # MI200 series (MI210, MI250, MI250X)
-    CDNA3 = "cdna3"      # MI300 series (MI300A, MI300X)
+    CDNA3 = "cdna3"      # MI300 series (MI300A, MI300X, MI325X)
+    CDNA4 = "cdna4"      # MI350X, MI355X (gfx950)
     RDNA2 = "rdna2"      # Consumer GPUs (RX 6000 series)
     RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
 
@@ -538,8 +539,13 @@ class AMDConfig:
             self.architecture = self._detect_architecture()
 
         # Configure settings based on architecture
-        if self.architecture == AMDArchitecture.CDNA3:
-            # MI300 series - most advanced
+        if self.architecture == AMDArchitecture.CDNA4:
+            # MI350X/MI355X - latest data center (gfx950)
+            self.enable_matrix_cores = True
+            self.matrix_core_precision = "bf16"
+            self.allow_bf16 = True
+        elif self.architecture == AMDArchitecture.CDNA3:
+            # MI300 series / MI325X - data center (gfx940/gfx942)
             self.enable_matrix_cores = True
             self.matrix_core_precision = "bf16"
             self.allow_bf16 = True
@@ -566,8 +572,12 @@ class AMDConfig:
                 device_props = torch.hip.get_device_properties(0)
                 device_name = device_props.name.upper()
 
-                # MI300 series (CDNA3)
-                if any(name in device_name for name in ["MI300", "MI3"]):
+                # MI350X/MI355X (CDNA4, gfx950) — check before MI300 patterns
+                if any(name in device_name for name in ["MI350", "MI355"]):
+                    return AMDArchitecture.CDNA4
+
+                # MI325X / MI300 series (CDNA3, gfx940/gfx942)
+                if any(name in device_name for name in ["MI325", "MI300", "MI3"]):
                     return AMDArchitecture.CDNA3
 
                 # MI200 series (CDNA2)

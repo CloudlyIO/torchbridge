@@ -22,7 +22,7 @@ cp .githooks/commit-msg .git/hooks/commit-msg
 chmod +x .git/hooks/commit-msg
 
 # Or use the install script (recommended)
-./scripts/install-hooks.sh
+./scripts/install_hooks.sh
 ```
 
 **Testing**:
@@ -58,14 +58,14 @@ Some changes here.
 ### Install All Hooks
 
 ```bash
-./scripts/install-hooks.sh
+./scripts/install_hooks.sh
 ```
 
 ### Reinstall After Updates
 
 ```bash
 # If hooks are updated in .githooks/, reinstall them
-./scripts/install-hooks.sh --force
+./scripts/install_hooks.sh --force
 ```
 
 ### Bypass Hooks (Not Recommended)
@@ -85,7 +85,7 @@ When creating new hooks:
 
 1. Add the hook script to `.githooks/`
 2. Make it executable: `chmod +x .githooks/hook-name`
-3. Update `scripts/install-hooks.sh` to include the new hook
+3. Update `scripts/install_hooks.sh` to include the new hook
 4. Document it in this README
 5. Test thoroughly before committing
 

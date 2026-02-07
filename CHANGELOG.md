@@ -783,7 +783,7 @@ validation with actual HuggingFace models to prove optimizations work in practic
   - `docs/capabilities/README.md` - Technical deep-dive navigation
   - `docs/backends/README.md` - Hardware backend selection guide
   - `docs/guides/README.md` - User guides navigation
-  - `docs/getting-started/README.md` - Onboarding hub
+  - `docs/getting_started/README.md` - Onboarding hub
   - `docs/archive/README.md` - Archive documentation
   - `docs/validation-reports/README.md` - Validation reports index
 

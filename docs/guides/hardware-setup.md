@@ -211,6 +211,6 @@ PYTHONPATH=src python3 -m pytest tests/ -q
 
 ## See Also
 
-- [Installation](../getting-started/installation.md)
+- [Installation](../getting_started/installation.md)
 - [Backend Selection](backend-selection.md)
-- [Troubleshooting](../getting-started/troubleshooting.md)
+- [Troubleshooting](../getting_started/troubleshooting.md)

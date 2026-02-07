@@ -299,4 +299,4 @@ torchbridge export --model optimized.pt --format onnx --input-shape 1,128
 
 - [Deployment](deployment.md)
 - [Backend Selection](backend-selection.md)
-- [Installation](../getting-started/installation.md)
+- [Installation](../getting_started/installation.md)

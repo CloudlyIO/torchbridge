@@ -98,7 +98,7 @@ class TestAMDArchitecture:
 
     def test_all_architectures_exist(self):
         """Test all expected architectures exist."""
-        expected = ["AUTO", "CDNA", "CDNA2", "CDNA3", "RDNA2", "RDNA3"]
+        expected = ["AUTO", "CDNA", "CDNA2", "CDNA3", "CDNA4", "RDNA2", "RDNA3"]
         for arch_name in expected:
             assert hasattr(AMDArchitecture, arch_name)
 
@@ -107,6 +107,7 @@ class TestAMDArchitecture:
         assert AMDArchitecture.AUTO.value == "auto"
         assert AMDArchitecture.CDNA2.value == "cdna2"
         assert AMDArchitecture.CDNA3.value == "cdna3"
+        assert AMDArchitecture.CDNA4.value == "cdna4"
 
 
 class TestAMDExceptions:
@@ -678,7 +679,8 @@ class TestHIPCompilationEnhanced:
 
         arch_targets = {
             AMDArchitecture.CDNA2: "gfx90a",
-            AMDArchitecture.CDNA3: "gfx940",
+            AMDArchitecture.CDNA3: "gfx942",
+            AMDArchitecture.CDNA4: "gfx950",
             AMDArchitecture.RDNA2: "gfx1030",
             AMDArchitecture.RDNA3: "gfx1100",
         }
