@@ -68,28 +68,39 @@ gcloud compute instances create tb-val-$(date +%s) \
 gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --quiet
 ```
 
-### AMD ROCm - CONFIGURATION NEEDED
+### AMD ROCm (MI300X) - AMD Developer Cloud - WORKING CONFIG
+
+**Access Details (PERMANENT):**
+| Setting | Value |
+|---------|-------|
+| SSH Key | `~/.ssh/id_ed25520` |
+| Instance Type | `2.6.0---ROCm-7.0-gpu-mi300x1-192gb-devcloud-atl1` |
+| Public IP | `129.212.181.53` (update if instance relaunched) |
+| Device | AMD Instinct MI300X VF (gfx942, CDNA3, 192GB VRAM) |
+| Portal | https://www.amd.com/en/developer/resources/ai-cloud.html |
 
 **Previous validation (Feb 3, 2026):**
-- Device: AMD Instinct MI300X VF (gfx942, CDNA3, 192GB VRAM)
 - Result: 1611 passed, 76 skipped, 0 failed
 - Commit: 9faf7c4
 
-**AWS AMD GPU options:**
-- g4ad.xlarge (Radeon Pro V520) - requires vCPU quota increase
-- Request quota at: https://aws.amazon.com/contact-us/ec2-request
-
-**AMD Developer Cloud:**
-- Access: https://www.amd.com/en/developer/resources/ai-cloud.html
-- $100 credits via AI Developer Program
-- MI300X instances with 192GB HBM3
-
-**TODO: Add AMD cloud SSH access details here when available**
-
 ```bash
-# After getting access, run:
-./scripts/cloud_testing/amd_cloud/run_validation.sh
+# SSH to AMD Developer Cloud MI300X
+ssh -i ~/.ssh/id_ed25520 ubuntu@129.212.181.53
+
+# If connection fails, relaunch from AMD Developer Cloud portal:
+# Instance type: 2.6.0---ROCm-7.0-gpu-mi300x1-192gb-devcloud-atl1
+# Then update IP above
+
+# Once connected, run validation:
+git clone https://github.com/CloudlyIO/torchbridge.git
+cd torchbridge
+pip install transformers datasets -q
+python3 examples/bert_squad/validate_cross_backend.py --tolerance 1e-3
+
+# ROCm uses higher tolerance (1e-3) due to SDPA flash attention divergence
 ```
+
+**Note:** AMD Developer Cloud instances are ephemeral. If connection fails, relaunch from portal.
 
 ### Validation Script on Any Instance
 
@@ -123,6 +134,16 @@ python3 examples/bert_squad/validate_cross_backend.py --tolerance 1e-4
 | Image | pytorch-2-7-cu128-ubuntu-2404-nvidia-570 |
 | GPU Quota | 1 GPU (request increase for more) |
 
+## AMD Developer Cloud Configuration Details
+
+| Setting | Value |
+|---------|-------|
+| Portal | https://www.amd.com/en/developer/resources/ai-cloud.html |
+| SSH Key | ~/.ssh/id_ed25520 |
+| Instance | 2.6.0---ROCm-7.0-gpu-mi300x1-192gb-devcloud-atl1 |
+| GPU | AMD Instinct MI300X (192GB HBM3) |
+| Tolerance | 1e-3 (ROCm SDPA divergence) |
+
 ---
 
 ## Cost Efficiency - CRITICAL
@@ -155,6 +176,7 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --quiet
 |------|---------|-----|--------|---------|
 | 2026-02-07 | AWS CUDA | A10G | PASSED (diff 2.34e-06) | 7.4ms |
 | 2026-02-07 | GCP CUDA | T4 | PASSED (diff 2.52e-06) | 21.8ms |
+| 2026-02-03 | AMD ROCm | MI300X | PASSED (1611 tests) | - |
 | 2026-01-28 | AWS CUDA | A10G | PASSED (66 tests) | - |
 
 ---
@@ -172,3 +194,18 @@ cd examples/bert_squad
 # List available instance types
 python scripts/validation/run_cloud_validation.py --list
 ```
+
+---
+
+## Presentation Deck - Release Checklist
+
+**File:** `TorchBridge_Presentation.pptx` (local only, gitignored)
+
+**On every release, update the presentation deck with:**
+1. New features and API changes from this release
+2. Updated benchmark numbers and performance comparisons
+3. Updated architecture diagrams if internals changed
+4. Current cloud validation results table
+5. Updated roadmap slide reflecting completed and upcoming work
+
+This is a mandatory step in the release process. The `.pptx` file lives in the repo root but is gitignored — never commit it.
