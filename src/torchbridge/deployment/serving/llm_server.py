@@ -34,7 +34,7 @@ Example:
     run_llm_server(server, host="0.0.0.0", port=8000)
     ```
 
-Version: 0.4.22
+Version: 0.5.3
 """
 
 import asyncio

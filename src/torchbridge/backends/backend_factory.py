@@ -10,7 +10,7 @@ The factory supports:
 - Fallback to CPU when no accelerator is available
 - Backend registration for extensibility
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging

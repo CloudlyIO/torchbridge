@@ -7,7 +7,7 @@ Implements multiple sparse attention strategies:
 - Strided sparse attention (Sparse Transformers)
 - Dynamic sparse attention with learned patterns
 
-v0.4.23 - Complete implementation replacing placeholders
+Version: 0.5.3
 """
 
 

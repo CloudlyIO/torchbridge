@@ -1,4 +1,4 @@
-# TorchBridge Vision Models (v0.4.14)
+# TorchBridge Vision Models (v0.5.3)
 
 Optimized inference for computer vision models including ResNet, Vision Transformers, and Stable Diffusion.
 
@@ -308,6 +308,6 @@ pip install torch torchvision timm diffusers transformers xformers
 
 ## Version
 
-Part of TorchBridge v0.4.14 - Vision Model Integration
+Part of TorchBridge v0.5.3 - Vision Model Integration
 
 For more details, see the main documentation and guides.

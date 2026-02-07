@@ -28,7 +28,7 @@ Example:
     # LLM Server: Create LLM server with create_llm_server(model, tokenizer)
     ```
 
-Version: 0.4.22
+Version: 0.5.3
 """
 
 from .fastapi_server import (

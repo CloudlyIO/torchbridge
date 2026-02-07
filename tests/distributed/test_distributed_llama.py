@@ -1,5 +1,5 @@
 """
-Distributed Llama Model Validation Tests (v0.4.24)
+Distributed Llama Model Validation Tests (v0.5.3)
 
 Validates that distributed training infrastructure works correctly
 with Llama-class models across multiple GPUs.

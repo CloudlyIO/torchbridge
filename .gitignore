@@ -253,6 +253,7 @@ reports/
 benchmark_results/
 examples/export_output/
 examples/training_output/
+examples/bert_squad/results/
 
 # ===================================================================
 # LOCAL DEVELOPMENT FILES - Keep repo clean

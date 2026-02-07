@@ -12,7 +12,7 @@ Tests all v0.4.6 features including:
 - FlexAttention
 - All existing functionality
 
-Version: 0.4.6
+Version: 0.5.3
 """
 
 import json
@@ -69,7 +69,7 @@ class TestConfig:
     """Configuration for a test run."""
     platform: CloudPlatform
     gpu_type: GPUType
-    version: str = "0.4.6"
+    version: str = "0.5.3"
     test_moe: bool = True
     test_fp8: bool = True
     test_attention: bool = True
@@ -962,7 +962,7 @@ def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any
     """Run comprehensive tests on the current platform."""
 
     logger.info("=" * 70)
-    logger.info("TorchBridge v0.4.6 Comprehensive Cloud Validation")
+    logger.info("TorchBridge v0.5.3 Comprehensive Cloud Validation")
     logger.info("=" * 70)
 
     # Detect hardware
@@ -1064,7 +1064,7 @@ def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="TorchBridge v0.4.6 Cloud Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge v0.5.3 Cloud Validation")
     parser.add_argument("--output-dir", default="./test_results", help="Output directory")
     parser.add_argument("--no-moe", action="store_true", help="Skip MoE tests")
     parser.add_argument("--no-fp8", action="store_true", help="Skip FP8 tests")

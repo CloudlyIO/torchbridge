@@ -6,7 +6,7 @@ High-level optimizer for NVIDIA GPU models with multiple optimization levels.
 Inherits from BaseOptimizer to provide a consistent interface across all
 hardware backends while implementing NVIDIA-specific optimizations.
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging

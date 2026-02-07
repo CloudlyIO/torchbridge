@@ -1,22 +1,15 @@
 """
-Test Suite for Small Model Integration (v0.4.11)
+Test Suite for Small Model Integration (v0.5.3)
 
 Tests for BERT, GPT-2, and DistilBERT optimization wrappers.
 Validates optimization, inference, and backend integration.
 
-Version: 0.4.11
+Version: 0.5.3
 """
-
-import os
-
-# Import test utilities
-import sys
 
 import pytest
 import torch
 import torch.nn as nn
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
 class TestTextModelTypes:

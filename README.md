@@ -2,7 +2,7 @@
 
 **Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, Intel, and TPU without code changes, and **validates that outputs match across backends**.
 
-[![Version](https://img.shields.io/badge/version-0.5.0-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1600%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-5%2F5%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP L4](https://img.shields.io/badge/GCP%20L4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/badge/version-0.5.3-green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1814%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-5%2F5%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP L4](https://img.shields.io/badge/GCP%20L4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
@@ -82,10 +82,10 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 
 | Backend | Hardware | Precision | Status |
 |---------|----------|-----------|--------|
-| **NVIDIA** | H100, A100, L4, T4, RTX | FP8, BF16, FP16, FP32 | Production |
-| **AMD** | MI300X, MI200, RDNA3 | BF16, FP16, FP32 | Production |
-| **Intel** | Ponte Vecchio, Arc, Flex | BF16, FP16, FP32 | Production |
-| **TPU** | v4, v5e, v5p, v6e | BF16, FP32 | Production |
+| **NVIDIA** | B200, H100, H200, A100, L4, T4 | FP4, FP8, BF16, FP16, FP32 | Production |
+| **AMD** | MI350X, MI325X, MI300X, MI200 | FP4, FP8, BF16, FP16, FP32 | Production |
+| **Intel** | Ponte Vecchio, Arc | BF16, FP16, FP32 | Maintenance |
+| **TPU** | v4, v5e, v5p, v6e, v7 | BF16, FP32 | Production |
 | **CPU** | x86, ARM (Apple Silicon) | FP32, BF16 | Fallback |
 
 See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
@@ -203,11 +203,11 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **1600+ tests** passing across all modules
+- **1,814 tests** passing across all modules
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on NVIDIA A10G (AWS) and L4 (GCP) -- 5/5 use cases pass
-- **Cross-platform** tested on macOS, Linux, AWS, GCP
+- **Cloud validated** on NVIDIA A10G (AWS), L4 (GCP), and AMD MI300X -- 5/5 use cases pass
+- **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud
 
 ```bash
 PYTHONPATH=src python3 -m pytest tests/ -q
@@ -243,4 +243,4 @@ ruff check src/ tests/
 
 ## License
 
-Open source -- see LICENSE file for details.
+See LICENSE file for licensing details.

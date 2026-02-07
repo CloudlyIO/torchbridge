@@ -1,5 +1,5 @@
 """
-E2E Tests for LLM Inference Server (v0.4.22)
+E2E Tests for LLM Inference Server (v0.5.3)
 
 Tests cover:
 - Server startup and shutdown
@@ -10,7 +10,7 @@ Tests cover:
 - Health checks and metrics
 - Error handling
 
-Version: 0.4.22
+Version: 0.5.3
 """
 
 import time

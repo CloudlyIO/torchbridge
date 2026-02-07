@@ -1,5 +1,5 @@
 """
-TorchBridge Distributed Model Support (v0.4.13)
+TorchBridge Distributed Model Support (v0.5.3)
 
 This module provides distributed inference and training support for large models
 like Llama-70B, Falcon-180B, and other models that exceed single-GPU memory.

@@ -16,7 +16,7 @@ Usage:
 Requirements:
     pip install transformers
 
-Version: 0.4.11
+Version: 0.5.3
 """
 
 import argparse

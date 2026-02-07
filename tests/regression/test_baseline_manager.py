@@ -4,13 +4,9 @@ Tests for BaselineManager functionality
 """
 
 import json
-import os
-import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from benchmarks.framework.benchmark_runner import PerformanceMetrics
 from benchmarks.regression.baseline_manager import BaselineManager, BaselineMetrics

@@ -1,20 +1,15 @@
 """
-Test Suite for LLM Integration (v0.4.12)
+Test Suite for LLM Integration (v0.5.3)
 
 Tests for Llama, Mistral, Phi optimization wrappers and KV-cache.
 Validates optimization, quantization, and backend integration.
 
-Version: 0.4.12
+Version: 0.5.3
 """
-
-import os
-import sys
 
 import pytest
 import torch
 import torch.nn as nn
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
 class TestLLMTypes:

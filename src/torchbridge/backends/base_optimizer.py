@@ -7,7 +7,7 @@ defining the common interface and shared functionality for model optimization.
 Backends (NVIDIA, AMD, TPU, Intel) implement optimizers inheriting from this base
 while providing device-specific optimization strategies.
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging

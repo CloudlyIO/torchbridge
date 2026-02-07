@@ -8,7 +8,7 @@ Supports Llama, Mistral, Phi, and other autoregressive models with:
 - Flash Attention
 - Memory-efficient inference
 
-Version: 0.4.12
+Version: 0.5.3
 """
 
 import logging

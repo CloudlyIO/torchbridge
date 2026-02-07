@@ -4,15 +4,9 @@ Comprehensive Test Suite for PyGraph CUDA Graph Optimizations
 Tests for PyGraph CUDA Graph optimization techniques.
 """
 
-import os
-import sys
-
 import pytest
 import torch
 import torch.nn as nn
-
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from torchbridge.optimizations.next_gen import (
     AutoGraphCapture,

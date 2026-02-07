@@ -3,14 +3,9 @@
 Tests for RegressionDetector functionality
 """
 
-import os
-import sys
 from datetime import datetime
 
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-
 from benchmarks.framework.benchmark_runner import PerformanceMetrics
 from benchmarks.regression.baseline_manager import BaselineMetrics
 from benchmarks.regression.regression_detector import (

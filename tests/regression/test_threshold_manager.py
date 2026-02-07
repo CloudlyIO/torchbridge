@@ -3,16 +3,11 @@
 Tests for ThresholdManager functionality
 """
 
-import os
-import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-
 from benchmarks.regression.baseline_manager import BaselineMetrics
 from benchmarks.regression.threshold_manager import ThresholdConfig, ThresholdManager
 

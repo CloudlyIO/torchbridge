@@ -1,5 +1,5 @@
 """
-Multi-modal Model Optimization (v0.4.15)
+Multi-modal Model Optimization (v0.5.3)
 
 This module provides optimized inference for multi-modal models:
 - CLIP (Vision-Language): Image-text embedding and similarity

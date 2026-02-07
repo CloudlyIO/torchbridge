@@ -26,7 +26,7 @@ class ReportGenerator:
         self.project_root = project_root
         self.reports_dir = reports_dir
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.version = "0.4.30"
+        self.version = "0.5.3"
 
     def _load_json_report(self, filename: str) -> dict[str, Any] | list[Any]:
         """Load a JSON report file."""

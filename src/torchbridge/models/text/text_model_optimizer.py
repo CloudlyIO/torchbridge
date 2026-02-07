@@ -13,7 +13,7 @@ Features:
 - Memory-efficient inference
 - Batch optimization
 
-Version: 0.4.11
+Version: 0.5.3
 """
 
 import logging

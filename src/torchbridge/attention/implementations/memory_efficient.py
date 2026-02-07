@@ -10,7 +10,7 @@ Implements:
 - FlashAttention-style memory patterns
 - Long sequence attention with linear memory
 
-v0.4.23 - Complete implementation replacing placeholders
+Version: 0.5.3
 """
 
 

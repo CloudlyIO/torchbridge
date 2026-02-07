@@ -7,7 +7,7 @@ defining the common interface and shared functionality.
 Backends (NVIDIA, AMD, TPU, Intel) inherit from this base and implement
 device-specific optimizations while maintaining a consistent API.
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging

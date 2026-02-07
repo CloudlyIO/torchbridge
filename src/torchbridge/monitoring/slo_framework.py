@@ -10,7 +10,7 @@ Key Concepts:
 - Error Budget: The acceptable amount of unreliability (100% - SLO target)
 - Compliance: Whether the SLO is being met over a time window
 
-Version: 0.4.33
+Version: 0.5.3
 
 Example:
     ```python

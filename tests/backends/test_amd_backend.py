@@ -1,5 +1,5 @@
 """
-AMD Backend Tests (v0.4.9)
+AMD Backend Tests (v0.5.3)
 
 Comprehensive test suite for AMD ROCm backend implementation.
 Tests cover configuration, backend operations, optimization, compilation,

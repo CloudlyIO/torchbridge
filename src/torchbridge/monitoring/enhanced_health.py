@@ -10,7 +10,7 @@ Extends the base health monitoring with:
 - Auto-recovery recommendations
 - Integration with structured logging
 
-Version: 0.4.32
+Version: 0.5.3
 
 Example:
     ```python

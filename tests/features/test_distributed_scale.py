@@ -10,8 +10,6 @@ Tests the large-scale distributed training and inference framework including:
 - Orchestration and fault tolerance
 """
 
-import os
-import sys
 import time
 from dataclasses import asdict
 from unittest.mock import Mock, patch
@@ -19,9 +17,6 @@ from unittest.mock import Mock, patch
 import pytest
 import torch
 import torch.nn as nn
-
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from torchbridge.distributed_scale import (
     AdaptiveLoadBalancer,

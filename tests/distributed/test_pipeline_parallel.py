@@ -1,5 +1,5 @@
 """
-Pipeline Parallelism Tests (v0.4.24)
+Pipeline Parallelism Tests (v0.5.3)
 
 Comprehensive tests for pipeline parallel training including:
 - GPipe scheduler (fill-drain)

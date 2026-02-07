@@ -20,7 +20,7 @@ Key Features:
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.4.9
+Version: 0.5.3
 """
 
 import logging
@@ -93,7 +93,7 @@ class AMDBackend(BaseBackend):
         self._current_amd_device: AMDDeviceInfoLegacy | None = None
         self._cpu_fallback = False
 
-        logger.info("Initializing AMD ROCm Backend v0.4.8")
+        logger.info("Initializing AMD ROCm Backend v0.5.3")
 
         # Validate configuration
         self._validate_config()
