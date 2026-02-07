@@ -6,7 +6,7 @@ Core backend for NVIDIA GPU device management and model preparation.
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends while implementing NVIDIA-specific optimizations.
 
-Version: 0.4.8
+Version: 0.5.3
 """
 
 import logging
@@ -178,14 +178,18 @@ class NVIDIABackend(BaseBackend):
     @property
     def is_blackwell(self) -> bool:
         """Check if running on Blackwell GPU."""
-        return self.nvidia_config.architecture == NVIDIAArchitecture.BLACKWELL
+        return self.nvidia_config.architecture in [
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        ]
 
     @property
     def supports_fp8(self) -> bool:
         """Check if GPU supports FP8."""
         return self.nvidia_config.architecture in [
             NVIDIAArchitecture.HOPPER,
-            NVIDIAArchitecture.BLACKWELL
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER
         ]
 
     def prepare_model(

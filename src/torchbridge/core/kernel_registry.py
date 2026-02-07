@@ -315,7 +315,8 @@ class KernelRegistry:
                 (8, 6): NVIDIAArchitecture.AMPERE,
                 (8, 9): NVIDIAArchitecture.ADA,
                 (9, 0): NVIDIAArchitecture.HOPPER,
-                (10, 0): NVIDIAArchitecture.BLACKWELL,
+                (10, 0): NVIDIAArchitecture.BLACKWELL_DC,
+                (12, 0): NVIDIAArchitecture.BLACKWELL_CONSUMER,
             }
 
             current_arch = arch_map.get(compute_capability)
@@ -500,7 +501,8 @@ def register_default_kernels(registry: KernelRegistry | None = None) -> None:
                 NVIDIAArchitecture.AMPERE,
                 NVIDIAArchitecture.ADA,
                 NVIDIAArchitecture.HOPPER,
-                NVIDIAArchitecture.BLACKWELL
+                NVIDIAArchitecture.BLACKWELL_DC,
+                NVIDIAArchitecture.BLACKWELL_CONSUMER
             ],
             precision_support=[
                 PrecisionFormat.FP16,

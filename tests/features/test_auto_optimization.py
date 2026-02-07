@@ -251,7 +251,7 @@ class TestHardwareProfile:
             hardware_type=HardwareType.NVIDIA_GPU,
             device_name="NVIDIA B100",
             device_count=1,
-            nvidia_architecture=NVIDIAArchitecture.BLACKWELL,
+            nvidia_architecture=NVIDIAArchitecture.BLACKWELL_DC,
         )
 
         profile_ampere = HardwareProfile(

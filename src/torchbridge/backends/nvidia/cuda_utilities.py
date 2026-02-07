@@ -198,11 +198,18 @@ class CUDAOptimizations:
             'optimal_dimension_divisor': 16 if self.nvidia_config.tensor_core_version >= 4 else 8,
         }
 
-        if self.nvidia_config.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+        if self.nvidia_config.architecture in [
+            NVIDIAArchitecture.HOPPER,
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        ]:
             config.update({
                 'fp8_enabled': True,
                 'flash_attention_3': True,
-                'tensor_core_version': 4,
+                'tensor_core_version': 5 if self.nvidia_config.architecture in [
+                    NVIDIAArchitecture.BLACKWELL_DC,
+                    NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                ] else 4,
             })
 
         return config
@@ -340,7 +347,11 @@ class CUDAUtilities:
             'CUDA_LAUNCH_BLOCKING': '0',  # Async kernel launches
         }
 
-        if architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+        if architecture in [
+            NVIDIAArchitecture.HOPPER,
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        ]:
             # H100/Blackwell optimizations
             flags.update({
                 'CUDA_DEVICE_MAX_CONNECTIONS': '32',  # More concurrent streams

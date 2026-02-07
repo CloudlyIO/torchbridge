@@ -66,6 +66,8 @@ class NVIDIAAdapter(VendorAdapter):
             '8.7': ('Ampere', 'GA10B', ['Tensor_Cores_v3', 'BF16', 'TF32']),
             '8.9': ('Ada_Lovelace', 'AD102/103/104/106/107', ['Tensor_Cores_v4', 'RT_Cores_v3', 'AV1']),
             '9.0': ('Hopper', 'GH100', ['Tensor_Cores_v4', 'FP8', 'DPX', 'Thread_Block_Clusters']),
+            '10.0': ('Blackwell_DC', 'GB100/GB200', ['Tensor_Cores_v5', 'FP4', 'FP8', 'NVLink_5', 'Thread_Block_Clusters', 'Confidential_Computing']),
+            '12.0': ('Blackwell_Consumer', 'GB202/203/205', ['Tensor_Cores_v5', 'FP8', 'RT_Cores_v4', 'DLSS_4', 'NVLink_Consumer']),
         }
 
         # Performance characteristics by generation
@@ -125,6 +127,25 @@ class NVIDIAAdapter(VendorAdapter):
                 'sparsity_support': True,
                 'nvlink_support': True,
                 'multi_instance_gpu': True
+            },
+            'Blackwell_DC': {
+                'tensor_cores': True,
+                'fp8_support': True,
+                'fp4_support': True,
+                'bf16_support': True,
+                'sparsity_support': True,
+                'nvlink_support': True,  # NVLink 5, 1.8 TB/s
+                'multi_instance_gpu': True,
+                'confidential_computing': True
+            },
+            'Blackwell_Consumer': {
+                'tensor_cores': True,
+                'fp8_support': True,
+                'fp4_support': False,  # Consumer Blackwell does not support FP4
+                'bf16_support': True,
+                'sparsity_support': True,
+                'nvlink_support': False,  # Consumer uses PCIe/NVLink Bridge
+                'multi_instance_gpu': False
             }
         }
 
@@ -315,7 +336,9 @@ class NVIDIAAdapter(VendorAdapter):
             (8, 0): 64,   # A100
             (8, 6): 128,  # RTX 30xx series
             (8, 9): 128,  # RTX 40xx series
-            (9, 0): 256   # H100
+            (9, 0): 256,  # H100
+            (10, 0): 512, # B100/B200 (Blackwell DC)
+            (12, 0): 256  # RTX 5090 (Blackwell Consumer)
         }
 
         key = (props.major, props.minor)
@@ -347,7 +370,9 @@ class NVIDIAAdapter(VendorAdapter):
                 return bandwidth
 
         # Fallback estimation based on memory size and compute capability
-        if props.major >= 9:
+        if props.major >= 10:
+            return 8000  # Blackwell-class (8 TB/s HBM3e)
+        elif props.major >= 9:
             return 2000  # H100-class
         elif props.major >= 8:
             return 1000  # A100-class
@@ -416,7 +441,9 @@ class NVIDIAAdapter(VendorAdapter):
         # High-end cards typically have NVLink
         if generation_info['nvlink_support']:
             # Check if it's likely a high-end card
-            if 'A100' in props.name or 'H100' in props.name or 'V100' in props.name:
+            if any(gpu in props.name for gpu in ['B100', 'B200', 'GB200', 'GB300']):
+                return "NVLink 5"
+            elif 'A100' in props.name or 'H100' in props.name or 'V100' in props.name:
                 return "NVLink"
             elif props.multi_processor_count > 80:  # High SM count suggests data center GPU
                 return "NVLink"
@@ -490,6 +517,22 @@ class NVIDIAAdapter(VendorAdapter):
                 'kernel_optimizations': ['tensor_core_v4', 'fp8_operations', 'thread_block_clusters', 'dpx_instructions'],
                 'memory_optimizations': ['hbm3_optimization', 'distributed_shared_memory', 'async_transaction_barrier'],
                 'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_90']
+            })
+
+        elif generation_info['generation'] == 'Blackwell_DC':
+            optimizations.update({
+                'recommended_precisions': ['FP4', 'FP8', 'TF32', 'BF16', 'FP16', 'INT8', 'Sparsity_2_4'],
+                'kernel_optimizations': ['tensor_core_v5', 'fp4_operations', 'fp8_operations', 'thread_block_clusters', 'confidential_computing'],
+                'memory_optimizations': ['hbm3e_optimization', 'nvlink5_1800gbps', 'distributed_shared_memory'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_100']
+            })
+
+        elif generation_info['generation'] == 'Blackwell_Consumer':
+            optimizations.update({
+                'recommended_precisions': ['FP8', 'TF32', 'BF16', 'FP16', 'INT8', 'Sparsity_2_4'],
+                'kernel_optimizations': ['tensor_core_v5', 'fp8_operations', 'rt_core_v4', 'dlss_4'],
+                'memory_optimizations': ['gddr7_optimization', 'l2_cache_tuning'],
+                'compilation_flags': ['-use_fast_math', '-O3', '--gpu-architecture=sm_120']
             })
 
         return optimizations
