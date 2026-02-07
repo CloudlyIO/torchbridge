@@ -5,6 +5,8 @@ This module consolidates all configuration classes into a unified system,
 replacing the scattered 36+ config classes throughout the codebase.
 """
 
+import os
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -48,7 +50,8 @@ class NVIDIAArchitecture(Enum):
     AMPERE = "ampere"     # RTX 3000/A100
     ADA = "ada"           # RTX 4000 series
     HOPPER = "hopper"     # H100/H200
-    BLACKWELL = "blackwell"  # B100/B200
+    BLACKWELL_DC = "blackwell_dc"           # B100/B200/GB200 (sm_100, cc 10.0)
+    BLACKWELL_CONSUMER = "blackwell_consumer"   # RTX 5090/5080 (sm_120, cc 12.0)
 
 
 class TPUVersion(Enum):
@@ -234,9 +237,16 @@ class NVIDIAConfig:
             self.architecture = self._detect_architecture()
 
         # Configure FP8 based on architecture
-        if self.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+        if self.architecture in [
+            NVIDIAArchitecture.HOPPER,
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        ]:
             self.fp8_enabled = True
-            self.tensor_core_version = 4
+            self.tensor_core_version = 5 if self.architecture in [
+                NVIDIAArchitecture.BLACKWELL_DC,
+                NVIDIAArchitecture.BLACKWELL_CONSUMER,
+            ] else 4
         elif self.architecture == NVIDIAArchitecture.AMPERE:
             self.fp8_enabled = False  # A100 doesn't support FP8
             self.tensor_core_version = 3
@@ -257,9 +267,13 @@ class NVIDIAConfig:
             if any(name in device_name for name in ["H100", "H200"]):
                 return NVIDIAArchitecture.HOPPER
 
-            # B100/B200 (Blackwell)
-            if any(name in device_name for name in ["B100", "B200"]):
-                return NVIDIAArchitecture.BLACKWELL
+            # Blackwell Data Center (B100/B200/GB200/GB300)
+            if any(name in device_name for name in ["B100", "B200", "GB200", "GB300"]):
+                return NVIDIAArchitecture.BLACKWELL_DC
+
+            # Blackwell Consumer (RTX 5090/5080)
+            if any(name in device_name for name in ["RTX 50", "RTX 5090", "RTX 5080"]):
+                return NVIDIAArchitecture.BLACKWELL_CONSUMER
 
             # A100 (Ampere)
             if "A100" in device_name:
@@ -282,7 +296,11 @@ class NVIDIAConfig:
                 return NVIDIAArchitecture.VOLTA
 
             # Fallback based on compute capability
-            if device_props.major >= 9:
+            if device_props.major >= 12:
+                return NVIDIAArchitecture.BLACKWELL_CONSUMER
+            elif device_props.major >= 10:
+                return NVIDIAArchitecture.BLACKWELL_DC
+            elif device_props.major >= 9:
                 return NVIDIAArchitecture.HOPPER
             elif device_props.major >= 8:
                 return NVIDIAArchitecture.AMPERE
@@ -487,7 +505,7 @@ class AMDConfig:
     hip_kernel_cache_enabled: bool = True
     hip_kernel_cache_size: int = 100
     hip_compiler_cache_size: int = 100
-    hip_compiler_cache_dir: str = "/tmp/hip_cache"
+    hip_compiler_cache_dir: str = os.path.join(tempfile.gettempdir(), "hip_cache")
 
     # rocBLAS settings
     rocblas_enabled: bool = True

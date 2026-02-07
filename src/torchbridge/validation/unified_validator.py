@@ -899,7 +899,11 @@ class UnifiedValidator:
 
             # Check FP8 settings
             if nvidia_config.fp8_enabled:
-                if nvidia_config.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+                if nvidia_config.architecture in [
+                    NVIDIAArchitecture.HOPPER,
+                    NVIDIAArchitecture.BLACKWELL_DC,
+                    NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                ]:
                     self._add_success("FP8 training enabled for H100/Blackwell")
                 else:
                     self._add_warning("FP8 enabled but architecture may not support it")
@@ -957,7 +961,11 @@ class UnifiedValidator:
             from ..core.config import NVIDIAArchitecture
 
             if nvidia_config.fp8_enabled:
-                if nvidia_config.architecture in [NVIDIAArchitecture.HOPPER, NVIDIAArchitecture.BLACKWELL]:
+                if nvidia_config.architecture in [
+                    NVIDIAArchitecture.HOPPER,
+                    NVIDIAArchitecture.BLACKWELL_DC,
+                    NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                ]:
                     self._add_success("FP8 supported on current architecture")
 
                     # Check FP8 recipe
