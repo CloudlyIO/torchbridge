@@ -4,7 +4,6 @@ Shared utility functions for TorchBridge demos.
 This module provides common utility functions used across demo scripts,
 with TorchBridge HAL integration for backend-agnostic device handling.
 
-Version: 0.5.0
 """
 
 import argparse
@@ -30,33 +29,27 @@ def print_section(title: str, width: int = 70) -> None:
     print(f"  {title}")
     print(f"{'=' * width}")
 
-
 def print_subsection(title: str, width: int = 50) -> None:
     """Print a formatted subsection header."""
     print(f"\n{'-' * width}")
     print(f"  {title}")
     print(f"{'-' * width}")
 
-
 def print_success(message: str) -> None:
     """Print a success message with checkmark."""
     print(f"✅ {message}")
-
 
 def print_info(message: str) -> None:
     """Print an info message."""
     print(f"ℹ️  {message}")
 
-
 def print_warning(message: str) -> None:
     """Print a warning message."""
     print(f"⚠️  {message}")
 
-
 def print_error(message: str) -> None:
     """Print an error message."""
     print(f"❌ {message}")
-
 
 def print_metrics(metrics: dict[str, Any], indent: int = 3) -> None:
     """Print a dictionary of metrics in a formatted way."""
@@ -69,7 +62,6 @@ def print_metrics(metrics: dict[str, Any], indent: int = 3) -> None:
             print_metrics(value, indent + 3)
         else:
             print(f"{prefix}{key}: {value}")
-
 
 # ============================================================================
 # Device Utilities
@@ -111,7 +103,6 @@ def get_device(prefer: str = "auto") -> torch.device:
         return torch.device("cpu")
     return torch.device("cpu")
 
-
 def get_device_info(device: torch.device | None = None) -> dict[str, Any]:
     """
     Get detailed information about a device.
@@ -152,7 +143,6 @@ def get_device_info(device: torch.device | None = None) -> dict[str, Any]:
 
     return info
 
-
 def synchronize(device: torch.device | None = None) -> None:
     """
     Synchronize device for accurate timing measurements.
@@ -176,7 +166,6 @@ def synchronize(device: torch.device | None = None) -> None:
             torch.mps.synchronize()
     # CPU doesn't need synchronization
 
-
 def get_memory_allocated(device: torch.device | None = None) -> int:
     """
     Get memory allocated on device in bytes.
@@ -195,7 +184,6 @@ def get_memory_allocated(device: torch.device | None = None) -> int:
     elif device.type == "xpu" and hasattr(torch, "xpu"):
         return torch.xpu.memory_allocated(device)
     return 0  # CPU memory tracking not supported this way
-
 
 # ============================================================================
 # Formatting Utilities
@@ -217,7 +205,6 @@ def format_memory(bytes_value: int) -> str:
         bytes_value /= 1024
     return f"{bytes_value:.2f} PB"
 
-
 def format_time(milliseconds: float) -> str:
     """
     Format milliseconds to human-readable string.
@@ -234,7 +221,6 @@ def format_time(milliseconds: float) -> str:
         return f"{milliseconds:.2f} ms"
     else:
         return f"{milliseconds / 1000:.2f} s"
-
 
 # ============================================================================
 # Argument Parsing

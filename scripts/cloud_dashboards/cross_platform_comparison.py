@@ -10,7 +10,6 @@ Features:
 - Generate comparison reports and visualizations
 - Detect cross-platform inconsistencies
 
-Version: 0.3.7
 """
 
 import json
@@ -21,7 +20,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # Data Classes
@@ -86,7 +84,6 @@ class PlatformMetrics:
             "timestamp": self.timestamp.isoformat(),
         }
 
-
 @dataclass
 class ComparisonMetric:
     """A single comparison metric between two platforms."""
@@ -97,7 +94,6 @@ class ComparisonMetric:
     difference_pct: float  # (platform_b - platform_a) / platform_a * 100
     winner: str  # "platform_a", "platform_b", or "tie"
     significance: str  # "significant", "marginal", "none"
-
 
 @dataclass
 class ComparisonReport:
@@ -174,7 +170,6 @@ class ComparisonReport:
         ])
 
         return "\n".join(lines)
-
 
 # ============================================================================
 # Cross-Platform Comparison
@@ -365,7 +360,6 @@ class CrossPlatformComparison:
         """Get list of available platform names."""
         return list(self.platforms.keys())
 
-
 # ============================================================================
 # Convenience Functions
 # ============================================================================
@@ -392,7 +386,6 @@ def generate_comparison_report(
     comparison.add_from_benchmark_results(platform_a_results, platform_a_name)
     comparison.add_from_benchmark_results(platform_b_results, platform_b_name)
     return comparison.generate_report(platform_a_name, platform_b_name)
-
 
 def create_comparison_chart(
     report: ComparisonReport,

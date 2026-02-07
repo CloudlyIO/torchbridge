@@ -18,7 +18,6 @@ Key Features:
 
 Inherits from BaseMemoryManager for shared functionality.
 
-Version: 0.5.3
 """
 
 import gc
@@ -38,7 +37,6 @@ from .amd_exceptions import ROCmMemoryError
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class AMDMemoryStats:
     """Extended memory statistics for AMD GPU with fragmentation tracking."""
@@ -51,7 +49,6 @@ class AMDMemoryStats:
     num_allocations: int
     num_frees: int
     fragmentation_percent: float = 0.0
-
 
 class AMDMemoryManager(BaseMemoryManager):
     """
@@ -407,6 +404,5 @@ class AMDMemoryManager(BaseMemoryManager):
             f"free={stats['free_mb']:.2f}MB, "
             f"fragmentation={stats['fragmentation_percent']:.1f}%)"
         )
-
 
 __all__ = ["AMDMemoryManager", "AMDMemoryStats"]

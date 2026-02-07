@@ -4,7 +4,6 @@ Result Uploader for TorchBridge Cloud Testing.
 This module provides utilities for uploading test results and benchmarks
 to cloud storage (S3, GCS) for persistence and analysis.
 
-Version: 0.3.7
 """
 
 import json
@@ -18,7 +17,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # Base Uploader
 # ============================================================================
@@ -31,7 +29,6 @@ class UploadResult:
     url: str | None = None
     error_message: str | None = None
     bytes_uploaded: int = 0
-
 
 class ResultUploader(ABC):
     """Abstract base class for result uploaders."""
@@ -69,7 +66,6 @@ class ResultUploader(ABC):
     def download_json(self, path: str) -> dict[str, Any] | None:
         """Download JSON data."""
         pass
-
 
 # ============================================================================
 # S3 Uploader
@@ -270,7 +266,6 @@ class S3Uploader(ResultUploader):
             logger.error(f"Failed to download from S3: {e}")
             return None
 
-
 # ============================================================================
 # GCS Uploader
 # ============================================================================
@@ -457,7 +452,6 @@ class GCSUploader(ResultUploader):
         except Exception as e:
             logger.error(f"Failed to download from GCS: {e}")
             return None
-
 
 # ============================================================================
 # Convenience Functions

@@ -6,7 +6,6 @@ High-level optimizer for NVIDIA GPU models with multiple optimization levels.
 Inherits from BaseOptimizer to provide a consistent interface across all
 hardware backends while implementing NVIDIA-specific optimizations.
 
-Version: 0.5.3
 """
 
 import logging
@@ -26,7 +25,6 @@ from .nvidia_backend import NVIDIABackend
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class NVIDIAOptimizationResult:
     """Results from NVIDIA model optimization (legacy format for backward compatibility)."""
@@ -37,7 +35,6 @@ class NVIDIAOptimizationResult:
     memory_stats: dict[str, Any]
     device_info: dict[str, Any]
     warnings: list[str]
-
 
 class NVIDIAOptimizer(BaseOptimizer):
     """

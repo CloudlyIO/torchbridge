@@ -11,7 +11,6 @@ all management subsystems:
 The original 38+ scattered Manager/Optimizer classes have been consolidated
 into three focused managers coordinated by UnifiedManager.
 
-Version: 0.3.11
 """
 
 import warnings
@@ -360,10 +359,8 @@ class UnifiedManager:
         for manager in self._managers.values():
             manager.shutdown()
 
-
 # Global unified manager instance for convenience
 default_manager: UnifiedManager | None = None
-
 
 def get_manager(config: TorchBridgeConfig | None = None) -> UnifiedManager:
     """Get the global unified manager."""
@@ -372,11 +369,9 @@ def get_manager(config: TorchBridgeConfig | None = None) -> UnifiedManager:
         default_manager = UnifiedManager(config)
     return default_manager
 
-
 def optimize_with_unified_manager(target: Any, **kwargs) -> Any:
     """Convenience function for unified optimization."""
     return get_manager().optimize(target, **kwargs)
-
 
 def reset_manager() -> None:
     """Reset the global manager."""

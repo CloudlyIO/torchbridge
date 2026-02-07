@@ -4,9 +4,7 @@ XLA Compatibility Layer for torch_xla 2.9.0+
 This module provides backward-compatible wrappers for deprecated
 torch_xla APIs, supporting both old (2.x) and new (2.9+) versions.
 
-Version: 0.5.3
 """
-
 
 import torch
 
@@ -29,7 +27,6 @@ def get_xla_device() -> torch.device:
         return xm.xla_device()
     except ImportError:
         return torch.device('cpu')
-
 
 def get_world_size() -> int:
     """
@@ -62,7 +59,6 @@ def get_world_size() -> int:
     except ImportError:
         return 1
 
-
 def get_ordinal() -> int:
     """
     Get process ordinal/rank (compatible with torch_xla 2.9+).
@@ -93,7 +89,6 @@ def get_ordinal() -> int:
     except ImportError:
         return 0
 
-
 def sync() -> None:
     """
     Synchronize XLA operations (compatible with torch_xla 2.9+).
@@ -112,7 +107,6 @@ def sync() -> None:
         xm.mark_step()
     except ImportError:
         pass
-
 
 def get_device_count() -> int:
     """
@@ -144,7 +138,6 @@ def get_device_count() -> int:
     except ImportError:
         return 0
 
-
 def rendezvous(tag: str) -> None:
     """
     Distributed rendezvous point (compatible with torch_xla 2.9+).
@@ -159,7 +152,6 @@ def rendezvous(tag: str) -> None:
     except ImportError:
         pass
 
-
 def is_xla_available() -> bool:
     """
     Check if XLA/TPU is available.
@@ -173,7 +165,6 @@ def is_xla_available() -> bool:
         return device.type == 'xla'
     except ImportError:
         return False
-
 
 def is_tpu_device() -> bool:
     """
@@ -218,7 +209,6 @@ def is_tpu_device() -> bool:
     except ImportError:
         return False
 
-
 def get_device_hw_type() -> str:
     """
     Get XLA device hardware type (compatible with torch_xla 2.9+).
@@ -249,7 +239,6 @@ def get_device_hw_type() -> str:
     except ImportError:
         return 'CPU'
 
-
 # Version info
 def get_torch_xla_version() -> str:
     """Get torch_xla version string."""
@@ -258,7 +247,6 @@ def get_torch_xla_version() -> str:
         return getattr(torch_xla, '__version__', 'unknown')
     except ImportError:
         return 'not installed'
-
 
 def get_torch_compile_backend() -> str | None:
     """
@@ -306,7 +294,6 @@ def get_torch_compile_backend() -> str | None:
 
     except ImportError:
         return None
-
 
 def is_torch_xla_2_9_plus() -> bool:
     """

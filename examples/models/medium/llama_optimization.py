@@ -22,13 +22,12 @@ Hardware requirements:
 Usage:
     python llama_optimization.py [--model meta-llama/Llama-2-7b-hf]
 
-Version: 0.5.3
 """
 
 import argparse
 import logging
 import time
-from typing import Dict, Any
+from typing import Any
 
 import torch
 
@@ -38,15 +37,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 def print_section(title: str) -> None:
     """Print a formatted section header."""
     print(f"\n{'='*70}")
     print(f"  {title}")
     print(f"{'='*70}\n")
 
-
-def check_dependencies() -> Dict[str, bool]:
+def check_dependencies() -> dict[str, bool]:
     """Check if required dependencies are installed."""
     deps = {}
 
@@ -69,18 +66,17 @@ def check_dependencies() -> Dict[str, bool]:
     try:
         import bitsandbytes
         deps["bitsandbytes"] = True
-        logger.info(f"bitsandbytes available for quantization")
+        logger.info("bitsandbytes available for quantization")
     except ImportError:
         deps["bitsandbytes"] = False
         logger.warning("bitsandbytes not installed (optional, for quantization)")
 
     return deps
 
-
-def estimate_memory(model_name: str, quantization: str = "none") -> Dict[str, float]:
+def estimate_memory(model_name: str, quantization: str = "none") -> dict[str, float]:
     """Estimate memory requirements."""
     try:
-        from torchbridge.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
+        from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
 
         quant_map = {
             "none": QuantizationMode.NONE,
@@ -113,22 +109,17 @@ def estimate_memory(model_name: str, quantization: str = "none") -> Dict[str, fl
 
         return {"model_memory_gb": base, "total_gb": base * 1.1}
 
-
 def run_with_torchbridge(
     model_name: str,
     quantization: str,
     prompt: str,
     max_new_tokens: int
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run optimized inference with TorchBridge."""
     print_section(f"TorchBridge Optimized - {model_name}")
 
     try:
-        from torchbridge.models.llm import (
-            LLMOptimizer,
-            LLMConfig,
-            QuantizationMode
-        )
+        from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
 
         quant_map = {
             "none": QuantizationMode.NONE,
@@ -156,7 +147,7 @@ def run_with_torchbridge(
             print(f"Available VRAM: {available:.1f} GB")
 
             if memory_est['total_gb'] > available * 0.9:
-                print(f"WARNING: Model may not fit in memory!")
+                print("WARNING: Model may not fit in memory!")
                 if quantization == "none":
                     print("Consider using --quantization int8 or int4")
 
@@ -164,7 +155,7 @@ def run_with_torchbridge(
         model, tokenizer = optimizer.optimize(model_name)
 
         opt_info = optimizer.get_optimization_info()
-        print(f"\nOptimization applied:")
+        print("\nOptimization applied:")
         print(f"  Device: {opt_info['device']}")
         print(f"  Dtype: {opt_info['dtype']}")
         print(f"  Backend: {opt_info['backend']}")
@@ -207,7 +198,7 @@ def run_with_torchbridge(
 
         print(f"\nGenerated ({tokens_generated} tokens in {generation_time:.2f}s):")
         print(f"  {generated_text[:500]}...")
-        print(f"\nPerformance:")
+        print("\nPerformance:")
         print(f"  Time: {generation_time:.2f}s")
         print(f"  Tokens/sec: {tokens_generated/generation_time:.1f}")
 
@@ -226,7 +217,6 @@ def run_with_torchbridge(
     except Exception as e:
         logger.error(f"Generation failed: {e}")
         return {"error": str(e)}
-
 
 def run_memory_demo():
     """Demonstrate memory estimation for different configurations."""
@@ -247,7 +237,6 @@ def run_memory_demo():
         for quant in quantizations:
             est = estimate_memory(model_id, quant)
             print(f"{name:<15} {quant:<8} {est['total_gb']:<12.1f}")
-
 
 def run_interactive_demo(model, tokenizer, device):
     """Run interactive chat demo."""
@@ -283,7 +272,6 @@ def run_interactive_demo(model, tokenizer, device):
 
         print(f"\nAssistant: {response}")
         print(f"({tokens} tokens, {gen_time:.2f}s, {tokens/gen_time:.1f} tok/s)")
-
 
 def main():
     """Main entry point."""
@@ -330,7 +318,7 @@ def main():
         return
 
     # Print system info
-    print(f"\nSystem Info:")
+    print("\nSystem Info:")
     print(f"  PyTorch: {torch.__version__}")
     print(f"  CUDA available: {torch.cuda.is_available()}")
     if torch.cuda.is_available():
@@ -357,7 +345,6 @@ def main():
         run_memory_demo()
 
     print_section("Complete!")
-
 
 if __name__ == "__main__":
     main()

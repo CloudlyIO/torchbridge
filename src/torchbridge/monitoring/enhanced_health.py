@@ -10,8 +10,6 @@ Extends the base health monitoring with:
 - Auto-recovery recommendations
 - Integration with structured logging
 
-Version: 0.5.3
-
 Example:
     ```python
     from torchbridge.monitoring import EnhancedHealthMonitor
@@ -59,7 +57,6 @@ from .structured_logging import correlation_context, get_logger
 
 logger = get_logger(__name__)
 
-
 class ResourceType(Enum):
     """Types of system resources to monitor."""
     CPU = "cpu"
@@ -68,14 +65,12 @@ class ResourceType(Enum):
     GPU_MEMORY = "gpu_memory"
     NETWORK = "network"
 
-
 class HealthTrend(Enum):
     """Health trend indicators."""
     IMPROVING = "improving"
     STABLE = "stable"
     DEGRADING = "degrading"
     CRITICAL = "critical"
-
 
 @dataclass
 class ResourceThresholds:
@@ -91,7 +86,6 @@ class ResourceThresholds:
     response_time_warning_ms: float = 100.0
     response_time_critical_ms: float = 500.0
 
-
 @dataclass
 class HealthHistoryEntry:
     """Single entry in health history."""
@@ -99,7 +93,6 @@ class HealthHistoryEntry:
     status: HealthStatus
     components: dict[str, HealthStatus]
     metrics: dict[str, float]
-
 
 @dataclass
 class PredictiveHealthReport:
@@ -125,7 +118,6 @@ class PredictiveHealthReport:
             "analysis_window_minutes": self.analysis_window_minutes,
             "data_points": self.data_points,
         }
-
 
 class SystemResourceMonitor:
     """Monitors system resources (CPU, memory, disk)."""
@@ -222,7 +214,6 @@ class SystemResourceMonitor:
         except Exception as e:
             logger.error(f"Failed to get process info: {e}")
             return None
-
 
 class EnhancedHealthMonitor(HealthMonitor):
     """
@@ -773,7 +764,6 @@ class EnhancedHealthMonitor(HealthMonitor):
 
         return recommendations
 
-
 def create_enhanced_health_monitor(
     model: nn.Module | None = None,
     model_name: str = "model",
@@ -795,7 +785,6 @@ def create_enhanced_health_monitor(
         model_name=model_name,
         enable_predictive=enable_predictive,
     )
-
 
 # Export all public APIs
 __all__ = [

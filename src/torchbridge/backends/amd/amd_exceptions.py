@@ -15,7 +15,6 @@ Exception Hierarchy:
   - AMDConfigurationError: Configuration validation errors
   - MatrixCoreError: Matrix core operation errors
 
-Version: 0.3.7
 """
 
 import logging
@@ -35,11 +34,9 @@ from torchbridge.backends.base_exceptions import (
 
 logger = logging.getLogger(__name__)
 
-
 class AMDBackendError(BackendError):
     """Base exception for all AMD backend errors."""
     pass
-
 
 class ROCmNotAvailableError(DeviceNotAvailableError):
     """Raised when ROCm runtime is not available."""
@@ -47,13 +44,11 @@ class ROCmNotAvailableError(DeviceNotAvailableError):
     def __init__(self, message: str = "ROCm runtime not available"):
         super().__init__("ROCm", message)
 
-
 class HIPCompilationError(KernelCompilationError):
     """Raised when HIP kernel compilation fails."""
 
     def __init__(self, kernel_name: str, error_message: str):
         super().__init__(kernel_name, "HIP", error_message)
-
 
 class ROCmMemoryError(MemoryError):
     """Raised when GPU memory operations fail."""
@@ -66,14 +61,12 @@ class ROCmMemoryError(MemoryError):
             "available_mb": available_mb
         })
 
-
 class MIOpenError(AMDBackendError):
     """Raised when MIOpen operations fail."""
 
     def __init__(self, operation: str, error_message: str):
         message = f"MIOpen {operation} failed: {error_message}"
         super().__init__(message, {"operation": operation, "error": error_message})
-
 
 class ROCBLASError(AMDBackendError):
     """Raised when rocBLAS operations fail."""
@@ -82,20 +75,17 @@ class ROCBLASError(AMDBackendError):
         message = f"rocBLAS {operation} failed: {error_message}"
         super().__init__(message, {"operation": operation, "error": error_message})
 
-
 class AMDDeviceError(DeviceError):
     """Raised when device management operations fail."""
 
     def __init__(self, device_id: int, operation: str, error_message: str):
         super().__init__(device_id, operation, error_message)
 
-
 class AMDConfigurationError(ConfigurationError):
     """Raised when configuration validation fails."""
 
     def __init__(self, parameter: str, value: Any, reason: str):
         super().__init__(parameter, value, reason)
-
 
 class MatrixCoreError(AMDBackendError):
     """Raised when Matrix Core operations fail."""
@@ -108,20 +98,17 @@ class MatrixCoreError(AMDBackendError):
             "error": error_message
         })
 
-
 class AMDOptimizationError(OptimizationError):
     """Raised when optimization operations fail."""
 
     def __init__(self, optimization_level: str, error_message: str):
         super().__init__(optimization_level, error_message)
 
-
 class HIPKernelError(KernelError):
     """Raised when HIP kernel execution fails."""
 
     def __init__(self, kernel_name: str, error_code: int, error_message: str):
         super().__init__(kernel_name, error_code, error_message)
-
 
 __all__ = [
     "AMDBackendError",

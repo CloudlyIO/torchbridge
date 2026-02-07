@@ -11,7 +11,6 @@ Features:
 - Cost tracking and optimization
 - TPU pod support for distributed testing
 
-Version: 0.3.7
 """
 
 import logging
@@ -24,7 +23,6 @@ from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # Configuration Classes
@@ -50,7 +48,6 @@ class GCPMachineType(Enum):
     # CPU (fallback)
     N2_STANDARD_32 = "n2-standard-32"   # 32 vCPU, 128GB RAM
 
-
 class TPUType(Enum):
     """Supported TPU types."""
     V5E_1 = "v5litepod-1"      # 1 chip
@@ -60,14 +57,12 @@ class TPUType(Enum):
     V5P_8 = "v5p-8"            # 8 chips (v5p)
     V6E_1 = "v6e-1"            # 1 chip (when available)
 
-
 class GCPRegion(Enum):
     """GCP regions with GPU/TPU availability."""
     US_CENTRAL1 = "us-central1"
     US_WEST1 = "us-west1"
     US_EAST1 = "us-east1"
     EUROPE_WEST4 = "europe-west4"
-
 
 class GCPZone(Enum):
     """GCP zones (region + zone letter)."""
@@ -78,7 +73,6 @@ class GCPZone(Enum):
     US_WEST1_B = "us-west1-b"
     US_EAST1_B = "us-east1-b"
     US_EAST1_C = "us-east1-c"
-
 
 @dataclass
 class GCPInstanceConfig:
@@ -105,7 +99,6 @@ class GCPInstanceConfig:
         }
         self.labels = {**default_labels, **self.labels}
 
-
 @dataclass
 class TPUConfig:
     """Configuration for a GCP TPU."""
@@ -125,7 +118,6 @@ class TPUConfig:
             "managed-by": "cloud-testing-harness",
         }
         self.labels = {**default_labels, **self.labels}
-
 
 @dataclass
 class GCPTestResult:
@@ -167,7 +159,6 @@ class GCPTestResult:
             "success": self.success,
             "error_message": self.error_message,
         }
-
 
 # ============================================================================
 # GCP Test Harness
@@ -424,7 +415,6 @@ class GCPTestHarness:
             "cpu_utilization_avg": 0.0,
         }
 
-
 # ============================================================================
 # TPU Test Harness
 # ============================================================================
@@ -554,7 +544,6 @@ class TPUTestHarness:
         finally:
             if self.tpu_name and self.config.preemptible:
                 self.delete_tpu()
-
 
 # ============================================================================
 # Factory Functions

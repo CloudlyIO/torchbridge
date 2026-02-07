@@ -4,7 +4,6 @@ Test Suite for LLM Integration (v0.5.3)
 Tests for Llama, Mistral, Phi optimization wrappers and KV-cache.
 Validates optimization, quantization, and backend integration.
 
-Version: 0.5.3
 """
 
 import pytest
@@ -34,7 +33,6 @@ class TestLLMTypes:
         assert LLMType.MISTRAL.value == "mistral"
         assert LLMType.PHI.value == "phi"
 
-
 class TestQuantizationMode:
     """Tests for QuantizationMode enum."""
 
@@ -57,7 +55,6 @@ class TestQuantizationMode:
         assert QuantizationMode.INT4.value == "int4"
         assert QuantizationMode.FP8.value == "fp8"
         assert QuantizationMode.BNBT4.value == "bnb_4bit"
-
 
 class TestGenerationConfig:
     """Tests for GenerationConfig dataclass."""
@@ -89,7 +86,6 @@ class TestGenerationConfig:
         assert config.max_new_tokens == 512
         assert config.temperature == 0.9
         assert config.do_sample is False
-
 
 class TestLLMConfig:
     """Tests for LLMConfig dataclass."""
@@ -134,7 +130,6 @@ class TestLLMConfig:
         assert config.model_type == LLMType.MISTRAL
         assert config.quantization == QuantizationMode.INT8
         assert config.max_sequence_length == 8192
-
 
 class TestLLMOptimizer:
     """Tests for LLMOptimizer class."""
@@ -264,7 +259,6 @@ class TestLLMOptimizer:
         detected = optimizer._detect_model_type(model)
         assert detected == LLMType.PHI
 
-
 class TestKVCacheManager:
     """Tests for KVCacheManager class."""
 
@@ -386,7 +380,6 @@ class TestKVCacheManager:
         assert "num_layers" in usage
         assert usage["cache_memory_mb"] > 0
 
-
 class TestPagedKVCache:
     """Tests for PagedKVCache class."""
 
@@ -469,7 +462,6 @@ class TestPagedKVCache:
         assert "utilization" in usage
         assert usage["used_pages"] == 2
         assert usage["free_pages"] == 6
-
 
 class TestSlidingWindowCache:
     """Tests for SlidingWindowCache class."""
@@ -564,7 +556,6 @@ class TestSlidingWindowCache:
 
         assert mask.shape == (5, 25)  # seq_len x (cache_len + seq_len)
 
-
 class TestFactoryFunction:
     """Tests for create_optimized_llm factory function."""
 
@@ -591,7 +582,6 @@ class TestFactoryFunction:
                 quantization=quant_map.get(quant_str, QuantizationMode.NONE)
             )
             assert config.quantization == quant_enum
-
 
 class TestModuleExports:
     """Tests for module exports."""
@@ -635,7 +625,6 @@ class TestModuleExports:
         assert LLMOptimizer is not None
         assert LLMConfig is not None
         assert create_optimized_llm is not None
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -7,7 +7,6 @@ and integration with PyTorch/XLA for Google Cloud TPUs.
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends.
 
-Version: 0.5.3
 """
 
 import logging
@@ -32,7 +31,6 @@ from . import xla_compat
 from .cache_utils import LRUCache
 
 logger = logging.getLogger(__name__)
-
 
 class TPUBackend(BaseBackend):
     """
