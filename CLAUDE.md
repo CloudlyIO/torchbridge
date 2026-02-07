@@ -1,127 +1,162 @@
 # Claude Code Instructions for TorchBridge
 
-This file contains instructions for Claude Code to remember how to work with this repository.
+**READ THIS FILE FIRST WHEN WORKING ON THIS REPO.**
 
-## Cloud Validation - HOW TO RUN
+This file contains permanent configuration and instructions that Claude must follow.
 
-**IMPORTANT: When asked to run cloud validation, use these commands:**
+---
 
-### Quick Validation (AWS + GCP spot instances)
+## Cloud Validation - EXACT COMMANDS
+
+### AWS CUDA (A10G) - WORKING CONFIG
 
 ```bash
-# Run validation on AWS g5.xlarge (A10G) and GCP g2-standard-4 (L4)
-python scripts/validation/run_cloud_validation.py --provider all --tier spot
+# Region: us-east-1 (NOT us-west-2)
+# Key: shahmod-gpu-key-east1
+# Zone: us-east-1d
+
+# Find latest Deep Learning AMI
+AMI_ID=$(aws ec2 describe-images \
+  --region us-east-1 \
+  --owners amazon \
+  --filters "Name=name,Values=*Deep Learning Base OSS Nvidia*Ubuntu*" \
+  --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' \
+  --output text)
+
+# Launch instance
+INSTANCE_ID=$(aws ec2 run-instances \
+  --region us-east-1 \
+  --image-id $AMI_ID \
+  --instance-type g5.xlarge \
+  --key-name shahmod-gpu-key-east1 \
+  --placement AvailabilityZone=us-east-1d \
+  --instance-initiated-shutdown-behavior terminate \
+  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=torchbridge-val},{Key=Project,Value=TorchBridge}]' \
+  --query 'Instances[0].InstanceId' \
+  --output text)
+
+# Wait and get IP
+aws ec2 wait instance-running --region us-east-1 --instance-ids $INSTANCE_ID
+PUBLIC_IP=$(aws ec2 describe-instances --region us-east-1 --instance-ids $INSTANCE_ID \
+  --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+
+# SSH and run validation
+ssh -i ~/.ssh/shahmod-gpu-key-east1.pem ubuntu@$PUBLIC_IP
+
+# ALWAYS TERMINATE AFTER VALIDATION
+aws ec2 terminate-instances --region us-east-1 --instance-ids $INSTANCE_ID
 ```
 
-### AWS Only
+### GCP CUDA (T4/L4) - WORKING CONFIG
 
 ```bash
-# Single instance (A10G)
-python scripts/validation/run_cloud_validation.py --provider aws --instance-type g5.xlarge
+# Project: shahmod-kernel-pytorch
+# Zone: us-central1-a
 
-# Multiple instances
-python scripts/validation/run_cloud_validation.py --provider aws --tier spot
+# Launch T4 instance
+gcloud compute instances create tb-val-$(date +%s) \
+  --zone=us-central1-a \
+  --machine-type=n1-standard-4 \
+  --accelerator=type=nvidia-tesla-t4,count=1 \
+  --maintenance-policy=TERMINATE \
+  --image-family=pytorch-2-7-cu128-ubuntu-2404-nvidia-570 \
+  --image-project=deeplearning-platform-release \
+  --boot-disk-size=100GB \
+  --preemptible
 
-# Full validation (includes A100)
-python scripts/validation/run_cloud_validation.py --provider aws --tier full
+# ALWAYS TERMINATE AFTER VALIDATION
+gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --quiet
 ```
 
-### GCP Only
+### AMD ROCm (MI300X) - AMD Developer Cloud
+
+Access: https://www.amd.com/en/developer/resources/ai-cloud.html
+- $100 credits via AI Developer Program
+- MI300X instances with 192GB HBM3
 
 ```bash
-# Single instance (T4)
-python scripts/validation/run_cloud_validation.py --provider gcp --machine-type n1-standard-4
-
-# L4 GPU
-python scripts/validation/run_cloud_validation.py --provider gcp --machine-type g2-standard-4
-
-# A100 GPU
-python scripts/validation/run_cloud_validation.py --provider gcp --machine-type a2-highgpu-1g
-```
-
-### AMD ROCm (MI300X)
-
-```bash
-# Use AMD Developer Cloud script
+# After getting access, run:
 ./scripts/cloud_testing/amd_cloud/run_validation.sh
 ```
 
-### Intel XPU (DevCloud)
+### Validation Script on Any Instance
 
 ```bash
-# Submit to Intel DevCloud
-ssh devcloud 'cd torchbridge && qsub -I -l nodes=1:gpu:ppn=2 scripts/cloud_testing/intel_devcloud/run_validation.sh'
+git clone https://github.com/CloudlyIO/torchbridge.git
+cd torchbridge
+pip install --break-system-packages torch transformers -q
+python3 examples/bert_squad/validate_cross_backend.py --tolerance 1e-4
 ```
 
-### BERT SQuAD Specific
+---
+
+## AWS Configuration Details
+
+| Setting | Value |
+|---------|-------|
+| Region | **us-east-1** (NOT us-west-2) |
+| Zone | us-east-1d |
+| Key Pair | shahmod-gpu-key-east1 |
+| Key File | ~/.ssh/shahmod-gpu-key-east1.pem |
+| AMI | Deep Learning Base OSS Nvidia Ubuntu (latest) |
+| Instance | g5.xlarge (A10G, 24GB) |
+
+## GCP Configuration Details
+
+| Setting | Value |
+|---------|-------|
+| Project | shahmod-kernel-pytorch |
+| Zone | us-central1-a |
+| Machine | n1-standard-4 + T4, or g2-standard-4 (L4) |
+| Image | pytorch-2-7-cu128-ubuntu-2404-nvidia-570 |
+| GPU Quota | 1 GPU (request increase for more) |
+
+---
+
+## Cost Efficiency - CRITICAL
+
+**ALWAYS terminate instances after validation:**
 
 ```bash
-# Run BERT cross-backend validation on cloud
+# Check running instances
+aws ec2 describe-instances --region us-east-1 \
+  --filters "Name=tag:Project,Values=TorchBridge" "Name=instance-state-name,Values=running" \
+  --query 'Reservations[].Instances[].[InstanceId,InstanceType]' --output table
+
+gcloud compute instances list --filter="name~tb-val"
+
+# Terminate ALL
+aws ec2 terminate-instances --region us-east-1 --instance-ids INSTANCE_ID
+gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --quiet
+```
+
+**Estimated costs:**
+- AWS g5.xlarge: ~$1.00/hour on-demand, ~$0.30/hour spot
+- GCP n1-standard-4 + T4: ~$0.35/hour preemptible
+- Always use preemptible/spot when possible
+
+---
+
+## Previous Successful Validations
+
+| Date | Backend | GPU | Result | Latency |
+|------|---------|-----|--------|---------|
+| 2026-02-07 | AWS CUDA | A10G | PASSED (diff 2.34e-06) | 7.4ms |
+| 2026-02-07 | GCP CUDA | T4 | PASSED (diff 2.52e-06) | 21.8ms |
+| 2026-01-28 | AWS CUDA | A10G | PASSED (66 tests) | - |
+
+---
+
+## Quick Reference
+
+```bash
+# Run cloud validation script (auto-detects backend)
+python scripts/validation/run_cloud_validation.py --provider aws --tier dev
+
+# BERT SQuAD specific
 cd examples/bert_squad
 ./scripts/cloud_validation.sh
 
-# Or trigger GitHub workflow
-gh workflow run "BERT SQuAD Cross-Backend Validation" -f backends="cuda,rocm,cpu"
+# List available instance types
+python scripts/validation/run_cloud_validation.py --list
 ```
-
-## Available Instance Types
-
-### AWS
-| Instance | GPU | Spot Price |
-|----------|-----|------------|
-| g5.xlarge | 1x A10G | ~$0.50/hr |
-| g5.2xlarge | 1x A10G | ~$0.80/hr |
-| p4d.24xlarge | 8x A100 | ~$15/hr |
-| p5.48xlarge | 8x H100 | ~$40/hr |
-
-### GCP
-| Machine | GPU | Notes |
-|---------|-----|-------|
-| n1-standard-4 | 1x T4 | Cheapest |
-| g2-standard-4 | 1x L4 | Good balance |
-| a2-highgpu-1g | 1x A100 | Premium |
-
-## Checking Results
-
-```bash
-# Results are saved to
-ls reports/cloud_validation/
-
-# Check instance status
-aws ec2 describe-instances --filters "Name=tag:Project,Values=TorchBridge" --query 'Reservations[].Instances[].[InstanceId,State.Name,InstanceType]'
-
-# GCP instances
-gcloud compute instances list --filter="name~tb-val"
-```
-
-## Dry Run (Preview without launching)
-
-```bash
-python scripts/validation/run_cloud_validation.py --provider all --tier spot --dry-run
-```
-
-## Cost Efficiency - IMPORTANT
-
-**Always terminate instances after validation:**
-
-```bash
-# List running instances
-gcloud compute instances list --filter="name~tb-val"
-aws ec2 describe-instances --filters "Name=tag:Project,Values=TorchBridge" "Name=instance-state-name,Values=running"
-
-# Terminate GCP instances
-gcloud compute instances delete INSTANCE_NAME --zone=ZONE --quiet
-
-# Terminate AWS instances
-aws ec2 terminate-instances --instance-ids INSTANCE_ID
-```
-
-**Prefer preemptible/spot instances** (auto-terminate, cheaper):
-- AWS: Uses spot by default (~70% cheaper)
-- GCP: Uses preemptible by default (~80% cheaper)
-
-## Credentials Required
-
-- AWS: `aws configure` (uses ~/.aws/credentials)
-- GCP: `gcloud auth login` (uses ~/.config/gcloud)
-- AWS Key Pair: `shahmod-gpu-key-east1` (or set AWS_KEY_NAME env var)
