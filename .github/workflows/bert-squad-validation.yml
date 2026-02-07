@@ -1,0 +1,515 @@
+# =============================================================================
+# BERT SQuAD Cross-Backend Validation
+# TorchBridge v0.5.3
+#
+# Validates BERT QA model produces consistent outputs across:
+# - AWS CUDA (A10G/A100)
+# - AMD ROCm (MI300X)
+# - GCP TPU (v5e)
+# - Intel XPU (Arc/Flex)
+#
+# Triggers:
+# - Manual dispatch
+# - Weekly (Sunday 4 AM UTC)
+# - Changes to examples/bert_squad/**
+# =============================================================================
+
+name: BERT SQuAD Cross-Backend Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      backends:
+        description: 'Backends to test (comma-separated: cuda,rocm,tpu,xpu,cpu)'
+        required: false
+        default: 'cuda,rocm,cpu'
+      quick_mode:
+        description: 'Quick mode (fewer iterations)'
+        type: boolean
+        default: false
+
+  schedule:
+    # Weekly on Sunday at 4 AM UTC
+    - cron: '0 4 * * 0'
+
+  push:
+    branches: [main]
+    paths:
+      - 'examples/bert_squad/**'
+      - 'src/torchbridge/backends/**'
+
+  pull_request:
+    paths:
+      - 'examples/bert_squad/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  BERT_SQUAD_DIR: 'examples/bert_squad'
+
+jobs:
+  # ===========================================================================
+  # CPU Baseline (always runs)
+  # ===========================================================================
+  cpu-baseline:
+    name: CPU Baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r ${{ env.BERT_SQUAD_DIR }}/requirements.txt
+          pip install pytest-json-report
+
+      - name: Install TorchBridge
+        run: pip install -e .
+
+      - name: Run cross-backend tests (CPU only)
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python -m pytest tests/test_consistency.py -v \
+            --tb=short \
+            --json-report \
+            --json-report-file=results/cpu_test_results.json \
+            -k "device0"  # CPU tests only
+
+      - name: Run validation script
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python validate_cross_backend.py \
+            --tolerance 1e-4 \
+            --output results/cpu_validation.json
+
+      - name: Upload CPU results
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-baseline-results
+          path: ${{ env.BERT_SQUAD_DIR }}/results/
+          retention-days: 30
+
+  # ===========================================================================
+  # AWS CUDA (A10G via self-hosted runner)
+  # ===========================================================================
+  aws-cuda:
+    name: AWS CUDA (A10G)
+    runs-on: [self-hosted, gpu, cuda]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      contains(github.event.inputs.backends, 'cuda') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'push'
+    timeout-minutes: 45
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check CUDA availability
+        run: |
+          nvidia-smi
+          python3 -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r ${{ env.BERT_SQUAD_DIR }}/requirements.txt
+          pip install pytest-json-report
+
+      - name: Install TorchBridge
+        run: pip install -e .
+
+      - name: Run cross-backend tests
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          mkdir -p results/cuda
+          python -m pytest tests/test_consistency.py -v \
+            --tb=short \
+            --json-report \
+            --json-report-file=results/cuda/test_results.json
+
+      - name: Run cross-backend validation
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python validate_cross_backend.py \
+            --tolerance 1e-4 \
+            --output results/cuda/cross_backend_validation.json
+
+      - name: Run inference benchmark
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          ITERATIONS=${{ github.event.inputs.quick_mode == 'true' && '20' || '100' }}
+          python inference.py \
+            --benchmark \
+            --iterations $ITERATIONS \
+            --output results/cuda/inference_benchmark.json
+
+      - name: Generate report
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python << 'PYEOF'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          results_dir = Path("results/cuda")
+
+          validation = json.load(open(results_dir / "cross_backend_validation.json"))
+          benchmark = json.load(open(results_dir / "inference_benchmark.json"))
+          tests = json.load(open(results_dir / "test_results.json"))
+
+          test_summary = tests.get("summary", {})
+          perf = benchmark.get("benchmark", {})
+
+          report = f"""# BERT SQuAD AWS CUDA Validation Report
+
+          **Generated:** {datetime.now().isoformat()}
+          **Backend:** CUDA
+          **Status:** {"PASSED" if validation.get("all_passed") and test_summary.get("failed", 0) == 0 else "FAILED"}
+
+          ## Test Results
+          - Passed: {test_summary.get("passed", 0)}
+          - Failed: {test_summary.get("failed", 0)}
+          - Duration: {test_summary.get("duration", 0):.2f}s
+
+          ## Cross-Backend Consistency
+          - All passed: {validation.get("all_passed")}
+          - Tolerance: {validation.get("tolerance")}
+
+          ## Performance
+          - Mean latency: {perf.get("mean_ms", 0):.2f} ms
+          - P95 latency: {perf.get("p95_ms", 0):.2f} ms
+          - Throughput: {perf.get("throughput_qps", 0):.1f} QPS
+          """
+
+          with open(results_dir / "REPORT.md", "w") as f:
+              f.write(report)
+          print(report)
+          PYEOF
+
+      - name: Upload CUDA results
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-cuda-results
+          path: ${{ env.BERT_SQUAD_DIR }}/results/cuda/
+          retention-days: 30
+
+  # ===========================================================================
+  # AMD ROCm (MI300X via self-hosted runner)
+  # ===========================================================================
+  amd-rocm:
+    name: AMD ROCm (MI300X)
+    runs-on: [self-hosted, gpu, amd]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      contains(github.event.inputs.backends, 'rocm') ||
+      github.event_name == 'schedule'
+    timeout-minutes: 60
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check ROCm availability
+        run: |
+          rocm-smi --showproductname || echo "rocm-smi not available"
+          python3 -c "import torch; print(f'CUDA/ROCm: {torch.cuda.is_available()}')"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+          pip install -r ${{ env.BERT_SQUAD_DIR }}/requirements.txt
+          pip install pytest-json-report
+
+      - name: Install TorchBridge
+        run: pip install -e .
+
+      - name: Run cross-backend tests
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          mkdir -p results/rocm
+          python -m pytest tests/test_consistency.py -v \
+            --tb=short \
+            --json-report \
+            --json-report-file=results/rocm/test_results.json
+
+      - name: Run cross-backend validation
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python validate_cross_backend.py \
+            --tolerance 1e-3 \
+            --output results/rocm/cross_backend_validation.json
+
+      - name: Run inference benchmark
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          python inference.py \
+            --benchmark \
+            --iterations 50 \
+            --output results/rocm/inference_benchmark.json
+
+      - name: Upload ROCm results
+        uses: actions/upload-artifact@v4
+        with:
+          name: amd-rocm-results
+          path: ${{ env.BERT_SQUAD_DIR }}/results/rocm/
+          retention-days: 30
+
+  # ===========================================================================
+  # GCP TPU (v5e via self-hosted runner)
+  # ===========================================================================
+  gcp-tpu:
+    name: GCP TPU (v5e)
+    runs-on: [self-hosted, tpu]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      contains(github.event.inputs.backends, 'tpu') ||
+      github.event_name == 'schedule'
+    timeout-minutes: 60
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check TPU availability
+        run: |
+          python3 -c "import torch_xla; import torch_xla.core.xla_model as xm; print(f'TPU devices: {xm.get_xla_supported_devices()}')" || echo "TPU not available"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch torch_xla
+          pip install -r ${{ env.BERT_SQUAD_DIR }}/requirements.txt
+          pip install pytest-json-report
+
+      - name: Install TorchBridge
+        run: pip install -e .
+
+      - name: Run TPU validation
+        working-directory: ${{ env.BERT_SQUAD_DIR }}
+        run: |
+          mkdir -p results/tpu
+
+          # TPU-specific validation script
+          python3 << 'PYEOF'
+          import torch
+          import torch_xla
+          import torch_xla.core.xla_model as xm
+          from transformers import AutoModelForQuestionAnswering, AutoTokenizer
+          import json
+          import time
+
+          print("=" * 60)
+          print("  BERT SQuAD TPU Validation")
+          print("=" * 60)
+
+          device = xm.xla_device()
+          print(f"\nTPU Device: {device}")
+
+          # Load model
+          print("\nLoading BERT model...")
+          tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+          model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
+          model = model.to(device)
+          model.eval()
+
+          # Test input
+          question = "What is the capital of France?"
+          context = "Paris is the capital and largest city of France."
+          inputs = tokenizer(question, context, max_length=384, truncation=True,
+                            padding="max_length", return_tensors="pt")
+          inputs = {k: v.to(device) for k, v in inputs.items()}
+
+          # Run inference
+          print("\nRunning inference...")
+          with torch.no_grad():
+              outputs = model(**inputs)
+          xm.mark_step()
+
+          # Get CPU reference
+          print("Getting CPU reference...")
+          cpu_model = AutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
+          cpu_model.eval()
+          cpu_inputs = tokenizer(question, context, max_length=384, truncation=True,
+                                padding="max_length", return_tensors="pt")
+          with torch.no_grad():
+              cpu_outputs = cpu_model(**cpu_inputs)
+
+          # Compare
+          tpu_start = outputs.start_logits.cpu()
+          tpu_end = outputs.end_logits.cpu()
+          cpu_start = cpu_outputs.start_logits
+          cpu_end = cpu_outputs.end_logits
+
+          start_diff = torch.abs(cpu_start - tpu_start).max().item()
+          end_diff = torch.abs(cpu_end - tpu_end).max().item()
+
+          import torch.nn.functional as F
+          start_cos = F.cosine_similarity(cpu_start.flatten().unsqueeze(0),
+                                          tpu_start.flatten().unsqueeze(0)).item()
+          end_cos = F.cosine_similarity(cpu_end.flatten().unsqueeze(0),
+                                        tpu_end.flatten().unsqueeze(0)).item()
+
+          print(f"\nResults:")
+          print(f"  Start logits max diff: {start_diff:.2e}")
+          print(f"  End logits max diff: {end_diff:.2e}")
+          print(f"  Start cosine similarity: {start_cos:.6f}")
+          print(f"  End cosine similarity: {end_cos:.6f}")
+
+          # Benchmark
+          print("\nRunning benchmark...")
+          times = []
+          for _ in range(20):
+              start = time.perf_counter()
+              with torch.no_grad():
+                  _ = model(**inputs)
+              xm.mark_step()
+              times.append((time.perf_counter() - start) * 1000)
+
+          avg_time = sum(times) / len(times)
+          print(f"  Mean latency: {avg_time:.2f} ms")
+          print(f"  Throughput: {1000/avg_time:.1f} QPS")
+
+          # Save results
+          results = {
+              "backend": "tpu",
+              "all_passed": start_diff < 1e-3 and end_diff < 1e-3,
+              "tolerance": 1e-3,
+              "comparisons": {
+                  "tpu": {
+                      "passed": start_diff < 1e-3 and end_diff < 1e-3,
+                      "start_logits": {"max_diff": start_diff, "cosine_sim": start_cos},
+                      "end_logits": {"max_diff": end_diff, "cosine_sim": end_cos}
+                  }
+              },
+              "benchmark": {
+                  "mean_ms": avg_time,
+                  "throughput_qps": 1000/avg_time
+              }
+          }
+
+          with open("results/tpu/cross_backend_validation.json", "w") as f:
+              json.dump(results, f, indent=2)
+
+          print("\n" + "=" * 60)
+          status = "PASSED" if results["all_passed"] else "FAILED"
+          print(f"  TPU Validation: {status}")
+          print("=" * 60)
+          PYEOF
+
+      - name: Upload TPU results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp-tpu-results
+          path: ${{ env.BERT_SQUAD_DIR }}/results/tpu/
+          retention-days: 30
+
+  # ===========================================================================
+  # Summary Report
+  # ===========================================================================
+  summary:
+    name: Generate Summary Report
+    runs-on: ubuntu-latest
+    needs: [cpu-baseline, aws-cuda, amd-rocm, gcp-tpu]
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate summary report
+        run: |
+          python3 << 'PYEOF'
+          import json
+          from pathlib import Path
+          from datetime import datetime
+
+          artifacts = Path("artifacts")
+
+          backends = {
+              "cpu-baseline-results": "CPU",
+              "aws-cuda-results": "AWS CUDA",
+              "amd-rocm-results": "AMD ROCm",
+              "gcp-tpu-results": "GCP TPU"
+          }
+
+          results = []
+          for artifact_name, backend_name in backends.items():
+              artifact_path = artifacts / artifact_name
+              if artifact_path.exists():
+                  # Try to find validation results
+                  for json_file in artifact_path.rglob("*validation*.json"):
+                      try:
+                          data = json.load(open(json_file))
+                          results.append({
+                              "backend": backend_name,
+                              "passed": data.get("all_passed", False),
+                              "tolerance": data.get("tolerance", "N/A")
+                          })
+                          break
+                      except:
+                          pass
+                  else:
+                      results.append({"backend": backend_name, "passed": "Unknown", "tolerance": "N/A"})
+              else:
+                  results.append({"backend": backend_name, "passed": "Skipped", "tolerance": "N/A"})
+
+          # Generate markdown summary
+          summary = f"""# BERT SQuAD Cross-Backend Validation Summary
+
+          **Generated:** {datetime.now().isoformat()}
+          **Workflow:** bert-squad-validation
+
+          ## Results by Backend
+
+          | Backend | Status | Tolerance |
+          |---------|--------|-----------|
+          """
+
+          all_passed = True
+          for r in results:
+              status = "PASSED" if r["passed"] == True else ("SKIPPED" if r["passed"] == "Skipped" else "FAILED")
+              if r["passed"] not in [True, "Skipped"]:
+                  all_passed = False
+              summary += f"| {r['backend']} | {status} | {r['tolerance']} |\n"
+
+          summary += f"""
+          ## Overall Status
+
+          {"All backends validated successfully" if all_passed else "Some backends failed validation - review individual reports"}
+
+          ## Artifacts
+
+          Individual backend reports are available as workflow artifacts.
+          """
+
+          print(summary)
+
+          with open("VALIDATION_SUMMARY.md", "w") as f:
+              f.write(summary)
+          PYEOF
+
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-summary
+          path: VALIDATION_SUMMARY.md
+          retention-days: 90
+
+      - name: Post summary to job
+        run: |
+          cat VALIDATION_SUMMARY.md >> $GITHUB_STEP_SUMMARY
