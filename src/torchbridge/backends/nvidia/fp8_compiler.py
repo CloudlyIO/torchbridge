@@ -71,7 +71,8 @@ class FP8Compiler:
 
         self._fp8_supported = self.nvidia_config.architecture in [
             NVIDIAArchitecture.HOPPER,
-            NVIDIAArchitecture.BLACKWELL
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]
 
         self._fp8_layers = set()
@@ -328,7 +329,10 @@ class FP8Compiler:
         # Theoretical speedups based on NVIDIA documentation
         if self.nvidia_config.architecture == NVIDIAArchitecture.HOPPER:
             base_speedup = 2.0  # H100 FP8 vs FP16
-        elif self.nvidia_config.architecture == NVIDIAArchitecture.BLACKWELL:
+        elif self.nvidia_config.architecture in [
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        ]:
             base_speedup = 2.5  # Blackwell FP8 vs FP16
         else:
             base_speedup = 1.0  # No FP8 support

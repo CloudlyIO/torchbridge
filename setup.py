@@ -9,9 +9,11 @@ Usage:
     python setup.py build_ext --inplace  # Build CUDA extensions only
 """
 
-from setuptools import setup
 import os
 import sys
+
+from setuptools import setup
+
 
 # Only import CUDA-related modules if we're building extensions
 def get_cuda_extension():
@@ -60,7 +62,10 @@ def get_cuda_extension():
         '-gencode=arch=compute_86,code=sm_86',  # RTX 30xx
         '-gencode=arch=compute_89,code=sm_89',  # RTX 40xx
         '-gencode=arch=compute_90,code=sm_90',  # H100
+        '-gencode=arch=compute_100,code=sm_100',  # B100/B200/GB200 (Blackwell DC)
+        '-gencode=arch=compute_120,code=sm_120',  # RTX 5090 (Blackwell Consumer)
         '-DENABLE_FP8',
+        '-DENABLE_FP4',
         '-DENABLE_FLASH_ATTENTION_V3',
         '-DENABLE_FUSED_KERNELS',
         '-lineinfo',
