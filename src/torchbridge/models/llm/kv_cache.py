@@ -6,7 +6,6 @@ Provides optimized key-value cache management for LLM inference:
 - Paged attention (vLLM-style)
 - Sliding window cache for efficient long contexts
 
-Version: 0.5.3
 """
 
 import logging
@@ -15,7 +14,6 @@ from dataclasses import dataclass
 import torch
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class CacheConfig:
@@ -33,7 +31,6 @@ class CacheConfig:
 
     # Sliding window
     window_size: int = 4096
-
 
 class KVCacheManager:
     """
@@ -149,7 +146,6 @@ class KVCacheManager:
             "cache_length": self.get_cache_length(cache),
             "num_layers": len(cache),
         }
-
 
 class PagedKVCache:
     """
@@ -335,7 +331,6 @@ class PagedKVCache:
             "utilization": used_pages / self.config.num_pages if self.config.num_pages > 0 else 0,
         }
 
-
 class SlidingWindowCache:
     """
     Sliding window KV-cache for efficient long context handling.
@@ -452,7 +447,6 @@ class SlidingWindowCache:
             "window_size": self.window_size,
             "window_utilization": cache_len / self.window_size if self.window_size > 0 else 0,
         }
-
 
 __all__ = [
     "CacheConfig",

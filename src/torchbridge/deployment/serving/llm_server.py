@@ -34,7 +34,6 @@ Example:
     run_llm_server(server, host="0.0.0.0", port=8000)
     ```
 
-Version: 0.5.3
 """
 
 import asyncio
@@ -81,7 +80,6 @@ except ImportError:
     TRANSFORMERS_AVAILABLE = False
     TokenizerType = Any
 
-
 class HealthStatus(Enum):
     """Server health status."""
 
@@ -89,7 +87,6 @@ class HealthStatus(Enum):
     UNHEALTHY = "unhealthy"
     STARTING = "starting"
     SHUTTING_DOWN = "shutting_down"
-
 
 @dataclass
 class LLMServerConfig:
@@ -128,7 +125,6 @@ class LLMServerConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
-
 
 # Pydantic models for request/response (only if FastAPI available)
 if FASTAPI_AVAILABLE:
@@ -216,7 +212,6 @@ else:
     HealthResponse = dict[str, Any]
     MetricsResponse = dict[str, Any]
 
-
 @dataclass
 class BatchItem:
     """Item in the dynamic batching queue."""
@@ -226,7 +221,6 @@ class BatchItem:
     generation_kwargs: dict[str, Any]
     result_queue: queue.Queue
     timestamp: float = field(default_factory=time.time)
-
 
 class LLMInferenceServer:
     """
@@ -808,7 +802,6 @@ class LLMInferenceServer:
             memory_reserved_mb=memory_reserved,
         )
 
-
 def create_llm_server(
     model: nn.Module,
     tokenizer: TokenizerType,
@@ -849,7 +842,6 @@ def create_llm_server(
 
     return LLMInferenceServer(model=model, tokenizer=tokenizer, config=config)
 
-
 def run_llm_server(
     server: LLMInferenceServer,
     host: str = "0.0.0.0",
@@ -887,7 +879,6 @@ def run_llm_server(
         workers=workers,
         log_level=log_level,
     )
-
 
 __all__ = [
     "LLMInferenceServer",

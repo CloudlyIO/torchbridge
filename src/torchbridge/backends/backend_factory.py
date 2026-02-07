@@ -10,7 +10,6 @@ The factory supports:
 - Fallback to CPU when no accelerator is available
 - Backend registration for extensibility
 
-Version: 0.5.3
 """
 
 import logging
@@ -24,7 +23,6 @@ from .base_backend import BaseBackend, CPUBackend
 from .base_optimizer import BaseOptimizer, CPUOptimizer
 
 logger = logging.getLogger(__name__)
-
 
 class BackendType(Enum):
     """
@@ -54,7 +52,6 @@ class BackendType(Enum):
             'sycl': cls.INTEL,
         }
         return aliases.get(name_lower, cls.CPU)
-
 
 class BackendFactory:
     """
@@ -445,7 +442,6 @@ class BackendFactory:
             print("Auto-selected: CPU (no accelerators available)")
         print("=" * 60)
 
-
 def get_backend(
     backend_type: BackendType | str = BackendType.AUTO,
     config: Any = None,
@@ -463,7 +459,6 @@ def get_backend(
         Backend instance
     """
     return BackendFactory.create(backend_type, config, **kwargs)
-
 
 def get_optimizer(
     backend_type: BackendType | str = BackendType.AUTO,
@@ -485,7 +480,6 @@ def get_optimizer(
     """
     return BackendFactory.create_optimizer(backend_type, config, device, **kwargs)
 
-
 def detect_best_backend() -> BackendType:
     """
     Detect the best available backend.
@@ -495,7 +489,6 @@ def detect_best_backend() -> BackendType:
     """
     return BackendFactory._auto_select()
 
-
 def list_available_backends() -> list[str]:
     """
     List available backend names.
@@ -504,7 +497,6 @@ def list_available_backends() -> list[str]:
         List of available backend names
     """
     return [bt.value for bt in BackendFactory.get_available_backends()]
-
 
 __all__ = [
     'BackendFactory',

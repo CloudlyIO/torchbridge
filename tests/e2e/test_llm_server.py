@@ -10,7 +10,6 @@ Tests cover:
 - Health checks and metrics
 - Error handling
 
-Version: 0.5.3
 """
 
 import time
@@ -28,7 +27,6 @@ from fastapi.testclient import TestClient
 # ============================================================================
 # Test Fixtures
 # ============================================================================
-
 
 class MockLLMModel(torch.nn.Module):
     """Mock LLM model for testing."""
@@ -68,7 +66,6 @@ class MockLLMModel(torch.nn.Module):
         )
         return torch.cat([input_ids, new_tokens], dim=1)
 
-
 class TokenizerOutput:
     """Mock tokenizer output with attribute access."""
 
@@ -89,7 +86,6 @@ class TokenizerOutput:
         elif key == "attention_mask":
             return self.attention_mask
         raise KeyError(key)
-
 
 class MockTokenizer:
     """Mock tokenizer for testing."""
@@ -127,7 +123,6 @@ class MockTokenizer:
         num_tokens = len(token_ids) if isinstance(token_ids, list) else 1
         return f"Generated text with {num_tokens} tokens"
 
-
 @pytest.fixture
 def mock_llm_model():
     """Create mock LLM model."""
@@ -135,12 +130,10 @@ def mock_llm_model():
     model.eval()
     return model
 
-
 @pytest.fixture
 def mock_tokenizer():
     """Create mock tokenizer."""
     return MockTokenizer()
-
 
 @pytest.fixture
 def llm_server(mock_llm_model, mock_tokenizer):
@@ -172,17 +165,14 @@ def llm_server(mock_llm_model, mock_tokenizer):
 
     return server
 
-
 @pytest.fixture
 def test_client(llm_server):
     """Create test client."""
     return TestClient(llm_server.app)
 
-
 # ============================================================================
 # Server Lifecycle Tests
 # ============================================================================
-
 
 class TestServerLifecycle:
     """Tests for server startup and shutdown."""
@@ -209,11 +199,9 @@ class TestServerLifecycle:
         assert llm_server.device is not None
         assert isinstance(llm_server.device, torch.device)
 
-
 # ============================================================================
 # Endpoint Tests
 # ============================================================================
-
 
 class TestGenerateEndpoint:
     """Tests for /generate endpoint."""
@@ -297,7 +285,6 @@ class TestGenerateEndpoint:
         content = response.text
         assert "data:" in content
 
-
 class TestChatEndpoint:
     """Tests for /chat endpoint."""
 
@@ -346,7 +333,6 @@ class TestChatEndpoint:
         assert response.status_code == 200
         assert "text/event-stream" in response.headers.get("content-type", "")
 
-
 class TestTokenizeEndpoint:
     """Tests for /tokenize endpoint."""
 
@@ -389,11 +375,9 @@ class TestTokenizeEndpoint:
         if "tokens" in data and data["tokens"] is not None:
             assert isinstance(data["tokens"], list)
 
-
 # ============================================================================
 # Health and Metrics Tests
 # ============================================================================
-
 
 class TestHealthEndpoints:
     """Tests for health check endpoints."""
@@ -450,7 +434,6 @@ class TestHealthEndpoints:
         assert "average_tokens_per_second" in data
         assert data["generation_count"] >= 1
 
-
 class TestRootEndpoint:
     """Tests for root endpoint."""
 
@@ -476,11 +459,9 @@ class TestRootEndpoint:
         assert isinstance(data["endpoints"], list)
         assert len(data["endpoints"]) > 0
 
-
 # ============================================================================
 # Dynamic Batching Tests
 # ============================================================================
-
 
 class TestDynamicBatching:
     """Tests for dynamic batching functionality."""
@@ -525,11 +506,9 @@ class TestDynamicBatching:
         for response in results:
             assert response.status_code == 200
 
-
 # ============================================================================
 # Error Handling Tests
 # ============================================================================
-
 
 class TestErrorHandling:
     """Tests for error handling."""
@@ -559,11 +538,9 @@ class TestErrorHandling:
 
         assert response.status_code == 404
 
-
 # ============================================================================
 # Integration Tests
 # ============================================================================
-
 
 class TestIntegration:
     """Integration tests for complete workflows."""
@@ -599,11 +576,9 @@ class TestIntegration:
         metrics = test_client.get("/metrics").json()
         assert metrics["generation_count"] >= 3
 
-
 # ============================================================================
 # Performance Tests
 # ============================================================================
-
 
 class TestPerformance:
     """Performance-related tests."""
@@ -636,11 +611,9 @@ class TestPerformance:
         assert metrics["total_generation_time_ms"] > 0
         assert metrics["average_generation_time_ms"] > 0
 
-
 # ============================================================================
 # Cleanup Tests
 # ============================================================================
-
 
 class TestCleanup:
     """Tests for proper cleanup."""
@@ -659,7 +632,6 @@ class TestCleanup:
         if llm_server._batch_thread:
             # Thread should have stopped or be about to stop
             pass
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

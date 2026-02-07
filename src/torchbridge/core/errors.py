@@ -12,14 +12,12 @@ This module provides the complete exception hierarchy for the framework:
 All backend-specific exceptions (NVIDIA, AMD, TPU) inherit from
 the base_exceptions module which inherits from TorchBridgeError.
 
-Version: 0.3.11
 """
 
 import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 # =============================================================================
 # Base Exception
@@ -73,7 +71,6 @@ class TorchBridgeError(Exception):
             "cause": str(self.cause) if self.cause else None
         }
 
-
 # =============================================================================
 # Validation Errors
 # =============================================================================
@@ -81,7 +78,6 @@ class TorchBridgeError(Exception):
 class ValidationError(TorchBridgeError):
     """Base exception for validation failures."""
     pass
-
 
 class ConfigValidationError(ValidationError):
     """Raised when configuration validation fails."""
@@ -100,7 +96,6 @@ class ConfigValidationError(ValidationError):
             "value": value,
             "reason": reason
         })
-
 
 class InputValidationError(ValidationError):
     """Raised when input validation fails."""
@@ -122,7 +117,6 @@ class InputValidationError(ValidationError):
             "reason": reason
         })
 
-
 class ModelValidationError(ValidationError):
     """Raised when model validation fails."""
 
@@ -138,7 +132,6 @@ class ModelValidationError(ValidationError):
             "issues": issues
         })
 
-
 # =============================================================================
 # Hardware Errors
 # =============================================================================
@@ -146,7 +139,6 @@ class ModelValidationError(ValidationError):
 class HardwareError(TorchBridgeError):
     """Base exception for hardware-related errors."""
     pass
-
 
 class HardwareDetectionError(HardwareError):
     """Raised when hardware detection fails."""
@@ -157,7 +149,6 @@ class HardwareDetectionError(HardwareError):
             "hardware_type": hardware_type,
             "reason": reason
         })
-
 
 class HardwareNotFoundError(HardwareError):
     """Raised when required hardware is not available."""
@@ -170,7 +161,6 @@ class HardwareNotFoundError(HardwareError):
             "hardware_type": hardware_type,
             "requirements": requirements
         })
-
 
 class HardwareCapabilityError(HardwareError):
     """Raised when hardware lacks required capabilities."""
@@ -188,7 +178,6 @@ class HardwareCapabilityError(HardwareError):
             "available": available_capabilities
         })
 
-
 # =============================================================================
 # Optimization Errors
 # =============================================================================
@@ -196,7 +185,6 @@ class HardwareCapabilityError(HardwareError):
 class OptimizationError(TorchBridgeError):
     """Base exception for optimization failures."""
     pass
-
 
 class CompilationError(OptimizationError):
     """Raised when model compilation fails."""
@@ -209,7 +197,6 @@ class CompilationError(OptimizationError):
             "error": error_message
         })
 
-
 class FusionError(OptimizationError):
     """Raised when operator fusion fails."""
 
@@ -219,7 +206,6 @@ class FusionError(OptimizationError):
             "pattern": pattern,
             "reason": reason
         })
-
 
 class PrecisionError(OptimizationError):
     """Raised when precision conversion fails."""
@@ -237,7 +223,6 @@ class PrecisionError(OptimizationError):
             "reason": reason
         })
 
-
 # =============================================================================
 # Deployment Errors
 # =============================================================================
@@ -245,7 +230,6 @@ class PrecisionError(OptimizationError):
 class DeploymentError(TorchBridgeError):
     """Base exception for deployment failures."""
     pass
-
 
 class ExportError(DeploymentError):
     """Raised when model export fails."""
@@ -258,7 +242,6 @@ class ExportError(DeploymentError):
             "reason": reason
         })
 
-
 class ServingError(DeploymentError):
     """Raised when inference serving fails."""
 
@@ -269,7 +252,6 @@ class ServingError(DeploymentError):
             "operation": operation,
             "reason": reason
         })
-
 
 class ContainerError(DeploymentError):
     """Raised when container operations fail."""
@@ -282,7 +264,6 @@ class ContainerError(DeploymentError):
             "reason": reason
         })
 
-
 # =============================================================================
 # Monitoring Errors
 # =============================================================================
@@ -290,7 +271,6 @@ class ContainerError(DeploymentError):
 class MonitoringError(TorchBridgeError):
     """Base exception for monitoring failures."""
     pass
-
 
 class MetricsError(MonitoringError):
     """Raised when metrics collection/export fails."""
@@ -303,7 +283,6 @@ class MetricsError(MonitoringError):
             "reason": reason
         })
 
-
 class HealthCheckError(MonitoringError):
     """Raised when health check fails."""
 
@@ -314,7 +293,6 @@ class HealthCheckError(MonitoringError):
             "status": status,
             "reason": reason
         })
-
 
 # =============================================================================
 # Utility Functions
@@ -348,7 +326,6 @@ def raise_or_warn(
         log_instance = log or logger
         log_instance.warning(f"{exception_class.__name__}: {message}")
 
-
 def format_error_chain(exc: Exception, max_depth: int = 5) -> str:
     """
     Format an exception chain for logging.
@@ -373,7 +350,6 @@ def format_error_chain(exc: Exception, max_depth: int = 5) -> str:
         parts.append(f"  Python cause: {type(exc.__cause__).__name__}: {exc.__cause__}")
 
     return "\n".join(parts)
-
 
 __all__ = [
     # Base

@@ -6,7 +6,6 @@ Core backend for NVIDIA GPU device management and model preparation.
 Inherits from BaseBackend to provide a consistent interface across all
 hardware backends while implementing NVIDIA-specific optimizations.
 
-Version: 0.5.3
 """
 
 import logging
@@ -34,7 +33,6 @@ from torchbridge.core.kernel_registry import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 class NVIDIABackend(BaseBackend):
     """

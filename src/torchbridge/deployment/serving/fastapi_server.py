@@ -21,7 +21,6 @@ Example:
     run_server(server, host="0.0.0.0", port=8000)
     ```
 
-Version: 0.3.9
 """
 
 import asyncio
@@ -57,7 +56,6 @@ try:
 except ImportError:
     UVICORN_AVAILABLE = False
 
-
 class HealthStatus(Enum):
     """Server health status."""
 
@@ -65,7 +63,6 @@ class HealthStatus(Enum):
     UNHEALTHY = "unhealthy"
     STARTING = "starting"
     SHUTTING_DOWN = "shutting_down"
-
 
 @dataclass
 class ServerConfig:
@@ -96,7 +93,6 @@ class ServerConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
-
 
 # Pydantic models for request/response (only if FastAPI available)
 if FASTAPI_AVAILABLE:
@@ -151,7 +147,6 @@ else:
     InferenceResponse = dict[str, Any]
     HealthResponse = dict[str, Any]
     MetricsResponse = dict[str, Any]
-
 
 class InferenceServer:
     """
@@ -465,7 +460,6 @@ class InferenceServer:
             memory_reserved_mb=memory_reserved,
         )
 
-
 def create_fastapi_server(
     model: nn.Module,
     model_name: str = "model",
@@ -497,7 +491,6 @@ def create_fastapi_server(
     )
 
     return InferenceServer(model=model, config=config)
-
 
 def run_server(
     server: InferenceServer,

@@ -12,7 +12,6 @@ Consolidates functionality from:
 - HardwareTopologyManager, DeviceMeshOptimizer
 - And 10+ other hardware managers
 
-Version: 0.3.11
 """
 
 from typing import Any

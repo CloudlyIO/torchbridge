@@ -11,8 +11,6 @@ Alert Categories:
 - SLO violation alerts
 - Availability alerts
 
-Version: 0.5.3
-
 Example:
     ```python
     from torchbridge.monitoring import (
@@ -45,14 +43,12 @@ from .structured_logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class AlertSeverity(Enum):
     """Alert severity levels."""
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
     PAGE = "page"  # Paging/on-call level
-
 
 class AlertState(Enum):
     """Possible alert states."""
@@ -62,7 +58,6 @@ class AlertState(Enum):
     NO_DATA = "nodata"
     ERROR = "error"
 
-
 class ComparisonOperator(Enum):
     """Comparison operators for alert conditions."""
     GREATER_THAN = "gt"
@@ -71,7 +66,6 @@ class ComparisonOperator(Enum):
     LESS_THAN_OR_EQUAL = "lte"
     EQUAL = "eq"
     NOT_EQUAL = "neq"
-
 
 @dataclass
 class AlertCondition:
@@ -99,7 +93,6 @@ class AlertCondition:
             "type": "query",
         }
 
-
 @dataclass
 class AlertAnnotation:
     """Alert annotation (displayed in alerts)."""
@@ -123,7 +116,6 @@ class AlertAnnotation:
             annotations["__panelId__"] = str(self.panel_id)
         return annotations
 
-
 @dataclass
 class AlertLabel:
     """Alert label for routing and grouping."""
@@ -133,7 +125,6 @@ class AlertLabel:
     def to_tuple(self) -> tuple[str, str]:
         """Convert to tuple."""
         return (self.name, self.value)
-
 
 @dataclass
 class AlertRule:
@@ -268,7 +259,6 @@ class AlertRule:
             "isPaused": self.is_paused,
         }
 
-
 @dataclass
 class AlertRuleGroup:
     """Group of related alert rules."""
@@ -289,7 +279,6 @@ class AlertRuleGroup:
             "interval": self.evaluation_interval,
             "rules": [rule.to_dict() for rule in self.rules],
         }
-
 
 class AlertRuleBuilder:
     """Builder for creating alert rules with sensible defaults."""
@@ -558,7 +547,6 @@ class AlertRuleBuilder:
             ],
         )
 
-
 def create_default_alert_rules(
     latency_p99_threshold: float = 200.0,
     latency_p95_threshold: float = 150.0,
@@ -626,7 +614,6 @@ def create_default_alert_rules(
 
     return [latency_group, error_group, resource_group, slo_group, traffic_group]
 
-
 def export_alert_rules_json(
     rule_groups: list[AlertRuleGroup],
     output_path: str | Path,
@@ -652,7 +639,6 @@ def export_alert_rules_json(
         group_count=len(rule_groups),
         rule_count=sum(len(g.rules) for g in rule_groups),
     )
-
 
 def export_alert_rules_yaml(
     rule_groups: list[AlertRuleGroup],
@@ -686,7 +672,6 @@ def export_alert_rules_yaml(
         output_path=str(path),
         group_count=len(rule_groups),
     )
-
 
 # Export all public APIs
 __all__ = [
