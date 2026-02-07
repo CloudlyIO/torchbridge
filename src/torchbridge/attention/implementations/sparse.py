@@ -7,9 +7,7 @@ Implements multiple sparse attention strategies:
 - Strided sparse attention (Sparse Transformers)
 - Dynamic sparse attention with learned patterns
 
-Version: 0.5.3
 """
-
 
 import torch
 import torch.nn as nn
@@ -83,7 +81,6 @@ def _compute_block_mask(
 
     return full_mask
 
-
 def _compute_strided_mask(
     seq_len: int,
     local_window: int,
@@ -119,7 +116,6 @@ def _compute_strided_mask(
         mask[i, strided_positions] = False
 
     return mask
-
 
 @register_attention('dynamic_sparse_attention')
 class DynamicSparseAttention(BaseAttention):
@@ -224,7 +220,6 @@ class DynamicSparseAttention(BaseAttention):
 
         return torch.matmul(attn_weights, v)
 
-
 @register_attention('block_sparse_attention')
 class BlockSparseAttention(BaseAttention):
     """BigBird-style block sparse attention.
@@ -305,7 +300,6 @@ class BlockSparseAttention(BaseAttention):
 
         return torch.matmul(attn_weights, v)
 
-
 @register_attention('strided_sparse_attention')
 class StridedSparseAttention(BaseAttention):
     """Strided sparse attention (Sparse Transformer style).
@@ -384,7 +378,6 @@ class StridedSparseAttention(BaseAttention):
         attn_weights = self.attention_dropout(attn_weights)
 
         return torch.matmul(attn_weights, v)
-
 
 class SparseAttentionPattern(BaseAttention):
     """Flexible sparse attention with configurable patterns.

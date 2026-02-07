@@ -13,7 +13,6 @@ Approved root .md files (MUST remain constant):
 - CHANGELOG.md
 - CONTRIBUTING.md
 
-Version: 0.3.4
 """
 
 import subprocess
@@ -38,7 +37,6 @@ REPORT_PATTERNS = [
     "CLEANUP_SUMMARY",
 ]
 
-
 def get_staged_files() -> list[str]:
     """Get list of staged files."""
     result = subprocess.run(
@@ -47,7 +45,6 @@ def get_staged_files() -> list[str]:
         text=True,
     )
     return [f for f in result.stdout.strip().split("\n") if f]
-
 
 def check_root_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for unauthorized root .md files."""
@@ -60,7 +57,6 @@ def check_root_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
                 violations.append(file)
 
     return len(violations) == 0, violations
-
 
 def check_report_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for report files that should be in /local."""
@@ -75,7 +71,6 @@ def check_report_files(staged_files: list[str]) -> tuple[bool, list[str]]:
 
     return len(violations) == 0, violations
 
-
 def check_docs_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
     """Check for new .md files in docs/ directory."""
     new_docs = []
@@ -85,7 +80,6 @@ def check_docs_md_files(staged_files: list[str]) -> tuple[bool, list[str]]:
             new_docs.append(file)
 
     return len(new_docs) == 0, new_docs
-
 
 def main():
     """Run all documentation policy checks."""
@@ -150,7 +144,6 @@ def main():
 
     print("✅ Documentation policy check passed!")
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

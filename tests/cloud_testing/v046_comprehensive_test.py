@@ -12,7 +12,6 @@ Tests all v0.4.6 features including:
 - FlexAttention
 - All existing functionality
 
-Version: 0.5.3
 """
 
 import json
@@ -29,7 +28,6 @@ from typing import Any
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # Configuration
 # ============================================================================
@@ -41,7 +39,6 @@ class CloudPlatform(Enum):
     GCP_NVIDIA = "gcp_nvidia"
     GCP_TPU = "gcp_tpu"
     LOCAL = "local"
-
 
 class GPUType(Enum):
     """Supported GPU types."""
@@ -63,7 +60,6 @@ class GPUType(Enum):
     # CPU
     CPU = "cpu"
 
-
 @dataclass
 class TestConfig:
     """Configuration for a test run."""
@@ -83,7 +79,6 @@ class TestConfig:
         """Create output directory."""
         os.makedirs(self.output_dir, exist_ok=True)
 
-
 @dataclass
 class TestResult:
     """Results from a test suite."""
@@ -97,7 +92,6 @@ class TestResult:
     duration_seconds: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
-
 @dataclass
 class BenchmarkResult:
     """Results from a benchmark."""
@@ -106,7 +100,6 @@ class BenchmarkResult:
     gpu_type: str
     metrics: dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-
 
 # ============================================================================
 # Hardware Detection
@@ -192,7 +185,6 @@ def detect_hardware() -> tuple[CloudPlatform, GPUType, dict[str, Any]]:
     # CPU fallback
     return CloudPlatform.LOCAL, GPUType.CPU, info
 
-
 def _detect_cloud_platform(backend: str) -> CloudPlatform:
     """Detect cloud platform from instance metadata."""
     # Try AWS
@@ -223,7 +215,6 @@ def _detect_cloud_platform(backend: str) -> CloudPlatform:
         pass
 
     return CloudPlatform.LOCAL
-
 
 # ============================================================================
 # Test Suites
@@ -292,7 +283,6 @@ class TestSuite:
                 gpu_type=self.config.gpu_type.value,
                 errors=[str(e)]
             )
-
 
 class MoETestSuite(TestSuite):
     """Test suite for Mixture of Experts functionality."""
@@ -438,7 +428,6 @@ class MoETestSuite(TestSuite):
             result.metrics["error"] = str(e)
 
         return result
-
 
 class FP8TestSuite(TestSuite):
     """Test suite for FP8 functionality."""
@@ -640,7 +629,6 @@ class FP8TestSuite(TestSuite):
 
         return result
 
-
 class BackendTestSuite(TestSuite):
     """Test suite for backend-specific functionality."""
 
@@ -758,7 +746,6 @@ class BackendTestSuite(TestSuite):
         result.metrics = benchmarks
         return result
 
-
 class AttentionTestSuite(TestSuite):
     """Test suite for attention mechanisms."""
 
@@ -843,7 +830,6 @@ class AttentionTestSuite(TestSuite):
             result.metrics["error"] = str(e)
 
         return result
-
 
 # ============================================================================
 # Report Generation
@@ -953,7 +939,6 @@ def generate_report(
 
     return report
 
-
 # ============================================================================
 # Main Orchestration
 # ============================================================================
@@ -1059,7 +1044,6 @@ def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any
         "report_path": report_path,
         "json_path": json_path
     }
-
 
 if __name__ == "__main__":
     import argparse

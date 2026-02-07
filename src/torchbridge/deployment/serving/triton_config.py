@@ -35,7 +35,6 @@ Example:
     )
     ```
 
-Version: 0.3.9
 """
 
 import json
@@ -50,7 +49,6 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
-
 class TritonBackend(Enum):
     """Supported Triton backends."""
 
@@ -58,7 +56,6 @@ class TritonBackend(Enum):
     ONNXRUNTIME = "onnxruntime"  # ONNX Runtime backend
     TENSORRT = "tensorrt"  # TensorRT backend (NVIDIA GPUs)
     PYTHON = "python"  # Python backend (flexible but slower)
-
 
 class TritonDataType(Enum):
     """Triton data types."""
@@ -107,7 +104,6 @@ class TritonDataType(Enum):
                 return member
         return cls.FP32
 
-
 @dataclass
 class TritonInput:
     """Triton model input specification."""
@@ -135,7 +131,6 @@ class TritonInput:
 
         lines.append("}")
         return "\n".join(lines)
-
 
 @dataclass
 class TritonOutput:
@@ -165,7 +160,6 @@ class TritonOutput:
         lines.append("}")
         return "\n".join(lines)
 
-
 @dataclass
 class TritonInstanceGroup:
     """Triton instance group configuration."""
@@ -187,7 +181,6 @@ class TritonInstanceGroup:
 
         lines.append("}")
         return "\n".join(lines)
-
 
 @dataclass
 class TritonDynamicBatching:
@@ -219,7 +212,6 @@ class TritonDynamicBatching:
 
         lines.append("}")
         return "\n".join(lines)
-
 
 @dataclass
 class TritonModelConfig:
@@ -306,7 +298,6 @@ class TritonModelConfig:
             f.write(self.to_config_str())
         logger.info(f"Saved Triton config to {path}")
 
-
 def create_triton_config(
     model_name: str,
     inputs: list[tuple[str, str, list[int]]],
@@ -384,7 +375,6 @@ def create_triton_config(
         dynamic_batching=dynamic_batching,
         default_model_filename=default_filename,
     )
-
 
 def generate_triton_model_repository(
     model: nn.Module,

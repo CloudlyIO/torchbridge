@@ -6,7 +6,6 @@ This module provides the foundation for all managers:
 - ManagerContext dataclass
 - BaseManager abstract class
 
-Version: 0.3.11
 """
 
 import gc
@@ -29,7 +28,6 @@ class ManagerType(Enum):
     OPTIMIZATION = "optimization"
     INFRASTRUCTURE = "infrastructure"
 
-
 class ManagerState(Enum):
     """Manager lifecycle states."""
     INITIALIZING = "initializing"
@@ -38,7 +36,6 @@ class ManagerState(Enum):
     SUSPENDED = "suspended"
     ERROR = "error"
     SHUTDOWN = "shutdown"
-
 
 @dataclass
 class ManagerContext:
@@ -51,7 +48,6 @@ class ManagerContext:
     metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
-
 
 class BaseManager(ABC):
     """

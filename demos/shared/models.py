@@ -3,7 +3,6 @@ Shared model architectures for TorchBridge demos.
 
 This module provides common model architectures used across demo scripts.
 
-Version: 0.3.6
 """
 
 from typing import Literal
@@ -24,7 +23,6 @@ class SimpleLinear(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.linear(x)
-
 
 class SimpleMLP(nn.Module):
     """Simple MLP for basic testing."""
@@ -49,7 +47,6 @@ class SimpleMLP(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.layers(x)
-
 
 # ============================================================================
 # Transformer Models
@@ -105,7 +102,6 @@ class SimpleTransformer(nn.Module):
         x = self.transformer(x)
         return self.output_projection(x)
 
-
 class SimpleAttention(nn.Module):
     """
     Simple attention module for testing attention-specific optimizations.
@@ -144,7 +140,6 @@ class SimpleAttention(nn.Module):
 
         attn_out, _ = self.attention(x, key, value)
         return self.norm(x + attn_out)
-
 
 # ============================================================================
 # Vision Models
@@ -197,13 +192,11 @@ class SimpleCNN(nn.Module):
         x = self.features(x)
         return self.classifier(x)
 
-
 # ============================================================================
 # Model Factory
 # ============================================================================
 
 ModelType = Literal["linear", "mlp", "transformer", "attention", "cnn"]
-
 
 def create_model(
     model_type: ModelType,

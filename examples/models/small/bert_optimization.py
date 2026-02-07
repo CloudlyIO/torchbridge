@@ -16,13 +16,12 @@ Usage:
 Requirements:
     pip install transformers datasets
 
-Version: 0.5.3
 """
 
 import argparse
 import logging
 import time
-from typing import Dict, Any
+from typing import Any
 
 import torch
 
@@ -33,13 +32,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 def print_section(title: str) -> None:
     """Print a formatted section header."""
     print(f"\n{'='*60}")
     print(f"  {title}")
     print(f"{'='*60}\n")
-
 
 def check_dependencies() -> bool:
     """Check if required dependencies are installed."""
@@ -50,7 +47,6 @@ def check_dependencies() -> bool:
     except ImportError:
         logger.error("transformers not installed. Run: pip install transformers")
         return False
-
 
 def create_sample_data(tokenizer, batch_size: int = 8, seq_length: int = 128):
     """Create sample data for benchmarking."""
@@ -73,8 +69,7 @@ def create_sample_data(tokenizer, batch_size: int = 8, seq_length: int = 128):
 
     return inputs
 
-
-def benchmark_model(model, inputs, device, num_iterations: int = 100) -> Dict[str, float]:
+def benchmark_model(model, inputs, device, num_iterations: int = 100) -> dict[str, float]:
     """Benchmark model inference."""
     # Move inputs to device
     inputs = {k: v.to(device) for k, v in inputs.items()}
@@ -108,12 +103,11 @@ def benchmark_model(model, inputs, device, num_iterations: int = 100) -> Dict[st
         "throughput_samples_per_sec": throughput,
     }
 
-
-def run_baseline(model_name: str, task: str, batch_size: int, seq_length: int) -> Dict[str, Any]:
+def run_baseline(model_name: str, task: str, batch_size: int, seq_length: int) -> dict[str, Any]:
     """Run baseline PyTorch model without optimization."""
     print_section(f"Baseline PyTorch - {model_name}")
 
-    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -144,8 +138,7 @@ def run_baseline(model_name: str, task: str, batch_size: int, seq_length: int) -
         **results
     }
 
-
-def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) -> Dict[str, Any]:
+def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) -> dict[str, Any]:
     """Run TorchBridge optimized model."""
     print_section(f"TorchBridge Optimized - {model_name}")
 
@@ -154,9 +147,9 @@ def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) 
     # Import TorchBridge
     try:
         from torchbridge.models.text import (
-            TextModelOptimizer,
+            OptimizationMode,
             TextModelConfig,
-            OptimizationMode
+            TextModelOptimizer,
         )
 
         # Create optimized config
@@ -219,7 +212,6 @@ def run_optimized(model_name: str, task: str, batch_size: int, seq_length: int) 
         **results
     }
 
-
 def run_text_classification_demo(model_name: str):
     """Run a complete text classification demo."""
     print_section("Text Classification Demo")
@@ -266,7 +258,6 @@ def run_text_classification_demo(model_name: str):
 
     except ImportError as e:
         logger.warning(f"Demo skipped: {e}")
-
 
 def main():
     """Main entry point."""
@@ -349,7 +340,6 @@ def main():
     run_text_classification_demo(args.model)
 
     print_section("Complete!")
-
 
 if __name__ == "__main__":
     main()

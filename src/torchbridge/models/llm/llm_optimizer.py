@@ -8,7 +8,6 @@ Supports Llama, Mistral, Phi, and other autoregressive models with:
 - Flash Attention
 - Memory-efficient inference
 
-Version: 0.5.3
 """
 
 import logging
@@ -21,7 +20,6 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
-
 class LLMType(Enum):
     """Supported LLM types."""
     LLAMA = "llama"
@@ -31,7 +29,6 @@ class LLMType(Enum):
     GEMMA = "gemma"
     CUSTOM = "custom"
 
-
 class QuantizationMode(Enum):
     """Quantization modes for LLMs."""
     NONE = "none"           # Full precision
@@ -39,7 +36,6 @@ class QuantizationMode(Enum):
     INT4 = "int4"           # INT4 weight quantization (GPTQ/AWQ)
     FP8 = "fp8"             # FP8 for H100+
     BNBT4 = "bnb_4bit"      # BitsAndBytes 4-bit
-
 
 @dataclass
 class GenerationConfig:
@@ -51,7 +47,6 @@ class GenerationConfig:
     repetition_penalty: float = 1.1
     do_sample: bool = True
     use_cache: bool = True
-
 
 @dataclass
 class LLMConfig:
@@ -90,7 +85,6 @@ class LLMConfig:
 
     # Generation defaults
     generation: GenerationConfig = field(default_factory=GenerationConfig)
-
 
 class LLMOptimizer:
     """
@@ -442,7 +436,6 @@ class LLMOptimizer:
             "quantization": self.config.quantization.value,
         }
 
-
 class OptimizedLlama(nn.Module):
     """
     Optimized Llama wrapper for inference.
@@ -486,7 +479,6 @@ class OptimizedLlama(nn.Module):
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
-
 class OptimizedMistral(nn.Module):
     """Optimized Mistral wrapper."""
 
@@ -522,7 +514,6 @@ class OptimizedMistral(nn.Module):
 
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
-
 
 class OptimizedPhi(nn.Module):
     """Optimized Phi wrapper."""
@@ -560,7 +551,6 @@ class OptimizedPhi(nn.Module):
     def get_optimization_info(self) -> dict[str, Any]:
         return self.optimizer.get_optimization_info()
 
-
 def create_optimized_llm(
     model_name: str,
     quantization: str = "none",
@@ -595,7 +585,6 @@ def create_optimized_llm(
 
     optimizer = LLMOptimizer(config)
     return optimizer.optimize(model_name, **kwargs)
-
 
 __all__ = [
     "LLMType",

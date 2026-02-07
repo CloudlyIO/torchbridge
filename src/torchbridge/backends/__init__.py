@@ -9,7 +9,6 @@ This module provides hardware-specific optimizations for:
 
 All backends inherit from shared base classes for consistent interfaces.
 
-Version: 0.5.3
 """
 
 # Base exceptions

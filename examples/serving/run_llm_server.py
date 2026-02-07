@@ -56,13 +56,11 @@ Sample curl commands after starting server:
     # Metrics
     curl http://localhost:8000/metrics
 
-Version: 0.5.3
 """
 
 import argparse
 import logging
 import sys
-from typing import Optional
 
 # Configure logging
 logging.basicConfig(
@@ -70,7 +68,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
 
 def main():
     """Main function to run LLM server."""
@@ -129,11 +126,11 @@ def main():
 
     try:
         # Import required modules
-        from torchbridge.models.llm import LLMOptimizer, LLMConfig, QuantizationMode
         from torchbridge.deployment.serving.llm_server import (
             create_llm_server,
             run_llm_server,
         )
+        from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
 
         logger.info(f"Loading model: {args.model}")
         logger.info(f"Quantization: {args.quantization}")
@@ -228,7 +225,6 @@ def main():
     except Exception as e:
         logger.error(f"Error starting server: {e}", exc_info=True)
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

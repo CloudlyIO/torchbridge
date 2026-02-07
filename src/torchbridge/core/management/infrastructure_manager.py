@@ -10,7 +10,6 @@ Consolidates functionality from:
 - TestEnvironmentManager, CIPipelineManager
 - DeprecationManager, and other infrastructure managers
 
-Version: 0.3.11
 """
 
 import warnings

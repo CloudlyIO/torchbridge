@@ -6,7 +6,6 @@ This module provides optimizations for ViT models including:
 - Patch embedding optimization
 - Memory-efficient inference
 
-Version: 0.5.3
 """
 
 import math
@@ -239,7 +238,6 @@ class SlicedMultiheadAttention(nn.Module):
 
         return output
 
-
 class SlicedAttentionWrapper(nn.Module):
     """Wrapper that adds attention slicing to existing attention modules.
 
@@ -294,7 +292,6 @@ class SlicedAttentionWrapper(nn.Module):
         # For now, delegate to original forward
         # Full slicing integration requires model-specific handling
         return self._original_forward(*args, **kwargs)
-
 
 class ViTOptimizer(BaseVisionOptimizer):
     """Optimizer for Vision Transformer models."""
@@ -488,7 +485,6 @@ class ViTOptimizer(BaseVisionOptimizer):
 
         return outputs
 
-
 def create_vit_optimizer(
     model_name: str = "vit_base_patch16_224",
     optimization_level: OptimizationLevel = OptimizationLevel.O2,
@@ -548,7 +544,6 @@ def create_vit_optimizer(
     model = optimizer.optimize(model)
 
     return model, optimizer
-
 
 class ViTBenchmark:
     """Benchmark Vision Transformer models."""
@@ -651,7 +646,6 @@ class ViTBenchmark:
             "optimization_summary": self.optimizer.get_optimization_summary(),
         }
 
-
 # Pre-configured optimizers for common ViT variants
 def create_vit_base_optimized(
     optimization_level: OptimizationLevel = OptimizationLevel.O2,
@@ -667,7 +661,6 @@ def create_vit_base_optimized(
         Tuple of (optimized_model, optimizer)
     """
     return create_vit_optimizer("vit_base_patch16_224", optimization_level, **kwargs)
-
 
 def create_vit_large_optimized(
     optimization_level: OptimizationLevel = OptimizationLevel.O2,
