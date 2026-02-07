@@ -68,7 +68,8 @@ class HardwareProfile:
         """Check if NVIDIA H100 or Blackwell."""
         return self.nvidia_architecture in [
             NVIDIAArchitecture.HOPPER,
-            NVIDIAArchitecture.BLACKWELL
+            NVIDIAArchitecture.BLACKWELL_DC,
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]
 
     def is_high_end_tpu(self) -> bool:
@@ -212,9 +213,13 @@ class HardwareDetector:
         props.name.lower()
         major, _minor = props.major, props.minor
 
-        # Blackwell (compute capability 10.0+)
+        # Blackwell Consumer (compute capability 12.0+)
+        if major >= 12:
+            return NVIDIAArchitecture.BLACKWELL_CONSUMER
+
+        # Blackwell Data Center (compute capability 10.0+)
         if major >= 10:
-            return NVIDIAArchitecture.BLACKWELL
+            return NVIDIAArchitecture.BLACKWELL_DC
 
         # Hopper - H100 (compute capability 9.0)
         if major == 9:
