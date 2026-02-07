@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.7"
+version = "0.5.8"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Intel, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
