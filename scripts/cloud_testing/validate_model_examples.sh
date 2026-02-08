@@ -21,6 +21,20 @@ REPO_URL="https://github.com/CloudlyIO/torchbridge.git"
 WORK_DIR="$HOME/torchbridge"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
+# Load .env if present (for HF_TOKEN and other credentials)
+if [ -f "$WORK_DIR/.env" ]; then
+    set -a
+    source "$WORK_DIR/.env"
+    set +a
+    log_info "Loaded credentials from .env" 2>/dev/null || true
+fi
+
+# Export HF_TOKEN for huggingface_hub if set
+if [ -n "${HF_TOKEN:-}" ]; then
+    export HF_TOKEN
+    export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN"
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -285,9 +299,13 @@ echo "────────────────────────�
 column -t -s',' "$RESULTS_DIR/summary.csv" 2>/dev/null || cat "$RESULTS_DIR/summary.csv"
 echo ""
 
-PASS_COUNT=$(grep -c ',PASS,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo 0)
-FAIL_COUNT=$(grep -c ',FAIL,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo 0)
-SKIP_COUNT=$(grep -c ',SKIPPED,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo 0)
+PASS_COUNT=$(grep -c ',PASS,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo "0")
+FAIL_COUNT=$(grep -c ',FAIL,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo "0")
+SKIP_COUNT=$(grep -c ',SKIPPED,' "$RESULTS_DIR/summary.csv" 2>/dev/null || echo "0")
+# Sanitize counts (strip whitespace/newlines)
+PASS_COUNT=$(echo "$PASS_COUNT" | tr -d '[:space:]')
+FAIL_COUNT=$(echo "$FAIL_COUNT" | tr -d '[:space:]')
+SKIP_COUNT=$(echo "$SKIP_COUNT" | tr -d '[:space:]')
 
 echo "Summary: $PASS_COUNT passed, $FAIL_COUNT failed, $SKIP_COUNT skipped"
 echo ""
