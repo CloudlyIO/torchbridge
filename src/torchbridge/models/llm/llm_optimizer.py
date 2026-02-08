@@ -260,7 +260,7 @@ class LLMOptimizer:
             # Prepare model loading kwargs
             model_kwargs = {
                 "trust_remote_code": True,
-                "torch_dtype": self._dtype,
+                "dtype": self._dtype,
             }
 
             # Add device map for automatic distribution
@@ -277,9 +277,13 @@ class LLMOptimizer:
                     logger.warning("BitsAndBytes not available for quantization")
                     model_kwargs.update(quant_config)
 
-            # Add Flash Attention
+            # Add Flash Attention (requires flash-attn package and Ampere+ GPU)
             if self.config.use_flash_attention:
-                model_kwargs["attn_implementation"] = "flash_attention_2"
+                try:
+                    import flash_attn  # noqa: F401
+                    model_kwargs["attn_implementation"] = "flash_attention_2"
+                except ImportError:
+                    logger.info("flash-attn not available, using default attention")
 
             model_kwargs.update(kwargs)
 
@@ -289,10 +293,12 @@ class LLMOptimizer:
             logger.info(f"Loaded model: {model_name}")
             return model, tokenizer
 
-        except ImportError:
-            raise ImportError(
-                "transformers library required. Install with: pip install transformers"
-            ) from None
+        except ImportError as e:
+            if "transformers" in str(e).lower():
+                raise ImportError(
+                    "transformers library required. Install with: pip install transformers"
+                ) from None
+            raise
 
     def _detect_model_type(self, model: nn.Module) -> LLMType:
         """Detect the type of LLM."""
