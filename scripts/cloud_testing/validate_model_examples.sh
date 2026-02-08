@@ -12,7 +12,7 @@
 # Supports: AWS (A10G/H100), GCP (T4/L4), AMD (MI300X)
 # =============================================================================
 
-set -euo pipefail
+set -eo pipefail
 
 # ─── Configuration ───
 
@@ -127,7 +127,7 @@ log_warning "Some dependencies may have failed to install"
 python3 -c "import torch; print(f'PyTorch {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
 python3 -c "import transformers; print(f'Transformers {transformers.__version__}')"
 
-export PYTHONPATH="$WORK_DIR:$WORK_DIR/src:$PYTHONPATH"
+export PYTHONPATH="$WORK_DIR:$WORK_DIR/src:${PYTHONPATH:-}"
 
 # ─── Run Model Examples ───
 
@@ -139,16 +139,19 @@ run_example() {
 
     log_info "Running: $name"
     local start_time=$(date +%s)
+    local exit_code=0
 
-    if python3 "$script" "${args[@]}" 2>&1 | tee "$RESULTS_DIR/${name}.log"; then
-        local end_time=$(date +%s)
-        local duration=$((end_time - start_time))
+    python3 "$script" "${args[@]}" > "$RESULTS_DIR/${name}.log" 2>&1 || exit_code=$?
+    cat "$RESULTS_DIR/${name}.log"
+
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    if [ "$exit_code" -eq 0 ]; then
         log_success "$name completed in ${duration}s"
         echo "$name,PASS,$duration" >> "$RESULTS_DIR/summary.csv"
     else
-        local end_time=$(date +%s)
-        local duration=$((end_time - start_time))
-        log_error "$name failed after ${duration}s"
+        log_error "$name failed after ${duration}s (exit $exit_code)"
         echo "$name,FAIL,$duration" >> "$RESULTS_DIR/summary.csv"
     fi
 }
