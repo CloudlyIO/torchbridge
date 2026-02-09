@@ -109,6 +109,7 @@ where = ["src"]
 target-version = "py310"
 line-length = 88
 src = ["src", "tests"]
+exclude = ["benchmarks", "demos"]
 
 [tool.ruff.lint]
 select = [

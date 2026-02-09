@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified Backend Demo (v0.4.8)
+Unified Backend Demo
 
 Demonstrates the unified backend interface and BackendFactory for automatic
 hardware detection across NVIDIA, AMD, TPU, and Intel platforms.
@@ -610,7 +610,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "=" * 60)
-    print("  Unified Backend Demo (v0.5.0)")
+    print("  Unified Backend Demo")
     print("  TorchBridge - Cross-Platform Backend Unification")
     print("=" * 60)
 

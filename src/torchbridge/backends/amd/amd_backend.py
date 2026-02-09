@@ -90,7 +90,7 @@ class AMDBackend(BaseBackend):
         self._current_amd_device: AMDDeviceInfoLegacy | None = None
         self._cpu_fallback = False
 
-        logger.info("Initializing AMD ROCm Backend v0.5.3")
+        logger.info("Initializing AMD ROCm Backend")
 
         # Validate configuration
         self._validate_config()

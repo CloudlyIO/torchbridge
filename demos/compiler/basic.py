@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 Basic PyTorch Optimizations Demo (v0.5.0)
+🚀 Basic PyTorch Optimizations Demo
 
 Demonstrates core PyTorch optimization techniques with measurable performance improvements:
 - Kernel fusion for 2-3x speedup

@@ -40,7 +40,6 @@ except ImportError:
     StatisticalAnalysis = None
     ADVANCED_ANALYSIS_AVAILABLE = False
 
-__version__ = "0.5.0"
 __all__ = [
     # Runner and config
     "BenchmarkRunner",

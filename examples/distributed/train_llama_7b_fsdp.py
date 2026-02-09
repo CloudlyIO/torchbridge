@@ -26,38 +26,34 @@ Usage:
              --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT \\
              train_llama_7b_fsdp.py --multi_node
 
-v0.4.24 - Distributed Training Validation
+Distributed Training Validation
 """
 
-import os
-import sys
-import time
 import argparse
-from dataclasses import dataclass
-from typing import Optional, Dict, Any
 import functools
+import os
+import time
+from dataclasses import dataclass
 
 import torch
-import torch.nn as nn
 import torch.distributed as dist
+import torch.nn as nn
+from torch.distributed.fsdp import (
+    BackwardPrefetch,
+    CPUOffload,
+    MixedPrecision,
+    ShardingStrategy,
+)
 from torch.distributed.fsdp import (
     FullyShardedDataParallel as FSDP,
-    MixedPrecision,
-    BackwardPrefetch,
-    ShardingStrategy,
-    CPUOffload,
-)
-from torch.distributed.fsdp.wrap import (
-    transformer_auto_wrap_policy,
-    size_based_auto_wrap_policy,
-    enable_wrap,
-    wrap,
 )
 from torch.distributed.fsdp.fully_sharded_data_parallel import (
     FullStateDictConfig,
     StateDictType,
 )
-
+from torch.distributed.fsdp.wrap import (
+    transformer_auto_wrap_policy,
+)
 
 # =============================================================================
 # Configuration
@@ -67,7 +63,7 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import (
 class TrainingConfig:
     """Training configuration."""
     # Model
-    model_name: str = "meta-llama/Llama-2-7b-hf"
+    model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     use_mock_model: bool = True  # Use mock for testing without HF auth
 
     # Training
@@ -207,8 +203,8 @@ class MockLlamaForCausalLM(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        labels: Optional[torch.Tensor] = None,
-    ) -> Dict[str, torch.Tensor]:
+        labels: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
         hidden_states = self.embed_tokens(input_ids)
 
         for layer in self.layers:
@@ -245,7 +241,7 @@ def get_sharding_strategy(strategy_name: str) -> ShardingStrategy:
     return strategies.get(strategy_name, ShardingStrategy.FULL_SHARD)
 
 
-def get_mixed_precision_policy(enabled: bool) -> Optional[MixedPrecision]:
+def get_mixed_precision_policy(enabled: bool) -> MixedPrecision | None:
     """Get mixed precision policy."""
     if not enabled:
         return None
@@ -302,12 +298,12 @@ def setup_fsdp(
 def apply_activation_checkpointing(model: FSDP):
     """Apply activation checkpointing to reduce memory."""
     from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
-        checkpoint_wrapper,
-        CheckpointImpl,
         apply_activation_checkpointing,
+        checkpoint_wrapper,
     )
 
-    check_fn = lambda submodule: isinstance(submodule, MockLlamaDecoderLayer)
+    def check_fn(submodule):
+        return isinstance(submodule, MockLlamaDecoderLayer)
 
     apply_activation_checkpointing(
         model,
@@ -515,7 +511,7 @@ def train(config: TrainingConfig):
     total_loss = 0.0
     start_time = time.time()
 
-    for epoch in range(1000):  # Large number, we use max_steps instead
+    for _epoch in range(1000):  # Large number, we use max_steps instead
         for batch_idx, (input_ids, labels) in enumerate(dataloader):
             input_ids = input_ids.cuda()
             labels = labels.cuda()
@@ -598,7 +594,7 @@ def main():
     parser.add_argument(
         "--model_name",
         type=str,
-        default="meta-llama/Llama-2-7b-hf",
+        default="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
         help="Model name or path",
     )
     parser.add_argument(

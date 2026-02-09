@@ -1,5 +1,5 @@
 """
-Export Pipeline E2E Tests (v0.5.3)
+Export Pipeline E2E Tests
 
 Tests for the complete model export and deployment pipeline including:
 - ONNX export

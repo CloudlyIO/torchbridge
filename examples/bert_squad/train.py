@@ -14,16 +14,13 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -38,12 +35,12 @@ except ImportError:
     print("Warning: TorchBridge not available, using basic PyTorch")
 
 # Transformers
+from datasets import load_dataset
 from transformers import (
     AutoModelForQuestionAnswering,
     AutoTokenizer,
     get_linear_schedule_with_warmup,
 )
-from datasets import load_dataset
 
 # Setup logging
 logging.basicConfig(
@@ -122,7 +119,7 @@ class BERTSquadTrainer:
             else:
                 backend_type = detect_best_backend()
 
-            hw_info = detect_hardware()
+            detect_hardware()
 
             if backend_type == BackendType.NVIDIA and torch.cuda.is_available():
                 device = torch.device("cuda")

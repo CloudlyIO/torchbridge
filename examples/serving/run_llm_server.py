@@ -8,7 +8,7 @@ This example demonstrates how to:
 
 Supported Models:
 - GPT-2 (all variants)
-- LLaMA-2, LLaMA-3
+- DeepSeek R1, Qwen 3, Gemma 3, Llama 4
 - Mistral-7B
 - Phi-2, Phi-3
 
@@ -78,7 +78,7 @@ def main():
         "--model",
         type=str,
         default="gpt2",
-        help="Model name (e.g., gpt2, gpt2-medium, meta-llama/Llama-2-7b-hf)"
+        help="Model name (e.g., deepseek-ai/DeepSeek-R1-Distill-Qwen-7B, Qwen/Qwen3-8B)"
     )
     parser.add_argument(
         "--quantization",

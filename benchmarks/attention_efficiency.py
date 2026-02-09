@@ -2,7 +2,7 @@
 """
 Attention Efficiency Benchmarks
 
-Benchmarks for v0.4.23 attention implementations:
+Benchmarks for attention implementations:
 - ViT Attention Slicing
 - Sparse Attention (Block, Strided, Dynamic)
 - Memory-Efficient Attention (Chunked, LongSequence)
@@ -12,7 +12,7 @@ Measures:
 - Memory usage (MB)
 - Scaling with sequence length
 
-v0.4.23 - Complete Placeholder Implementations
+Complete Placeholder Implementations
 """
 
 import argparse
@@ -335,7 +335,7 @@ def run_benchmarks(
         seq_lengths = [64, 128, 256, 512]
 
     print("=" * 60)
-    print("Attention Efficiency Benchmarks (v0.5.3)")
+    print("Attention Efficiency Benchmarks")
     print("=" * 60)
     print(f"Device: {DEVICE}")
     print(f"Batch size: {batch_size}")

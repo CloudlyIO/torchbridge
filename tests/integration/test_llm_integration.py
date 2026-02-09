@@ -1,5 +1,5 @@
 """
-Test Suite for LLM Integration (v0.5.3)
+Test Suite for LLM Integration
 
 Tests for Llama, Mistral, Phi optimization wrappers and KV-cache.
 Validates optimization, quantization, and backend integration.
@@ -100,7 +100,7 @@ class TestLLMConfig:
 
         config = LLMConfig()
 
-        assert config.model_name == "meta-llama/Llama-2-7b-hf"
+        assert config.model_name == "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
         assert config.model_type == LLMType.LLAMA
         assert config.max_sequence_length == 4096
         assert config.quantization == QuantizationMode.NONE

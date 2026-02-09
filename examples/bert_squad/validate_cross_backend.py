@@ -26,8 +26,8 @@ from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
 # TorchBridge imports
 try:
-    from torchbridge.backends import detect_best_backend, BackendType
-    from torchbridge.core.hardware_detector import detect_hardware
+    from torchbridge.backends import BackendType, detect_best_backend  # noqa: F401
+    from torchbridge.core.hardware_detector import detect_hardware  # noqa: F401
     TORCHBRIDGE_AVAILABLE = True
 except ImportError:
     TORCHBRIDGE_AVAILABLE = False
@@ -241,7 +241,7 @@ def main():
         return_tensors="pt",
     )
 
-    print(f"\nTest input:")
+    print("\nTest input:")
     print(f"  Question: {question}")
     print(f"  Context: {context[:50]}...")
     print(f"  Input shape: {inputs['input_ids'].shape}")

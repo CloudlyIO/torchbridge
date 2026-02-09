@@ -1,5 +1,5 @@
 """
-Tests for Backend Unification (v0.5.3)
+Tests for Backend Unification
 
 This module tests the unified backend interface including:
 - BaseBackend abstract class

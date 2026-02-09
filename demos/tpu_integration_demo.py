@@ -359,7 +359,7 @@ class TPUIntegrationDemo:
 
         # Compilation statistics
         comp_stats = compiler.get_compilation_stats()
-        # v0.3.2: Changed to cache-based statistics
+        # Changed to cache-based statistics
         cache_stats = comp_stats.get('compilation_cache', {})
         print(f"      Cache size: {cache_stats.get('size', 0)}/{comp_stats.get('cache_max_size', 0)}")
         print(f"      XLA available: {comp_stats['xla_available']}")

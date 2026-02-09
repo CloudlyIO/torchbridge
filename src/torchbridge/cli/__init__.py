@@ -24,6 +24,8 @@ logging.getLogger("torch.distributed.elastic").setLevel(logging.ERROR)
 # Suppress pynvml deprecation warning
 os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 
+from torchbridge import __version__ as _tb_version
+
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
@@ -48,7 +50,7 @@ def main(args: list[str] | None = None) -> int:
         epilog="""
 Examples:
   torchbridge optimize --model model.pt --level production
-  torchbridge benchmark --model bert-base-uncased --quick
+  torchbridge benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --quick
   torchbridge export --model model.pt --format onnx
   torchbridge profile --model model.pt --mode summary
   torchbridge doctor --full-report
@@ -61,7 +63,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.5.3'
+        version=f'%(prog)s {_tb_version}'
     )
 
     # Add subcommands

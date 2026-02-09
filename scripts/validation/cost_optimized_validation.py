@@ -230,7 +230,7 @@ class CostOptimizedValidator:
                     "cell_type": "markdown",
                     "metadata": {},
                     "source": [
-                        "# TorchBridge v0.4.34 Validation\n",
+                        "# TorchBridge Validation\n",
                         f"**Platform**: {resource.name}\n",
                         f"**Backend**: {resource.backend}\n",
                         f"**Generated**: {datetime.now().isoformat()}\n"

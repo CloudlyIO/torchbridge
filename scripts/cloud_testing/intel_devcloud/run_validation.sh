@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Intel XPU Backend Validation - Intel DevCloud
-# TorchBridge v0.4.10
+# TorchBridge Cloud Validation
 #
 # Validates Intel backend on real Intel XPU hardware (PVC, Arc, Flex)
 # Run on Intel DevCloud or any system with Intel GPU + IPEX
@@ -16,7 +16,7 @@ export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="intel"
 export PLATFORM="intel_devcloud"
-export VERSION="0.4.10"
+export VERSION="latest"
 
 mkdir -p "$REPORT_DIR"
 
@@ -223,9 +223,9 @@ print(f"\nPerformance results saved to {report_dir}/intel_perf_results.json")
 PYEOF
 
 # =============================================================================
-# v0.4.10 Feature Validation
+# Feature Validation
 # =============================================================================
-log_step "5/6" "Validating v0.4.10 Features"
+log_step "5/6" "Validating Features"
 
 python3 << 'PYEOF'
 import torch
@@ -233,10 +233,10 @@ import json
 import os
 
 print("=" * 60)
-print("  v0.4.10 Intel Feature Validation")
+print("  Intel Feature Validation")
 print("=" * 60)
 
-results = {"version": "0.4.10", "features": {}}
+results = {"version": "latest", "features": {}}
 
 # 1. Test Backend Initialization
 print("\n1. Backend Initialization:")
@@ -329,7 +329,7 @@ with open(f'{report_dir}/v0410_feature_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
 print("\n" + "=" * 60)
-print("  v0.4.10 Feature validation complete")
+print("  Feature validation complete")
 print("=" * 60)
 PYEOF
 
@@ -367,7 +367,7 @@ try:
 except:
     pass
 
-# Load v0.4.10 feature results
+# Load feature results
 v0410_results = {}
 try:
     with open(f'{report_dir}/v0410_feature_results.json') as f:
@@ -404,9 +404,9 @@ report = f"""# Intel XPU Backend Validation Report - v{version}
 
 """
 
-# Add v0.4.10 feature validation results
+# Add feature validation results
 if v0410_results.get('features'):
-    report += """## v0.4.10 Feature Validation
+    report += """## Feature Validation
 
 | Feature | Status |
 |---------|--------|
@@ -434,7 +434,7 @@ report += f"""
 
 {"**PASSED** - All tests successful" if summary.get('failed', 0) == 0 else "**FAILED** - Review failed tests"}
 
-## v0.4.10 Changes Validated
+## Changes Validated
 
 - [x] Comprehensive Intel backend documentation (docs/backends/intel.md)
 - [x] Intel DevCloud validation script
@@ -467,7 +467,7 @@ echo ""
 echo "Key files:"
 echo "  - INTEL_CLOUD_REPORT.md       : Main validation report"
 echo "  - intel_test_results.json     : Detailed test results"
-echo "  - v0410_feature_results.json  : v0.4.10 feature validation"
+echo "  - v0410_feature_results.json  : feature validation"
 echo "  - intel_perf_results.json     : Performance benchmarks"
 echo ""
 

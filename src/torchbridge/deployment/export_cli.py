@@ -1,5 +1,5 @@
 """
-Export CLI for TorchBridge (v0.5.3)
+Export CLI for TorchBridge
 
 Command-line interface for exporting PyTorch models to various formats.
 

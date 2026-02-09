@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TorchBridge v0.4.30 Report Generator
+TorchBridge Report Generator
 
 Generates comprehensive validation reports:
 1. Reliability Report
@@ -26,7 +26,7 @@ class ReportGenerator:
         self.project_root = project_root
         self.reports_dir = reports_dir
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.version = "0.5.3"
+        self.version = ""
 
     def _load_json_report(self, filename: str) -> dict[str, Any] | list[Any]:
         """Load a JSON report file."""
@@ -232,7 +232,7 @@ reliability with a {test_summary.get('pass_rate', 0):.1f}% test pass rate.
     def generate_performance_report(self) -> str:
         """Generate performance report."""
         git_info = self._get_git_info()
-        file_counts = self._count_source_files()
+        self._count_source_files()
 
         report = f"""# TorchBridge v{self.version} Performance Report
 
@@ -325,9 +325,9 @@ across different hardware backends and workloads.
 
 ## 4. Regression Analysis
 
-### 4.1 v0.4.30 vs v0.4.0
+### 4.1 Version Comparison
 
-| Feature | v0.4.0 | v0.4.30 | Change |
+| Feature | Previous | Current | Change |
 |---------|--------|---------|--------|
 | FlashAttention | 2.0x | 2.5x | +25% |
 | FP8 Training | N/A | 2.0x | New |

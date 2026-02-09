@@ -1,6 +1,6 @@
-# TorchBridge Test Suite v0.5.3
+# TorchBridge Test Suite
 
-Comprehensive test suite for validating GPU optimizations -- 1,814 tests.
+Comprehensive test suite for validating GPU optimizations -- 1,786 tests.
 
 ## Quick Start
 

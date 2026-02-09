@@ -1,5 +1,5 @@
 # TorchBridge ServiceMonitor for Prometheus Operator
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
