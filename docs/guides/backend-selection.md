@@ -95,9 +95,9 @@ Compare backends by cost-per-token on your workload:
 from torchbridge import TorchBridgeConfig
 
 config = TorchBridgeConfig.for_training()
-config.hardware.nvidia.fp8_enabled = True           # H100+
-config.hardware.nvidia.flash_attention_version = "3" # H100+
-config.hardware.nvidia.enable_oom_protection = True
+config.hardware.nvidia.fp8_enabled = True              # H100+
+config.hardware.nvidia.flash_attention_version = "3"   # H100+
+config.hardware.nvidia.flash_attention_enabled = True
 ```
 
 ### AMD
@@ -118,8 +118,8 @@ config = AMDConfig(
 from torchbridge.core.config import IntelConfig
 
 config = IntelConfig(
-    enable_ipex=True,
-    enable_onednn=True,
+    ipex_enabled=True,
+    onednn_enabled=True,
     enable_amx=True,
 )
 ```
@@ -131,8 +131,8 @@ from torchbridge.core.config import TPUConfig
 
 config = TPUConfig(
     precision="bfloat16",
-    enable_xla_cache=True,
     cache_max_size=100,
+    compilation_timeout_seconds=300,
 )
 ```
 

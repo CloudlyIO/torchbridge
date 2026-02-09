@@ -168,9 +168,9 @@ if torch.cuda.is_available():
 # 3. Quick Backend Test
 echo "[3/7] Running quick backend test..."
 python3 -c "
-import torchbridge as kpt
-print(f'TorchBridge: {{kpt.__version__}}')
-manager = kpt.get_manager()
+import torchbridge
+print(f'TorchBridge: {{torchbridge.__version__}}')
+manager = torchbridge.get_manager()
 print(f'Manager initialized: {{type(manager).__name__}}')
 "
 

@@ -6,7 +6,7 @@ Demonstrates the AMD backend capabilities for TorchBridge,
 including configuration, optimization, and profiling features.
 
 This demo works in simulation mode without actual AMD hardware,
-showing the API and workflow for AMD GPU optimization.
+showing the API and workflow for AMD cross-backend support.
 
 Usage:
     PYTHONPATH=src python3 demos/amd_backend_demo.py

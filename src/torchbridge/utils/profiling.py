@@ -3,7 +3,7 @@ GPU Performance Profiling and Benchmarking Educational Utilities
 
 This module provides comprehensive tools for profiling kernel performance,
 memory usage, and computational efficiency with extensive educational guidance
-for understanding GPU optimization impact.
+for understanding cross-backend GPU performance impact.
 
 """
 
@@ -25,9 +25,9 @@ except ImportError:
 
 class KernelProfiler:
     """
-    Educational GPU Kernel Profiler for Learning Optimization Impact.
+    Educational GPU Kernel Profiler for Learning Performance Impact.
 
-    This profiler teaches you how to properly measure GPU optimization effectiveness
+    This profiler teaches you how to properly measure cross-backend GPU performance
     by providing detailed insights into performance characteristics and bottlenecks.
 
     """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Advanced Benchmark Runner for PyTorch Optimization Framework
+Advanced Benchmark Runner for TorchBridge
 
 Comprehensive benchmarking against state-of-the-art implementations with
 statistical analysis and production-grade measurement methodology.

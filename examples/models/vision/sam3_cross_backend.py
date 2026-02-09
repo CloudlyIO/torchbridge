@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-SAM 3 (Segment Anything Model 3) Optimization Example
+SAM 3 (Segment Anything Model 3) Cross-Backend Example
 
-Demonstrates how to use TorchBridge to optimize Meta's SAM 3 for
+Demonstrates how to use TorchBridge to run Meta's SAM 3 for
 production vision segmentation across CUDA, ROCm, and CPU backends.
 
 SAM 3 introduces text and exemplar prompts, enabling detection,
@@ -26,10 +26,10 @@ Hardware requirements:
     - CPU:  ~4GB RAM
 
 Usage:
-    python sam3_optimization.py
-    python sam3_optimization.py --image path/to/image.jpg
-    python sam3_optimization.py --text-prompt "dog"
-    python sam3_optimization.py --benchmark
+    python sam3_cross_backend.py
+    python sam3_cross_backend.py --image path/to/image.jpg
+    python sam3_cross_backend.py --text-prompt "dog"
+    python sam3_cross_backend.py --benchmark
 """
 
 import argparse
@@ -290,7 +290,7 @@ def run_benchmark(num_runs: int = 20) -> dict[str, Any]:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="SAM 3 Optimization with TorchBridge"
+        description="SAM 3 Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument("--image", type=str, help="Path to input image")
     parser.add_argument(

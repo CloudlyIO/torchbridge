@@ -1,11 +1,11 @@
 """
-Use Case 2: LLM Optimization for Inference
+Use Case 2: Cross-Backend LLM Inference
 
 Demonstrates TorchBridge's LLM optimizer: load a HuggingFace model,
 apply optimizations (BetterTransformer, torch.compile, quantization),
-and measure the impact on latency and throughput.
+and measure the impact on latency and throughput across backends.
 
-Run: PYTHONPATH=src python3 examples/usecase2_llm_optimization.py
+Run: PYTHONPATH=src python3 examples/usecase2_cross_backend_inference.py
 """
 # ruff: noqa: E402
 

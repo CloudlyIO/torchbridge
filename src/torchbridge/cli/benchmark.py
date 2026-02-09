@@ -13,7 +13,7 @@ from pathlib import Path
 
 import torch
 
-import torchbridge as kpt
+import torchbridge
 
 
 @dataclass
@@ -237,7 +237,7 @@ Examples:
             test_cases = [
                 ("Linear_512", torch.nn.Linear(512, 512), (32, 512)),
                 ("Linear_1024", torch.nn.Linear(1024, 1024), (32, 1024)),
-                ("FusedGELU", kpt.FusedGELU(), (32, 512)),
+                ("FusedGELU", torchbridge.FusedGELU(), (32, 512)),
                 ("Sequential_MLP", torch.nn.Sequential(
                     torch.nn.Linear(768, 3072),
                     torch.nn.GELU(),

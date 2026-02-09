@@ -1,7 +1,7 @@
 # Development Docker image for TorchBridge
 # Includes all development tools and optional dependencies
 
-FROM nvidia/cuda:11.8-devel-ubuntu22.04
+FROM nvidia/cuda:12.1-devel-ubuntu22.04
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -31,9 +31,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir \
-    torch==2.1.0+cu118 \
-    torchvision==0.16.0+cu118 \
-    --index-url https://download.pytorch.org/whl/cu118
+    torch \
+    torchvision \
+    --index-url https://download.pytorch.org/whl/cu121
 
 # Install Triton for GPU kernel development
 RUN pip install --no-cache-dir triton==2.1.0
@@ -76,12 +76,12 @@ CMD ["/bin/bash"]
 
 # Add helpful development aliases
 RUN echo 'alias ll="ls -la"' >> ~/.bashrc \
-    && echo 'alias kpt="torchbridge"' >> ~/.bashrc \
+    && echo 'alias tb="torchbridge"' >> ~/.bashrc \
     && echo 'alias pytest="python -m pytest"' >> ~/.bashrc \
     && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> ~/.bashrc
 
 # Metadata
 LABEL maintainer="TorchBridge Team" \
-      version="0.1.55-dev" \
+      version="0.5.9-dev" \
       description="Development environment for TorchBridge hardware abstraction layer for PyTorch" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

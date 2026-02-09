@@ -1,5 +1,5 @@
 # Production Dockerfile for TorchBridge Inference Server
-# v0.4.22 - Production Serving
+# Production Serving (version: see pyproject.toml)
 #
 # Build:
 #   docker build -f docker/Dockerfile.serving -t torchbridge-serving:latest .
@@ -68,6 +68,13 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Expose port
 EXPOSE 8000
+
+# Labels
+LABEL org.opencontainers.image.title="TorchBridge Serving" \
+      org.opencontainers.image.description="Production inference server with GPU support" \
+      org.opencontainers.image.version="0.5.9" \
+      org.opencontainers.image.vendor="TorchBridge" \
+      org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
 
 # Default command
 CMD ["python3", "-m", "examples.serving.run_llm_server", \

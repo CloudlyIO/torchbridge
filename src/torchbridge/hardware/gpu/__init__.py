@@ -1,11 +1,11 @@
 """
 Advanced GPU Integration Techniques for PyTorch
 
-This module provides cutting-edge GPU optimization techniques that leverage
+This module provides cross-backend GPU integration techniques that leverage
 advanced hardware features and low-level GPU programming concepts for
 maximum performance in PyTorch neural networks.
 
-Advanced GPU optimization requires understanding hardware capabilities:
+Advanced GPU integration requires understanding hardware capabilities:
 - CUDA programming model: Threads, blocks, grids, and memory hierarchy
 - Tensor Cores: Specialized hardware for mixed-precision matrix operations
 - Memory coalescing: Optimizing global memory access patterns
@@ -13,14 +13,14 @@ Advanced GPU optimization requires understanding hardware capabilities:
 - Multi-GPU techniques: Scaling across multiple GPUs with optimal communication
 
  ADVANCED TECHNIQUES:
-- custom_kernels: CUDA kernel integration and optimization
+- custom_kernels: CUDA kernel integration and backend-aware generation
 - tensor_cores: Specialized Tensor Core utilization patterns
-- memory_optimization: Advanced memory hierarchy optimization
+- memory_optimization: Advanced memory hierarchy management
 - multi_gpu_patterns: Efficient multi-GPU computation strategies
-- profiling_tools: Advanced profiling and optimization measurement
+- profiling_tools: Advanced profiling and performance measurement
 
  PRACTICAL VALUE:
-These techniques enable the highest levels of GPU performance optimization,
+These techniques enable the highest levels of cross-backend GPU performance,
 providing the tools to achieve state-of-the-art efficiency in production
 deep learning systems.
 """

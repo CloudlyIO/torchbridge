@@ -1,7 +1,7 @@
 """
 System diagnostics commands for TorchBridge CLI.
 
-Provides comprehensive system compatibility checking and optimization recommendations.
+Provides comprehensive system compatibility checking and backend recommendations.
 """
 
 import argparse
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 import torch
 
-import torchbridge as kpt
+import torchbridge
 
 
 @dataclass
@@ -33,14 +33,14 @@ class DoctorCommand:
         """Register the doctor command with argument parser."""
         parser = subparsers.add_parser(
             'doctor',
-            help='Diagnose system compatibility and optimization readiness',
+            help='Diagnose system compatibility and backend readiness',
             description='Check system configuration for optimal TorchBridge performance',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Check Categories:
   basic      - Python, PyTorch, and basic dependencies
   hardware   - GPU detection and capabilities
-  optimization - Optimization framework availability
+  optimization - Backend framework availability
   advanced   - Advanced features (Triton, CUDA kernels)
 
 Examples:
@@ -233,7 +233,7 @@ Examples:
 
         # TorchBridge installation
         try:
-            kpt_version = kpt.__version__
+            kpt_version = torchbridge.__version__
             results.append(DiagnosticResult(
                 "TorchBridge Version",
                 "pass",
@@ -278,8 +278,8 @@ Examples:
                 results.append(DiagnosticResult(
                     "GPU Compute Capability",
                     "pass",
-                    f"Compute {compute_capability} ( Excellent for optimization)",
-                    details="Supports Tensor Cores and advanced optimizations"
+                    f"Compute {compute_capability} ( Excellent for HAL features)",
+                    details="Supports Tensor Cores and advanced backend features"
                 ))
             elif major >= 6:  # Pascal
                 results.append(DiagnosticResult(
@@ -292,8 +292,8 @@ Examples:
                 results.append(DiagnosticResult(
                     "GPU Compute Capability",
                     "warning",
-                    f"Compute {compute_capability} ( Limited optimization support)",
-                    recommendation="GPU may not support all optimization features"
+                    f"Compute {compute_capability} ( Limited backend feature support)",
+                    recommendation="GPU may not support all backend features"
                 ))
 
             # Check memory
@@ -314,8 +314,8 @@ Examples:
                 results.append(DiagnosticResult(
                     "GPU Memory",
                     "warning",
-                    f"{gpu_memory:.1f} GB ( Limited memory for optimization)",
-                    recommendation="Upgrade GPU or use CPU-only optimizations"
+                    f"{gpu_memory:.1f} GB ( Limited memory for advanced features)",
+                    recommendation="Upgrade GPU or use CPU-only backend"
                 ))
         else:
             results.append(DiagnosticResult(
@@ -348,9 +348,9 @@ Examples:
 
     @staticmethod
     def _check_optimization_frameworks(verbose: bool) -> list[DiagnosticResult]:
-        """Check availability of optimization frameworks."""
+        """Check availability of backend frameworks and compilation tools."""
         if verbose:
-            print(" Checking optimization frameworks...")
+            print(" Checking backend frameworks...")
 
         results = []
 
@@ -405,15 +405,15 @@ Examples:
                 CompilerOptimizationAssistant,  # noqa: F401
             )
             results.append(DiagnosticResult(
-                "TorchBridge Optimization",
+                "TorchBridge HAL",
                 "pass",
-                "Optimization framework ( Available)"
+                "Hardware abstraction layer ( Available)"
             ))
         except ImportError as e:
             results.append(DiagnosticResult(
-                "TorchBridge Optimization",
+                "TorchBridge HAL",
                 "fail",
-                f"Optimization framework not available ({e})",
+                f"Hardware abstraction layer not available ({e})",
                 recommendation="Reinstall TorchBridge package"
             ))
 
@@ -421,7 +421,7 @@ Examples:
 
     @staticmethod
     def _check_advanced_features(verbose: bool) -> list[DiagnosticResult]:
-        """Check availability of advanced optimization features."""
+        """Check availability of advanced backend features."""
         if verbose:
             print(" Checking advanced features...")
 
@@ -586,7 +586,7 @@ Examples:
         if failed > 0:
             summary += "\n Critical issues detected - system may not work optimally"
         elif warnings > 0:
-            summary += "\n  Some optimizations may not be available"
+            summary += "\n  Some backend features may not be available"
         else:
             summary += "\n System is ready for optimal TorchBridge performance!"
 
@@ -652,7 +652,7 @@ def main():
     """Standalone entry point for tb-doctor."""
     parser = argparse.ArgumentParser(
         prog='tb-doctor',
-        description='Diagnose system compatibility and optimization readiness',
+        description='Diagnose system compatibility and backend readiness',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 

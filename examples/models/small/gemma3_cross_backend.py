@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Gemma 3 12B Optimization Example
+Gemma 3 12B Cross-Backend Example
 
-Demonstrates how to use TorchBridge to optimize Google DeepMind's Gemma 3
+Demonstrates how to use TorchBridge to run Google DeepMind's Gemma 3
 for efficient inference across CUDA, ROCm, and CPU backends.
 
 Gemma 3 is multimodal (text + image), supports 128K context window,
@@ -23,10 +23,10 @@ Hardware requirements (12B):
     - INT4: ~7GB VRAM
 
 Usage:
-    python gemma3_optimization.py
-    python gemma3_optimization.py --model google/gemma-3-4b-it
-    python gemma3_optimization.py --quantization int4
-    python gemma3_optimization.py --benchmark
+    python gemma3_cross_backend.py
+    python gemma3_cross_backend.py --model google/gemma-3-4b-it
+    python gemma3_cross_backend.py --quantization int4
+    python gemma3_cross_backend.py --benchmark
 """
 
 import argparse
@@ -343,7 +343,7 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Gemma 3 Optimization with TorchBridge"
+        description="Gemma 3 Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
@@ -377,7 +377,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("Gemma 3 Optimization with TorchBridge")
+    print_section("Gemma 3 Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

@@ -1,6 +1,6 @@
 # TorchBridge Test Suite
 
-Comprehensive test suite for validating GPU optimizations -- 1,786 tests.
+Comprehensive test suite for validating cross-backend hardware abstraction -- 1,239 tests.
 
 ## Quick Start
 
@@ -31,7 +31,6 @@ tests/
 ├── unit/                    # Fast, isolated tests (<1s each)
 │   ├── test_configs.py
 │   ├── test_kernel_registry.py
-│   ├── test_package_installation.py
 │   └── test_performance_tracker.py
 │
 ├── integration/             # Multi-component tests (1-30s)
@@ -40,13 +39,12 @@ tests/
 │   ├── test_distributed_integration.py
 │   ├── test_full_pipeline.py
 │   ├── test_kernel_integration.py
-│   ├── test_llm_integration.py
-│   ├── test_multimodal_integration.py
-│   ├── test_small_model_integration.py
-│   └── test_vision_model_integration.py
+│   └── test_llm_integration.py
 │
 ├── backends/                # Hardware backend tests
 │   ├── test_amd_backend.py
+│   ├── test_blackwell_detection.py
+│   ├── test_cdna4_detection.py
 │   ├── test_custom_kernels.py
 │   ├── test_hardware_abstraction.py
 │   ├── test_intel_backend.py
@@ -56,35 +54,14 @@ tests/
 │   └── test_tpu_config.py
 │
 ├── features/                # Feature-specific tests
-│   ├── test_advanced.py
-│   ├── test_advanced_memory.py
-│   ├── test_attention_compatibility.py
 │   ├── test_auto_optimization.py
-│   ├── test_distributed_scale.py
-│   ├── test_dynamic_shapes.py
-│   ├── test_enhanced_health.py
-│   ├── test_flex_attention.py
-│   ├── test_fp8_native.py
-│   ├── test_fp8_training.py
-│   ├── test_grafana_alerts.py
-│   ├── test_moe.py
-│   ├── test_next_gen.py
-│   ├── test_slo_framework.py
-│   └── test_structured_logging.py
+│   └── test_distributed_scale.py
 │
 ├── e2e/                     # End-to-end tests
-│   ├── test_cross_backend_bert.py
-│   ├── test_cross_backend_gpt2.py
 │   ├── test_deployment.py
 │   ├── test_export_pipeline.py
 │   ├── test_llm_server.py
 │   ├── test_monitoring.py
-│   ├── test_placeholder_completions.py
-│   ├── test_quantization_quality.py
-│   ├── test_real_bert.py
-│   ├── test_real_clip.py
-│   ├── test_real_gpt2.py
-│   ├── test_real_resnet.py
 │   └── test_serving.py
 │
 ├── distributed/             # Distributed training tests
@@ -106,11 +83,6 @@ tests/
 │   ├── test_optimize.py
 │   ├── test_profile.py
 │   └── test_validate.py
-│
-├── patterns/                # Optimization pattern tests
-│   ├── test_compiler_friendly_patterns.py
-│   ├── test_compute_intensity_patterns.py
-│   └── test_memory_efficiency_patterns.py
 │
 ├── regression/              # Regression detection tests
 │   ├── test_baseline_manager.py
@@ -153,7 +125,7 @@ pytest tests/unit/ tests/integration/ -v -m "not gpu"
 **NVIDIA GPU:**
 ```bash
 pytest tests/backends/test_nvidia_backend.py -v
-pytest tests/features/test_fp8_training.py -v  # H100+ required
+pytest tests/backends/test_blackwell_detection.py -v
 ```
 
 **Multi-GPU:**

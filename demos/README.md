@@ -1,6 +1,6 @@
-# 🚀 TorchBridge Demos
+# TorchBridge Demos
 
-**PyTorch optimization demonstrations with 2-6x performance improvements.**
+**Hardware abstraction layer demonstrations for cross-backend PyTorch.**
 
 ## Quick Start
 
@@ -12,40 +12,36 @@ export PYTHONPATH=../src
 python3 run_all_demos.py --quick
 
 # Try individual demos
-python3 precision/adaptive.py --quick     # ✅ 30% quality improvement
-python3 attention/fusion.py --quick      # ✅ 40-60% kernel reduction
+python3 precision/fp8.py --quick           # ✅ FP8 precision support
+python3 attention/flash.py --quick       # ✅ Memory-efficient attention
 python3 memory/deep_states.py --quick    # ✅ 2.5x memory reduction
 ```
 
 ## Demo Structure
 
-✅ **Working Demos (16 total):**
+**Working Demos:**
 
 ```
-precision/     🎯 Precision & quantization (1 demo)
-  ├── adaptive.py            # Smart precision allocation
+precision/     Precision & quantization (1 demo)
+  └── fp8.py                 # FP8 precision support
 
-attention/     🧠 Attention mechanisms (2 demos)
-  ├── fusion.py              # Neural operator fusion
+attention/     Attention mechanisms (1 demo)
   └── flash.py               # Memory-efficient attention
 
-memory/        💾 Memory optimization (3 demos)
+memory/        Memory management (3 demos)
   ├── deep_states.py         # Advanced optimizer states
   ├── basic.py               # Memory pool management
   └── checkpointing.py       # Gradient checkpointing
 
-compiler/      ⚡ Compilation optimization (2 demos)
+compiler/      Compilation support (2 demos)
   ├── shapes.py              # Dynamic shape bucketing
   └── basic.py               # PyTorch compilation
 
-experimental/  🚀 Cutting-edge features (1 demo)
-  └── ultra_precision.py     # FP4/FP8 precision
-
-hardware/      🔧 Multi-vendor GPU support (1 demo)
+hardware/      Multi-vendor GPU support (1 demo)
   └── multi_gpu.py           # Hardware abstraction
 
-production/    🏭 Deployment patterns (1 demo)
-  └── deployment.py          # Production optimization
+production/    Deployment patterns (1 demo)
+  └── deployment.py          # Production deployment
 ```
 
 ## Performance Results

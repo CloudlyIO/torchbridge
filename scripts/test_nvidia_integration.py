@@ -199,7 +199,7 @@ class NVIDIAIntegrationTester:
 
             # Test NVIDIA benchmark
             result = subprocess.run([
-                sys.executable, "benchmarks/nvidia_config_benchmarks.py", "--quick"
+                sys.executable, "benchmarks/nvidia_integration_benchmark.py", "--quick"
             ],
             cwd=repo_root,
             env={"PYTHONPATH": str(repo_root / "src")},

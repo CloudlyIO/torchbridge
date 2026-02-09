@@ -5,8 +5,8 @@
 FROM python:3.10-slim as builder
 
 # Set build arguments
-ARG CUDA_VERSION=11.8
-ARG PYTORCH_VERSION=2.1.0
+ARG CUDA_VERSION=12.1
+ARG PYTORCH_VERSION=2.5.0
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels .
 
 # Production stage
-FROM nvidia/cuda:11.8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1-runtime-ubuntu22.04
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -54,9 +54,9 @@ WORKDIR /app
 
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir \
-    torch==2.1.0+cu118 \
-    torchvision==0.16.0+cu118 \
-    --index-url https://download.pytorch.org/whl/cu118
+    torch \
+    torchvision \
+    --index-url https://download.pytorch.org/whl/cu121
 
 # Copy wheels from build stage
 COPY --from=builder /build/wheels/*.whl /tmp/wheels/
@@ -92,7 +92,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Metadata
 LABEL maintainer="TorchBridge Team" \
-      version="0.1.55" \
+      version="0.5.9" \
       description="Production-ready TorchBridge hardware abstraction layer for PyTorch" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge" \
       org.opencontainers.image.documentation="https://torchbridge.readthedocs.io" \

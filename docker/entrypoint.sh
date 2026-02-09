@@ -24,20 +24,19 @@ run_diagnostics() {
     python -m torchbridge.cli.doctor --verbose
 }
 
-# Function to start optimization server
+# Function to start inference server
 start_server() {
-    echo "🌐 Starting TorchBridge optimization server..."
-    exec uvicorn torchbridge.server:app \
+    echo "Starting TorchBridge inference server..."
+    exec python -m examples.serving.run_llm_server \
         --host 0.0.0.0 \
-        --port ${PORT:-8000} \
-        --workers ${WORKERS:-1}
+        --port ${PORT:-8000}
 }
 
 # Function to run benchmarks
 run_benchmarks() {
     echo "📊 Running performance benchmarks..."
     python -m torchbridge.cli.benchmark \
-        --predefined ${BENCHMARK_SUITE:-optimization} \
+        --predefined ${BENCHMARK_SUITE:-cross_backend} \
         --quick \
         --output /app/logs/benchmark_results.json
 }
@@ -58,7 +57,7 @@ main() {
             ;;
         "optimize")
             shift
-            echo "🔧 Running model optimization..."
+            echo "Preparing model for target backend..."
             exec python -m torchbridge.cli.optimize "$@"
             ;;
         "bash"|"sh")
@@ -72,9 +71,9 @@ main() {
         *)
             echo "ℹ️  Available commands:"
             echo "  doctor     - Run system diagnostics"
-            echo "  server     - Start optimization API server"
+            echo "  server     - Start inference API server"
             echo "  benchmark  - Run performance benchmarks"
-            echo "  optimize   - Optimize a model"
+            echo "  optimize   - Prepare a model for target backend"
             echo "  bash       - Interactive shell"
             echo "  python     - Run Python directly"
             echo ""

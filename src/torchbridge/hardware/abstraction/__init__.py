@@ -1,10 +1,10 @@
 """
-Hardware Abstraction Layer for PyTorch Optimization Framework
+Hardware Abstraction Layer for PyTorch Cross-Backend Framework
 
 Universal hardware abstraction supporting proprietary GPUs and AI chips through:
 - PyTorch PrivateUse1 integration
 - Triton compiler backend abstraction
-- Vendor-specific optimization plugins
+- Vendor-specific backend plugins
 - Distributed training across heterogeneous hardware
 - Real-time inference load balancing
 """
