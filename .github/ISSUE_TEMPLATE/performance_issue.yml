@@ -77,7 +77,7 @@ body:
     id: version
     attributes:
       label: TorchBridge Version
-      placeholder: "0.5.8"
+      placeholder: "python -c \"import torchbridge; print(torchbridge.__version__)\""
     validations:
       required: true
 
@@ -86,7 +86,7 @@ body:
     attributes:
       label: Previous Version (if regression)
       description: If this is a regression, which version worked correctly?
-      placeholder: "0.5.8"
+      placeholder: "e.g. 0.5.x"
 
   - type: textarea
     id: hardware
