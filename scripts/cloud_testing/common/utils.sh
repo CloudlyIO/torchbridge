@@ -37,7 +37,7 @@ log_step() {
 # Print header
 print_header() {
     local title="$1"
-    local version="${2:-0.3.7}"
+    local version="${2:-latest}"
     echo "=============================================="
     echo "  $title"
     echo "  TorchBridge v$version"
