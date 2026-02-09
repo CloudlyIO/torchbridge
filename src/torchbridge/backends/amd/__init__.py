@@ -6,8 +6,8 @@ targeting CDNA2 (MI200) and CDNA3 (MI300) architectures.
 
 Architecture:
 - AMDBackend: Main backend orchestrator for AMD GPUs
-- AMDOptimizer: Multi-level optimization (conservative/balanced/aggressive)
-- ROCmCompiler: HIP kernel compilation and optimization
+- AMDOptimizer: Multi-level backend tuning (conservative/balanced/aggressive)
+- ROCmCompiler: HIP kernel compilation and backend-aware generation
 - AMDMemoryManager: GPU memory management with HBM pooling
 - HIPUtilities: Device coordination and profiling
 

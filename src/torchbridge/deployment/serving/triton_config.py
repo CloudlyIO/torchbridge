@@ -2,7 +2,7 @@
 Triton Inference Server Integration for TorchBridge
 
 This module provides configuration generation and model repository setup
-for deploying TorchBridge-optimized models to NVIDIA Triton Inference Server.
+for deploying TorchBridge HAL-managed models to NVIDIA Triton Inference Server.
 
 Features:
 - Model configuration generation (config.pbtxt)

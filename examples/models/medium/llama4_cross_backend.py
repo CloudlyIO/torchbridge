@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Llama 4 Scout Optimization Example
+Llama 4 Scout Cross-Backend Example
 
-Demonstrates how to use TorchBridge to optimize Meta Llama 4 Scout for
+Demonstrates how to use TorchBridge to run Meta Llama 4 Scout for
 production inference across CUDA, ROCm, and CPU backends. Llama 4 Scout
 uses a Mixture-of-Experts (MoE) architecture with 17B active parameters
 and 16 experts, fitting on a single H100/A100 GPU.
@@ -26,11 +26,11 @@ Hardware requirements:
     - INT4: ~14GB VRAM (A10G, L4)
 
 Usage:
-    python llama4_optimization.py
-    python llama4_optimization.py --model meta-llama/Llama-4-Scout-17B-16E-Instruct
-    python llama4_optimization.py --quantization int4
-    python llama4_optimization.py --benchmark
-    python llama4_optimization.py --export safetensors
+    python llama4_cross_backend.py
+    python llama4_cross_backend.py --model meta-llama/Llama-4-Scout-17B-16E-Instruct
+    python llama4_cross_backend.py --quantization int4
+    python llama4_cross_backend.py --benchmark
+    python llama4_cross_backend.py --export safetensors
 """
 
 import argparse
@@ -408,7 +408,7 @@ def run_memory_comparison():
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Llama 4 Scout Optimization with TorchBridge"
+        description="Llama 4 Scout Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
@@ -451,7 +451,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("Llama 4 Scout Optimization with TorchBridge")
+    print_section("Llama 4 Scout Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

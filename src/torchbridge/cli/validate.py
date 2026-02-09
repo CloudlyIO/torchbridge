@@ -195,11 +195,11 @@ Examples:
         # Import checks
         start = time.time()
         try:
-            import torchbridge as kpt  # noqa: F811
+            import torchbridge  # noqa: F811
             results.append(ValidationResult(
                 "TorchBridge Import",
                 "pass",
-                f"TorchBridge {kpt.__version__} imported successfully",
+                f"TorchBridge {torchbridge.__version__} imported successfully",
                 duration_ms=(time.time() - start) * 1000,
             ))
         except ImportError as e:
@@ -400,7 +400,7 @@ Examples:
                 duration_ms=(time.time() - start) * 1000,
             ))
 
-        # Optimization framework check
+        # Backend framework check
         start = time.time()
         from torchbridge.cli.doctor import DoctorCommand
         doctor_opt = DoctorCommand._check_optimization_frameworks(verbose)

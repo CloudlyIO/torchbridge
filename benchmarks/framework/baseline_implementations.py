@@ -2,8 +2,8 @@
 """
 State-of-the-Art Baseline Implementations for Benchmarking
 
-Reference implementations of leading optimization frameworks for comparison
-with our optimization techniques.
+Reference implementations of leading frameworks for comparison
+with TorchBridge cross-backend performance.
 """
 
 import warnings

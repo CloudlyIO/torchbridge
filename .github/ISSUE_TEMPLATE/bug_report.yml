@@ -55,7 +55,7 @@ body:
       description: Please provide a minimal code example that reproduces the issue.
       render: python
       placeholder: |
-        import torchbridge as kpt
+        import torchbridge
 
         # Your code here
     validations:

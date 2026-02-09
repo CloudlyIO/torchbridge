@@ -1,7 +1,7 @@
 """
 Backend implementations for TorchBridge.
 
-This module provides hardware-specific optimizations for:
+This module provides hardware-specific backend implementations for:
 - NVIDIA GPUs (CUDA)
 - AMD GPUs (ROCm/HIP)
 - Google TPUs (PyTorch/XLA)

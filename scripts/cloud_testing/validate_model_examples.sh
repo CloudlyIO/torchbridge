@@ -178,11 +178,11 @@ echo "test,status,duration_s" > "$RESULTS_DIR/summary.csv"
 log_section "SAM 3 (Segment Anything Model 3)"
 
 run_example "sam3_inference" \
-    "examples/models/vision/sam3_optimization.py" \
+    "examples/models/vision/sam3_cross_backend.py" \
     --output-json "$RESULTS_DIR/sam3_inference.json"
 
 run_example "sam3_benchmark" \
-    "examples/models/vision/sam3_optimization.py" \
+    "examples/models/vision/sam3_cross_backend.py" \
     --benchmark \
     --output-json "$RESULTS_DIR/sam3_benchmark.json"
 
@@ -191,19 +191,19 @@ run_example "sam3_benchmark" \
 log_section "DeepSeek R1 Distill 7B"
 
 run_example "deepseek_inference" \
-    "examples/models/medium/deepseek_optimization.py" \
+    "examples/models/medium/deepseek_cross_backend.py" \
     --quantization "$LLM_QUANT" \
     --max-new-tokens 256 \
     --output-json "$RESULTS_DIR/deepseek_inference.json"
 
 run_example "deepseek_benchmark" \
-    "examples/models/medium/deepseek_optimization.py" \
+    "examples/models/medium/deepseek_cross_backend.py" \
     --quantization "$LLM_QUANT" \
     --benchmark \
     --output-json "$RESULTS_DIR/deepseek_benchmark.json"
 
 run_example "deepseek_moe_analysis" \
-    "examples/models/medium/deepseek_optimization.py" \
+    "examples/models/medium/deepseek_cross_backend.py" \
     --analyze-experts \
     --output-json "$RESULTS_DIR/deepseek_moe.json"
 
@@ -212,19 +212,19 @@ run_example "deepseek_moe_analysis" \
 log_section "Qwen 3 8B"
 
 run_example "qwen3_inference" \
-    "examples/models/medium/qwen3_optimization.py" \
+    "examples/models/medium/qwen3_cross_backend.py" \
     --quantization "$LLM_QUANT" \
     --max-new-tokens 128 \
     --output-json "$RESULTS_DIR/qwen3_inference.json"
 
 run_example "qwen3_multilingual" \
-    "examples/models/medium/qwen3_optimization.py" \
+    "examples/models/medium/qwen3_cross_backend.py" \
     --quantization "$LLM_QUANT" \
     --multilingual \
     --output-json "$RESULTS_DIR/qwen3_multilingual.json"
 
 run_example "qwen3_benchmark" \
-    "examples/models/medium/qwen3_optimization.py" \
+    "examples/models/medium/qwen3_cross_backend.py" \
     --quantization "$LLM_QUANT" \
     --benchmark \
     --output-json "$RESULTS_DIR/qwen3_benchmark.json"
@@ -234,14 +234,14 @@ run_example "qwen3_benchmark" \
 log_section "Gemma 3 ($GEMMA_MODEL)"
 
 run_example "gemma3_inference" \
-    "examples/models/small/gemma3_optimization.py" \
+    "examples/models/small/gemma3_cross_backend.py" \
     --model "$GEMMA_MODEL" \
     --quantization "$GEMMA_QUANT" \
     --max-new-tokens 128 \
     --output-json "$RESULTS_DIR/gemma3_inference.json"
 
 run_example "gemma3_benchmark" \
-    "examples/models/small/gemma3_optimization.py" \
+    "examples/models/small/gemma3_cross_backend.py" \
     --model "$GEMMA_MODEL" \
     --quantization "$GEMMA_QUANT" \
     --benchmark \
@@ -253,13 +253,13 @@ if [ "$LLAMA4_QUANT" != "skip" ]; then
     log_section "Llama 4 Scout (17B active, 16 experts)"
 
     run_example "llama4_inference" \
-        "examples/models/medium/llama4_optimization.py" \
+        "examples/models/medium/llama4_cross_backend.py" \
         --quantization "$LLAMA4_QUANT" \
         --max-new-tokens 128 \
         --output-json "$RESULTS_DIR/llama4_inference.json"
 
     run_example "llama4_benchmark" \
-        "examples/models/medium/llama4_optimization.py" \
+        "examples/models/medium/llama4_cross_backend.py" \
         --quantization "$LLAMA4_QUANT" \
         --benchmark \
         --output-json "$RESULTS_DIR/llama4_benchmark.json"

@@ -129,40 +129,6 @@ def benchmark_model(
         )
 
 
-def benchmark_sliced_attention(
-    seq_lengths: list[int],
-    batch_size: int = 4,
-    embed_dim: int = 768,
-    num_heads: int = 12,
-) -> list[BenchmarkResult]:
-    """Benchmark SlicedMultiheadAttention."""
-    results = []
-
-    try:
-        from torchbridge.models.vision.vit import SlicedMultiheadAttention
-    except ImportError as e:
-        print(f"Could not import SlicedMultiheadAttention: {e}")
-        return results
-
-    for seq_len in seq_lengths:
-        # Test different slice sizes
-        for slice_size in [16, 32, 64]:
-            model = SlicedMultiheadAttention(
-                embed_dim=embed_dim,
-                num_heads=num_heads,
-                slice_size=slice_size,
-            ).to(DEVICE)
-
-            result = benchmark_model(model, batch_size, seq_len, embed_dim)
-            result.name = f"SlicedAttn_s{slice_size}"
-            results.append(result)
-
-            print(f"  {result.name} @ seq={seq_len}: "
-                  f"{result.throughput:.1f} samples/s, "
-                  f"{result.latency_ms:.2f} ms")
-
-    return results
-
 
 def benchmark_sparse_attention(
     seq_lengths: list[int],
@@ -348,12 +314,6 @@ def run_benchmarks(
     print("Standard PyTorch MultiheadAttention:")
     print("-" * 40)
     all_results.extend(benchmark_standard_attention(seq_lengths, batch_size))
-    print()
-
-    # Sliced attention
-    print("Sliced Attention (ViT optimization):")
-    print("-" * 40)
-    all_results.extend(benchmark_sliced_attention(seq_lengths, batch_size))
     print()
 
     # Sparse attention

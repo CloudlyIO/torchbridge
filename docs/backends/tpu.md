@@ -37,7 +37,6 @@ from torchbridge.core.config import TPUConfig
 
 # Inference configuration
 config = TPUConfig(
-    enable_xla_cache=True,
     cache_max_size=100,
     compilation_timeout_seconds=300,
     memory_fraction=0.9,
@@ -54,10 +53,10 @@ backend = TPUBackend(config)
 config = TPUConfig(precision="float32", mixed_precision=False)
 
 # Training: balanced
-config = TPUConfig(precision="bfloat16", enable_xla_cache=True)
+config = TPUConfig(precision="bfloat16", cache_max_size=100)
 
 # Inference: maximum throughput
-config = TPUConfig(precision="bfloat16", enable_xla_cache=True, cache_max_size=200)
+config = TPUConfig(precision="bfloat16", cache_max_size=200)
 ```
 
 ## Precision Support
@@ -82,7 +81,6 @@ TPU operations require XLA graph compilation. First iterations are slower while 
 ```python
 # Enable caching for faster subsequent runs
 config = TPUConfig(
-    enable_xla_cache=True,
     cache_max_size=100,
 )
 

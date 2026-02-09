@@ -74,8 +74,8 @@ log_step "4/5" "Running NVIDIA Benchmarks"
 # Integration benchmark
 python3 benchmarks/nvidia_integration_benchmark.py 2>&1 | tee "$REPORT_DIR/nvidia_benchmark_output.txt"
 
-# Config benchmark
-python3 benchmarks/nvidia_config_benchmarks.py 2>&1 | tee -a "$REPORT_DIR/nvidia_benchmark_output.txt"
+# Integration benchmark (comprehensive)
+python3 benchmarks/nvidia_integration_benchmark.py --quick 2>&1 | tee -a "$REPORT_DIR/nvidia_benchmark_output.txt"
 
 # =============================================================================
 # Report

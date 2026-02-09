@@ -1,13 +1,13 @@
 """
 TorchBridge Unified Hardware Module
 
-This module consolidates all hardware-specific optimizations:
-- GPU integration and optimization patterns
+This module consolidates all hardware-specific backend components:
+- GPU integration and cross-backend patterns
 - Hardware abstraction layer for multi-vendor support
 - Custom CUDA kernels and kernel interfaces
-- Performance profiling and optimization tools
+- Performance profiling and measurement tools
 
-Note: This module unifies hardware-specific optimization components.
+Note: This module unifies hardware-specific backend components.
 
 Development Status:
 - CUDA kernel implementations: Educational patterns provided; production use should
@@ -16,7 +16,7 @@ Development Status:
   TPU (full). ASIC/neuromorphic adapters are placeholder implementations.
 """
 
-# GPU integration and optimization - import what's available
+# GPU integration and backend support - import what's available
 try:
     from .gpu import *  # noqa: F403
 except ImportError as e:

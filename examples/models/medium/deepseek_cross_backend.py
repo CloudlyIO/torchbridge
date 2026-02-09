@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-DeepSeek R1 Distill 7B Optimization Example
+DeepSeek R1 Distill 7B Cross-Backend Example
 
-Demonstrates how to use TorchBridge to optimize DeepSeek R1 Distill models
-for inference, showcasing Mixture of Experts (MoE) handling across backends.
+Demonstrates how to use TorchBridge to run DeepSeek R1 Distill models
+for inference across backends, showcasing Mixture of Experts (MoE) handling.
 
 Models covered:
 - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B (7B active params)
@@ -24,10 +24,10 @@ Hardware requirements:
     - INT4: ~4GB VRAM
 
 Usage:
-    python deepseek_optimization.py
-    python deepseek_optimization.py --model deepseek-ai/DeepSeek-R1-Distill-Llama-8B
-    python deepseek_optimization.py --analyze-experts
-    python deepseek_optimization.py --benchmark
+    python deepseek_cross_backend.py
+    python deepseek_cross_backend.py --model deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    python deepseek_cross_backend.py --analyze-experts
+    python deepseek_cross_backend.py --benchmark
 """
 
 import argparse
@@ -388,7 +388,7 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="DeepSeek R1 Distill 7B Optimization with TorchBridge"
+        description="DeepSeek R1 Distill 7B Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
@@ -433,7 +433,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("DeepSeek R1 Distill Optimization with TorchBridge")
+    print_section("DeepSeek R1 Distill Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

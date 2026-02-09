@@ -1,14 +1,14 @@
 """
 TPU Backend Module for TorchBridge
 
-This module provides TPU-specific implementations and optimizations
+This module provides TPU-specific backend implementations and HAL-aware support
 for PyTorch models using PyTorch/XLA integration.
 
 Key Components:
 - TPU Device Management
 - PyTorch/XLA Integration
-- TPU-specific Memory Optimization
-- XLA Compilation and Optimization
+- TPU-specific Memory Management
+- XLA Compilation and Backend Integration
 - TPU Model Deployment Support
 
 Example:

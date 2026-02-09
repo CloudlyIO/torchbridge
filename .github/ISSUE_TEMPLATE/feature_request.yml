@@ -40,10 +40,10 @@ body:
       description: How would you use this feature? Provide code examples if applicable.
       render: python
       placeholder: |
-        import torchbridge as kpt
+        import torchbridge
 
         # How you'd like to use the feature
-        result = kpt.new_feature(...)
+        result = torchbridge.new_feature(...)
 
   - type: dropdown
     id: component

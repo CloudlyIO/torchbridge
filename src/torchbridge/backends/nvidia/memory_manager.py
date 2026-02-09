@@ -1,7 +1,7 @@
 """
 NVIDIA Memory Manager
 
-GPU memory allocation and optimization for NVIDIA devices.
+GPU memory allocation and management for NVIDIA devices.
 Inherits from BaseMemoryManager for shared functionality.
 """
 

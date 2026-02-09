@@ -1,8 +1,8 @@
 """
 Model optimization commands for TorchBridge CLI.
 
-Provides easy-to-use optimization of PyTorch models with different optimization levels
-and hardware configurations.
+Provides easy-to-use cross-backend preparation of PyTorch models with different
+optimization levels and hardware configurations.
 """
 
 import argparse
@@ -12,12 +12,12 @@ from pathlib import Path
 
 import torch
 
-import torchbridge as kpt
+import torchbridge
 from torchbridge.utils.compiler_assistant import CompilerOptimizationAssistant
 
 
 class OptimizeCommand:
-    """Model optimization command implementation."""
+    """Model optimization command implementation for cross-backend deployment."""
 
     @staticmethod
     def register(subparsers) -> None:
@@ -25,7 +25,7 @@ class OptimizeCommand:
         parser = subparsers.add_parser(
             'optimize',
             help='Optimize PyTorch models for production deployment',
-            description='Apply TorchBridge optimizations to your PyTorch models',
+            description='Apply TorchBridge backend-aware transformations to your PyTorch models',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Optimization Levels:
@@ -96,7 +96,7 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the optimize command."""
-        print(" TorchBridge Model Optimization")
+        print(" TorchBridge Model Preparation")
         print("=" * 50)
 
         try:
@@ -231,8 +231,8 @@ Examples:
             optimized_model = torch.compile(model, mode='max-autotune')
 
         elif level == 'triton':
-            # Use TorchBridge Triton optimizations
-            if hasattr(kpt, 'OptimizedMultiHeadAttention'):
+            # Use TorchBridge Triton backend kernels
+            if hasattr(torchbridge, 'OptimizedMultiHeadAttention'):
                 # Apply attention optimizations if applicable
                 optimized_model = model
             else:
@@ -241,7 +241,7 @@ Examples:
         elif level == 'production':
             # Full production optimization stack
             try:
-                # Use TorchBridge optimization assistant
+                # Use TorchBridge HAL-aware compilation assistant
                 assistant = CompilerOptimizationAssistant(device=sample_input.device)
                 result = assistant.optimize_model(model, interactive=False)
                 optimized_model = torch.compile(model, mode='max-autotune')
@@ -344,7 +344,7 @@ def main():
     """Standalone entry point for tb-optimize."""
     parser = argparse.ArgumentParser(
         prog='tb-optimize',
-        description='Apply TorchBridge optimizations to your PyTorch models',
+        description='Apply TorchBridge backend-aware transformations to your PyTorch models',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 

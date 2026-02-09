@@ -87,13 +87,13 @@ Best for: Maximum scale (70B-180B models)
 
 ## Examples
 
-See `examples/models/large/train_llama_7b_fsdp.py` for complete examples.
+See `examples/distributed/train_llama_7b_fsdp.py` for complete examples.
 
 ## Testing
 
 Run distributed tests:
 ```bash
-pytest tests/test_distributed_integration.py
+pytest tests/distributed/ tests/integration/test_distributed_integration.py
 ```
 
 Note: Full multi-GPU tests require actual distributed environment.

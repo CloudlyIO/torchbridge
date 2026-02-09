@@ -39,7 +39,7 @@ body:
       render: python
       placeholder: |
         import torch
-        import torchbridge as kpt
+        import torchbridge
         import time
 
         # Setup

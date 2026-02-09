@@ -35,8 +35,8 @@ model = backend.prepare_model(your_model)
 from torchbridge.core.config import IntelConfig
 
 config = IntelConfig(
-    enable_ipex=True,
-    enable_onednn=True,
+    ipex_enabled=True,
+    onednn_enabled=True,
     enable_amx=True,  # Advanced Matrix Extensions (Sapphire Rapids+)
 )
 
@@ -126,7 +126,7 @@ backend.empty_cache()
 Common issues:
 - **IPEX import fails:** Install with `pip install intel-extension-for-pytorch`
 - **XPU not detected:** Install oneAPI Base Toolkit and set `source /opt/intel/oneapi/setvars.sh`
-- **Poor performance:** Ensure oneDNN fusion is enabled (`config.enable_onednn = True`)
+- **Poor performance:** Ensure oneDNN fusion is enabled (`config.onednn_enabled = True`)
 
 ## See Also
 
