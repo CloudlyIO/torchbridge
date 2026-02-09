@@ -4,7 +4,7 @@ Cross-Backend Integration Tests
 Tests automatic backend selection, backend initialization, and cross-backend
 compatibility for NVIDIA, TPU, and AMD backends.
 
-Phase 4C-Pre Week 5: AMD Testing & Integration (v0.3.5)
+Phase 4C-Pre Week 5: AMD Testing & Integration
 """
 
 import logging

@@ -69,8 +69,6 @@ from .xpu_utilities import (
     xpu_synchronize,
 )
 
-__version__ = "0.5.3"
-
 __all__ = [
     # Main backend
     'IntelBackend',

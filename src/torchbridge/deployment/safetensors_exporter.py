@@ -1,5 +1,5 @@
 """
-SafeTensors Export for TorchBridge (v0.5.3)
+SafeTensors Export for TorchBridge
 
 Provides export functionality to the SafeTensors format, which offers:
 - Safer loading (no pickle execution)

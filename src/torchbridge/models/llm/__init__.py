@@ -2,7 +2,7 @@
 LLM Optimization Module
 
 Provides optimized wrappers for large language models (1B-13B parameters):
-- Llama-2-7B, Llama-3-8B
+- DeepSeek R1 7B, Qwen 3 8B, Gemma 3 12B, Llama 4 Scout 17B
 - Mistral-7B, Mixtral-8x7B
 - Phi-2, Phi-3
 

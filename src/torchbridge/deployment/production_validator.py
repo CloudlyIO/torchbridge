@@ -1,5 +1,5 @@
 """
-Production Readiness Validator for TorchBridge (v0.5.3)
+Production Readiness Validator for TorchBridge
 
 Validates models are ready for production deployment by checking:
 - Model exportability (ONNX, TorchScript, SafeTensors)

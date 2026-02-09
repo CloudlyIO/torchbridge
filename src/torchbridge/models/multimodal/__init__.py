@@ -1,5 +1,5 @@
 """
-Multi-modal Model Optimization (v0.5.3)
+Multi-modal Model Optimization
 
 This module provides optimized inference for multi-modal models:
 - CLIP (Vision-Language): Image-text embedding and similarity
@@ -84,4 +84,3 @@ __all__ = [
     "create_whisper_large_optimized",
 ]
 
-__version__ = "0.5.3"

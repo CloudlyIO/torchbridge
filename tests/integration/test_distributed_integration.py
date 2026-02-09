@@ -450,8 +450,8 @@ class TestDistributedLLMOptimizer:
             LargeModelType,
         )
 
-        optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf")
-        assert optimizer.model_type == LargeModelType.LLAMA_70B
+        optimizer = DistributedLLMOptimizer("Qwen/Qwen3-32B")
+        assert optimizer.model_type == LargeModelType.QWEN_72B
 
         optimizer = DistributedLLMOptimizer("mistralai/Mixtral-8x7B-v0.1")
         assert optimizer.model_type == LargeModelType.MIXTRAL
@@ -464,7 +464,7 @@ class TestDistributedLLMOptimizer:
         )
 
         config = DistributedConfig(world_size=8, tensor_parallel_size=8)
-        optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf", config)
+        optimizer = DistributedLLMOptimizer("Qwen/Qwen3-32B", config)
 
         memory = optimizer.estimate_memory()
 
@@ -482,7 +482,7 @@ class TestDistributedLLMOptimizer:
         )
 
         config = DistributedConfig(world_size=1)
-        optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf", config)
+        optimizer = DistributedLLMOptimizer("Qwen/Qwen3-32B", config)
 
         # This will create a mock model
         with patch.dict("sys.modules", {"transformers": None}):
@@ -520,9 +520,9 @@ class TestCreateDistributedLLM:
         """Test creating distributed LLM with defaults."""
         from torchbridge.models.distributed import create_distributed_llm
 
-        optimizer = create_distributed_llm("meta-llama/Llama-2-70b-hf")
+        optimizer = create_distributed_llm("Qwen/Qwen3-32B")
 
-        assert optimizer.model_name == "meta-llama/Llama-2-70b-hf"
+        assert optimizer.model_name == "Qwen/Qwen3-32B"
         assert optimizer.config.world_size == 8
 
     def test_create_with_custom_config(self):
@@ -533,7 +533,7 @@ class TestCreateDistributedLLM:
         )
 
         optimizer = create_distributed_llm(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             world_size=4,
             dtype=torch.float16,
             quantization="int8",
@@ -553,7 +553,7 @@ class TestEstimateGPURequirements:
         from torchbridge.models.distributed import estimate_gpu_requirements
 
         requirements = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             max_sequence_length=4096,
             max_batch_size=1,
         )
@@ -568,12 +568,12 @@ class TestEstimateGPURequirements:
         from torchbridge.models.distributed import estimate_gpu_requirements
 
         req_fp16 = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             quantization="none",
         )
 
         req_int8 = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             quantization="int8",
         )
 
@@ -623,7 +623,7 @@ class TestEndToEndDistributed:
         from torchbridge.models.distributed import estimate_gpu_requirements
 
         models = [
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             "tiiuae/falcon-40b",
             "mistralai/Mixtral-8x7B-v0.1",
         ]

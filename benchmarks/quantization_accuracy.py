@@ -4,7 +4,7 @@ Quantization Accuracy Benchmarks
 Measures the accuracy impact of different quantization modes on real models.
 Evaluates perplexity for language models and accuracy for classification models.
 
-v0.4.21 - Quantization Quality Validation
+Quantization Quality Validation
 
 Targets:
     - INT8: <2% perplexity increase, 50% memory reduction

@@ -1,13 +1,13 @@
 """
-End-to-End Tests for v0.4.23 Placeholder Completions
+End-to-End Tests for Placeholder Completions
 
-Tests all placeholder implementations that were completed in v0.4.23:
+Tests all placeholder implementations:
 - ViT Attention Slicing (SlicedMultiheadAttention, SlicedAttentionWrapper)
 - Pipeline Parallel InterleavedScheduler (run_forward, run_backward)
 - Sparse Attention (DynamicSparse, BlockSparse, StridedSparse)
 - Memory-Efficient Attention (Chunked, LongSequence, GradientCheckpointed)
 
-v0.4.23 - Complete Placeholder Implementations
+- Complete Placeholder Implementations
 """
 
 
@@ -559,7 +559,7 @@ class TestMemoryEfficientAttention:
 # =============================================================================
 
 class TestIntegration:
-    """Integration tests for v0.4.23 features."""
+    """Integration tests for features."""
 
     def test_all_attention_types_work(self, device):
         """Test that all attention implementations work."""
@@ -666,7 +666,7 @@ class TestIntegration:
 # =============================================================================
 
 class TestPerformance:
-    """Performance benchmarks for v0.4.23 features."""
+    """Performance benchmarks for features."""
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_sliced_attention_performance(self, device):

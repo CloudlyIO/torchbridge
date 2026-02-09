@@ -8,21 +8,17 @@ import re
 import sys
 from pathlib import Path
 
-# Critical version files (MUST match for any release)
+# Canonical version locations (MUST match)
+# Version is centrally managed: pyproject.toml is the source of truth,
+# __init__.py has a fallback for development installs.
 CRITICAL_VERSION_FILES = {
     'pyproject.toml': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
     'src/torchbridge/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/torchbridge/cli/__init__.py': r"version='%\(prog\)s\s+(\d+\.\d+\.\d+)'",
     'CHANGELOG.md': r'## \[(\d+\.\d+\.\d+)\]',
 }
 
-# Secondary version files (should match, but not blocking)
-SECONDARY_VERSION_FILES = {
-    'src/torchbridge/backends/nvidia/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/torchbridge/backends/tpu/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/torchbridge/backends/amd/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/torchbridge/backends/intel/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
-}
+# No secondary version files — all sub-package versions removed
+SECONDARY_VERSION_FILES = {}
 
 def extract_version(file_path: Path, pattern: str) -> str:
     """Extract version from file using regex pattern."""

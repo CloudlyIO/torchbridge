@@ -1,5 +1,5 @@
 #!/bin/bash
-# TorchBridge v0.4.34 Full Cloud Validation
+# TorchBridge Full Cloud Validation
 #
 # This script orchestrates validation across all cloud providers and backends.
 # Prerequisites:
@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${BLUE}============================================================${NC}"
-echo -e "${BLUE}TorchBridge v0.4.34 Full Cloud Validation${NC}"
+echo -e "${BLUE}TorchBridge Full Cloud Validation${NC}"
 echo -e "${BLUE}============================================================${NC}"
 echo -e "Mode: ${YELLOW}$MODE${NC}"
 echo -e "Reports: $REPORTS_DIR"

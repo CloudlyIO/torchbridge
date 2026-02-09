@@ -3,7 +3,7 @@
 # Deploy with:
 #   kubectl apply -f docker/kubernetes/
 #
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 apiVersion: apps/v1
 kind: Deployment

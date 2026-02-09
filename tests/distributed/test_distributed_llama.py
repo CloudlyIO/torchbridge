@@ -1,5 +1,5 @@
 """
-Distributed Llama Model Validation Tests (v0.5.3)
+Distributed Llama Model Validation Tests
 
 Validates that distributed training infrastructure works correctly
 with Llama-class models across multiple GPUs.
@@ -112,12 +112,12 @@ class TestDistributedLLMOptimizer:
             tensor_parallel_size=8,
         )
         optimizer = DistributedLLMOptimizer(
-            model_name="meta-llama/Llama-2-70b-hf",
+            model_name="Qwen/Qwen3-32B",
             config=config,
         )
 
         assert optimizer is not None
-        assert optimizer.model_name == "meta-llama/Llama-2-70b-hf"
+        assert optimizer.model_name == "Qwen/Qwen3-32B"
 
     def test_optimizer_with_strategy(self):
         """Test optimizer with explicit strategy."""
@@ -133,7 +133,7 @@ class TestDistributedLLMOptimizer:
             strategy=ParallelismStrategy.TENSOR_PARALLEL,
         )
         optimizer = DistributedLLMOptimizer(
-            model_name="meta-llama/Llama-2-7b-hf",
+            model_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
             config=config,
         )
 
@@ -148,7 +148,7 @@ class TestMemoryEstimation:
         from torchbridge.models.distributed import estimate_gpu_requirements
 
         requirements = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             max_sequence_length=4096,
             max_batch_size=1,
         )
@@ -161,11 +161,11 @@ class TestMemoryEstimation:
         from torchbridge.models.distributed import estimate_gpu_requirements
 
         req_fp16 = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             quantization="none",
         )
         req_int8 = estimate_gpu_requirements(
-            "meta-llama/Llama-2-70b-hf",
+            "Qwen/Qwen3-32B",
             quantization="int8",
         )
 
@@ -423,7 +423,7 @@ class TestFactoryFunctions:
 
         # Create optimizer (does not load model by default)
         result = create_distributed_llm(
-            model_name="meta-llama/Llama-2-7b-hf",
+            model_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
             world_size=2,
         )
 
@@ -437,7 +437,7 @@ class TestFactoryFunctions:
         # Uses default config (world_size=8, tensor_parallel_size=8)
         wrapper = DistributedLlama70B()
         assert wrapper is not None
-        assert wrapper.model_name == "meta-llama/Llama-2-70b-hf"
+        assert wrapper.model_name == "Qwen/Qwen3-32B"
 
 
 # =============================================================================

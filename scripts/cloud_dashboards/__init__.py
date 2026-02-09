@@ -9,11 +9,9 @@ for monitoring TorchBridge performance across cloud platforms.
 from .cross_platform_comparison import (
     CrossPlatformComparison,
     PlatformMetrics,
-    generate_comparison_report,
     create_comparison_chart,
+    generate_comparison_report,
 )
-
-__version__ = "0.5.3"
 
 __all__ = [
     "CrossPlatformComparison",

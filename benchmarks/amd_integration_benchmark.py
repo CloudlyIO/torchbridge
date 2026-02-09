@@ -6,7 +6,7 @@ Comprehensive performance benchmarking for AMD backend including
 backend operations, optimizer performance, compiler efficiency,
 memory management, and cross-backend comparison.
 
-Phase 4C-Pre Week 5: AMD Testing & Integration (v0.3.5)
+Phase 4C-Pre Week 5: AMD Testing & Integration
 
 Usage:
     PYTHONPATH=src python3 benchmarks/amd_integration_benchmark.py
@@ -474,7 +474,7 @@ def main():
         arch_iters = 30
 
     print("\n" + "=" * 70)
-    print("  AMD ROCm Integration Benchmark (v0.3.5)")
+    print("  AMD ROCm Integration Benchmark")
     print("  Mode:", "Quick" if args.quick else "Full")
     print("=" * 70)
 

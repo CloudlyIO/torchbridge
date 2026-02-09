@@ -8,7 +8,127 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.3 (Clean CLI Output)
+**Current Version**: v0.5.8 (Modern Model Examples & Real Benchmarks)
+
+---
+
+## [0.5.8] - 2026-02-08 - Modern Model Examples & Real Benchmarks
+
+### **Summary**
+
+Production-grade examples for the latest AI models with real GPU benchmarks.
+Five new model examples covering LLMs, vision, and multilingual workloads,
+plus a cross-backend benchmark suite. Cloud-validated on AWS A10G and GCP T4
+with full inference and performance data.
+
+### **Added**
+
+- **Llama 4 Scout example** (`examples/models/medium/llama4_optimization.py`): 17B active / 109B total MoE with 16 experts, INT4/INT8/FP8 quantization, expert routing analysis
+- **DeepSeek R1 Distill 7B example** (`examples/models/medium/deepseek_optimization.py`): reasoning model with MoE analysis, benchmark mode, 256-token generation
+- **Qwen 3 8B example** (`examples/models/medium/qwen3_optimization.py`): multilingual inference across 5 languages (EN/ZH/JA/AR/ES), benchmark mode
+- **SAM 3 example** (`examples/models/vision/sam3_optimization.py`): text-prompted segmentation, multi-resolution benchmarks, synthetic test images
+- **Gemma 3 12B example** (`examples/models/small/gemma3_optimization.py`): instruction-tuned inference, model size comparison (1B/4B/12B/27B)
+- **Cross-backend benchmark suite** (`scripts/benchmark_suite.py`): p50/p95/p99 latency, throughput, TTFT, peak memory across models
+- **Cloud validation script** (`scripts/cloud_testing/validate_model_examples.sh`): auto-detects GPU/VRAM, adapts quantization, runs full validation
+- **`.env` credential support**: HF_TOKEN for gated models (Llama 4, Gemma 3, SAM 3)
+
+### **Fixed**
+
+- LLMOptimizer: handle missing `flash-attn` gracefully (was masking real errors)
+- LLMOptimizer: `torch_dtype` renamed to `dtype` for transformers 5.x compatibility
+- Validation script: fix unbound `PYTHONPATH` variable, sanitize `grep -c` output
+
+### **Validated**
+
+- AWS g5.xlarge (A10G, 24GB): 9/9 tests passed — DeepSeek 28.7 tok/s, Qwen 3 22.1 tok/s, Gemma 3 12B 3.7 tok/s
+- GCP n1-standard-4 (T4, 16GB): 9/9 tests passed — DeepSeek 6.2 tok/s, Qwen 3 4.9 tok/s, Gemma 3 4B 4.3 tok/s
+- PyTorch 2.7.1+cu128, Transformers 5.1.0
+
+### **Metrics**
+
+- 188 source modules, 77,489 lines of code
+- 1,786 test functions
+- 0 ruff violations, 0 mypy errors
+
+---
+
+## [0.5.7] - 2026-02-07 - AMD CDNA 4 Support
+
+### **Summary**
+
+Adds hardware support for AMD CDNA 4 architecture (MI350X/MI355X) and
+MI325X detection. Updates ROCm compatibility to 7.0+ and adds naming
+cleanup for consistent NVIDIA/AMD GPU references.
+
+### **Added**
+
+- AMD MI350X/MI355X support (gfx950 architecture, 288GB HBM3e)
+- AMD MI325X detection (gfx942, 256GB HBM3e)
+- Hardware FP4/FP6 precision support for CDNA 4
+- ROCm 7.0+ compatibility updates
+- AMD CDNA 4 test markers (`@pytest.mark.amd_cdna4`)
+
+### **Changed**
+
+- Consistent "NVIDIA" naming (was mixed "Nvidia"/"nvidia")
+- Updated hardware matrix docs with CDNA 4 specifications
+
+---
+
+## [0.5.6] - 2026-02-07 - Version String Cleanup
+
+### **Summary**
+
+Removes hardcoded version strings scattered across the codebase. Version
+is now sourced exclusively from `pyproject.toml` with a fallback in
+`__init__.py`. No more stale version references in 50+ files.
+
+### **Changed**
+
+- Single source of truth for version: `pyproject.toml` + `__init__.py` fallback
+- Removed hardcoded version strings from all source files, docs, and scripts
+- Future version bumps only require editing 2 files
+
+---
+
+## [0.5.5] - 2026-02-07 - NVIDIA Blackwell Hardware Support
+
+### **Summary**
+
+Adds hardware detection and optimization support for NVIDIA Blackwell
+architecture GPUs. Covers both data center (B100/B200, sm_100) and
+consumer (RTX 5090, sm_120) compute capabilities.
+
+### **Added**
+
+- Blackwell B100/B200/GB200 support (compute capability 10.0, sm_100)
+- RTX 5090 support (compute capability 12.0, sm_120)
+- NVFP4 precision support (4-bit with microscaling, 3.5x memory reduction)
+- NVLink 5 bandwidth detection (1.8 TB/s per GPU)
+- Blackwell backend tests
+
+### **Changed**
+
+- NVIDIA auto-detection updated for two new compute capabilities
+- Hardware matrix docs updated with Blackwell specifications
+
+---
+
+## [0.5.4] - 2026-02-07 - Codebase Cleanup & Accuracy
+
+### **Summary**
+
+Accuracy and consistency pass across the entire codebase. Removes
+incorrect claims, updates hardware references, and fixes stale
+version strings from the v0.4.x era.
+
+### **Fixed**
+
+- Removed "open source" claim from README.md (TorchBridge is not open-source)
+- Updated 50+ files with stale v0.4.x version strings
+- Updated README hardware table with current GPUs (B100/B200, MI325X, MI350X, TPU v7)
+- Updated CONTRIBUTING.md to remove open-source language
+- Added `examples/bert_squad/results/` to `.gitignore`
 
 ---
 

@@ -1,12 +1,12 @@
 """
-v0.4.6 Comprehensive Cloud Testing Framework
+Comprehensive Cloud Testing Framework
 
 This module provides unified testing across all supported backends:
 - NVIDIA (AWS P4d/P5/G5, GCP A100/L4)
 - AMD (AWS AMD instances, AMD Developer Cloud)
 - TPU (GCP TPU v5e/v5p)
 
-Tests all v0.4.6 features including:
+Tests all features including:
 - Mixture of Experts (MoE)
 - Native FP8 support
 - FlexAttention
@@ -65,7 +65,7 @@ class TestConfig:
     """Configuration for a test run."""
     platform: CloudPlatform
     gpu_type: GPUType
-    version: str = "0.5.3"
+    version: str = ""
     test_moe: bool = True
     test_fp8: bool = True
     test_attention: bool = True
@@ -947,7 +947,7 @@ def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any
     """Run comprehensive tests on the current platform."""
 
     logger.info("=" * 70)
-    logger.info("TorchBridge v0.5.3 Comprehensive Cloud Validation")
+    logger.info("TorchBridge Comprehensive Cloud Validation")
     logger.info("=" * 70)
 
     # Detect hardware
@@ -1048,7 +1048,7 @@ def run_comprehensive_tests(output_dir: str = "./test_results") -> dict[str, Any
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="TorchBridge v0.5.3 Cloud Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge Cloud Validation")
     parser.add_argument("--output-dir", default="./test_results", help="Output directory")
     parser.add_argument("--no-moe", action="store_true", help="Skip MoE tests")
     parser.add_argument("--no-fp8", action="store_true", help="Skip FP8 tests")
