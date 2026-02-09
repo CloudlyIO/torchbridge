@@ -87,7 +87,7 @@ body:
     attributes:
       label: TorchBridge Version
       description: Output of `python -c "import torchbridge; print(torchbridge.__version__)"`
-      placeholder: "0.4.26"
+      placeholder: "0.5.8"
     validations:
       required: true
 

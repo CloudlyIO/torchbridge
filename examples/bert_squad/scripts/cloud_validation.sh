@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # BERT SQuAD Cross-Backend Cloud Validation
-# TorchBridge v0.5.3
+# TorchBridge Cloud Validation
 #
 # Validates BERT QA model produces consistent outputs across backends.
 # Run on AWS (CUDA), GCP (TPU), AMD Developer Cloud (ROCm).
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
-VERSION="0.5.3"
+VERSION="latest"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Parse arguments

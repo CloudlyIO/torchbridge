@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TorchBridge v0.4.30 Master Validation Script
+TorchBridge Master Validation Script
 
 Orchestrates all validation phases:
 - Phase 1: Static Analysis (Ruff, mypy, bandit, pip-audit)
@@ -56,7 +56,7 @@ class PhaseResult:
 
 
 class MasterValidator:
-    """Orchestrates v0.4.30 validation."""
+    """Orchestrates validation."""
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -424,7 +424,7 @@ class MasterValidator:
     def save_summary(self):
         """Save validation summary to JSON."""
         summary = {
-            "version": "0.5.3",
+            "version": "",
             "timestamp": datetime.now().isoformat(),
             "phases": []
         }
@@ -454,7 +454,7 @@ class MasterValidator:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="TorchBridge v0.4.30 Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge Validation")
     parser.add_argument(
         "--phase",
         choices=["all", "static", "local", "cloud", "reports"],

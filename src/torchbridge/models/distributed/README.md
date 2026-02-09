@@ -1,4 +1,4 @@
-# TorchBridge Distributed Models (v0.5.3)
+# TorchBridge Distributed Models
 
 Multi-GPU training and inference support for large language models (70B+ parameters).
 
@@ -27,7 +27,7 @@ Intelligent parameter distribution:
 
 ### Large Model Optimizer
 Complete optimizer for 70B+ models:
-- Llama-2-70B, Falcon-180B, Mixtral-8x7B
+- Qwen3-32B, DeepSeek-R1-70B, Mixtral-8x7B
 - Automatic strategy selection (TP/PP/Sharding)
 - GPU requirement estimation
 - Memory-efficient loading
@@ -42,7 +42,7 @@ from torchbridge.models.distributed import (
 
 # Automatic configuration
 model, tokenizer = create_distributed_llm(
-    "meta-llama/Llama-2-70b-hf",
+    "Qwen/Qwen3-32B",
     world_size=4,  # 4 GPUs
 )
 
@@ -52,7 +52,7 @@ config = DistributedConfig(
     pipeline_parallel_size=2,
     enable_gradient_checkpointing=True,
 )
-optimizer = DistributedLLMOptimizer("meta-llama/Llama-2-70b-hf", config)
+optimizer = DistributedLLMOptimizer("Qwen/Qwen3-32B", config)
 model, tokenizer = optimizer.optimize()
 ```
 
@@ -60,8 +60,8 @@ model, tokenizer = optimizer.optimize()
 
 | Model | Parameters | Memory (FP16) | Recommended GPUs |
 |-------|------------|---------------|------------------|
-| Llama-2-13B | 13B | ~26GB | 2x A100 40GB |
-| Llama-2-70B | 70B | ~140GB | 4x A100 40GB or 2x A100 80GB |
+| DeepSeek-R1-7B | 13B | ~26GB | 2x A100 40GB |
+| Qwen3-32B | 70B | ~140GB | 4x A100 40GB or 2x A100 80GB |
 | Mixtral-8x7B | 46.7B | ~93GB | 4x A100 40GB |
 | Falcon-180B | 180B | ~360GB | 8x A100 80GB |
 
@@ -87,7 +87,7 @@ Best for: Maximum scale (70B-180B models)
 
 ## Examples
 
-See `examples/models/large/llama_70b_distributed.py` for complete examples.
+See `examples/models/large/train_llama_7b_fsdp.py` for complete examples.
 
 ## Testing
 
@@ -126,6 +126,6 @@ Single-GPU tests use mocked distributed operations.
 
 ## Version
 
-Part of TorchBridge v0.5.3 - Large Model Integration
+Part of TorchBridge - Large Model Integration
 
 For more details, see the main documentation.

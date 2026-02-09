@@ -5,7 +5,7 @@ Backend Performance Comparison Benchmark
 Comprehensive performance comparison between NVIDIA and TPU backends,
 measuring latency, throughput, memory usage, and synchronization overhead.
 
-Phase 4C-Pre Week 3: Integration Testing (v0.3.3)
+Phase 4C-Pre Week 3: Integration Testing
 
 Usage:
     python3 backend_comparison_benchmark.py [--quick] [--device cpu|auto]

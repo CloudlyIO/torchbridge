@@ -21,7 +21,7 @@ from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
 # TorchBridge imports
 try:
-    from torchbridge.backends import detect_best_backend
+    from torchbridge.backends import detect_best_backend  # noqa: F401
     from torchbridge.core.unified_manager import get_manager
     TORCHBRIDGE_AVAILABLE = True
 except ImportError:
@@ -290,7 +290,7 @@ def main():
 
         print(f"\nDevice: {results['device']}")
         print(f"Iterations: {results['iterations']}")
-        print(f"\nLatency:")
+        print("\nLatency:")
         print(f"  Mean:   {results['mean_ms']:.2f} ms")
         print(f"  Std:    {results['std_ms']:.2f} ms")
         print(f"  P50:    {results['p50_ms']:.2f} ms")

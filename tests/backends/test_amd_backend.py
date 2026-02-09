@@ -1,11 +1,11 @@
 """
-AMD Backend Tests (v0.5.3)
+AMD Backend Tests
 
 Comprehensive test suite for AMD ROCm backend implementation.
 Tests cover configuration, backend operations, optimization, compilation,
 memory management, and utilities.
 
-v0.4.9 Additions:
+Additions:
 - Operator fusion tests (Conv+BN, Linear+GELU, aggressive fusion)
 - HIP compilation tests with simulation mode
 - Memory layout optimization tests
@@ -554,7 +554,7 @@ class TestLRUCache:
 
 
 class TestAMDOperatorFusion:
-    """Tests for AMD operator fusion (v0.4.9)."""
+    """Tests for AMD operator fusion."""
 
     def test_conv_bn_fusion_pattern_detection(self):
         """Test Conv+BatchNorm fusion pattern detection."""
@@ -635,7 +635,7 @@ class TestAMDOperatorFusion:
 
 
 class TestHIPCompilationEnhanced:
-    """Enhanced tests for HIP compilation (v0.4.9)."""
+    """Enhanced tests for HIP compilation."""
 
     def test_simulated_compilation(self):
         """Test simulated compilation without ROCm."""
@@ -706,7 +706,7 @@ class TestHIPCompilationEnhanced:
 
 
 class TestAMDBackendEnhanced:
-    """Enhanced tests for AMD backend (v0.4.9)."""
+    """Enhanced tests for AMD backend."""
 
     def test_backend_with_all_architectures(self):
         """Test backend initialization with all architectures."""
@@ -779,7 +779,7 @@ class TestAMDBackendEnhanced:
 
 
 class TestAMDMemoryManagerEnhanced:
-    """Enhanced tests for AMD memory manager (v0.4.9)."""
+    """Enhanced tests for AMD memory manager."""
 
     def test_memory_manager_defragmentation(self):
         """Test memory defragmentation."""
@@ -833,7 +833,7 @@ class TestAMDMemoryManagerEnhanced:
 
 
 class TestAMDIntegrationV049:
-    """Integration tests for v0.4.9 AMD improvements."""
+    """Integration tests for AMD improvements."""
 
     def test_full_optimization_pipeline(self):
         """Test complete optimization pipeline."""

@@ -1,16 +1,15 @@
 """
 TorchBridge Model Integration Module
 
-Provides optimized wrappers for popular pre-trained models from HuggingFace
+Provides optimized wrappers for pre-trained models from HuggingFace
 and other sources. Supports automatic backend selection and optimization
 across NVIDIA, AMD, TPU, and Intel hardware.
 
 Model Categories:
-- text: BERT, GPT-2, DistilBERT, and other text models
-- llm: Llama, Mistral, Phi, and other LLMs
-- distributed: Large-scale distributed models
-- vision: ResNet, ViT, Stable Diffusion
-- multimodal: CLIP, LLaVA, Whisper
+- llm: DeepSeek R1, Qwen 3, Gemma 3, Llama 4 Scout, and other LLMs
+- distributed: Large-scale distributed model training
+- vision: SAM 3 and vision model optimization
+- multimodal: Multi-modal model optimization
 
 """
 
@@ -61,21 +60,8 @@ from .llm import (
     SlidingWindowCache,
     create_optimized_llm,
 )
-from .text import (
-    OptimizedBERT,
-    OptimizedDistilBERT,
-    OptimizedGPT2,
-    TextModelOptimizer,
-    create_optimized_text_model,
-)
 
 __all__ = [
-    # Text models
-    "TextModelOptimizer",
-    "OptimizedBERT",
-    "OptimizedGPT2",
-    "OptimizedDistilBERT",
-    "create_optimized_text_model",
     # LLM models
     "LLMOptimizer",
     "LLMConfig",

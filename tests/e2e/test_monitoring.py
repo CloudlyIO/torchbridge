@@ -1,5 +1,5 @@
 """
-Tests for the TorchBridge Monitoring Module (v0.3.10)
+Tests for the TorchBridge Monitoring Module
 
 Tests cover:
 - Prometheus metrics exporter

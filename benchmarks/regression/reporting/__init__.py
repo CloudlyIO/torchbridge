@@ -25,4 +25,3 @@ __all__ = [
     'ChartType'
 ]
 
-__version__ = "0.1.59"

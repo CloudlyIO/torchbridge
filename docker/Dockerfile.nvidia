@@ -7,7 +7,7 @@
 # Run:
 #   docker run --gpus all -p 8000:8000 torchbridge:nvidia
 #
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 # Use NVIDIA CUDA base image with Python
 FROM nvidia/cuda:12.1-cudnn8-runtime-ubuntu22.04 AS base

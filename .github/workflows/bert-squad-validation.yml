@@ -1,6 +1,6 @@
 # =============================================================================
 # BERT SQuAD Cross-Backend Validation
-# TorchBridge v0.5.3
+# TorchBridge Cloud Validation
 #
 # Validates BERT QA model produces consistent outputs across:
 # - AWS CUDA (A10G/A100)

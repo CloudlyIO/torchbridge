@@ -10,7 +10,7 @@
 #   - prometheus: Metrics collection
 #   - grafana: Metrics visualization
 #
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 version: '3.8'
 

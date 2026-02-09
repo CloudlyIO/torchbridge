@@ -52,7 +52,7 @@ class GenerationConfig:
 class LLMConfig:
     """Configuration for LLM optimization."""
     # Model settings
-    model_name: str = "meta-llama/Llama-2-7b-hf"
+    model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     model_type: LLMType = LLMType.LLAMA
     max_sequence_length: int = 4096
 
@@ -96,7 +96,7 @@ class LLMOptimizer:
     Example:
         >>> from torchbridge.models.llm import LLMOptimizer
         >>> optimizer = LLMOptimizer()
-        >>> model, tokenizer = optimizer.optimize("meta-llama/Llama-2-7b-hf")
+        >>> model, tokenizer = optimizer.optimize("deepseek-ai/DeepSeek-R1-Distill-Qwen-7B")
         >>> outputs = model.generate(input_ids, max_new_tokens=100)
     """
 
@@ -447,13 +447,13 @@ class OptimizedLlama(nn.Module):
     Optimized Llama wrapper for inference.
 
     Example:
-        >>> model = OptimizedLlama("meta-llama/Llama-2-7b-hf")
+        >>> model = OptimizedLlama("deepseek-ai/DeepSeek-R1-Distill-Qwen-7B")
         >>> outputs = model.generate(input_ids, max_new_tokens=100)
     """
 
     def __init__(
         self,
-        model_name: str = "meta-llama/Llama-2-7b-hf",
+        model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
         config: LLMConfig | None = None,
         **kwargs
     ):

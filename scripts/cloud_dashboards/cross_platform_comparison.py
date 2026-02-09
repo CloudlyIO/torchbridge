@@ -17,7 +17,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class PlatformMetrics:
     sample_count: int = 0
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "platform_name": self.platform_name,
@@ -100,12 +100,12 @@ class ComparisonReport:
     """Full comparison report between two platforms."""
     platform_a: PlatformMetrics
     platform_b: PlatformMetrics
-    metrics: List[ComparisonMetric]
+    metrics: list[ComparisonMetric]
     overall_winner: str
     summary: str
     generated_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "platform_a": self.platform_a.to_dict(),
@@ -134,21 +134,21 @@ class ComparisonReport:
     def to_markdown(self) -> str:
         """Convert to Markdown format."""
         lines = [
-            f"# Cross-Platform Comparison Report",
-            f"",
+            "# Cross-Platform Comparison Report",
+            "",
             f"**Generated**: {self.generated_at.strftime('%Y-%m-%d %H:%M:%S')}",
-            f"",
-            f"## Platforms Compared",
-            f"",
+            "",
+            "## Platforms Compared",
+            "",
             f"| Property | {self.platform_a.platform_name} | {self.platform_b.platform_name} |",
             f"|----------|{'-' * len(self.platform_a.platform_name)}--|{'-' * len(self.platform_b.platform_name)}--|",
             f"| Cloud | {self.platform_a.cloud_provider.upper()} | {self.platform_b.cloud_provider.upper()} |",
             f"| Instance | {self.platform_a.instance_type} | {self.platform_b.instance_type} |",
             f"| GPU | {self.platform_a.gpu_model} | {self.platform_b.gpu_model} |",
             f"| Samples | {self.platform_a.sample_count} | {self.platform_b.sample_count} |",
-            f"",
-            f"## Metrics Comparison",
-            f"",
+            "",
+            "## Metrics Comparison",
+            "",
             f"| Metric | {self.platform_a.platform_name} | {self.platform_b.platform_name} | Ratio | Winner |",
             f"|--------|{'-' * 10}|{'-' * 10}|-------|--------|",
         ]
@@ -161,11 +161,11 @@ class ComparisonReport:
             )
 
         lines.extend([
-            f"",
-            f"## Summary",
-            f"",
+            "",
+            "## Summary",
+            "",
             f"**Overall Winner**: {self.overall_winner}",
-            f"",
+            "",
             self.summary,
         ])
 
@@ -193,7 +193,7 @@ class CrossPlatformComparison:
 
     def __init__(self):
         """Initialize comparison tool."""
-        self.platforms: Dict[str, PlatformMetrics] = {}
+        self.platforms: dict[str, PlatformMetrics] = {}
 
     def add_platform(self, metrics: PlatformMetrics) -> None:
         """Add platform metrics for comparison."""
@@ -202,7 +202,7 @@ class CrossPlatformComparison:
 
     def add_from_benchmark_results(
         self,
-        results: Dict[str, Any],
+        results: dict[str, Any],
         platform_name: str,
     ) -> None:
         """
@@ -356,7 +356,7 @@ class CrossPlatformComparison:
             summary=summary,
         )
 
-    def get_platform_names(self) -> List[str]:
+    def get_platform_names(self) -> list[str]:
         """Get list of available platform names."""
         return list(self.platforms.keys())
 
@@ -365,8 +365,8 @@ class CrossPlatformComparison:
 # ============================================================================
 
 def generate_comparison_report(
-    platform_a_results: Dict[str, Any],
-    platform_b_results: Dict[str, Any],
+    platform_a_results: dict[str, Any],
+    platform_b_results: dict[str, Any],
     platform_a_name: str = "Platform A",
     platform_b_name: str = "Platform B",
 ) -> ComparisonReport:
@@ -389,7 +389,7 @@ def generate_comparison_report(
 
 def create_comparison_chart(
     report: ComparisonReport,
-    output_path: Optional[str] = None,
+    output_path: str | None = None,
 ) -> str:
     """
     Create a text-based comparison chart.

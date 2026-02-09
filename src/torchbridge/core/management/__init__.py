@@ -47,8 +47,6 @@ from .unified_manager import (
     reset_manager,
 )
 
-__version__ = "0.5.3"
-
 __all__ = [
     # Base classes
     "BaseManager",

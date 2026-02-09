@@ -8,7 +8,7 @@ Key Components:
 - ONNX Export: Export models to ONNX format with optimization metadata
 - TorchScript Export: Export models to TorchScript (trace/script) format
 - Optimization Metadata: Schema for preserving optimization information
-- Inference Serving: TorchServe, Triton, and FastAPI integrations (v0.3.9)
+- Inference Serving: TorchServe, Triton, and FastAPI integrations
 
 Example:
     ```python
@@ -34,7 +34,7 @@ Example:
         method="trace"
     )
 
-    # FastAPI inference server (v0.3.9)
+    # FastAPI inference server
     from torchbridge.deployment.serving import create_fastapi_server
     server = create_fastapi_server(model, model_name="my_model")
     ```
@@ -81,19 +81,7 @@ from .safetensors_exporter import (
     load_safetensors,
 )
 
-# TorchScript export
-from .torchscript_exporter import (
-    ExportMethod,
-    TorchScriptExportConfig,
-    TorchScriptExporter,
-    TorchScriptExportResult,
-    export_to_torchscript,
-    load_torchscript,
-)
-
-__version__ = "0.5.3"
-
-# Serving module (v0.3.9)
+# Serving module
 from .serving import (
     BaseHandler,
     # FastAPI
@@ -111,6 +99,16 @@ from .serving import (
     generate_triton_model_repository,
     package_for_torchserve,
     run_server,
+)
+
+# TorchScript export
+from .torchscript_exporter import (
+    ExportMethod,
+    TorchScriptExportConfig,
+    TorchScriptExporter,
+    TorchScriptExportResult,
+    export_to_torchscript,
+    load_torchscript,
 )
 
 __all__ = [
@@ -150,18 +148,18 @@ __all__ = [
     "ValidationSeverity",
     "ValidationStatus",
     "validate_production_readiness",
-    # Serving - TorchServe (v0.3.9)
+    # Serving - TorchServe
     "TorchBridgeHandler",
     "BaseHandler",
     "create_torchserve_handler",
     "package_for_torchserve",
-    # Serving - Triton (v0.3.9)
+    # Serving - Triton
     "TritonModelConfig",
     "TritonBackend",
     "TritonDataType",
     "create_triton_config",
     "generate_triton_model_repository",
-    # Serving - FastAPI (v0.3.9)
+    # Serving - FastAPI
     "InferenceServer",
     "ServerConfig",
     "create_fastapi_server",

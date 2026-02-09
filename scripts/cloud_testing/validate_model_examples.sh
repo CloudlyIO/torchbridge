@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Model Examples Validation - Cloud GPU
-# TorchBridge v0.5.8
+# TorchBridge Model Validation
 #
 # Runs all model examples and benchmark suite on a cloud GPU instance.
 # Adapts quantization based on available VRAM.

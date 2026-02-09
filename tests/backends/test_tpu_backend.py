@@ -262,7 +262,7 @@ class TestXLACompiler:
 
         stats = compiler.get_compilation_stats()
         assert isinstance(stats, dict)
-        assert 'compilation_cache' in stats  # v0.3.2: Changed to cache stats
+        assert 'compilation_cache' in stats  # Changed to cache stats
         assert 'xla_available' in stats
         assert 'compilation_mode' in stats
         assert 'cache_max_size' in stats
@@ -521,7 +521,7 @@ class TestTPUErrorHandling:
 
 
 class TestTPUErrorPaths:
-    """Test TPU backend error handling and edge cases (v0.3.2 hardening)."""
+    """Test TPU backend error handling and edge cases ."""
 
     def test_lru_cache_eviction(self):
         """Test LRU cache eviction when max size is exceeded."""

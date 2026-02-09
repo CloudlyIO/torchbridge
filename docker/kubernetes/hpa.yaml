@@ -1,5 +1,5 @@
 # TorchBridge Horizontal Pod Autoscaler
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

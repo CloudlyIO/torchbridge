@@ -1,5 +1,5 @@
 """
-TorchBridge Distributed Model Support (v0.5.3)
+TorchBridge Distributed Model Support
 
 This module provides distributed inference and training support for large models
 like Llama-70B, Falcon-180B, and other models that exceed single-GPU memory.
@@ -20,14 +20,14 @@ Example:
 
     # Create distributed optimizer for Llama-70B
     optimizer = DistributedLLMOptimizer(
-        model_name="meta-llama/Llama-2-70b-hf",
+        model_name="Qwen/Qwen3-32B",
         tensor_parallel_size=4,
         pipeline_parallel_size=2,
     )
 
     # Or use factory function
     model = create_distributed_llm(
-        "meta-llama/Llama-2-70b-hf",
+        "Qwen/Qwen3-32B",
         world_size=8,
     )
 """
