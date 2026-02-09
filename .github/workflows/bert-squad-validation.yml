@@ -56,10 +56,10 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -91,7 +91,7 @@ jobs:
             --output results/cpu_validation.json
 
       - name: Upload CPU results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cpu-baseline-results
           path: ${{ env.BERT_SQUAD_DIR }}/results/
@@ -112,7 +112,7 @@ jobs:
     continue-on-error: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check CUDA availability
         run: |
@@ -197,7 +197,7 @@ jobs:
           PYEOF
 
       - name: Upload CUDA results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: aws-cuda-results
           path: ${{ env.BERT_SQUAD_DIR }}/results/cuda/
@@ -217,7 +217,7 @@ jobs:
     continue-on-error: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check ROCm availability
         run: |
@@ -259,7 +259,7 @@ jobs:
             --output results/rocm/inference_benchmark.json
 
       - name: Upload ROCm results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: amd-rocm-results
           path: ${{ env.BERT_SQUAD_DIR }}/results/rocm/
@@ -279,7 +279,7 @@ jobs:
     continue-on-error: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check TPU availability
         run: |
@@ -408,7 +408,7 @@ jobs:
           PYEOF
 
       - name: Upload TPU results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: gcp-tpu-results
           path: ${{ env.BERT_SQUAD_DIR }}/results/tpu/
@@ -424,10 +424,10 @@ jobs:
     if: always()
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: artifacts/
 
@@ -504,7 +504,7 @@ jobs:
           PYEOF
 
       - name: Upload summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: validation-summary
           path: VALIDATION_SUMMARY.md
