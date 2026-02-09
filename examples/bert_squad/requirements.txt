@@ -3,7 +3,7 @@
 
 # Core
 torch>=2.0.0
-torchbridge-ml>=0.5.3
+torchbridge-ml
 
 # Transformers
 transformers>=4.36.0
