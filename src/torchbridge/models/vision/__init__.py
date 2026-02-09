@@ -1,5 +1,5 @@
 """
-Vision Model Optimization (v0.5.3)
+Vision Model Optimization
 
 This module provides optimized inference for computer vision models:
 - ResNet (ResNet-50/152): Image classification
@@ -82,4 +82,3 @@ __all__ = [
     "create_sdxl_optimized",
 ]
 
-__version__ = "0.5.3"

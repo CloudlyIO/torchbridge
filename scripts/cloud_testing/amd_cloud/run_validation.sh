@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
 # AMD Backend Validation - AMD Developer Cloud (MI300X)
-# TorchBridge v0.4.9
+# TorchBridge Cloud Validation
 #
-# v0.4.9 Updates:
+# Updates:
 # - New operator fusion tests (Conv+BN, Linear+GELU, aggressive fusion)
 # - Enhanced HIP compilation pipeline tests
 # - Memory layout optimization benchmarks
@@ -19,7 +19,7 @@ export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="amd"
 export PLATFORM="amd_cloud"
-export VERSION="0.4.9"
+export VERSION="latest"
 
 mkdir -p "$REPORT_DIR"
 
@@ -117,8 +117,8 @@ log_step "4/6" "Running AMD Benchmarks"
 log_info "Running integration benchmarks..."
 python3 benchmarks/amd_integration_benchmark.py 2>&1 | tee "$REPORT_DIR/amd_benchmark_output.txt"
 
-# v0.4.9: New optimization benchmark
-log_info "Running v0.4.9 optimization benchmarks..."
+# New optimization benchmark
+log_info "Running optimization benchmarks..."
 python3 benchmarks/amd_optimization_benchmark.py 2>&1 | tee "$REPORT_DIR/amd_optimization_benchmark_output.txt" || log_warning "Optimization benchmark had issues"
 
 # Additional performance tests
@@ -177,9 +177,9 @@ print(f"\nPerformance results saved")
 PYEOF
 
 # =============================================================================
-# v0.4.9 Feature Validation
+# Feature Validation
 # =============================================================================
-log_step "5/6" "Validating v0.4.9 Features"
+log_step "5/6" "Validating Features"
 
 python3 << 'PYEOF'
 import torch
@@ -187,10 +187,10 @@ import json
 import os
 
 print("=" * 60)
-print("  v0.4.9 Feature Validation")
+print("  Feature Validation")
 print("=" * 60)
 
-results = {"version": "0.4.9", "features": {}}
+results = {"version": "latest", "features": {}}
 
 # 1. Test Operator Fusion
 print("\n1. Operator Fusion Tests:")
@@ -316,7 +316,7 @@ with open(f'{report_dir}/v049_feature_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
 print("\n" + "=" * 60)
-print("  v0.4.9 Feature validation complete")
+print("  Feature validation complete")
 print("=" * 60)
 PYEOF
 
@@ -348,7 +348,7 @@ try:
 except:
     pass
 
-# Load v0.4.9 feature results
+# Load feature results
 v049_results = {}
 try:
     with open(f'{report_dir}/v049_feature_results.json') as f:
@@ -383,9 +383,9 @@ report = f"""# AMD Backend Validation Report - v{version}
 
 """
 
-# Add v0.4.9 feature validation results
+# Add feature validation results
 if v049_results.get('features'):
-    report += """## v0.4.9 Feature Validation
+    report += """## Feature Validation
 
 | Feature | Status |
 |---------|--------|
@@ -411,7 +411,7 @@ report += f"""
 
 {"**PASSED** - All tests successful" if summary.get('failed', 0) == 0 else "**FAILED** - Review failed tests"}
 
-## v0.4.9 Changes Validated
+## Changes Validated
 
 - [x] Operator fusion (Conv+BN, Linear+GELU, aggressive)
 - [x] HIP kernel compilation pipeline
@@ -443,7 +443,7 @@ echo ""
 echo "Key files:"
 echo "  - AMD_CLOUD_REPORT.md       : Main validation report"
 echo "  - amd_test_results.json     : Detailed test results"
-echo "  - v049_feature_results.json : v0.4.9 feature validation"
+echo "  - v049_feature_results.json : feature validation"
 echo "  - amd_perf_results.json     : Performance benchmarks"
 echo ""
 

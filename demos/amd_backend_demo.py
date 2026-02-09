@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AMD ROCm Backend Demo (v0.3.4)
+AMD ROCm Backend Demo
 
 Demonstrates the AMD backend capabilities for TorchBridge,
 including configuration, optimization, and profiling features.
@@ -526,7 +526,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "=" * 60)
-    print("  AMD ROCm Backend Demo (v0.3.4)")
+    print("  AMD ROCm Backend Demo")
     print("  TorchBridge - Production-Ready AMD GPU Support")
     print("=" * 60)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FlexAttention Demo (v0.5.0)
+FlexAttention Demo
 
 Demonstrates FlexAttention integration with PyTorch 2.5+ for flexible
 attention patterns with FlashAttention-like performance.
@@ -342,7 +342,7 @@ def demo_registry_integration():
 def main():
     """Run all demos"""
     print("\n" + "="*60)
-    print("  FlexAttention Demo - TorchBridge v0.5.0")
+    print("  FlexAttention Demo - TorchBridge")
     print("="*60)
 
     results = {}

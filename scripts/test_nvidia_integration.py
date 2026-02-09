@@ -25,12 +25,12 @@ repo_root = Path(__file__).parent.parent
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from torchbridge.core.config import (
+from torchbridge.core.config import (  # noqa: E402
     NVIDIAArchitecture,
     OptimizationLevel,
     TorchBridgeConfig,
 )
-from torchbridge.validation.unified_validator import UnifiedValidator
+from torchbridge.validation.unified_validator import UnifiedValidator  # noqa: E402
 
 
 class NVIDIAIntegrationTester:
@@ -163,7 +163,7 @@ class NVIDIAIntegrationTester:
                 "-q", "--tb=no"
             ],
             cwd=repo_root,
-            env={**dict(), "PYTHONPATH": str(repo_root / "src")},
+            env={"PYTHONPATH": str(repo_root / "src")},
             capture_output=True, text=True)
 
             if result.returncode == 0:
@@ -191,7 +191,7 @@ class NVIDIAIntegrationTester:
                 sys.executable, "demos/nvidia_configuration_demo.py", "--quick"
             ],
             cwd=repo_root,
-            env={**dict(), "PYTHONPATH": str(repo_root / "src")},
+            env={"PYTHONPATH": str(repo_root / "src")},
             capture_output=True, text=True)
 
             demo_success = result.returncode == 0
@@ -202,7 +202,7 @@ class NVIDIAIntegrationTester:
                 sys.executable, "benchmarks/nvidia_config_benchmarks.py", "--quick"
             ],
             cwd=repo_root,
-            env={**dict(), "PYTHONPATH": str(repo_root / "src")},
+            env={"PYTHONPATH": str(repo_root / "src")},
             capture_output=True, text=True)
 
             benchmark_success = result.returncode == 0
@@ -232,7 +232,7 @@ class NVIDIAIntegrationTester:
             config = TorchBridgeConfig()
             start_time = time.perf_counter()
             for _ in range(50):
-                arch = config.hardware.nvidia._detect_architecture()
+                config.hardware.nvidia._detect_architecture()
             detection_time = (time.perf_counter() - start_time) * 1000 / 50
 
             detection_good = detection_time < 1.0  # Should be < 1ms

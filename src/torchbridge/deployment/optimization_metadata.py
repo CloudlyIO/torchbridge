@@ -214,7 +214,7 @@ class OptimizationMetadata:
     """
     # Version and identification
     schema_version: str = "1.0.0"
-    torchbridge_version: str = "0.3.8"
+    torchbridge_version: str = ""
     export_timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     export_format: str = "onnx"
 
@@ -272,7 +272,7 @@ class OptimizationMetadata:
 
         return cls(
             schema_version=data.get('schema_version', '1.0.0'),
-            torchbridge_version=data.get('torchbridge_version', '0.3.8'),
+            torchbridge_version=data.get('torchbridge_version', ''),
             export_timestamp=data.get('export_timestamp', datetime.now().isoformat()),
             export_format=data.get('export_format', 'onnx'),
             optimization_level=data.get('optimization_level', 'balanced'),

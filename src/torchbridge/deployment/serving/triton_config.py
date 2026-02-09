@@ -474,7 +474,7 @@ def generate_triton_model_repository(
     # Create metadata file with TorchBridge info
     metadata = {
         "framework": "torchbridge",
-        "version": "0.3.9",
+        "version": "1",
         "export_format": export_format,
         "model_config": {
             "name": config.name,

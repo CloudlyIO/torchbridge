@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# TorchBridge v0.4.6 Master Cloud Testing Script
+# TorchBridge Master Cloud Testing Script
 # =============================================================================
 #
 # This script orchestrates comprehensive testing across all cloud platforms:
@@ -20,7 +20,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-VERSION="0.4.6"
+VERSION="latest"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # =============================================================================

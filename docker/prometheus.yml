@@ -1,5 +1,5 @@
 # Prometheus Configuration for TorchBridge
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 global:
   scrape_interval: 15s

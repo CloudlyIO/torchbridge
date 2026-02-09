@@ -1,5 +1,5 @@
 """
-E2E Tests for LLM Inference Server (v0.5.3)
+E2E Tests for LLM Inference Server
 
 Tests cover:
 - Server startup and shutdown

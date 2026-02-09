@@ -41,7 +41,7 @@ from .config import (
     set_config,
 )
 
-# Error handling framework (v0.3.11)
+# Error handling framework
 from .errors import (
     CompilationError,
     ConfigValidationError,

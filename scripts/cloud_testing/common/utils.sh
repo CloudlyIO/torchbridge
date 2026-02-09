@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Common Utilities for Cloud Testing Scripts
-# TorchBridge v0.3.7
+# TorchBridge Cloud Validation
 # =============================================================================
 
 # Colors for output

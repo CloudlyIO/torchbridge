@@ -134,7 +134,7 @@ class GCPConfig:
 def generate_validation_script(backend: str, instance_name: str) -> str:
     """Generate validation script to run on cloud instance."""
     return f'''#!/bin/bash
-# TorchBridge v0.4.34 Cloud Validation
+# TorchBridge Cloud Validation
 # Instance: {instance_name}
 # Backend: {backend}
 # Generated: {datetime.now().isoformat()}
@@ -398,7 +398,7 @@ def run_gcp_validation(
         result = subprocess.run(launch_cmd, capture_output=True, text=True, timeout=120)
 
         if result.returncode == 0:
-            instance_data = json.loads(result.stdout)
+            json.loads(result.stdout)
             print(f"Instance launched: {instance_name}")
 
             validation_result = {

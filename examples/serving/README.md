@@ -117,7 +117,7 @@ curl http://localhost:8000/metrics
 The server works with any autoregressive language model from HuggingFace:
 
 - **GPT-2**: `gpt2`, `gpt2-medium`, `gpt2-large`, `gpt2-xl`
-- **LLaMA**: `meta-llama/Llama-2-7b-hf`, `meta-llama/Llama-2-13b-hf`
+- **DeepSeek**: `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B`
 - **Mistral**: `mistralai/Mistral-7B-v0.1`, `mistralai/Mistral-7B-Instruct-v0.2`
 - **Phi**: `microsoft/phi-2`, `microsoft/phi-3-mini-4k-instruct`
 
@@ -152,4 +152,4 @@ The LLM server uses:
 
 ### Version
 
-v0.5.3 - Production Serving Release
+Production Serving Release

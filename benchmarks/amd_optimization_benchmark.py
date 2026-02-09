@@ -1,5 +1,5 @@
 """
-AMD Backend Optimization Benchmarks (v0.5.3)
+AMD Backend Optimization Benchmarks
 
 Comprehensive benchmark suite for AMD ROCm backend optimization strategies.
 Measures performance across different optimization levels, architectures,
@@ -247,7 +247,7 @@ def benchmark_memory_management() -> dict[str, Any]:
 
 def run_all_benchmarks() -> dict[str, Any]:
     """Run all AMD optimization benchmarks."""
-    print_section("AMD Backend Optimization Benchmarks (v0.5.3)")
+    print_section("AMD Backend Optimization Benchmarks")
 
     results = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

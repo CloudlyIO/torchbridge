@@ -105,8 +105,6 @@ from .structured_logging import (
     set_correlation_id,
 )
 
-__version__ = "0.5.3"
-
 __all__ = [
     # Prometheus
     "MetricsExporter",

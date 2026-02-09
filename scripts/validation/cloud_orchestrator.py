@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TorchBridge v0.4.30 Cloud Orchestrator
+TorchBridge Cloud Orchestrator
 
 Manages cloud instance deployment and test execution for hardware validation:
 - AWS: p5.48xlarge (H100), p4d.24xlarge (A100), g5.xlarge (A10G), AMD MI300X
@@ -196,7 +196,7 @@ class CloudOrchestrator:
         """Generate validation script for the instance."""
 
         script = f"""#!/bin/bash
-# TorchBridge v0.4.30 Cloud Validation Script
+# TorchBridge Cloud Validation Script
 # Instance: {config.instance_type}
 # Backend: {config.backend.value}
 # Generated: {datetime.now().isoformat()}
@@ -204,7 +204,7 @@ class CloudOrchestrator:
 set -e
 
 echo "=============================================="
-echo "TorchBridge v0.4.30 Cloud Validation"
+echo "TorchBridge Cloud Validation"
 echo "Instance: {config.instance_type}"
 echo "Backend: {config.backend.value}"
 echo "=============================================="

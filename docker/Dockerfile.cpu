@@ -7,7 +7,7 @@
 # Run:
 #   docker run -p 8000:8000 torchbridge:cpu
 #
-# Version: 0.3.10
+# Version: see pyproject.toml
 
 FROM python:3.11-slim AS base
 

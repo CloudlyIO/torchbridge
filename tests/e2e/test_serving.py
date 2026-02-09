@@ -1,5 +1,5 @@
 """
-Tests for the TorchBridge Serving Module (v0.3.9)
+Tests for the TorchBridge Serving Module
 
 Tests cover:
 - TorchServe handler functionality

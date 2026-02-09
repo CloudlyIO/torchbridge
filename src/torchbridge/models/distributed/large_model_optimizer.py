@@ -204,7 +204,7 @@ class DistributedLLMOptimizer:
                 return LargeModelType.MIXTRAL_8X22B
             else:
                 return LargeModelType.MIXTRAL
-        elif "qwen" in name_lower and "72b" in name_lower:
+        elif "qwen" in name_lower and ("72b" in name_lower or "32b" in name_lower):
             return LargeModelType.QWEN_72B
         elif "dbrx" in name_lower:
             return LargeModelType.DBRX
@@ -576,11 +576,11 @@ class DistributedLLMOptimizer:
 
 # Convenience wrappers for specific models
 class DistributedLlama70B(DistributedLLMOptimizer):
-    """Optimized wrapper for Llama-2-70B."""
+    """Optimized wrapper for large language models."""
 
     def __init__(
         self,
-        model_name: str = "meta-llama/Llama-2-70b-hf",
+        model_name: str = "Qwen/Qwen3-32B",
         config: DistributedConfig | None = None,
     ):
         if config is None:
