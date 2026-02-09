@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Qwen 3 8B Optimization Example
+Qwen 3 8B Cross-Backend Example
 
-Demonstrates how to use TorchBridge to optimize Alibaba's Qwen 3 models
+Demonstrates how to use TorchBridge to run Alibaba's Qwen 3 models
 for multilingual enterprise inference across CUDA, ROCm, and CPU backends.
 
 Qwen 3 supports hybrid thinking modes (thinking + non-thinking) and
@@ -23,11 +23,11 @@ Hardware requirements:
     - INT4: ~5GB VRAM
 
 Usage:
-    python qwen3_optimization.py
-    python qwen3_optimization.py --model Qwen/Qwen3-4B
-    python qwen3_optimization.py --quantization int4
-    python qwen3_optimization.py --multilingual
-    python qwen3_optimization.py --benchmark
+    python qwen3_cross_backend.py
+    python qwen3_cross_backend.py --model Qwen/Qwen3-4B
+    python qwen3_cross_backend.py --quantization int4
+    python qwen3_cross_backend.py --multilingual
+    python qwen3_cross_backend.py --benchmark
 """
 
 import argparse
@@ -380,7 +380,7 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Qwen 3 Optimization with TorchBridge"
+        description="Qwen 3 Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
@@ -413,7 +413,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("Qwen 3 Optimization with TorchBridge")
+    print_section("Qwen 3 Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

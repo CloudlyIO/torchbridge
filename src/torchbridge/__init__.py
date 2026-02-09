@@ -1,7 +1,7 @@
 """
 TorchBridge — Hardware Abstraction Layer for PyTorch
 
-Unified optimization across NVIDIA, AMD, Intel, and TPU backends.
+Unified hardware abstraction across NVIDIA, AMD, Intel, and TPU backends.
 """
 
 # Suppress noisy platform-specific warnings before importing torch
@@ -24,7 +24,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("torchbridge-ml")
 except PackageNotFoundError:
-    __version__ = "0.5.8"  # Fallback for development
+    __version__ = "0.5.9"  # Fallback for development
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing
@@ -114,7 +114,7 @@ __all__ = [
 
 # Convenience functions for quick setup
 def create_attention(d_model: int, num_heads: int, **kwargs):
-    """Create optimized attention layer with automatic configuration."""
+    """Create backend-aware attention layer with automatic configuration."""
     config = get_config()
     return AttentionLayer(
         embed_dim=d_model,
@@ -134,7 +134,7 @@ def create_memory_optimizer(optimizer, model, **kwargs):
     )
 
 def optimize_model(model, **kwargs):
-    """Apply unified optimization to model using global manager."""
+    """Apply unified backend abstraction to model using global manager."""
     return get_manager().optimize(model, **kwargs)
 
 def create_moe(hidden_size: int, num_experts: int = 8, top_k: int = 2, moe_type: str = "standard", **kwargs):

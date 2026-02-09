@@ -1,7 +1,7 @@
 """
 TorchBridge Command Line Interface
 
-Professional CLI tools for PyTorch optimization, benchmarking, profiling,
+Professional CLI tools for cross-backend PyTorch support, benchmarking, profiling,
 model export, and system validation.
 """
 
@@ -45,7 +45,7 @@ def main(args: list[str] | None = None) -> int:
     """
     parser = argparse.ArgumentParser(
         prog='torchbridge',
-        description='TorchBridge: Production-grade PyTorch optimization CLI',
+        description='TorchBridge: Production-grade PyTorch hardware abstraction CLI',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

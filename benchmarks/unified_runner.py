@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Unified Benchmark Runner for PyTorch Optimization Framework
+Unified Benchmark Runner for TorchBridge
 
 Consolidates all benchmarking functionality into a single, comprehensive system
-that provides consistent benchmarking across all optimization levels with
+that provides consistent cross-backend benchmarking with
 statistical analysis and production-grade measurement methodology.
 """
 

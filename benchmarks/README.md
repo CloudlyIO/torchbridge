@@ -1,6 +1,6 @@
 # TorchBridge Benchmarks
 
-Benchmarking suite for validating GPU optimizations.
+Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, TPU, and Intel.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ Benchmarking suite for validating GPU optimizations.
 python3 benchmarks/simple_benchmark_test.py
 
 # Backend comparison
-python3 benchmarks/backend_comparison_benchmark.py --quick
+python3 benchmarks/backend_comparison.py --quick
 
 # Unified runner
 python3 benchmarks/unified_runner.py --quick
@@ -31,11 +31,8 @@ benchmarks/
 │
 ├── Backend Benchmarks
 │   ├── backend_comparison.py        # Cross-backend comparison
-│   ├── backend_comparison_benchmark.py
-│   ├── nvidia_config_benchmarks.py  # NVIDIA-specific
-│   ├── nvidia_integration_benchmark.py
+│   ├── nvidia_integration_benchmark.py  # NVIDIA-specific
 │   ├── amd_integration_benchmark.py # AMD-specific
-│   ├── amd_optimization_benchmark.py
 │   ├── intel_benchmark.py           # Intel-specific
 │   └── tpu_integration_benchmark.py # TPU-specific
 │
@@ -78,11 +75,11 @@ benchmarks/
 | Benchmark | Focus | Hardware |
 |-----------|-------|----------|
 | `simple_benchmark_test.py` | Quick validation | Any |
-| `nvidia_config_benchmarks.py` | NVIDIA backend | NVIDIA GPU |
+| `nvidia_integration_benchmark.py` | NVIDIA backend | NVIDIA GPU |
 | `amd_integration_benchmark.py` | AMD backend | AMD GPU |
 | `intel_benchmark.py` | Intel backend | Intel XPU |
 | `tpu_integration_benchmark.py` | TPU backend | Cloud TPU |
-| `backend_comparison_benchmark.py` | Cross-backend | Any GPU |
+| `backend_comparison.py` | Cross-backend | Any GPU |
 | `custom_kernel_benchmark.py` | CUDA kernels | CUDA GPU |
 | `hardware_abstraction_benchmark.py` | Hardware layer | Any |
 | `dynamic_shapes_benchmark.py` | Dynamic shapes | Any |
@@ -103,7 +100,7 @@ python3 benchmarks/unified_runner.py --backends nvidia,amd
 python3 benchmarks/unified_runner.py --output results/
 
 # Backend-specific
-python3 benchmarks/nvidia_config_benchmarks.py --quick
+python3 benchmarks/nvidia_integration_benchmark.py --quick
 python3 benchmarks/amd_integration_benchmark.py
 python3 benchmarks/tpu_integration_benchmark.py
 ```

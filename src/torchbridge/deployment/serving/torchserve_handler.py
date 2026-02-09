@@ -2,11 +2,11 @@
 TorchServe Integration for TorchBridge
 
 This module provides a custom TorchServe handler that leverages TorchBridge
-optimizations for production inference serving.
+hardware abstraction for production inference serving.
 
 Features:
-- Automatic model optimization on load
-- TorchBridge optimization metadata support
+- Automatic backend-aware model preparation on load
+- TorchBridge backend metadata support
 - Batch inference with dynamic batching
 - Health monitoring and metrics
 - FP8/FP16 precision support
@@ -159,7 +159,7 @@ class BaseHandler(ABC):
 
     def _optimize_model(self, model: nn.Module) -> nn.Module:
         """
-        Apply TorchBridge optimizations to the model.
+        Apply TorchBridge backend-aware transformations to the model.
         """
         model = model.to(self.device)
         model.eval()

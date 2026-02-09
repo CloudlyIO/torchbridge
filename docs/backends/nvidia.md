@@ -90,8 +90,8 @@ print(f"Free: {stats['free']}MB")
 backend.empty_cache()
 backend.reset_peak_memory_stats()
 
-# OOM protection
-config.hardware.nvidia.enable_oom_protection = True
+# Configure memory fraction
+config.hardware.nvidia.memory_fraction = 0.90  # Reduce from default 0.95
 ```
 
 ## Multi-GPU

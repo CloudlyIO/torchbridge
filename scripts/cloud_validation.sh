@@ -191,9 +191,9 @@ echo "Use Case 1 exit code: $UC1_EXIT"
 
 echo ""
 echo "============================================================"
-echo "[5/8] USE CASE 2: LLM Optimization for Inference"
+echo "[5/8] USE CASE 2: Cross-Backend LLM Inference"
 echo "============================================================"
-$PYTHON examples/usecase2_llm_optimization.py 2>&1 && UC2_EXIT=0 || UC2_EXIT=$?
+$PYTHON examples/usecase2_cross_backend_inference.py 2>&1 && UC2_EXIT=0 || UC2_EXIT=$?
 echo "Use Case 2 exit code: $UC2_EXIT"
 
 echo ""

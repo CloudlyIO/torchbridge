@@ -28,7 +28,7 @@ print_header "AMD Backend Validation v$VERSION (MI300X)"
 # =============================================================================
 # Setup
 # =============================================================================
-log_step "1/5" "Environment Setup"
+log_step "1/6" "Environment Setup"
 
 cd "$WORK_DIR"
 export PYTHONPATH="$WORK_DIR/torchbridge:$PYTHONPATH"
@@ -59,7 +59,7 @@ fi
 # =============================================================================
 # GPU Info
 # =============================================================================
-log_step "2/5" "GPU Configuration"
+log_step "2/6" "GPU Configuration"
 
 python3 << 'PYEOF'
 import torch
@@ -97,7 +97,7 @@ PYEOF
 # =============================================================================
 # Tests
 # =============================================================================
-log_step "3/5" "Running AMD Backend Tests"
+log_step "3/6" "Running AMD Backend Tests"
 
 warmup_gpu
 
@@ -117,9 +117,9 @@ log_step "4/6" "Running AMD Benchmarks"
 log_info "Running integration benchmarks..."
 python3 benchmarks/amd_integration_benchmark.py 2>&1 | tee "$REPORT_DIR/amd_benchmark_output.txt"
 
-# New optimization benchmark
-log_info "Running optimization benchmarks..."
-python3 benchmarks/amd_optimization_benchmark.py 2>&1 | tee "$REPORT_DIR/amd_optimization_benchmark_output.txt" || log_warning "Optimization benchmark had issues"
+# AMD integration benchmark (comprehensive)
+log_info "Running AMD integration benchmarks..."
+python3 benchmarks/amd_integration_benchmark.py --quick 2>&1 | tee "$REPORT_DIR/amd_integration_benchmark_output.txt" || log_warning "AMD integration benchmark had issues"
 
 # Additional performance tests
 python3 << 'PYEOF'
@@ -312,7 +312,7 @@ else:
 
 # Save results
 report_dir = os.environ.get('REPORT_DIR', '.')
-with open(f'{report_dir}/v049_feature_results.json', 'w') as f:
+with open(f'{report_dir}/feature_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
 print("\n" + "=" * 60)
@@ -349,10 +349,10 @@ except:
     pass
 
 # Load feature results
-v049_results = {}
+feature_results = {}
 try:
-    with open(f'{report_dir}/v049_feature_results.json') as f:
-        v049_results = json.load(f)
+    with open(f'{report_dir}/feature_results.json') as f:
+        feature_results = json.load(f)
 except:
     pass
 
@@ -384,13 +384,13 @@ report = f"""# AMD Backend Validation Report - v{version}
 """
 
 # Add feature validation results
-if v049_results.get('features'):
+if feature_results.get('features'):
     report += """## Feature Validation
 
 | Feature | Status |
 |---------|--------|
 """
-    for feature, status in v049_results['features'].items():
+    for feature, status in feature_results['features'].items():
         report += f"| {feature.replace('_', ' ').title()} | {status} |\n"
     report += "\n"
 
@@ -443,7 +443,7 @@ echo ""
 echo "Key files:"
 echo "  - AMD_CLOUD_REPORT.md       : Main validation report"
 echo "  - amd_test_results.json     : Detailed test results"
-echo "  - v049_feature_results.json : feature validation"
+echo "  - feature_results.json : feature validation"
 echo "  - amd_perf_results.json     : Performance benchmarks"
 echo ""
 
@@ -452,7 +452,7 @@ if [ $TEST_EXIT -eq 0 ]; then
     echo ""
     echo "Next steps:"
     echo "  1. Review AMD_CLOUD_REPORT.md"
-    echo "  2. Copy reports to docs/cloud_testing/reports/amd_v049/"
+    echo "  2. Copy reports to docs/cloud_testing/reports/amd/"
     echo "  3. Update CHANGELOG.md with cloud validation results"
 else
     log_error "Some tests failed (exit code: $TEST_EXIT)"

@@ -1,13 +1,13 @@
 """
 Model Deployment Module for TorchBridge
 
-This module provides export and serving functionality for deploying optimized
+This module provides export and serving functionality for deploying HAL-managed
 PyTorch models to various formats and inference platforms.
 
 Key Components:
-- ONNX Export: Export models to ONNX format with optimization metadata
+- ONNX Export: Export models to ONNX format with backend metadata
 - TorchScript Export: Export models to TorchScript (trace/script) format
-- Optimization Metadata: Schema for preserving optimization information
+- Backend Metadata: Schema for preserving hardware abstraction information
 - Inference Serving: TorchServe, Triton, and FastAPI integrations
 
 Example:
