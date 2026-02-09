@@ -85,7 +85,7 @@ backend.empty_cache()
 Mitigations:
 - Reduce batch size
 - Enable gradient checkpointing: `SelectiveGradientCheckpointing(model)`
-- Enable OOM protection: `config.hardware.nvidia.enable_oom_protection = True`
+- Set memory fraction limit: `config.hardware.amd.memory_fraction = 0.9` (AMD) or reduce batch size (NVIDIA)
 
 ### FlashAttention Not Working
 
@@ -94,11 +94,11 @@ FlashAttention v2 works on Ampere and newer GPUs (sm_80+). FlashAttention v3 req
 ```python
 # FlashAttention v2 (Ampere+: A100, RTX 3090, etc.)
 config.hardware.nvidia.flash_attention_version = "2"
-config.attention.enable_flash_attention = True
+config.hardware.nvidia.flash_attention_enabled = True
 
 # FlashAttention v3 (Hopper+: H100, Blackwell, etc.)
 config.hardware.nvidia.flash_attention_version = "3"
-config.attention.enable_flash_attention = True
+config.hardware.nvidia.flash_attention_enabled = True
 ```
 
 ---
@@ -152,7 +152,7 @@ pip install torch_xla[tpu]~=2.0 -f https://storage.googleapis.com/libtpu-release
 
 First iteration is slow due to XLA graph compilation. Mitigations:
 - Use static shapes (pad to fixed lengths)
-- Enable caching: `config.hardware.tpu.enable_xla_cache = True`
+- Enable caching: increase `config.hardware.tpu.cache_max_size` (default: 100)
 - Increase timeout: `config.hardware.tpu.compilation_timeout_seconds = 600`
 
 ### TPU Memory Errors

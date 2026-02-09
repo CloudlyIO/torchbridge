@@ -2,7 +2,7 @@
 LLM-Specific FastAPI Inference Server for TorchBridge
 
 This module provides a production-grade REST API server for serving LLMs
-optimized with TorchBridge's LLMOptimizer. Includes streaming, dynamic
+managed with TorchBridge's LLMOptimizer. Includes streaming, dynamic
 batching, and specialized endpoints for text generation.
 
 Features:

@@ -1,13 +1,13 @@
 """
-LLM Optimization Module
+LLM Cross-Backend Module
 
-Provides optimized wrappers for large language models (1B-13B parameters):
+Provides HAL-aware wrappers for large language models (1B-13B parameters):
 - DeepSeek R1 7B, Qwen 3 8B, Gemma 3 12B, Llama 4 Scout 17B
 - Mistral-7B, Mixtral-8x7B
 - Phi-2, Phi-3
 
 Features:
-- KV-cache optimization for inference
+- KV-cache management for inference
 - Quantization support (INT8, INT4, FP8)
 - Flash Attention integration
 - Memory-efficient generation

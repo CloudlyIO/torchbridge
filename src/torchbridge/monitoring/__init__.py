@@ -2,7 +2,7 @@
 Production Monitoring Module for TorchBridge
 
 This module provides comprehensive monitoring capabilities for production
-deployments of TorchBridge-optimized models.
+deployments of TorchBridge HAL-managed models.
 
 Key Components:
 - Prometheus Metrics: Export metrics for Prometheus scraping

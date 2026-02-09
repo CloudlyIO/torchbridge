@@ -8,7 +8,58 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.8 (Modern Model Examples & Real Benchmarks)
+**Current Version**: v0.5.9 (HAL Identity Alignment)
+
+---
+
+## [0.5.9] - 2026-02-09 - HAL Identity Alignment
+
+### **Summary**
+
+Comprehensive codebase-wide cleanup aligning every file with TorchBridge's identity
+as a Hardware Abstraction Layer (HAL). Removed stale model wrappers, dead tests,
+duplicate benchmarks, and old identity language. Renamed files, fixed docstrings,
+updated documentation, and synchronized Docker/script/template metadata.
+
+### **Removed**
+
+- **Model wrapper modules**: `src/torchbridge/models/vision/` (5 files, ~1,867 LOC), `models/multimodal/` (5 files, ~1,690 LOC), `models/text/` — these wrapped HuggingFace models, not HAL functionality
+- **Stale test files**: 22 test files (~8,500 LOC) covering deleted model wrappers and obsolete patterns
+- **`tests/patterns/` directory**: fully removed
+- **Duplicate benchmarks**: `backend_comparison_benchmark.py`, `nvidia_config_benchmarks.py`, `amd_optimization_benchmark.py` (redundant with existing benchmarks)
+- **Stale validator**: `scripts/validation/v0430_master_validator.py`
+- **Dead code**: `benchmark_sliced_attention` function from `attention_efficiency.py` (imported from deleted module)
+
+### **Changed**
+
+- **Renamed 7 files** from `*_optimization.py` to `*_cross_backend.py`:
+  - `deepseek_optimization.py`, `qwen3_optimization.py`, `llama4_optimization.py`, `sam3_optimization.py`, `gemma3_optimization.py` (examples)
+  - `usecase2_llm_optimization.py` -> `usecase2_cross_backend_inference.py`
+  - `auto_optimization_demo.py` -> `auto_backend_selection_demo.py`
+- **~25 source docstrings**: "optimization framework" language replaced with HAL language ("hardware abstraction", "cross-backend", "backend-aware")
+- **CLI diagnostic label**: "TorchBridge Optimization" -> "TorchBridge HAL" in `tb-doctor`
+- **Docker**: CUDA 11.8 -> 12.1, unpinned PyTorch versions, fixed phantom `torchbridge.server` module, added serving LABEL metadata, removed stale `kpt` alias
+- **Docker version comments**: hardcoded versions replaced with `see pyproject.toml`
+- **README.md**: "Optimize for Any Backend" -> "Run on Any Backend", test count updated to 1,239
+- **All benchmark/script docstrings**: "PyTorch Optimization Framework" -> "TorchBridge"
+- **Cloud validation scripts**: fixed step numbering, removed hardcoded `v049` filenames, updated benchmark references
+
+### **Fixed**
+
+- 10 files with stale `import torchbridge as kpt` alias (CLI modules, scripts, issue templates)
+- 5 phantom config attributes in docs (`enable_oom_protection`, `enable_flash_attention`, `enable_xla_cache`, `enable_ipex`, `enable_onednn`) replaced with actual attribute names
+- `demos/README.md`: removed references to 3 non-existent demo files
+- `benchmarks/next_gen/README.md`: "optimization" identity language corrected
+- Docker version labels synchronized (were 0.1.55, 0.3.10, 0.5.0 across different files)
+- `entrypoint.sh`: phantom module `torchbridge.server:app` -> working serving module
+
+### **Metrics**
+
+- 176 source modules, 73,216 lines of code (was 188 modules, 77,489 LOC)
+- 1,239 test functions across 59 test files (was 1,786 across 81 files)
+- 0 ruff violations, 0 mypy errors
+- 0 remaining `kpt` alias references
+- 0 remaining `*_optimization.py` example filenames
 
 ---
 
@@ -23,11 +74,11 @@ with full inference and performance data.
 
 ### **Added**
 
-- **Llama 4 Scout example** (`examples/models/medium/llama4_optimization.py`): 17B active / 109B total MoE with 16 experts, INT4/INT8/FP8 quantization, expert routing analysis
-- **DeepSeek R1 Distill 7B example** (`examples/models/medium/deepseek_optimization.py`): reasoning model with MoE analysis, benchmark mode, 256-token generation
-- **Qwen 3 8B example** (`examples/models/medium/qwen3_optimization.py`): multilingual inference across 5 languages (EN/ZH/JA/AR/ES), benchmark mode
-- **SAM 3 example** (`examples/models/vision/sam3_optimization.py`): text-prompted segmentation, multi-resolution benchmarks, synthetic test images
-- **Gemma 3 12B example** (`examples/models/small/gemma3_optimization.py`): instruction-tuned inference, model size comparison (1B/4B/12B/27B)
+- **Llama 4 Scout example** (`examples/models/medium/llama4_cross_backend.py`): 17B active / 109B total MoE with 16 experts, INT4/INT8/FP8 quantization, expert routing analysis
+- **DeepSeek R1 Distill 7B example** (`examples/models/medium/deepseek_cross_backend.py`): reasoning model with MoE analysis, benchmark mode, 256-token generation
+- **Qwen 3 8B example** (`examples/models/medium/qwen3_cross_backend.py`): multilingual inference across 5 languages (EN/ZH/JA/AR/ES), benchmark mode
+- **SAM 3 example** (`examples/models/vision/sam3_cross_backend.py`): text-prompted segmentation, multi-resolution benchmarks, synthetic test images
+- **Gemma 3 12B example** (`examples/models/small/gemma3_cross_backend.py`): instruction-tuned inference, model size comparison (1B/4B/12B/27B)
 - **Cross-backend benchmark suite** (`scripts/benchmark_suite.py`): p50/p95/p99 latency, throughput, TTFT, peak memory across models
 - **Cloud validation script** (`scripts/cloud_testing/validate_model_examples.sh`): auto-detects GPU/VRAM, adapts quantization, runs full validation
 - **`.env` credential support**: HF_TOKEN for gated models (Llama 4, Gemma 3, SAM 3)
@@ -319,7 +370,7 @@ dependency handling ensures clean imports on minimal cloud environments.
 
 - **5 end-to-end use case examples** validated on real cloud GPUs:
   - `usecase1_export_pipeline.py` — TorchScript, ONNX, SafeTensors export with validation
-  - `usecase2_llm_optimization.py` — GPT-2 optimization with BetterTransformer
+  - `usecase2_cross_backend_inference.py` — GPT-2 cross-backend inference with BetterTransformer
   - `usecase3_cicd_validation.py` — Diagnostics, benchmarks, cross-backend checks
   - `usecase4_backend_agnostic_training.py` — AMP training with auto backend detection
   - `usecase5_cross_backend_validation.py` — Model, hardware, config, and output consistency
@@ -3734,7 +3785,7 @@ This release focuses on removing legacy code, consolidating duplicative modules,
 - Predefined benchmark suites (optimization, transformers, vision) validated
 
 **Demos**: All demos functional
-- `auto_optimization_demo.py`: Working
+- `auto_backend_selection_demo.py`: Working
 - All other demos validated
 
 ### 🎯 **Impact**
@@ -3803,7 +3854,7 @@ This release completes Phase 3 of the unified roadmap with comprehensive product
 - Optimization level recommendations
 - End-to-end integration tests
 
-**Demo** (`demos/auto_optimization_demo.py`):
+**Demo** (`demos/auto_backend_selection_demo.py`):
 - 7 complete demonstrations
 - One-line model optimization
 - Custom optimization options

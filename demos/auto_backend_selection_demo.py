@@ -1,7 +1,7 @@
 """
-Auto-Optimization Demo - Stage 3A: Intelligent Optimization Selection
+Auto-Backend Selection Demo - Stage 3A: Intelligent Backend Selection
 
-Demonstrates automatic hardware detection and optimization selection
+Demonstrates automatic hardware detection and backend selection
 without requiring users to manually configure backend settings.
 
 This demo shows:
@@ -326,8 +326,8 @@ def demo_7_inference_mode():
 def main():
     """Run all demos."""
     print("\n" + "="*70)
-    print("  Auto-Optimization Demo - Stage 3A")
-    print("  Intelligent Hardware Detection & Optimization Selection")
+    print("  Auto-Backend Selection Demo - Stage 3A")
+    print("  Intelligent Hardware Detection & Backend Selection")
     print("="*70)
 
     try:

@@ -1,7 +1,7 @@
 """
 CUDA Utilities and Optimizations
 
-General CUDA utilities and helper functions for NVIDIA GPU optimization.
+General CUDA utilities and helper functions for NVIDIA GPU backend support.
 """
 
 import logging

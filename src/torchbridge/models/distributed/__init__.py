@@ -9,7 +9,7 @@ Features:
 - Pipeline Parallelism: Split model stages across GPUs
 - Model Sharding: Automatic weight distribution strategies
 - Multi-GPU Coordination: Efficient communication patterns
-- Memory Optimization: Activation checkpointing + offloading
+- Memory Management: Activation checkpointing + offloading
 
 Example:
     from torchbridge.models.distributed import (

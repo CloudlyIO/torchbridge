@@ -1,16 +1,12 @@
 """
 TorchBridge Model Integration Module
 
-Provides optimized wrappers for pre-trained models from HuggingFace
-and other sources. Supports automatic backend selection and optimization
-across NVIDIA, AMD, TPU, and Intel hardware.
+Provides HAL-aware utilities for model training and inference across
+NVIDIA, AMD, TPU, and Intel backends.
 
-Model Categories:
-- llm: DeepSeek R1, Qwen 3, Gemma 3, Llama 4 Scout, and other LLMs
-- distributed: Large-scale distributed model training
-- vision: SAM 3 and vision model optimization
-- multimodal: Multi-modal model optimization
-
+Modules:
+- llm: LLM inference utilities (KV cache, generation config, quantization)
+- distributed: Distributed training primitives (tensor/pipeline parallelism, FSDP, sharding)
 """
 
 # Distributed models

@@ -188,37 +188,37 @@ class TestTorchBridgeIntegration:
 
     def test_config_system(self):
         """Test configuration system."""
-        import torchbridge as kpt
+        import torchbridge
 
         # Get config
-        config = kpt.get_config()
+        config = torchbridge.get_config()
         assert config is not None
         assert hasattr(config, 'device')
 
         # Configure
-        kpt.configure(device='cpu')
-        config = kpt.get_config()
+        torchbridge.configure(device='cpu')
+        config = torchbridge.get_config()
         assert config.device == 'cpu'
 
     def test_manager_creation(self):
         """Test unified manager creation."""
-        import torchbridge as kpt
+        import torchbridge
 
-        manager = kpt.get_manager()
+        manager = torchbridge.get_manager()
         assert manager is not None
 
     def test_attention_layer_import(self):
         """Test attention layer can be imported."""
-        import torchbridge as kpt
+        import torchbridge
 
         # AttentionLayer is the base class
-        assert kpt.AttentionLayer is not None
+        assert torchbridge.AttentionLayer is not None
 
     def test_create_moe(self):
         """Test MoE layer creation."""
-        import torchbridge as kpt
+        import torchbridge
 
-        moe = kpt.create_moe(hidden_size=256, num_experts=4, top_k=2)
+        moe = torchbridge.create_moe(hidden_size=256, num_experts=4, top_k=2)
         assert moe is not None
 
         # Test forward pass
@@ -229,9 +229,9 @@ class TestTorchBridgeIntegration:
 
     def test_fused_gelu(self):
         """Test fused GELU activation."""
-        import torchbridge as kpt
+        import torchbridge
 
-        gelu = kpt.FusedGELU()
+        gelu = torchbridge.FusedGELU()
         x = torch.randn(2, 32, 256)
 
         with torch.no_grad():

@@ -1,10 +1,10 @@
 """
-TorchBridge Core Module - Unified Core Optimization Components
+TorchBridge Core Module - Unified Core HAL Components
 
-This module consolidates all core PyTorch optimization functionality:
-- Optimized layer implementations
-- Basic optimized components
-- Hardware detection and auto-optimization
+This module consolidates all core PyTorch hardware abstraction functionality:
+- Backend-aware layer implementations
+- Basic cross-backend components
+- Hardware detection and auto-configuration
 - Performance tracking and regression detection
 """
 

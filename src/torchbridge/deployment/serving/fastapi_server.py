@@ -1,8 +1,8 @@
 """
 FastAPI Inference Server for TorchBridge
 
-This module provides a lightweight REST API server for serving TorchBridge-
-optimized models with health checks, metrics, and batch inference support.
+This module provides a lightweight REST API server for serving TorchBridge
+HAL-managed models with health checks, metrics, and batch inference support.
 
 Features:
 - REST API for model inference
@@ -245,7 +245,7 @@ class InferenceServer:
 
         app = FastAPI(
             title=f"TorchBridge Inference Server - {self.config.model_name}",
-            description="REST API for model inference with TorchBridge optimizations",
+            description="REST API for model inference with TorchBridge hardware abstraction",
             version=self.config.model_version,
             lifespan=lifespan,
         )

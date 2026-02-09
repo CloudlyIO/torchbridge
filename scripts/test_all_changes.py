@@ -240,7 +240,7 @@ def test_basic_functionality():
 
 def main():
     """Run all validation tests and report results."""
-    print("🧪 PyTorch Optimization Framework Validation")
+    print("TorchBridge Cross-Backend Validation")
     print("=" * 60)
     print("Validating current framework components...\n")
 

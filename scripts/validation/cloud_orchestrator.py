@@ -216,9 +216,9 @@ pip install -q torchbridge[all]
 # 2. Hardware Detection
 echo "[2/6] Detecting hardware..."
 python -c "
-import torchbridge as kpt
+import torchbridge
 print('Hardware detected:')
-print(kpt.detect_hardware())
+print(torchbridge.detect_hardware())
 "
 
 # 3. Functional Tests
@@ -244,11 +244,11 @@ python benchmarks/backend_comparison.py \\
 echo "[5/6] Running memory tests..."
 python -c "
 import torch
-import torchbridge as kpt
+import torchbridge
 
 # Test memory optimization
 model = torch.nn.TransformerEncoderLayer(d_model=512, nhead=8)
-optimized = kpt.optimize(model, backend='{config.backend.value}')
+optimized = torchbridge.optimize(model, backend='{config.backend.value}')
 print('Memory optimization successful')
 "
 
@@ -257,7 +257,7 @@ echo "[6/6] Running stress tests ({validation.stress_duration_minutes} minutes).
 timeout {validation.stress_duration_minutes * 60} python -c "
 import time
 import torch
-import torchbridge as kpt
+import torchbridge
 
 start = time.time()
 iterations = 0
