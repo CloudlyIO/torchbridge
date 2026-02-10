@@ -5,7 +5,7 @@ This module provides hardware-specific backend implementations for:
 - NVIDIA GPUs (CUDA)
 - AMD GPUs (ROCm/HIP)
 - Google TPUs (PyTorch/XLA)
-- Intel GPUs (XPU/IPEX)
+- AWS Trainium/Inferentia (NeuronX)
 
 All backends inherit from shared base classes for consistent interfaces.
 
