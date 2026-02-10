@@ -56,9 +56,6 @@ def get_available_devices():
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         devices.append(torch.device("mps"))
 
-    if hasattr(torch, "xpu") and torch.xpu.is_available():
-        devices.append(torch.device("xpu"))
-
     return devices
 
 
@@ -68,8 +65,6 @@ def synchronize_device(device: torch.device):
         torch.cuda.synchronize()
     elif device.type == "mps" and hasattr(torch.mps, "synchronize"):
         torch.mps.synchronize()
-    elif device.type == "xpu" and hasattr(torch, "xpu"):
-        torch.xpu.synchronize()
 
 
 def create_model_with_weights(state_dict: dict, device: torch.device) -> torch.nn.Module:

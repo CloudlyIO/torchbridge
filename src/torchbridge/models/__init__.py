@@ -2,7 +2,7 @@
 TorchBridge Model Integration Module
 
 Provides HAL-aware utilities for model training and inference across
-NVIDIA, AMD, TPU, and Intel backends.
+NVIDIA, AMD, and TPU backends.
 
 Modules:
 - llm: LLM inference utilities (KV cache, generation config, quantization)

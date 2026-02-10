@@ -6,7 +6,6 @@
 # - AWS CUDA (A10G/A100)
 # - AMD ROCm (MI300X)
 # - GCP TPU (v5e)
-# - Intel XPU (Arc/Flex)
 #
 # Triggers:
 # - Manual dispatch
@@ -20,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       backends:
-        description: 'Backends to test (comma-separated: cuda,rocm,tpu,xpu,cpu)'
+        description: 'Backends to test (comma-separated: cuda,rocm,tpu,cpu)'
         required: false
         default: 'cuda,rocm,cpu'
       quick_mode:

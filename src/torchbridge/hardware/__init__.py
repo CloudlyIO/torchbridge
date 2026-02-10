@@ -12,7 +12,7 @@ Note: This module unifies hardware-specific backend components.
 Development Status:
 - CUDA kernel implementations: Educational patterns provided; production use should
   leverage Triton or torch.compile() for automatic kernel generation.
-- Vendor adapter support: NVIDIA (full), AMD ROCm (full), Intel XPU (full),
+- Vendor adapter support: NVIDIA (full), AMD ROCm (full),
   TPU (full). ASIC/neuromorphic adapters are placeholder implementations.
 """
 

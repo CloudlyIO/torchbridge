@@ -51,17 +51,6 @@ python3 -c "import torch; print(f'ROCm available: {torch.cuda.is_available()}')"
 
 Requires ROCm 5.6+. Supported on MI200, MI300X, RDNA3.
 
-### Intel (IPEX)
-
-```bash
-pip install intel-extension-for-pytorch
-
-# Verify
-python3 -c "import intel_extension_for_pytorch; print('IPEX available')"
-```
-
-Supported on Ponte Vecchio, Arc, Flex series.
-
 ### TPU (XLA)
 
 ```bash

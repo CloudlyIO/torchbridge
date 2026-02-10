@@ -84,7 +84,7 @@ class BenchmarkSuite:
 def detect_backends() -> list[tuple[str, torch.device]]:
     """Return a list of (name, device) tuples for every available backend.
 
-    CPU is always included.  CUDA, ROCm, and XPU are added when the
+    CPU is always included.  CUDA and ROCm are added when the
     corresponding hardware / software stack is detected.
     """
     backends: list[tuple[str, torch.device]] = [("cpu", torch.device("cpu"))]
@@ -98,10 +98,6 @@ def detect_backends() -> list[tuple[str, torch.device]]:
             backends.append(("rocm", torch.device("cuda", 0)))
         else:
             backends.append(("cuda", torch.device("cuda", 0)))
-
-    # Intel XPU
-    if hasattr(torch, "xpu") and hasattr(torch.xpu, "is_available") and torch.xpu.is_available():
-        backends.append(("xpu", torch.device("xpu", 0)))
 
     return backends
 

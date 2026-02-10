@@ -127,35 +127,6 @@ services:
       - torchbridge-net
 
   # =============================================================================
-  # Inference Intel GPU
-  # =============================================================================
-  inference-intel:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.intel
-    image: torchbridge:intel
-    container_name: torchbridge-inference-intel
-    profiles:
-      - intel
-    ports:
-      - "8003:8000"
-      - "9093:9090"
-    environment:
-      - MODEL_NAME=${MODEL_NAME:-model}
-      - MODEL_PATH=${MODEL_PATH:-/models/model.pt}
-      - DEVICE=${DEVICE:-xpu}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-    volumes:
-      - ${MODEL_DIR:-./models}:/models:ro
-    devices:
-      - /dev/dri:/dev/dri
-    group_add:
-      - render
-    restart: unless-stopped
-    networks:
-      - torchbridge-net
-
-  # =============================================================================
   # Inference CPU (Alternative)
   # =============================================================================
   inference-cpu:

@@ -1,6 +1,6 @@
 # TorchBridge
 
-**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, Intel, and TPU without code changes, and **validates that outputs match across backends**.
+**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, and TPU without code changes, and **validates that outputs match across backends**.
 
 [![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1239%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
@@ -15,10 +15,10 @@ Your model code
       |
   TorchBridge HAL
       |
-  +---------+---------+---------+---------+
-  | NVIDIA  |   AMD   |  Intel  |   TPU   |
-  | CUDA    |  ROCm   |  IPEX   |   XLA   |
-  +---------+---------+---------+---------+
+  +---------+---------+---------+
+  | NVIDIA  |   AMD   |   TPU   |
+  | CUDA    |  ROCm   |   XLA   |
+  +---------+---------+---------+
 ```
 
 **What it does:**
@@ -45,7 +45,7 @@ PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-backend_type = detect_best_backend()  # NVIDIA, AMD, INTEL, TPU, or CPU
+backend_type = detect_best_backend()  # NVIDIA, AMD, TPU, or CPU
 backend = BackendFactory.create(backend_type)
 print(backend.get_device_info())
 ```
@@ -84,7 +84,6 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 |---------|----------|-----------|--------|
 | **NVIDIA** | B200, H100, H200, A100, L4, T4 | FP4, FP8, BF16, FP16, FP32 | Production |
 | **AMD** | MI350X, MI325X, MI300X, MI200 | FP4, FP8, BF16, FP16, FP32 | Production |
-| **Intel** | Ponte Vecchio, Arc | BF16, FP16, FP32 | Maintenance |
 | **TPU** | v4, v5e, v5p, v6e, v7 | BF16, FP32 | Production |
 | **CPU** | x86, ARM (Apple Silicon) | FP32, BF16 | Fallback |
 
@@ -165,7 +164,6 @@ src/torchbridge/
 ├── backends/          # Vendor-specific backend implementations
 │   ├── nvidia/        #   NVIDIA CUDA backend
 │   ├── amd/           #   AMD ROCm backend
-│   ├── intel/         #   Intel IPEX backend
 │   └── tpu/           #   Google TPU/XLA backend
 ├── hardware/          # Hardware detection and abstraction
 ├── precision/         # FP8 training and precision management
@@ -203,7 +201,7 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **1,239 tests** passing across all modules
+- **1,234 tests** passing across all modules
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on NVIDIA A10G (AWS), L4 (GCP), and AMD MI300X -- 5/5 use cases pass
@@ -216,7 +214,7 @@ ruff check src/ tests/
 
 ## Use Cases
 
-**Cross-vendor training** -- Train on NVIDIA in the cloud, fine-tune on AMD on-prem, infer on Intel at the edge. Same code throughout.
+**Cross-vendor training** -- Train on NVIDIA in the cloud, fine-tune on AMD on-prem, deploy on TPU. Same code throughout.
 
 **Cost optimization** -- Switch between cloud GPU types based on spot pricing without rewriting training scripts.
 

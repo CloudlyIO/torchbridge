@@ -2,7 +2,7 @@
 Hardware Discovery and Topology Management
 
 Comprehensive hardware discovery for heterogeneous clusters:
-- Multi-vendor GPU detection (NVIDIA, AMD, Intel)
+- Multi-vendor GPU detection (NVIDIA, AMD)
 - Hardware topology discovery and analysis
 - Device capability and performance estimation
 - NUMA and interconnect topology mapping
@@ -31,7 +31,6 @@ class HardwareVendor(Enum):
     """Supported hardware vendors"""
     NVIDIA = "nvidia"
     AMD = "amd"
-    INTEL = "intel"
     CUSTOM_ASIC = "custom_asic"
     UNKNOWN = "unknown"
 
@@ -45,7 +44,6 @@ class DeviceCapability(Enum):
     COMPUTE_9_0 = "9.0"  # H100
     RDNA2 = "rdna2"      # AMD RDNA2
     RDNA3 = "rdna3"      # AMD RDNA3
-    XE_HPG = "xe_hpg"    # Intel Xe-HPG
 
 
 class ThermalState(Enum):
@@ -190,7 +188,7 @@ class HardwareTopologyManager:
                 device_info = self._discover_cuda_device(device_id)
                 devices.append(device_info)
 
-        # Discover other accelerators (AMD ROCm, Intel OneAPI)
+        # Discover other accelerators (AMD ROCm)
         devices.extend(self._discover_other_accelerators())
 
         # Get system information
@@ -301,19 +299,12 @@ class HardwareTopologyManager:
         )
 
     def _discover_other_accelerators(self) -> list[DeviceInfo]:
-        """Discover non-CUDA accelerators (AMD, Intel)"""
+        """Discover non-CUDA accelerators (AMD)"""
         devices = []
 
         # AMD ROCm detection
         try:
             # Would use rocm-smi or similar tools
-            pass
-        except Exception:
-            pass
-
-        # Intel GPU detection
-        try:
-            # Would use intel-gpu-tools or level-zero
             pass
         except Exception:
             pass

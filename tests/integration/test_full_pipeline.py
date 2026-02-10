@@ -322,12 +322,6 @@ class TestBackendIntegration:
         assert AMDBackend is not None
         assert AMDOptimizer is not None
 
-    def test_intel_backend_import(self):
-        """Test Intel backend can be imported."""
-        from torchbridge.backends.intel import IntelBackend, IntelOptimizer
-        assert IntelBackend is not None
-        assert IntelOptimizer is not None
-
     def test_tpu_backend_import(self):
         """Test TPU backend can be imported."""
         from torchbridge.backends.tpu import TPUBackend, TPUOptimizer

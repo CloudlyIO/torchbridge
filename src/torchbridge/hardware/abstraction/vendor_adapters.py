@@ -8,7 +8,6 @@ NOTE: This file contains all vendor adapters in one place for historical reasons
 Future refactoring should split into separate modules:
 - nvidia_adapter.py (NVIDIAAdapter)
 - amd_adapter.py (AMDAdapter)
-- intel_adapter.py (IntelAdapter)
 - cpu_adapter.py (CPUAdapter)
 - custom_adapter.py (CustomHardwareAdapter)
 
@@ -19,7 +18,6 @@ import logging
 import os
 from typing import Any
 
-import numpy as np
 import torch
 
 try:
@@ -918,259 +916,6 @@ class AMDAdapter(VendorAdapter):
         return False
 
 
-class IntelAdapter(VendorAdapter):
-    """
-    Intel adapter supporting both CPU and Intel GPU (XPU) devices
-
-    Provides unified interface for Intel hardware while leveraging
-    Intel Extension for PyTorch (IPEX) when available.
-    """
-
-    def __init__(self):
-        super().__init__(HardwareVendor.INTEL)
-        self.ipex_available = self._check_ipex_availability()
-        self.xpu_available = self._check_xpu_availability()
-
-    def _check_ipex_availability(self) -> bool:
-        """Check if Intel Extension for PyTorch is available"""
-        try:
-            import intel_extension_for_pytorch as ipex  # noqa: F401
-            return True
-        except ImportError:
-            return False
-
-    def _check_xpu_availability(self) -> bool:
-        """Check if Intel XPU (GPU) is available"""
-        try:
-            if self.ipex_available:
-                import intel_extension_for_pytorch as ipex
-                return hasattr(ipex, 'xpu') and ipex.xpu.is_available()
-            return False
-        except Exception:
-            return False
-
-    def initialize_device(self, device_id: int) -> DeviceSpec:
-        """Initialize Intel device (CPU or XPU)"""
-        if device_id == 0:
-            # CPU device
-            _memory_gb = psutil.virtual_memory().total / (1024**3) if _psutil_available else 0.0
-            capabilities = HardwareCapabilities(
-                vendor=HardwareVendor.INTEL,
-                device_name=self._get_cpu_info(),
-                compute_capability="cpu",
-                memory_gb=_memory_gb,
-                peak_flops_fp32=self._estimate_cpu_flops(),
-                peak_flops_fp16=self._estimate_cpu_flops() * 0.5,  # AVX-512 can help
-                memory_bandwidth_gbps=100,  # Typical DDR4/DDR5
-                supported_precisions=[ComputeCapability.FP32, ComputeCapability.FP16],
-                interconnect_type="System Bus"
-            )
-        elif self.xpu_available:
-            # Intel XPU (GPU) device
-            capabilities = self._get_xpu_capabilities(device_id - 1)
-        else:
-            raise RuntimeError(f"Intel device {device_id} not available")
-
-        device_spec = DeviceSpec(
-            device_id=device_id,
-            vendor=HardwareVendor.INTEL,
-            capabilities=capabilities
-        )
-
-        self._devices.append(device_spec)
-        return device_spec
-
-    def discover_devices(self) -> list[DeviceSpec]:
-        """Discover Intel devices (CPU + XPU if available)"""
-        devices = []
-
-        try:
-            # Always include CPU as device 0
-            cpu_device = self.initialize_device(0)
-            devices.append(cpu_device)
-
-            # Add XPU devices if available
-            if self.xpu_available:
-                import intel_extension_for_pytorch as ipex
-                xpu_count = ipex.xpu.device_count() if hasattr(ipex.xpu, 'device_count') else 1
-
-                for xpu_id in range(xpu_count):
-                    xpu_device = self.initialize_device(xpu_id + 1)  # Offset by 1
-                    devices.append(xpu_device)
-
-        except Exception as e:
-            logger.error(f"Error discovering Intel devices: {e}")
-
-        return devices
-
-    def compile_kernel(self, kernel_source: str, target_device: DeviceSpec) -> Any:
-        """Compile kernel for Intel device"""
-        try:
-            if target_device.capabilities.device_name.startswith("Intel GPU"):
-                # XPU kernel compilation
-                return self._compile_xpu_kernel(kernel_source, target_device)
-            else:
-                # CPU kernel compilation (JIT or AOT)
-                return self._compile_cpu_kernel(kernel_source, target_device)
-
-        except Exception as e:
-            logger.error(f"Intel kernel compilation failed: {e}")
-            return None
-
-    def _compile_xpu_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
-        """Compile kernel for Intel XPU"""
-        return {
-            'device_id': device.device_id,
-            'vendor': 'intel_xpu',
-            'kernel_source': kernel_source,
-            'compilation_time': 0.2,
-            'optimizations_applied': ['vectorization', 'memory_tiling']
-        }
-
-    def _compile_cpu_kernel(self, kernel_source: str, device: DeviceSpec) -> Any:
-        """Compile kernel for Intel CPU"""
-        return {
-            'device_id': device.device_id,
-            'vendor': 'intel_cpu',
-            'kernel_source': kernel_source,
-            'compilation_time': 0.05,
-            'optimizations_applied': ['avx512', 'vectorization', 'prefetch']
-        }
-
-    def optimize_memory_layout(self, tensor: torch.Tensor, device: DeviceSpec) -> torch.Tensor:
-        """Apply Intel-specific memory optimizations"""
-        # Ensure tensor is on correct device
-        if device.capabilities.device_name.startswith("Intel GPU") and self.xpu_available:
-            # Move to XPU
-            import intel_extension_for_pytorch as ipex
-            tensor = tensor.to(f'xpu:{device.device_id-1}')
-        else:
-            # CPU optimizations
-            tensor = tensor.cpu()
-
-        # Apply Intel-specific optimizations
-        if self.ipex_available:
-            try:
-                import intel_extension_for_pytorch as ipex
-                # Apply IPEX optimizations
-                tensor = ipex.optimize(tensor)
-            except Exception as e:
-                logger.debug(f"IPEX optimization failed: {e}")
-
-        return tensor
-
-    def create_communication_backend(self, devices: list[DeviceSpec]) -> Any:
-        """Create communication backend for Intel devices"""
-        intel_devices = [d for d in devices if d.vendor == HardwareVendor.INTEL]
-
-        return {
-            'backend_type': 'gloo',  # Intel typically uses Gloo for CPU
-            'devices': [d.device_id for d in intel_devices],
-            'supports_allreduce': True,
-            'supports_allgather': True,
-            'optimizations': ['avx512'] if self._has_avx512() else []
-        }
-
-    def get_device_metrics(self, device_id: int) -> dict[str, float]:
-        """Get Intel device metrics"""
-        metrics = {
-            'utilization': 0.0,
-            'memory_used_gb': 0.0,
-            'memory_total_gb': 0.0,
-            'temperature_c': 0.0
-        }
-
-        try:
-            if device_id == 0:  # CPU
-                # CPU metrics
-                if _psutil_available:
-                    cpu_percent = psutil.cpu_percent(interval=0.1)
-                    memory = psutil.virtual_memory()
-
-                    metrics.update({
-                        'utilization': cpu_percent,
-                        'memory_used_gb': (memory.total - memory.available) / (1024**3),
-                        'memory_total_gb': memory.total / (1024**3)
-                    })
-
-                    # Try to get CPU temperature
-                    try:
-                        temps = psutil.sensors_temperatures()
-                        if 'coretemp' in temps:
-                            avg_temp = np.mean([t.current for t in temps['coretemp']])
-                            metrics['temperature_c'] = avg_temp
-                    except Exception:
-                        pass
-
-            elif self.xpu_available:
-                # FUTURE: Intel XPU metrics require Level Zero API (ze_api.h) and Intel
-                # GPU drivers. Not implementable without Intel Arc/Flex hardware.
-                # See: https://spec.oneapi.io/level-zero/latest/
-                metrics.update({
-                    'utilization': 50.0,  # Placeholder
-                    'memory_used_gb': 2.0,  # Placeholder
-                    'memory_total_gb': 16.0  # Placeholder
-                })
-
-        except Exception as e:
-            logger.error(f"Error getting Intel device metrics: {e}")
-
-        return metrics
-
-    def _get_cpu_info(self) -> str:
-        """Get CPU information"""
-        try:
-            import platform
-            core_count = psutil.cpu_count() if _psutil_available else (os.cpu_count() or 1)
-            return f"{platform.processor()} ({core_count} cores)"
-        except Exception:
-            return "Intel CPU"
-
-    def _estimate_cpu_flops(self) -> float:
-        """Estimate CPU FLOPS"""
-        # Rough estimation based on core count and frequency
-        try:
-            if _psutil_available:
-                core_count = psutil.cpu_count(logical=False) or (os.cpu_count() or 1)
-            else:
-                core_count = os.cpu_count() or 1
-            # Assume base frequency of ~3 GHz for modern Intel CPUs
-            base_freq = 3.0e9  # 3 GHz
-            # Assume ~32 FLOPS per cycle for AVX-512
-            flops_per_cycle = 32 if self._has_avx512() else 16
-
-            return core_count * base_freq * flops_per_cycle
-        except Exception:
-            return 1e12  # 1 TFLOP fallback
-
-    def _has_avx512(self) -> bool:
-        """Check if CPU supports AVX-512"""
-        try:
-            import platform
-            # Simple heuristic - this would need proper CPUID checking
-            return "Intel" in platform.processor()
-        except Exception:
-            return False
-
-    def _get_xpu_capabilities(self, xpu_id: int) -> HardwareCapabilities:
-        """Get Intel XPU capabilities"""
-        return HardwareCapabilities(
-            vendor=HardwareVendor.INTEL,
-            device_name="Intel GPU (XPU)",
-            compute_capability="xe_hpg",
-            memory_gb=16.0,  # Typical for Intel Arc GPUs
-            peak_flops_fp32=10e12,  # 10 TFLOPS estimate
-            peak_flops_fp16=20e12,  # 20 TFLOPS estimate
-            memory_bandwidth_gbps=512,
-            supported_precisions=[
-                ComputeCapability.FP32,
-                ComputeCapability.FP16,
-                ComputeCapability.INT8
-            ],
-            interconnect_type="PCIe"
-        )
-
-
 class CPUAdapter(VendorAdapter):
     """
     Generic CPU adapter for any CPU architecture
@@ -1179,7 +924,7 @@ class CPUAdapter(VendorAdapter):
     """
 
     def __init__(self):
-        super().__init__(HardwareVendor.INTEL)  # Map CPU to Intel vendor
+        super().__init__(HardwareVendor.UNKNOWN)  # Generic CPU vendor
 
     def initialize_device(self, device_id: int) -> DeviceSpec:
         """Initialize CPU device"""
@@ -1188,7 +933,7 @@ class CPUAdapter(VendorAdapter):
 
         _memory_gb = psutil.virtual_memory().total / (1024**3) if _psutil_available else 0.0
         capabilities = HardwareCapabilities(
-            vendor=HardwareVendor.INTEL,
+            vendor=HardwareVendor.UNKNOWN,
             device_name=self._get_cpu_name(),
             compute_capability="cpu",
             memory_gb=_memory_gb,
@@ -1201,7 +946,7 @@ class CPUAdapter(VendorAdapter):
 
         device_spec = DeviceSpec(
             device_id=0,
-            vendor=HardwareVendor.INTEL,
+            vendor=HardwareVendor.UNKNOWN,
             capabilities=capabilities
         )
 
@@ -1292,8 +1037,6 @@ def create_vendor_adapter(vendor: HardwareVendor) -> VendorAdapter:
         return NVIDIAAdapter()
     elif vendor == HardwareVendor.AMD:
         return AMDAdapter()
-    elif vendor == HardwareVendor.INTEL:
-        return IntelAdapter()
     else:
         return CPUAdapter()
 
@@ -1323,13 +1066,6 @@ def get_available_vendors() -> list[HardwareVendor]:
     except (ImportError, subprocess.TimeoutExpired, FileNotFoundError):
         pass
 
-    # Check Intel
-    try:
-        import intel_extension_for_pytorch as ipex  # noqa: F401
-        vendors.append(HardwareVendor.INTEL)
-    except ImportError:
-        pass
-
     # CPU is always available
     vendors.append(HardwareVendor.UNKNOWN)  # Generic CPU
 
@@ -1348,13 +1084,6 @@ def auto_detect_best_adapter() -> VendorAdapter:
             if torch.version.hip is not None:
                 return AMDAdapter()
     except Exception:
-        pass
-
-    # Check for Intel XPU
-    try:
-        import intel_extension_for_pytorch as ipex  # noqa: F401
-        return IntelAdapter()
-    except ImportError:
         pass
 
     # Fallback to CPU
@@ -1648,7 +1377,7 @@ class CustomHardwareAdapter(VendorAdapter):
         devices = []
 
         try:
-            # FUTURE: Neuromorphic discovery requires vendor APIs (Intel Loihi NxSDK,
+            # FUTURE: Neuromorphic discovery requires vendor APIs (Loihi NxSDK,
             # BrainChip MetaTF). Not implementable without neuromorphic hardware.
             devices.append(self._initialize_neuromorphic_device(0))
         except Exception as e:
@@ -1841,7 +1570,7 @@ class CustomHardwareAdapter(VendorAdapter):
                 })
             elif self.hardware_type == "neuromorphic":
                 # FUTURE: Neuromorphic metrics require vendor-specific spike monitoring APIs.
-                # Placeholder values based on Intel Loihi 2 specifications.
+                # Placeholder values based on Loihi 2 specifications.
                 base_metrics.update({
                     'utilization': 30.0,  # Event-driven, lower continuous utilization
                     'memory_used_gb': 2.0,
@@ -1885,8 +1614,6 @@ def create_vendor_adapter_enhanced(vendor: HardwareVendor, custom_type: str | No
         return NVIDIAAdapter()
     elif vendor == HardwareVendor.AMD:
         return AMDAdapter()
-    elif vendor == HardwareVendor.INTEL:
-        return IntelAdapter()
     elif vendor == HardwareVendor.UNKNOWN and custom_type:
         return CustomHardwareAdapter(custom_type)
     else:

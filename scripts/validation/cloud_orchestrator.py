@@ -5,13 +5,11 @@ TorchBridge Cloud Orchestrator
 Manages cloud instance deployment and test execution for hardware validation:
 - AWS: p5.48xlarge (H100), p4d.24xlarge (A100), g5.xlarge (A10G), AMD MI300X
 - GCP: a3-highgpu-8g (H100), a2-highgpu-1g (A100), g2-standard-4 (L4), TPU v5e/v5p
-- Intel DevCloud: Arc A770, Flex 170, Ponte Vecchio
 
 Usage:
     python scripts/validation/cloud_orchestrator.py --provider aws --instance p5.48xlarge
     python scripts/validation/cloud_orchestrator.py --provider gcp --instance a3-highgpu-8g
     python scripts/validation/cloud_orchestrator.py --provider gcp --tpu v5e-8
-    python scripts/validation/cloud_orchestrator.py --provider intel --device arc-a770
 """
 
 import argparse
@@ -27,13 +25,11 @@ from typing import Any
 class CloudProvider(Enum):
     AWS = "aws"
     GCP = "gcp"
-    INTEL = "intel"
 
 
 class HardwareBackend(Enum):
     NVIDIA_CUDA = "cuda"
     AMD_ROCM = "rocm"
-    INTEL_XPU = "xpu"
     TPU_XLA = "tpu"
 
 
@@ -138,34 +134,6 @@ GCP_INSTANCES = {
     ),
 }
 
-INTEL_DEVICES = {
-    "arc-a770": InstanceConfig(
-        provider=CloudProvider.INTEL,
-        instance_type="arc-a770",
-        backend=HardwareBackend.INTEL_XPU,
-        gpu_count=1,
-        gpu_memory_gb=16,
-        region="devcloud",
-    ),
-    "flex-170": InstanceConfig(
-        provider=CloudProvider.INTEL,
-        instance_type="flex-170",
-        backend=HardwareBackend.INTEL_XPU,
-        gpu_count=2,
-        gpu_memory_gb=16,
-        region="devcloud",
-    ),
-    "ponte-vecchio": InstanceConfig(
-        provider=CloudProvider.INTEL,
-        instance_type="ponte-vecchio",
-        backend=HardwareBackend.INTEL_XPU,
-        gpu_count=2,
-        gpu_memory_gb=128,
-        region="devcloud",
-    ),
-}
-
-
 class CloudOrchestrator:
     """Orchestrates cloud hardware validation."""
 
@@ -184,8 +152,6 @@ class CloudOrchestrator:
             return AWS_INSTANCES.get(instance_type)
         elif provider == CloudProvider.GCP:
             return GCP_INSTANCES.get(instance_type)
-        elif provider == CloudProvider.INTEL:
-            return INTEL_DEVICES.get(instance_type)
         return None
 
     def generate_validation_script(
@@ -365,31 +331,6 @@ echo "=============================================="
             "status": "script_generated"
         }
 
-    def deploy_intel(self, config: InstanceConfig) -> dict[str, Any]:
-        """Deploy to Intel DevCloud and run validation."""
-        print(f"Deploying to Intel DevCloud {config.instance_type}...")
-
-        commands = [
-            "# Connect to Intel DevCloud",
-            "ssh devcloud",
-            "",
-            f"# Request {config.instance_type} node",
-            f"qsub -l nodes=1:{config.instance_type}:ppn=2 -d . validation_script.sh",
-            "",
-            "# Monitor job",
-            "qstat",
-            "",
-            "# Retrieve results",
-            "cat validation_script.sh.o*",
-        ]
-
-        return {
-            "provider": "intel",
-            "instance": config.instance_type,
-            "commands": commands,
-            "status": "script_generated"
-        }
-
     def run_validation(
         self,
         provider: CloudProvider,
@@ -428,8 +369,6 @@ echo "=============================================="
             result = self.deploy_aws(config)
         elif provider == CloudProvider.GCP:
             result = self.deploy_gcp(config)
-        elif provider == CloudProvider.INTEL:
-            result = self.deploy_intel(config)
         else:
             result = {"error": "Unknown provider"}
 
@@ -459,18 +398,12 @@ echo "=============================================="
         for name, config in GCP_INSTANCES.items():
             print(f"  {name:20} - {config.backend.value:10} - {config.gpu_count}x GPU ({config.gpu_memory_gb}GB)")
 
-        print("\nIntel DevCloud Devices:")
-        print("-" * 60)
-        for name, config in INTEL_DEVICES.items():
-            print(f"  {name:20} - {config.backend.value:10} - {config.gpu_count}x GPU ({config.gpu_memory_gb}GB)")
-
 
 def main():
     parser = argparse.ArgumentParser(description="TorchBridge Cloud Validation Orchestrator")
-    parser.add_argument("--provider", choices=["aws", "gcp", "intel"], help="Cloud provider")
+    parser.add_argument("--provider", choices=["aws", "gcp"], help="Cloud provider")
     parser.add_argument("--instance", help="Instance type")
     parser.add_argument("--tpu", help="TPU type (GCP only)")
-    parser.add_argument("--device", help="Device type (Intel only)")
     parser.add_argument("--list", action="store_true", help="List available instances")
     parser.add_argument("--dry-run", action="store_true", default=True, help="Generate scripts without deploying")
     args = parser.parse_args()
@@ -487,7 +420,7 @@ def main():
         return
 
     provider = CloudProvider(args.provider)
-    instance_type = args.instance or args.tpu or args.device
+    instance_type = args.instance or args.tpu
 
     if not instance_type:
         print("Error: Must specify --instance, --tpu, or --device")

@@ -19,7 +19,6 @@
 |----------|------------------|-----------------|
 | **H100/H200** | FP8 native, Transformer Engine | Next-gen GPU performance |
 | **Apple M3/M4** | Neural Engine, unified memory | Apple Silicon efficiency |
-| **Intel Xeon (AMX)** | Advanced Matrix Extensions | CPU backend performance |
 | **AMD MI300** | Unified memory, ROCm | Alternative GPU platform |
 | **Groq LPUs** | Custom inference chips | Specialized hardware |
 
@@ -168,7 +167,6 @@ python3 -c "from enhanced_benchmark_runner import main; main()"
 ### Phase 4: Advanced Hardware (Planned)
 - [ ] H100/H200 FP8 optimization
 - [ ] Apple Neural Engine integration
-- [ ] Intel AMX CPU optimization
 - [ ] AMD MI300 ROCm benchmarking
 
 ## 🔄 Continuous Integration

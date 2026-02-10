@@ -19,7 +19,7 @@ backend = BackendFactory.create(detect_best_backend())
 print(f"Backend: {backend}")
 ```
 
-TorchBridge automatically detects NVIDIA CUDA, AMD ROCm, Intel XPU, Google TPU, or falls back to CPU.
+TorchBridge automatically detects NVIDIA CUDA, AMD ROCm, Google TPU, or falls back to CPU.
 
 ## 3. Optimize and Run
 

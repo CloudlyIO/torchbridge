@@ -2,7 +2,7 @@
 Shared timing utilities for TorchBridge benchmarks.
 
 This module provides standardized timing and measurement utilities
-for consistent benchmarking across all backends (NVIDIA, TPU, AMD, Intel).
+for consistent benchmarking across all backends (NVIDIA, TPU, AMD).
 
 """
 
@@ -34,8 +34,6 @@ def synchronize_device(device: torch.device | None = None) -> None:
         # Sync all available accelerators
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        if hasattr(torch, "xpu") and torch.xpu.is_available():
-            torch.xpu.synchronize()
         if hasattr(torch, "mps") and hasattr(torch.mps, "synchronize"):
             torch.mps.synchronize()
         return
@@ -44,8 +42,6 @@ def synchronize_device(device: torch.device | None = None) -> None:
 
     if device_type == "cuda":
         torch.cuda.synchronize(device)
-    elif device_type == "xpu" and hasattr(torch, "xpu"):
-        torch.xpu.synchronize(device)
     elif device_type == "mps" and hasattr(torch.mps, "synchronize"):
         torch.mps.synchronize()
     # CPU doesn't need synchronization
@@ -54,15 +50,13 @@ def get_best_device() -> torch.device:
     """
     Get the best available compute device.
 
-    Priority: CUDA > XPU > MPS > CPU
+    Priority: CUDA > MPS > CPU
 
     Returns:
         torch.device for the best available backend
     """
     if torch.cuda.is_available():
         return torch.device("cuda")
-    if hasattr(torch, "xpu") and torch.xpu.is_available():
-        return torch.device("xpu")
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")

@@ -82,6 +82,6 @@ RUN echo 'alias ll="ls -la"' >> ~/.bashrc \
 
 # Metadata
 LABEL maintainer="TorchBridge Team" \
-      version="0.5.10-dev" \
+      version="0.5.11-dev" \
       description="Development environment for TorchBridge hardware abstraction layer for PyTorch" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

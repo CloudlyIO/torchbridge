@@ -5,13 +5,12 @@
 # Prerequisites:
 #   - AWS CLI configured (aws configure)
 #   - GCP CLI configured (gcloud auth login)
-#   - Intel DevCloud SSH key configured
 #
 # Usage:
 #   ./run_full_cloud_validation.sh [--free-only] [--spot-only] [--full]
 #
 # Cost Estimates:
-#   --free-only: $0 (Intel DevCloud, Colab notebooks)
+#   --free-only: $0 (Colab, Kaggle, Lightning.ai notebooks)
 #   --spot-only: ~$50 (spot/preemptible instances)
 #   --full: ~$150 (includes A100/H100 premium instances)
 
@@ -79,39 +78,8 @@ EOF
 
 echo -e "\n${GREEN}=== TIER 1: Free Resources ===${NC}\n"
 
-# Intel DevCloud (Free)
-echo -e "${BLUE}[1/4] Intel DevCloud (Arc A770)${NC}"
-if command -v ssh &> /dev/null; then
-    echo "  Checking Intel DevCloud connectivity..."
-    if ssh -o BatchMode=yes -o ConnectTimeout=5 devcloud echo "connected" 2>/dev/null; then
-        echo -e "  ${GREEN}✓ Connected to Intel DevCloud${NC}"
-        echo "  Submitting validation job..."
-
-        # Copy validation script
-        scp "$REPORTS_DIR/validation_arc-a770.sh" devcloud:~/torchbridge_validation.sh 2>/dev/null || true
-
-        # Submit job
-        JOB_ID=$(ssh devcloud "qsub -l nodes=1:gpu:ppn=2 -d . ~/torchbridge_validation.sh" 2>/dev/null) || JOB_ID="failed"
-
-        if [[ "$JOB_ID" != "failed" ]]; then
-            echo -e "  ${GREEN}✓ Job submitted: $JOB_ID${NC}"
-            update_result "intel" "arc-a770" "submitted" "Job ID: $JOB_ID"
-        else
-            echo -e "  ${YELLOW}⚠ Job submission failed (may need interactive session)${NC}"
-            update_result "intel" "arc-a770" "manual_required" "Use interactive qsub"
-        fi
-    else
-        echo -e "  ${YELLOW}⚠ Intel DevCloud not configured${NC}"
-        echo "  To configure: https://devcloud.intel.com/oneapi/get_started/"
-        update_result "intel" "arc-a770" "skipped" "DevCloud not configured"
-    fi
-else
-    echo -e "  ${YELLOW}⚠ SSH not available${NC}"
-    update_result "intel" "arc-a770" "skipped" "SSH not available"
-fi
-
 # Google Colab (Free - Manual)
-echo -e "\n${BLUE}[2/4] Google Colab (T4 GPU)${NC}"
+echo -e "${BLUE}[1/3] Google Colab (T4 GPU)${NC}"
 echo "  Notebook generated: $REPORTS_DIR/validation_google_colab_free_t4.ipynb"
 echo "  Manual steps required:"
 echo "    1. Open https://colab.research.google.com"
@@ -121,7 +89,7 @@ echo "    4. Run all cells"
 update_result "colab" "t4" "manual_required" "See notebook"
 
 # Kaggle (Free - Manual)
-echo -e "\n${BLUE}[3/4] Kaggle Notebooks (P100/T4)${NC}"
+echo -e "\n${BLUE}[2/3] Kaggle Notebooks (P100/T4)${NC}"
 echo "  Notebook generated: $REPORTS_DIR/validation_kaggle_notebooks_p100_t4.ipynb"
 echo "  Manual steps required:"
 echo "    1. Open https://www.kaggle.com/code"
@@ -131,7 +99,7 @@ echo "    4. Run all cells"
 update_result "kaggle" "p100" "manual_required" "See notebook"
 
 # Lightning.ai (Free - Manual)
-echo -e "\n${BLUE}[4/4] Lightning.ai (T4 GPU)${NC}"
+echo -e "\n${BLUE}[3/3] Lightning.ai (T4 GPU)${NC}"
 echo "  Notebook generated: $REPORTS_DIR/validation_lightning.ai_t4.ipynb"
 echo "  Manual steps required:"
 echo "    1. Open https://lightning.ai"

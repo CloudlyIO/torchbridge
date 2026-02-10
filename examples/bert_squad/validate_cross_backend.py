@@ -3,7 +3,7 @@
 Cross-Backend Validation for BERT SQuAD
 
 Validates that BERT produces consistent outputs across different backends
-(CUDA, ROCm, XPU, MPS, CPU) to ensure numerical parity.
+(CUDA, ROCm, MPS, CPU) to ensure numerical parity.
 
 Usage:
     python validate_cross_backend.py
@@ -63,10 +63,6 @@ def get_available_backends() -> list[tuple[str, torch.device]]:
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         backends.append(("mps", torch.device("mps")))
 
-    # Intel XPU
-    if hasattr(torch, "xpu") and torch.xpu.is_available():
-        backends.append(("xpu", torch.device("xpu")))
-
     return backends
 
 
@@ -76,16 +72,12 @@ def synchronize_device(device: torch.device):
         torch.cuda.synchronize()
     elif device.type == "mps" and hasattr(torch.mps, "synchronize"):
         torch.mps.synchronize()
-    elif device.type == "xpu" and hasattr(torch, "xpu"):
-        torch.xpu.synchronize()
 
 
 def get_memory_allocated(device: torch.device) -> float | None:
     """Get memory allocated in MB."""
     if device.type == "cuda":
         return torch.cuda.memory_allocated(device) / 1024 / 1024
-    elif device.type == "xpu" and hasattr(torch.xpu, "memory_allocated"):
-        return torch.xpu.memory_allocated(device) / 1024 / 1024
     return None
 
 

@@ -91,7 +91,7 @@ class LLMOptimizer:
     Optimizer for large language models with comprehensive optimization.
 
     Supports models from 1B to 13B parameters with automatic optimization
-    for available hardware including NVIDIA, AMD, TPU, and Intel.
+    for available hardware including NVIDIA, AMD, and TPU.
 
     Example:
         >>> from torchbridge.models.llm import LLMOptimizer
@@ -135,13 +135,6 @@ class LLMOptimizer:
         if torch.cuda.is_available():
             return torch.device("cuda")
 
-        try:
-            import intel_extension_for_pytorch as ipex  # noqa: F401
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
-                return torch.device("xpu")
-        except ImportError:
-            pass
-
         return torch.device("cpu")
 
     def _get_optimal_dtype(self) -> torch.dtype:
@@ -155,8 +148,6 @@ class LLMOptimizer:
                 if major >= 8:
                     return torch.bfloat16
                 return torch.float16
-        elif self._device.type == "xpu":
-            return torch.bfloat16
 
         return torch.float32
 

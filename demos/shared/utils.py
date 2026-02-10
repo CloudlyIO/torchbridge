@@ -158,8 +158,6 @@ def synchronize(device: torch.device | None = None) -> None:
 
     if device.type == "cuda":
         torch.cuda.synchronize(device)
-    elif device.type == "xpu" and hasattr(torch, "xpu"):
-        torch.xpu.synchronize(device)
     elif device.type == "mps" and hasattr(torch, "mps"):
         # MPS synchronization (PyTorch 2.0+)
         if hasattr(torch.mps, "synchronize"):
@@ -181,8 +179,6 @@ def get_memory_allocated(device: torch.device | None = None) -> int:
 
     if device.type == "cuda":
         return torch.cuda.memory_allocated(device)
-    elif device.type == "xpu" and hasattr(torch, "xpu"):
-        return torch.xpu.memory_allocated(device)
     return 0  # CPU memory tracking not supported this way
 
 # ============================================================================

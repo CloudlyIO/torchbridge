@@ -93,40 +93,6 @@ python3 -c "import torch; print(f'ROCm: {torch.cuda.is_available()}')"
 
 ---
 
-## Intel (IPEX / oneAPI)
-
-### Intel Extension for PyTorch
-
-```bash
-pip install intel-extension-for-pytorch
-```
-
-### oneAPI Base Toolkit (for XPU)
-
-```bash
-# Install oneAPI
-wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/..../l_BaseKit.sh
-sudo sh l_BaseKit.sh
-
-# Set environment
-source /opt/intel/oneapi/setvars.sh
-```
-
-### PyTorch with XPU
-
-```bash
-pip install intel-extension-for-pytorch[xpu]
-```
-
-### Verify
-
-```bash
-python3 -c "import intel_extension_for_pytorch; print('IPEX available')"
-python3 -c "import torch; print(f'XPU devices: {torch.xpu.device_count()}')"
-```
-
----
-
 ## Google TPU (XLA)
 
 ### PyTorch/XLA
