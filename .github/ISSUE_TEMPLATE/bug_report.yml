@@ -70,7 +70,7 @@ body:
         - Attention (FlashAttention, MultiHead)
         - Precision (FP16, BF16, FP8)
         - Memory (Checkpointing, Optimizer States)
-        - Hardware Backend (NVIDIA, AMD, Intel, TPU)
+        - Hardware Backend (NVIDIA, AMD, TPU)
         - Distributed Training (FSDP, Pipeline, Tensor Parallel)
         - Model Export (ONNX, TorchScript, SafeTensors)
         - Deployment/Serving
@@ -138,7 +138,6 @@ body:
         - NVIDIA GPU (Datacenter - A100/H100)
         - NVIDIA GPU (Other)
         - AMD GPU (ROCm)
-        - Intel GPU (XPU)
         - Google TPU
         - Apple Silicon (MPS)
     validations:

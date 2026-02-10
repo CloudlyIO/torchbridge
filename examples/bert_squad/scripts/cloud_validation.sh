@@ -87,12 +87,6 @@ detect_backend() {
         return
     fi
 
-    # Check for Intel XPU
-    if python3 -c "import torch; torch.xpu.is_available()" 2>/dev/null; then
-        echo "xpu"
-        return
-    fi
-
     # Check for Apple MPS
     if python3 -c "import torch; torch.backends.mps.is_available()" 2>/dev/null; then
         echo "mps"
@@ -111,7 +105,6 @@ info = {
     "pytorch_version": torch.__version__,
     "cuda_available": torch.cuda.is_available(),
     "mps_available": hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
-    "xpu_available": hasattr(torch, "xpu") and torch.xpu.is_available(),
     "devices": []
 }
 
@@ -126,8 +119,6 @@ if torch.cuda.is_available():
         })
 elif info["mps_available"]:
     info["devices"].append({"index": 0, "name": "Apple MPS", "backend": "mps"})
-elif info["xpu_available"]:
-    info["devices"].append({"index": 0, "name": "Intel XPU", "backend": "xpu"})
 else:
     info["devices"].append({"index": 0, "name": "CPU", "backend": "cpu"})
 

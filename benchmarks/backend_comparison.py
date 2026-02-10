@@ -3,7 +3,7 @@
 Backend Comparison Benchmarks
 
 Benchmarks for comparing performance across unified backends (NVIDIA, AMD, TPU,
-Intel, CPU) using the standardized BaseBackend interface.
+CPU) using the standardized BaseBackend interface.
 
 This benchmark measures:
 - Backend initialization time
@@ -457,7 +457,6 @@ def get_available_backends() -> list[str]:
         ("nvidia", BackendType.NVIDIA),
         ("amd", BackendType.AMD),
         ("tpu", BackendType.TPU),
-        ("intel", BackendType.INTEL),
     ]
 
     for name, backend_type in backend_checks:

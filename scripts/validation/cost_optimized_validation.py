@@ -3,7 +3,7 @@
 TorchBridge Cost-Optimized Cloud Validation
 
 Reduces validation costs from ~$2,000 to ~$50-100 using:
-1. Free/low-cost cloud resources (Intel DevCloud, Colab, Kaggle)
+1. Free/low-cost cloud resources (Colab, Kaggle, Lightning.ai)
 2. Spot/preemptible instances (70-90% cheaper)
 3. Smallest viable instances per backend
 4. Reduced test duration (5 mins vs 60 mins)
@@ -56,14 +56,6 @@ class ValidationPlan:
 # ============================================================================
 
 FREE_RESOURCES = [
-    ResourceConfig(
-        name="Intel DevCloud (Arc A770)",
-        provider="intel",
-        backend="xpu",
-        cost_per_hour=0,
-        is_free=True,
-        notes="Free Intel developer access, requires signup"
-    ),
     ResourceConfig(
         name="Google Colab Free (T4)",
         provider="colab",
@@ -176,7 +168,7 @@ class CostOptimizedValidator:
         if tier == ValidationTier.QUICK:
             return ValidationPlan(
                 tier=tier,
-                resources=FREE_RESOURCES[:4],  # Intel, Colab, Kaggle, Lightning
+                resources=FREE_RESOURCES[:4],  # Colab, Kaggle, Lightning, Codespaces
                 estimated_cost=0,
                 estimated_time_minutes=60,
                 tests=[
@@ -241,10 +233,7 @@ class CostOptimizedValidator:
                     "metadata": {},
                     "source": [
                         "# Install TorchBridge\n",
-                        "!pip install -q torchbridge torch\n",
-                        "\n",
-                        "# For Intel XPU\n",
-                        "# !pip install intel-extension-for-pytorch\n"
+                        "!pip install -q torchbridge torch\n"
                     ],
                     "execution_count": None,
                     "outputs": []
@@ -435,44 +424,6 @@ print(f"Shape: {out.shape} - PASSED")
 ```
 """
 
-    def generate_intel_devcloud_script(self) -> str:
-        """Generate Intel DevCloud validation script."""
-        return """#!/bin/bash
-# Intel DevCloud Validation Script
-
-# 1. Connect to DevCloud
-# ssh devcloud
-
-# 2. Request GPU node
-qsub -I -l nodes=1:gpu:ppn=2 -d .
-
-# 3. Once on node, run:
-source /opt/intel/oneapi/setvars.sh
-pip install --user torchbridge intel-extension-for-pytorch
-
-python << 'EOF'
-import torch
-import intel_extension_for_pytorch as ipex
-from torchbridge.hardware import get_optimal_backend
-
-# Check XPU
-print(f"XPU available: {torch.xpu.is_available()}")
-if torch.xpu.is_available():
-    print(f"XPU device: {torch.xpu.get_device_name(0)}")
-
-backend = get_optimal_backend()
-print(f"Backend: {backend}")
-
-# Test
-import torch.nn as nn
-device = 'xpu' if torch.xpu.is_available() else 'cpu'
-attn = nn.MultiheadAttention(512, 8, batch_first=True).to(device)
-x = torch.randn(4, 128, 512, device=device)
-out, _ = attn(x, x, x)
-print(f"Output: {out.shape} - PASSED")
-EOF
-"""
-
     def run_validation(self, tier: ValidationTier) -> dict[str, Any]:
         """Run validation for specified tier."""
         plan = self.create_validation_plan(tier)
@@ -508,11 +459,6 @@ EOF
         kaggle_path.write_text(self.generate_kaggle_script())
         print(f"  - {kaggle_path}")
 
-        # Intel DevCloud script
-        intel_path = self.results_dir / "intel_devcloud_validation.sh"
-        intel_path.write_text(self.generate_intel_devcloud_script())
-        print(f"  - {intel_path}")
-
         # Notebooks for each free resource
         for resource in [r for r in plan.resources if r.is_free]:
             notebook_name = resource.name.lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "_")
@@ -540,9 +486,8 @@ EOF
         print(f"{'='*60}")
         print("1. Open Google Colab and run colab_validation.md instructions")
         print("2. Create Kaggle notebook using kaggle_validation.md")
-        print("3. Connect to Intel DevCloud and run intel_devcloud_validation.sh")
         if tier != ValidationTier.QUICK:
-            print("4. For paid resources, use cloud_orchestrator.py with spot instances")
+            print("3. For paid resources, use cloud_orchestrator.py with spot instances")
 
         return result
 

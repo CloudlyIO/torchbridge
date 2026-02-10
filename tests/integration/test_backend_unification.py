@@ -8,7 +8,7 @@ This module tests the unified backend interface including:
 - DeviceInfo, OptimizationResult dataclasses
 - OptimizationLevel enum
 
-All backends (NVIDIA, AMD, TPU, Intel) should inherit from the base classes
+All backends (NVIDIA, AMD, TPU) should inherit from the base classes
 and provide a consistent API.
 """
 
@@ -364,7 +364,6 @@ class TestBackendFactory:
         assert BackendType.NVIDIA.value == "nvidia"
         assert BackendType.AMD.value == "amd"
         assert BackendType.TPU.value == "tpu"
-        assert BackendType.INTEL.value == "intel"
         assert BackendType.CPU.value == "cpu"
 
     def test_backend_type_from_string(self):
@@ -375,8 +374,6 @@ class TestBackendFactory:
         assert BackendType.from_string("rocm") == BackendType.AMD
         assert BackendType.from_string("tpu") == BackendType.TPU
         assert BackendType.from_string("xla") == BackendType.TPU
-        assert BackendType.from_string("intel") == BackendType.INTEL
-        assert BackendType.from_string("xpu") == BackendType.INTEL
 
     def test_factory_create_cpu_backend(self):
         """Test BackendFactory.create() with CPU."""
@@ -478,14 +475,6 @@ class TestBackendInheritance:
         assert isinstance(backend, BaseBackend)
         assert backend.BACKEND_NAME == "tpu"
 
-    def test_intel_backend_inherits_base(self):
-        """Test IntelBackend inherits from BaseBackend."""
-        from torchbridge.backends.intel import IntelBackend
-
-        backend = IntelBackend()
-        assert isinstance(backend, BaseBackend)
-        assert backend.BACKEND_NAME == "intel"
-
 
 # =============================================================================
 # Unified Interface Tests
@@ -498,7 +487,6 @@ class TestUnifiedInterface:
     def backends(self):
         """Create instances of all backends."""
         from torchbridge.backends.amd import AMDBackend
-        from torchbridge.backends.intel import IntelBackend
         from torchbridge.backends.nvidia import NVIDIABackend
         from torchbridge.backends.tpu import TPUBackend
 
@@ -507,7 +495,6 @@ class TestUnifiedInterface:
             NVIDIABackend(),
             AMDBackend(),
             TPUBackend(),
-            IntelBackend(),
         ]
 
     def test_all_have_device_property(self, backends):

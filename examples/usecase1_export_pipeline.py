@@ -3,7 +3,7 @@ Use Case 1: Hardware-Agnostic Model Export Pipeline
 
 Demonstrates TorchBridge's core value: detect hardware, build a model,
 export to every portable format, and validate correctness — all through
-a unified API that works identically on NVIDIA, AMD, Intel, TPU, or CPU.
+a unified API that works identically on NVIDIA, AMD, TPU, or CPU.
 
 Run: PYTHONPATH=src python3 examples/usecase1_export_pipeline.py
 """

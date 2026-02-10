@@ -11,7 +11,6 @@ Guide for developers contributing to the hardware abstraction layer for PyTorch.
 Optional (for GPU backend development):
 - CUDA 12.0+ and NVCC (NVIDIA)
 - ROCm 5.6+ (AMD)
-- Intel Extension for PyTorch (Intel)
 - PyTorch/XLA (TPU)
 
 ## Development Setup
@@ -78,7 +77,6 @@ src/torchbridge/
 ├── backends/          # Vendor-specific backend implementations
 │   ├── nvidia/        #   NVIDIA CUDA
 │   ├── amd/           #   AMD ROCm
-│   ├── intel/         #   Intel IPEX
 │   └── tpu/           #   Google TPU/XLA
 ├── hardware/          # Hardware detection and abstraction layer
 ├── precision/         # Mixed-precision training

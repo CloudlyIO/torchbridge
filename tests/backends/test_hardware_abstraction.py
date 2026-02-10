@@ -38,7 +38,6 @@ try:
     )
     from torchbridge.hardware.abstraction.vendor_adapters import (
         CPUAdapter,
-        IntelAdapter,  # noqa: F401
         NVIDIAAdapter,
     )
     HAL_AVAILABLE = True
@@ -70,27 +69,27 @@ def sample_device_specs():
         )
     )
 
-    intel_device = DeviceSpec(
+    amd_device = DeviceSpec(
         device_id=1,
-        vendor=HardwareVendor.INTEL,
+        vendor=HardwareVendor.AMD,
         capabilities=HardwareCapabilities(
-            vendor=HardwareVendor.INTEL,
-            device_name="Intel XPU",
-            compute_capability="1.0",
-            memory_gb=32.0,
-            peak_flops_fp32=10.0e12,
-            peak_flops_fp16=20.0e12,
-            memory_bandwidth_gbps=1024.0,
+            vendor=HardwareVendor.AMD,
+            device_name="AMD MI300X",
+            compute_capability="gfx942",
+            memory_gb=192.0,
+            peak_flops_fp32=163.4e12,
+            peak_flops_fp16=326.8e12,
+            memory_bandwidth_gbps=5300.0,
             supported_precisions=[
                 ComputeCapability.FP32, ComputeCapability.FP16,
                 ComputeCapability.BF16, ComputeCapability.MIXED_PRECISION
             ],
             tensor_core_support=False,
-            interconnect_type="PCIe"
+            interconnect_type="Infinity Fabric"
         )
     )
 
-    return [nvidia_device, intel_device]
+    return [nvidia_device, amd_device]
 
 
 @pytest.fixture
@@ -184,7 +183,7 @@ class TestHardwareAbstractionLayer:
         assert isinstance(capabilities, CrossVendorCapabilities)
         assert capabilities.total_devices == 2
         assert HardwareVendor.NVIDIA in capabilities.vendor_distribution
-        assert HardwareVendor.INTEL in capabilities.vendor_distribution
+        assert HardwareVendor.AMD in capabilities.vendor_distribution
         assert capabilities.cross_vendor_communication is True
         assert "ring" in capabilities.mesh_topologies
 
@@ -265,8 +264,6 @@ class TestVendorAdapters:
         """Test CPU adapter functionality"""
         adapter = CPUAdapter()
 
-        assert adapter.vendor == HardwareVendor.INTEL  # CPU mapped to Intel
-
         # Test device discovery
         devices = adapter.discover_devices()
         assert len(devices) >= 1  # Should always have at least one CPU
@@ -283,9 +280,9 @@ class TestVendorAdapters:
         # Create mock device
         device = DeviceSpec(
             device_id=0,
-            vendor=HardwareVendor.INTEL,
+            vendor=HardwareVendor.UNKNOWN,
             capabilities=HardwareCapabilities(
-                vendor=HardwareVendor.INTEL,
+                vendor=HardwareVendor.UNKNOWN,
                 device_name="CPU",
                 compute_capability="1.0",
                 memory_gb=16.0,
@@ -355,7 +352,7 @@ class TestHardwareAdapterIntegration:
             # Create mock devices for testing
             mock_devices = [
                 Mock(device_id=0, vendor=HardwareVendor.NVIDIA, is_available=True),
-                Mock(device_id=1, vendor=HardwareVendor.INTEL, is_available=True)
+                Mock(device_id=1, vendor=HardwareVendor.AMD, is_available=True)
             ]
 
             mesh = adapter.create_cross_vendor_mesh_hal(
@@ -396,9 +393,9 @@ class TestPerformanceAndStress:
         for i in range(10):
             device = DeviceSpec(
                 device_id=i,
-                vendor=HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.INTEL,
+                vendor=HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.AMD,
                 capabilities=HardwareCapabilities(
-                    vendor=HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.INTEL,
+                    vendor=HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.AMD,
                     device_name=f"Test Device {i}",
                     compute_capability="1.0",
                     memory_gb=16.0,

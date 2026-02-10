@@ -10,7 +10,6 @@ Every hardware backend implements the same `BaseBackend` interface:
 BaseBackend (abstract)
 ├── NVIDIABackend   → CUDA
 ├── AMDBackend      → ROCm / HIP
-├── IntelBackend    → IPEX / oneAPI
 ├── TPUBackend      → XLA
 └── CPUBackend      → fallback
 ```
@@ -56,16 +55,15 @@ class BaseBackend(ABC):
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-# Auto-detect: returns "cuda", "rocm", "xpu", "tpu", or "cpu"
+# Auto-detect: returns "cuda", "rocm", "tpu", or "cpu"
 backend = BackendFactory.create(detect_best_backend())
 ```
 
 Detection priority:
 1. NVIDIA CUDA (if `torch.cuda.is_available()`)
 2. AMD ROCm (if ROCm runtime detected)
-3. Intel XPU (if IPEX available)
-4. Google TPU (if PyTorch/XLA available)
-5. CPU (fallback)
+3. Google TPU (if PyTorch/XLA available)
+4. CPU (fallback)
 
 ## Optimization Levels
 
@@ -93,7 +91,7 @@ Backends return consistent data structures:
 @dataclass
 class DeviceInfo:
     name: str              # e.g., "NVIDIA H100"
-    backend: str           # "cuda", "rocm", "xpu", "tpu", "cpu"
+    backend: str           # "cuda", "rocm", "tpu", "cpu"
     memory_total_gb: float
     memory_available_gb: float
     compute_capability: str
@@ -113,7 +111,7 @@ device = backend.device
 model = YourModel().to(device)
 model = backend.prepare_model(model)
 
-# This runs identically on NVIDIA, AMD, Intel, or TPU
+# This runs identically on NVIDIA, AMD, or TPU
 for batch in dataloader:
     inputs = batch.to(device)
     output = model(inputs)
@@ -147,7 +145,6 @@ Each backend has unique capabilities and configuration options:
 
 - [NVIDIA](nvidia.md) -- CUDA, Tensor Cores, FP8, FlashAttention
 - [AMD](amd.md) -- ROCm, HIP, Matrix Cores
-- [Intel](intel.md) -- IPEX, oneDNN, AMX/XMX
 - [TPU](tpu.md) -- XLA, TPU pods, BF16 optimization
 
 ## Migration Between Backends
