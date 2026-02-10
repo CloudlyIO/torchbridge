@@ -222,7 +222,7 @@ class TestTorchBridgeConfigTPU:
         assert HardwareBackend.TPU.value == "tpu"
 
         # Test all expected backends are present
-        expected_backends = {'cuda', 'cpu', 'tpu', 'amd', 'intel', 'custom'}
+        expected_backends = {'cuda', 'cpu', 'tpu', 'amd', 'trainium', 'custom'}
         actual_backends = {backend.value for backend in HardwareBackend}
         assert expected_backends.issubset(actual_backends)
 

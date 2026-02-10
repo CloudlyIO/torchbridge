@@ -224,7 +224,6 @@ gcloud compute tpus tpu-vm delete bert-squad-tpu --zone=us-central1-a
 | MPS     | 1e-4              | 0.9999              | Apple Silicon |
 | ROCm    | 1e-3              | 0.999               | SDPA divergence expected |
 | TPU     | 1e-3              | 0.999               | XLA compilation differences |
-| XPU     | 1e-4              | 0.9999              | Intel Arc/Flex |
 
 ---
 

@@ -3,7 +3,7 @@
 Unified Backend Demo
 
 Demonstrates the unified backend interface and BackendFactory for automatic
-hardware detection across NVIDIA, AMD, TPU, and Intel platforms.
+hardware detection across NVIDIA, AMD, and TPU platforms.
 
 This demo showcases:
 - BackendFactory for automatic backend selection
@@ -381,7 +381,6 @@ def demo_backend_inheritance() -> dict[str, Any]:
         ("NVIDIA", "torchbridge.backends.nvidia.NVIDIABackend"),
         ("AMD", "torchbridge.backends.amd.AMDBackend"),
         ("TPU", "torchbridge.backends.tpu.TPUBackend"),
-        ("Intel", "torchbridge.backends.intel.IntelBackend"),
     ]
 
     for name, class_path in backend_classes:

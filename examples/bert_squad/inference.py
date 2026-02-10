@@ -34,8 +34,6 @@ def get_device() -> torch.device:
         return torch.device("cuda")
     elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return torch.device("mps")
-    elif hasattr(torch, "xpu") and torch.xpu.is_available():
-        return torch.device("xpu")
     return torch.device("cpu")
 
 
@@ -45,8 +43,6 @@ def synchronize(device: torch.device):
         torch.cuda.synchronize()
     elif device.type == "mps" and hasattr(torch.mps, "synchronize"):
         torch.mps.synchronize()
-    elif device.type == "xpu" and hasattr(torch, "xpu"):
-        torch.xpu.synchronize()
 
 
 class BERTSquadInference:

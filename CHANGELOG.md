@@ -8,7 +8,7 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.10 (AWS Trainium Backend)
+**Current Version**: v0.5.11 (Intel Backend Removal)
 
 ---
 

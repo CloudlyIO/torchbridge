@@ -439,8 +439,8 @@ def _apply_fusion_optimization(model: nn.Module, target_intensity: float) -> nn.
 def _apply_blocking_optimization(model: nn.Module, target_intensity: float) -> nn.Module:
     """Apply blocking/tiling optimization for better cache utilization."""
     # DESIGN_NOTE: Cache-aware tiling requires architecture-specific tuning (L1/L2
-    # sizes, cache line sizes). Production implementations should use cuBLAS/oneDNN
-    # which have highly-tuned blocking strategies. torch.compile() handles this
+    # sizes, cache line sizes). Production implementations should use cuBLAS
+    # which has highly-tuned blocking strategies. torch.compile() handles this
     # automatically for most cases.
     return model
 

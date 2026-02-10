@@ -104,7 +104,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest tests/ -v --tb=short \
-            -m "not gpu and not slow and not tpu and not amd and not intel" \
+            -m "not gpu and not slow and not tpu and not amd" \
             --ignore=tests/cloud_testing \
             --cov=src/torchbridge \
             --cov-report=xml \

@@ -99,8 +99,6 @@ def detect_gpu_vendor(gpu_name: str) -> str:
         return 'NVIDIA'
     elif any(keyword in gpu_name_lower for keyword in ['amd', 'radeon', 'rx', 'vega']):
         return 'AMD'
-    elif any(keyword in gpu_name_lower for keyword in ['intel', 'arc', 'xe']):
-        return 'Intel'
     else:
         return 'Unknown'
 
@@ -284,23 +282,6 @@ def explain_vendor_optimizations():
                 "Mixed precision training",
                 "Memory optimization patterns"
             ]
-        },
-        "Intel": {
-            "hardware_features": [
-                "XMX Matrix Engines",
-                "Xe-Link for Scale-out",
-                "Unified Memory Architecture"
-            ],
-            "software_stack": [
-                "Intel oneAPI",
-                "Intel Extension for PyTorch",
-                "Intel Neural Compressor"
-            ],
-            "pytorch_optimizations": [
-                "XPU device optimization",
-                "Auto-mixed precision",
-                "Graph optimization"
-            ]
         }
     }
 
@@ -331,7 +312,6 @@ def explain_cross_platform_deployment():
         ],
         "Edge Deployment": [
             "CPU-optimized models with quantization",
-            "Intel Neural Compressor integration",
             "ARM processor optimization",
             "Power-efficient inference patterns"
         ],

@@ -3,7 +3,7 @@
 BERT SQuAD Training with TorchBridge HAL
 
 Hardware-agnostic fine-tuning of BERT-base on SQuAD 2.0.
-Works on NVIDIA CUDA, AMD ROCm, Intel XPU, Apple MPS, and CPU.
+Works on NVIDIA CUDA, AMD ROCm, Apple MPS, and CPU.
 
 Usage:
     python train.py --epochs 2 --batch-size 16
@@ -111,7 +111,6 @@ class BERTSquadTrainer:
                 backend_map = {
                     "cuda": BackendType.NVIDIA,
                     "rocm": BackendType.AMD,
-                    "xpu": BackendType.INTEL,
                     "mps": BackendType.NVIDIA,  # Fallback
                     "cpu": BackendType.CPU,
                 }
@@ -139,9 +138,6 @@ class BERTSquadTrainer:
             elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 device = torch.device("mps")
                 backend_info = {"name": "Apple Silicon", "type": "MPS"}
-            elif hasattr(torch, "xpu") and torch.xpu.is_available():
-                device = torch.device("xpu")
-                backend_info = {"name": "Intel XPU", "type": "Intel"}
             else:
                 device = torch.device("cpu")
                 backend_info = {"name": "CPU", "type": "CPU"}
@@ -174,9 +170,6 @@ class BERTSquadTrainer:
         elif self.device.type == "mps":
             if hasattr(torch.mps, "synchronize"):
                 torch.mps.synchronize()
-        elif self.device.type == "xpu":
-            if hasattr(torch, "xpu"):
-                torch.xpu.synchronize()
 
     def setup(self):
         """Initialize model, tokenizer, and data."""
@@ -531,7 +524,7 @@ def main():
     parser.add_argument("--max-length", type=int, default=384, help="Max sequence length")
 
     # Backend
-    parser.add_argument("--backend", choices=["cuda", "rocm", "xpu", "mps", "cpu"],
+    parser.add_argument("--backend", choices=["cuda", "rocm", "mps", "cpu"],
                        help="Force specific backend (default: auto-detect)")
 
     # Options

@@ -107,8 +107,6 @@ class BenchmarkRunner:
         if device.type == "cuda":
             print(f"   GPU: {torch.cuda.get_device_name()}")
             print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory // 1024**3}GB")
-        elif device.type == "xpu" and hasattr(torch, "xpu"):
-            print(f"   Intel XPU detected")
         elif device.type == "mps":
             print("   Apple MPS detected")
         else:

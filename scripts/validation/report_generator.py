@@ -196,7 +196,6 @@ Target: >99.9% uptime in production scenarios
 |---------|------------|-------------|-----------|
 | NVIDIA CUDA | ✓ | ✓ | Pending |
 | AMD ROCm | ✓ | ✓ | Pending |
-| Intel XPU | ✓ | ✓ | Pending |
 | TPU XLA | ✓ | ✓ | Pending |
 | CPU | ✓ | ✓ | ✓ |
 
@@ -280,7 +279,6 @@ across different hardware backends and workloads.
 | A100 80GB | 312 | 2.0 TB/s | Excellent |
 | A10G | 125 | 600 GB/s | Good |
 | MI300X | 1307 | 5.3 TB/s | Good |
-| Intel Arc A770 | 35 | 560 GB/s | Good |
 
 ### 2.2 TPU Performance
 

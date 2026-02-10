@@ -44,7 +44,6 @@ Correct import paths:
 ```python
 from torchbridge.backends.nvidia import NVIDIABackend
 from torchbridge.backends.amd import AMDBackend
-from torchbridge.backends.intel import IntelBackend
 from torchbridge.backends.tpu import TPUBackend
 ```
 
@@ -221,7 +220,7 @@ torchbridge doctor --full-report
 ## Quick Checklist
 
 - Hardware detected correctly?
-- Dependencies installed? (CUDA/ROCm/XLA/IPEX)
+- Dependencies installed? (CUDA/ROCm/XLA)
 - Drivers up to date?
 - Correct backend selected?
 - Dtypes match between model and inputs?

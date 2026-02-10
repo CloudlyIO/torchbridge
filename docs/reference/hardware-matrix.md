@@ -42,18 +42,6 @@ Complete hardware support table for TorchBridge backends.
 | **RDNA 3** | RX 7900 XTX | gfx1100 | 24 GB GDDR6 | Yes | Yes | Yes | No | No | No |
 | **RDNA 2** | RX 6900 XT | gfx1030 | 16 GB GDDR6 | Yes | Yes | No | No | No | No |
 
-### Intel (Maintenance Mode)
-
-| Architecture | Hardware | Status | FP32 | FP16 | BF16 | XMX Cores |
-|-------------|----------|--------|------|------|------|-----------|
-| **Xe-HPC (PVC)** | Data Center GPU Max | Sunsetting | Yes | Yes | Yes | Yes |
-| **Xe-HPG (Arc)** | Arc A770, A750 | Via upstream PyTorch XPU | Yes | Yes | Yes | Yes |
-| **Xe-LP (Flex)** | Flex 170, 140 | Limited | Yes | Yes | Partial | No |
-| **Gaudi 3** | Habana Gaudi 3 | End-of-line | Yes | Yes | Yes | N/A |
-
-> **Note:** Intel Falcon Shores has been cancelled. IPEX is being sunset (March 2026).
-> XPU support via upstream PyTorch SYCL is the recommended path forward.
-
 ## TPU Support
 
 | Generation | Chip | BF16 | FP32 | FP8 | HBM | Pods |
@@ -66,19 +54,19 @@ Complete hardware support table for TorchBridge backends.
 
 ## Feature Support by Backend
 
-| Feature | NVIDIA | AMD | Intel | TPU | CPU |
-|---------|--------|-----|-------|-----|-----|
-| Mixed precision | Yes | Yes | Yes | Yes | Partial |
-| FP8 training | H100+ | MI300X+ | No | No | No |
-| FP4 inference | B100+ | MI350X+ | No | No | No |
-| torch.compile | Yes | Yes | Yes | Partial | Yes |
-| Distributed (DDP) | Yes | Yes | Yes | Yes | No |
-| FSDP | Yes | Yes | Partial | Partial | No |
-| Tensor Parallel | Yes | Yes | Partial | Partial | No |
-| Gradient checkpointing | Yes | Yes | Yes | Yes | Yes |
-| Activation offloading | Yes | Yes | Yes | Partial | N/A |
-| Model export (TorchScript) | Yes | Yes | Yes | Partial | Yes |
-| Model export (ONNX) | Yes | Yes | Yes | Partial | Yes |
+| Feature | NVIDIA | AMD | TPU | CPU |
+|---------|--------|-----|-----|-----|
+| Mixed precision | Yes | Yes | Yes | Partial |
+| FP8 training | H100+ | MI300X+ | No | No |
+| FP4 inference | B100+ | MI350X+ | No | No |
+| torch.compile | Yes | Yes | Partial | Yes |
+| Distributed (DDP) | Yes | Yes | Yes | No |
+| FSDP | Yes | Yes | Partial | No |
+| Tensor Parallel | Yes | Yes | Partial | No |
+| Gradient checkpointing | Yes | Yes | Yes | Yes |
+| Activation offloading | Yes | Yes | Partial | N/A |
+| Model export (TorchScript) | Yes | Yes | Partial | Yes |
+| Model export (ONNX) | Yes | Yes | Partial | Yes |
 
 ## Cloud Platform Availability
 
@@ -92,7 +80,6 @@ Complete hardware support table for TorchBridge backends.
 | NVIDIA T4 | g4dn.xlarge | n1 + T4 | NC T4 v3 |
 | AMD MI300X | -- | -- | ND MI300X v5 |
 | AMD MI325X | -- | -- | -- |
-| Intel Max | -- | -- | -- |
 | TPU v6e | -- | ct6e-standard | -- |
 | TPU v5e | -- | ct5lp-hightpu | -- |
 | TPU v4 | -- | ct4p-hightpu | -- |

@@ -400,7 +400,7 @@ docker run {name}
 ## TorchBridge
 
 This project uses TorchBridge for hardware-agnostic PyTorch development.
-TorchBridge automatically detects your hardware (NVIDIA, AMD, Intel, TPU)
+TorchBridge automatically detects your hardware (NVIDIA, AMD, TPU)
 and applies the best optimizations.
 
 - Run `tb-doctor` to check your system compatibility
@@ -454,7 +454,7 @@ Examples:
 
         parser.add_argument(
             '--backend',
-            choices=['auto', 'nvidia', 'amd', 'intel', 'tpu', 'cpu'],
+            choices=['auto', 'nvidia', 'amd', 'tpu', 'cpu'],
             default='auto',
             help='Backend hint for config (default: auto)'
         )
@@ -593,7 +593,7 @@ def main():
     )
     parser.add_argument(
         '--backend',
-        choices=['auto', 'nvidia', 'amd', 'intel', 'tpu', 'cpu'],
+        choices=['auto', 'nvidia', 'amd', 'tpu', 'cpu'],
         default='auto',
         help='Backend hint for config (default: auto)'
     )
