@@ -1,6 +1,6 @@
 # TorchBridge Test Suite
 
-Comprehensive test suite for validating cross-backend hardware abstraction -- 1,239 tests.
+Comprehensive test suite for validating cross-backend hardware abstraction -- 1,234 tests.
 
 ## Quick Start
 
@@ -47,7 +47,6 @@ tests/
 │   ├── test_cdna4_detection.py
 │   ├── test_custom_kernels.py
 │   ├── test_hardware_abstraction.py
-│   ├── test_intel_backend.py
 │   ├── test_nvidia_backend.py
 │   ├── test_nvidia_config.py
 │   ├── test_tpu_backend.py
@@ -107,7 +106,6 @@ pytest -m benchmark      # Performance benchmarks
 pytest -m gpu            # Requires CUDA GPU
 pytest -m tpu            # Requires TPU
 pytest -m amd            # Requires AMD GPU (ROCm)
-pytest -m intel          # Requires Intel GPU (XPU)
 pytest -m fp8            # Requires FP8 hardware (H100+)
 
 # By duration

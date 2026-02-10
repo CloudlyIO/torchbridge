@@ -2,7 +2,7 @@
 Use Case 4: Backend-Agnostic Training Loop
 
 Demonstrates the core HAL value proposition: write a training loop ONCE,
-run it on any backend. The same code works on NVIDIA, AMD, Intel, TPU,
+run it on any backend. The same code works on NVIDIA, AMD, TPU,
 or CPU — TorchBridge handles device placement and backend-specific
 optimizations automatically.
 
@@ -228,6 +228,6 @@ print(f"  {'Final loss':<15s} {baseline_losses[-1]:>12.4f} {tb_losses[-1]:>12.4f
 print(f"  {'Total time':<15s} {baseline_time*1000:>11.1f}ms {tb_time*1000:>11.1f}ms")
 print(f"  {'Speedup':<15s} {'1.00x':>12s} {f'{speedup:.2f}x':>12s}")
 print()
-print("  The same training code runs on NVIDIA, AMD, Intel, TPU, or CPU.")
+print("  The same training code runs on NVIDIA, AMD, TPU, or CPU.")
 print("  On GPU, AMP (mixed precision) and backend.prepare_model() apply")
 print("  vendor-specific optimizations automatically.")

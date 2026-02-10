@@ -83,10 +83,6 @@ class HardwareAdapter:
                         from ..hardware.abstraction.vendor_adapters import NVIDIAAdapter
                         adapter = NVIDIAAdapter()
                         self.hal.register_vendor_adapter(adapter)
-                    elif vendor == HardwareVendor.INTEL:
-                        from ..hardware.abstraction.vendor_adapters import IntelAdapter
-                        adapter = IntelAdapter()
-                        self.hal.register_vendor_adapter(adapter)
                     elif vendor == HardwareVendor.UNKNOWN:  # CPU
                         from ..hardware.abstraction.vendor_adapters import CPUAdapter
                         adapter = CPUAdapter()

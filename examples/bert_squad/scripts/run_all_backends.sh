@@ -56,8 +56,6 @@ if torch.cuda.is_available():
         backends.append('cuda')
 if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
     backends.append('mps')
-if hasattr(torch, 'xpu') and torch.xpu.is_available():
-    backends.append('xpu')
 print(' '.join(backends))
 ")
 echo "  Available backends: $BACKENDS"

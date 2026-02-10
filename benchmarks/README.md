@@ -1,6 +1,6 @@
 # TorchBridge Benchmarks
 
-Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, TPU, and Intel.
+Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, and TPU.
 
 ## Quick Start
 
@@ -33,7 +33,6 @@ benchmarks/
 │   ├── backend_comparison.py        # Cross-backend comparison
 │   ├── nvidia_integration_benchmark.py  # NVIDIA-specific
 │   ├── amd_integration_benchmark.py # AMD-specific
-│   ├── intel_benchmark.py           # Intel-specific
 │   └── tpu_integration_benchmark.py # TPU-specific
 │
 ├── Feature Benchmarks
@@ -77,7 +76,6 @@ benchmarks/
 | `simple_benchmark_test.py` | Quick validation | Any |
 | `nvidia_integration_benchmark.py` | NVIDIA backend | NVIDIA GPU |
 | `amd_integration_benchmark.py` | AMD backend | AMD GPU |
-| `intel_benchmark.py` | Intel backend | Intel XPU |
 | `tpu_integration_benchmark.py` | TPU backend | Cloud TPU |
 | `backend_comparison.py` | Cross-backend | Any GPU |
 | `custom_kernel_benchmark.py` | CUDA kernels | CUDA GPU |

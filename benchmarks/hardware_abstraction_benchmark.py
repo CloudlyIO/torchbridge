@@ -45,7 +45,6 @@ try:
     )
     from torchbridge.hardware.abstraction.vendor_adapters import (
         CPUAdapter,
-        IntelAdapter,
         NVIDIAAdapter,
     )
 
@@ -282,7 +281,7 @@ class HALBenchmarkSuite:
         # Create test devices for mesh benchmarking
         test_devices = []
         for i in range(8):  # Create 8 test devices
-            vendor = HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.INTEL
+            vendor = HardwareVendor.NVIDIA if i % 2 == 0 else HardwareVendor.AMD
             device = DeviceSpec(
                 device_id=i + 1000,  # Use high IDs to avoid conflicts
                 vendor=vendor,
@@ -469,10 +468,9 @@ class HALBenchmarkSuite:
         # Test different vendor combinations
         vendor_combinations = [
             ([HardwareVendor.NVIDIA], "all_nvidia"),
-            ([HardwareVendor.INTEL], "all_intel"),
-            ([HardwareVendor.NVIDIA, HardwareVendor.INTEL], "nvidia_intel_mix"),
+            ([HardwareVendor.AMD], "all_amd"),
             ([HardwareVendor.NVIDIA, HardwareVendor.AMD], "nvidia_amd_mix"),
-            ([HardwareVendor.NVIDIA, HardwareVendor.INTEL, HardwareVendor.AMD], "multi_vendor"),
+            ([HardwareVendor.NVIDIA, HardwareVendor.AMD], "multi_vendor"),
         ]
 
         for vendors, combo_name in vendor_combinations:

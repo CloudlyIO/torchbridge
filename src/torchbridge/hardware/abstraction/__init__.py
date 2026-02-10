@@ -24,7 +24,6 @@ from .vendor_adapters import (
     AMDAdapter,
     CPUAdapter,
     CustomHardwareAdapter,
-    IntelAdapter,
     NVIDIAAdapter,
     auto_detect_best_adapter,
     create_custom_adapter,
@@ -47,7 +46,6 @@ __all__ = [
     # Vendor Adapters
     'NVIDIAAdapter',
     'AMDAdapter',
-    'IntelAdapter',
     'CPUAdapter',
 
     # Custom Hardware Support

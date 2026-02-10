@@ -4,7 +4,7 @@ Base Optimizer for All Hardware Backends
 This module provides the abstract base class for all optimizer implementations,
 defining the common interface and shared functionality for model optimization.
 
-Backends (NVIDIA, AMD, TPU, Intel) implement optimizers inheriting from this base
+Backends (NVIDIA, AMD, TPU) implement optimizers inheriting from this base
 while providing device-specific optimization strategies.
 
 """
@@ -620,7 +620,7 @@ class CPUOptimizer(BaseOptimizer):
             ),
             OptimizationStrategy(
                 name='mkl',
-                description='Intel MKL optimizations',
+                description='MKL math library optimizations',
                 applicable_levels=[
                     OptimizationLevel.O3
                 ],

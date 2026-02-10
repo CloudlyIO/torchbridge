@@ -9,11 +9,11 @@ TorchBridge auto-detects available hardware and selects the optimal backend:
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-backend_name = detect_best_backend()  # "cuda", "rocm", "xpu", "tpu", or "cpu"
+backend_name = detect_best_backend()  # "cuda", "rocm", "tpu", or "cpu"
 backend = BackendFactory.create(backend_name)
 ```
 
-Detection priority: NVIDIA CUDA > AMD ROCm > Intel XPU > Google TPU > CPU.
+Detection priority: NVIDIA CUDA > AMD ROCm > Google TPU > CPU.
 
 For most users, automatic selection is the right choice. Manual selection is useful when you have multiple accelerators or want to force a specific backend.
 
@@ -23,7 +23,6 @@ For most users, automatic selection is the right choice. Manual selection is use
 # Force a specific backend
 backend = BackendFactory.create("cuda")   # NVIDIA
 backend = BackendFactory.create("rocm")   # AMD
-backend = BackendFactory.create("xpu")    # Intel
 backend = BackendFactory.create("tpu")    # Google TPU
 backend = BackendFactory.create("cpu")    # CPU fallback
 ```
@@ -36,14 +35,14 @@ export TORCHBRIDGE_BACKEND=rocm
 
 ## Feature Matrix
 
-| Feature | NVIDIA | AMD | Intel | TPU | CPU |
-|---------|--------|-----|-------|-----|-----|
-| FP8 training | H100+ | -- | -- | -- | -- |
-| BF16 training | Ampere+ | CDNA2+ | PVC, Arc | All | Some |
-| FP16 training | All | All | PVC, Arc | -- | -- |
-| FlashAttention | Ampere+ | -- | -- | -- | -- |
-| Distributed | Multi-GPU | Multi-GPU | Multi-GPU | Pods | -- |
-| torch.compile | Yes | Yes | Yes | Partial | Yes |
+| Feature | NVIDIA | AMD | TPU | CPU |
+|---------|--------|-----|-----|-----|
+| FP8 training | H100+ | -- | -- | -- |
+| BF16 training | Ampere+ | CDNA2+ | All | Some |
+| FP16 training | All | All | -- | -- |
+| FlashAttention | Ampere+ | -- | -- | -- |
+| Distributed | Multi-GPU | Multi-GPU | Pods | -- |
+| torch.compile | Yes | Yes | Partial | Yes |
 
 ## Choosing by Workload
 
@@ -59,7 +58,7 @@ config = TorchBridgeConfig.for_training()
 
 ### Inference (Low Latency)
 
-**Best:** NVIDIA L4/T4, TPU v5e, Intel Arc
+**Best:** NVIDIA L4/T4, TPU v5e
 
 Optimized for throughput per dollar.
 
@@ -109,18 +108,6 @@ config = AMDConfig(
     architecture=AMDArchitecture.CDNA3,
     enable_matrix_cores=True,
     memory_pool_size_gb=8.0,
-)
-```
-
-### Intel
-
-```python
-from torchbridge.core.config import IntelConfig
-
-config = IntelConfig(
-    ipex_enabled=True,
-    onednn_enabled=True,
-    enable_amx=True,
 )
 ```
 

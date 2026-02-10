@@ -1,11 +1,11 @@
 # BERT on SQuAD — Cross-Backend Training & Deployment
 
 Fine-tune BERT-base on SQuAD 2.0 using TorchBridge HAL for hardware-agnostic
-training and deployment across NVIDIA, AMD, Intel, and CPU backends.
+training and deployment across NVIDIA, AMD, and CPU backends.
 
 ## Project Goals
 
-1. **Train anywhere** — Same script works on CUDA, ROCm, XPU, MPS, and CPU
+1. **Train anywhere** — Same script works on CUDA, ROCm, MPS, and CPU
 2. **Validate consistency** — Ensure numerical parity across backends
 3. **Export portable** — ONNX export that runs on any runtime
 4. **Benchmark performance** — Compare latency/throughput across hardware
@@ -56,7 +56,6 @@ bert_squad/
 |---------|---------|-------------|
 | NVIDIA CUDA | GTX 1080 (8GB) | A10G/L4 (24GB) |
 | AMD ROCm | MI100 (32GB) | MI300X (192GB) |
-| Intel XPU | Arc A770 (16GB) | Gaudi2 |
 | Apple MPS | M1 (8GB) | M2 Pro (16GB) |
 | CPU | 16GB RAM | 32GB RAM |
 

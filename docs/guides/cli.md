@@ -18,7 +18,7 @@ torchbridge optimize --model model.pt --output optimized.pt --level production
 |------|-------------|---------|
 | `--output` | Output path | `optimized_<input>` |
 | `--level` | Optimization level: `basic`, `jit`, `compile`, `triton`, `production` | `basic` |
-| `--backend` | Force backend: `cuda`, `rocm`, `xpu`, `tpu`, `cpu` | auto |
+| `--backend` | Force backend: `cuda`, `rocm`, `tpu`, `cpu` | auto |
 | `--dtype` | Target dtype: `fp32`, `fp16`, `bf16` | auto |
 | `--verbose` | Enable verbose output | false |
 
@@ -114,7 +114,7 @@ tb-doctor --ci
 
 **Output includes:**
 - Python and PyTorch versions
-- Available backends (CUDA, ROCm, IPEX, XLA)
+- Available backends (CUDA, ROCm, XLA)
 - GPU information (model, memory, compute capability)
 - Driver versions
 - TorchBridge version and configuration
@@ -199,7 +199,7 @@ torchbridge init --name my_project --template training
 |------|-------------|---------|
 | `--name` | Project name (required) | -- |
 | `--template` | Template: `training`, `inference`, `distributed`, `serving` | `training` |
-| `--backend` | Backend hint: `auto`, `nvidia`, `amd`, `intel`, `tpu`, `cpu` | `auto` |
+| `--backend` | Backend hint: `auto`, `nvidia`, `amd`, `tpu`, `cpu` | `auto` |
 | `--output-dir` | Parent directory for generated project | `.` |
 | `--force` | Overwrite existing directory | false |
 | `--verbose` | Detailed output | false |
