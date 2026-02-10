@@ -1,7 +1,7 @@
 """
 TorchBridge — Hardware Abstraction Layer for PyTorch
 
-Unified hardware abstraction across NVIDIA, AMD, Intel, and TPU backends.
+Unified hardware abstraction across NVIDIA, AMD, and TPU backends.
 """
 
 # Suppress noisy platform-specific warnings before importing torch
@@ -24,7 +24,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("torchbridge-ml")
 except PackageNotFoundError:
-    __version__ = "0.5.9"  # Fallback for development
+    __version__ = "0.5.10"  # Fallback for development
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing

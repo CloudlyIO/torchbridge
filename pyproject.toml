@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.9"
-description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Intel, and TPU backends"
+version = "0.5.10"
+description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-keywords = ["pytorch", "hardware-abstraction", "multi-backend", "cuda", "amd", "intel", "tpu", "machine-learning", "deep-learning"]
+keywords = ["pytorch", "hardware-abstraction", "multi-backend", "cuda", "amd", "tpu", "machine-learning", "deep-learning"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -203,7 +203,6 @@ markers = [
     "gpu: Requires CUDA GPU",
     "tpu: Requires TPU",
     "amd: Requires AMD GPU (ROCm)",
-    "intel: Requires Intel GPU (XPU)",
     "fp8: Requires FP8 hardware (H100+)",
     "slow: Long-running tests",
     "benchmark: Performance benchmarks",
