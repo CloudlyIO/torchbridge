@@ -37,7 +37,7 @@ class HardwareBackend(Enum):
     CPU = "cpu"
     TPU = "tpu"
     AMD = "amd"
-    INTEL = "intel"
+    TRAINIUM = "trainium"
     CUSTOM = "custom"
 
 
@@ -90,14 +90,13 @@ class AMDArchitecture(Enum):
     RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
 
 
-class IntelArchitecture(Enum):
-    """Intel XPU architectures."""
+class TrainiumArchitecture(Enum):
+    """AWS Trainium chip generations."""
     AUTO = "auto"
-    PVC = "pvc"          # Ponte Vecchio (Data Center Max)
-    ATS = "ats"          # Arctic Sound (older data center)
-    DG2 = "dg2"          # Arc GPUs (A770, A750, A580)
-    FLEX = "flex"        # Data Center Flex series
-    INTEGRATED = "integrated"  # Integrated graphics (Iris Xe, etc.)
+    TRN1 = "trn1"        # Trainium1, NeuronCore v1, 32GB HBM
+    TRN2 = "trn2"        # Trainium2, NeuronCore v3, 96GB HBM
+    TRN3 = "trn3"        # Trainium3, NeuronCore v4, 144GB HBM3e
+    INF2 = "inf2"        # Inferentia2 (inference-optimized)
 
 
 class AttentionPatterns(Enum):
@@ -606,91 +605,84 @@ class AMDConfig:
 
 
 @dataclass
-class IntelConfig:
-    """Intel XPU-specific hardware configuration."""
+class TrainiumConfig:
+    """AWS Trainium-specific configuration."""
     enabled: bool = True
-    architecture: IntelArchitecture = IntelArchitecture.AUTO
+    architecture: TrainiumArchitecture = TrainiumArchitecture.AUTO
     device_id: int = 0
 
-    # IPEX settings
-    ipex_enabled: bool = True
-    ipex_optimization_level: str = "O1"  # "O0", "O1"
+    # Neuron compiler settings
+    neuron_cc_flags: str = ""
+    compilation_timeout_seconds: int = 600
+    enable_graph_caching: bool = True
 
-    # oneDNN settings
-    onednn_enabled: bool = True
-    onednn_fusion_enabled: bool = True
+    # Precision
+    precision: str = "bfloat16"    # bf16 is Trainium's native precision
+    mixed_precision: bool = True
+    enable_cfp8: bool = False      # Configurable FP8 (Trn1+)
+    enable_mxfp8: bool = False     # Microscaling FP8 (Trn2+)
+    enable_mxfp4: bool = False     # Microscaling FP4 (Trn3 only)
 
-    # Precision settings
-    default_precision: str = "fp32"  # "fp32", "fp16", "bf16"
-    enable_mixed_precision: bool = True
-    allow_fp16: bool = True
-    allow_bf16: bool = True
+    # Memory
+    memory_fraction: float = 0.90
+    gradient_checkpointing: bool = True
 
-    # Memory settings
-    enable_memory_pooling: bool = True
-    max_memory_fraction: float = 0.9
+    # Distributed
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
 
-    # Performance optimization
-    optimization_level: str = "balanced"  # "conservative", "balanced", "aggressive"
-    enable_amx: bool = True  # Enable AMX (Advanced Matrix Extensions) if available
-    auto_kernel_selection: bool = True
+    # Cache management
+    cache_max_size: int = 100
 
-    # Profiling and debugging
-    enable_profiling: bool = False
+    # Allocation tracking
+    allocation_history_retention_seconds: int = 3600
+
+    # Validation
+    enable_strict_validation: bool = False
+
+    # Monitoring
+    monitoring_interval_seconds: float = 1.0
+    monitoring_duration_seconds: float = 60.0
 
     def __post_init__(self):
-        """Auto-configure based on detected architecture."""
-        if self.architecture == IntelArchitecture.AUTO:
+        """Auto-detect architecture from environment."""
+        if self.architecture == TrainiumArchitecture.AUTO:
             self.architecture = self._detect_architecture()
 
-        # Configure settings based on architecture
-        if self.architecture == IntelArchitecture.PVC:
-            # Ponte Vecchio (Data Center Max) - most advanced
-            self.allow_bf16 = True
-            self.enable_amx = True
-        elif self.architecture == IntelArchitecture.DG2:
-            # Arc GPUs - consumer
-            self.allow_bf16 = True
-            self.enable_amx = False
-        elif self.architecture == IntelArchitecture.FLEX:
-            # Flex series - data center
-            self.allow_bf16 = True
-            self.enable_amx = False
-        else:
-            # Integrated graphics
-            self.allow_bf16 = False
-            self.enable_amx = False
-            self.max_memory_fraction = 0.5  # Share memory with system
+        # Configure precision based on architecture
+        if self.architecture == TrainiumArchitecture.TRN3:
+            # Trn3 supports MXFP4 and MXFP8
+            pass  # Let user configure explicitly
+        elif self.architecture == TrainiumArchitecture.TRN2:
+            # Trn2 supports MXFP8 but not MXFP4
+            self.enable_mxfp4 = False
+        elif self.architecture in (TrainiumArchitecture.TRN1, TrainiumArchitecture.INF2):
+            # Trn1/Inf2 support cFP8 only
+            self.enable_mxfp8 = False
+            self.enable_mxfp4 = False
 
-    def _detect_architecture(self) -> IntelArchitecture:
-        """Detect Intel XPU architecture."""
+    def _detect_architecture(self) -> TrainiumArchitecture:
+        """Detect Trainium architecture from environment."""
         try:
-            import torch
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
-                device_props = torch.xpu.get_device_properties(0)
-                device_name = device_props.name.upper()
+            instance_type = os.environ.get("NEURON_INSTANCE_TYPE", "")
+            if "trn1" in instance_type.lower():
+                return TrainiumArchitecture.TRN1
+            elif "trn2" in instance_type.lower():
+                return TrainiumArchitecture.TRN2
+            elif "trn3" in instance_type.lower():
+                return TrainiumArchitecture.TRN3
+            elif "inf2" in instance_type.lower():
+                return TrainiumArchitecture.INF2
 
-                # Ponte Vecchio / Data Center Max
-                if any(name in device_name for name in ["MAX", "PONTE VECCHIO", "PVC"]):
-                    return IntelArchitecture.PVC
-
-                # Arc GPUs (DG2)
-                if any(name in device_name for name in ["ARC", "DG2", "A770", "A750", "A580"]):
-                    return IntelArchitecture.DG2
-
-                # Flex series
-                if "FLEX" in device_name:
-                    return IntelArchitecture.FLEX
-
-                # Integrated graphics
-                if any(name in device_name for name in ["IRIS", "UHD", "INTEGRATED"]):
-                    return IntelArchitecture.INTEGRATED
-
-                return IntelArchitecture.DG2  # Default to Arc for unknown
-        except (ImportError, AttributeError, Exception):
+            # Fallback: try to detect from Neuron runtime
+            neuron_cores = os.environ.get("NEURON_RT_VISIBLE_CORES", "")
+            if neuron_cores:
+                # We're on a Neuron instance but don't know the type
+                return TrainiumArchitecture.TRN2  # Default to most common
+        except Exception:
             pass
 
-        return IntelArchitecture.DG2  # Default fallback
+        return TrainiumArchitecture.TRN2  # Default fallback
 
 
 @dataclass
@@ -704,7 +696,7 @@ class HardwareConfig:
     nvidia: NVIDIAConfig = field(default_factory=NVIDIAConfig)
     tpu: TPUConfig = field(default_factory=TPUConfig)
     amd: AMDConfig = field(default_factory=AMDConfig)
-    intel: IntelConfig = field(default_factory=IntelConfig)
+    trainium: TrainiumConfig = field(default_factory=TrainiumConfig)
 
     # Tensor Core settings (general)
     tensor_cores_enabled: bool = True
@@ -722,12 +714,12 @@ class HardwareConfig:
         """Auto-configure hardware settings based on detected capabilities."""
         # Auto-detect hardware backend if not explicitly set
         if self.backend == HardwareBackend.CUDA and not torch.cuda.is_available():
-            # Try Intel XPU detection first
-            if self._detect_intel_xpu():
-                self.backend = HardwareBackend.INTEL
             # Try AMD ROCm detection
-            elif self._detect_amd_rocm():
+            if self._detect_amd_rocm():
                 self.backend = HardwareBackend.AMD
+            # Try Trainium detection (before TPU to avoid XLA misdetection)
+            elif self._detect_trainium_environment():
+                self.backend = HardwareBackend.TRAINIUM
             # Try TPU detection
             elif self._detect_tpu_environment():
                 self.backend = HardwareBackend.TPU
@@ -749,14 +741,14 @@ class HardwareConfig:
         else:
             self.amd.enabled = False
 
-        # Configure Intel settings
-        if self.backend == HardwareBackend.INTEL:
-            self.intel.enabled = True
-            # Disable incompatible settings for Intel XPU
-            self.triton_enabled = False  # Triton is CUDA-specific
-            # Intel config will auto-detect architecture in its own __post_init__
+        # Configure Trainium settings
+        if self.backend == HardwareBackend.TRAINIUM:
+            self.trainium.enabled = True
+            # Disable incompatible settings for Trainium
+            self.tensor_cores_enabled = False  # Trainium uses NeuronCores, not Tensor Cores
+            self.triton_enabled = False        # Triton is CUDA-specific
         else:
-            self.intel.enabled = False
+            self.trainium.enabled = False
 
         # Configure TPU settings
         if self.backend == HardwareBackend.TPU:
@@ -767,16 +759,6 @@ class HardwareConfig:
         else:
             self.tpu.enabled = False
 
-    def _detect_intel_xpu(self) -> bool:
-        """Check if Intel XPU is available."""
-        try:
-            import torch
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
-                return True
-        except Exception:
-            pass
-        return False
-
     def _detect_amd_rocm(self) -> bool:
         """Check if AMD ROCm is available."""
         try:
@@ -786,6 +768,20 @@ class HardwareConfig:
         except Exception:
             pass
         return False
+
+    def _detect_trainium_environment(self) -> bool:
+        """Check if running on AWS Trainium/Inferentia2."""
+        try:
+            import torch_neuronx  # noqa: F401
+            # Trainium uses XLA under the hood but is not a TPU
+            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
+            if pjrt == 'NEURON':
+                return True
+            if os.environ.get('NEURON_RT_VISIBLE_CORES'):
+                return True
+            return False
+        except ImportError:
+            return False
 
     def _detect_tpu_environment(self) -> bool:
         """Check if running in TPU environment (compatible with torch_xla 2.9+)."""
@@ -985,10 +981,18 @@ class TorchBridgeConfig:
         if torch.cuda.is_available():
             return torch.device("cuda")
 
-        # Try Intel XPU
+        # Try Trainium (before TPU — both use XLA)
         try:
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
-                return torch.device("xpu")
+            import torch_neuronx  # noqa: F401
+            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
+            if pjrt == 'NEURON' or os.environ.get('NEURON_RT_VISIBLE_CORES'):
+                import torch_xla
+                if hasattr(torch_xla, 'device'):
+                    return torch_xla.device()
+                import torch_xla.core.xla_model as xm
+                return xm.xla_device()
+        except ImportError:
+            pass
         except Exception:
             pass
 
@@ -1024,10 +1028,12 @@ class TorchBridgeConfig:
         # Sync hardware backend with detected device
         if self.device.type == "cuda":
             self.hardware.backend = HardwareBackend.CUDA
-        elif self.device.type == "xpu":
-            self.hardware.backend = HardwareBackend.INTEL
-        elif str(self.device).startswith('xla'):  # TPU device
-            self.hardware.backend = HardwareBackend.TPU
+        elif str(self.device).startswith('xla'):
+            # Distinguish Trainium from TPU — both use XLA
+            if os.environ.get('PJRT_DEVICE', '').upper() == 'NEURON' or os.environ.get('NEURON_RT_VISIBLE_CORES'):
+                self.hardware.backend = HardwareBackend.TRAINIUM
+            else:
+                self.hardware.backend = HardwareBackend.TPU
         else:
             self.hardware.backend = HardwareBackend.CPU
 
@@ -1035,26 +1041,15 @@ class TorchBridgeConfig:
         if self.device.type == "cpu":
             self.hardware.tensor_cores_enabled = False
             self.precision.fp8_enabled = False
-        elif self.device.type == "xpu":  # Intel XPU
-            self.hardware.tensor_cores_enabled = False  # Intel uses Vector Engine, not Tensor Cores
-            self.precision.fp8_enabled = False          # Intel XPU uses BF16/FP16, not FP8
-            self.hardware.triton_enabled = False        # Triton is CUDA-specific
-        elif str(self.device).startswith('xla'):  # TPU
-            self.hardware.tensor_cores_enabled = False  # TPU doesn't use Tensor Cores
-            self.precision.fp8_enabled = False          # TPU uses bfloat16, not FP8
+        elif str(self.device).startswith('xla'):  # TPU or Trainium
+            self.hardware.tensor_cores_enabled = False  # Neither uses Tensor Cores
+            self.precision.fp8_enabled = False          # Both use bfloat16 primarily
             self.hardware.triton_enabled = False        # Triton is CUDA-specific
 
         # Validate memory settings
         if self.memory.max_memory_gb is None:
             if self.device.type == "cuda":
                 self.memory.max_memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-            elif self.device.type == "xpu":
-                # Intel XPU memory varies by device
-                try:
-                    props = torch.xpu.get_device_properties(0)
-                    self.memory.max_memory_gb = props.total_memory / (1024**3)
-                except Exception:
-                    self.memory.max_memory_gb = 16.0  # Default for Arc GPUs
             elif str(self.device).startswith('xla'):  # TPU
                 # TPU memory varies by type, use reasonable default
                 self.memory.max_memory_gb = 32.0  # Default for v5e

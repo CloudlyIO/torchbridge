@@ -1,18 +1,16 @@
-# TorchBridge AMD GPU Container
-# ROCm-based container for AMD GPU inference and training
+# TorchBridge AWS Trainium Container
+# Optimized for training and inference on AWS Trainium (Trn1/Trn2/Trn3) instances
 #
 # Build:
-#   docker build -f docker/Dockerfile.amd -t torchbridge:amd .
+#   docker build -f docker/Dockerfile.trainium -t torchbridge:trainium .
 #
-# Run:
-#   docker run --device=/dev/kfd --device=/dev/dri --group-add video \
-#     -p 8000:8000 torchbridge:amd
+# Run (on Trainium instance):
+#   docker run --device=/dev/neuron0 -p 8000:8000 torchbridge:trainium
 #
-# Tested on: AMD Instinct MI250X, MI300X
 # Version: see pyproject.toml
 
-# ROCm 6.0 base image with PyTorch support
-FROM rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 AS base
+# Use AWS Neuron SDK base image with PyTorch
+FROM public.ecr.aws/neuron/pytorch-training-neuronx:2.5.1-neuronx-py311-sdk2.21.0-ubuntu22.04 AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,13 +20,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LC_ALL=C.UTF-8 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HSA_OVERRIDE_GFX_VERSION=11.0.0
-
-# Install additional system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    PJRT_DEVICE=NEURON \
+    NEURON_CC_FLAGS="--auto-cast=matmul --auto-cast-type=bf16"
 
 # Create app directory
 WORKDIR /app
@@ -48,8 +41,8 @@ COPY pyproject.toml ./
 # Install TorchBridge
 RUN pip install -e .
 
-# Verify ROCm + PyTorch integration
-RUN python -c "import torch; print(f'PyTorch {torch.__version__}'); print(f'ROCm available: {torch.cuda.is_available()}'); print(f'HIP version: {torch.version.hip}')" || true
+# Verify Neuron + PyTorch
+RUN python3 -c "import torch; import torch_neuronx; print(f'PyTorch {torch.__version__}, Neuron SDK: OK')"
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
@@ -69,8 +62,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Labels
-LABEL org.opencontainers.image.title="TorchBridge AMD" \
-      org.opencontainers.image.description="Production inference container with AMD ROCm GPU support" \
+LABEL org.opencontainers.image.title="TorchBridge Trainium" \
+      org.opencontainers.image.description="Training and inference container with AWS Trainium support" \
       org.opencontainers.image.version="0.5.10" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

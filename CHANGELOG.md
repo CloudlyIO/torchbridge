@@ -8,7 +8,67 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.9 (HAL Identity Alignment)
+**Current Version**: v0.5.10 (AWS Trainium Backend)
+
+---
+
+## [0.5.11] - 2026-02-10 - Intel Backend Removal
+
+### **Summary**
+
+Complete removal of the Intel GPU backend (IPEX/XPU/Gaudi/oneAPI). Intel's GPU ecosystem
+is EOL: Falcon Shores cancelled, Gaudi discontinued, IPEX sunset March 2026. TorchBridge
+now supports four backends: NVIDIA (CUDA), AMD (ROCm), TPU (XLA), and AWS Trainium (NeuronX).
+
+### **Removed**
+
+- **Intel backend package** (`backends/intel/`): 6 files — `IntelBackend`, `IntelOptimizer`, `IntelMemoryManager`, `xpu_utilities`, `intel_exceptions`, and package init (~1,943 LOC)
+- **`IntelArchitecture` enum and `IntelConfig` dataclass** from `core/config.py`
+- **`INTEL` from `BackendType` and `HardwareBackend` enums** — including `xpu`/`sycl` aliases
+- **Intel auto-detection** (`_check_intel_available()`, `_detect_intel_xpu()`)
+- **Intel test suite** (`test_intel_backend.py`)
+- **Intel benchmark** (`benchmarks/intel_benchmark.py`)
+- **Intel demo** (`demos/intel_xpu_demo.py`)
+- **Intel Docker image** (`docker/Dockerfile.intel`) and `inference-intel` compose service
+- **Intel CI workflow** (`.github/workflows/intel-gpu-test.yml`)
+- **Intel documentation** (`docs/backends/intel.md`)
+- **Intel cloud validation scripts** (`scripts/cloud_testing/intel_devcloud/`, 3 report files)
+- **Intel references** from ~60 files: README, docs, guides, examples, demos, benchmarks, scripts, CI, issue templates, hardware matrix
+
+### **Changed**
+
+- Backend factory priority unchanged: NVIDIA (100) > AMD (90) > Trainium (88) > TPU (85) > CPU (0)
+- `pyproject.toml`: description and keywords updated (no Intel)
+- `pytest.ini` / `pyproject.toml`: removed `intel` test marker
+- All multi-backend lists, tables, and diagrams updated to reflect 4 backends
+- Docker LABELs: all 7 Dockerfiles updated from 0.5.10 to 0.5.11
+
+---
+
+## [0.5.10] - 2026-02-09 - AWS Trainium Backend
+
+### **Summary**
+
+Added full AWS Trainium backend support. TorchBridge now supports NVIDIA, AMD,
+TPU, and AWS Trainium (Trn1/Trn2/Trn3) and Inferentia2 hardware via the Neuron SDK.
+
+### **Added**
+
+- **Trainium backend package** (`backends/trainium/`): 7 new files — `TrainiumBackend`, `TrainiumOptimizer`, `NeuronCompiler`, `TrainiumMemoryManager`, `neuron_utilities`, `trainium_exceptions`, and package init
+- **`TrainiumArchitecture` enum**: TRN1, TRN2, TRN3, INF2 chip generations
+- **`TrainiumConfig` dataclass**: Neuron compiler settings, precision (BF16/cFP8/MXFP8/MXFP4), memory fraction, distributed parallelism, graph caching
+- **`TRAINIUM` in `HardwareBackend`** and **`BackendType`** enums with priority 88 (between TPU and AMD)
+- **Trainium auto-detection**: via `torch_neuronx` import + `PJRT_DEVICE=NEURON` / `NEURON_RT_VISIBLE_CORES` env vars
+- **Trainium test suite** (`test_trainium_backend.py`): ~40 tests covering backend, config, optimizer, compiler, memory manager, exceptions, and factory integration
+- **Trainium documentation** (`docs/backends/trainium.md`)
+- **Trainium Docker image** (`docker/Dockerfile.trainium`): Neuron SDK base image with TorchBridge
+
+### **Changed**
+
+- Backend factory detects Trainium before TPU to avoid XLA misdetection
+- `TorchBridgeConfig._detect_device()` checks Trainium before TPU
+- `HardwareConfig.__post_init__` includes Trainium detection and configuration
+- Docker LABELs: all 7 Dockerfiles updated from 0.5.9 to 0.5.10
 
 ---
 

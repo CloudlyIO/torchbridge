@@ -32,7 +32,7 @@ class BackendType(Enum):
     NVIDIA = "nvidia"
     AMD = "amd"
     TPU = "tpu"
-    INTEL = "intel"
+    TRAINIUM = "trainium"
     CPU = "cpu"
 
     @classmethod
@@ -48,8 +48,8 @@ class BackendType(Enum):
             'rocm': cls.AMD,
             'hip': cls.AMD,
             'xla': cls.TPU,
-            'xpu': cls.INTEL,
-            'sycl': cls.INTEL,
+            'neuron': cls.TRAINIUM,
+            'trn': cls.TRAINIUM,
         }
         return aliases.get(name_lower, cls.CPU)
 
@@ -81,8 +81,8 @@ class BackendFactory:
     _priority: dict[BackendType, int] = {
         BackendType.NVIDIA: 100,  # Highest priority
         BackendType.AMD: 90,
+        BackendType.TRAINIUM: 88,
         BackendType.TPU: 85,
-        BackendType.INTEL: 80,
         BackendType.CPU: 0,  # Fallback
     }
 
@@ -246,6 +246,14 @@ class BackendFactory:
             except ImportError:
                 logger.warning("AMD backend not available")
 
+        elif backend_type == BackendType.TRAINIUM:
+            try:
+                from .trainium import TrainiumBackend
+                cls._backends[BackendType.TRAINIUM] = TrainiumBackend
+                return TrainiumBackend
+            except ImportError:
+                logger.warning("Trainium backend not available")
+
         elif backend_type == BackendType.TPU:
             try:
                 from .tpu import TPUBackend
@@ -253,14 +261,6 @@ class BackendFactory:
                 return TPUBackend
             except ImportError:
                 logger.warning("TPU backend not available")
-
-        elif backend_type == BackendType.INTEL:
-            try:
-                from .intel import IntelBackend
-                cls._backends[BackendType.INTEL] = IntelBackend
-                return IntelBackend
-            except ImportError:
-                logger.warning("Intel backend not available")
 
         # Default to CPU
         return CPUBackend
@@ -283,13 +283,13 @@ class BackendFactory:
         if cls._check_amd_available():
             available.append(BackendType.AMD)
 
+        # Check Trainium (before TPU to avoid XLA misdetection)
+        if cls._check_trainium_available():
+            available.append(BackendType.TRAINIUM)
+
         # Check TPU/XLA
         if cls._check_tpu_available():
             available.append(BackendType.TPU)
-
-        # Check Intel/XPU
-        if cls._check_intel_available():
-            available.append(BackendType.INTEL)
 
         # CPU is always available
         available.append(BackendType.CPU)
@@ -327,6 +327,28 @@ class BackendFactory:
             return False
 
     @classmethod
+    def _check_trainium_available(cls) -> bool:
+        """Check if AWS Trainium/Inferentia2 is available."""
+        if BackendType.TRAINIUM in cls._availability_checks:
+            return cls._availability_checks[BackendType.TRAINIUM]()
+
+        try:
+            import os
+
+            import torch_neuronx  # noqa: F401
+
+            # Trainium uses XLA but is not a TPU
+            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
+            if pjrt == 'NEURON':
+                return True
+            # Also check if neuron runtime cores are visible
+            if os.environ.get('NEURON_RT_VISIBLE_CORES'):
+                return True
+            return False
+        except ImportError:
+            return False
+
+    @classmethod
     def _check_tpu_available(cls) -> bool:
         """Check if TPU/XLA is available."""
         if BackendType.TPU in cls._availability_checks:
@@ -337,19 +359,6 @@ class BackendFactory:
             # Try to get a device - this will fail if no TPU
             xm.xla_device()
             return True
-        except Exception:
-            return False
-
-    @classmethod
-    def _check_intel_available(cls) -> bool:
-        """Check if Intel XPU is available."""
-        if BackendType.INTEL in cls._availability_checks:
-            return cls._availability_checks[BackendType.INTEL]()
-
-        try:
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
-                return True
-            return False
         except Exception:
             return False
 
@@ -381,12 +390,10 @@ class BackendFactory:
             info['available'] = cls._check_amd_available()
             if info['available']:
                 info['hip_version'] = getattr(torch.version, 'hip', None)
+        elif backend_type == BackendType.TRAINIUM:
+            info['available'] = cls._check_trainium_available()
         elif backend_type == BackendType.TPU:
             info['available'] = cls._check_tpu_available()
-        elif backend_type == BackendType.INTEL:
-            info['available'] = cls._check_intel_available()
-            if info['available']:
-                info['device_count'] = torch.xpu.device_count() if hasattr(torch, 'xpu') else 0
         elif backend_type == BackendType.CPU:
             info['available'] = True
             import platform
@@ -432,8 +439,8 @@ class BackendFactory:
                     print(f"           CUDA: {info['cuda_version']}, Devices: {info['device_count']}")
                 if 'hip_version' in info:
                     print(f"           HIP: {info['hip_version']}")
-                if 'device_count' in info and bt == BackendType.INTEL:
-                    print(f"           XPU Devices: {info['device_count']}")
+                if bt == BackendType.TRAINIUM:
+                    print("           Neuron SDK detected")
 
         print("\n" + "=" * 60)
         if available and available[0] != BackendType.CPU:
