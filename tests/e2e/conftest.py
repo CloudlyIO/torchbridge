@@ -190,80 +190,76 @@ def cuda_device():
 # =============================================================================
 
 @pytest.fixture(scope="session")
-def bert_model_and_tokenizer():
-    """Load real BERT model and tokenizer (session-scoped to avoid re-downloading)."""
+def qwen3_model_and_tokenizer():
+    """Load Qwen3-0.6B model and tokenizer (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
-    from transformers import AutoModel, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    model_name = "bert-base-uncased"
+    model_name = "Qwen/Qwen3-0.6B"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
     except Exception as e:
-        pytest.skip(f"Failed to load BERT model: {e}")
+        pytest.skip(f"Failed to load Qwen3 model: {e}")
     model.eval()
 
     return model, tokenizer
 
 
 @pytest.fixture(scope="session")
-def gpt2_model_and_tokenizer():
-    """Load real GPT-2 model and tokenizer (session-scoped to avoid re-downloading)."""
+def deepseek_model_and_tokenizer():
+    """Load DeepSeek-R1-Distill-Qwen-1.5B model and tokenizer (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
-    from transformers import GPT2LMHeadModel, GPT2Tokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    model_name = "gpt2"
+    model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     try:
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
         tokenizer.pad_token = tokenizer.eos_token
-        model = GPT2LMHeadModel.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
     except Exception as e:
-        pytest.skip(f"Failed to load GPT-2 model: {e}")
+        pytest.skip(f"Failed to load DeepSeek model: {e}")
     model.eval()
 
     return model, tokenizer
 
 
 @pytest.fixture(scope="session")
-def resnet50_model():
-    """Load real ResNet-50 model (session-scoped)."""
-    if not _check_torchvision():
-        pytest.skip("torchvision not available")
+def dinov2_model():
+    """Load DINOv2-small model (session-scoped)."""
+    if not _check_transformers():
+        pytest.skip("transformers not available")
 
-    import ssl
-    import urllib.error
+    from transformers import AutoModel
 
-    from torchvision.models import ResNet50_Weights, resnet50
-
+    model_name = "facebook/dinov2-small"
     try:
-        model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+        model = AutoModel.from_pretrained(model_name)
         model.eval()
         return model
-    except (urllib.error.URLError, ssl.SSLError, OSError) as e:
-        pytest.skip(f"Cannot download ResNet-50 weights: {e}")
+    except Exception as e:
+        pytest.skip(f"Failed to load DINOv2 model: {e}")
 
 
 @pytest.fixture(scope="session")
-def clip_model_and_processor():
-    """Load real CLIP model and processor (session-scoped)."""
+def minilm_model():
+    """Load MiniLM-L6-v2 embedding model (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
 
-    from transformers import CLIPModel, CLIPProcessor
+    from transformers import AutoModel
 
-    model_name = "openai/clip-vit-base-patch32"
+    model_name = "sentence-transformers/all-MiniLM-L6-v2"
     try:
-        processor = CLIPProcessor.from_pretrained(model_name)
-        model = CLIPModel.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
+        model.eval()
+        return model
     except Exception as e:
-        pytest.skip(f"Failed to load CLIP model: {e}")
-    model.eval()
-
-    return model, processor
+        pytest.skip(f"Failed to load MiniLM model: {e}")
 
 
 # =============================================================================

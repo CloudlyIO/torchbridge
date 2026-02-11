@@ -630,8 +630,7 @@ class TestCleanup:
 
         # Check thread stopped
         if llm_server._batch_thread:
-            # Thread should have stopped or be about to stop
-            pass
+            assert not llm_server._batch_thread.is_alive()
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

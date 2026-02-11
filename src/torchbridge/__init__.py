@@ -24,7 +24,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("torchbridge-ml")
 except PackageNotFoundError:
-    __version__ = "0.5.11"  # Fallback for development
+    __version__ = "0.5.12"  # Fallback for development
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing

@@ -1,6 +1,6 @@
 # TorchBridge Test Suite
 
-Comprehensive test suite for validating cross-backend hardware abstraction -- 1,234 tests.
+Comprehensive test suite for validating cross-backend hardware abstraction -- 1,270+ tests.
 
 ## Quick Start
 
@@ -31,7 +31,16 @@ tests/
 ├── unit/                    # Fast, isolated tests (<1s each)
 │   ├── test_configs.py
 │   ├── test_kernel_registry.py
+│   ├── test_mixture_of_experts.py
 │   └── test_performance_tracker.py
+│
+├── models/                  # Real-model HAL tests (@real_model marker)
+│   ├── test_qwen3_hal.py
+│   ├── test_deepseek_r1_hal.py
+│   ├── test_dinov2_hal.py
+│   ├── test_minilm_hal.py
+│   ├── test_whisper_hal.py
+│   └── test_qwen25_vl_hal.py
 │
 ├── integration/             # Multi-component tests (1-30s)
 │   ├── test_backend_integration.py
@@ -107,6 +116,9 @@ pytest -m gpu            # Requires CUDA GPU
 pytest -m tpu            # Requires TPU
 pytest -m amd            # Requires AMD GPU (ROCm)
 pytest -m fp8            # Requires FP8 hardware (H100+)
+
+# By model type
+pytest -m real_model     # Real pretrained model tests
 
 # By duration
 pytest -m slow           # Long-running tests
