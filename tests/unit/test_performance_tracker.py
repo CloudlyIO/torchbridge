@@ -169,8 +169,11 @@ class TestPerformanceTracker:
         assert baseline_cpu.backend == "cpu"
         assert baseline_nvidia.backend == "nvidia"
 
-    def test_metrics_persistence(self, temp_storage, simple_model, sample_inputs):
-        """Test that metrics are persisted to disk."""
+    def test_metrics_persistence(self, temp_storage, simple_model, sample_inputs, monkeypatch):
+        """Test that metrics are persisted to disk when opt-in enabled."""
+        # Enable metrics persistence via env var
+        monkeypatch.setenv("TORCHBRIDGE_METRICS", "1")
+
         # Create tracker and record metrics
         tracker1 = PerformanceTracker(storage_path=temp_storage)
         tracker1.record_performance(

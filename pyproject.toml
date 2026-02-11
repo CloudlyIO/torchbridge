@@ -148,7 +148,6 @@ check_untyped_defs = false
 no_implicit_optional = true
 strict_equality = true
 disable_error_code = [
-    "assignment",
     "arg-type",
     "operator",
     "union-attr",
@@ -159,10 +158,6 @@ disable_error_code = [
     "misc",
     "has-type",
     "attr-defined",
-    "dict-item",
-    "return-value",
-    "call-arg",
-    "list-item",
     "type-var",
     "no-redef",
     "comparison-overlap",
@@ -211,6 +206,7 @@ markers = [
     "requires_transformers: Requires HuggingFace transformers library",
     "requires_torchvision: Requires torchvision library",
     "stress: Stress and edge-case tests (may be slow or memory-intensive)",
+    "trainium: Requires AWS Trainium (Neuron SDK)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

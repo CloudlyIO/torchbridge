@@ -48,7 +48,7 @@ except ImportError:
     # Create stub classes for type hints
     class BaseModel:
         pass
-    FastAPI = None
+    FastAPI: type | None = None
 
 try:
     import uvicorn
@@ -142,11 +142,11 @@ if FASTAPI_AVAILABLE:
         memory_reserved_mb: float
 else:
     # Stub classes when FastAPI not available
-    InferenceRequest = dict[str, Any]
-    BatchInferenceRequest = dict[str, Any]
-    InferenceResponse = dict[str, Any]
-    HealthResponse = dict[str, Any]
-    MetricsResponse = dict[str, Any]
+    InferenceRequest = dict[str, Any]  # type: ignore[assignment]
+    BatchInferenceRequest = dict[str, Any]  # type: ignore[assignment]
+    InferenceResponse = dict[str, Any]  # type: ignore[assignment]
+    HealthResponse = dict[str, Any]  # type: ignore[assignment]
+    MetricsResponse = dict[str, Any]  # type: ignore[assignment]
 
 class InferenceServer:
     """
@@ -223,7 +223,7 @@ class InferenceServer:
         # Try torch.compile
         if hasattr(torch, "compile"):
             try:
-                self.model = torch.compile(self.model, mode="reduce-overhead")
+                self.model = torch.compile(self.model, mode="reduce-overhead")  # type: ignore[assignment]
                 logger.info("Applied torch.compile optimization")
             except Exception as e:
                 logger.warning(f"torch.compile failed: {e}")

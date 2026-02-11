@@ -25,7 +25,7 @@ model = backend.prepare_model(your_model)
 ## Core Components
 
 - **`TrainiumBackend`** -- main backend implementing `BaseBackend`
-- **`TrainiumOptimizer`** -- Neuron-specific optimization strategies
+- **`TrainiumAdapter`** -- Neuron-specific optimization strategies
 - **`NeuronCompiler`** -- Neuron graph compilation with caching
 - **`TrainiumMemoryManager`** -- HBM monitoring and management
 

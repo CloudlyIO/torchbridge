@@ -173,7 +173,7 @@ class SystemResourceMonitor:
             logger.error(f"Failed to get disk info: {e}")
             return None
 
-    def get_gpu_memory_info(self) -> list[dict[str, float]] | None:
+    def get_gpu_memory_info(self) -> list[dict[str, Any]] | None:
         """Get GPU memory information for all devices."""
         if not torch.cuda.is_available():
             return None

@@ -22,6 +22,15 @@ from .backend_factory import (
     list_available_backends,
 )
 
+# Base adapter
+from .base_adapter import (
+    BaseAdapter,
+    BaseKernelAdapter,
+    CPUAdapter,
+    KernelConfig,
+    OptimizationStrategy,
+)
+
 # Base backend
 from .base_backend import (
     BaseBackend,
@@ -56,15 +65,6 @@ from .base_memory_manager import (
     MemoryAllocationInfo,
 )
 
-# Base optimizer
-from .base_optimizer import (
-    BaseKernelOptimizer,
-    BaseOptimizer,
-    CPUOptimizer,
-    KernelConfig,
-    OptimizationStrategy,
-)
-
 __all__ = [
     # Base exceptions
     'BackendError',
@@ -93,10 +93,10 @@ __all__ = [
     'OptimizationLevel',
     'DeviceInfo',
     'OptimizationResult',
-    # Base optimizer
-    'BaseOptimizer',
-    'BaseKernelOptimizer',
-    'CPUOptimizer',
+    # Base adapter
+    'BaseAdapter',
+    'BaseKernelAdapter',
+    'CPUAdapter',
     'KernelConfig',
     'OptimizationStrategy',
     # Backend factory

@@ -74,10 +74,10 @@ class UnifiedManager:
         self.hardware_detector = HardwareDetector()
         self._hardware_profile: HardwareProfile | None = None
 
-        # Backend optimizer instances (lazy-loaded)
-        self._nvidia_optimizer = None
-        self._tpu_optimizer = None
-        self._amd_optimizer = None
+        # Backend adapter instances (lazy-loaded)
+        self._nvidia_adapter: Any = None
+        self._tpu_adapter: Any = None
+        self._amd_adapter: Any = None
 
         self._initialized = True
 
@@ -157,10 +157,10 @@ class UnifiedManager:
 
         # Extract model from result (backends return different types)
         if isinstance(result, tuple):
-            # BaseOptimizer returns (model, OptimizationResult)
+            # BaseAdapter returns (model, OptimizationResult)
             return result[0]
         elif isinstance(result, nn.Module):
-            # AMD optimizer returns model directly
+            # AMD adapter returns model directly
             return result
         elif hasattr(result, 'optimized_model'):
             return result.optimized_model
@@ -178,17 +178,17 @@ class UnifiedManager:
     ) -> Any:
         """Optimize model using NVIDIA backend."""
         try:
-            from ...backends.nvidia import NVIDIAOptimizer
+            from ...backends.nvidia import NVIDIAAdapter
 
-            if self._nvidia_optimizer is None:
-                self._nvidia_optimizer = NVIDIAOptimizer(self.config)
+            if self._nvidia_adapter is None:
+                self._nvidia_adapter = NVIDIAAdapter(self.config)
 
             if for_inference:
-                result = self._nvidia_optimizer.optimize_for_inference(
+                result = self._nvidia_adapter.optimize_for_inference(
                     model, sample_input=sample_inputs, level=optimization_level
                 )
             else:
-                result = self._nvidia_optimizer.optimize_for_training(
+                result = self._nvidia_adapter.optimize_for_training(
                     model, level=optimization_level
                 )
 
@@ -207,12 +207,12 @@ class UnifiedManager:
     ) -> Any:
         """Optimize model using TPU backend."""
         try:
-            from ...backends.tpu import TPUOptimizer
+            from ...backends.tpu import TPUAdapter
 
-            if self._tpu_optimizer is None:
-                self._tpu_optimizer = TPUOptimizer(self.config)
+            if self._tpu_adapter is None:
+                self._tpu_adapter = TPUAdapter(self.config)
 
-            result = self._tpu_optimizer.optimize(
+            result = self._tpu_adapter.optimize(
                 model, sample_inputs, optimization_level, for_inference
             )
 
@@ -231,14 +231,14 @@ class UnifiedManager:
     ) -> Any:
         """Optimize model using AMD ROCm backend."""
         try:
-            from ...backends.amd import AMDOptimizer
+            from ...backends.amd import AMDAdapter
             from ...core.config import AMDConfig
 
-            if self._amd_optimizer is None:
+            if self._amd_adapter is None:
                 amd_config = AMDConfig(optimization_level=optimization_level)
-                self._amd_optimizer = AMDOptimizer(amd_config)
+                self._amd_adapter = AMDAdapter(amd_config)
 
-            result = self._amd_optimizer.optimize(
+            result = self._amd_adapter.optimize(
                 model, level=optimization_level
             )
 

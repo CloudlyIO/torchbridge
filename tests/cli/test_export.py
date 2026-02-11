@@ -78,6 +78,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -106,6 +107,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -134,6 +136,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -163,6 +166,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -191,6 +195,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -219,6 +224,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -245,6 +251,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         # This may partially fail if ONNX/SafeTensors not available
@@ -281,6 +288,7 @@ class TestExportCommand:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         # Should not raise, falls back to simple model
@@ -323,6 +331,7 @@ class TestExportONNXSpecific:
             validation_tolerance=1e-4,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ExportCommand.execute(args)
@@ -355,6 +364,7 @@ class TestExportONNXSpecific:
                 validation_tolerance=1e-4,
                 verbose=False,
                 quiet=True,
+                trust_source=True,
             )
 
             result = ExportCommand.execute(args)

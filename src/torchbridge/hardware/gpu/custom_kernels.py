@@ -547,7 +547,7 @@ class FusedLinearGELUKernel(nn.Module):
 
         # Initialize custom kernel optimizer
         self.triton_optimizer = TritonKernelOptimizer() if TRITON_AVAILABLE else None
-        self._optimized_kernel = None
+        self._optimized_kernel: Callable | None = None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass using custom kernel when available."""
@@ -986,6 +986,7 @@ def create_fused_ffn_layer(
         out_features = in_features
 
     # Select fused activation layer
+    fused_layer: nn.Module
     if activation.lower() == "gelu":
         fused_layer = FusedLinearGELU(in_features, hidden_features, bias=bias)
     elif activation.lower() == "silu":

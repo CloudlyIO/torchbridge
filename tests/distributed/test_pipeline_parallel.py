@@ -324,8 +324,13 @@ class TestGPipeScheduler:
         gradients = [torch.randn_like(o) for o in outputs]
         scheduler.run_backward(gradients)
 
-        # Should complete without error
-        assert True
+        # Verify outputs have expected shapes
+        assert len(outputs) == 4
+        assert all(o.shape == (2, 32, 256) for o in outputs)
+
+        # Verify gradients exist on module parameters after backward
+        assert module.weight.grad is not None
+        assert module.weight.grad.shape == module.weight.shape
 
 
 # =============================================================================
@@ -421,8 +426,13 @@ class TestInterleavedScheduler:
         gradients = [torch.randn_like(o) for o in outputs]
         scheduler.run_backward(gradients)
 
-        # Should complete without error
-        assert True
+        # Verify outputs have expected shapes
+        assert len(outputs) == 8
+        assert all(o.shape == (2, 32, 256) for o in outputs)
+
+        # Verify gradients exist on module parameters after backward
+        assert module.weight.grad is not None
+        assert module.weight.grad.shape == module.weight.shape
 
     def test_run_forward_backward_combined(self, device):
         """Test combined forward-backward pass."""

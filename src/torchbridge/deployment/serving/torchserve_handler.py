@@ -183,7 +183,7 @@ class BaseHandler(ABC):
         if hasattr(torch, "compile") and self.config.optimization_level != "conservative":
             try:
                 mode = "reduce-overhead" if self.config.optimization_level == "aggressive" else "default"
-                model = torch.compile(model, mode=mode)
+                model = torch.compile(model, mode=mode)  # type: ignore[assignment]
                 logger.info(f"Applied torch.compile with mode={mode}")
             except Exception as e:
                 logger.warning(f"torch.compile failed: {e}")

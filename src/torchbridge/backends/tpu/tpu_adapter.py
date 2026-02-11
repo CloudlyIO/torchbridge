@@ -1,7 +1,7 @@
 """
-TPU Model Optimizer
+TPU Model Adapter
 
-High-level optimizer for TPU models that combines backend preparation,
+High-level adapter for TPU models that combines backend preparation,
 XLA compilation, and TPU-specific optimizations.
 """
 
@@ -33,9 +33,9 @@ class TPUOptimizationResult:
     performance_metrics: dict[str, Any]
 
 
-class TPUOptimizer:
+class TPUAdapter:
     """
-    High-level TPU model optimizer.
+    High-level TPU model adapter.
 
     Combines TPU backend preparation, XLA compilation, and optimization
     strategies to provide the best performance for TPU deployments.
@@ -43,7 +43,7 @@ class TPUOptimizer:
 
     def __init__(self, config: TorchBridgeConfig | None = None):
         """
-        Initialize TPU optimizer.
+        Initialize TPU adapter.
 
         Args:
             config: Optional configuration. If None, creates default config.
@@ -216,7 +216,7 @@ class TPUOptimizer:
             if hasattr(module, 'attention') or 'attention' in module.__class__.__name__.lower():
                 # Enable flash attention if available
                 if hasattr(module, 'flash_attention'):
-                    module.flash_attention = True
+                    module.flash_attention = True  # type: ignore[assignment]
 
                 # Optimize for TPU memory layout
                 if hasattr(module, 'num_heads'):
@@ -409,9 +409,9 @@ class TPUOptimizer:
         self.compiler.clear_cache()
 
     def __repr__(self) -> str:
-        """String representation of TPU optimizer."""
+        """String representation of TPU adapter."""
         return (
-            f"TPUOptimizer(backend={self.backend}, "
+            f"TPUAdapter(backend={self.backend}, "
             f"compiler={self.compiler}, "
             f"optimizations={len(self._optimization_history)})"
         )

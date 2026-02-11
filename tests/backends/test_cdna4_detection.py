@@ -182,10 +182,10 @@ class TestCDNA4FP8Support:
 
     def test_cdna4_fp8_optimizer(self):
         """CDNA4 optimizer should enable FP8 quantization."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(architecture=AMDArchitecture.CDNA4)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         # FP8 should not raise a warning for CDNA4
         model = torch.nn.Linear(64, 32)
@@ -195,20 +195,20 @@ class TestCDNA4FP8Support:
 
     def test_cdna3_fp8_optimizer(self):
         """CDNA3 optimizer should also enable FP8 quantization."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(architecture=AMDArchitecture.CDNA3)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         model = torch.nn.Linear(64, 32)
         result = optimizer._prepare_fp8_quantization(model)
         assert result is True
 
     def test_cdna2_no_fp8(self):
         """CDNA2 should NOT support FP8."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(architecture=AMDArchitecture.CDNA2)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         model = torch.nn.Linear(64, 32)
         result = optimizer._prepare_fp8_quantization(model)
         assert result is False

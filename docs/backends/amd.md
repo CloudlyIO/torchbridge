@@ -27,7 +27,7 @@ model = backend.prepare_model(your_model)
 ## Core Components
 
 - **`AMDBackend`** -- main backend implementing `BaseBackend`
-- **`AMDOptimizer`** -- ROCm-specific optimization strategies
+- **`AMDAdapter`** -- ROCm-specific optimization strategies
 - **`ROCmCompiler`** -- HIP kernel compilation with caching
 - **`AMDMemoryManager`** -- GPU memory pooling and monitoring
 - **`HIPUtilities`** -- low-level HIP runtime utilities

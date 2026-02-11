@@ -13,9 +13,9 @@ import torch.nn as nn
 
 from torchbridge.backends.trainium import (
     NeuronCompiler,
+    TrainiumAdapter,
     TrainiumBackend,
     TrainiumMemoryManager,
-    TrainiumOptimizer,
 )
 from torchbridge.core.config import (
     TorchBridgeConfig,
@@ -200,13 +200,13 @@ class TestTrainiumConfig:
         assert 'trainium' in config_dict['hardware']
 
 
-class TestTrainiumOptimizer:
-    """Test Trainium optimizer functionality."""
+class TestTrainiumAdapter:
+    """Test Trainium adapter functionality."""
 
     def test_trainium_optimizer_creation(self):
         """Test Trainium optimizer creation."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         assert optimizer is not None
         assert optimizer.config == config
@@ -216,7 +216,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_conservative_optimization(self):
         """Test conservative optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -231,7 +231,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_balanced_optimization(self):
         """Test balanced optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -244,7 +244,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_aggressive_optimization(self):
         """Test aggressive optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -257,7 +257,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_inference(self):
         """Test inference-specific optimization."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -271,7 +271,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_training(self):
         """Test training-specific optimization."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -284,7 +284,7 @@ class TestTrainiumOptimizer:
     def test_trainium_optimizer_stats(self):
         """Test optimizer statistics."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         stats = optimizer.get_optimization_stats()
         assert isinstance(stats, dict)
@@ -293,7 +293,7 @@ class TestTrainiumOptimizer:
     def test_invalid_optimization_level(self):
         """Test invalid optimization level handling."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -539,7 +539,7 @@ class TestTrainiumErrorHandling:
             TrainiumValidationError,
         )
 
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
         model = nn.Linear(10, 10)
 
         # Create invalid inputs that will cause validation to fail
@@ -552,7 +552,7 @@ class TestTrainiumErrorHandling:
     def test_optimizer_with_invalid_level(self):
         """Test optimizer handles invalid optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TrainiumOptimizer(config)
+        optimizer = TrainiumAdapter(config)
         model = nn.Linear(10, 10)
 
         # Invalid optimization level should raise ValueError

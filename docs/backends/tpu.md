@@ -26,7 +26,7 @@ model = backend.prepare_model(your_model)
 ## Core Components
 
 - **`TPUBackend`** -- main backend implementing `BaseBackend`
-- **`TPUOptimizer`** -- XLA-specific optimization strategies
+- **`TPUAdapter`** -- XLA-specific optimization strategies
 - **`XLACompiler`** -- XLA graph compilation with caching
 - **`TPUMemoryManager`** -- HBM monitoring and management
 

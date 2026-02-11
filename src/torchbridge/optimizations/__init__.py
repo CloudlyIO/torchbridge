@@ -78,5 +78,5 @@ class _LegacyNextGenImportHelper:
             raise AttributeError(f"module 'torchbridge.next_gen_optimizations' has no attribute '{name}'") from None
 
 # Legacy import support
-sys.modules['torchbridge.optimization_patterns'] = _LegacyOptimizationImportHelper()
-sys.modules['torchbridge.next_gen_optimizations'] = _LegacyNextGenImportHelper()
+sys.modules['torchbridge.optimization_patterns'] = _LegacyOptimizationImportHelper()  # type: ignore[assignment]
+sys.modules['torchbridge.next_gen_optimizations'] = _LegacyNextGenImportHelper()  # type: ignore[assignment]

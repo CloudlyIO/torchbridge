@@ -13,7 +13,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from torchbridge.backends.amd import AMDBackend, AMDOptimizer
+from torchbridge.backends.amd import AMDAdapter, AMDBackend
 from torchbridge.backends.nvidia import NVIDIABackend
 from torchbridge.backends.tpu import TPUBackend
 from torchbridge.core.config import AMDConfig, TorchBridgeConfig
@@ -144,7 +144,7 @@ class TestBackendInitialization:
     def test_amd_optimizer_initializes(self):
         """Test AMD optimizer can be initialized."""
         config = AMDConfig(optimization_level="balanced")
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         assert optimizer is not None
         assert hasattr(optimizer, 'optimize')
@@ -153,7 +153,7 @@ class TestBackendInitialization:
     def test_amd_optimizer_optimizes_model(self):
         """Test AMD optimizer can optimize models."""
         config = AMDConfig(optimization_level="balanced")
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         model = SimpleModel()
 
         optimized_model = optimizer.optimize(model)
@@ -315,7 +315,7 @@ class TestBackendCapabilities:
     def test_amd_optimizer_summary(self):
         """Test AMD optimizer provides summary."""
         config = AMDConfig(optimization_level="balanced")
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         model = SimpleModel()
 
         optimizer.optimize(model)
@@ -474,7 +474,7 @@ def test_integration_summary():
     assert amd_model is not None
 
     # 5. AMD optimizer works
-    amd_optimizer = AMDOptimizer(amd_config)
+    amd_optimizer = AMDAdapter(amd_config)
     optimized = amd_optimizer.optimize(model)
     assert optimized is not None
 

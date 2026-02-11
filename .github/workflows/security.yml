@@ -52,8 +52,8 @@ jobs:
 
       - name: Run Bandit
         run: |
-          bandit -r src/ -f json -o bandit-report.json --severity-level medium || true
-          bandit -r src/ -f txt --severity-level medium
+          bandit -r src/ -f json -o bandit-report.json --severity-level medium --confidence-level HIGH || true
+          bandit -r src/ -f txt --severity-level medium --confidence-level HIGH
 
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v6

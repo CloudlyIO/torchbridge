@@ -281,10 +281,9 @@ class LearnablePositionalEncoding(nn.Module):
         self.pos_embedding = nn.Parameter(torch.zeros(max_seq_len, embed_dim))
 
         # Dropout for regularization
+        self.dropout_layer: nn.Dropout | None = None
         if dropout > 0.0:
             self.dropout_layer = nn.Dropout(dropout)
-        else:
-            self.dropout_layer = None
 
         self._initialize_weights()
 
@@ -387,6 +386,7 @@ class FusedTokenPositionalEmbedding(nn.Module):
         )
 
         # Positional encoding
+        self.pos_encoding: nn.Module
         if pos_encoding_type == 'learnable':
             self.pos_encoding = LearnablePositionalEncoding(
                 embed_dim, max_seq_len, dropout=0.0  # Apply dropout after fusion
@@ -399,10 +399,9 @@ class FusedTokenPositionalEmbedding(nn.Module):
             raise ValueError(f"Unsupported positional encoding type: {pos_encoding_type}")
 
         # Dropout layer
+        self.dropout_layer: nn.Dropout | None = None
         if dropout > 0.0:
             self.dropout_layer = nn.Dropout(dropout)
-        else:
-            self.dropout_layer = None
 
     def forward(self, input_ids: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         """

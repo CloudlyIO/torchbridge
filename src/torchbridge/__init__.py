@@ -35,6 +35,8 @@ from .advanced_memory.deep_optimizer_states import (
     DeepOptimizerStates,
 )
 from .attention.core.base import BaseAttention as AttentionLayer
+from .attention.core.config import AttentionModuleConfig
+from .attention.implementations.memory_efficient import MemoryEfficientAttention
 
 # Core Components (explicit imports)
 from .core.config import (
@@ -115,13 +117,12 @@ __all__ = [
 # Convenience functions for quick setup
 def create_attention(d_model: int, num_heads: int, **kwargs):
     """Create backend-aware attention layer with automatic configuration."""
-    config = get_config()
-    return AttentionLayer(
+    attn_config = AttentionModuleConfig(
         embed_dim=d_model,
         num_heads=num_heads,
-        device=config.device,
-        **kwargs
+        **kwargs,
     )
+    return MemoryEfficientAttention(attn_config)
 
 def create_memory_optimizer(optimizer, model, **kwargs):
     """Create memory-optimized training setup."""

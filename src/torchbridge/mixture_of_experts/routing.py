@@ -285,8 +285,8 @@ class HashRouter(BaseRouter):
         projected = self.token_projection(x)
 
         # Generate hash-based expert assignments
-        expert_indices = []
-        expert_weights = []
+        expert_indices: list[list[int]] | torch.Tensor = []
+        expert_weights: list[list[float]] | torch.Tensor = []
 
         for i in range(num_tokens):
             token_repr = projected[i].detach().cpu().numpy().tobytes()
@@ -341,10 +341,10 @@ class HashRouter(BaseRouter):
         # Set probabilities based on hash assignments
         for i in range(num_tokens):
             for k in range(self.top_k):
-                expert_idx = expert_indices[i, k].item()
+                expert_idx: int = int(expert_indices[i, k].item())
                 probs[i, expert_idx] = expert_weights[i, k].item()
 
-        return {
+        result: dict[str, torch.Tensor] = {
             'logits': logits,
             'probs': probs,
             'expert_indices': expert_indices,
@@ -352,6 +352,7 @@ class HashRouter(BaseRouter):
             'top_k_probs': expert_weights,
             'top_k_indices': expert_indices
         }
+        return result
 
 
 class LearnedRouter(BaseRouter):

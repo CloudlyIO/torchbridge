@@ -565,7 +565,7 @@ class ComputeIntensityProfiler:
         - Performance regression detection
         - Optimization opportunity quantification
         """
-        results = {
+        results: dict[str, Any] = {
             "model_summary": self._get_model_summary(model),
             "intensity_analysis": {},
             "optimization_recommendations": [],

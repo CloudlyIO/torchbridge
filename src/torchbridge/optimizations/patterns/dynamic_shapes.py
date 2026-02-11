@@ -1098,7 +1098,7 @@ class DynamicShapeBucketing:
                 })
 
             # Sort by efficiency score
-            bucket_details.sort(key=lambda x: x["efficiency_score"], reverse=True)
+            bucket_details.sort(key=lambda x: x["efficiency_score"], reverse=True)  # type: ignore[return-value]
 
             return {
                 "bucket_details": bucket_details,
