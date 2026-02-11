@@ -145,6 +145,12 @@ Examples:
             help='Suppress non-essential output'
         )
 
+        parser.add_argument(
+            '--trust-source',
+            action='store_true',
+            help='Allow loading untrusted model files (enables weights_only=False for pickle deserialization)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the export command."""
@@ -186,7 +192,8 @@ Examples:
         if verbose:
             print(f"Loading model: {args.model}")
 
-        model = ExportCommand._load_model(args.model, dtype)
+        trust_source = getattr(args, 'trust_source', False)
+        model = ExportCommand._load_model(args.model, dtype, trust_source=trust_source)
         model.eval()
 
         # Parse input shape
@@ -273,14 +280,23 @@ Examples:
         return 0 if all_success else 1
 
     @staticmethod
-    def _load_model(model_path: str, dtype: torch.dtype) -> torch.nn.Module:
+    def _load_model(model_path: str, dtype: torch.dtype, *, trust_source: bool = False) -> torch.nn.Module:
         """Load a model from file or create a simple test model."""
         path = Path(model_path)
 
         if path.exists():
             # Load from file
             if path.suffix in ['.pt', '.pth']:
-                loaded = torch.load(path, map_location='cpu', weights_only=False)
+                try:
+                    loaded = torch.load(path, map_location='cpu', weights_only=not trust_source)
+                except Exception as e:
+                    if not trust_source and "Weights only load failed" in str(e):
+                        raise RuntimeError(
+                            f"Cannot safely load '{path}': the file contains objects that "
+                            f"require pickle deserialization.\n"
+                            f"If you trust this file, re-run with --trust-source to allow loading."
+                        ) from e
+                    raise
                 if isinstance(loaded, torch.nn.Module):
                     model = loaded
                 elif isinstance(loaded, dict) and 'model' in loaded:

@@ -445,17 +445,17 @@ def _populate_model_metadata(metadata: OptimizationMetadata, model: nn.Module) -
     if hasattr(model, 'config'):
         config = model.config
         if hasattr(config, 'hidden_size'):
-            metadata.model.hidden_size = config.hidden_size
+            metadata.model.hidden_size = int(config.hidden_size)
         if hasattr(config, 'num_attention_heads'):
-            metadata.model.num_attention_heads = config.num_attention_heads
+            metadata.model.num_attention_heads = int(config.num_attention_heads)
         if hasattr(config, 'num_hidden_layers'):
-            metadata.model.num_hidden_layers = config.num_hidden_layers
+            metadata.model.num_hidden_layers = int(config.num_hidden_layers)
         if hasattr(config, 'intermediate_size'):
-            metadata.model.intermediate_size = config.intermediate_size
+            metadata.model.intermediate_size = int(config.intermediate_size)
         if hasattr(config, 'vocab_size'):
-            metadata.model.vocab_size = config.vocab_size
+            metadata.model.vocab_size = int(config.vocab_size)
         if hasattr(config, 'max_position_embeddings'):
-            metadata.model.max_position_embeddings = config.max_position_embeddings
+            metadata.model.max_position_embeddings = int(config.max_position_embeddings)
 
 
 def _populate_precision_metadata(metadata: OptimizationMetadata, model: nn.Module) -> None:

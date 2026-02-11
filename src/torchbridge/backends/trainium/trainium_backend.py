@@ -62,7 +62,7 @@ class TrainiumBackend(BaseBackend):
         self.trainium_config = self._full_config.hardware.trainium
 
         # Initialize XLA/Neuron environment
-        self._xla_device = None
+        self._xla_device: torch.device | None = None
         self._world_size = 1
         self._rank = 0
 
@@ -189,7 +189,7 @@ class TrainiumBackend(BaseBackend):
     @property
     def device(self) -> torch.device:
         """Get the Trainium XLA device."""
-        return self._xla_device
+        return self._xla_device  # type: ignore[return-value]
 
     @property
     def is_distributed(self) -> bool:
@@ -338,7 +338,7 @@ class TrainiumBackend(BaseBackend):
                 result = result.to(dtype=target_dtype)
             return result
         elif hasattr(data, 'items'):
-            result = {}
+            result: dict[str, Any] = {}
             for key, value in data.items():
                 if isinstance(value, torch.Tensor):
                     moved = value.to(self.device)

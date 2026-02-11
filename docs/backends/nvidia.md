@@ -26,7 +26,7 @@ model = backend.prepare_model(your_model)
 ## Core Components
 
 - **`NVIDIABackend`** -- main backend implementing `BaseBackend`
-- **`NVIDIAOptimizer`** -- architecture-aware optimization strategies
+- **`NVIDIAAdapter`** -- architecture-aware optimization strategies
 - **`NVIDIAMemoryManager`** -- GPU memory monitoring and management
 - **`CUDADeviceManager`** -- multi-GPU device handling
 

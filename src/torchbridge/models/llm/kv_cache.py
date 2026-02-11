@@ -40,9 +40,11 @@ class KVCacheManager:
     autoregressive generation.
 
     Example:
+        >>> config = CacheConfig(num_layers=2, num_heads=4, head_dim=64, device="cpu")
         >>> cache_manager = KVCacheManager(config)
-        >>> cache = cache_manager.create_cache(batch_size=4)
-        >>> cache = cache_manager.update_cache(cache, new_keys, new_values, layer_idx)
+        >>> cache = cache_manager.create_cache(batch_size=2)
+        >>> len(cache) == 2
+        True
     """
 
     def __init__(self, config: CacheConfig):
@@ -155,9 +157,11 @@ class PagedKVCache:
     in fixed-size pages for efficient memory allocation.
 
     Example:
+        >>> config = CacheConfig(num_layers=2, num_heads=4, head_dim=64, device="cpu")
         >>> paged_cache = PagedKVCache(config)
-        >>> paged_cache.allocate_pages(batch_size=4, num_pages_per_seq=10)
-        >>> paged_cache.write_to_cache(keys, values, page_indices, offsets)
+        >>> pages = paged_cache.allocate_pages(batch_size=2, num_pages_per_seq=4)
+        >>> pages.shape
+        torch.Size([2, 4])
     """
 
     def __init__(self, config: CacheConfig):
@@ -339,9 +343,11 @@ class SlidingWindowCache:
     useful for models with sliding window attention (e.g., Mistral).
 
     Example:
+        >>> config = CacheConfig(num_layers=2, num_heads=4, head_dim=64, window_size=128, device="cpu")
         >>> sw_cache = SlidingWindowCache(config)
-        >>> cache = sw_cache.create_cache(batch_size=4)
-        >>> cache = sw_cache.update_cache(cache, new_keys, new_values, layer_idx)
+        >>> cache = sw_cache.create_cache(batch_size=2)
+        >>> len(cache) == 2
+        True
     """
 
     def __init__(self, config: CacheConfig):

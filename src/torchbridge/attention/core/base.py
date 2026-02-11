@@ -128,7 +128,7 @@ class BaseAttention(nn.Module, ABC):
                 key: torch.Tensor | None = None,
                 value: torch.Tensor | None = None,
                 attention_mask: torch.Tensor | None = None,
-                return_attention_weights: bool = False) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+                return_attention_weights: bool = False) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor | None]:
         """
         Unified forward pass for all attention implementations.
 
@@ -228,7 +228,7 @@ class AttentionWithCache(BaseAttention):
     def __init__(self, config: AttentionConfig):
         super().__init__(config)
         self.cache_enabled = False
-        self.kv_cache: dict[str, torch.Tensor] | None = None
+        self.kv_cache: dict[str, torch.Tensor | int] | None = None
 
     def enable_cache(self, max_batch_size: int = 1, max_seq_len: int | None = None):
         """Enable KV caching for faster autoregressive generation"""

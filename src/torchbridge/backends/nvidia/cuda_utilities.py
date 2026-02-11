@@ -37,9 +37,9 @@ class CUDADeviceManager:
         self.config = config or TorchBridgeConfig()
         self.nvidia_config = self.config.hardware.nvidia
 
-        self._devices = []
-        self._current_device = None
-        self._device_properties = {}
+        self._devices: list[torch.device] = []
+        self._current_device: torch.device | None = None
+        self._device_properties: dict[int, dict[str, Any]] = {}
 
         self._setup_cuda_devices()
 
@@ -68,13 +68,13 @@ class CUDADeviceManager:
             }
 
         logger.info("CUDA Device Manager initialized: num_devices=%d", device_count)
-        for i, props in self._device_properties.items():
+        for i, props in self._device_properties.items():  # type: ignore[assignment]
             logger.debug("  Device %d: %s (CC %s, %.1f GB)",
                         i, props['name'], props['compute_capability'],
                         props['total_memory_gb'])
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         """Get current CUDA device."""
         return self._current_device
 
@@ -171,8 +171,8 @@ class CUDAOptimizations:
         """Add hints for CUDA kernel fusion."""
         for module in model.modules():
             if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv3d)):
-                module._cuda_fusible = True
-                module._cuda_fusion_priority = 1
+                module._cuda_fusible = True  # type: ignore[assignment]
+                module._cuda_fusion_priority = 1  # type: ignore[assignment]
 
         return model
 
@@ -226,7 +226,7 @@ class CUDAUtilities:
     @staticmethod
     def get_cuda_env_info() -> dict[str, Any]:
         """Get CUDA environment information."""
-        env_info = {
+        env_info: dict[str, Any] = {
             'cuda_available': torch.cuda.is_available(),
         }
 

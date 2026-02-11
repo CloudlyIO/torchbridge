@@ -108,9 +108,9 @@ class LLMOptimizer:
             config: Optional configuration for optimization
         """
         self.config = config or LLMConfig()
-        self._device = None
-        self._backend = None
-        self._dtype = None
+        self._device: torch.device | None = None
+        self._backend: Any = None
+        self._dtype: torch.dtype | None = None
         self._setup_backend()
 
     def _setup_backend(self) -> None:
@@ -249,7 +249,7 @@ class LLMOptimizer:
                     tokenizer.pad_token = tokenizer.eos_token
 
             # Prepare model loading kwargs
-            model_kwargs = {
+            model_kwargs: dict[str, Any] = {
                 "trust_remote_code": True,
                 "dtype": self._dtype,
             }
@@ -317,7 +317,7 @@ class LLMOptimizer:
             if hasattr(model.config, 'attn_implementation'):
                 pass  # Already set during loading
             elif hasattr(model, '_attn_implementation'):
-                model._attn_implementation = "flash_attention_2"
+                model._attn_implementation = "flash_attention_2"  # type: ignore[assignment]
                 logger.info("Enabled Flash Attention 2")
         except Exception as e:
             logger.debug(f"Could not enable Flash Attention: {e}")
@@ -362,18 +362,18 @@ class LLMOptimizer:
                 dynamic=True
             )
             logger.info(f"Applied torch.compile with mode={self.config.compile_mode}")
-            return compiled_model
+            return compiled_model  # type: ignore[return-value]
         except Exception as e:
             logger.warning(f"torch.compile failed: {e}")
             return model
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         """Get current device."""
         return self._device
 
     @property
-    def dtype(self) -> torch.dtype:
+    def dtype(self) -> torch.dtype | None:
         """Get current dtype."""
         return self._dtype
 
@@ -390,7 +390,7 @@ class LLMOptimizer:
             "max_seq_length": self.config.max_sequence_length,
         }
 
-    def estimate_memory(self, model_name: str = None) -> dict[str, float]:
+    def estimate_memory(self, model_name: str | None = None) -> dict[str, Any]:
         """Estimate memory requirements for the model."""
         # Rough estimates based on parameter count (in FP16)
         param_estimates = {
@@ -470,7 +470,7 @@ class OptimizedLlama(nn.Module):
         return self.model.generate(input_ids=input_ids, **kwargs)
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         return self._device
 
     def get_optimization_info(self) -> dict[str, Any]:
@@ -506,7 +506,7 @@ class OptimizedMistral(nn.Module):
         return self.model.generate(input_ids=input_ids, **kwargs)
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         return self._device
 
     def get_optimization_info(self) -> dict[str, Any]:
@@ -542,7 +542,7 @@ class OptimizedPhi(nn.Module):
         return self.model.generate(input_ids=input_ids, **kwargs)
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         return self._device
 
     def get_optimization_info(self) -> dict[str, Any]:

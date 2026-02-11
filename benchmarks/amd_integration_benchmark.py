@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root / "src"))
 from torchbridge.backends.amd import (
     AMDBackend,
     AMDMemoryManager,
-    AMDOptimizer,
+    AMDAdapter,
     HIPUtilities,
     ROCmCompiler,
 )
@@ -206,7 +206,7 @@ def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
 
     for level in ["conservative", "balanced", "aggressive"]:
         config = AMDConfig(optimization_level=level)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         result = run_timed_iterations(
             lambda opt=optimizer: opt.optimize(model),
@@ -223,7 +223,7 @@ def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
             optimization_level="aggressive",
             enable_matrix_cores=True,
         )
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         result = run_timed_iterations(
             lambda opt=optimizer: opt.optimize(model),
@@ -430,7 +430,7 @@ def benchmark_architecture_comparison(iterations: int = 30) -> dict[str, Any]:
             architecture=arch,
             optimization_level="balanced",
         )
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         result = run_timed_iterations(
             lambda opt=optimizer: opt.optimize(model),

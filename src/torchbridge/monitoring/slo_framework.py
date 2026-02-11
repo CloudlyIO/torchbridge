@@ -469,11 +469,9 @@ class SLOManager:
         # Get measurement count
         if slo.sli_type in (SLIType.LATENCY_P50, SLIType.LATENCY_P95,
                            SLIType.LATENCY_P99, SLIType.LATENCY_MEAN):
-            measurements = self._collector.get_latencies(slo.window_minutes)
-            measurement_count = len(measurements)
+            measurement_count = len(self._collector.get_latencies(slo.window_minutes))
         else:
-            measurements = self._collector.get_requests(slo.window_minutes)
-            measurement_count = len(measurements)
+            measurement_count = len(self._collector.get_requests(slo.window_minutes))
 
         # Determine compliance
         if current_value is None or measurement_count < 10:

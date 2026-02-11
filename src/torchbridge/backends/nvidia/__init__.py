@@ -14,15 +14,15 @@ Key Components:
 
 Example:
     ```python
-    from torchbridge.backends.nvidia import NVIDIABackend, NVIDIAOptimizer
+    from torchbridge.backends.nvidia import NVIDIABackend, NVIDIAAdapter
 
     # Initialize NVIDIA backend
     backend = NVIDIABackend()
     model = backend.prepare_model(your_model)
 
     # Optimize for NVIDIA GPU
-    optimizer = NVIDIAOptimizer(backend.config)
-    optimized_model = optimizer.optimize(model)
+    adapter = NVIDIAAdapter(backend.config)
+    optimized_model = adapter.optimize(model)
     ```
 """
 
@@ -38,12 +38,12 @@ from .flash_attention_integration import (
 )
 from .fp8_compiler import FP8Compiler
 from .memory_manager import NVIDIAMemoryManager
+from .nvidia_adapter import NVIDIAAdapter
 from .nvidia_backend import NVIDIABackend
-from .nvidia_optimizer import NVIDIAOptimizer
 
 __all__ = [
     'NVIDIABackend',
-    'NVIDIAOptimizer',
+    'NVIDIAAdapter',
     'FP8Compiler',
     'NVIDIAMemoryManager',
     'FlashAttention3',

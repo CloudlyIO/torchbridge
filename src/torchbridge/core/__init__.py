@@ -198,6 +198,6 @@ class _LegacyImportHelper:
 
 import sys  # noqa: E402
 
-sys.modules['torchbridge.compiler_integration'] = _LegacyImportHelper()
-sys.modules['torchbridge.compiler_optimized'] = _LegacyImportHelper()
-sys.modules['torchbridge.components'] = _LegacyImportHelper()
+sys.modules['torchbridge.compiler_integration'] = _LegacyImportHelper()  # type: ignore[assignment]
+sys.modules['torchbridge.compiler_optimized'] = _LegacyImportHelper()  # type: ignore[assignment]
+sys.modules['torchbridge.components'] = _LegacyImportHelper()  # type: ignore[assignment]

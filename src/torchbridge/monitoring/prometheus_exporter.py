@@ -59,7 +59,7 @@ try:
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     # Stub classes for when prometheus_client is not available
-    CollectorRegistry = object
+    CollectorRegistry = object  # type: ignore[assignment,misc]
 
 @dataclass
 class MetricsConfig:

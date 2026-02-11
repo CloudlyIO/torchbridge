@@ -13,21 +13,21 @@ Key Components:
 
 Example:
     ```python
-    from torchbridge.backends.tpu import TPUBackend, TPUOptimizer
+    from torchbridge.backends.tpu import TPUBackend, TPUAdapter
 
     # Initialize TPU backend
     backend = TPUBackend()
     model = backend.prepare_model(your_model)
 
     # Optimize for TPU
-    optimizer = TPUOptimizer(backend.config)
-    optimized_model = optimizer.optimize(model)
+    adapter = TPUAdapter(backend.config)
+    optimized_model = adapter.optimize(model)
     ```
 """
 
 from .memory_manager import TPUMemoryManager
+from .tpu_adapter import TPUAdapter
 from .tpu_backend import TPUBackend
-from .tpu_optimizer import TPUOptimizer
 from .xla_compiler import XLACompiler
 from .xla_integration import (
     XLADeviceManager,
@@ -39,7 +39,7 @@ from .xla_integration import (
 
 __all__ = [
     'TPUBackend',
-    'TPUOptimizer',
+    'TPUAdapter',
     'XLACompiler',
     'TPUMemoryManager',
     'XLADeviceManager',

@@ -15,9 +15,9 @@ from torchbridge.backends.nvidia import (
     CUDAOptimizations,
     FlashAttention3,
     FP8Compiler,
+    NVIDIAAdapter,
     NVIDIABackend,
     NVIDIAMemoryManager,
-    NVIDIAOptimizer,
     create_cuda_integration,
     create_flash_attention_3,
 )
@@ -154,18 +154,18 @@ class TestNVIDIABackend:
 # NVIDIA Optimizer Tests (10 tests)
 # ============================================================================
 
-class TestNVIDIAOptimizer:
-    """Test NVIDIA optimizer functionality."""
+class TestNVIDIAAdapter:
+    """Test NVIDIA adapter functionality."""
 
     def test_optimizer_creation(self):
         """Test optimizer creation."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         assert optimizer.config is not None
         assert optimizer.backend is not None
 
     def test_conservative_optimization(self):
         """Test conservative optimization level."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_legacy(model, optimization_level="conservative")
         assert result.optimization_level == "conservative"
@@ -173,7 +173,7 @@ class TestNVIDIAOptimizer:
 
     def test_balanced_optimization(self):
         """Test balanced optimization level."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_legacy(model, optimization_level="balanced")
         assert result.optimization_level == "balanced"
@@ -182,7 +182,7 @@ class TestNVIDIAOptimizer:
 
     def test_aggressive_optimization(self):
         """Test aggressive optimization level."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_legacy(model, optimization_level="aggressive")
         assert result.optimization_level == "aggressive"
@@ -190,21 +190,21 @@ class TestNVIDIAOptimizer:
 
     def test_optimize_for_inference(self):
         """Test inference optimization."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_for_inference_legacy(model)
         assert "eval_mode" in result.optimizations_applied
 
     def test_optimize_for_training(self):
         """Test training optimization."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_for_training_legacy(model)
         assert result.optimized_model is not None
 
     def test_get_optimization_recommendations(self):
         """Test optimization recommendations."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         recommendations = optimizer.get_optimization_recommendations(model)
         assert 'architecture' in recommendations
@@ -212,7 +212,7 @@ class TestNVIDIAOptimizer:
 
     def test_optimization_with_sample_inputs(self):
         """Test optimization with sample inputs."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         sample_inputs = torch.randn(1, 16)
         result = optimizer.optimize_legacy(model, sample_inputs=sample_inputs)
@@ -222,7 +222,7 @@ class TestNVIDIAOptimizer:
         """Test mixed precision enablement."""
         config = TorchBridgeConfig()
         config.precision.mixed_precision = True
-        optimizer = NVIDIAOptimizer(config)
+        optimizer = NVIDIAAdapter(config)
         model = nn.Linear(16, 16)
         result = optimizer.optimize_legacy(model, optimization_level="balanced")
         # Check that optimization was attempted
@@ -230,7 +230,7 @@ class TestNVIDIAOptimizer:
 
     def test_optimization_warnings(self):
         """Test optimization warnings."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         result = optimizer.optimize_legacy(model, optimization_level="unknown_level")
         assert len(result.warnings) > 0
@@ -504,7 +504,7 @@ class TestNVIDIAIntegration:
 
     def test_full_optimization_pipeline(self):
         """Test full optimization pipeline."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Sequential(
             nn.Linear(64, 128),
             nn.ReLU(),
@@ -524,7 +524,7 @@ class TestNVIDIAIntegration:
     def test_end_to_end_inference_optimization(self):
         """Test end-to-end inference optimization."""
         config = TorchBridgeConfig()
-        optimizer = NVIDIAOptimizer(config)
+        optimizer = NVIDIAAdapter(config)
         model = nn.Linear(128, 128)
         sample_input = torch.randn(1, 128)
         result = optimizer.optimize_for_inference_legacy(
@@ -652,7 +652,7 @@ class TestNVIDIAErrorPaths:
 
     def test_optimizer_with_invalid_optimization_level(self):
         """Test optimizer with invalid optimization level."""
-        optimizer = NVIDIAOptimizer()
+        optimizer = NVIDIAAdapter()
         model = nn.Linear(64, 64)
 
         # Optimizer should handle invalid level gracefully (fallback to default)

@@ -64,7 +64,7 @@ except ImportError:
     # Create stub classes for type hints
     class BaseModel:
         pass
-    FastAPI = None
+    FastAPI: type | None = None
 
 try:
     import uvicorn
@@ -203,14 +203,14 @@ if FASTAPI_AVAILABLE:
         memory_reserved_mb: float
 else:
     # Stub classes when FastAPI not available
-    GenerateRequest = dict[str, Any]
-    ChatMessage = dict[str, Any]
-    ChatCompletionRequest = dict[str, Any]
-    GenerateResponse = dict[str, Any]
-    TokenCountRequest = dict[str, Any]
-    TokenCountResponse = dict[str, Any]
-    HealthResponse = dict[str, Any]
-    MetricsResponse = dict[str, Any]
+    GenerateRequest = dict[str, Any]  # type: ignore[assignment]
+    ChatMessage = dict[str, Any]  # type: ignore[assignment]
+    ChatCompletionRequest = dict[str, Any]  # type: ignore[assignment]
+    GenerateResponse = dict[str, Any]  # type: ignore[assignment]
+    TokenCountRequest = dict[str, Any]  # type: ignore[assignment]
+    TokenCountResponse = dict[str, Any]  # type: ignore[assignment]
+    HealthResponse = dict[str, Any]  # type: ignore[assignment]
+    MetricsResponse = dict[str, Any]  # type: ignore[assignment]
 
 @dataclass
 class BatchItem:
@@ -307,7 +307,7 @@ class LLMInferenceServer:
         """Set up the model for inference."""
         # Model should already be on correct device from LLMOptimizer
         if hasattr(self.model, 'device'):
-            self.device = self.model.device
+            self.device = self.model.device  # type: ignore[assignment]
         else:
             self.model = self.model.to(self.device)
 
@@ -471,7 +471,7 @@ class LLMInferenceServer:
             prompt = self._format_chat_prompt(request.messages)
 
             # Create generation request
-            gen_request = GenerateRequest(
+            gen_request = GenerateRequest(  # type: ignore[call-arg]
                 prompt=prompt,
                 max_new_tokens=request.max_new_tokens,
                 temperature=request.temperature,

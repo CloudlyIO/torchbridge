@@ -372,7 +372,7 @@ class OptimizationImplementer:
 optimized_model = torch.compile(model, mode='default')
 '''
 
-        return optimized_model, code
+        return optimized_model, code  # type: ignore[return-value]
 
     def _implement_operation_fusion(self, model: nn.Module, recommendation: OptimizationRecommendation) -> tuple[nn.Module, str]:
         """Implement operation fusion optimization."""

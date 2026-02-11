@@ -10,6 +10,7 @@ hardware backends while implementing NVIDIA-specific optimizations.
 
 import logging
 import warnings
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -59,9 +60,9 @@ class NVIDIABackend(BaseBackend):
         self._full_config = config or TorchBridgeConfig()
         self.nvidia_config = self._full_config.hardware.nvidia
 
-        self._devices = []
-        self._compute_capability = None
-        self._device_name = None
+        self._devices: list[torch.device] = []
+        self._compute_capability: tuple[int, int] | None = None
+        self._device_name: str | None = None
 
         # Initialize kernel registry
         self._kernel_registry = KernelRegistry()
@@ -146,7 +147,7 @@ class NVIDIABackend(BaseBackend):
     @property
     def device(self) -> torch.device:
         """Get current CUDA device."""
-        return self._device
+        return self._device  # type: ignore[return-value]
 
     @property
     def devices(self) -> list[torch.device]:
@@ -262,7 +263,7 @@ class NVIDIABackend(BaseBackend):
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
                 mode = 'max-autotune' if (self.is_h100 or self.is_blackwell) else 'reduce-overhead'
-                model = torch.compile(model, mode=mode)
+                model = torch.compile(model, mode=mode)  # type: ignore[assignment]
                 # Warm up
                 with torch.no_grad():
                     _ = model(sample_input.to(self.device))
@@ -296,7 +297,7 @@ class NVIDIABackend(BaseBackend):
 
         # Apply mixed precision settings if configured
         if self.nvidia_config.mixed_precision_enabled:
-            model._mixed_precision_enabled = True
+            model._mixed_precision_enabled = True  # type: ignore[assignment]
 
         if optimizer:
             return model, optimizer
@@ -356,7 +357,7 @@ class NVIDIABackend(BaseBackend):
         for module in model.modules():
             if isinstance(module, (nn.Linear, nn.Conv2d)):
                 # Add metadata for torch.compile
-                module._cuda_fusible = True
+                module._cuda_fusible = True  # type: ignore[assignment]
 
         return model
 
@@ -497,7 +498,7 @@ class NVIDIABackend(BaseBackend):
 
     def get_optimal_attention_kernel(self,
                                      head_dim: int,
-                                     precision: PrecisionFormat | None = None) -> type[nn.Module] | None:
+                                     precision: PrecisionFormat | None = None) -> Callable | type[nn.Module] | None:
         """
         Select optimal attention kernel for current hardware.
 
@@ -593,7 +594,7 @@ class NVIDIABackend(BaseBackend):
                     if isinstance(module, nn.Sequential) and len(module) == 2:
                         if isinstance(module[0], nn.Linear) and isinstance(module[1], nn.SiLU):
                             linear = module[0]
-                            fused = FusedLinearSiLU(
+                            fused: nn.Module = FusedLinearSiLU(
                                 in_features=linear.in_features,
                                 out_features=linear.out_features,
                                 bias=linear.bias is not None

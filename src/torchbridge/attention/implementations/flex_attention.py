@@ -33,9 +33,9 @@ try:
     FLEX_ATTENTION_AVAILABLE = True
 except ImportError:
     FLEX_ATTENTION_AVAILABLE = False
-    flex_attention = None
-    create_block_mask = None
-    create_mask = None
+    flex_attention: Callable | None = None
+    create_block_mask: Callable | None = None
+    create_mask: Callable | None = None
 
 # Check for torch.compile availability
 try:
@@ -43,7 +43,7 @@ try:
     TORCH_COMPILE_AVAILABLE = True
 except AttributeError:
     TORCH_COMPILE_AVAILABLE = False
-    torch_compile = lambda f, **kwargs: f  # noqa: E731
+    torch_compile = lambda f, **kwargs: f  # type: ignore[assignment]  # noqa: E731
 
 
 class FlexAttentionScoreMods:
@@ -243,6 +243,7 @@ class FlexAttentionLayer(AttentionWithCache):
         self._score_mod_fn = self._resolve_score_mod(score_mod, config)
 
         # Compile score_mod for better performance
+        self._compiled_score_mod: Callable | None
         if self.compile_score_mod and self._score_mod_fn is not None:
             self._compiled_score_mod = torch_compile(self._score_mod_fn, fullgraph=True)
         else:
@@ -381,13 +382,13 @@ class FlexAttentionLayer(AttentionWithCache):
         try:
             # Use native FlexAttention
             # Note: flex_attention expects [B, H, S, D] format
-            output = flex_attention(
+            output = flex_attention(  # type: ignore[misc]
                 q, k, v,
                 score_mod=self._compiled_score_mod,
                 block_mask=block_mask,
                 scale=self.scale,
             )
-            return output
+            return output  # type: ignore[return-value]
 
         except Exception as e:
             warnings.warn(f"FlexAttention failed: {e}. Falling back to standard attention.", stacklevel=2)

@@ -270,7 +270,7 @@ Examples:
             # Vision model benchmarks
             try:
                 import torchvision.models as models
-                shapes = [(1, 3, 224, 224), (8, 3, 224, 224), (16, 3, 224, 224)]
+                shapes: list[tuple[int, ...]] = [(1, 3, 224, 224), (8, 3, 224, 224), (16, 3, 224, 224)]
 
                 for batch_size, channels, height, width in shapes:
                     model = models.resnet18(pretrained=False).to(device).eval()
@@ -428,9 +428,9 @@ Examples:
             sample_input = torch.randn(input_shape, device=device)
             return torch.jit.trace(model_copy, sample_input)
         elif level == 'compile':
-            return torch.compile(model_copy, mode='default')
+            return torch.compile(model_copy, mode='default')  # type: ignore[return-value]
         elif level == 'triton':
-            return torch.compile(model_copy, mode='max-autotune')
+            return torch.compile(model_copy, mode='max-autotune')  # type: ignore[return-value]
         else:
             return model_copy
 
