@@ -76,7 +76,7 @@ class TestOptimizeCommand:
             torch.save(temp_model, f.name)
 
             try:
-                model = OptimizeCommand._load_model(f.name, verbose=False)
+                model = OptimizeCommand._load_model(f.name, verbose=False, trust_source=True)
                 assert isinstance(model, torch.nn.Linear)
             finally:
                 os.unlink(f.name)
@@ -197,6 +197,7 @@ class TestOptimizeCommand:
         args.benchmark = False
         args.validate = True
         args.verbose = False
+        args.trust_source = False
 
         result = OptimizeCommand.execute(args)
         assert result == 0
@@ -211,6 +212,7 @@ class TestOptimizeCommand:
         args.benchmark = False
         args.validate = False
         args.verbose = False
+        args.trust_source = False
 
         with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as f:
             args.output = f.name
@@ -233,6 +235,7 @@ class TestOptimizeCommand:
         args.validate = False
         args.verbose = True
         args.output = None
+        args.trust_source = False
 
         result = OptimizeCommand.execute(args)
         assert result == 0
@@ -244,6 +247,7 @@ class TestOptimizeCommand:
         args.level = 'basic'
         args.hardware = 'cpu'
         args.verbose = False
+        args.trust_source = False
 
         result = OptimizeCommand.execute(args)
         assert result == 1

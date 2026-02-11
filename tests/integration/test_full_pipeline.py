@@ -312,21 +312,21 @@ class TestBackendIntegration:
 
     def test_nvidia_backend_import(self):
         """Test NVIDIA backend can be imported."""
-        from torchbridge.backends.nvidia import NVIDIABackend, NVIDIAOptimizer
+        from torchbridge.backends.nvidia import NVIDIAAdapter, NVIDIABackend
         assert NVIDIABackend is not None
-        assert NVIDIAOptimizer is not None
+        assert NVIDIAAdapter is not None
 
     def test_amd_backend_import(self):
         """Test AMD backend can be imported."""
-        from torchbridge.backends.amd import AMDBackend, AMDOptimizer
+        from torchbridge.backends.amd import AMDAdapter, AMDBackend
         assert AMDBackend is not None
-        assert AMDOptimizer is not None
+        assert AMDAdapter is not None
 
     def test_tpu_backend_import(self):
         """Test TPU backend can be imported."""
-        from torchbridge.backends.tpu import TPUBackend, TPUOptimizer
+        from torchbridge.backends.tpu import TPUAdapter, TPUBackend
         assert TPUBackend is not None
-        assert TPUOptimizer is not None
+        assert TPUAdapter is not None
 
     def test_hal_import(self):
         """Test Hardware Abstraction Layer can be imported."""

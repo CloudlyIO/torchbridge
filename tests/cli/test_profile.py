@@ -57,6 +57,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -81,6 +82,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -105,6 +107,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -131,6 +134,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -158,6 +162,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -191,6 +196,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -215,6 +221,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -246,6 +253,7 @@ class TestProfileCommand:
                 with_modules=False,
                 verbose=False,
                 quiet=True,
+                trust_source=True,
             )
 
             result = ProfileCommand.execute(args)
@@ -270,6 +278,7 @@ class TestProfileCommand:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         # Should not raise, falls back to simple model
@@ -312,6 +321,7 @@ class TestProfileDetailedOptions:
             with_modules=False,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -336,6 +346,7 @@ class TestProfileDetailedOptions:
             with_modules=True,
             verbose=False,
             quiet=True,
+            trust_source=True,
         )
 
         result = ProfileCommand.execute(args)
@@ -361,6 +372,7 @@ class TestProfileDetailedOptions:
                 with_modules=False,
                 verbose=False,
                 quiet=True,
+                trust_source=True,
             )
 
             result = ProfileCommand.execute(args)

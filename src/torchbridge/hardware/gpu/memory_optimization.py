@@ -93,7 +93,10 @@ class MemoryOptimizer:
             if isinstance(outputs, torch.Tensor):
                 loss = outputs.sum()
             else:
-                loss = sum(out.sum() for out in outputs if isinstance(out, torch.Tensor))
+                loss = sum(
+                    (out.sum() for out in outputs if isinstance(out, torch.Tensor)),
+                    torch.tensor(0.0),
+                )
 
             loss.backward()
 
@@ -167,7 +170,7 @@ class MemoryOptimizer:
                 # Apply memory-efficient attention patterns
                 if hasattr(module, 'scale_dot_product_attention'):
                     # Use Flash Attention if available
-                    module.use_memory_efficient_attention = True
+                    module.use_memory_efficient_attention = True  # type: ignore[assignment]
         return model
 
     def _optimize_embedding_memory(self, model: nn.Module) -> nn.Module:

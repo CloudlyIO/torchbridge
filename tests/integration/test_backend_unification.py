@@ -3,7 +3,7 @@ Tests for Backend Unification
 
 This module tests the unified backend interface including:
 - BaseBackend abstract class
-- BaseOptimizer abstract class
+- BaseAdapter abstract class
 - BackendFactory
 - DeviceInfo, OptimizationResult dataclasses
 - OptimizationLevel enum
@@ -21,11 +21,11 @@ from torchbridge.backends import (
     # Exceptions
     BackendFactory,
     BackendType,
+    BaseAdapter,
     # Base classes
     BaseBackend,
-    BaseOptimizer,
+    CPUAdapter,
     CPUBackend,
-    CPUOptimizer,
     # Dataclasses
     DeviceInfo,
     KernelConfig,
@@ -307,22 +307,22 @@ class TestCPUBackend:
 
 
 # =============================================================================
-# CPUOptimizer Tests
+# CPUAdapter Tests
 # =============================================================================
 
-class TestCPUOptimizer:
-    """Tests for CPUOptimizer."""
+class TestCPUAdapter:
+    """Tests for CPUAdapter."""
 
-    def test_cpu_optimizer_creation(self):
-        """Test creating a CPUOptimizer."""
-        optimizer = CPUOptimizer()
+    def test_cpu_adapter_creation(self):
+        """Test creating a CPUAdapter."""
+        optimizer = CPUAdapter()
 
         assert optimizer is not None
-        assert optimizer.OPTIMIZER_NAME == "cpu"
+        assert optimizer.ADAPTER_NAME == "cpu"
 
-    def test_cpu_optimizer_optimize(self):
-        """Test CPUOptimizer.optimize()."""
-        optimizer = CPUOptimizer()
+    def test_cpu_adapter_optimize(self):
+        """Test CPUAdapter.optimize()."""
+        optimizer = CPUAdapter()
         model = SimpleModel()
 
         optimized_model, result = optimizer.optimize(model, level=OptimizationLevel.O2)
@@ -331,9 +331,9 @@ class TestCPUOptimizer:
         assert isinstance(result, OptimizationResult)
         assert result.success is True
 
-    def test_cpu_optimizer_optimization_levels(self):
+    def test_cpu_adapter_optimization_levels(self):
         """Test different optimization levels."""
-        optimizer = CPUOptimizer()
+        optimizer = CPUAdapter()
         model = SimpleModel()
 
         for level in [OptimizationLevel.O0, OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3]:
@@ -341,9 +341,9 @@ class TestCPUOptimizer:
             assert result.success is True
             assert result.level == level
 
-    def test_cpu_optimizer_get_available_strategies(self):
-        """Test CPUOptimizer.get_available_strategies()."""
-        optimizer = CPUOptimizer()
+    def test_cpu_adapter_get_available_strategies(self):
+        """Test CPUAdapter.get_available_strategies()."""
+        optimizer = CPUAdapter()
         strategies = optimizer.get_available_strategies()
 
         assert isinstance(strategies, list)
@@ -428,7 +428,7 @@ class TestBackendFactory:
         """Test get_optimizer() convenience function."""
         optimizer = get_optimizer()
 
-        assert isinstance(optimizer, BaseOptimizer)
+        assert isinstance(optimizer, BaseAdapter)
 
     def test_detect_best_backend(self):
         """Test detect_best_backend() function."""

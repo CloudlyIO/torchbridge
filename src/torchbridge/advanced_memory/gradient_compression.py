@@ -31,7 +31,7 @@ class LossyGradientCompression(GradientCompressor):
         self.bits = bits
         self.quantization_levels = 2 ** bits
 
-    def compress(self, gradients: torch.Tensor) -> torch.Tensor:
+    def compress(self, gradients: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Quantize gradients"""
         # Simple quantization
         min_val = gradients.min()
@@ -76,7 +76,7 @@ class QuantizedGradientAccumulation:
 
     def __init__(self, accumulation_steps: int = 4):
         self.accumulation_steps = accumulation_steps
-        self.accumulated_gradients = None
+        self.accumulated_gradients: dict[str, torch.Tensor] | None = None
         self.step_count = 0
 
     def accumulate(self, gradients: dict[str, torch.Tensor]):

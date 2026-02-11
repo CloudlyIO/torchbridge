@@ -246,7 +246,7 @@ def _identify_memory_optimizations(model: nn.Module, sample_input: torch.Tensor)
     return optimizations
 
 
-def _analyze_memory_bandwidth(model: nn.Module, sample_input: torch.Tensor) -> dict[str, float]:
+def _analyze_memory_bandwidth(model: nn.Module, sample_input: torch.Tensor) -> dict[str, Any]:
     """Analyze memory bandwidth utilization characteristics."""
     # Educational implementation - in practice would use profiling tools
     total_params = sum(p.numel() for p in model.parameters())
@@ -468,7 +468,7 @@ class AdaptiveMemoryManager:
                 "memory_format": torch.channels_last
             }
 
-    def analyze_memory_pressure(self) -> dict[str, float]:
+    def analyze_memory_pressure(self) -> dict[str, Any]:
         """Analyze current memory pressure and recommend optimizations."""
         if torch.cuda.is_available():
             current_memory = torch.cuda.memory_allocated()

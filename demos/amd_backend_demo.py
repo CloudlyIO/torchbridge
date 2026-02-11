@@ -119,7 +119,7 @@ def demo_amd_optimizer() -> dict[str, Any]:
     """Demonstrate AMD optimizer functionality."""
     print_section("AMD Optimizer")
 
-    from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.backends.amd.amd_adapter import AMDAdapter
     from torchbridge.core.config import AMDArchitecture, AMDConfig
 
     results = {"passed": 0, "total": 0}
@@ -136,7 +136,7 @@ def demo_amd_optimizer() -> dict[str, Any]:
     results["total"] += 1
     try:
         config = AMDConfig(optimization_level="conservative")
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         start = time.perf_counter()
         optimized = optimizer.optimize(model)
@@ -158,7 +158,7 @@ def demo_amd_optimizer() -> dict[str, Any]:
             architecture=AMDArchitecture.CDNA2,
             optimization_level="balanced",
         )
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         start = time.perf_counter()
         optimized = optimizer.optimize(model)
@@ -184,7 +184,7 @@ def demo_amd_optimizer() -> dict[str, Any]:
             enable_matrix_cores=True,
             enable_mixed_precision=True,
         )
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         start = time.perf_counter()
         optimized = optimizer.optimize(model)
@@ -435,7 +435,7 @@ def demo_full_pipeline(quick: bool = False) -> dict[str, Any]:
     """Demonstrate full AMD optimization pipeline."""
     print_section("Full Optimization Pipeline")
 
-    from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    from torchbridge.backends.amd.amd_adapter import AMDAdapter
     from torchbridge.backends.amd.hip_utilities import HIPUtilities
     from torchbridge.core.config import AMDArchitecture, AMDConfig
 
@@ -473,7 +473,7 @@ def demo_full_pipeline(quick: bool = False) -> dict[str, Any]:
             enable_profiling=True,
         )
 
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         utils = HIPUtilities(config)
 
         # Create model (d_model must be divisible by num_heads=12)

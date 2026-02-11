@@ -28,7 +28,7 @@ class PrivateUse1Config:
     device_name: str
     vendor: HardwareVendor
     backend_library: str
-    kernel_registrations: dict[str, Callable] = None
+    kernel_registrations: dict[str, Callable] | None = None
     generator_class: type | None = None
     guard_class: type | None = None
     enable_autograd: bool = True

@@ -46,6 +46,7 @@ class FeedForwardExpert(nn.Module):
         self.fc1 = nn.Linear(input_size, hidden_size, bias=use_bias, **factory_kwargs)
 
         # Activation function
+        self.activation: nn.Module | None
         if activation_fn == "relu":
             self.activation = nn.ReLU()
         elif activation_fn == "gelu":
@@ -143,6 +144,7 @@ class ConvolutionalExpert(nn.Module):
             )
 
         # Activation function
+        self.activation: nn.Module
         if activation_fn == "relu":
             self.activation = nn.ReLU()
         elif activation_fn == "gelu":
@@ -405,6 +407,7 @@ class ParameterEfficientExpert(nn.Module):
             self.linear = nn.Linear(input_size, hidden_size, bias=use_bias, **factory_kwargs)
 
         # Activation function
+        self.activation: nn.Module
         if activation_fn == "relu":
             self.activation = nn.ReLU()
         elif activation_fn == "gelu":
@@ -457,7 +460,7 @@ class ParameterEfficientExpert(nn.Module):
 
         return output
 
-    def get_parameter_count(self) -> dict[str, int]:
+    def get_parameter_count(self) -> dict[str, int | float]:
         """Get parameter count breakdown"""
         total_params = sum(p.numel() for p in self.parameters())
 
@@ -494,7 +497,7 @@ class HybridExpert(nn.Module):
         input_size: int,
         hidden_size: int,
         output_size: int | None = None,
-        expert_types: dict[str, dict[str, Any]] = None,
+        expert_types: dict[str, dict[str, Any]] | None = None,
         combination_method: str = "concat",  # "concat", "add", "attention"
         device: torch.device | None = None,
         dtype: torch.dtype | None = None

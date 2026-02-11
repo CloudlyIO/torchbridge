@@ -35,15 +35,15 @@ class OptimizationResult:
     optimizations_applied: list[str]
     performance_improvement: float | None = None
     memory_savings_mb: float | None = None
-    warnings: list[str] = None
+    warnings: list[str] | None = None
 
     def __post_init__(self):
         if self.warnings is None:
             self.warnings = []
 
-class AMDOptimizer:
+class AMDAdapter:
     """
-    AMD-specific optimizer for PyTorch models.
+    AMD-specific adapter for PyTorch models.
 
     This class implements multi-level optimization strategies tailored for
     AMD CDNA2/CDNA3 architectures, leveraging ROCm/HIP capabilities.
@@ -57,8 +57,8 @@ class AMDOptimizer:
 
     Example:
         >>> config = AMDConfig(optimization_level="balanced")
-        >>> optimizer = AMDOptimizer(config)
-        >>> optimized_model = optimizer.optimize(model)
+        >>> adapter = AMDAdapter(config)
+        >>> optimized_model = adapter.optimize(model)
     """
 
     def __init__(self, config: AMDConfig):
@@ -73,7 +73,7 @@ class AMDOptimizer:
         self._fused_ops: set[str] = set()
 
         logger.info(
-            "Initializing AMDOptimizer: level=%s, architecture=%s",
+            "Initializing AMDAdapter: level=%s, architecture=%s",
             config.optimization_level,
             config.architecture.value,
         )
@@ -344,7 +344,7 @@ class AMDOptimizer:
                 try:
                     # Use reduce-overhead mode which is good for inference
                     # This enables kernel fusion including Linear+GELU
-                    model = torch.compile(model, mode='reduce-overhead', fullgraph=False)
+                    model = torch.compile(model, mode='reduce-overhead', fullgraph=False)  # type: ignore[assignment]
                     logger.debug("Applied torch.compile for Linear+GELU fusion")
                 except Exception as e:
                     logger.debug("torch.compile not applied: %s", e)
@@ -598,7 +598,7 @@ class AMDOptimizer:
             # 4. Apply torch.compile with max-autotune for aggressive optimization
             if hasattr(torch, 'compile') and fused_count > 0:
                 try:
-                    model = torch.compile(
+                    model = torch.compile(  # type: ignore[assignment]
                         model,
                         mode='max-autotune',  # Maximum optimization
                         fullgraph=False,
@@ -661,4 +661,4 @@ class AMDOptimizer:
             "operator_fusion": self.config.enable_operator_fusion,
         }
 
-__all__ = ["AMDOptimizer", "OptimizationResult"]
+__all__ = ["AMDAdapter", "OptimizationResult"]

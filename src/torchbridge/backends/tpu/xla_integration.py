@@ -40,8 +40,8 @@ class XLADeviceManager:
             config: TPU configuration
         """
         self.config = config
-        self._devices = []
-        self._current_device = None
+        self._devices: list[torch.device] = []
+        self._current_device: torch.device | None = None
         self._world_size = 1
         self._rank = 0
 
@@ -75,7 +75,7 @@ class XLADeviceManager:
             self._current_device = torch.device("cpu")
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         """Get current XLA device."""
         return self._current_device
 
@@ -356,7 +356,7 @@ class XLAOptimizations:
             # Mark modules that have static shapes
             if hasattr(module, 'forward'):
                 # Add metadata for XLA compiler
-                module._xla_static_shapes = True
+                module._xla_static_shapes = True  # type: ignore[assignment]
 
         return model
 
@@ -383,7 +383,7 @@ class XLAUtilities:
     @staticmethod
     def get_xla_env_info() -> dict[str, Any]:
         """Get XLA environment information."""
-        env_info = {
+        env_info: dict[str, Any] = {
             'XLA_FLAGS': os.environ.get('XLA_FLAGS', ''),
             'XLA_PYTHON_CLIENT_MEM_FRACTION': os.environ.get('XLA_PYTHON_CLIENT_MEM_FRACTION', ''),
             'TPU_TYPE': os.environ.get('TPU_TYPE', ''),

@@ -17,15 +17,15 @@ Key Components:
 
 Example:
     ```python
-    from torchbridge.backends.trainium import TrainiumBackend, TrainiumOptimizer
+    from torchbridge.backends.trainium import TrainiumBackend, TrainiumAdapter
 
     # Initialize Trainium backend
     backend = TrainiumBackend()
     model = backend.prepare_model(your_model)
 
     # Optimize for Trainium
-    optimizer = TrainiumOptimizer(backend.config)
-    optimized_model = optimizer.optimize(model)
+    adapter = TrainiumAdapter(backend.config)
+    optimized_model = adapter.optimize(model)
     ```
 """
 
@@ -36,12 +36,12 @@ from .neuron_utilities import (
     get_neuron_sdk_version,
     is_neuron_available,
 )
+from .trainium_adapter import TrainiumAdapter
 from .trainium_backend import TrainiumBackend
-from .trainium_optimizer import TrainiumOptimizer
 
 __all__ = [
     'TrainiumBackend',
-    'TrainiumOptimizer',
+    'TrainiumAdapter',
     'NeuronCompiler',
     'TrainiumMemoryManager',
     'is_neuron_available',

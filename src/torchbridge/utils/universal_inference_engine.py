@@ -336,7 +336,7 @@ class RequestProfiler:
         # Estimate activation memory (typically 2-4x input size)
         activation_memory_gb = input_memory_gb * 3
 
-        return base_memory + input_memory_gb + activation_memory_gb
+        return float(base_memory + input_memory_gb + activation_memory_gb)
 
     def _estimate_model_memory(self, model_id: str) -> float:
         """Estimate base model memory from model ID"""
@@ -440,7 +440,7 @@ class UniversalInferenceEngine:
         self.profiler = RequestProfiler()
 
         # Performance tracking
-        self.request_metrics: dict[str, list[float]] = {
+        self.request_metrics: dict[str, deque[float]] = {
             'latency_ms': deque(maxlen=1000),
             'throughput_rps': deque(maxlen=100),
             'queue_size': deque(maxlen=1000)
@@ -657,37 +657,37 @@ class UniversalInferenceEngine:
         if self.request_metrics['latency_ms']:
             latencies = list(self.request_metrics['latency_ms'])
             metrics['latency'] = {
-                'avg_ms': np.mean(latencies),
-                'p50_ms': np.percentile(latencies, 50),
-                'p95_ms': np.percentile(latencies, 95),
-                'p99_ms': np.percentile(latencies, 99),
-                'max_ms': np.max(latencies)
+                'avg_ms': float(np.mean(latencies)),
+                'p50_ms': float(np.percentile(latencies, 50)),
+                'p95_ms': float(np.percentile(latencies, 95)),
+                'p99_ms': float(np.percentile(latencies, 99)),
+                'max_ms': float(np.max(latencies))
             }
 
         # Throughput metrics
         if self.request_metrics['throughput_rps']:
             throughputs = list(self.request_metrics['throughput_rps'])
             metrics['throughput'] = {
-                'current_rps': throughputs[-1] if throughputs else 0.0,
-                'avg_rps': np.mean(throughputs),
-                'max_rps': np.max(throughputs) if throughputs else 0.0
+                'current_rps': float(throughputs[-1]) if throughputs else 0.0,
+                'avg_rps': float(np.mean(throughputs)),
+                'max_rps': float(np.max(throughputs)) if throughputs else 0.0
             }
 
         # Queue metrics
         if self.request_metrics['queue_size']:
             queue_sizes = list(self.request_metrics['queue_size'])
             metrics['queue'] = {
-                'current_size': queue_sizes[-1] if queue_sizes else 0,
-                'avg_size': np.mean(queue_sizes),
-                'max_size': np.max(queue_sizes) if queue_sizes else 0
+                'current_size': float(queue_sizes[-1]) if queue_sizes else 0.0,
+                'avg_size': float(np.mean(queue_sizes)),
+                'max_size': float(np.max(queue_sizes)) if queue_sizes else 0.0
             }
 
         # Hardware metrics
         available_devices = self.hardware_pool.get_available_devices()
         metrics['hardware'] = {
-            'total_devices': len(self.hardware_pool.available_devices),
-            'available_devices': len(available_devices),
-            'avg_utilization': np.mean([d.current_utilization for d in available_devices]) if available_devices else 0.0
+            'total_devices': float(len(self.hardware_pool.available_devices)),
+            'available_devices': float(len(available_devices)),
+            'avg_utilization': float(np.mean([d.current_utilization for d in available_devices])) if available_devices else 0.0
         }
 
         return metrics

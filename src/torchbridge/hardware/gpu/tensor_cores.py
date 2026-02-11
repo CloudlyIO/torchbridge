@@ -355,6 +355,7 @@ class MixedPrecisionManager:
         self.precision_policy = precision_policy
         self.loss_scaling = loss_scaling
 
+        self.scaler: GradScaler | None
         if loss_scaling:
             self.scaler = GradScaler()
         else:
@@ -633,7 +634,7 @@ def benchmark_tensor_core_performance(
     model_optimized: nn.Module,
     sample_input: torch.Tensor,
     num_iterations: int = 100
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """
     Benchmark Tensor Core performance improvements.
 

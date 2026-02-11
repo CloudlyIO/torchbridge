@@ -57,7 +57,7 @@ class TPUBackend(BaseBackend):
         self.tpu_config = self._full_config.hardware.tpu
 
         # Initialize XLA environment
-        self._xla_device = None
+        self._xla_device: torch.device | None = None
         self._world_size = 1
         self._rank = 0
 
@@ -196,7 +196,7 @@ class TPUBackend(BaseBackend):
     @property
     def device(self) -> torch.device:
         """Get the TPU device."""
-        return self._xla_device
+        return self._xla_device  # type: ignore[return-value]
 
     @property
     def is_distributed(self) -> bool:
@@ -359,7 +359,7 @@ class TPUBackend(BaseBackend):
                 result = result.to(dtype=target_dtype)
             return result
         elif hasattr(data, 'items'):  # Dict-like objects (including BatchEncoding)
-            result = {}
+            result: dict[str, Any] = {}
             for key, value in data.items():
                 if isinstance(value, torch.Tensor):
                     moved = value.to(self.device)

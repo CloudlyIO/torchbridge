@@ -1,10 +1,10 @@
 """
-Base Optimizer for All Hardware Backends
+Base Adapter for All Hardware Backends
 
-This module provides the abstract base class for all optimizer implementations,
+This module provides the abstract base class for all adapter implementations,
 defining the common interface and shared functionality for model optimization.
 
-Backends (NVIDIA, AMD, TPU) implement optimizers inheriting from this base
+Backends (NVIDIA, AMD, TPU) implement adapters inheriting from this base
 while providing device-specific optimization strategies.
 
 """
@@ -26,7 +26,7 @@ class KernelConfig:
     """
     Configuration for a specific kernel operation.
 
-    Used by kernel optimizers to tune operations for specific hardware.
+    Used by kernel adapters to tune operations for specific hardware.
     """
     algorithm: str = "auto"
     tile_sizes: tuple[int, ...] = (32, 32, 32)
@@ -65,9 +65,9 @@ class OptimizationStrategy:
         """Check if this strategy is applicable for the given level."""
         return level in self.applicable_levels
 
-class BaseOptimizer(ABC):
+class BaseAdapter(ABC):
     """
-    Abstract base class for model optimizers.
+    Abstract base class for model adapters.
 
     This class defines the common interface for optimizing PyTorch models
     for different hardware backends.
@@ -82,15 +82,15 @@ class BaseOptimizer(ABC):
     - get_optimization_recommendations()
     """
 
-    # Optimizer name - should be overridden by subclasses
-    OPTIMIZER_NAME: str = "base"
+    # Adapter name - should be overridden by subclasses
+    ADAPTER_NAME: str = "base"
 
     # Default optimization level
     DEFAULT_LEVEL: OptimizationLevel = OptimizationLevel.O2
 
     def __init__(self, config: Any = None, device: torch.device | None = None):
         """
-        Initialize the optimizer.
+        Initialize the adapter.
 
         Args:
             config: Backend-specific configuration object
@@ -183,7 +183,7 @@ class BaseOptimizer(ABC):
             level = OptimizationLevel.from_string(level)
 
         logger.info(
-            f"Optimizing model with {self.OPTIMIZER_NAME} at level {level.value}"
+            f"Optimizing model with {self.ADAPTER_NAME} at level {level.value}"
         )
 
         try:
@@ -438,19 +438,19 @@ class BaseOptimizer(ABC):
             f"optimizations_performed={len(self._optimization_history)})"
         )
 
-class BaseKernelOptimizer(ABC):
+class BaseKernelAdapter(ABC):
     """
-    Abstract base class for kernel-level optimizers.
+    Abstract base class for kernel-level adapters.
 
     This class provides an interface for tuning specific operations
     (GEMM, Convolution, Attention, etc.) for different hardware.
     """
 
-    OPTIMIZER_NAME: str = "base_kernel"
+    ADAPTER_NAME: str = "base_kernel"
 
     def __init__(self, device: torch.device | None = None):
         """
-        Initialize the kernel optimizer.
+        Initialize the kernel adapter.
 
         Args:
             device: Target device for optimization
@@ -534,14 +534,14 @@ class BaseKernelOptimizer(ABC):
         """Clear configuration cache."""
         self._config_cache.clear()
 
-class CPUOptimizer(BaseOptimizer):
+class CPUAdapter(BaseAdapter):
     """
-    CPU optimizer implementation.
+    CPU adapter implementation.
 
     Provides basic optimizations for CPU execution.
     """
 
-    OPTIMIZER_NAME = "cpu"
+    ADAPTER_NAME = "cpu"
 
     def _apply_optimizations(
         self,
@@ -576,7 +576,7 @@ class CPUOptimizer(BaseOptimizer):
         if level.value >= OptimizationLevel.O2.value:
             if hasattr(torch, 'compile'):
                 try:
-                    model = torch.compile(model, mode='reduce-overhead')
+                    model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
                     optimizations.append('torch_compile')
                 except Exception as e:
                     warnings.append(f'torch.compile failed: {e}')
@@ -630,9 +630,9 @@ class CPUOptimizer(BaseOptimizer):
         ]
 
 __all__ = [
-    'BaseOptimizer',
-    'BaseKernelOptimizer',
-    'CPUOptimizer',
+    'BaseAdapter',
+    'BaseKernelAdapter',
+    'CPUAdapter',
     'KernelConfig',
     'OptimizationStrategy',
 ]

@@ -17,7 +17,7 @@ from torchbridge.backends.nvidia import (
     FP8Compiler,
     NVIDIABackend,
     NVIDIAMemoryManager,
-    NVIDIAOptimizer,
+    NVIDIAAdapter,
 )
 from torchbridge.core.config import NVIDIAArchitecture, TorchBridgeConfig
 
@@ -86,7 +86,7 @@ def benchmark_nvidia_optimizer() -> dict[str, Any]:
     iterations = 50
     results = {}
 
-    optimizer = NVIDIAOptimizer()
+    optimizer = NVIDIAAdapter()
     model = nn.Sequential(
         nn.Linear(128, 256),
         nn.ReLU(),

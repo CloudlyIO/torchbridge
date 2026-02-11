@@ -132,7 +132,7 @@ class XLACompiler:
 
                 if backend is not None:
                     # Use specific backend (openxla for 2.9+, aot_torchxla_trace_once for older)
-                    compiled_model = torch.compile(
+                    compiled_model: nn.Module = torch.compile(  # type: ignore[assignment]
                         model,
                         backend=backend,
                         dynamic=self.config.enable_xla_dynamic_shapes
@@ -140,7 +140,7 @@ class XLACompiler:
                 else:
                     # For torch_xla 2.9+ without explicit backend, use default compilation
                     # torch.compile works directly with XLA tensors
-                    compiled_model = torch.compile(
+                    compiled_model = torch.compile(  # type: ignore[assignment]
                         model,
                         dynamic=self.config.enable_xla_dynamic_shapes
                     )

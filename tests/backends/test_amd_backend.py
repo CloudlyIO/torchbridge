@@ -156,25 +156,25 @@ class TestAMDExceptions:
         assert "balanced" in str(error) or "Optimization" in str(error)
 
 
-class TestAMDOptimizer:
-    """Tests for AMD optimizer."""
+class TestAMDAdapter:
+    """Tests for AMD adapter."""
 
-    def test_optimizer_creation(self):
-        """Test optimizer creation."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+    def test_adapter_creation(self):
+        """Test adapter creation."""
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig()
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         assert optimizer.config == config
 
     def test_optimization_levels(self):
         """Test different optimization levels."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         for level in ["conservative", "balanced", "aggressive"]:
             config = AMDConfig(optimization_level=level)
-            optimizer = AMDOptimizer(config)
+            optimizer = AMDAdapter(config)
 
             model = torch.nn.Linear(64, 32)
             optimized = optimizer.optimize(model)
@@ -183,12 +183,12 @@ class TestAMDOptimizer:
 
     def test_optimization_result(self):
         """Test optimization result structure."""
-        from torchbridge.backends.amd.amd_optimizer import (
-            AMDOptimizer,
+        from torchbridge.backends.amd.amd_adapter import (
+            AMDAdapter,
         )
 
         config = AMDConfig()
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         model = torch.nn.Linear(64, 32)
         optimizer.optimize(model)
@@ -199,10 +199,10 @@ class TestAMDOptimizer:
 
     def test_optimization_with_conv_model(self):
         """Test optimization with convolutional model."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig()
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         model = torch.nn.Sequential(
             torch.nn.Conv2d(3, 16, 3, padding=1),
@@ -448,7 +448,7 @@ class TestAMDBackendIntegration:
     )
     def test_full_pipeline(self):
         """Test full optimization pipeline."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
         from torchbridge.backends.amd.hip_utilities import HIPUtilities
 
         config = AMDConfig(
@@ -457,7 +457,7 @@ class TestAMDBackendIntegration:
             enable_profiling=True,
         )
 
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         utils = HIPUtilities(config)
 
         model = torch.nn.Sequential(
@@ -475,8 +475,8 @@ class TestAMDBackendIntegration:
         assert summary["total_regions"] >= 1
 
     def test_config_integration(self):
-        """Test configuration integration with optimizer."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        """Test configuration integration with adapter."""
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
@@ -485,7 +485,7 @@ class TestAMDBackendIntegration:
             enable_mixed_precision=True,
         )
 
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         summary = optimizer.get_optimization_summary()
 
         assert summary["architecture"] == "cdna3"
@@ -558,10 +558,10 @@ class TestAMDOperatorFusion:
 
     def test_conv_bn_fusion_pattern_detection(self):
         """Test Conv+BatchNorm fusion pattern detection."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(enable_operator_fusion=True)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         # Create model with Conv+BN pattern
         model = torch.nn.Sequential(
@@ -576,10 +576,10 @@ class TestAMDOperatorFusion:
 
     def test_linear_gelu_fusion_pattern(self):
         """Test Linear+GELU fusion pattern detection."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(enable_operator_fusion=True)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         model = torch.nn.Sequential(
             torch.nn.Linear(256, 512),
@@ -595,13 +595,13 @@ class TestAMDOperatorFusion:
 
     def test_aggressive_fusion_patterns(self):
         """Test aggressive fusion patterns."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
             enable_operator_fusion=True
         )
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         # Transformer-like model
         model = torch.nn.Sequential(
@@ -616,10 +616,10 @@ class TestAMDOperatorFusion:
 
     def test_memory_layout_optimization(self):
         """Test memory layout optimization for HBM."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig()
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         model = torch.nn.Sequential(
             torch.nn.Conv2d(3, 64, 3, padding=1),
@@ -837,8 +837,8 @@ class TestAMDIntegrationV049:
 
     def test_full_optimization_pipeline(self):
         """Test complete optimization pipeline."""
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
         from torchbridge.backends.amd.amd_backend import AMDBackend
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
 
         config = AMDConfig(
             architecture=AMDArchitecture.CDNA3,
@@ -848,7 +848,7 @@ class TestAMDIntegrationV049:
         )
 
         backend = AMDBackend(config)
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
 
         model = torch.nn.Sequential(
             torch.nn.Linear(256, 512),
@@ -871,12 +871,12 @@ class TestAMDIntegrationV049:
 
     def test_optimizer_and_compiler_integration(self):
         """Test optimizer and compiler work together."""
-        from torchbridge.backends.amd.amd_optimizer import AMDOptimizer
+        from torchbridge.backends.amd.amd_adapter import AMDAdapter
         from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
 
         config = AMDConfig(optimization_level="balanced")
 
-        optimizer = AMDOptimizer(config)
+        optimizer = AMDAdapter(config)
         compiler = ROCmCompiler(config)
 
         # Compile a kernel

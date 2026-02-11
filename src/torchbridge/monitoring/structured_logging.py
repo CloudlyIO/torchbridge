@@ -425,6 +425,7 @@ def configure_logging(
             root_logger.removeHandler(handler)
 
         # Create formatter
+        formatter: logging.Formatter
         if json_format:
             formatter = JSONFormatter(_global_config)
         else:

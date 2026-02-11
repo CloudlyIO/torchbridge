@@ -474,7 +474,7 @@ def demo_optimizer_integration() -> dict[str, Any]:
         print_result(
             "Get CPU optimizer",
             "pass",
-            f"Optimizer: {optimizer.OPTIMIZER_NAME}",
+            f"Adapter: {optimizer.ADAPTER_NAME}",
         )
         results["passed"] += 1
     except Exception as e:

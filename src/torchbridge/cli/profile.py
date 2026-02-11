@@ -138,6 +138,12 @@ Examples:
             help='Suppress non-essential output'
         )
 
+        parser.add_argument(
+            '--trust-source',
+            action='store_true',
+            help='Allow loading untrusted model files (enables weights_only=False for pickle deserialization)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the profile command."""
@@ -182,7 +188,8 @@ Examples:
         if verbose:
             print(f"Loading model: {args.model}")
 
-        model = ProfileCommand._load_model(args.model, dtype, device)
+        trust_source = getattr(args, 'trust_source', False)
+        model = ProfileCommand._load_model(args.model, dtype, device, trust_source=trust_source)
         model.eval()
 
         # Parse input shape and create sample input
@@ -227,12 +234,21 @@ Examples:
         return 0
 
     @staticmethod
-    def _load_model(model_path: str, dtype: torch.dtype, device: str) -> torch.nn.Module:
+    def _load_model(model_path: str, dtype: torch.dtype, device: str, *, trust_source: bool = False) -> torch.nn.Module:
         """Load a model from file or create a simple test model."""
         path = Path(model_path)
 
         if path.exists():
-            loaded = torch.load(path, map_location=device, weights_only=False)
+            try:
+                loaded = torch.load(path, map_location=device, weights_only=not trust_source)
+            except Exception as e:
+                if not trust_source and "Weights only load failed" in str(e):
+                    raise RuntimeError(
+                        f"Cannot safely load '{path}': the file contains objects that "
+                        f"require pickle deserialization.\n"
+                        f"If you trust this file, re-run with --trust-source to allow loading."
+                    ) from e
+                raise
             if isinstance(loaded, torch.nn.Module):
                 model = loaded
             elif isinstance(loaded, dict) and 'model' in loaded:
@@ -476,7 +492,7 @@ Examples:
                     })
 
         # Get final stats
-        results = {
+        results: dict[str, Any] = {
             'model_params_mb': sum(p.numel() * p.element_size() for p in model.parameters()) / 1024 / 1024,
             'input_size_mb': sample_input.numel() * sample_input.element_size() / 1024 / 1024,
         }

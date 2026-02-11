@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root / "src"))
 from torchbridge.backends.tpu import (
     TPUBackend,
     TPUMemoryManager,
-    TPUOptimizer,
+    TPUAdapter,
     XLACompiler,
     XLADeviceManager,
     XLADistributedTraining,
@@ -223,7 +223,7 @@ class TPUBenchmarkRunner:
         start_time = time.perf_counter()
 
         try:
-            optimizer = TPUOptimizer(self.config)
+            optimizer = TPUAdapter(self.config)
 
             # Test models of different complexities
             test_cases = [

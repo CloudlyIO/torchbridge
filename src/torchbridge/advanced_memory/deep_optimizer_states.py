@@ -91,7 +91,7 @@ class OptimizerStateGroup:
 
         # Transfer management
         self.is_transferring = False
-        self.transfer_future = None
+        self.transfer_future: Any = None
 
     def estimate_memory_usage(self) -> int:
         """Estimate memory usage in bytes"""

@@ -31,9 +31,9 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from torchbridge.backends.tpu import (
+    TPUAdapter,
     TPUBackend,
     TPUMemoryManager,
-    TPUOptimizer,
     XLACompiler,
     XLAUtilities,
     create_xla_integration,
@@ -270,7 +270,7 @@ class TPUIntegrationDemo:
 
         # Initialize optimizer and compiler
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
         compiler = XLACompiler(config.hardware.tpu)
 
         # Test model

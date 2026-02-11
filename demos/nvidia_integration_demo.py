@@ -30,9 +30,9 @@ from torchbridge.backends.nvidia import (
     CUDAOptimizations,
     FlashAttention3,
     FP8Compiler,
+    NVIDIAAdapter,
     NVIDIABackend,
     NVIDIAMemoryManager,
-    NVIDIAOptimizer,
     create_flash_attention_3,
 )
 from torchbridge.core.config import NVIDIAArchitecture, TorchBridgeConfig
@@ -84,7 +84,7 @@ def demo_nvidia_optimizer():
     """Demonstrate NVIDIA optimizer with multiple optimization levels."""
     print_section("2. NVIDIA Optimizer - Multi-Level Optimization")
 
-    optimizer = NVIDIAOptimizer()
+    optimizer = NVIDIAAdapter()
     model = nn.Sequential(
         nn.Linear(64, 128),
         nn.ReLU(),
@@ -295,7 +295,7 @@ def demo_integration():
 
     # Create components
     backend = NVIDIABackend(config)
-    optimizer = NVIDIAOptimizer(config)
+    optimizer = NVIDIAAdapter(config)
     memory_manager = NVIDIAMemoryManager(config)
 
     # Create model

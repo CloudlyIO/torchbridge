@@ -44,7 +44,7 @@ class LoadBalancer:
         router_probs: torch.Tensor,
         num_tokens: int,
         expert_mask: torch.Tensor | None = None
-    ) -> dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor | int]:
         """
         Compute capacity information for experts
 
@@ -95,13 +95,14 @@ class LoadBalancer:
             min=0
         ).sum()
 
-        return {
+        result: dict[str, torch.Tensor | int] = {
             'expert_capacities': expert_capacities,
             'expert_utilization': expert_utilization,
             'tokens_dropped': tokens_dropped,
             'base_capacity': base_capacity,
             'total_capacity': expert_capacities.sum()
         }
+        return result
 
     def compute_load_balance_loss(
         self,
@@ -140,7 +141,7 @@ class LoadBalancer:
 
         if mask is not None:
             router_probs = router_probs * mask.unsqueeze(-1)
-            num_tokens = mask.sum()
+            num_tokens = int(mask.sum().item())
 
         # Fraction of tokens assigned to each expert
         tokens_per_expert = torch.zeros(
@@ -631,7 +632,7 @@ class MemoryEfficientSwitching:
         # Simple LRU-based offloading strategy
         usage_threshold = 100  # Steps since last use
 
-        offload_info = {
+        offload_info: dict[str, int | float] = {
             'experts_offloaded': 0,
             'experts_loaded': 0,
             'memory_saved_mb': 0
