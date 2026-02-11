@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.12"
+version = "0.5.13"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -210,6 +210,7 @@ markers = [
     "real_model: Tests that load real model weights from HuggingFace/torchvision",
     "requires_transformers: Requires HuggingFace transformers library",
     "requires_torchvision: Requires torchvision library",
+    "stress: Stress and edge-case tests (may be slow or memory-intensive)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
