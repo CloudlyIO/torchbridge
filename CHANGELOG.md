@@ -8,7 +8,30 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.12 (Model Modernization & Production Hardening)
+**Current Version**: v0.5.13 (Stress Testing & Edge Cases)
+
+---
+
+## [0.5.13] - 2026-02-10 - Stress Testing & Edge Cases
+
+### **Summary**
+
+Added a comprehensive stress test suite pushing the HAL to its limits with adversarial and
+edge-case workloads: large batch inference, mixed precision matrix, OOM recovery, multi-model
+memory leak detection, concurrent inference, long-running stability, and torch.compile compatibility.
+
+### **Added**
+
+- **Stress test suite** (`tests/stress/`): 7 test files, ~26 tests, ~55 parametrized cases
+  - Large batch inference (1/8/32/64/128) on LLM, text, and vision models
+  - Mixed precision matrix (FP32/FP16/BF16) with cross-precision consistency + LLM generation
+  - OOM recovery: graceful fallback after failed allocations
+  - Multi-model sequential load/unload with memory leak detection
+  - Concurrent inference: 2 models on same device
+  - Long-running stability: 1000 iterations with drift and leak checks
+  - torch.compile compatibility across modes and models
+- `@pytest.mark.stress` marker for stress/edge-case tests
+- `MemoryTracker` fixture for leak detection in stress tests
 
 ---
 
