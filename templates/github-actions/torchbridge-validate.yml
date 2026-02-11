@@ -44,7 +44,7 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/ -v --tb=short \
-            -m "not gpu and not slow and not tpu and not amd and not intel"
+            -m "not gpu and not slow and not tpu and not amd"
 
   # Optional: GPU validation on self-hosted runners
   validate-gpu:
