@@ -1,7 +1,5 @@
 """
 Tests for auto-optimization and hardware detection.
-
-Tests Stage 3A: Intelligent Optimization Selection
 """
 
 from unittest.mock import patch

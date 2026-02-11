@@ -2,7 +2,7 @@
 Hardware Detection Module
 
 Automatically detects available hardware and provides capability profiles
-for intelligent optimization selection.
+for backend selection.
 """
 
 from dataclasses import dataclass
@@ -18,7 +18,6 @@ class HardwareType(Enum):
     NVIDIA_GPU = "nvidia_gpu"
     TPU = "tpu"
     AMD_GPU = "amd_gpu"
-    INTEL_GPU = "intel_gpu"
     CPU = "cpu"
 
 
@@ -95,7 +94,7 @@ class HardwareDetector:
     Automatic hardware detection and capability profiling.
 
     Detects available hardware and provides comprehensive profiles
-    for intelligent optimization selection.
+    for backend selection.
     """
 
     def __init__(self):

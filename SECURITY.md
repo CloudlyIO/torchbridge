@@ -36,7 +36,7 @@ We will keep you informed of our progress throughout the remediation process and
 
 This security policy applies to the following components of the TorchBridge project:
 
-- **PyPI package:** [torchbridge](https://pypi.org/project/torchbridge/)
+- **PyPI package:** [torchbridge-ml](https://pypi.org/project/torchbridge-ml/)
 - **GitHub repository:** [CloudlyIO/torchbridge](https://github.com/CloudlyIO/torchbridge)
 
 ## Disclosure Policy
