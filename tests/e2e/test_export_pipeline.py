@@ -156,8 +156,8 @@ class TestSafeTensorsExport:
             SafeTensorsExportConfig,
             SafeTensorsExporter,
         )
-        assert SafeTensorsExporter is not None
-        assert SafeTensorsExportConfig is not None
+        assert callable(SafeTensorsExporter)
+        assert callable(SafeTensorsExportConfig)
 
     def test_export_simple_model(self, simple_model, temp_dir):
         """Test exporting simple model to SafeTensors."""
@@ -250,8 +250,8 @@ class TestProductionValidator:
             ProductionRequirements,
             ProductionValidator,
         )
-        assert ProductionValidator is not None
-        assert ProductionRequirements is not None
+        assert callable(ProductionValidator)
+        assert callable(ProductionRequirements)
 
     def test_validate_simple_model(self, simple_model, sample_input):
         """Test validating simple model."""
@@ -260,9 +260,10 @@ class TestProductionValidator:
         result = validate_production_readiness(simple_model, sample_input)
 
         assert result is not None
-        assert hasattr(result, "passed")
-        assert hasattr(result, "checks")
+        assert isinstance(result.passed, bool)
+        assert isinstance(result.checks, list)
         assert len(result.checks) > 0
+        assert all(hasattr(c, "name") and hasattr(c, "passed") for c in result.checks)
 
     def test_validate_forward_pass(self, simple_model, sample_input):
         """Test forward pass validation."""
@@ -448,11 +449,13 @@ class TestTorchScriptExport:
             loaded = result
 
         assert loaded is not None
+        assert callable(loaded)
 
-        # Test inference
+        # Test inference produces correct output shape
         with torch.no_grad():
             output = loaded(sample_input)
         assert output.shape[0] == sample_input.shape[0]
+        assert output.dtype in (torch.float32, torch.float16, torch.bfloat16)
 
 
 # =============================================================================
@@ -468,6 +471,7 @@ class TestExportCLI:
 
         parser = create_parser()
         assert parser is not None
+        assert hasattr(parser, "parse_args")
 
     def test_parse_shape(self):
         """Test shape parsing."""
@@ -586,6 +590,8 @@ class TestEdgeCases:
         large_input = torch.randn(64, 512)
         result = validate_production_readiness(simple_model, large_input)
         assert result is not None
+        assert isinstance(result.passed, bool)
+        assert len(result.checks) > 0
 
     def test_multiple_exports_same_dir(self, simple_model, sample_input, temp_dir):
         """Test multiple exports to same directory."""

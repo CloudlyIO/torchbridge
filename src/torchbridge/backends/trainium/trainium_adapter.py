@@ -1,7 +1,7 @@
 """
-Trainium Model Optimizer
+Trainium Model Adapter
 
-High-level optimizer for Trainium models that combines backend preparation,
+High-level adapter for Trainium models that combines backend preparation,
 Neuron compilation, and Trainium-specific optimizations.
 """
 
@@ -33,9 +33,9 @@ class TrainiumOptimizationResult:
     performance_metrics: dict[str, Any]
 
 
-class TrainiumOptimizer:
+class TrainiumAdapter:
     """
-    High-level Trainium model optimizer.
+    High-level Trainium model adapter.
 
     Combines Trainium backend preparation, Neuron compilation, and optimization
     strategies to provide the best performance for Trainium deployments.
@@ -43,7 +43,7 @@ class TrainiumOptimizer:
 
     def __init__(self, config: TorchBridgeConfig | None = None):
         """
-        Initialize Trainium optimizer.
+        Initialize Trainium adapter.
 
         Args:
             config: Optional configuration. If None, creates default config.
@@ -289,9 +289,9 @@ class TrainiumOptimizer:
         self.compiler.clear_cache()
 
     def __repr__(self) -> str:
-        """String representation of Trainium optimizer."""
+        """String representation of Trainium adapter."""
         return (
-            f"TrainiumOptimizer(backend={self.backend}, "
+            f"TrainiumAdapter(backend={self.backend}, "
             f"compiler={self.compiler}, "
             f"optimizations={len(self._optimization_history)})"
         )

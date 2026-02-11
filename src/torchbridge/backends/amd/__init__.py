@@ -6,7 +6,7 @@ targeting CDNA2 (MI200) and CDNA3 (MI300) architectures.
 
 Architecture:
 - AMDBackend: Main backend orchestrator for AMD GPUs
-- AMDOptimizer: Multi-level backend tuning (conservative/balanced/aggressive)
+- AMDAdapter: Multi-level backend tuning (conservative/balanced/aggressive)
 - ROCmCompiler: HIP kernel compilation and backend-aware generation
 - AMDMemoryManager: GPU memory management with HBM pooling
 - HIPUtilities: Device coordination and profiling
@@ -17,15 +17,15 @@ Supported Hardware:
 
 """
 
+from .amd_adapter import AMDAdapter
 from .amd_backend import AMDBackend
-from .amd_optimizer import AMDOptimizer
 from .hip_utilities import HIPUtilities
 from .memory_manager import AMDMemoryManager
 from .rocm_compiler import ROCmCompiler
 
 __all__ = [
     "AMDBackend",
-    "AMDOptimizer",
+    "AMDAdapter",
     "ROCmCompiler",
     "AMDMemoryManager",
     "HIPUtilities",

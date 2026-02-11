@@ -140,9 +140,9 @@ class FP8Compiler:
         for_inference: bool
     ) -> None:
         """Prepare Linear layer for FP8 execution."""
-        # Mark layer as FP8-ready
-        module._fp8_enabled = True
-        module._fp8_mode = 'inference' if for_inference else 'training'
+        # Mark layer as FP8-ready (dynamic attributes for metadata)
+        module._fp8_enabled = True  # type: ignore[assignment]
+        module._fp8_mode = 'inference' if for_inference else 'training'  # type: ignore[assignment]
         self._fp8_layers.add(name)
 
         # For actual FP8 execution, we would use transformer_engine or similar
@@ -163,8 +163,8 @@ class FP8Compiler:
         for_inference: bool
     ) -> None:
         """Prepare Conv layer for FP8 execution."""
-        module._fp8_enabled = True
-        module._fp8_mode = 'inference' if for_inference else 'training'
+        module._fp8_enabled = True  # type: ignore[assignment]
+        module._fp8_mode = 'inference' if for_inference else 'training'  # type: ignore[assignment]
         self._fp8_layers.add(name)
 
     def _prepare_attention_for_fp8(
@@ -174,8 +174,8 @@ class FP8Compiler:
         for_inference: bool
     ) -> None:
         """Prepare attention layer for FP8 execution."""
-        module._fp8_enabled = True
-        module._fp8_mode = 'inference' if for_inference else 'training'
+        module._fp8_enabled = True  # type: ignore[assignment]
+        module._fp8_mode = 'inference' if for_inference else 'training'  # type: ignore[assignment]
         self._fp8_layers.add(name)
 
         # Check attention head dimensions
@@ -274,7 +274,7 @@ class FP8Compiler:
         if hasattr(torch, 'compile') and sample_inputs is not None:
             try:
                 compile_mode = 'max-autotune' if for_inference else 'default'
-                compiled_model = torch.compile(
+                compiled_model = torch.compile(  # type: ignore[assignment]
                     compiled_model,
                     mode=compile_mode,
                     dynamic=False

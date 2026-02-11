@@ -155,7 +155,7 @@ def check_compilation_compatibility(
     Returns:
         Comprehensive compilation compatibility analysis
     """
-    compatibility_analysis = {
+    compatibility_analysis: dict[str, Any] = {
         "overall_compatibility": CompilationCompatibility.GOOD.value,
         "compilation_issues": [],
         "optimization_opportunities": [],

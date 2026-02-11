@@ -33,8 +33,8 @@ FP8_NATIVE_AVAILABLE = PYTORCH_VERSION >= (2, 1)
 
 # FP8 dtype availability check
 try:
-    _E4M3_DTYPE = torch.float8_e4m3fn
-    _E5M2_DTYPE = torch.float8_e5m2
+    _E4M3_DTYPE: torch.dtype | None = torch.float8_e4m3fn
+    _E5M2_DTYPE: torch.dtype | None = torch.float8_e5m2
     FP8_DTYPES_AVAILABLE = True
 except AttributeError:
     _E4M3_DTYPE = None
@@ -252,9 +252,11 @@ class NativeFP8Linear(nn.Module):
         device: Target device
 
     Example:
-        >>> layer = NativeFP8Linear(512, 256)
+        >>> layer = NativeFP8Linear(512, 256, device=torch.device("cpu"))
         >>> x = torch.randn(32, 512)
-        >>> output = layer(x)  # Actual FP8 computation
+        >>> output = layer(x)
+        >>> output.shape
+        torch.Size([32, 256])
     """
 
     def __init__(
@@ -523,10 +525,9 @@ class FP8InferenceEngine:
         calibration_data: Optional calibration data for scale computation
 
     Example:
-        >>> model = MyTransformerModel()
-        >>> engine = FP8InferenceEngine(model)
-        >>> engine.prepare()
-        >>> outputs = engine.infer(inputs)
+        >>> model = torch.nn.Sequential(torch.nn.Linear(64, 32))  # doctest: +SKIP
+        >>> engine = FP8InferenceEngine(model)  # doctest: +SKIP
+        >>> engine.prepare()  # doctest: +SKIP
     """
 
     def __init__(
@@ -736,7 +737,7 @@ def benchmark_fp8_layer(
     batch_size: int = 32,
     num_iterations: int = 100,
     device: torch.device | None = None
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """
     Benchmark FP8 vs standard linear layer performance.
 

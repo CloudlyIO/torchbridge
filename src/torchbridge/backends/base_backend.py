@@ -270,6 +270,7 @@ class BaseBackend(ABC):
             raise TypeError(
                 f"Expected nn.Module, got {type(model).__name__}"
             )
+        return model
 
     @abstractmethod
     def optimize_for_inference(
@@ -583,7 +584,7 @@ class CPUBackend(BaseBackend):
         # Apply torch.compile if available (PyTorch 2.0+)
         if hasattr(torch, 'compile'):
             try:
-                model = torch.compile(model, mode='reduce-overhead')
+                model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
             except Exception as e:
                 logger.warning(f"torch.compile failed: {e}")
 

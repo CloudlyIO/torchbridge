@@ -93,6 +93,12 @@ Examples:
             help='Enable verbose output'
         )
 
+        parser.add_argument(
+            '--trust-source',
+            action='store_true',
+            help='Allow loading untrusted model files (enables weights_only=False for pickle deserialization)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the optimize command."""
@@ -104,7 +110,8 @@ Examples:
             device = OptimizeCommand._detect_hardware(args.hardware, args.verbose)
 
             # Load model
-            model = OptimizeCommand._load_model(args.model, args.verbose)
+            trust_source = getattr(args, 'trust_source', False)
+            model = OptimizeCommand._load_model(args.model, args.verbose, trust_source=trust_source)
             model = model.to(device)
 
             # Parse input shape
@@ -162,14 +169,23 @@ Examples:
         return device
 
     @staticmethod
-    def _load_model(model_path: str, verbose: bool) -> torch.nn.Module:
+    def _load_model(model_path: str, verbose: bool, *, trust_source: bool = False) -> torch.nn.Module:
         """Load model from file or create example model."""
         if verbose:
             print(f" Loading model: {model_path}")
 
         # Check if it's a file path
         if Path(model_path).exists():
-            model = torch.load(model_path, map_location='cpu', weights_only=False)
+            try:
+                model = torch.load(model_path, map_location='cpu', weights_only=not trust_source)
+            except Exception as e:
+                if not trust_source and "Weights only load failed" in str(e):
+                    raise RuntimeError(
+                        f"Cannot safely load '{model_path}': the file contains objects that "
+                        f"require pickle deserialization.\n"
+                        f"If you trust this file, re-run with --trust-source to allow loading."
+                    ) from e
+                raise
             if isinstance(model, dict) and 'model' in model:
                 model = model['model']
         else:
@@ -224,11 +240,11 @@ Examples:
 
         elif level == 'jit':
             # TorchScript JIT
-            optimized_model = torch.jit.trace(model, sample_input)
+            optimized_model = torch.jit.trace(model, sample_input)  # type: ignore[assignment]
 
         elif level == 'compile':
             # torch.compile optimization
-            optimized_model = torch.compile(model, mode='max-autotune')
+            optimized_model = torch.compile(model, mode='max-autotune')  # type: ignore[assignment]
 
         elif level == 'triton':
             # Use TorchBridge Triton backend kernels
@@ -236,7 +252,7 @@ Examples:
                 # Apply attention optimizations if applicable
                 optimized_model = model
             else:
-                optimized_model = torch.compile(model, mode='max-autotune')
+                optimized_model = torch.compile(model, mode='max-autotune')  # type: ignore[assignment]
 
         elif level == 'production':
             # Full production optimization stack
@@ -244,12 +260,12 @@ Examples:
                 # Use TorchBridge HAL-aware compilation assistant
                 assistant = CompilerOptimizationAssistant(device=sample_input.device)
                 result = assistant.optimize_model(model, interactive=False)
-                optimized_model = torch.compile(model, mode='max-autotune')
+                optimized_model = torch.compile(model, mode='max-autotune')  # type: ignore[assignment]
                 if verbose and result.optimization_opportunities:
                     print(f"   Found {len(result.optimization_opportunities)} optimization opportunities")
             except Exception:
                 # Fallback to torch.compile
-                optimized_model = torch.compile(model, mode='max-autotune')
+                optimized_model = torch.compile(model, mode='max-autotune')  # type: ignore[assignment]
 
         if verbose:
             print("    Optimizations applied")
@@ -391,6 +407,11 @@ def main():
         '--verbose', '-v',
         action='store_true',
         help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--trust-source',
+        action='store_true',
+        help='Allow loading untrusted model files (enables weights_only=False for pickle deserialization)'
     )
 
     args = parser.parse_args()

@@ -1,9 +1,9 @@
 """
-NVIDIA Optimizer Implementation
+NVIDIA Adapter Implementation
 
-High-level optimizer for NVIDIA GPU models with multiple optimization levels.
+High-level adapter for NVIDIA GPU models with multiple optimization levels.
 
-Inherits from BaseOptimizer to provide a consistent interface across all
+Inherits from BaseAdapter to provide a consistent interface across all
 hardware backends while implementing NVIDIA-specific optimizations.
 
 """
@@ -16,8 +16,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 
+from torchbridge.backends.base_adapter import BaseAdapter, OptimizationStrategy
 from torchbridge.backends.base_backend import OptimizationLevel, OptimizationResult
-from torchbridge.backends.base_optimizer import BaseOptimizer, OptimizationStrategy
 from torchbridge.core.config import TorchBridgeConfig
 
 from .fp8_compiler import FP8Compiler
@@ -36,23 +36,23 @@ class NVIDIAOptimizationResult:
     device_info: dict[str, Any]
     warnings: list[str]
 
-class NVIDIAOptimizer(BaseOptimizer):
+class NVIDIAAdapter(BaseAdapter):
     """
-    High-level NVIDIA GPU optimizer with multiple optimization levels.
+    High-level NVIDIA GPU adapter with multiple optimization levels.
 
     Provides conservative, balanced, and aggressive optimization strategies
     for NVIDIA GPUs (H100, Blackwell, Ampere, etc.).
 
-    Inherits from BaseOptimizer to provide a unified interface while
+    Inherits from BaseAdapter to provide a unified interface while
     maintaining backward compatibility with existing NVIDIA-specific APIs.
     """
 
-    OPTIMIZER_NAME: str = "nvidia"
+    ADAPTER_NAME: str = "nvidia"
     DEFAULT_LEVEL = OptimizationLevel.O2
 
     def __init__(self, config: TorchBridgeConfig | None = None, device: torch.device | None = None):
         """
-        Initialize NVIDIA optimizer.
+        Initialize NVIDIA adapter.
 
         Args:
             config: TorchBridge configuration with NVIDIA settings
@@ -78,7 +78,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         dtype: torch.dtype | None = None
     ) -> tuple[nn.Module, OptimizationResult]:
         """
-        Apply NVIDIA-specific optimizations (implements BaseOptimizer abstract method).
+        Apply NVIDIA-specific optimizations (implements BaseAdapter abstract method).
 
         Args:
             model: PyTorch model to optimize
@@ -121,7 +121,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         )
 
     def get_available_strategies(self) -> list[OptimizationStrategy]:
-        """Get available NVIDIA optimization strategies (implements BaseOptimizer abstract method)."""
+        """Get available NVIDIA optimization strategies (implements BaseAdapter abstract method)."""
         strategies = [
             OptimizationStrategy(
                 name='device_placement',
@@ -182,7 +182,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         """
         Legacy optimize method for backward compatibility.
 
-        Use the unified `optimize()` method from BaseOptimizer for new code.
+        Use the unified `optimize()` method from BaseAdapter for new code.
 
         Args:
             model: PyTorch model to optimize
@@ -302,7 +302,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         """Enable mixed precision training/inference."""
         # This is typically handled via torch.cuda.amp.autocast during training
         # Here we just mark the model as mixed-precision ready
-        model._mixed_precision_enabled = True
+        model._mixed_precision_enabled = True  # type: ignore[assignment]
         return model
 
     def _enable_gradient_checkpointing(self, model: nn.Module) -> nn.Module:
@@ -319,7 +319,7 @@ class NVIDIAOptimizer(BaseOptimizer):
     def _enable_kernel_fusion(self, model: nn.Module) -> nn.Module:
         """Enable kernel fusion optimizations."""
         # Mark model for kernel fusion with torch.compile
-        model._kernel_fusion_enabled = True
+        model._kernel_fusion_enabled = True  # type: ignore[assignment]
         return model
 
     def _apply_aggressive_memory_optimizations(
@@ -352,7 +352,7 @@ class NVIDIAOptimizer(BaseOptimizer):
         """Fuse BatchNorm layers for inference."""
         try:
             # Fuse Conv + BatchNorm layers
-            torch.quantization.fuse_modules(model, inplace=True)
+            torch.quantization.fuse_modules(model, inplace=True)  # type: ignore[call-arg]
         except Exception:
             # Fusion may not be applicable for all models
             pass

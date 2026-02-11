@@ -39,6 +39,19 @@ jobs:
           files: dist/*
           generate_release_notes: true
 
+      - name: Generate SBOM
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py environment --output-format json -o sbom.cdx.json
+          echo "SBOM generated: sbom.cdx.json"
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v6
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 90
+
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

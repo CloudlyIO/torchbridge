@@ -330,10 +330,9 @@ class FusedLinearSequence(nn.Module):
             for i in range(len(layer_dims) - 1)
         ])
 
+        self.dropout_layer: nn.Dropout | None = None
         if dropout > 0.0:
             self.dropout_layer = nn.Dropout(dropout)
-        else:
-            self.dropout_layer = None
 
         self._initialize_weights()
 

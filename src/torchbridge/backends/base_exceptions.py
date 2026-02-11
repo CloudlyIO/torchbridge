@@ -36,21 +36,36 @@ class BackendError(TorchBridgeError):
     Supports optional details dictionary for structured error information.
     """
 
-    def __init__(self, message: str, details: dict[str, Any] | None = None):
+    default_hint: str = "Ensure the required backend libraries are installed"
+
+    def __init__(
+        self,
+        message: str,
+        details: dict[str, Any] | None = None,
+        *,
+        hint: str | None = None
+    ):
         """
         Initialize backend error.
 
         Args:
             message: Error message
             details: Optional dictionary with additional error details
+            hint: Optional actionable hint for the user
         """
-        super().__init__(message, details)
+        super().__init__(
+            message, details, hint=hint if hint is not None else self.default_hint
+        )
 
     def __str__(self) -> str:
         if self.details:
             details_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
-            return f"{self.message} ({details_str})"
-        return self.message
+            result = f"{self.message} ({details_str})"
+        else:
+            result = self.message
+        if self.hint:
+            result = f"{result}\n  Hint: {self.hint}"
+        return result
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r}, details={self.details!r})"
@@ -62,11 +77,16 @@ class BackendError(TorchBridgeError):
 class DeviceNotAvailableError(BackendError):
     """Raised when device or runtime is not available."""
 
-    def __init__(self, backend: str, reason: str = ""):
+    default_hint: str = "Run 'torchbridge doctor' to diagnose hardware issues"
+
+    def __init__(self, backend: str, reason: str = "", *, hint: str | None = None):
         message = f"{backend} not available"
         if reason:
             message = f"{message}: {reason}"
-        super().__init__(message, {"backend": backend, "reason": reason})
+        super().__init__(
+            message, {"backend": backend, "reason": reason},
+            hint=hint if hint is not None else self.default_hint
+        )
 
 class DeviceError(BackendError):
     """Raised when device operations fail."""
@@ -90,11 +110,17 @@ class MemoryError(BackendError):
 class OutOfMemoryError(MemoryError):
     """Raised when device runs out of memory."""
 
+    default_hint: str = (
+        "Try reducing batch_size or use gradient checkpointing"
+    )
+
     def __init__(
         self,
         required_bytes: int | None = None,
         available_bytes: int | None = None,
-        device: str = "unknown"
+        device: str = "unknown",
+        *,
+        hint: str | None = None
     ):
         if required_bytes is not None and available_bytes is not None:
             required_mb = required_bytes / (1024 ** 2)
@@ -103,11 +129,14 @@ class OutOfMemoryError(MemoryError):
         else:
             message = f"Out of memory on {device}"
 
-        super().__init__(message, {
-            "required_bytes": required_bytes,
-            "available_bytes": available_bytes,
-            "device": device
-        })
+        super().__init__(
+            message, {
+                "required_bytes": required_bytes,
+                "available_bytes": available_bytes,
+                "device": device
+            },
+            hint=hint if hint is not None else self.default_hint
+        )
 
 class MemoryAllocationError(MemoryError):
     """Raised when memory allocation fails."""
@@ -158,9 +187,18 @@ class KernelCompilationError(CompilationError):
 class OptimizationError(BackendError):
     """Raised when optimization operations fail."""
 
-    def __init__(self, optimization_type: str, error_message: str):
+    default_hint: str = (
+        "Try a lower optimization level or disable specific optimizations"
+    )
+
+    def __init__(
+        self, optimization_type: str, error_message: str, *, hint: str | None = None
+    ):
         message = f"Optimization ({optimization_type}) failed: {error_message}"
-        super().__init__(message, {"type": optimization_type, "error": error_message})
+        super().__init__(
+            message, {"type": optimization_type, "error": error_message},
+            hint=hint if hint is not None else self.default_hint
+        )
 
 class ModelOptimizationError(OptimizationError):
     """Raised when model optimization fails."""
@@ -181,9 +219,18 @@ class ModelOptimizationError(OptimizationError):
 class ConfigurationError(BackendError):
     """Raised when configuration validation fails."""
 
-    def __init__(self, parameter: str, value: Any, reason: str):
+    default_hint: str = (
+        "Check your TorchBridge config with torchbridge.get_config()"
+    )
+
+    def __init__(
+        self, parameter: str, value: Any, reason: str, *, hint: str | None = None
+    ):
         message = f"Invalid configuration for '{parameter}': {value} - {reason}"
-        super().__init__(message, {"parameter": parameter, "value": value, "reason": reason})
+        super().__init__(
+            message, {"parameter": parameter, "value": value, "reason": reason},
+            hint=hint if hint is not None else self.default_hint
+        )
 
 class InvalidArchitectureError(ConfigurationError):
     """Raised when an unsupported architecture is specified."""

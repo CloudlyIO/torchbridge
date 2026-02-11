@@ -10,6 +10,7 @@ Advanced MoE layer implementations based on 2025-2026 research:
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -99,6 +100,7 @@ class MoELayer(nn.Module):
         )
 
         # Expert parallelism handler
+        self.expert_parallelism: ExpertParallelism | None
         if config.expert_parallelism:
             self.expert_parallelism = ExpertParallelism(
                 num_experts=config.num_experts,
@@ -260,9 +262,9 @@ class MoELayer(nn.Module):
                 count = (expert_indices == expert_idx).sum().cpu()
                 self.expert_usage_count[expert_idx] += count
 
-            self.total_tokens_processed += num_tokens
+            self.total_tokens_processed += num_tokens  # type: ignore[assignment]
 
-    def get_expert_utilization_stats(self) -> dict[str, float]:
+    def get_expert_utilization_stats(self) -> dict[str, Any]:
         """Get expert utilization statistics"""
         if self.total_tokens_processed == 0:
             return {'expert_balance': 1.0, 'expert_efficiency': 1.0}
@@ -310,7 +312,7 @@ class SparseMoELayer(MoELayer):
         super().__init__(config, hidden_size, **kwargs)
         self.sparsity_level = sparsity_level
 
-    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass with sparse expert activation"""
         # Add sparsity-specific logic here if needed
         return super().forward(x, **kwargs)
@@ -398,7 +400,7 @@ class AdaptiveMoELayer(MoELayer):
         self.adaptation_rate = adaptation_rate
         self.register_buffer('input_complexity_ema', torch.tensor(1.0))
 
-    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass with adaptive routing"""
         # Compute input complexity (variance as proxy)
         input_complexity = x.var(dim=-1).mean()

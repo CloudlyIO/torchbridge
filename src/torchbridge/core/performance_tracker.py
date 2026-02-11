@@ -8,6 +8,8 @@ Stage 3B: Performance Regression Detection
 """
 
 import json
+import logging
+import os
 import time
 import warnings
 from dataclasses import asdict, dataclass, field
@@ -18,6 +20,10 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+
+logger = logging.getLogger(__name__)
+
+_METRICS_OPT_IN_LOGGED = False
 
 
 class MetricType(Enum):
@@ -103,18 +109,34 @@ class PerformanceTracker:
     against them to detect when optimizations degrade performance.
     """
 
-    def __init__(self, storage_path: str | None = None):
+    def __init__(self, storage_path: str | Path | None = None):
         """
         Initialize performance tracker.
+
+        Local metrics persistence is opt-in: set TORCHBRIDGE_METRICS=1 to enable.
+        When disabled, metrics are tracked in-memory only for the current session.
 
         Args:
             storage_path: Path to store performance metrics (JSON file)
         """
+        self._persist = os.environ.get("TORCHBRIDGE_METRICS", "0") == "1"
+
+        if not self._persist:
+            global _METRICS_OPT_IN_LOGGED
+            if not _METRICS_OPT_IN_LOGGED:
+                logger.info(
+                    "Local metrics persistence disabled (default). "
+                    "Set TORCHBRIDGE_METRICS=1 to enable."
+                )
+                _METRICS_OPT_IN_LOGGED = True
+
         if storage_path is None:
             storage_path = Path.home() / '.torchbridge' / 'performance_metrics.json'
 
         self.storage_path = Path(storage_path)
-        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if self._persist:
+            self.storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing metrics
         self.metrics_history: dict[str, list[PerformanceMetrics]] = {}
@@ -125,7 +147,9 @@ class PerformanceTracker:
         self.moderate_threshold = 0.25  # 25%
 
     def _load_metrics(self):
-        """Load metrics from storage."""
+        """Load metrics from storage (no-op when persistence is disabled)."""
+        if not self._persist:
+            return
         if self.storage_path.exists():
             try:
                 with open(self.storage_path) as f:
@@ -140,7 +164,9 @@ class PerformanceTracker:
                 self.metrics_history = {}
 
     def _save_metrics(self):
-        """Save metrics to storage."""
+        """Save metrics to storage (no-op when persistence is disabled)."""
+        if not self._persist:
+            return
         try:
             data = {
                 model_hash: [m.to_dict() for m in metrics]

@@ -88,9 +88,9 @@ class _LegacyCUDAKernelsHelper:
         return getattr(gpu, name)
 
 # Legacy import support - register parent modules
-sys.modules['torchbridge.gpu_integration'] = _LegacyGPUIntegrationHelper()
-sys.modules['torchbridge.hardware_abstraction'] = _LegacyHardwareAbstractionHelper()
-sys.modules['torchbridge.cuda_kernels'] = _LegacyCUDAKernelsHelper()
+sys.modules['torchbridge.gpu_integration'] = _LegacyGPUIntegrationHelper()  # type: ignore[assignment]
+sys.modules['torchbridge.hardware_abstraction'] = _LegacyHardwareAbstractionHelper()  # type: ignore[assignment]
+sys.modules['torchbridge.cuda_kernels'] = _LegacyCUDAKernelsHelper()  # type: ignore[assignment]
 
 # Also register submodules for deep imports (e.g., torchbridge.hardware_abstraction.privateuse1_integration)
 try:

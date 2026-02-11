@@ -35,7 +35,9 @@ class TorchBridgeError(Exception):
         self,
         message: str,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
+        *,
+        hint: str | None = None
     ):
         """
         Initialize TorchBridge error.
@@ -44,11 +46,16 @@ class TorchBridgeError(Exception):
             message: Human-readable error message
             details: Optional dictionary with additional context
             cause: Optional underlying exception
+            hint: Optional actionable hint for the user
         """
         self.message = message
         self.details = details or {}
         self.cause = cause
-        super().__init__(self.message)
+        self.hint = hint
+        full_message = message
+        if hint:
+            full_message = f"{message}\n  Hint: {hint}"
+        super().__init__(full_message)
 
     def __str__(self) -> str:
         parts = [self.message]
@@ -57,7 +64,10 @@ class TorchBridgeError(Exception):
             parts.append(f"({details_str})")
         if self.cause:
             parts.append(f"[caused by: {type(self.cause).__name__}: {self.cause}]")
-        return " ".join(parts)
+        result = " ".join(parts)
+        if self.hint:
+            result = f"{result}\n  Hint: {self.hint}"
+        return result
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r}, details={self.details!r})"
@@ -68,7 +78,8 @@ class TorchBridgeError(Exception):
             "error_type": self.__class__.__name__,
             "message": self.message,
             "details": self.details,
-            "cause": str(self.cause) if self.cause else None
+            "cause": str(self.cause) if self.cause else None,
+            "hint": self.hint
         }
 
 # =============================================================================
@@ -184,7 +195,22 @@ class HardwareCapabilityError(HardwareError):
 
 class OptimizationError(TorchBridgeError):
     """Base exception for optimization failures."""
-    pass
+
+    default_hint: str = (
+        "Try a lower optimization level or disable specific optimizations"
+    )
+
+    def __init__(
+        self,
+        message: str,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None,
+        *,
+        hint: str | None = None
+    ):
+        super().__init__(
+            message, details, cause, hint=hint if hint is not None else self.default_hint
+        )
 
 class CompilationError(OptimizationError):
     """Raised when model compilation fails."""

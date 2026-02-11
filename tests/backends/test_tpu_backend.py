@@ -12,9 +12,9 @@ import torch
 import torch.nn as nn
 
 from torchbridge.backends.tpu import (
+    TPUAdapter,
     TPUBackend,
     TPUMemoryManager,
-    TPUOptimizer,
     XLACompiler,
     XLADeviceManager,
     XLADistributedTraining,
@@ -106,13 +106,13 @@ class TestTPUBackend:
         backend.clear_cache()
 
 
-class TestTPUOptimizer:
-    """Test TPU optimizer functionality."""
+class TestTPUAdapter:
+    """Test TPU adapter functionality."""
 
     def test_tpu_optimizer_creation(self):
         """Test TPU optimizer creation."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         assert optimizer is not None
         assert optimizer.config == config
@@ -122,7 +122,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_conservative_optimization(self):
         """Test conservative optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -137,7 +137,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_balanced_optimization(self):
         """Test balanced optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -151,7 +151,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_aggressive_optimization(self):
         """Test aggressive optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -165,7 +165,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_inference_optimization(self):
         """Test inference-specific optimization."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -179,7 +179,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_training_optimization(self):
         """Test training-specific optimization."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -192,7 +192,7 @@ class TestTPUOptimizer:
     def test_tpu_optimizer_stats(self):
         """Test optimizer statistics."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         stats = optimizer.get_optimization_stats()
         assert isinstance(stats, dict)
@@ -201,7 +201,7 @@ class TestTPUOptimizer:
     def test_invalid_optimization_level(self):
         """Test invalid optimization level handling."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
 
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
@@ -562,7 +562,7 @@ class TestTPUErrorPaths:
 
         from torchbridge.backends.tpu.tpu_exceptions import TPUValidationError
 
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
         model = nn.Linear(10, 10)
 
         # Create invalid inputs that will cause validation to fail
@@ -670,7 +670,7 @@ class TestTPUErrorPaths:
     def test_optimizer_with_invalid_level(self):
         """Test optimizer handles invalid optimization level."""
         config = TorchBridgeConfig()
-        optimizer = TPUOptimizer(config)
+        optimizer = TPUAdapter(config)
         model = nn.Linear(10, 10)
 
         # Invalid optimization level should raise ValueError

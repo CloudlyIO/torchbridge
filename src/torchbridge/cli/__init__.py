@@ -36,7 +36,7 @@ from .profile import ProfileCommand
 from .validate import ValidateCommand
 
 
-def main(args: list[str] | None = None) -> int:
+def main(args: list[str] | None = None) -> str | int | None:
     """
     Main entry point for the torchbridge CLI.
 

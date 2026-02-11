@@ -339,7 +339,10 @@ class GPUProfiler:
         if isinstance(outputs, torch.Tensor):
             loss = outputs.sum()
         else:
-            loss = sum(out.sum() for out in outputs if isinstance(out, torch.Tensor))
+            loss = sum(
+                (out.sum() for out in outputs if isinstance(out, torch.Tensor)),
+                torch.tensor(0.0),
+            )
 
         loss.backward()
         backward_peak = torch.cuda.max_memory_allocated()

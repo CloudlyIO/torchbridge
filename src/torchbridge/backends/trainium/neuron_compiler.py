@@ -124,7 +124,7 @@ class NeuronCompiler:
 
             # Use torch.compile with XLA backend (same mechanism as TPU)
             if hasattr(torch, 'compile'):
-                compiled_model = torch.compile(model)
+                compiled_model: nn.Module = torch.compile(model)  # type: ignore[assignment]
                 return compiled_model
 
             return model

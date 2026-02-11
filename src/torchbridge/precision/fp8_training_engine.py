@@ -183,7 +183,7 @@ class FP8ScaleManager:
 
         # Check if any values exceed FP8 range
         overflow = scaled_amax > max_fp8_value
-        return overflow.any().item()
+        return bool(overflow.any().item())
 
     def _handle_overflow(self):
         """Handle overflow by reducing scale"""
@@ -259,15 +259,9 @@ class FP8TrainingEngine:
         device: Target device for training
 
     Example:
-        >>> config = FP8Config(forward_format=FP8Format.E4M3, backward_format=FP8Format.E5M2)
-        >>> engine = FP8TrainingEngine(model, config, device)
-        >>> engine.setup_fp8_training()
-        >>>
-        >>> # Training loop
-        >>> for batch in dataloader:
-        >>>     loss = engine.training_step(batch.inputs, batch.targets)
-        >>>     loss.backward()
-        >>>     engine.optimizer_step()
+        >>> config = FP8Config(forward_format=FP8Format.E4M3, backward_format=FP8Format.E5M2)  # doctest: +SKIP
+        >>> engine = FP8TrainingEngine(model, config, device)  # doctest: +SKIP
+        >>> engine.setup_fp8_training()  # doctest: +SKIP
     """
 
     def __init__(
@@ -290,7 +284,7 @@ class FP8TrainingEngine:
         self.original_layers = {}  # Store original layers for restoration
 
         # Statistics tracking
-        self.training_stats = {
+        self.training_stats: dict[str, Any] = {
             'steps': 0,
             'overflows': 0,
             'scale_updates': 0,
@@ -298,6 +292,7 @@ class FP8TrainingEngine:
         }
 
         # Initialize HAL if available
+        self.hal: HardwareAbstractionLayer | None
         if HAL_AVAILABLE:
             self.hal = HardwareAbstractionLayer()
         else:
@@ -609,14 +604,8 @@ def create_fp8_trainer(
         Configured FP8TrainingEngine
 
     Example:
-        >>> model = MyTransformerModel()
-        >>> trainer = create_fp8_trainer(model, device='cuda')
-        >>>
-        >>> with trainer:
-        >>>     for batch in dataloader:
-        >>>         loss = trainer.training_step(batch.x, batch.y)
-        >>>         loss.backward()
-        >>>         trainer.optimizer_step(optimizer)
+        >>> model = torch.nn.Linear(128, 64)  # doctest: +SKIP
+        >>> trainer = create_fp8_trainer(model, device='cpu')  # doctest: +SKIP
     """
     config = FP8Config(
         forward_format=forward_format,

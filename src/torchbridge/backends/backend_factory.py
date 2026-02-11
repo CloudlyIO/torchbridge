@@ -19,8 +19,8 @@ from typing import Any
 
 import torch
 
+from .base_adapter import BaseAdapter, CPUAdapter
 from .base_backend import BaseBackend, CPUBackend
-from .base_optimizer import BaseOptimizer, CPUOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class BackendFactory:
     _backends: dict[BackendType, type[BaseBackend]] = {}
 
     # Registered optimizers
-    _optimizers: dict[BackendType, type[BaseOptimizer]] = {}
+    _optimizers: dict[BackendType, type[BaseAdapter]] = {}
 
     # Backend priority for auto-selection (higher = preferred)
     _priority: dict[BackendType, int] = {
@@ -94,7 +94,7 @@ class BackendFactory:
         cls,
         backend_type: BackendType,
         backend_class: type[BaseBackend],
-        optimizer_class: type[BaseOptimizer] | None = None,
+        optimizer_class: type[BaseAdapter] | None = None,
         availability_check: Callable[[], bool] | None = None,
         priority: int | None = None
     ) -> None:
@@ -168,7 +168,7 @@ class BackendFactory:
         config: Any = None,
         device: torch.device | None = None,
         **kwargs
-    ) -> BaseOptimizer:
+    ) -> BaseAdapter:
         """
         Create an optimizer for the specified backend.
 
@@ -190,13 +190,13 @@ class BackendFactory:
             backend_type = cls._auto_select()
 
         # Get optimizer class
-        optimizer_class = cls._optimizers.get(backend_type, CPUOptimizer)
+        optimizer_class = cls._optimizers.get(backend_type, CPUAdapter)
 
         try:
             return optimizer_class(config=config, device=device, **kwargs)
         except Exception as e:
             logger.error(f"Failed to create {backend_type.value} optimizer: {e}")
-            return CPUOptimizer(config=config, device=device)
+            return CPUAdapter(config=config, device=device)
 
     @classmethod
     def _auto_select(cls) -> BackendType:
@@ -373,7 +373,7 @@ class BackendFactory:
         Returns:
             Dictionary with backend information
         """
-        info = {
+        info: dict[str, Any] = {
             'type': backend_type.value,
             'available': False,
             'priority': cls._priority.get(backend_type, 0),
@@ -472,7 +472,7 @@ def get_optimizer(
     config: Any = None,
     device: torch.device | None = None,
     **kwargs
-) -> BaseOptimizer:
+) -> BaseAdapter:
     """
     Convenience function to get an optimizer instance.
 

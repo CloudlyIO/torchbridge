@@ -46,7 +46,7 @@ class HardwareProfile:
     compute_capability: tuple | None = None
 
     # Available capabilities
-    capabilities: list[OptimizationCapability] = None
+    capabilities: list[OptimizationCapability] | None = None
 
     # Memory information
     total_memory_gb: float = 0.0

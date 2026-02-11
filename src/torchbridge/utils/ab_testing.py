@@ -245,7 +245,7 @@ class ABExperiment:
         else:
             duration_hours = (time.time() - self.start_time) / 3600
 
-        summary = {
+        summary: dict[str, Any] = {
             'experiment_id': self.experiment_id,
             'status': self.status.value,
             'duration_hours': duration_hours,

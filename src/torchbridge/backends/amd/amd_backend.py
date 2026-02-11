@@ -444,7 +444,7 @@ class AMDBackend(BaseBackend):
         # Apply torch.compile if available
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
-                model = torch.compile(model, mode='reduce-overhead')
+                model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
                 with torch.no_grad():
                     _ = model(sample_input.to(self.device))
             except Exception as e:
