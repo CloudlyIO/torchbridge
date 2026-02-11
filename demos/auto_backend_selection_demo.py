@@ -1,5 +1,5 @@
 """
-Auto-Backend Selection Demo - Stage 3A: Intelligent Backend Selection
+Auto-Backend Selection Demo
 
 Demonstrates automatic hardware detection and backend selection
 without requiring users to manually configure backend settings.
