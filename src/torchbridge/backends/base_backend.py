@@ -262,8 +262,14 @@ class BaseBackend(ABC):
 
         Returns:
             Prepared model on this backend's device
+
+        Raises:
+            TypeError: If model is not an nn.Module
         """
-        pass
+        if not isinstance(model, nn.Module):
+            raise TypeError(
+                f"Expected nn.Module, got {type(model).__name__}"
+            )
 
     @abstractmethod
     def optimize_for_inference(

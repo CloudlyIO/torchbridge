@@ -89,5 +89,5 @@
 
 ## Validation Script
 
-See [`scripts/cloud_validation.sh`](../../scripts/cloud_validation.sh) for the full validation script.
+See [`scripts/validation/cloud_validation.sh`](../../scripts/validation/cloud_validation.sh) for the full validation script.
 Handles both AWS Deep Learning AMIs and GCP DL VMs automatically.

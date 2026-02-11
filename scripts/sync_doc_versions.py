@@ -34,8 +34,6 @@ DOC_PATTERNS = [
 # Files to exclude from version sync
 EXCLUDE_FILES = [
     "CHANGELOG.md",  # Contains historical versions
-    "docs/unified_roadmap.md",  # Contains historical milestones
-    "docs/immediate_tasks.md",  # Contains historical achievements
 ]
 
 # Patterns to match version references in docs

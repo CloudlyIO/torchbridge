@@ -68,7 +68,7 @@ def load_model(model_path: str) -> nn.Module:
 
     # Try loading as state dict (need architecture)
     try:
-        state_dict = torch.load(model_path, map_location="cpu")
+        state_dict = torch.load(model_path, map_location="cpu", weights_only=True)
         if isinstance(state_dict, nn.Module):
             logger.info(f"Loaded PyTorch model from {model_path}")
             return state_dict

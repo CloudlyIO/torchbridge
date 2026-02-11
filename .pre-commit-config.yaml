@@ -30,7 +30,7 @@ repos:
       # Check version consistency across files
       - id: check-version-consistency
         name: Check version consistency
-        entry: python3 scripts/check_version_consistency.py
+        entry: python3 scripts/ci/check_version_consistency.py
         language: system
         pass_filenames: false
         always_run: true
@@ -38,14 +38,14 @@ repos:
       # Check CHANGELOG.md updated
       - id: check-changelog-updated
         name: Check CHANGELOG.md updated
-        entry: python3 scripts/check_changelog_updated.py
+        entry: python3 scripts/ci/check_changelog_updated.py
         language: system
         files: ^(src/|tests/|benchmarks/|demos/)
 
       # Check documentation updated
       - id: check-docs-updated
         name: Check documentation updated
-        entry: python3 scripts/check_docs_updated.py
+        entry: python3 scripts/ci/check_docs_updated.py
         language: system
         files: ^src/torchbridge/backends/
 
@@ -60,7 +60,7 @@ repos:
       # Check documentation policy (no unauthorized .md files)
       - id: check-documentation-policy
         name: Check documentation policy
-        entry: python3 scripts/check_documentation_policy.py
+        entry: python3 scripts/ci/check_documentation_policy.py
         language: system
         pass_filenames: false
         types: [markdown]

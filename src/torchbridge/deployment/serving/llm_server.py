@@ -98,7 +98,7 @@ class LLMServerConfig:
     workers: int = 1
 
     # Model settings
-    model_name: str = "gpt2"
+    model_name: str = "Qwen/Qwen3-0.6B"
     model_version: str = "1.0"
     device: str = "auto"  # auto, cuda, cpu
 
@@ -805,7 +805,7 @@ class LLMInferenceServer:
 def create_llm_server(
     model: nn.Module,
     tokenizer: TokenizerType,
-    model_name: str = "gpt2",
+    model_name: str = "Qwen/Qwen3-0.6B",
     model_version: str = "1.0",
     enable_streaming: bool = True,
     enable_dynamic_batching: bool = True,

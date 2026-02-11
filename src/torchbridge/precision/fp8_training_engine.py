@@ -542,7 +542,7 @@ class FP8TrainingEngine:
 
     def load_checkpoint(self, filepath: str):
         """Load FP8 training checkpoint"""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, map_location=self.device, weights_only=True)
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.training_stats = checkpoint.get('training_stats', self.training_stats)

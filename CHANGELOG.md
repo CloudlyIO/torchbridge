@@ -8,7 +8,57 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.11 (Intel Backend Removal)
+**Current Version**: v0.5.12 (Model Modernization & Production Hardening)
+
+---
+
+## [0.5.12] - 2026-02-10 - Model Modernization, Directory Compaction & Production Hardening
+
+### **Summary**
+
+Replaced legacy models with modern HuggingFace models (2025-2026 era), restructured examples/ from
+size-based to category-based layout, added real-model test suite and MoE unit tests, fixed security
+issues (unsafe pickle, torch.load, Docker dev running as root), and compacted thin directories.
+
+### **Added**
+
+- **6 new model example categories**: vision (DINOv2), multimodal (Qwen2.5-VL), embedding (BGE-M3), speech (Whisper v3), code (Qwen2.5-Coder), distributed (Qwen3 FSDP)
+- **Real-model test suite** (`tests/models/`): 6 test files covering Qwen3-0.6B, DeepSeek-R1-1.5B, DINOv2-small, MiniLM-L6-v2, Whisper-tiny, Qwen2.5-VL-3B with cross-backend consistency checks
+- **MoE unit tests** (`tests/unit/test_mixture_of_experts.py`): 30+ tests for TopKRouter, SwitchRouter, FeedForwardExpert, MoELayer, SwitchTransformerMoE, GLaMStyleMoE, LoadBalancer — closes test gap on 2,645 LOC
+- **Examples README** (`examples/models/README.md`): index of all model examples by category
+- **Input validation** at HAL boundary: `BaseBackend.prepare_model()` now raises `TypeError` for non-nn.Module inputs
+- **Restricted pickle unpickler** in ROCm compiler for safe kernel cache loading
+
+### **Changed**
+
+- **examples/ restructured**: size-based (`small/`, `medium/`) → category-based (`llm/`, `vision/`, `multimodal/`, `embedding/`, `speech/`, `code/`, `distributed/`, `serving/`)
+- **Default serving model**: `gpt2` → `Qwen/Qwen3-0.6B` in LLMServerConfig, Dockerfile.serving, and run_llm_server.py
+- **E2E test fixtures**: replaced BERT/GPT-2/ResNet-50/CLIP with Qwen3/DeepSeek/DINOv2/MiniLM
+- **benchmarks/ compacted**: eliminated `analysis/`, `configs/`, `next_gen/` thin directories (files moved to `framework/` or root)
+- **scripts/ organized**: 14 root scripts moved into `ci/`, `benchmarks/`, `validation/` subdirectories
+- **Docker dev image**: runs as non-root user (devuser, UID 1000); removed insecure Jupyter token/password blanking
+- **8 torch.load() calls**: added `weights_only=True` across precision, distributed, CLI, deployment, and backend modules
+- Updated CI workflows and pre-commit hooks to reference new script paths
+- Docker LABELs: all 7 Dockerfiles updated from 0.5.11 to 0.5.12
+
+### **Removed**
+
+- **examples/bert_squad/**: 2018 BERT model with checkpoints (~1,500 LOC + 2.4GB untracked data)
+- **examples/usecase1-5*.py**: 5 files using synthetic models (~1,014 LOC)
+- **examples/distributed/train_llama_7b_fsdp.py**: old Llama 2 FSDP example (~490 LOC)
+- **examples/training_output/**: generated checkpoint data
+- **examples/serving/__init__.py**: unnecessary for examples
+- **docs/blog/**: 1 stale file
+
+### **Security**
+
+- Fixed unsafe `pickle.load()` in `rocm_compiler.py` — replaced with `_RestrictedUnpickler` allowing only `CompiledKernel`
+- Added `weights_only=True` to 8 `torch.load()` calls (prevents arbitrary code execution via pickle)
+- Docker dev image no longer runs as root; Jupyter token auto-generated on startup
+
+### **Fixed**
+
+- Assertion-free `test_server_shutdown()` — now asserts `not llm_server._batch_thread.is_alive()`
 
 ---
 
