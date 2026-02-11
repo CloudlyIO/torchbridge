@@ -427,7 +427,7 @@ class TrainiumBackend(BaseBackend):
         Returns:
             Loaded model
         """
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=True)
 
         model.load_state_dict(checkpoint['model_state_dict'])
         model = model.to(self.device)

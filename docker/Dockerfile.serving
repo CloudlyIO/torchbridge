@@ -9,7 +9,7 @@
 #
 # Run with specific model:
 #   docker run -p 8000:8000 --gpus all \
-#     -e MODEL_NAME=gpt2 \
+#     -e MODEL_NAME=Qwen/Qwen3-0.6B \
 #     -e QUANTIZATION=int8 \
 #     torchbridge-serving:latest
 
@@ -54,7 +54,7 @@ COPY examples/ /app/examples/
 RUN pip3 install --no-cache-dir -e .
 
 # Environment variables for configuration
-ENV MODEL_NAME=gpt2
+ENV MODEL_NAME=Qwen/Qwen3-0.6B
 ENV QUANTIZATION=none
 ENV HOST=0.0.0.0
 ENV PORT=8000
@@ -72,12 +72,12 @@ EXPOSE 8000
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Serving" \
       org.opencontainers.image.description="Production inference server with GPU support" \
-      org.opencontainers.image.version="0.5.11" \
+      org.opencontainers.image.version="0.5.12" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
 
 # Default command
-CMD ["python3", "-m", "examples.serving.run_llm_server", \
+CMD ["python3", "-m", "examples.models.serving.run_llm_server", \
      "--model", "${MODEL_NAME}", \
      "--quantization", "${QUANTIZATION}", \
      "--host", "${HOST}", \

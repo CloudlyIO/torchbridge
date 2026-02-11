@@ -396,7 +396,7 @@ Examples:
         else:
             # Try to load from file
             if Path(model_name).exists():
-                return torch.load(model_name, map_location=device).eval()
+                return torch.load(model_name, map_location=device, weights_only=True).eval()
             else:
                 # Default fallback
                 return torch.nn.Linear(512, 512).to(device).eval()

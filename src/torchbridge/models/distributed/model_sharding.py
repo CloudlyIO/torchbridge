@@ -556,7 +556,7 @@ class WeightDistributor:
             State dict from shard
         """
         if shard_format == "pytorch":
-            return torch.load(path, map_location="cpu")
+            return torch.load(path, map_location="cpu", weights_only=True)
         elif shard_format == "safetensors":
             from safetensors import safe_open
             tensors = {}

@@ -272,7 +272,7 @@ Examples:
             model_file = Path(model_path)
             if model_file.exists():
                 try:
-                    model = torch.load(model_path, map_location='cpu')
+                    model = torch.load(model_path, map_location='cpu', weights_only=True)
                     if hasattr(model, 'eval'):
                         model.eval()
                     results.append(ValidationResult(
@@ -425,7 +425,7 @@ Examples:
 
         # Look for cloud validation script
         script_candidates = [
-            Path('scripts/cloud_validation.sh'),
+            Path('scripts/validation/cloud_validation.sh'),
             Path('cloud_validation.sh'),
         ]
 
