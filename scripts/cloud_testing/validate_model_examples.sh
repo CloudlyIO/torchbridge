@@ -280,7 +280,7 @@ if [ "$LLAMA4_QUANT" != "skip" ]; then
 fi
 
 run_example "benchmark_suite" \
-    "scripts/benchmark_suite.py" \
+    "scripts/benchmarks/benchmark_suite.py" \
     --models $BENCH_MODELS \
     --quantization "$LLM_QUANT" \
     --num-runs 10 \

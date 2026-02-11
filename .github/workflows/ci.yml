@@ -45,10 +45,10 @@ jobs:
           python-version: "3.12"
 
       - name: Check version consistency
-        run: python scripts/check_version_consistency.py
+        run: python scripts/ci/check_version_consistency.py
 
       - name: Check for broken internal links
-        run: python scripts/check_doc_links.py
+        run: python scripts/ci/check_doc_links.py
 
       - name: Validate demos import
         run: |

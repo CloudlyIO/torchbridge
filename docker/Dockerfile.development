@@ -61,12 +61,16 @@ RUN pip install --no-cache-dir \
     streamlit \
     gradio
 
-# Create jupyter config
+# Create non-root user for development
+RUN groupadd -g 1000 devuser \
+    && useradd -m -u 1000 -g devuser -s /bin/bash devuser \
+    && chown -R devuser:devuser /workspace
+
+# Create jupyter config (token auto-generated on startup for security)
+USER devuser
 RUN jupyter notebook --generate-config \
-    && echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py \
-    && echo "c.NotebookApp.open_browser = False" >> ~/.jupyter/jupyter_notebook_config.py \
-    && echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py \
-    && echo "c.NotebookApp.password = ''" >> ~/.jupyter/jupyter_notebook_config.py
+    && echo "c.NotebookApp.ip = '0.0.0.0'" >> /home/devuser/.jupyter/jupyter_notebook_config.py \
+    && echo "c.NotebookApp.open_browser = False" >> /home/devuser/.jupyter/jupyter_notebook_config.py
 
 # Expose ports for development services
 EXPOSE 8888 6006 8080 7860
@@ -75,13 +79,13 @@ EXPOSE 8888 6006 8080 7860
 CMD ["/bin/bash"]
 
 # Add helpful development aliases
-RUN echo 'alias ll="ls -la"' >> ~/.bashrc \
-    && echo 'alias tb="torchbridge"' >> ~/.bashrc \
-    && echo 'alias pytest="python -m pytest"' >> ~/.bashrc \
-    && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> ~/.bashrc
+RUN echo 'alias ll="ls -la"' >> /home/devuser/.bashrc \
+    && echo 'alias tb="torchbridge"' >> /home/devuser/.bashrc \
+    && echo 'alias pytest="python -m pytest"' >> /home/devuser/.bashrc \
+    && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> /home/devuser/.bashrc
 
 # Metadata
 LABEL maintainer="TorchBridge Team" \
-      version="0.5.11-dev" \
+      version="0.5.12-dev" \
       description="Development environment for TorchBridge hardware abstraction layer for PyTorch" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

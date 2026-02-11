@@ -30,6 +30,22 @@ from .amd_exceptions import HIPCompilationError
 
 logger = logging.getLogger(__name__)
 
+
+class _RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows loading known safe classes."""
+
+    _ALLOWED_CLASSES = {
+        ("torchbridge.backends.amd.rocm_compiler", "CompiledKernel"),
+    }
+
+    def find_class(self, module: str, name: str) -> type:
+        if (module, name) not in self._ALLOWED_CLASSES:
+            raise pickle.UnpicklingError(
+                f"Forbidden unpickle class: {module}.{name}"
+            )
+        return super().find_class(module, name)
+
+
 @dataclass
 class CompiledKernel:
     """Represents a compiled HIP kernel."""
@@ -420,7 +436,7 @@ class ROCmCompiler:
             cache_file = self._cache_dir / f"{cache_key}.pkl"
             if cache_file.exists():
                 with open(cache_file, "rb") as f:
-                    kernel = pickle.load(f)
+                    kernel = _RestrictedUnpickler(f).load()
                 logger.debug("Loaded kernel from disk cache: %s", cache_key)
                 return kernel
 

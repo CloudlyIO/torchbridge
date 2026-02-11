@@ -149,7 +149,7 @@ class BaseHandler(ABC):
         serialized_path = os.path.join(model_dir, "model.pth")
         if os.path.exists(serialized_path):
             logger.info(f"Loading serialized model from {serialized_path}")
-            model = torch.load(serialized_path, map_location=self.device)
+            model = torch.load(serialized_path, map_location=self.device, weights_only=True)
             return model
 
         raise FileNotFoundError(
