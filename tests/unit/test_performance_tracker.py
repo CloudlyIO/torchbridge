@@ -1,7 +1,5 @@
 """
 Tests for performance tracking and regression detection.
-
-Tests Stage 3B: Performance Regression Detection
 """
 
 import shutil
