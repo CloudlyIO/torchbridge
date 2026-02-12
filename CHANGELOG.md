@@ -8,7 +8,108 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.13 (Stress Testing & Edge Cases)
+**Current Version**: v0.5.18 (PyPI Publish & User Onboarding)
+
+---
+
+## [0.5.18] - 2026-02-11 - PyPI Publish & User Onboarding
+
+### **Summary**
+
+Use case documentation, cloud validation modernization (BERT SQuAD → Qwen3-0.6B),
+PyPI publish readiness, and version bump.
+
+### **Added**
+
+- **Use case documentation** (`docs/guides/use-cases.md`): 5 CLI-first scenarios
+  (tb-doctor, tb-optimize, tb-benchmark, tb-export, tb-validate)
+- Cloud validation scripts updated to use Qwen3-0.6B (modern LLM)
+
+### **Changed**
+
+- Cloud validation model: BERT SQuAD → Qwen3-0.6B across all 3 platforms
+- CLAUDE.md: all validation scripts and expected results updated
+- ROADMAP.md: v0.6.0 removed, staying on v0.5.x indefinitely
+- Docker LABELs: all 7 Dockerfiles updated from 0.5.13 to 0.5.18
+
+---
+
+## [0.5.17] - 2026-02-11 - Robustness & HAL Rename
+
+### **Summary**
+
+Complete Optimizer→Adapter rename across the entire codebase to align class names
+with HAL identity. Added robustness tests for missing dependencies and network failures.
+
+### **Added**
+
+- **Robustness tests** (`tests/robustness/`): missing dependency and network failure scenarios
+- All `*Optimizer` backend classes renamed to `*Adapter` (112 files, 1,863 insertions, 527 deletions)
+
+### **Changed**
+
+- `BaseOptimizer` → `BaseAdapter`, `NVIDIAOptimizer` → `NVIDIAAdapter`, etc.
+- `OptimizationResult` → `PreparationResult` across codebase
+- Benchmark, demo, and test class names updated to match
+
+---
+
+## [0.5.16] - 2026-02-11 - Usability & Privacy
+
+### **Summary**
+
+Added opt-in metrics gate, actionable error hints, and documentation for data handling
+and hardware compatibility.
+
+### **Added**
+
+- `TORCHBRIDGE_METRICS=1` opt-in gate for local metrics collection (off by default)
+- Error hints on `TorchBridgeError` — 5+ error types with actionable suggestions
+- `docs/guides/data-handling.md` — data handling and privacy guide
+- `docs/reference/compatibility-matrix.md` — hardware/software compatibility matrix
+
+### **Changed**
+
+- Installation docs updated with platform-specific instructions
+
+---
+
+## [0.5.15] - 2026-02-11 - Quality Gates & Coverage
+
+### **Summary**
+
+Raised quality bars: higher coverage threshold, stricter mypy, end-to-end user journey
+test, and SBOM generation in release workflow.
+
+### **Added**
+
+- `tests/e2e/test_user_journey.py` — end-to-end user path test
+- SBOM generation in release workflow
+
+### **Changed**
+
+- Coverage threshold raised from 60% to 75%
+- Removed 5 mypy suppressed error codes (stricter type checking)
+
+---
+
+## [0.5.14] - 2026-02-11 - Security & Test Hygiene
+
+### **Summary**
+
+Security hardening of CLI commands, test placeholder cleanup, and CI strictness improvements.
+
+### **Added**
+
+- `--trust-source` flag for CLI commands that load model weights
+- Doctests enabled in CI
+
+### **Changed**
+
+- `weights_only=True` now default in 3 CLI commands (load, optimize, export)
+- Replaced `assert True` test placeholders with real assertions
+- Security CI `|| true` removed — failures now block the pipeline
+- Makefile Intel targets cleaned up
 
 ---
 

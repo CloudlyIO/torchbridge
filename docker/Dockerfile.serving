@@ -72,7 +72,7 @@ EXPOSE 8000
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Serving" \
       org.opencontainers.image.description="Production inference server with GPU support" \
-      org.opencontainers.image.version="0.5.13" \
+      org.opencontainers.image.version="0.5.18" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
 
