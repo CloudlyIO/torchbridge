@@ -699,7 +699,14 @@ def main():
     )
 
     args = parser.parse_args()
-    return BenchmarkCommand.execute(args)
+    try:
+        return BenchmarkCommand.execute(args)
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user")
+        return 130
+    except Exception as e:
+        from torchbridge.cli import _print_error
+        return _print_error(e, verbose=getattr(args, 'verbose', False))
 
 
 if __name__ == '__main__':

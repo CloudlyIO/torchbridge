@@ -546,7 +546,14 @@ def main(args=None):
     ExportCommand.register(type('SubParsers', (), {'add_parser': lambda *a, **k: parser})())
 
     parsed_args = parser.parse_args(args)
-    return ExportCommand.execute(parsed_args)
+    try:
+        return ExportCommand.execute(parsed_args)
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user")
+        return 130
+    except Exception as e:
+        from torchbridge.cli import _print_error
+        return _print_error(e, verbose=getattr(parsed_args, 'verbose', False))
 
 
 if __name__ == '__main__':
