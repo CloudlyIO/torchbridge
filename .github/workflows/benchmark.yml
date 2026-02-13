@@ -27,6 +27,10 @@ on:
     # Run comprehensive benchmarks weekly on Sunday at 2 AM UTC
     - cron: '0 2 * * 0'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 concurrency:
   group: benchmark-${{ github.ref }}
   cancel-in-progress: true
@@ -38,6 +42,7 @@ jobs:
   benchmark-cpu:
     name: CPU Benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
@@ -52,6 +57,7 @@ jobs:
           pip install -e ".[dev,benchmark]"
 
       - name: Run CPU benchmarks
+        continue-on-error: true
         run: |
           mkdir -p ${{ env.BENCHMARK_RESULTS_DIR }}
           python -m pytest benchmarks/ \
@@ -61,15 +67,14 @@ jobs:
             --benchmark-group-by=func \
             --benchmark-warmup=on \
             --benchmark-min-rounds=3 \
-            -m "not gpu and not slow" \
-            || true
+            -m "not gpu and not slow"
 
       - name: Generate benchmark report
+        continue-on-error: true
         run: |
           python scripts/benchmarks/generate_benchmark_report.py \
             --input ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-cpu.json \
-            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-report.md \
-            || echo "Benchmark report generation skipped"
+            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-report.md
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v6
@@ -123,6 +128,7 @@ jobs:
   benchmark-gpu:
     name: GPU Benchmarks
     runs-on: [self-hosted, gpu, linux]
+    timeout-minutes: 30
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     continue-on-error: true
     steps:
@@ -138,8 +144,7 @@ jobs:
             --benchmark-json=${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-gpu.json \
             --benchmark-group-by=func \
             --benchmark-warmup=on \
-            -m "gpu and not slow" \
-            || true
+            -m "gpu and not slow"
 
       - name: Upload GPU benchmark results
         uses: actions/upload-artifact@v6
@@ -151,6 +156,7 @@ jobs:
   regression-check:
     name: Performance Regression Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: benchmark-cpu
     if: github.event_name == 'pull_request'
     steps:

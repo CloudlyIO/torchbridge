@@ -76,7 +76,7 @@ class EnhancedBenchmarkRunner:
         optimizations = []
 
         try:
-            from torchbridge.compiler_optimized import (  # noqa: F401
+            from torchbridge.core.optimized_layers import (  # noqa: F401
                 FusedGELU,
                 OptimizedLayerNorm,
             )
@@ -450,7 +450,7 @@ class OurOptimizationsBaseline:
     def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
         """Setup our optimized model"""
         try:
-            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
 
             # Create model with our optimizations
             hidden_size = model_config.get('hidden_size', 768)
@@ -479,7 +479,7 @@ class OptimizedTransformerModel(nn.Module):
         super().__init__()
 
         try:
-            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
 
             self.layers = nn.ModuleList([
                 OptimizedTransformerBlock(hidden_size)
@@ -513,7 +513,7 @@ class OptimizedTransformerBlock(nn.Module):
         super().__init__()
 
         try:
-            from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
+            from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
 
             self.attention = nn.MultiheadAttention(hidden_size, hidden_size // 64, batch_first=True)
             self.norm1 = OptimizedLayerNorm(hidden_size)

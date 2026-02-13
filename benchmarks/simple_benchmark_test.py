@@ -95,7 +95,7 @@ def test_our_optimizations():
     print("-" * 40)
 
     try:
-        from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
+        from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
         print("   ✅ Optimized components available")
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

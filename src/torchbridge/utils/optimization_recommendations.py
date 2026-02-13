@@ -129,7 +129,7 @@ optimized_model = torch.compile(model, mode="{compile_mode}")
             description='Fuse adjacent operations to reduce memory access',
             implementation_steps=[
                 'Identify fusable operation pairs (Linear + Activation)',
-                'Replace with fused implementations from compiler_optimized',
+                'Replace with fused implementations from core.optimized_layers',
                 'Validate numerical correctness',
                 'Measure performance improvements'
             ],
@@ -144,7 +144,7 @@ def forward(self, x):
     return self.activation(self.linear(x))
 
 # After: Fused Linear + GELU
-from torchbridge.compiler_optimized import FusedLinearGELU
+from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU
 
 self.fused_linear_gelu = FusedLinearGELU(512, 1024)
 
@@ -178,7 +178,7 @@ def forward(self, x):
 self.attention = nn.MultiheadAttention(embed_dim, num_heads)
 
 # After: Optimized Attention
-from torchbridge.compiler_optimized import CompilerOptimizedMultiHeadAttention
+from torchbridge.core.optimized_layers import CompilerOptimizedMultiHeadAttention
 
 self.attention = CompilerOptimizedMultiHeadAttention(embed_dim, num_heads)
 
@@ -213,12 +213,12 @@ if hasattr(F, 'scaled_dot_product_attention'):
 self.norm = nn.LayerNorm(hidden_size)
 
 # After: Optimized LayerNorm
-from torchbridge.compiler_optimized import OptimizedLayerNorm
+from torchbridge.core.optimized_layers import OptimizedLayerNorm
 
 self.norm = OptimizedLayerNorm(hidden_size)
 
 # Or: RMS Normalization (more efficient)
-from torchbridge.compiler_optimized import OptimizedRMSNorm
+from torchbridge.core.optimized_layers import OptimizedRMSNorm
 
 self.norm = OptimizedRMSNorm(hidden_size)
 ''',
@@ -393,7 +393,7 @@ optimized_model = torch.compile(model, mode='default')
         code = '''
 # Applied operation fusion optimization
 # Replaced Linear + Activation with fused implementations
-from torchbridge.compiler_optimized import FusedLinearGELU
+from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU
 
 # Example transformation:
 # self.linear = nn.Linear(in_features, out_features)
@@ -412,7 +412,7 @@ from torchbridge.compiler_optimized import FusedLinearGELU
 
         code = '''
 # Applied attention optimization
-from torchbridge.compiler_optimized import CompilerOptimizedMultiHeadAttention
+from torchbridge.core.optimized_layers import CompilerOptimizedMultiHeadAttention
 
 # Replaced standard attention with optimized version
 # self.attention = nn.MultiheadAttention(embed_dim, num_heads)
@@ -429,7 +429,7 @@ from torchbridge.compiler_optimized import CompilerOptimizedMultiHeadAttention
 
         code = '''
 # Applied normalization optimization
-from torchbridge.compiler_optimized import OptimizedLayerNorm
+from torchbridge.core.optimized_layers import OptimizedLayerNorm
 
 # Replaced standard LayerNorm with optimized version
 # self.norm = nn.LayerNorm(normalized_shape)
@@ -478,6 +478,6 @@ optimized_model = memory_optimizer.optimize_memory_layout(
         """Load code templates for optimization implementations."""
         return {
             'torch_compile': 'optimized_model = torch.compile(model)',
-            'operation_fusion': 'from torchbridge.compiler_optimized import FusedLinearGELU',
-            'attention_optimization': 'from torchbridge.compiler_optimized import CompilerOptimizedMultiHeadAttention'
+            'operation_fusion': 'from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU',
+            'attention_optimization': 'from torchbridge.core.optimized_layers import CompilerOptimizedMultiHeadAttention'
         }

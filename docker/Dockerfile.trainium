@@ -64,6 +64,6 @@ CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:a
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Trainium" \
       org.opencontainers.image.description="Training and inference container with AWS Trainium support" \
-      org.opencontainers.image.version="0.5.18" \
+      org.opencontainers.image.version="0.5.19" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
