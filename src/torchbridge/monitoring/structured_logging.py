@@ -478,7 +478,7 @@ def get_logger(name: str) -> StructuredLogger:
 
     Example:
         logger = get_logger(__name__)
-        logger.info("Processing", batch_size=32, model="bert")
+        logger.info("Processing", batch_size=32, model="qwen3")
     """
     with _config_lock:
         if name in _configured_loggers:

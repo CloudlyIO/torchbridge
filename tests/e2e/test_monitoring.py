@@ -286,9 +286,9 @@ class TestCreateDashboards:
         """Test creating full dashboard."""
         from torchbridge.monitoring import create_full_dashboard
 
-        dashboard = create_full_dashboard(model_name="bert")
+        dashboard = create_full_dashboard(model_name="qwen3")
 
-        assert "bert" in dashboard.title
+        assert "qwen3" in dashboard.title
         # Should have panels from both inference and system dashboards
         assert len(dashboard.panels) > 5
 
