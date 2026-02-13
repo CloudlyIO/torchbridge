@@ -55,7 +55,7 @@ class TestNetworkFailures:
 
         # Config doesn't need network
         config = torchbridge.get_config()
-        assert config is not None
+        assert isinstance(config, torchbridge.TorchBridgeConfig)
 
         # Model optimization doesn't need network
         model = torch.nn.Linear(32, 16)
@@ -68,11 +68,11 @@ class TestNetworkFailures:
 
         # Attention creation doesn't need network
         attn = torchbridge.create_attention(d_model=64, num_heads=4)
-        assert attn is not None
+        assert hasattr(attn, "forward")
 
         # MoE creation doesn't need network
         moe = torchbridge.create_moe(hidden_size=64, num_experts=4, top_k=2)
-        assert moe is not None
+        assert hasattr(moe, "forward")
 
     def test_hal_works_offline(self):
         """Hardware abstraction works without network access."""
@@ -81,14 +81,14 @@ class TestNetworkFailures:
         )
 
         hal = HardwareAbstractionLayer()
-        assert hal is not None
+        assert isinstance(hal, HardwareAbstractionLayer)
 
     def test_validator_works_offline(self):
         """Validator works without network access."""
         from torchbridge.validation.unified_validator import UnifiedValidator
 
         validator = UnifiedValidator()
-        assert validator is not None
+        assert isinstance(validator, UnifiedValidator)
 
     def test_backend_factory_works_offline(self):
         """Backend factory works without network."""
@@ -96,7 +96,7 @@ class TestNetworkFailures:
 
         # Should be able to create CPU backend without network
         backend = BackendFactory.create("cpu")
-        assert backend is not None
+        assert hasattr(backend, "prepare_model")
 
     def test_stress_fixture_handles_network_failure(self):
         """Stress test model fixtures should skip cleanly when download fails."""
@@ -106,10 +106,13 @@ class TestNetworkFailures:
                 "We couldn't connect to 'https://huggingface.co' "
                 "to load this file"
             )
-            with pytest.raises(OSError, match="couldn't connect"):
+            with pytest.raises(OSError, match="couldn't connect") as exc_info:
                 from transformers import AutoModel
 
                 AutoModel.from_pretrained("facebook/dinov2-small")
+
+            assert "huggingface.co" in str(exc_info.value)
+            mock_load.assert_called_once_with("facebook/dinov2-small")
 
     def test_dns_resolution_failure(self):
         """DNS resolution failure should produce clear error."""
@@ -117,10 +120,13 @@ class TestNetworkFailures:
             mock_load.side_effect = OSError(
                 "[Errno -2] Name or service not known"
             )
-            with pytest.raises(OSError, match="Name or service not known"):
+            with pytest.raises(OSError, match="Name or service not known") as exc_info:
                 from transformers import AutoModel
 
                 AutoModel.from_pretrained("facebook/dinov2-small")
+
+            assert "Errno" in str(exc_info.value)
+            mock_load.assert_called_once_with("facebook/dinov2-small")
 
     def test_ssl_error_handling(self):
         """SSL errors should produce clear error."""
@@ -128,7 +134,10 @@ class TestNetworkFailures:
             mock_load.side_effect = ssl.SSLError(
                 "SSL: CERTIFICATE_VERIFY_FAILED"
             )
-            with pytest.raises(ssl.SSLError, match="CERTIFICATE_VERIFY_FAILED"):
+            with pytest.raises(ssl.SSLError, match="CERTIFICATE_VERIFY_FAILED") as exc_info:
                 from transformers import AutoModel
 
                 AutoModel.from_pretrained("facebook/dinov2-small")
+
+            assert "CERTIFICATE" in str(exc_info.value)
+            mock_load.assert_called_once_with("facebook/dinov2-small")

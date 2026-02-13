@@ -62,9 +62,9 @@ class TestOptimizeCommand:
             # The function returns the model after calling eval()
             assert model == mock_model
 
-    def test_load_model_bert(self):
-        """Test loading BERT-like model."""
-        model = OptimizeCommand._load_model('bert', verbose=False)
+    def test_load_model_transformer(self):
+        """Test loading transformer-like demo model."""
+        model = OptimizeCommand._load_model('transformer', verbose=False)
         assert isinstance(model, torch.nn.Sequential)
         assert len(model) == 4  # Linear, GELU, Linear, LayerNorm
 
@@ -189,7 +189,7 @@ class TestOptimizeCommand:
         """Test full optimization workflow."""
         # Mock arguments
         args = MagicMock()
-        args.model = 'bert'
+        args.model = 'transformer'
         args.level = 'basic'
         args.output = None
         args.input_shape = '1,512,768'
@@ -205,7 +205,7 @@ class TestOptimizeCommand:
     def test_execute_with_file_output(self):
         """Test optimization with file output."""
         args = MagicMock()
-        args.model = 'bert'
+        args.model = 'transformer'
         args.level = 'basic'
         args.input_shape = '1,512,768'
         args.hardware = 'cpu'
@@ -227,7 +227,7 @@ class TestOptimizeCommand:
     def test_execute_with_benchmark(self):
         """Test optimization with benchmarking."""
         args = MagicMock()
-        args.model = 'bert'
+        args.model = 'transformer'
         args.level = 'basic'
         args.input_shape = '1,512,768'
         args.hardware = 'cpu'

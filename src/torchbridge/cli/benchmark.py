@@ -410,7 +410,7 @@ Examples:
         # Infer shape from model name
         if 'resnet' in model_name.lower() or 'vision' in model_name.lower():
             return (1, 3, 224, 224)
-        elif 'transformer' in model_name.lower() or 'bert' in model_name.lower():
+        elif 'transformer' in model_name.lower() or 'llm' in model_name.lower():
             return (1, 512, 768)
         elif model_name == 'linear_stress_test':
             return (16, 1024)  # Match the input size of Linear(1024, 1024)
