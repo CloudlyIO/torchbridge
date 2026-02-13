@@ -190,13 +190,11 @@ def cuda_device():
 # =============================================================================
 
 @pytest.fixture(scope="session")
-def qwen3_model_and_tokenizer():
-    """Load Qwen3-0.6B model and tokenizer (session-scoped)."""
+def _qwen3_session():
+    """Internal: Load Qwen3-0.6B model and tokenizer (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
-
     from transformers import AutoModelForCausalLM, AutoTokenizer
-
     model_name = "Qwen/Qwen3-0.6B"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -204,18 +202,24 @@ def qwen3_model_and_tokenizer():
     except Exception as e:
         pytest.skip(f"Failed to load Qwen3 model: {e}")
     model.eval()
-
     return model, tokenizer
 
 
+@pytest.fixture
+def qwen3_model_and_tokenizer(_qwen3_session):
+    """Qwen3-0.6B model and tokenizer, guaranteed in eval mode per test."""
+    model, tokenizer = _qwen3_session
+    model.eval()
+    yield model, tokenizer
+    model.eval()  # Restore eval mode for next test
+
+
 @pytest.fixture(scope="session")
-def deepseek_model_and_tokenizer():
-    """Load DeepSeek-R1-Distill-Qwen-1.5B model and tokenizer (session-scoped)."""
+def _deepseek_session():
+    """Internal: Load DeepSeek model and tokenizer (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
-
     from transformers import AutoModelForCausalLM, AutoTokenizer
-
     model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -224,18 +228,24 @@ def deepseek_model_and_tokenizer():
     except Exception as e:
         pytest.skip(f"Failed to load DeepSeek model: {e}")
     model.eval()
-
     return model, tokenizer
 
 
+@pytest.fixture
+def deepseek_model_and_tokenizer(_deepseek_session):
+    """DeepSeek model and tokenizer, guaranteed in eval mode per test."""
+    model, tokenizer = _deepseek_session
+    model.eval()
+    yield model, tokenizer
+    model.eval()
+
+
 @pytest.fixture(scope="session")
-def dinov2_model():
-    """Load DINOv2-small model (session-scoped)."""
+def _dinov2_session():
+    """Internal: Load DINOv2-small model (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
-
     from transformers import AutoModel
-
     model_name = "facebook/dinov2-small"
     try:
         model = AutoModel.from_pretrained(model_name)
@@ -245,14 +255,20 @@ def dinov2_model():
         pytest.skip(f"Failed to load DINOv2 model: {e}")
 
 
+@pytest.fixture
+def dinov2_model(_dinov2_session):
+    """DINOv2-small model, guaranteed in eval mode per test."""
+    _dinov2_session.eval()
+    yield _dinov2_session
+    _dinov2_session.eval()
+
+
 @pytest.fixture(scope="session")
-def minilm_model():
-    """Load MiniLM-L6-v2 embedding model (session-scoped)."""
+def _minilm_session():
+    """Internal: Load MiniLM-L6-v2 model (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
-
     from transformers import AutoModel
-
     model_name = "sentence-transformers/all-MiniLM-L6-v2"
     try:
         model = AutoModel.from_pretrained(model_name)
@@ -260,6 +276,14 @@ def minilm_model():
         return model
     except Exception as e:
         pytest.skip(f"Failed to load MiniLM model: {e}")
+
+
+@pytest.fixture
+def minilm_model(_minilm_session):
+    """MiniLM-L6-v2 model, guaranteed in eval mode per test."""
+    _minilm_session.eval()
+    yield _minilm_session
+    _minilm_session.eval()
 
 
 # =============================================================================
@@ -315,14 +339,14 @@ def output_tolerance():
     is expected and acceptable for inference quality.
     """
     return {
-        "atol": 0.5,   # Absolute tolerance - realistic for BF16 mixed precision
-        "rtol": 0.1,   # Relative tolerance - 10% relative difference allowed
+        "atol": 0.3,   # Absolute tolerance — accounts for BF16 mixed precision logit diffs
+        "rtol": 0.05,  # Relative tolerance — 5% relative difference allowed
     }
 
 
 @pytest.fixture
-def strict_tolerance():
-    """Strict tolerance for FP32-only output comparison."""
+def e2e_strict_tolerance():
+    """Strict tolerance for FP32-only e2e output comparison."""
     return {
         "atol": 1e-4,
         "rtol": 1e-4,

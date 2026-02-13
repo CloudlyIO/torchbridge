@@ -5,9 +5,7 @@ Get running with TorchBridge in three steps: install, detect hardware, run your 
 ## 1. Install
 
 ```bash
-git clone https://github.com/CloudlyIO/torchbridge.git
-cd torchbridge
-pip install -r requirements.txt
+pip install torchbridge-ml
 ```
 
 ## 2. Detect Your Hardware
@@ -103,8 +101,8 @@ from torchbridge.deployment import export_to_torchscript, export_to_onnx, export
 
 sample = torch.randn(1, 768)
 
-export_to_torchscript(model, sample, "model.pt")
-export_to_onnx(model, sample, "model.onnx", opset_version=17)
+export_to_torchscript(model, "model.pt", sample_input=sample)
+export_to_onnx(model, "model.onnx", sample_input=sample, opset_version=17)
 export_to_safetensors(model, "model.safetensors")
 ```
 

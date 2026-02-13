@@ -22,7 +22,7 @@ from .base_backend import OptimizationLevel, OptimizationResult
 logger = logging.getLogger(__name__)
 
 @dataclass
-class KernelConfig:
+class OperationKernelConfig:
     """
     Configuration for a specific kernel operation.
 
@@ -456,7 +456,7 @@ class BaseKernelAdapter(ABC):
             device: Target device for optimization
         """
         self.device = device or torch.device('cpu')
-        self._config_cache: dict[str, KernelConfig] = {}
+        self._config_cache: dict[str, OperationKernelConfig] = {}
 
     @abstractmethod
     def get_optimal_gemm_config(
@@ -465,7 +465,7 @@ class BaseKernelAdapter(ABC):
         n: int,
         k: int,
         dtype: torch.dtype = torch.float32
-    ) -> KernelConfig:
+    ) -> OperationKernelConfig:
         """
         Get optimal configuration for GEMM operation.
 
@@ -474,7 +474,7 @@ class BaseKernelAdapter(ABC):
             dtype: Data type
 
         Returns:
-            KernelConfig with optimal parameters
+            OperationKernelConfig with optimal parameters
         """
         pass
 
@@ -485,7 +485,7 @@ class BaseKernelAdapter(ABC):
         out_channels: int,
         kernel_size: tuple[int, ...],
         dtype: torch.dtype = torch.float32
-    ) -> KernelConfig:
+    ) -> OperationKernelConfig:
         """
         Get optimal configuration for convolution.
 
@@ -496,7 +496,7 @@ class BaseKernelAdapter(ABC):
             dtype: Data type
 
         Returns:
-            KernelConfig with optimal parameters
+            OperationKernelConfig with optimal parameters
         """
         pass
 
@@ -507,7 +507,7 @@ class BaseKernelAdapter(ABC):
         head_dim: int,
         num_heads: int,
         dtype: torch.dtype = torch.float32
-    ) -> KernelConfig:
+    ) -> OperationKernelConfig:
         """
         Get optimal configuration for attention operation.
 
@@ -518,15 +518,15 @@ class BaseKernelAdapter(ABC):
             dtype: Data type
 
         Returns:
-            KernelConfig with optimal parameters
+            OperationKernelConfig with optimal parameters
         """
         pass
 
-    def get_cached_config(self, key: str) -> KernelConfig | None:
+    def get_cached_config(self, key: str) -> OperationKernelConfig | None:
         """Get cached configuration."""
         return self._config_cache.get(key)
 
-    def cache_config(self, key: str, config: KernelConfig) -> None:
+    def cache_config(self, key: str, config: OperationKernelConfig) -> None:
         """Cache a configuration."""
         self._config_cache[key] = config
 
@@ -633,6 +633,6 @@ __all__ = [
     'BaseAdapter',
     'BaseKernelAdapter',
     'CPUAdapter',
-    'KernelConfig',
+    'OperationKernelConfig',
     'OptimizationStrategy',
 ]

@@ -590,6 +590,8 @@ class TestTPUErrorPaths:
 
     def test_memory_stats_with_retention(self):
         """Test memory allocation history retention."""
+        import time as time_mod
+
         config = TorchBridgeConfig()
         config.hardware.tpu.allocation_history_retention_seconds = 1  # 1 second
         manager = TPUMemoryManager(config.hardware.tpu)
@@ -601,13 +603,15 @@ class TestTPUErrorPaths:
         initial_history = len(manager._allocation_history)
         assert initial_history == 5
 
-        # Wait for retention period and optimize
-        import time
-        time.sleep(1.1)
+        # Backdate all allocation timestamps to 5 seconds ago
+        for alloc in manager._allocation_history:
+            alloc.timestamp = time_mod.time() - 5
+
+        # optimize_memory_usage should prune entries older than 1s
         manager.optimize_memory_usage()
 
         # Old allocations should be removed
-        assert len(manager._allocation_history) <= initial_history
+        assert len(manager._allocation_history) == 0
 
     def test_configurable_tpu_memory_capacity(self):
         """Test configurable TPU memory capacity overrides."""
