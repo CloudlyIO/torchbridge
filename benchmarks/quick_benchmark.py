@@ -44,7 +44,7 @@ def quick_environment_check():
 
     # Our optimizations
     try:
-        from torchbridge.compiler_optimized import FusedGELU
+        from torchbridge.core.optimized_layers import FusedGELU
         print("   Our Optimizations: ✅ Available")
     except ImportError:
         print("   Our Optimizations: ⚠️  Limited")

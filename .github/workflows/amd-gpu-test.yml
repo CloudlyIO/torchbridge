@@ -32,6 +32,9 @@ on:
       - 'tests/backends/test_amd_*.py'
       - 'docker/Dockerfile.amd'
 
+permissions:
+  contents: read
+
 concurrency:
   group: amd-gpu-${{ github.ref }}
   cancel-in-progress: true
@@ -78,8 +81,7 @@ jobs:
         run: |
           PYTHONPATH=src pytest tests/ -v --tb=short \
             -m "amd" \
-            --junitxml=test-results-amd.xml \
-            || true
+            --junitxml=test-results-amd.xml
 
       - name: Run TorchBridge AMD validation
         run: |
@@ -125,21 +127,21 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run AMD benchmarks
+        continue-on-error: true
         run: |
           mkdir -p ${{ env.BENCHMARK_RESULTS_DIR }}
           PYTHONPATH=src python3 -m torchbridge.cli.benchmark \
             --predefined optimization --quick \
             --format json \
-            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-amd.json \
-            || true
+            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-amd.json
 
       - name: Run AMD benchmarks (CSV)
+        continue-on-error: true
         run: |
           PYTHONPATH=src python3 -m torchbridge.cli.benchmark \
             --predefined optimization --quick \
             --format csv \
-            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-amd.csv \
-            || true
+            --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-amd.csv
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v6
