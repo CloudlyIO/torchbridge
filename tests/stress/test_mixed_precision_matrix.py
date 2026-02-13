@@ -8,9 +8,9 @@ class TestMixedPrecisionMatrix:
     DTYPES_CPU = [torch.float32, torch.float16, torch.bfloat16]
 
     @pytest.mark.parametrize("dtype", DTYPES_CPU, ids=["fp32", "fp16", "bf16"])
-    def test_minilm_precision(self, minilm_model, dtype):
+    def test_minilm_precision(self, minilm_model_and_tokenizer, dtype):
         """MiniLM produces valid output at each precision."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         model_cast = model.to(dtype=dtype)
         inputs = tokenizer("Precision test", return_tensors="pt")
         with torch.no_grad():
@@ -20,9 +20,9 @@ class TestMixedPrecisionMatrix:
         model.float()  # restore
 
     @pytest.mark.parametrize("dtype", DTYPES_CPU, ids=["fp32", "fp16", "bf16"])
-    def test_dinov2_precision(self, dinov2_model, dtype):
+    def test_dinov2_precision(self, dinov2_model_for_stress, dtype):
         """DINOv2 produces valid output at each precision."""
-        model = dinov2_model.to(dtype=dtype)
+        model = dinov2_model_for_stress.to(dtype=dtype)
         images = torch.randn(2, 3, 224, 224, dtype=dtype)
         with torch.no_grad():
             output = model(images)
@@ -30,9 +30,9 @@ class TestMixedPrecisionMatrix:
         model.float()
 
     @pytest.mark.parametrize("dtype", DTYPES_CPU, ids=["fp32", "fp16", "bf16"])
-    def test_cross_precision_consistency(self, minilm_model, dtype):
+    def test_cross_precision_consistency(self, minilm_model_and_tokenizer, dtype):
         """Output at lower precision is close to FP32 baseline."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         inputs = tokenizer("Consistency test", return_tensors="pt")
 
         with torch.no_grad():
@@ -70,9 +70,9 @@ class TestMixedPrecisionMatrix:
     @pytest.mark.parametrize(
         "dtype", [torch.float32, torch.float16, torch.bfloat16]
     )
-    def test_gpu_precision_matrix(self, minilm_model, dtype):
+    def test_gpu_precision_matrix(self, minilm_model_and_tokenizer, dtype):
         """GPU inference at each precision produces valid output."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         device = torch.device("cuda")
         model_gpu = model.to(device=device, dtype=dtype)
         inputs = tokenizer("GPU precision test", return_tensors="pt")

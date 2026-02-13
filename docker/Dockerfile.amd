@@ -39,7 +39,7 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
 # Install optional serving dependencies
-RUN pip install fastapi uvicorn prometheus-client psutil
+RUN pip install "fastapi>=0.100.0,<1.0" "uvicorn>=0.23.0,<1.0" "prometheus-client>=0.17.0,<1.0" "psutil>=5.9.0,<7.0"
 
 # Copy application code
 COPY src/ ./src/

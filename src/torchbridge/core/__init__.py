@@ -111,9 +111,8 @@ from .performance_tracker import (
 try:
     from .components.basic_optimized import *  # noqa: F403
     from .components.jit_optimized import *  # noqa: F403
-except ImportError as e:
-    import warnings
-    warnings.warn(f"Some components not available: {e}", stacklevel=2)
+except ImportError:
+    # Optional components — not available in all installations
     pass
 
 __all__ = [

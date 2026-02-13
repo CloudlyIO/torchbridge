@@ -28,7 +28,7 @@ from torchbridge.backends import (
     CPUBackend,
     # Dataclasses
     DeviceInfo,
-    KernelConfig,
+    OperationKernelConfig,
     OptimizationLevel,
     OptimizationResult,
     OptimizationStrategy,
@@ -590,15 +590,15 @@ class TestOptimizationStrategy:
 
 
 # =============================================================================
-# KernelConfig Tests
+# OperationKernelConfig Tests
 # =============================================================================
 
-class TestKernelConfig:
-    """Tests for KernelConfig dataclass."""
+class TestOperationKernelConfig:
+    """Tests for OperationKernelConfig dataclass."""
 
     def test_kernel_config_creation(self):
-        """Test creating a KernelConfig."""
-        config = KernelConfig(
+        """Test creating a OperationKernelConfig."""
+        config = OperationKernelConfig(
             algorithm='auto',
             tile_sizes=(32, 32, 32),
             num_warps=4
@@ -609,8 +609,8 @@ class TestKernelConfig:
         assert config.num_warps == 4
 
     def test_kernel_config_to_dict(self):
-        """Test KernelConfig.to_dict()."""
-        config = KernelConfig(
+        """Test OperationKernelConfig.to_dict()."""
+        config = OperationKernelConfig(
             algorithm='custom',
             tile_sizes=(64, 64),
             use_tensor_cores=True

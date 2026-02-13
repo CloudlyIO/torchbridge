@@ -25,10 +25,51 @@ class PrecisionFormat(Enum):
 
 
 class OptimizationLevel(Enum):
-    """Optimization levels from conservative to aggressive."""
-    CONSERVATIVE = "conservative"
-    BALANCED = "balanced"
-    AGGRESSIVE = "aggressive"
+    """
+    Standardized optimization levels across all backends.
+
+    O0: No optimizations (debug mode)
+    O1: Conservative optimizations (safe, minimal impact)
+    O2: Balanced optimizations (performance + stability)
+    O3: Aggressive optimizations (maximum performance)
+    """
+    O0 = "O0"
+    O1 = "O1"
+    O2 = "O2"
+    O3 = "O3"
+
+    # Aliases for compatibility
+    DEBUG = "O0"
+    CONSERVATIVE = "O1"
+    BALANCED = "O2"
+    AGGRESSIVE = "O3"
+
+    @classmethod
+    def from_string(cls, level: str) -> "OptimizationLevel":
+        """
+        Convert string to OptimizationLevel.
+
+        Args:
+            level: String like "O0", "O1", "conservative", "balanced", etc.
+
+        Returns:
+            OptimizationLevel enum value
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+        level_upper = level.upper()
+
+        if level_upper in ("O0", "DEBUG"):
+            return cls.O0
+        elif level_upper in ("O1", "CONSERVATIVE"):
+            return cls.O1
+        elif level_upper in ("O2", "BALANCED"):
+            return cls.O2
+        elif level_upper in ("O3", "AGGRESSIVE"):
+            return cls.O3
+        else:
+            _logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
+            return cls.O2
 
 
 class HardwareBackend(Enum):
@@ -195,7 +236,7 @@ class AttentionConfig:
 
     # Ring attention settings
     ring_enabled: bool = False
-    max_sequence_length: int = 1000000
+    max_sequence_length: int = 131072  # 128K; increase for ring attention workloads
 
     # Fusion settings
     fusion_enabled: bool = True
@@ -708,7 +749,7 @@ class HardwareConfig:
     flashlight_enabled: bool = False
 
     # Performance settings
-    optimization_level: OptimizationLevel = OptimizationLevel.BALANCED
+    optimization_level: OptimizationLevel = OptimizationLevel.O2
 
     def __post_init__(self):
         """Auto-configure hardware settings based on detected capabilities."""
@@ -971,7 +1012,7 @@ class TorchBridgeConfig:
     profile: bool = False
 
     # Optimization settings
-    optimization_level: OptimizationLevel = OptimizationLevel.BALANCED
+    optimization_level: OptimizationLevel = OptimizationLevel.O2
     experimental_features: bool = False
 
     @staticmethod
@@ -1061,7 +1102,7 @@ class TorchBridgeConfig:
         config.memory.gradient_checkpointing = False
         config.memory.deep_optimizer_states = False
         config.validation.enabled = False
-        config.optimization_level = OptimizationLevel.AGGRESSIVE
+        config.optimization_level = OptimizationLevel.O3
         return config
 
     @classmethod
@@ -1071,7 +1112,7 @@ class TorchBridgeConfig:
         config.memory.gradient_checkpointing = True
         config.memory.deep_optimizer_states = True
         config.validation.enabled = True
-        config.optimization_level = OptimizationLevel.BALANCED
+        config.optimization_level = OptimizationLevel.O2
         return config
 
     @classmethod
@@ -1081,7 +1122,7 @@ class TorchBridgeConfig:
         config.debug = True
         config.profile = True
         config.validation.strict_mode = True
-        config.optimization_level = OptimizationLevel.CONSERVATIVE
+        config.optimization_level = OptimizationLevel.O0
         return config
 
     def to_dict(self) -> dict[str, Any]:

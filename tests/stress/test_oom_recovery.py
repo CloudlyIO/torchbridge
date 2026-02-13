@@ -46,9 +46,9 @@ class TestOOMRecovery:
         torch.cuda.empty_cache()
 
     @pytest.mark.gpu
-    def test_gpu_oom_during_model_inference(self, minilm_model):
+    def test_gpu_oom_during_model_inference(self, minilm_model_and_tokenizer):
         """Model inference with absurdly large batch triggers OOM, recovers."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         device = torch.device("cuda")
         model_gpu = model.to(device)
 
