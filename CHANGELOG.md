@@ -8,7 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.18 (PyPI Publish & User Onboarding)
+**Current Version**: v0.5.19 (CI & Docker Hardening)
+
+---
+
+## [0.5.19] - 2026-02-12 - CI & Docker Hardening
+
+### **Summary**
+
+Comprehensive CI/CD and Docker hardening based on deep codebase audit. Fixed broken Docker
+builds, replaced dead BERT SQuAD workflow, hardened security pipelines, and added production
+safety measures across all workflows.
+
+### **Fixed**
+
+- **Docker workflow paths** (Critical): 4 of 5 Docker CI builds referenced Dockerfiles at
+  repo root instead of `docker/` — all builds now use correct `./docker/Dockerfile.*` paths
+- **Dead validation workflow** (Critical): Replaced 515-line `bert-squad-validation.yml`
+  (referencing deleted `examples/bert_squad/`) with Qwen3-0.6B cross-backend validation
+- **Serving container security** (Critical): `Dockerfile.serving` now runs as non-root user
+  (`appuser`) instead of root
+- **Supply chain risk**: Pinned `trivy-action@master` to `@0.28.0` release tag
+- **Silent CI failures**: Removed `|| true` from security scans (Bandit, pip-audit,
+  truffleHog) and benchmark steps — failures now properly surface
+
+### **Added**
+
+- `timeout-minutes` on all CI jobs across all 7 workflows (prevents runaway jobs)
+- `permissions` blocks on `benchmark.yml` and `amd-gpu-test.yml` (least-privilege)
+- `continue-on-error` at step level (replaces `|| true`) for benchmark steps
 
 ---
 
@@ -5701,8 +5729,6 @@ This project follows a `<Major>.<Minor>.<Commit>` versioning scheme:
 - **Minor**: Feature additions, significant improvements, or milestone completions
 - **Commit**: Incremental improvements, bug fixes, and regular development (auto-incremented)
 
-**Current Version**: 0.1.56 (next commit will be 0.1.57)
-
 ---
 
-**For detailed technical information, see `API.md` and `BENCHMARKS.md`.** 📖
+**For the latest version information, see `pyproject.toml`.**

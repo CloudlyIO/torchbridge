@@ -53,6 +53,13 @@ COPY examples/ /app/examples/
 # Install the package
 RUN pip3 install --no-cache-dir -e .
 
+# Create non-root user for production serving
+RUN groupadd -g 1000 appuser \
+    && useradd -m -u 1000 -g appuser -s /bin/bash appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
 # Environment variables for configuration
 ENV MODEL_NAME=Qwen/Qwen3-0.6B
 ENV QUANTIZATION=none
@@ -72,7 +79,7 @@ EXPOSE 8000
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Serving" \
       org.opencontainers.image.description="Production inference server with GPU support" \
-      org.opencontainers.image.version="0.5.18" \
+      org.opencontainers.image.version="0.5.19" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
 
