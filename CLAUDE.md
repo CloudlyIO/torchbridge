@@ -433,6 +433,9 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-02-11 | AMD ROCm | MI300X | Qwen3-0.6B | 4.82e-05 | 1.000001 | 30.2ms | PASSED |
 | 2026-02-11 | AWS CUDA | A10G | Qwen3-0.6B | 1.96e-05 | 1.000001 | 43.0ms | PASSED |
 | 2026-02-11 | GCP CUDA | T4 | Qwen3-0.6B | 2.67e-05 | 1.000001 | 54.2ms | PASSED |
+| 2026-02-12 | AMD ROCm | MI300X | Qwen3-0.6B | 4.82e-05 | 1.000001 | 30.0ms | PASSED |
+| 2026-02-12 | GCP CUDA | T4 | Qwen3-0.6B | 2.67e-05 | 1.000001 | 50.8ms | PASSED |
+| 2026-02-12 | AWS CUDA | A10G | Qwen3-0.6B | 1.96e-05 | 1.000001 | 41.8ms | PASSED |
 
 ---
 
