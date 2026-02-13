@@ -55,15 +55,16 @@ class BaseBackend(ABC):
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-# Auto-detect: returns "cuda", "rocm", "tpu", or "cpu"
+# Auto-detect: returns "cuda", "rocm", "neuron", "tpu", or "cpu"
 backend = BackendFactory.create(detect_best_backend())
 ```
 
 Detection priority:
 1. NVIDIA CUDA (if `torch.cuda.is_available()`)
 2. AMD ROCm (if ROCm runtime detected)
-3. Google TPU (if PyTorch/XLA available)
-4. CPU (fallback)
+3. AWS Trainium (if NeuronX runtime detected)
+4. Google TPU (if PyTorch/XLA available)
+5. CPU (fallback)
 
 ## Optimization Levels
 
@@ -111,7 +112,7 @@ device = backend.device
 model = YourModel().to(device)
 model = backend.prepare_model(model)
 
-# This runs identically on NVIDIA, AMD, or TPU
+# This runs identically on NVIDIA, AMD, Trainium, or TPU
 for batch in dataloader:
     inputs = batch.to(device)
     output = model(inputs)

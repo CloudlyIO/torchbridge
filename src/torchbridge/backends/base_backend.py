@@ -4,7 +4,7 @@ Base Backend for All Hardware Implementations
 This module provides the abstract base class for all backend implementations,
 defining the common interface and shared functionality.
 
-Backends (NVIDIA, AMD, TPU) inherit from this base and implement
+Backends (NVIDIA, AMD, Trainium, TPU) inherit from this base and implement
 device-specific optimizations while maintaining a consistent API.
 
 """
@@ -34,7 +34,7 @@ class DeviceInfo:
 
     All backends return this structure from get_device_info().
     """
-    backend: str  # "nvidia", "amd", "tpu", "cpu"
+    backend: str  # "nvidia", "amd", "trainium", "tpu", "cpu"
     device_type: str  # Device string (e.g., "cuda:0", "xla:0")
     device_id: int
     device_name: str
@@ -104,7 +104,7 @@ class BaseBackend(ABC):
     Abstract base class for all hardware backends.
 
     This class defines the common interface that all backend implementations
-    (NVIDIA, AMD, TPU) must implement, while providing shared functionality.
+    (NVIDIA, AMD, Trainium, TPU) must implement, while providing shared functionality.
 
     Subclasses must implement:
     - _setup_environment() -> None

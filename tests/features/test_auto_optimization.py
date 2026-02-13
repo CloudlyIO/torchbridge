@@ -29,7 +29,7 @@ ALL_HARDWARE_TYPES = [
     HardwareType.TPU,
     HardwareType.CPU,
 ]
-ALL_BACKENDS = ['nvidia', 'amd', 'tpu', 'cpu']
+ALL_BACKENDS = ['nvidia', 'amd', 'trainium', 'tpu', 'cpu']
 
 
 # Test fixtures

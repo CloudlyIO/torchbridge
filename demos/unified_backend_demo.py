@@ -3,7 +3,7 @@
 Unified Backend Demo
 
 Demonstrates the unified backend interface and BackendFactory for automatic
-hardware detection across NVIDIA, AMD, and TPU platforms.
+hardware detection across NVIDIA, AMD, Trainium, and TPU platforms.
 
 This demo showcases:
 - BackendFactory for automatic backend selection

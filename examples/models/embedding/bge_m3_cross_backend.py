@@ -91,7 +91,7 @@ def run_embedding(model_name: str) -> dict[str, Any]:
 
         sentences = [
             "TorchBridge provides hardware abstraction for PyTorch.",
-            "The model runs on NVIDIA, AMD, and TPU without code changes.",
+            "The model runs on NVIDIA, AMD, Trainium, and TPU without code changes.",
             "Cross-backend validation ensures output consistency.",
             "RAG pipelines benefit from fast embedding throughput.",
         ]

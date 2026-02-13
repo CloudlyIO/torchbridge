@@ -91,7 +91,7 @@ class LLMOptimizer:
     Optimizer for large language models with comprehensive optimization.
 
     Supports models from 1B to 13B parameters with automatic optimization
-    for available hardware including NVIDIA, AMD, and TPU.
+    for available hardware including NVIDIA, AMD, Trainium, and TPU.
 
     Example:
         >>> from torchbridge.models.llm import LLMOptimizer
