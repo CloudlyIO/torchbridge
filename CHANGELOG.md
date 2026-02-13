@@ -52,6 +52,17 @@ and updated all user-facing references for 5-backend consistency.
 - Regenerated `PKG-INFO`: removed all Intel references, added Trainium keyword
 - Updated README test badge: `1,397+` → `1,444+`
 
+### Improved (Pre-Beta Polish)
+- Added error handling to all 8 standalone `tb-*` CLI entry points (`optimize`,
+  `benchmark`, `export`, `profile`, `doctor`, `init`, `validate`, `migrate`) —
+  raw tracebacks no longer leak in non-verbose mode
+- Added Pydantic Field bounds to LLM server request models: `min_length`, `ge`/`le`
+  constraints on `GenerateRequest` and `ChatCompletionRequest`; `Literal` role type
+  on `ChatMessage`
+- Added "Common Pitfalls" section to quickstart guide (7 pitfalls with code examples)
+- Expanded data-handling guide with "Analyzing Performance Metrics" and
+  "Privacy Best Practices" sections
+
 ### Stats
 - 30 files changed (Trainium parity), 1 workflow renamed, 3 reports renamed
 - 1,374 passed, 70 skipped, 0 failures

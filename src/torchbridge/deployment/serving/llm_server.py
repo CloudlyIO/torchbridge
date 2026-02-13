@@ -47,7 +47,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import torch
 import torch.nn as nn
@@ -132,12 +132,12 @@ if FASTAPI_AVAILABLE:
     class GenerateRequest(BaseModel):
         """Request model for text generation."""
 
-        prompt: str = Field(..., description="Input text prompt")
-        max_new_tokens: int | None = Field(None, description="Maximum tokens to generate")
-        temperature: float | None = Field(None, description="Sampling temperature (0.0-2.0)")
-        top_p: float | None = Field(None, description="Nucleus sampling probability")
-        top_k: int | None = Field(None, description="Top-k sampling")
-        repetition_penalty: float | None = Field(None, description="Repetition penalty")
+        prompt: str = Field(..., min_length=1, description="Input text prompt")
+        max_new_tokens: int | None = Field(None, ge=1, le=4096, description="Maximum tokens to generate")
+        temperature: float | None = Field(None, ge=0.0, le=2.0, description="Sampling temperature (0.0-2.0)")
+        top_p: float | None = Field(None, ge=0.0, le=1.0, description="Nucleus sampling probability")
+        top_k: int | None = Field(None, ge=1, description="Top-k sampling")
+        repetition_penalty: float | None = Field(None, ge=0.1, le=10.0, description="Repetition penalty")
         do_sample: bool | None = Field(True, description="Enable sampling")
         stream: bool | None = Field(False, description="Enable streaming response")
         stop_sequences: list[str] | None = Field(None, description="Stop generation sequences")
@@ -145,16 +145,16 @@ if FASTAPI_AVAILABLE:
     class ChatMessage(BaseModel):
         """Chat message format."""
 
-        role: str = Field(..., description="Message role (system, user, assistant)")
+        role: Literal["system", "user", "assistant"] = Field(..., description="Message role (system, user, assistant)")
         content: str = Field(..., description="Message content")
 
     class ChatCompletionRequest(BaseModel):
         """Request model for chat completion."""
 
         messages: list[ChatMessage] = Field(..., description="List of chat messages")
-        max_new_tokens: int | None = Field(None, description="Maximum tokens to generate")
-        temperature: float | None = Field(None, description="Sampling temperature")
-        top_p: float | None = Field(None, description="Nucleus sampling")
+        max_new_tokens: int | None = Field(None, ge=1, le=4096, description="Maximum tokens to generate")
+        temperature: float | None = Field(None, ge=0.0, le=2.0, description="Sampling temperature")
+        top_p: float | None = Field(None, ge=0.0, le=1.0, description="Nucleus sampling")
         stream: bool | None = Field(False, description="Enable streaming")
 
     class GenerateResponse(BaseModel):
