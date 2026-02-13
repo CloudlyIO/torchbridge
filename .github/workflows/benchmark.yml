@@ -168,7 +168,7 @@ jobs:
           python-version: "3.12"
 
       - name: Download current benchmark results
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v6
         with:
           name: benchmark-results-cpu
           path: current-results/

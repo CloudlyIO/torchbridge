@@ -38,6 +38,21 @@ dependency extra.
   details, and cause chains instead of raw error messages. Verbose mode shows full
   tracebacks. Refactored command dispatch to dictionary-based lookup.
 
+### **Fixed** (Audit Round 4)
+
+- **Missing exports**: Added `TrainiumArchitecture`, `TrainiumConfig` to `core/__init__.py`
+- **Duplicate class**: Renamed AMD-local `OptimizationResult` → `AMDOptimizationResult`
+  to avoid clash with `backends.base_backend.OptimizationResult`
+- **Type annotations**: Added return types and parameter types to `__init__.py` convenience
+  functions (`create_attention`, `create_memory_optimizer`, `optimize_model`)
+- **Stale references**: Removed all BERT/GPT-2 mentions from active source code (6 files),
+  tests (2 files), and docs (2 files) — replaced with Qwen3/transformer/LLM terminology
+- **Test assertions**: Strengthened 10 tests from bare `is not None` to `isinstance`,
+  `hasattr`, and `mock.assert_called_once` validations
+- **QuantizationMode consistency**: Aligned `estimate_memory()` to use `BNBT4` matching
+  `optimized_inference()` and `benchmark()` in 2 example files
+- **CI consistency**: Standardized `download-artifact@v7` → `@v6` to match `upload-artifact@v6`
+
 ### **Infrastructure**
 
 - Version bump to 0.5.20 across pyproject.toml, __init__.py fallback, 7 Docker LABELs,
