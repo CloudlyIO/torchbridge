@@ -263,8 +263,8 @@ class TestGenerateEndpoint:
             json={"prompt": ""}
         )
 
-        # Should still work (tokenizer handles it)
-        assert response.status_code in [200, 500]
+        # 422 expected: Pydantic validates min_length=1 on prompt
+        assert response.status_code == 422
 
     def test_generate_streaming(self, test_client):
         """Test streaming generation."""
