@@ -8,7 +8,41 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.19 (CI & Docker Hardening)
+**Current Version**: v0.5.20 (Developer Experience & API Docs)
+
+---
+
+## [0.5.20] - 2026-02-12 - Developer Experience & API Docs
+
+### **Summary**
+
+Developer experience improvements: Sphinx API documentation infrastructure, enhanced CLI
+error reporting with actionable hints, performance tuning guide, and `[docs]` optional
+dependency extra.
+
+### **Added**
+
+- **Sphinx API documentation** (`docs/conf.py`, `docs/index.rst`): Complete Sphinx setup
+  with autodoc, autosummary, Napoleon (Google/NumPy docstrings), MyST (Markdown support),
+  furo theme, and intersphinx linking to Python and PyTorch docs
+- **API reference pages** (`docs/api/`): Auto-generated reference for core, backends,
+  CLI, deployment, and precision modules
+- **Performance tuning guide** (`docs/guides/performance-tuning.md`): Backend-specific
+  optimization strategies, memory tips, profiling workflows, and common pitfalls
+- **`[docs]` optional dependency** (`pyproject.toml`): sphinx, furo, myst-parser,
+  sphinx-autobuild for local docs development
+
+### **Improved**
+
+- **CLI error reporting**: TorchBridgeError exceptions now display structured hints,
+  details, and cause chains instead of raw error messages. Verbose mode shows full
+  tracebacks. Refactored command dispatch to dictionary-based lookup.
+
+### **Infrastructure**
+
+- Version bump to 0.5.20 across pyproject.toml, __init__.py fallback, 7 Docker LABELs,
+  and CHANGELOG.md
+- Cloud validation passed on all 3 platforms (AMD MI300X, GCP T4, AWS A10G)
 
 ---
 

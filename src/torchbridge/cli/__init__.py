@@ -25,6 +25,7 @@ logging.getLogger("torch.distributed.elastic").setLevel(logging.ERROR)
 os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 
 from torchbridge import __version__ as _tb_version
+from torchbridge.core.errors import TorchBridgeError
 
 from .benchmark import BenchmarkCommand
 from .doctor import DoctorCommand
@@ -34,6 +35,27 @@ from .migrate import MigrateCommand
 from .optimize import OptimizeCommand
 from .profile import ProfileCommand
 from .validate import ValidateCommand
+
+
+def _print_error(exc: Exception, verbose: bool = False) -> int:
+    """Format and print an error with hints if available."""
+    if isinstance(exc, TorchBridgeError):
+        print(f"Error: {exc.message}")
+        if exc.hint:
+            print(f"  Hint: {exc.hint}")
+        if exc.details:
+            for key, value in exc.details.items():
+                print(f"  {key}: {value}")
+        if exc.cause:
+            print(f"  Caused by: {type(exc.cause).__name__}: {exc.cause}")
+    else:
+        print(f"Error: {exc}")
+
+    if verbose:
+        import traceback
+        traceback.print_exc()
+
+    return 1
 
 
 def main(args: list[str] | None = None) -> str | int | None:
@@ -98,32 +120,29 @@ For command-specific help:
         parser.print_help()
         return 1
 
+    commands = {
+        'optimize': OptimizeCommand,
+        'benchmark': BenchmarkCommand,
+        'export': ExportCommand,
+        'profile': ProfileCommand,
+        'doctor': DoctorCommand,
+        'init': InitCommand,
+        'validate': ValidateCommand,
+        'migrate': MigrateCommand,
+    }
+
+    cmd_class = commands.get(parsed_args.command)
+    if cmd_class is None:
+        parser.print_help()
+        return 1
+
     try:
-        if parsed_args.command == 'optimize':
-            return OptimizeCommand.execute(parsed_args)
-        elif parsed_args.command == 'benchmark':
-            return BenchmarkCommand.execute(parsed_args)
-        elif parsed_args.command == 'export':
-            return ExportCommand.execute(parsed_args)
-        elif parsed_args.command == 'profile':
-            return ProfileCommand.execute(parsed_args)
-        elif parsed_args.command == 'doctor':
-            return DoctorCommand.execute(parsed_args)
-        elif parsed_args.command == 'init':
-            return InitCommand.execute(parsed_args)
-        elif parsed_args.command == 'validate':
-            return ValidateCommand.execute(parsed_args)
-        elif parsed_args.command == 'migrate':
-            return MigrateCommand.execute(parsed_args)
-        else:
-            parser.print_help()
-            return 1
+        return cmd_class.execute(parsed_args)
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         return 130
     except Exception as e:
-        print(f"Error: {e}")
-        return 1
+        return _print_error(e, verbose=getattr(parsed_args, 'verbose', False))
 
 
 if __name__ == '__main__':
