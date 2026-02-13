@@ -8,7 +8,42 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.20 (Developer Experience & API Docs)
+**Current Version**: v0.5.21 (Test Coverage & Assertion Quality)
+
+---
+
+## [0.5.21] - 2026-02-13 - Test Coverage & Assertion Quality
+
+### **Summary**
+
+Comprehensive test infrastructure hardening: new backend factory test suite, 35+ weak
+assertions strengthened across 11 test files, raising assertion quality from existence
+checks (`is not None`) to type/behavior validation (`isinstance`, `callable`, `hasattr`).
+
+### Added
+- `tests/unit/test_backend_factory.py` — 47 tests covering BackendType, BackendFactory,
+  CPUBackend, CPUAdapter, DeviceInfo, OptimizationResult, OperationKernelConfig,
+  OptimizationStrategy (previously untested core infrastructure)
+
+### Fixed (Assertion Quality)
+- **tests/unit/test_mixture_of_experts.py** — 7 `is not None` → `isinstance(X, nn.Module)` / `isinstance(lb, LoadBalancer)`
+- **tests/distributed/test_distributed_llama.py** — 14 weak assertions strengthened:
+  `callable()`, `isinstance()`, `hasattr()`, removed redundant existence checks
+- **tests/distributed/test_pipeline_parallel.py** — 5 fixes: scheduler/loss `is not None` →
+  `isinstance(scheduler, GPipeScheduler)`, `isinstance(total_loss, torch.Tensor)`
+- **tests/stress/test_amd_stress.py** — 2 fixes: `isinstance(optimizer, AMDAdapter)`
+- **tests/stress/test_trainium_stress.py** — 4 fixes: `isinstance` for adapter/compiler/manager/model
+- **tests/integration/test_distributed_integration.py** — 1 fix: removed redundant existence check
+- **tests/robustness/test_missing_deps.py** — 3 fixes: `isinstance(hal, HardwareAbstractionLayer)`,
+  `hasattr(config, 'device')`, `isinstance(validator, UnifiedValidator)`
+- **tests/unit/test_kernel_registry.py** — 1 fix: `isinstance(kernel_short, KernelMetadata)`
+- **tests/unit/test_performance_tracker.py** — 2 fixes: removed redundant `is not None`
+  before property access
+
+### Stats
+- 1,284 tests collected, 1,168+ pass (CPU), 48 skipped (GPU-only)
+- 0 ruff violations
+- 47 new tests + 39 assertions strengthened = 86 quality improvements
 
 ---
 

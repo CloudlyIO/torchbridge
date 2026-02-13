@@ -138,19 +138,19 @@ class TestMissingOptionalDeps:
         """HardwareAbstractionLayer works on CPU-only systems."""
         from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
         hal = HardwareAbstractionLayer()
-        assert hal is not None
+        assert isinstance(hal, HardwareAbstractionLayer)
 
     def test_config_without_optional_deps(self):
         """Configuration system works without optional deps."""
         import torchbridge
         config = torchbridge.get_config()
-        assert config is not None
+        assert hasattr(config, 'device')
 
     def test_validator_without_optional_deps(self):
         """UnifiedValidator can be instantiated without optional deps."""
         from torchbridge.validation.unified_validator import UnifiedValidator
         validator = UnifiedValidator()
-        assert validator is not None
+        assert isinstance(validator, UnifiedValidator)
 
     def test_performance_tracker_without_persistence(self):
         """PerformanceTracker works in memory-only mode (no TORCHBRIDGE_METRICS env var)."""

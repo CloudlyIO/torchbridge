@@ -326,7 +326,7 @@ class TestKernelRegistry:
                 precision=PrecisionFormat.FP16,
                 sequence_length=512
             )
-            assert kernel_short is not None
+            assert isinstance(kernel_short, KernelMetadata)
 
             # Request long sequence - should only get long_seq
             kernel_long = registry.get_optimal_kernel(

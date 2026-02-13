@@ -53,7 +53,7 @@ class TestTrainiumBackendStress:
 
         try:
             optimizer = TrainiumAdapter()
-            assert optimizer is not None
+            assert isinstance(optimizer, TrainiumAdapter)
         except Exception as e:
             # May fail if Neuron SDK is required for init
             assert "neuron" in str(e).lower() or "xla" in str(e).lower() or "not available" in str(e).lower()
@@ -94,7 +94,7 @@ class TestTrainiumBackendStress:
         trainium_cfg = TrainiumConfig()
         try:
             compiler = NeuronCompiler(trainium_cfg)
-            assert compiler is not None
+            assert isinstance(compiler, NeuronCompiler)
         except Exception:
             # Expected without Neuron SDK
             pass
@@ -105,7 +105,7 @@ class TestTrainiumBackendStress:
 
         try:
             manager = TrainiumMemoryManager()
-            assert manager is not None
+            assert isinstance(manager, TrainiumMemoryManager)
         except Exception:
             # Expected without Neuron SDK
             pass
@@ -143,7 +143,7 @@ class TestTrainiumBackendStress:
             nn.Linear(512, 256),
         )
         prepared = backend.prepare_model(model)
-        assert prepared is not None
+        assert isinstance(prepared, nn.Module)
 
     @skip_no_neuron
     def test_trainium_batch_scaling(self):
