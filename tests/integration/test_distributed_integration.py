@@ -488,7 +488,6 @@ class TestDistributedLLMOptimizer:
         with patch.dict("sys.modules", {"transformers": None}):
             model = optimizer._create_mock_model()
 
-        assert model is not None
         assert hasattr(model, "embed")
         assert hasattr(model, "layers")
         assert hasattr(model, "head")

@@ -140,7 +140,6 @@ class TestPerformanceTracker:
 
         # Should have baseline now
         baseline = tracker.get_baseline(simple_model)
-        assert baseline is not None
         assert baseline.model_name == "test_model"
 
     def test_get_baseline_with_filters(self, tracker, simple_model, sample_inputs):
@@ -187,7 +186,6 @@ class TestPerformanceTracker:
 
         # Should load existing metrics
         baseline = tracker2.get_baseline(simple_model)
-        assert baseline is not None
         assert baseline.model_name == "test_model"
 
 

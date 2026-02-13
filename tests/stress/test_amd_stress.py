@@ -58,7 +58,7 @@ class TestAMDBackendStress:
                 architecture=config.architecture,
             )
             optimizer = AMDAdapter(config_copy)
-            assert optimizer is not None
+            assert isinstance(optimizer, AMDAdapter)
 
     def test_amd_optimizer_optimize_small_model(self):
         """AMDAdapter.optimize should handle a small model on CPU."""
@@ -72,7 +72,7 @@ class TestAMDBackendStress:
         # optimize() should not crash even without ROCm
         try:
             result = optimizer.optimize(model)
-            assert result is not None
+            assert isinstance(result, nn.Module) or result is not None
         except Exception:
             # Some code paths may require ROCm — that's OK
             pass
