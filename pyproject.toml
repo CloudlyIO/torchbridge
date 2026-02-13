@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.19"
+version = "0.5.20"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -97,6 +97,12 @@ benchmark = [
     "torch-tb-profiler>=0.4.0",
     "psutil>=5.9.0",
     "gpustat>=1.1.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "furo>=2024.1.0",
+    "myst-parser>=2.0.0",
+    "sphinx-autobuild>=2024.1.0",
 ]
 
 [tool.setuptools.packages.find]
