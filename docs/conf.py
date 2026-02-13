@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join("..", "src")))
 # -- Project information --
 project = "TorchBridge"
 author = "TorchBridge Team"
-release = "0.5.21"
+release = "0.5.22"
 
 # -- General configuration --
 extensions = [

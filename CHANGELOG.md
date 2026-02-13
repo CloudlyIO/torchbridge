@@ -8,7 +8,55 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.21 (Test Coverage & Assertion Quality)
+**Current Version**: v0.5.22 (Codebase Consistency & Trainium Parity)
+
+---
+
+## [0.5.22] - 2026-02-13 - Codebase Consistency & Trainium Parity
+
+### **Summary**
+
+Systematic codebase cleanup: added Trainium to every backend listing across 30 files,
+removed stale BERT/Intel naming artifacts, standardized file/folder naming conventions,
+and updated all user-facing references for 5-backend consistency.
+
+### Changed (Trainium Parity — 30 files)
+- Added Trainium to CLI `--backend` choices in `cli/init.py` (2 locations)
+- Added Trainium to all backend docstrings: `__init__.py`, `base_backend.py`,
+  `base_adapter.py`, `base_memory_manager.py`, `base_exceptions.py`, `errors.py`,
+  `models/__init__.py`, `llm_optimizer.py`
+- Added Trainium column to feature matrices in `hardware-matrix.md`,
+  `distributed-training.md`, `backend-selection.md`
+- Updated detection priority lists in `overview.md`, `quickstart.md`, `cli.md`
+- Updated `README.md` architecture diagram and 6 prose references
+- Updated `pyproject.toml` description and keywords
+- Updated `bug_report.yml` and `feature_request.yml` issue templates
+- Updated test constants in `test_auto_optimization.py`, `test_backend_integration.py`,
+  `test_backend_unification.py`
+- Updated comments in `benchmark_database.py`, `cross_platform_comparison.py`
+- Updated example text in `bge_m3_cross_backend.py`, `test_minilm_hal.py`
+- Updated benchmark docs: `benchmarks/README.md`, `backend_comparison.py`
+- Updated demo: `unified_backend_demo.py`
+
+### Changed (File/Folder Naming Standardization)
+- Renamed `tests/benchmarks_tests/` → `tests/benchmark/` (consistent with other test dirs)
+- Renamed `benchmarks/framework/next_gen_README.md` → `next_gen.md` (no mixed-case)
+- Renamed local report files: `v0430_*` → `v0.4.3_*` (semantic versioning format)
+
+### Fixed (Stale References)
+- Renamed `.github/workflows/bert-squad-validation.yml` → `cross-backend-validation.yml`
+  (content was already Qwen3-0.6B since v0.5.19, filename was stale)
+- Renamed old validation reports: `*_bert_squad.json` → `*_qwen3.json` (3 files)
+- Fixed `summary.json` validation type: "BERT SQuAD" → "Qwen3-0.6B"
+- Deleted stale `.pyc` cache files from deleted BERT test modules
+- Regenerated `PKG-INFO`: removed all Intel references, added Trainium keyword
+- Updated README test badge: `1,397+` → `1,444+`
+
+### Stats
+- 30 files changed (Trainium parity), 1 workflow renamed, 3 reports renamed
+- 1,374 passed, 70 skipped, 0 failures
+- 0 ruff violations
+- 0 remaining "NVIDIA, AMD, TPU" (without Trainium) in non-historical files
 
 ---
 
