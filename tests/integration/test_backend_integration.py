@@ -64,7 +64,7 @@ class TestHardwareDetection:
         """Test optimal backend can be selected."""
         detector = HardwareDetector()
         backend = detector.get_optimal_backend()
-        assert backend in ['nvidia', 'tpu', 'amd', 'cpu']
+        assert backend in ['nvidia', 'amd', 'trainium', 'tpu', 'cpu']
 
     def test_cpu_always_available(self):
         """Test CPU backend is always available."""

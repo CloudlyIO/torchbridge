@@ -38,7 +38,7 @@ class BenchmarkRecord:
     cloud_provider: str = ""  # "aws" or "gcp"
     instance_type: str = ""   # e.g., "p4d.24xlarge", "a2-highgpu-1g"
     region: str = ""          # e.g., "us-west-2", "us-central1-a"
-    hardware_type: str = ""   # "nvidia", "amd", "tpu"
+    hardware_type: str = ""   # "nvidia", "amd", "trainium", "tpu"
     gpu_model: str = ""       # e.g., "H100", "A100", "MI300", "TPU v5e"
 
     # Benchmark info
@@ -283,7 +283,7 @@ class BenchmarkDatabase:
 
         Args:
             cloud_provider: Filter by cloud provider ("aws", "gcp")
-            hardware_type: Filter by hardware ("nvidia", "amd", "tpu")
+            hardware_type: Filter by hardware ("nvidia", "amd", "trainium", "tpu")
             benchmark_name: Filter by benchmark name
             benchmark_suite: Filter by benchmark suite
             instance_type: Filter by instance type
