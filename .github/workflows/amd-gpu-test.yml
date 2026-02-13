@@ -184,14 +184,14 @@ jobs:
     if: always()
     steps:
       - name: Download test results
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v6
         with:
           name: amd-gpu-test-results
           path: results/
         continue-on-error: true
 
       - name: Download benchmark results
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v6
         with:
           name: benchmark-results-amd
           path: benchmarks/

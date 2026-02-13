@@ -432,7 +432,7 @@ def _populate_model_metadata(metadata: OptimizationMetadata, model: nn.Module) -
 
     # Try to detect model type
     model_class = model.__class__.__name__.lower()
-    if 'transformer' in model_class or 'bert' in model_class or 'gpt' in model_class:
+    if 'transformer' in model_class or 'llm' in model_class or 'qwen' in model_class:
         metadata.model.model_type = 'transformer'
     elif 'resnet' in model_class or 'conv' in model_class or 'vgg' in model_class:
         metadata.model.model_type = 'cnn'

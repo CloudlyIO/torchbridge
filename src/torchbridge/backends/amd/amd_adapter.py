@@ -29,15 +29,15 @@ from .amd_exceptions import AMDOptimizationError, MatrixCoreError
 logger = logging.getLogger(__name__)
 
 @dataclass
-class OptimizationResult:
-    """Results from applying optimizations."""
+class AMDOptimizationResult:
+    """Results from applying AMD-specific optimizations."""
 
     optimizations_applied: list[str]
     performance_improvement: float | None = None
     memory_savings_mb: float | None = None
     warnings: list[str] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.warnings is None:
             self.warnings = []
 
@@ -99,7 +99,7 @@ class AMDAdapter:
         logger.info("Starting optimization: level=%s", optimization_level)
 
         try:
-            result = OptimizationResult(optimizations_applied=[])
+            result = AMDOptimizationResult(optimizations_applied=[])
 
             # Apply optimizations based on level
             if optimization_level == "conservative":
@@ -133,7 +133,7 @@ class AMDAdapter:
 
     def _apply_conservative_optimizations(
         self, model: torch.nn.Module
-    ) -> OptimizationResult:
+    ) -> AMDOptimizationResult:
         """
         Apply conservative optimizations (minimal risk).
 
@@ -146,9 +146,9 @@ class AMDAdapter:
             model: Model to optimize
 
         Returns:
-            OptimizationResult with applied optimizations
+            AMDOptimizationResult with applied optimizations
         """
-        result = OptimizationResult(optimizations_applied=[])
+        result = AMDOptimizationResult(optimizations_applied=[])
 
         # 1. Basic operator fusion
         if self.config.enable_operator_fusion:
@@ -172,7 +172,7 @@ class AMDAdapter:
 
     def _apply_balanced_optimizations(
         self, model: torch.nn.Module
-    ) -> OptimizationResult:
+    ) -> AMDOptimizationResult:
         """
         Apply balanced optimizations (moderate risk/reward).
 
@@ -186,7 +186,7 @@ class AMDAdapter:
             model: Model to optimize
 
         Returns:
-            OptimizationResult with applied optimizations
+            AMDOptimizationResult with applied optimizations
         """
         # Start with conservative optimizations
         result = self._apply_conservative_optimizations(model)
@@ -217,7 +217,7 @@ class AMDAdapter:
 
     def _apply_aggressive_optimizations(
         self, model: torch.nn.Module
-    ) -> OptimizationResult:
+    ) -> AMDOptimizationResult:
         """
         Apply aggressive optimizations (maximum performance).
 
@@ -232,7 +232,7 @@ class AMDAdapter:
             model: Model to optimize
 
         Returns:
-            OptimizationResult with applied optimizations
+            AMDOptimizationResult with applied optimizations
         """
         # Start with balanced optimizations
         result = self._apply_balanced_optimizations(model)
@@ -661,4 +661,4 @@ class AMDAdapter:
             "operator_fusion": self.config.enable_operator_fusion,
         }
 
-__all__ = ["AMDAdapter", "OptimizationResult"]
+__all__ = ["AMDAdapter", "AMDOptimizationResult"]
