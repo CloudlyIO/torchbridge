@@ -90,8 +90,8 @@ These configurations have been tested and validated:
 
 | Configuration | Platform | Tests | Status | Date |
 |--------------|----------|-------|--------|------|
-| NVIDIA A10G (Ampere) | AWS g5.xlarge | BERT SQuAD cross-backend | Passed (diff 2.34e-06) | 2026-02-07 |
-| NVIDIA T4 (Turing) | GCP n1 + T4 | BERT SQuAD cross-backend | Passed (diff 2.52e-06) | 2026-02-07 |
+| NVIDIA A10G (Ampere) | AWS g5.xlarge | Qwen3-0.6B cross-backend | Passed (diff 2.34e-06) | 2026-02-07 |
+| NVIDIA T4 (Turing) | GCP n1 + T4 | Qwen3-0.6B cross-backend | Passed (diff 2.52e-06) | 2026-02-07 |
 | CPU (x86) | Local | Full test suite | Passed | 2026-02-07 |
 | CPU (ARM/Apple Silicon) | Local | Full test suite | Passed | 2026-02-07 |
 

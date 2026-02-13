@@ -202,8 +202,8 @@ def benchmark_lazy_loading_improvements() -> dict[str, Any]:
 
     heavy_modules = [
         'torchbridge.distributed_scale',
-        'torchbridge.testing_framework',
-        'torchbridge.next_gen_optimizations'
+        'torchbridge.optimizations',
+        'torchbridge.hardware'
     ]
 
     print(" Benchmarking lazy loading performance...")

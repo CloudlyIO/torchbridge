@@ -37,7 +37,7 @@ Examples:
   tb-profile --model model.pt --mode summary
   tb-profile --model model.pt --mode memory --input-shape 1,3,224,224
   tb-profile --model model.pt --mode trace --output trace.json
-  tb-profile --model bert-base-uncased --mode detailed --iterations 100
+  tb-profile --model Qwen/Qwen3-0.6B --mode detailed --iterations 100
             """
         )
 
