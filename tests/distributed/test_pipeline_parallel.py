@@ -261,7 +261,7 @@ class TestGPipeScheduler:
         stage = PipelineStage(module, config)
 
         scheduler = GPipeScheduler([stage], config)
-        assert scheduler is not None
+        assert isinstance(scheduler, GPipeScheduler)
 
     def test_gpipe_forward(self, device):
         """Test GPipe forward pass."""
@@ -343,7 +343,7 @@ class TestInterleavedScheduler:
     def test_scheduler_import(self):
         """Test importing interleaved scheduler."""
         from torchbridge.models.distributed import InterleavedScheduler
-        assert InterleavedScheduler is not None
+        assert callable(InterleavedScheduler)
 
     def test_scheduler_creation(self, device):
         """Test creating interleaved scheduler."""
@@ -363,7 +363,7 @@ class TestInterleavedScheduler:
         stage = PipelineStage(module, config)
 
         scheduler = InterleavedScheduler([stage], config)
-        assert scheduler is not None
+        assert isinstance(scheduler, InterleavedScheduler)
 
     def test_interleaved_forward(self, device):
         """Test interleaved forward pass."""
@@ -466,7 +466,7 @@ class TestInterleavedScheduler:
         # Run combined forward-backward
         total_loss = scheduler.run_forward_backward(micro_batches, loss_fn)
 
-        assert total_loss is not None
+        assert isinstance(total_loss, torch.Tensor)
 
 
 # =============================================================================
@@ -621,7 +621,7 @@ class TestPipelineIntegration:
         optimizer.step()
 
         # Should have updated parameters
-        assert total_loss is not None
+        assert isinstance(total_loss, torch.Tensor)
 
     def test_gradient_accumulation(self, device):
         """Test gradient accumulation across micro-batches."""

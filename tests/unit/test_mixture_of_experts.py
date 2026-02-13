@@ -30,7 +30,7 @@ class TestTopKRouter:
 
     def test_creation(self):
         router = TopKRouter(hidden_size=64, num_experts=8, top_k=2)
-        assert router is not None
+        assert isinstance(router, nn.Module)
 
     def test_forward_shape(self):
         router = TopKRouter(hidden_size=64, num_experts=8, top_k=2)
@@ -75,7 +75,7 @@ class TestSwitchRouter:
 
     def test_creation(self):
         router = SwitchRouter(hidden_size=64, num_experts=8)
-        assert router is not None
+        assert isinstance(router, nn.Module)
 
     def test_forward_shape(self):
         router = SwitchRouter(hidden_size=64, num_experts=8)
@@ -103,7 +103,7 @@ class TestFeedForwardExpert:
 
     def test_creation(self):
         expert = FeedForwardExpert(input_size=64, hidden_size=256)
-        assert expert is not None
+        assert isinstance(expert, nn.Module)
 
     def test_forward_shape(self):
         expert = FeedForwardExpert(input_size=64, hidden_size=256)
@@ -163,7 +163,7 @@ class TestMoELayer:
     def test_creation(self):
         config = MoEConfig(num_experts=4, top_k=2)
         layer = MoELayer(config=config, hidden_size=64)
-        assert layer is not None
+        assert isinstance(layer, nn.Module)
 
     def test_forward_shape(self):
         config = MoEConfig(num_experts=4, top_k=2)
@@ -204,7 +204,7 @@ class TestSwitchTransformerMoE:
     def test_creation(self):
         config = MoEConfig(num_experts=4)
         layer = SwitchTransformerMoE(config=config, hidden_size=64)
-        assert layer is not None
+        assert isinstance(layer, nn.Module)
 
     def test_forward_shape(self):
         config = MoEConfig(num_experts=4)
@@ -220,7 +220,7 @@ class TestGLaMStyleMoE:
     def test_creation(self):
         config = MoEConfig(num_experts=4, top_k=2)
         layer = GLaMStyleMoE(config=config, hidden_size=64)
-        assert layer is not None
+        assert isinstance(layer, nn.Module)
 
     def test_forward_shape(self):
         config = MoEConfig(num_experts=4, top_k=2)
@@ -256,7 +256,7 @@ class TestLoadBalancer:
 
     def test_creation(self):
         lb = LoadBalancer(num_experts=8)
-        assert lb is not None
+        assert isinstance(lb, LoadBalancer)
 
     def test_compute_load_balance_loss(self):
         lb = LoadBalancer(num_experts=4)
