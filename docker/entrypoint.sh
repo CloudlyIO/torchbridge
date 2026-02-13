@@ -27,7 +27,7 @@ run_diagnostics() {
 # Function to start inference server
 start_server() {
     echo "Starting TorchBridge inference server..."
-    exec python -m examples.serving.run_llm_server \
+    exec python -m examples.models.serving.run_llm_server \
         --host 0.0.0.0 \
         --port ${PORT:-8000}
 }

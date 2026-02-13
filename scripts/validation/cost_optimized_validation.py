@@ -261,14 +261,15 @@ class CostOptimizedValidator:
                     "metadata": {},
                     "source": [
                         "# Basic validation\n",
-                        "from torchbridge.hardware import get_optimal_backend, create_backend\n",
+                        "from torchbridge.core.hardware_detector import get_optimal_backend\n",
+                        "from torchbridge.backends.backend_factory import BackendFactory\n",
                         "\n",
                         "# Detect backend\n",
                         "backend_name = get_optimal_backend()\n",
                         "print(f'Optimal backend: {backend_name}')\n",
                         "\n",
-                        "backend = create_backend(backend_name)\n",
-                        "print(f'Backend info: {backend.get_device_info()}')\n"
+                        "backend = BackendFactory.create(backend_name)\n",
+                        "print(f'Backend created: {backend}')\n"
                     ],
                     "execution_count": None,
                     "outputs": []
@@ -377,9 +378,10 @@ if torch.cuda.is_available():
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 # Cell 3: Test TorchBridge
-from torchbridge.hardware import get_optimal_backend, create_backend
-backend = get_optimal_backend()
-print(f"Backend: {backend}")
+from torchbridge.core.hardware_detector import get_optimal_backend
+from torchbridge.backends.backend_factory import BackendFactory
+backend_name = get_optimal_backend()
+print(f"Backend: {backend_name}")
 
 import torch.nn as nn
 attn = nn.MultiheadAttention(512, 8, batch_first=True).cuda()
@@ -409,7 +411,7 @@ print(f"Output: {out.shape} - PASSED")
 
 import torch
 import torch.nn as nn
-from torchbridge.hardware import get_optimal_backend
+from torchbridge.core.hardware_detector import get_optimal_backend
 
 # Validate
 print(f"GPU: {torch.cuda.get_device_name(0)}")

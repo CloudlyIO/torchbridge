@@ -47,7 +47,7 @@ class TestNetworkFailures:
             with pytest.raises(ConnectionError, match="Network unreachable"):
                 from transformers import AutoTokenizer
 
-                AutoTokenizer.from_pretrained("bert-base-uncased")
+                AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
 
     def test_core_functions_work_offline(self):
         """Core TorchBridge functions should work without network access."""
