@@ -27,7 +27,7 @@ from .base_adapter import (
     BaseAdapter,
     BaseKernelAdapter,
     CPUAdapter,
-    KernelConfig,
+    OperationKernelConfig,
     OptimizationStrategy,
 )
 
@@ -97,7 +97,7 @@ __all__ = [
     'BaseAdapter',
     'BaseKernelAdapter',
     'CPUAdapter',
-    'KernelConfig',
+    'OperationKernelConfig',
     'OptimizationStrategy',
     # Backend factory
     'BackendFactory',

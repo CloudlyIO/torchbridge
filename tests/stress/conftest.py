@@ -58,8 +58,8 @@ def memory_tracker():
 
 # ── Small model fixtures (for stress tests — need to be small) ──
 @pytest.fixture(scope="module")
-def minilm_model():
-    """MiniLM-L6-v2 -- 22M params, ideal for stress tests."""
+def minilm_model_and_tokenizer():
+    """MiniLM-L6-v2 -- 22M params, ideal for stress tests. Returns (model, tokenizer)."""
     try:
         from transformers import AutoModel, AutoTokenizer
 
@@ -74,7 +74,7 @@ def minilm_model():
 
 
 @pytest.fixture(scope="module")
-def dinov2_model():
+def dinov2_model_for_stress():
     """DINOv2-small -- 22M params, vision model for stress tests."""
     try:
         from transformers import AutoModel

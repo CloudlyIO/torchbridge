@@ -12,11 +12,12 @@ device-specific optimizations while maintaining a consistent API.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn
+
+from torchbridge.core.config import OptimizationLevel
 
 from .base_exceptions import BackendError
 from .base_memory_manager import BaseMemoryManager, BaseMemoryStats
@@ -25,53 +26,6 @@ logger = logging.getLogger(__name__)
 
 # Type variable for config types
 ConfigT = TypeVar('ConfigT')
-
-class OptimizationLevel(Enum):
-    """
-    Standardized optimization levels across all backends.
-
-    O0: No optimizations (debug mode)
-    O1: Conservative optimizations (safe, minimal impact)
-    O2: Balanced optimizations (performance + stability)
-    O3: Aggressive optimizations (maximum performance)
-    """
-    O0 = "O0"
-    O1 = "O1"
-    O2 = "O2"
-    O3 = "O3"
-
-    # Aliases for compatibility
-    DEBUG = "O0"
-    CONSERVATIVE = "O1"
-    BALANCED = "O2"
-    AGGRESSIVE = "O3"
-
-    @classmethod
-    def from_string(cls, level: str) -> "OptimizationLevel":
-        """
-        Convert string to OptimizationLevel.
-
-        Args:
-            level: String like "O0", "O1", "conservative", "balanced", etc.
-
-        Returns:
-            OptimizationLevel enum value
-        """
-        level_upper = level.upper()
-
-        # Direct match
-        if level_upper in ("O0", "DEBUG"):
-            return cls.O0
-        elif level_upper in ("O1", "CONSERVATIVE"):
-            return cls.O1
-        elif level_upper in ("O2", "BALANCED"):
-            return cls.O2
-        elif level_upper in ("O3", "AGGRESSIVE"):
-            return cls.O3
-        else:
-            # Default to balanced
-            logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
-            return cls.O2
 
 @dataclass
 class DeviceInfo:

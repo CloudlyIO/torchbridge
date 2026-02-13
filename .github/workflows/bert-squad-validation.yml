@@ -121,10 +121,9 @@ jobs:
     runs-on: [self-hosted, gpu, cuda]
     timeout-minutes: 30
     if: |
-      github.event_name == 'workflow_dispatch' &&
-      contains(github.event.inputs.backends, 'cuda') ||
-      github.event_name == 'schedule' ||
-      github.event_name == 'push'
+      (github.event_name == 'workflow_dispatch' &&
+      contains(github.event.inputs.backends, 'cuda')) ||
+      github.event_name == 'schedule'
     continue-on-error: true
 
     steps:
@@ -229,8 +228,8 @@ jobs:
     runs-on: [self-hosted, gpu, amd]
     timeout-minutes: 30
     if: |
-      github.event_name == 'workflow_dispatch' &&
-      contains(github.event.inputs.backends, 'rocm') ||
+      (github.event_name == 'workflow_dispatch' &&
+      contains(github.event.inputs.backends, 'rocm')) ||
       github.event_name == 'schedule'
     continue-on-error: true
 

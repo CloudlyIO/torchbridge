@@ -92,3 +92,4 @@ component_management:
       name: Distributed Training
       paths:
         - src/torchbridge/models/distributed/**
+        - src/torchbridge/distributed_scale/**

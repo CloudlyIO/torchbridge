@@ -7,7 +7,7 @@
 #   GCP: g2-standard-4 (L4 24GB) — pytorch-2-7-cu128-ubuntu-2404-nvidia-570
 #
 # Usage:
-#   SSH mode:    Copy to instance, then: bash v0441_gpu_validation.sh
+#   SSH mode:    Copy to instance, then: bash cloud_validation.sh
 #   Startup:     Pass as user-data (AWS) or startup-script (GCP)
 #
 # Prerequisites:
@@ -18,7 +18,7 @@
 
 set -uo pipefail  # no -e: let individual use cases fail without killing the script
 
-GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation-v0442/torchbridge_v0442.tar.gz}"
+GCS_URL="${TORCHBRIDGE_CODE_URL:-https://storage.googleapis.com/torchbridge-validation/torchbridge.tar.gz}"
 LOG=/tmp/torchbridge_validation.log
 
 exec > >(tee "$LOG") 2>&1
@@ -245,7 +245,7 @@ echo "Total: $TOTAL_PASS/5 passed"
 # Upload log to GCS (best-effort)
 TIMESTAMP=$(date +%s)
 gsutil cp "$LOG" \
-    "gs://torchbridge-validation-v0441/logs/${PROVIDER}_${INSTANCE}_${TIMESTAMP}.log" 2>/dev/null || true
+    "gs://torchbridge-validation/logs/${PROVIDER}_${INSTANCE}_${TIMESTAMP}.log" 2>/dev/null || true
 
 echo ""
 echo "Log: $LOG"
