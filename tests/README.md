@@ -76,7 +76,7 @@ tests/
 │   ├── test_distributed_llama.py
 │   └── test_pipeline_parallel.py
 │
-├── benchmarks_tests/        # Benchmark validation tests
+├── benchmark/               # Benchmark validation tests
 │   ├── test_advanced_memory_benchmarks.py
 │   ├── test_cli_benchmarks.py
 │   └── test_next_gen_benchmarks.py
