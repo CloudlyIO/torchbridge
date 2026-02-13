@@ -36,9 +36,9 @@ class TestDistributedImports:
             DistributedLLMOptimizer,
             ParallelismStrategy,
         )
-        assert DistributedConfig is not None
-        assert DistributedLLMOptimizer is not None
-        assert ParallelismStrategy is not None
+        assert callable(DistributedConfig)
+        assert callable(DistributedLLMOptimizer)
+        assert hasattr(ParallelismStrategy, "TENSOR_PARALLEL")
 
     def test_tensor_parallel_imports(self):
         """Test importing tensor parallel components."""
@@ -46,8 +46,8 @@ class TestDistributedImports:
             ColumnParallelLinear,
             TensorParallelConfig,
         )
-        assert TensorParallelConfig is not None
-        assert ColumnParallelLinear is not None
+        assert callable(TensorParallelConfig)
+        assert callable(ColumnParallelLinear)
 
     def test_pipeline_parallel_imports(self):
         """Test importing pipeline parallel components."""
@@ -55,8 +55,8 @@ class TestDistributedImports:
             PipelineParallelConfig,
             PipelineStage,
         )
-        assert PipelineParallelConfig is not None
-        assert PipelineStage is not None
+        assert callable(PipelineParallelConfig)
+        assert callable(PipelineStage)
 
     def test_sharding_imports(self):
         """Test importing sharding components."""
@@ -64,8 +64,8 @@ class TestDistributedImports:
             ModelSharder,
             ShardingStrategy,
         )
-        assert ShardingStrategy is not None
-        assert ModelSharder is not None
+        assert hasattr(ShardingStrategy, "FULL_SHARD")
+        assert callable(ModelSharder)
 
 
 class TestDistributedConfig:
@@ -116,7 +116,6 @@ class TestDistributedLLMOptimizer:
             config=config,
         )
 
-        assert optimizer is not None
         assert optimizer.model_name == "Qwen/Qwen3-32B"
 
     def test_optimizer_with_strategy(self):
@@ -153,7 +152,7 @@ class TestMemoryEstimation:
             max_batch_size=1,
         )
 
-        assert requirements is not None
+        assert isinstance(requirements, dict)
         assert "recommended_gpus" in requirements or "min_gpus" in requirements
 
     def test_estimate_with_quantization(self):
@@ -169,9 +168,9 @@ class TestMemoryEstimation:
             quantization="int8",
         )
 
-        # INT8 should need fewer GPUs
-        assert req_int8 is not None
-        assert req_fp16 is not None
+        # Both should return valid dicts
+        assert isinstance(req_int8, dict)
+        assert isinstance(req_fp16, dict)
 
 
 # =============================================================================
@@ -311,12 +310,12 @@ class TestPipelineSchedulers:
     def test_gpipe_scheduler_exists(self):
         """Test GPipeScheduler exists."""
         from torchbridge.models.distributed import GPipeScheduler
-        assert GPipeScheduler is not None
+        assert callable(GPipeScheduler)
 
     def test_interleaved_scheduler_exists(self):
         """Test InterleavedScheduler exists."""
         from torchbridge.models.distributed import InterleavedScheduler
-        assert InterleavedScheduler is not None
+        assert callable(InterleavedScheduler)
 
 
 class TestPipelineMemory:
@@ -349,7 +348,6 @@ class TestPipelineMemory:
             sequence_length=128,
         )
 
-        assert result is not None
         assert isinstance(result, dict)
 
 
@@ -386,7 +384,7 @@ class TestModelSharder:
         )
         sharder = ModelSharder(config=config)
 
-        assert sharder is not None
+        assert isinstance(sharder, ModelSharder)
 
 
 class TestWeightDistributor:
@@ -407,7 +405,7 @@ class TestWeightDistributor:
         )
         distributor = WeightDistributor(config=config)
 
-        assert distributor is not None
+        assert isinstance(distributor, WeightDistributor)
 
 
 # =============================================================================
@@ -427,8 +425,7 @@ class TestFactoryFunctions:
             world_size=2,
         )
 
-        assert result is not None
-        assert isinstance(result, object)
+        assert hasattr(result, 'model_name')
 
     def test_distributed_llama_70b(self):
         """Test DistributedLlama70B wrapper."""
@@ -436,7 +433,6 @@ class TestFactoryFunctions:
 
         # Uses default config (world_size=8, tensor_parallel_size=8)
         wrapper = DistributedLlama70B()
-        assert wrapper is not None
         assert wrapper.model_name == "Qwen/Qwen3-32B"
 
 
@@ -451,18 +447,18 @@ class TestDistributedIntegration:
         """Test ParallelismStrategy enum values."""
         from torchbridge.models.distributed import ParallelismStrategy
 
-        assert ParallelismStrategy.TENSOR_PARALLEL is not None
-        assert ParallelismStrategy.PIPELINE_PARALLEL is not None
-        assert ParallelismStrategy.HYBRID is not None
-        assert ParallelismStrategy.FSDP is not None
-        assert ParallelismStrategy.AUTO is not None
+        assert isinstance(ParallelismStrategy.TENSOR_PARALLEL, ParallelismStrategy)
+        assert isinstance(ParallelismStrategy.PIPELINE_PARALLEL, ParallelismStrategy)
+        assert isinstance(ParallelismStrategy.HYBRID, ParallelismStrategy)
+        assert isinstance(ParallelismStrategy.FSDP, ParallelismStrategy)
+        assert isinstance(ParallelismStrategy.AUTO, ParallelismStrategy)
 
     def test_large_model_type_enum(self):
         """Test LargeModelType enum values."""
         from torchbridge.models.distributed import LargeModelType
 
-        assert LargeModelType.LLAMA_70B is not None
-        assert LargeModelType.FALCON_40B is not None
+        assert isinstance(LargeModelType.LLAMA_70B, LargeModelType)
+        assert isinstance(LargeModelType.FALCON_40B, LargeModelType)
 
 
 # =============================================================================
