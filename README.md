@@ -1,24 +1,24 @@
 # TorchBridge
 
-**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, and TPU without code changes, and **validates that outputs match across backends**.
+**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, Trainium, and TPU without code changes, and **validates that outputs match across backends**.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C397%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C444%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
 PyTorch lets you build models. TorchBridge lets you run them **anywhere**.
 
-Most teams write hardware-specific code -- CUDA calls for NVIDIA, ROCm setup for AMD, XLA boilerplate for TPU. When the hardware changes, the code breaks. TorchBridge eliminates that problem with a **unified API** that detects your hardware and adapts automatically.
+Most teams write hardware-specific code -- CUDA calls for NVIDIA, ROCm setup for AMD, NeuronX setup for Trainium, XLA boilerplate for TPU. When the hardware changes, the code breaks. TorchBridge eliminates that problem with a **unified API** that detects your hardware and adapts automatically.
 
 ```
 Your model code
       |
   TorchBridge HAL
       |
-  +---------+---------+---------+
-  | NVIDIA  |   AMD   |   TPU   |
-  | CUDA    |  ROCm   |   XLA   |
-  +---------+---------+---------+
+  +---------+---------+-----------+---------+
+  | NVIDIA  |   AMD   | Trainium  |   TPU   |
+  | CUDA    |  ROCm   |  NeuronX  |   XLA   |
+  +---------+---------+-----------+---------+
 ```
 
 **What it does:**
@@ -45,7 +45,7 @@ PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-backend_type = detect_best_backend()  # NVIDIA, AMD, TPU, or CPU
+backend_type = detect_best_backend()  # NVIDIA, AMD, Trainium, TPU, or CPU
 backend = BackendFactory.create(backend_type)
 print(backend.get_device_info())
 ```
@@ -95,7 +95,7 @@ See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
 Automatically identifies available hardware and selects the optimal backend. No code changes needed when moving between GPU vendors or cloud providers.
 
 ### Vendor Adapters
-Each backend implements a common `BaseBackend` interface. Your code calls `manager.optimize(model)` and the correct vendor-specific operations execute underneath -- CUDA on NVIDIA, HIP on AMD, XLA on TPU.
+Each backend implements a common `BaseBackend` interface. Your code calls `manager.optimize(model)` and the correct vendor-specific operations execute underneath -- CUDA on NVIDIA, HIP on AMD, NeuronX on Trainium, XLA on TPU.
 
 ### Precision Management
 Configure precision once. TorchBridge handles the details per backend -- FP8 on H100, BF16 where supported, FP16 as fallback. Mixed-precision training with `torch.amp` autocast works across all backends.
@@ -104,10 +104,10 @@ Configure precision once. TorchBridge handles the details per backend -- FP8 on 
 Gradient checkpointing, activation offloading, optimizer state sharding, and memory pooling. These work consistently whether you're on a single GPU or a multi-node cluster.
 
 ### Checkpoint Portability
-Save a checkpoint on NVIDIA hardware, load it on AMD or TPU. TorchBridge handles device mapping and dtype conversion.
+Save a checkpoint on NVIDIA hardware, load it on AMD, Trainium, or TPU. TorchBridge handles device mapping and dtype conversion.
 
 ### Distributed Training
-Tensor parallelism, pipeline parallelism, and FSDP with a unified API. The same distributed training script runs on NVIDIA DGX, AMD Instinct, or TPU pods.
+Tensor parallelism, pipeline parallelism, and FSDP with a unified API. The same distributed training script runs on NVIDIA DGX, AMD Instinct, Trainium instances, or TPU pods.
 
 ## Code Examples
 
@@ -214,7 +214,7 @@ ruff check src/ tests/
 
 ## Use Cases
 
-**Cross-vendor training** -- Train on NVIDIA in the cloud, fine-tune on AMD on-prem, deploy on TPU. Same code throughout.
+**Cross-vendor training** -- Train on NVIDIA in the cloud, fine-tune on AMD on-prem, deploy on Trainium or TPU. Same code throughout.
 
 **Cost optimization** -- Switch between cloud GPU types based on spot pricing without rewriting training scripts.
 

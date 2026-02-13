@@ -4,7 +4,7 @@ Base Memory Manager for Backend Implementations
 This module provides the abstract base class for all backend memory managers,
 defining the common interface and shared functionality.
 
-Backends (NVIDIA, AMD, TPU) inherit from this base and implement
+Backends (NVIDIA, AMD, Trainium, TPU) inherit from this base and implement
 device-specific optimizations while maintaining a consistent API.
 """
 
@@ -93,7 +93,7 @@ class BaseMemoryManager(ABC):
     Abstract base class for backend memory managers.
 
     This class defines the common interface that all backend memory managers
-    (NVIDIA, AMD, TPU) must implement, while providing shared functionality
+    (NVIDIA, AMD, Trainium, TPU) must implement, while providing shared functionality
     for memory pooling, allocation tracking, and statistics.
 
     Subclasses must implement:

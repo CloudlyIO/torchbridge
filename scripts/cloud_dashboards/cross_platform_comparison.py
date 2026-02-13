@@ -31,7 +31,7 @@ class PlatformMetrics:
     platform_name: str  # e.g., "AWS P4d", "GCP A2"
     cloud_provider: str  # "aws" or "gcp"
     instance_type: str
-    hardware_type: str  # "nvidia", "amd", "tpu"
+    hardware_type: str  # "nvidia", "amd", "trainium", "tpu"
     gpu_model: str
 
     # Aggregated metrics

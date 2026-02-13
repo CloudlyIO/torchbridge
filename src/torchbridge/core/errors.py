@@ -9,7 +9,7 @@ This module provides the complete exception hierarchy for the framework:
 - DeploymentError: Export and serving errors
 - MonitoringError: Metrics and health monitoring errors
 
-All backend-specific exceptions (NVIDIA, AMD, TPU) inherit from
+All backend-specific exceptions (NVIDIA, AMD, Trainium, TPU) inherit from
 the base_exceptions module which inherits from TorchBridgeError.
 
 """

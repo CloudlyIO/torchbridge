@@ -44,7 +44,7 @@ class TestMiniLMHAL:
         model, tokenizer = model_and_tokenizer
         sentences = [
             "TorchBridge provides hardware abstraction.",
-            "Models run on NVIDIA, AMD, and TPU.",
+            "Models run on NVIDIA, AMD, Trainium, and TPU.",
             "Cross-backend validation is important.",
         ]
         inputs = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")

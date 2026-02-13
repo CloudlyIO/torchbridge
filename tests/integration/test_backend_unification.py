@@ -8,7 +8,7 @@ This module tests the unified backend interface including:
 - DeviceInfo, OptimizationResult dataclasses
 - OptimizationLevel enum
 
-All backends (NVIDIA, AMD, TPU) should inherit from the base classes
+All backends (NVIDIA, AMD, Trainium, TPU) should inherit from the base classes
 and provide a consistent API.
 """
 

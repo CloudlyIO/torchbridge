@@ -2,8 +2,8 @@
 """
 Backend Comparison Benchmarks
 
-Benchmarks for comparing performance across unified backends (NVIDIA, AMD, TPU,
-CPU) using the standardized BaseBackend interface.
+Benchmarks for comparing performance across unified backends (NVIDIA, AMD, Trainium,
+TPU, CPU) using the standardized BaseBackend interface.
 
 This benchmark measures:
 - Backend initialization time
