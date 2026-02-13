@@ -10,18 +10,6 @@ from typing import Any
 
 from ..core import AttentionConfig, AttentionPatterns, FP8AttentionConfig
 
-try:
-    from ..distributed.context_parallel import ContextParallelAttention
-    from ..distributed.ring_attention import RingAttentionLayer
-except ImportError:
-    ContextParallelAttention = None
-    RingAttentionLayer = None
-
-try:
-    from ..fusion.neural_operator import create_unified_attention_fusion
-except ImportError:
-    create_unified_attention_fusion = None
-
 # Import all components for re-export
 from ..implementations.flash_attention import FlashAttention2, FlashAttention3
 from ..implementations.memory_efficient import MemoryEfficientAttention
@@ -38,9 +26,7 @@ def __getattr__(name: str) -> Any:
         # From advanced_attention/
         'FlashAttention3': FlashAttention3,
         'MultiHeadFlashAttention3': FlashAttention3,  # Alias
-        'RingAttentionLayer': RingAttentionLayer,
         'DynamicSparseAttention': DynamicSparseAttention,
-        'ContextParallelAttention': ContextParallelAttention,
 
         # From attention/
         'MemoryEfficientAttention': MemoryEfficientAttention,
@@ -70,10 +56,7 @@ __all__ = [
     'FlashAttention2',
     'MemoryEfficientAttention',
     'DynamicSparseAttention',
-    'RingAttentionLayer',
-    'ContextParallelAttention',
-    'create_unified_attention_fusion',
     'AttentionConfig',
     'AttentionPatterns',
-    'FP8AttentionConfig'
+    'FP8AttentionConfig',
 ]

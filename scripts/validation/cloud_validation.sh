@@ -1,6 +1,6 @@
 #!/bin/bash
-# TorchBridge — Cloud GPU Use Case Validation
-# Runs all 5 use case scripts on NVIDIA GPU hardware (AWS or GCP)
+# TorchBridge — Cloud GPU Model Validation
+# Runs model example scripts on NVIDIA GPU hardware (AWS or GCP)
 #
 # Tested platforms:
 #   AWS: g5.xlarge (A10G 24GB) — Deep Learning AMI PyTorch 2.9, Ubuntu 24.04
@@ -179,43 +179,43 @@ for pkg in torch torchbridge transformers safetensors onnx psutil; do
     fi
 done
 
-# ── 4-8. Run Use Cases ───────────────────────────────────────────────
-UC1_EXIT=1; UC2_EXIT=1; UC3_EXIT=1; UC4_EXIT=1; UC5_EXIT=1
+# ── 4-8. Run Model Examples ──────────────────────────────────────────
+QWEN3_EXIT=1; DEEPSEEK_EXIT=1; GEMMA3_EXIT=1; LLAMA4_EXIT=1; SAM3_EXIT=1
 
 echo ""
 echo "============================================================"
-echo "[4/8] USE CASE 1: Hardware-Agnostic Export Pipeline"
+echo "[4/8] Qwen 3 Cross-Backend Inference"
 echo "============================================================"
-$PYTHON examples/usecase1_export_pipeline.py 2>&1 && UC1_EXIT=0 || UC1_EXIT=$?
-echo "Use Case 1 exit code: $UC1_EXIT"
+$PYTHON examples/models/llm/qwen3_cross_backend.py 2>&1 && QWEN3_EXIT=0 || QWEN3_EXIT=$?
+echo "Qwen 3 exit code: $QWEN3_EXIT"
 
 echo ""
 echo "============================================================"
-echo "[5/8] USE CASE 2: Cross-Backend LLM Inference"
+echo "[5/8] DeepSeek Cross-Backend Inference"
 echo "============================================================"
-$PYTHON examples/usecase2_cross_backend_inference.py 2>&1 && UC2_EXIT=0 || UC2_EXIT=$?
-echo "Use Case 2 exit code: $UC2_EXIT"
+$PYTHON examples/models/llm/deepseek_cross_backend.py 2>&1 && DEEPSEEK_EXIT=0 || DEEPSEEK_EXIT=$?
+echo "DeepSeek exit code: $DEEPSEEK_EXIT"
 
 echo ""
 echo "============================================================"
-echo "[6/8] USE CASE 3: CI/CD Hardware Validation"
+echo "[6/8] Gemma 3 Cross-Backend Inference"
 echo "============================================================"
-$PYTHON examples/usecase3_cicd_validation.py 2>&1 && UC3_EXIT=0 || UC3_EXIT=$?
-echo "Use Case 3 exit code: $UC3_EXIT"
+$PYTHON examples/models/llm/gemma3_cross_backend.py 2>&1 && GEMMA3_EXIT=0 || GEMMA3_EXIT=$?
+echo "Gemma 3 exit code: $GEMMA3_EXIT"
 
 echo ""
 echo "============================================================"
-echo "[7/8] USE CASE 4: Backend-Agnostic Training"
+echo "[7/8] Llama 4 Cross-Backend Inference"
 echo "============================================================"
-$PYTHON examples/usecase4_backend_agnostic_training.py 2>&1 && UC4_EXIT=0 || UC4_EXIT=$?
-echo "Use Case 4 exit code: $UC4_EXIT"
+$PYTHON examples/models/llm/llama4_cross_backend.py 2>&1 && LLAMA4_EXIT=0 || LLAMA4_EXIT=$?
+echo "Llama 4 exit code: $LLAMA4_EXIT"
 
 echo ""
 echo "============================================================"
-echo "[8/8] USE CASE 5: Cross-Backend Validation"
+echo "[8/8] SAM 3 Vision Cross-Backend Inference"
 echo "============================================================"
-$PYTHON examples/usecase5_cross_backend_validation.py 2>&1 && UC5_EXIT=0 || UC5_EXIT=$?
-echo "Use Case 5 exit code: $UC5_EXIT"
+$PYTHON examples/models/vision/sam3_cross_backend.py 2>&1 && SAM3_EXIT=0 || SAM3_EXIT=$?
+echo "SAM 3 exit code: $SAM3_EXIT"
 
 # ── Summary ──────────────────────────────────────────────────────────
 echo ""
@@ -229,14 +229,14 @@ echo "GPU:       $GPU_NAME"
 echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo ""
 echo "Results:"
-echo "  Use Case 1 (Export Pipeline):        $([ $UC1_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
-echo "  Use Case 2 (LLM Optimization):       $([ $UC2_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
-echo "  Use Case 3 (CI/CD Validation):       $([ $UC3_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
-echo "  Use Case 4 (Backend Training):       $([ $UC4_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
-echo "  Use Case 5 (Cross-Backend Val):      $([ $UC5_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
+echo "  Qwen 3 (LLM Inference):             $([ $QWEN3_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
+echo "  DeepSeek (LLM Inference):            $([ $DEEPSEEK_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
+echo "  Gemma 3 (LLM Inference):             $([ $GEMMA3_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
+echo "  Llama 4 (LLM Inference):             $([ $LLAMA4_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
+echo "  SAM 3 (Vision Inference):            $([ $SAM3_EXIT -eq 0 ] && echo 'PASS' || echo 'FAIL')"
 
 TOTAL_PASS=0
-for code in $UC1_EXIT $UC2_EXIT $UC3_EXIT $UC4_EXIT $UC5_EXIT; do
+for code in $QWEN3_EXIT $DEEPSEEK_EXIT $GEMMA3_EXIT $LLAMA4_EXIT $SAM3_EXIT; do
     [ "$code" -eq 0 ] && TOTAL_PASS=$((TOTAL_PASS + 1))
 done
 echo ""

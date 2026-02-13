@@ -459,7 +459,7 @@ def create_our_optimized_implementation(device: torch.device) -> BaseImplementat
             """Create model with our optimizations"""
             try:
                 # Import our optimized components
-                from torchbridge.compiler_optimized import FusedGELU, OptimizedLayerNorm
+                from torchbridge.core.optimized_layers import FusedGELU, OptimizedLayerNorm
                 # FlexAttention will be available in future version of unified attention framework
                 # from torchbridge.attention.implementations.flex_attention import FlexAttention
                 warnings.warn("FlexAttention temporarily unavailable in benchmarks")
@@ -523,7 +523,7 @@ class OurOptimizedModel(nn.Module):
         ])
 
         try:
-            from torchbridge.compiler_optimized import OptimizedLayerNorm
+            from torchbridge.core.optimized_layers import OptimizedLayerNorm
             self.ln_f = OptimizedLayerNorm(self.hidden_size)
         except ImportError:
             self.ln_f = nn.LayerNorm(self.hidden_size)
@@ -559,7 +559,7 @@ class OurOptimizedBlock(nn.Module):
         self.mlp = OurOptimizedMLP(hidden_size)
 
         try:
-            from torchbridge.compiler_optimized import OptimizedLayerNorm
+            from torchbridge.core.optimized_layers import OptimizedLayerNorm
             self.ln_1 = OptimizedLayerNorm(hidden_size)
             self.ln_2 = OptimizedLayerNorm(hidden_size)
         except ImportError:

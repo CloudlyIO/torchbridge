@@ -18,6 +18,7 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -39,6 +40,7 @@ jobs:
   bandit:
     name: Bandit Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
 
@@ -52,7 +54,7 @@ jobs:
 
       - name: Run Bandit
         run: |
-          bandit -r src/ -f json -o bandit-report.json --severity-level medium --confidence-level HIGH || true
+          bandit -r src/ -f json -o bandit-report.json --severity-level medium --confidence-level HIGH
           bandit -r src/ -f txt --severity-level medium --confidence-level HIGH
 
       - name: Upload Bandit Report
@@ -66,6 +68,7 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
@@ -81,6 +84,7 @@ jobs:
   pip-audit:
     name: Pip Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
 
@@ -97,7 +101,7 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --strict --desc on --format json --output pip-audit-report.json || true
+          pip-audit --strict --desc on --format json --output pip-audit-report.json
           pip-audit --strict --desc on
 
       - name: Upload pip-audit Report
@@ -111,6 +115,7 @@ jobs:
   secrets-scan:
     name: Secret Scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
@@ -121,7 +126,7 @@ jobs:
 
       - name: Run truffleHog
         run: |
-          trufflehog3 --no-history --format json . > secrets-report.json || true
+          trufflehog3 --no-history --format json . > secrets-report.json
           trufflehog3 --no-history .
 
       - name: Upload Secrets Report

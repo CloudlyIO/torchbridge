@@ -243,7 +243,7 @@ def validate_environment():
     # Check our optimizations
     try:
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-        from torchbridge.compiler_optimized import FusedGELU
+        from torchbridge.core.optimized_layers import FusedGELU
         print("   Our Optimizations: Available ✅")
     except ImportError:
         print("   Our Optimizations: Limited (fallback mode) ⚠️")

@@ -193,11 +193,14 @@ def test_documentation_exists():
 def test_demo_functionality():
     """Test that demo scripts exist and can be imported."""
     demo_dirs = [
-        "demos/01_getting_started",
-        "demos/02_compiler_optimizations",
-        "demos/03_advanced_attention",
-        "demos/04_gpu_integration",
-        "demos/05_next_generation"
+        "demos/attention",
+        "demos/compiler",
+        "demos/hardware",
+        "demos/memory",
+        "demos/precision",
+        "demos/production",
+        "demos/experimental",
+        "demos/shared",
     ]
 
     working_demos = 0
