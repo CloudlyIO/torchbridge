@@ -3,7 +3,7 @@ Base Exception Hierarchy for Backend Implementations
 
 This module provides the shared exception hierarchy that all backend-specific
 exceptions should inherit from. This ensures consistent error handling
-across NVIDIA, AMD, and TPU backends.
+across NVIDIA, AMD, Trainium, and TPU backends.
 
 Exception Hierarchy:
 - BackendError (inherits from TorchBridgeError): Base for all backend errors

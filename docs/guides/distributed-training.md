@@ -161,12 +161,12 @@ fsdp_manager = AdvancedFSDPManager(cpu_offload=True)
 
 ## Backend Compatibility
 
-| Strategy | NVIDIA | AMD | TPU |
-|----------|--------|-----|-----|
-| DDP | NCCL | Gloo/RCCL | XLA |
-| FSDP | Yes | Yes | Partial |
-| Tensor Parallel | Yes | Yes | Partial |
-| Pipeline Parallel | Yes | Yes | Partial |
+| Strategy | NVIDIA | AMD | Trainium | TPU |
+|----------|--------|-----|----------|-----|
+| DDP | NCCL | Gloo/RCCL | NeuronX | XLA |
+| FSDP | Yes | Yes | Yes | Partial |
+| Tensor Parallel | Yes | Yes | Yes | Partial |
+| Pipeline Parallel | Yes | Yes | Yes | Partial |
 
 ## Debugging
 

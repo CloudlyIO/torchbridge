@@ -18,7 +18,7 @@ torchbridge optimize --model model.pt --output optimized.pt --level production
 |------|-------------|---------|
 | `--output` | Output path | `optimized_<input>` |
 | `--level` | Optimization level: `basic`, `jit`, `compile`, `triton`, `production` | `basic` |
-| `--backend` | Force backend: `cuda`, `rocm`, `tpu`, `cpu` | auto |
+| `--backend` | Force backend: `cuda`, `rocm`, `neuron`, `tpu`, `cpu` | auto |
 | `--dtype` | Target dtype: `fp32`, `fp16`, `bf16` | auto |
 | `--verbose` | Enable verbose output | false |
 

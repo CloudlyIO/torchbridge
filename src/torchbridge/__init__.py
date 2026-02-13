@@ -1,7 +1,7 @@
 """
 TorchBridge — Hardware Abstraction Layer for PyTorch
 
-Unified hardware abstraction across NVIDIA, AMD, and TPU backends.
+Unified hardware abstraction across NVIDIA, AMD, Trainium, and TPU backends.
 """
 
 # Suppress noisy platform-specific warnings before importing torch

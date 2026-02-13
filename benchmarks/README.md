@@ -1,6 +1,6 @@
 # TorchBridge Benchmarks
 
-Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, and TPU.
+Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, Trainium, and TPU.
 
 ## Quick Start
 

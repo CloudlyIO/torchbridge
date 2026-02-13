@@ -9,11 +9,11 @@ TorchBridge auto-detects available hardware and selects the optimal backend:
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-backend_name = detect_best_backend()  # "cuda", "rocm", "tpu", or "cpu"
+backend_name = detect_best_backend()  # "cuda", "rocm", "neuron", "tpu", or "cpu"
 backend = BackendFactory.create(backend_name)
 ```
 
-Detection priority: NVIDIA CUDA > AMD ROCm > Google TPU > CPU.
+Detection priority: NVIDIA CUDA > AMD ROCm > AWS Trainium > Google TPU > CPU.
 
 For most users, automatic selection is the right choice. Manual selection is useful when you have multiple accelerators or want to force a specific backend.
 
@@ -35,20 +35,20 @@ export TORCHBRIDGE_BACKEND=rocm
 
 ## Feature Matrix
 
-| Feature | NVIDIA | AMD | TPU | CPU |
-|---------|--------|-----|-----|-----|
-| FP8 training | H100+ | -- | -- | -- |
-| BF16 training | Ampere+ | CDNA2+ | All | Some |
-| FP16 training | All | All | -- | -- |
-| FlashAttention | Ampere+ | -- | -- | -- |
-| Distributed | Multi-GPU | Multi-GPU | Pods | -- |
-| torch.compile | Yes | Yes | Partial | Yes |
+| Feature | NVIDIA | AMD | Trainium | TPU | CPU |
+|---------|--------|-----|----------|-----|-----|
+| FP8 training | H100+ | -- | Trn2+ | -- | -- |
+| BF16 training | Ampere+ | CDNA2+ | All | All | Some |
+| FP16 training | All | All | All | -- | -- |
+| FlashAttention | Ampere+ | -- | Yes | -- | -- |
+| Distributed | Multi-GPU | Multi-GPU | Multi-chip | Pods | -- |
+| torch.compile | Yes | Yes | Partial | Partial | Yes |
 
 ## Choosing by Workload
 
 ### Training (Large Models)
 
-**Best:** NVIDIA H100/A100, AMD MI300X, TPU v5p
+**Best:** NVIDIA H100/A100, AMD MI300X, Trainium Trn2, TPU v5p
 
 These have the most HBM and highest matmul throughput.
 

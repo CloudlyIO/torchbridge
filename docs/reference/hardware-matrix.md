@@ -54,19 +54,19 @@ Complete hardware support table for TorchBridge backends.
 
 ## Feature Support by Backend
 
-| Feature | NVIDIA | AMD | TPU | CPU |
-|---------|--------|-----|-----|-----|
-| Mixed precision | Yes | Yes | Yes | Partial |
-| FP8 training | H100+ | MI300X+ | No | No |
-| FP4 inference | B100+ | MI350X+ | No | No |
-| torch.compile | Yes | Yes | Partial | Yes |
-| Distributed (DDP) | Yes | Yes | Yes | No |
-| FSDP | Yes | Yes | Partial | No |
-| Tensor Parallel | Yes | Yes | Partial | No |
-| Gradient checkpointing | Yes | Yes | Yes | Yes |
-| Activation offloading | Yes | Yes | Partial | N/A |
-| Model export (TorchScript) | Yes | Yes | Partial | Yes |
-| Model export (ONNX) | Yes | Yes | Partial | Yes |
+| Feature | NVIDIA | AMD | Trainium | TPU | CPU |
+|---------|--------|-----|----------|-----|-----|
+| Mixed precision | Yes | Yes | Yes | Yes | Partial |
+| FP8 training | H100+ | MI300X+ | Trn2+ | No | No |
+| FP4 inference | B100+ | MI350X+ | No | No | No |
+| torch.compile | Yes | Yes | Partial | Partial | Yes |
+| Distributed (DDP) | Yes | Yes | Yes | Yes | No |
+| FSDP | Yes | Yes | Yes | Partial | No |
+| Tensor Parallel | Yes | Yes | Yes | Partial | No |
+| Gradient checkpointing | Yes | Yes | Yes | Yes | Yes |
+| Activation offloading | Yes | Yes | Yes | Partial | N/A |
+| Model export (TorchScript) | Yes | Yes | No | Partial | Yes |
+| Model export (ONNX) | Yes | Yes | No | Partial | Yes |
 
 ## Cloud Platform Availability
 

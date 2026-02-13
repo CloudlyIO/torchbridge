@@ -54,7 +54,7 @@ body:
         - Attention (FlashAttention, MultiHead)
         - Precision (FP16, BF16, FP8)
         - Memory (Checkpointing, Optimizer States)
-        - Hardware Backend (NVIDIA, AMD, TPU)
+        - Hardware Backend (NVIDIA, AMD, Trainium, TPU)
         - Distributed Training
         - Model Export
         - Deployment/Serving

@@ -4,7 +4,7 @@ Base Adapter for All Hardware Backends
 This module provides the abstract base class for all adapter implementations,
 defining the common interface and shared functionality for model optimization.
 
-Backends (NVIDIA, AMD, TPU) implement adapters inheriting from this base
+Backends (NVIDIA, AMD, Trainium, TPU) implement adapters inheriting from this base
 while providing device-specific optimization strategies.
 
 """
