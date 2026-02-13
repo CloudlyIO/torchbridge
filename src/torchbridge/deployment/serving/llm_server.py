@@ -14,10 +14,11 @@ Features:
 - Integration with LLMOptimizer for quantization
 
 Supported Models:
-- GPT-2 (all variants)
+- Qwen (Qwen3-0.6B, Qwen2.5 variants)
 - LLaMA (2, 3)
 - Mistral
 - Phi-2, Phi-3
+- DeepSeek
 
 Example:
     ```python
@@ -25,12 +26,12 @@ Example:
     from torchbridge.models.llm import LLMOptimizer, LLMConfig
 
     # Create optimizer and load model
-    config = LLMConfig(model_name="gpt2", quantization="int8")
+    config = LLMConfig(model_name="Qwen/Qwen3-0.6B", quantization="int8")
     optimizer = LLMOptimizer(config)
-    model, tokenizer = optimizer.optimize("gpt2")
+    model, tokenizer = optimizer.optimize("Qwen/Qwen3-0.6B")
 
     # Create and run server
-    server = create_llm_server(model, tokenizer, model_name="gpt2")
+    server = create_llm_server(model, tokenizer, model_name="Qwen/Qwen3-0.6B")
     run_llm_server(server, host="0.0.0.0", port=8000)
     ```
 
@@ -829,8 +830,8 @@ def create_llm_server(
     Example:
         >>> from torchbridge.models.llm import LLMOptimizer
         >>> optimizer = LLMOptimizer()
-        >>> model, tokenizer = optimizer.optimize("gpt2")
-        >>> server = create_llm_server(model, tokenizer, model_name="gpt2")
+        >>> model, tokenizer = optimizer.optimize("Qwen/Qwen3-0.6B")
+        >>> server = create_llm_server(model, tokenizer, model_name="Qwen/Qwen3-0.6B")
     """
     config = LLMServerConfig(
         model_name=model_name,

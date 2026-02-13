@@ -34,6 +34,8 @@ from .config import (
     TPUConfig,
     TPUTopology,
     TPUVersion,
+    TrainiumArchitecture,
+    TrainiumConfig,
     ValidationConfig,
     configure,
     # Helpers
@@ -130,7 +132,8 @@ __all__ = [
     'HardwareConfig', 'NVIDIAConfig', 'TPUConfig', 'AMDConfig',
     'DistributedConfig', 'ValidationConfig', 'KernelConfig',
     'PrecisionFormat', 'OptimizationLevel', 'HardwareBackend',
-    'NVIDIAArchitecture', 'TPUVersion', 'TPUTopology', 'TPUCompilationMode', 'AMDArchitecture',
+    'NVIDIAArchitecture', 'TPUVersion', 'TPUTopology', 'TPUCompilationMode', 'AMDArchitecture', 'TrainiumArchitecture',
+    'TrainiumConfig',
     'AttentionPatterns', 'FP8AttentionConfig', 'DynamicSparseConfig', 'RingAttentionConfig',
     'get_config', 'set_config', 'configure',
 

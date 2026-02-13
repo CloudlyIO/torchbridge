@@ -193,8 +193,8 @@ Examples:
             if model_path.lower() == 'resnet50':
                 import torchvision.models as models
                 model = models.resnet50(pretrained=False)
-            elif model_path.lower() == 'bert':
-                # Simple BERT-like model for demonstration
+            elif model_path.lower() == 'transformer':
+                # Simple transformer-like model for demonstration
                 model = torch.nn.Sequential(
                     torch.nn.Linear(768, 3072),
                     torch.nn.GELU(),

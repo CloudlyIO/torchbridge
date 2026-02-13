@@ -19,6 +19,9 @@ os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 # Filter specific warnings that are informational, not actionable errors
 warnings.filterwarnings("ignore", message=".*Redirects are currently not supported.*")
 
+from typing import Any
+
+import torch
 from importlib.metadata import PackageNotFoundError, version
 
 try:
@@ -115,7 +118,7 @@ __all__ = [
 ]
 
 # Convenience functions for quick setup
-def create_attention(d_model: int, num_heads: int, **kwargs):
+def create_attention(d_model: int, num_heads: int, **kwargs: Any) -> MemoryEfficientAttention:
     """Create backend-aware attention layer with automatic configuration."""
     attn_config = AttentionModuleConfig(
         embed_dim=d_model,
@@ -124,7 +127,7 @@ def create_attention(d_model: int, num_heads: int, **kwargs):
     )
     return MemoryEfficientAttention(attn_config)
 
-def create_memory_optimizer(optimizer, model, **kwargs):
+def create_memory_optimizer(optimizer: Any, model: torch.nn.Module, **kwargs: Any) -> DeepOptimizerStates:
     """Create memory-optimized training setup."""
     config = get_config()
     return DeepOptimizerStates(
@@ -134,7 +137,7 @@ def create_memory_optimizer(optimizer, model, **kwargs):
         **kwargs
     )
 
-def optimize_model(model, **kwargs):
+def optimize_model(model: torch.nn.Module, **kwargs: Any) -> Any:
     """Apply unified backend abstraction to model using global manager."""
     return get_manager().optimize(model, **kwargs)
 

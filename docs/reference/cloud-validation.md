@@ -33,7 +33,7 @@
 | SafeTensors export | 14.5 MB | 14.5 MB |
 | Baseline inference | 0.86 ms | -- |
 
-### UC2: LLM Optimization (GPT-2 124M)
+### UC2: LLM Optimization (Qwen3-0.6B)
 
 | Metric | AWS A10G | GCP L4 |
 |--------|----------|--------|

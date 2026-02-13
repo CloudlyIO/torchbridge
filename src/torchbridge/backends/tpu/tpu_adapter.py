@@ -236,7 +236,7 @@ class TPUAdapter:
 
         model_type = type(model).__name__.lower()
 
-        if 'bert' in model_type or 'transformer' in model_type:
+        if 'llm' in model_type or 'transformer' in model_type:
             # Transformer optimizations
             model = self._optimize_transformer_model(model)
         elif 'resnet' in model_type or 'convnet' in model_type:
