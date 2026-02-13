@@ -2,7 +2,7 @@
 
 **Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, and TPU without code changes, and **validates that outputs match across backends**.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C270%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C397%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
@@ -195,13 +195,13 @@ All 5 use cases validated on real GPU hardware across AWS and GCP:
 
 **Platforms tested:**
 - **AWS g5.xlarge** -- NVIDIA A10G 24GB, PyTorch 2.9.1+cu130
-- **GCP g2-standard-4** -- NVIDIA L4 24GB, PyTorch 2.7.1+cu128
+- **GCP n1-standard-4** -- NVIDIA T4 16GB, PyTorch 2.7.1+cu128
 
 See [full validation report](./docs/reference/cloud-validation.md) for detailed benchmarks and results.
 
 ## Quality
 
-- **1,270+ tests** passing across all modules
+- **1,397+ tests** passing across all modules
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on NVIDIA A10G (AWS), L4 (GCP), and AMD MI300X -- 5/5 use cases pass

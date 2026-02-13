@@ -24,9 +24,9 @@ def _try_compiled_forward(compiled_model, *args, **kwargs):
 @pytest.mark.stress
 @pytest.mark.real_model
 class TestTorchCompileCompat:
-    def test_minilm_compile(self, minilm_model):
+    def test_minilm_compile(self, minilm_model_and_tokenizer):
         """MiniLM compiles and produces valid output."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         compiled = _try_compile(model)
 
         inputs = tokenizer("Compile test", return_tensors="pt")
@@ -39,13 +39,13 @@ class TestTorchCompileCompat:
         max_diff = torch.abs(eager_out - compiled_out).max().item()
         assert max_diff < 1e-4, f"Compiled vs eager diverged: {max_diff}"
 
-    def test_dinov2_compile(self, dinov2_model):
+    def test_dinov2_compile(self, dinov2_model_for_stress):
         """DINOv2 compiles and produces valid output."""
-        compiled = _try_compile(dinov2_model)
+        compiled = _try_compile(dinov2_model_for_stress)
 
         image = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
-            eager_out = dinov2_model(image).last_hidden_state
+            eager_out = dinov2_model_for_stress(image).last_hidden_state
             compiled_out = _try_compiled_forward(
                 compiled, image
             ).last_hidden_state
@@ -69,9 +69,9 @@ class TestTorchCompileCompat:
     @pytest.mark.parametrize(
         "mode", ["default", "reduce-overhead", "max-autotune"]
     )
-    def test_compile_modes(self, minilm_model, mode):
+    def test_compile_modes(self, minilm_model_and_tokenizer, mode):
         """All torch.compile modes produce valid output."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         compiled = _try_compile(model, mode=mode)
 
         inputs = tokenizer("Mode test", return_tensors="pt")
@@ -80,9 +80,9 @@ class TestTorchCompileCompat:
         assert not torch.isnan(output.last_hidden_state).any()
 
     @pytest.mark.gpu
-    def test_gpu_compile_consistency(self, minilm_model):
+    def test_gpu_compile_consistency(self, minilm_model_and_tokenizer):
         """Compiled model on GPU matches eager on GPU."""
-        model, tokenizer = minilm_model
+        model, tokenizer = minilm_model_and_tokenizer
         device = torch.device("cuda")
         model_gpu = model.to(device)
 

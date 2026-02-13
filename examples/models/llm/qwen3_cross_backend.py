@@ -136,7 +136,7 @@ def run_optimized_inference(
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,
@@ -223,7 +223,7 @@ def run_multilingual_demo(model_name: str, quantization: str) -> dict[str, Any]:
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,
@@ -296,7 +296,7 @@ def run_benchmark(
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,

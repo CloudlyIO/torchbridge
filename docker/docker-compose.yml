@@ -73,7 +73,8 @@ services:
     networks:
       - torchbridge-net
     depends_on:
-      - inference
+      inference:
+        condition: service_healthy
 
   # =============================================================================
   # Grafana - Metrics Visualization
@@ -93,7 +94,8 @@ services:
     networks:
       - torchbridge-net
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
 
   # =============================================================================
   # Inference AMD GPU

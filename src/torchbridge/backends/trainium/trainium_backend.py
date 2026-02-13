@@ -13,6 +13,7 @@ differentiated from TPU via environment variables and torch_neuronx imports.
 """
 
 import logging
+import tempfile
 import warnings
 from pathlib import Path
 from typing import Any
@@ -184,7 +185,10 @@ class TrainiumBackend(BaseBackend):
 
         # Enable graph caching
         if self.trainium_config.enable_graph_caching:
-            os.environ.setdefault('NEURON_COMPILE_CACHE_URL', '/tmp/neuron_cache')
+            os.environ.setdefault(
+                'NEURON_COMPILE_CACHE_URL',
+                os.path.join(tempfile.gettempdir(), 'neuron_cache'),
+            )
 
     @property
     def device(self) -> torch.device:
