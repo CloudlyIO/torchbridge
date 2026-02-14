@@ -5,6 +5,7 @@ This module consolidates all configuration classes into a unified system,
 replacing the scattered 36+ config classes throughout the codebase.
 """
 
+import logging
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -12,6 +13,8 @@ from enum import Enum
 from typing import Any
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 class PrecisionFormat(Enum):
@@ -179,6 +182,18 @@ class DynamicSparseConfig:
     min_sparsity: float = 0.05
     max_sparsity: float = 0.9
 
+    def __post_init__(self):
+        if not 0.0 <= self.sparsity_threshold <= 1.0:
+            raise ValueError(f"sparsity_threshold must be in [0, 1], got {self.sparsity_threshold}")
+        if not 0.0 <= self.efficiency_target <= 1.0:
+            raise ValueError(f"efficiency_target must be in [0, 1], got {self.efficiency_target}")
+        if not 0.0 <= self.min_sparsity <= 1.0:
+            raise ValueError(f"min_sparsity must be in [0, 1], got {self.min_sparsity}")
+        if not 0.0 <= self.max_sparsity <= 1.0:
+            raise ValueError(f"max_sparsity must be in [0, 1], got {self.max_sparsity}")
+        if self.min_sparsity > self.max_sparsity:
+            raise ValueError(f"min_sparsity ({self.min_sparsity}) must be <= max_sparsity ({self.max_sparsity})")
+
 
 @dataclass
 class RingAttentionConfig:
@@ -208,6 +223,18 @@ class PrecisionConfig:
     quantization_enabled: bool = False
     calibration_samples: int = 1000
 
+    def __post_init__(self):
+        if not 0.0 <= self.entropy_threshold <= 1.0:
+            raise ValueError(f"entropy_threshold must be in [0, 1], got {self.entropy_threshold}")
+        if not 0.0 <= self.memory_budget <= 1.0:
+            raise ValueError(f"memory_budget must be in [0, 1], got {self.memory_budget}")
+        if not 0.0 <= self.quality_target <= 1.0:
+            raise ValueError(f"quality_target must be in [0, 1], got {self.quality_target}")
+        if self.fp8_interval < 1:
+            raise ValueError(f"fp8_interval must be >= 1, got {self.fp8_interval}")
+        if self.calibration_samples < 1:
+            raise ValueError(f"calibration_samples must be >= 1, got {self.calibration_samples}")
+
 
 @dataclass
 class MemoryConfig:
@@ -225,6 +252,16 @@ class MemoryConfig:
     # Advanced settings
     long_sequence_optimization: bool = False
     sequence_length_threshold: int = 8192
+
+    def __post_init__(self):
+        if not 0.0 <= self.memory_fraction <= 1.0:
+            raise ValueError(f"memory_fraction must be in [0, 1], got {self.memory_fraction}")
+        if not 0.0 <= self.fragmentation_threshold <= 1.0:
+            raise ValueError(f"fragmentation_threshold must be in [0, 1], got {self.fragmentation_threshold}")
+        if self.max_memory_gb is not None and self.max_memory_gb <= 0:
+            raise ValueError(f"max_memory_gb must be positive, got {self.max_memory_gb}")
+        if self.sequence_length_threshold < 1:
+            raise ValueError(f"sequence_length_threshold must be >= 1, got {self.sequence_length_threshold}")
 
 
 @dataclass
@@ -244,6 +281,14 @@ class AttentionConfig:
 
     # Context parallel settings
     context_parallel_size: int = 1
+
+    def __post_init__(self):
+        if not 0.0 <= self.sparsity_ratio <= 1.0:
+            raise ValueError(f"sparsity_ratio must be in [0, 1], got {self.sparsity_ratio}")
+        if self.max_sequence_length < 1:
+            raise ValueError(f"max_sequence_length must be >= 1, got {self.max_sequence_length}")
+        if self.context_parallel_size < 1:
+            raise ValueError(f"context_parallel_size must be >= 1, got {self.context_parallel_size}")
 
 
 @dataclass
@@ -351,6 +396,7 @@ class NVIDIAConfig:
                 return NVIDIAArchitecture.PASCAL
 
         except Exception:
+            logger.debug("NVIDIA GPU architecture detection failed", exc_info=True)
             return NVIDIAArchitecture.PASCAL
 
 
@@ -440,6 +486,7 @@ class TPUConfig:
             pass
         except Exception:
             # Other detection errors
+            logger.debug("TPU version detection failed", exc_info=True)
             pass
 
         return TPUVersion.V5E  # Default fallback
@@ -462,6 +509,7 @@ class TPUConfig:
         except ImportError:
             pass
         except Exception:
+            logger.debug("TPU topology detection failed", exc_info=True)
             pass
 
         return TPUTopology.SINGLE  # Default fallback
@@ -489,6 +537,7 @@ class TPUConfig:
             import os
             return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
         except Exception:
+            logger.debug("TPU environment check failed", exc_info=True)
             return False
 
     def _get_world_size(self) -> int:
@@ -721,6 +770,7 @@ class TrainiumConfig:
                 # We're on a Neuron instance but don't know the type
                 return TrainiumArchitecture.TRN2  # Default to most common
         except Exception:
+            logger.debug("Trainium architecture detection failed", exc_info=True)
             pass
 
         return TrainiumArchitecture.TRN2  # Default fallback
@@ -807,6 +857,7 @@ class HardwareConfig:
             if hasattr(torch, 'hip') and torch.hip.is_available():
                 return True
         except Exception:
+            logger.debug("AMD ROCm detection failed", exc_info=True)
             pass
         return False
 
@@ -847,6 +898,7 @@ class HardwareConfig:
             import os
             return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
         except Exception:
+            logger.debug("TPU environment detection failed", exc_info=True)
             return False
 
 
@@ -883,6 +935,18 @@ class ValidationConfig:
     # Benchmark settings
     benchmark_iterations: int = 10
     warmup_iterations: int = 3
+
+    def __post_init__(self):
+        if not 0.0 <= self.accuracy_threshold <= 1.0:
+            raise ValueError(f"accuracy_threshold must be in [0, 1], got {self.accuracy_threshold}")
+        if not 0.0 <= self.performance_threshold <= 1.0:
+            raise ValueError(f"performance_threshold must be in [0, 1], got {self.performance_threshold}")
+        if self.memory_threshold_gb <= 0:
+            raise ValueError(f"memory_threshold_gb must be positive, got {self.memory_threshold_gb}")
+        if self.benchmark_iterations < 1:
+            raise ValueError(f"benchmark_iterations must be >= 1, got {self.benchmark_iterations}")
+        if self.warmup_iterations < 0:
+            raise ValueError(f"warmup_iterations must be >= 0, got {self.warmup_iterations}")
 
 
 @dataclass
@@ -978,6 +1042,7 @@ class KernelConfig:
 
         except Exception:
             # If anything fails, use safe defaults
+            logger.debug("Kernel config auto-detection failed, using safe defaults", exc_info=True)
             self.flash_attention_version = "2"
             self.fp8_layernorm = False
             self.fp8_attention = False
@@ -1035,6 +1100,7 @@ class TorchBridgeConfig:
         except ImportError:
             pass
         except Exception:
+            logger.debug("Trainium device detection failed", exc_info=True)
             pass
 
         # Try TPU (compatible with torch_xla 2.9+)
@@ -1059,6 +1125,7 @@ class TorchBridgeConfig:
         except ImportError:
             pass
         except Exception:
+            logger.debug("TPU device detection failed", exc_info=True)
             pass
 
         # Fall back to CPU
@@ -1157,10 +1224,9 @@ class TorchBridgeConfig:
     def update(self, **kwargs) -> None:
         """Update configuration with keyword arguments."""
         for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-            else:
+            if not hasattr(self, key):
                 raise ValueError(f"Unknown configuration parameter: {key}")
+            setattr(self, key, value)
 
 
 # Global default configuration instance

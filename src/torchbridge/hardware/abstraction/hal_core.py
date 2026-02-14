@@ -510,8 +510,6 @@ class HardwareAbstractionLayer:
 
     def _populate_mesh_matrices(self, mesh: DeviceMesh) -> None:
         """Populate bandwidth and latency matrices for device mesh"""
-        len(mesh.devices)
-
         for i, device_a in enumerate(mesh.devices):
             for j, device_b in enumerate(mesh.devices):
                 if i == j:

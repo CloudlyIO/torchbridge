@@ -5,6 +5,7 @@ Automatically detects available hardware and provides capability profiles
 for backend selection.
 """
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
 
@@ -12,12 +13,15 @@ import torch
 
 from .config import NVIDIAArchitecture, TPUVersion
 
+logger = logging.getLogger(__name__)
+
 
 class HardwareType(Enum):
     """Available hardware types."""
     NVIDIA_GPU = "nvidia_gpu"
-    TPU = "tpu"
     AMD_GPU = "amd_gpu"
+    TRAINIUM = "trainium"
+    TPU = "tpu"
     CPU = "cpu"
 
 
@@ -116,9 +120,11 @@ class HardwareDetector:
 
         # Try detection in order of preference
         # Check AMD first since ROCm exposes CUDA API
+        # Check Trainium before TPU since both use XLA
         profile = (
             self._detect_amd_gpu() or
             self._detect_nvidia_gpu() or
+            self._detect_trainium() or
             self._detect_tpu() or
             self._detect_cpu()
         )
@@ -167,6 +173,7 @@ class HardwareDetector:
             )
 
         except Exception:
+            logger.debug("AMD GPU detection failed", exc_info=True)
             return None
 
     def _detect_nvidia_gpu(self) -> HardwareProfile | None:
@@ -210,6 +217,7 @@ class HardwareDetector:
 
         except Exception:
             # Detection failed, return None
+            logger.debug("NVIDIA GPU detection failed", exc_info=True)
             return None
 
     def _detect_nvidia_architecture(self, props) -> NVIDIAArchitecture:
@@ -235,6 +243,62 @@ class HardwareDetector:
 
         # Older architectures
         return NVIDIAArchitecture.PASCAL
+
+    def _detect_trainium(self) -> HardwareProfile | None:
+        """Detect AWS Trainium/Inferentia hardware via NeuronX."""
+        try:
+            import os
+
+            # Check for Neuron environment indicators first
+            is_neuron = (
+                os.environ.get('NEURON_RT_NUM_CORES') is not None or
+                os.environ.get('PJRT_DEVICE') == 'NEURON'
+            )
+
+            if not is_neuron:
+                # Try importing torch_neuronx as a secondary check
+                try:
+                    import torch_neuronx  # noqa: F401
+                    is_neuron = True
+                except ImportError:
+                    return None
+
+            if not is_neuron:
+                return None
+
+            # Detect chip generation from environment
+            instance_type = os.environ.get('INSTANCE_TYPE', '')
+            device_name = "AWS Trainium"
+            if 'trn2' in instance_type.lower():
+                device_name = "AWS Trainium2"
+            elif 'trn3' in instance_type.lower():
+                device_name = "AWS Trainium3"
+
+            # Get core count
+            core_count = 1
+            neuron_cores = os.environ.get('NEURON_RT_NUM_CORES')
+            if neuron_cores:
+                try:
+                    core_count = int(neuron_cores)
+                except ValueError:
+                    pass
+
+            capabilities = [
+                OptimizationCapability.XLA_COMPILATION,
+                OptimizationCapability.MIXED_PRECISION,
+            ]
+
+            return HardwareProfile(
+                hardware_type=HardwareType.TRAINIUM,
+                device_name=device_name,
+                device_count=core_count,
+                capabilities=capabilities,
+                xla_available=True
+            )
+
+        except Exception:
+            logger.debug("Trainium detection failed", exc_info=True)
+            return None
 
     def _detect_tpu(self) -> HardwareProfile | None:
         """Detect TPU hardware."""
@@ -310,7 +374,7 @@ class HardwareDetector:
             profile: Hardware profile (auto-detect if None)
 
         Returns:
-            Backend name: 'nvidia', 'tpu', or 'cpu'
+            Backend name: 'nvidia', 'amd', 'trainium', 'tpu', or 'cpu'
         """
         if profile is None:
             profile = self.detect()
@@ -319,6 +383,8 @@ class HardwareDetector:
             return 'nvidia'
         elif profile.hardware_type == HardwareType.AMD_GPU:
             return 'amd'
+        elif profile.hardware_type == HardwareType.TRAINIUM:
+            return 'trainium'
         elif profile.hardware_type == HardwareType.TPU:
             return 'tpu'
         else:

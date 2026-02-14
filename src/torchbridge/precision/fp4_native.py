@@ -19,6 +19,7 @@ References:
     - NVFP4 microscaling: Two-level scaling with FP32 tensor scale + FP8 block scale
 """
 
+import logging
 import warnings
 from dataclasses import dataclass
 from typing import Any
@@ -26,6 +27,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 
 def _check_fp4_hardware_support() -> bool:
@@ -38,6 +41,7 @@ def _check_fp4_hardware_support() -> bool:
         # Consumer Blackwell (sm_120) does NOT support FP4
         return props.major == 10
     except Exception:
+        logger.debug("FP4 hardware support check failed", exc_info=True)
         return False
 
 

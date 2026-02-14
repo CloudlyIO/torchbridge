@@ -240,6 +240,7 @@ class PerformanceTracker:
                 param_memory = sum(p.numel() * p.element_size() for p in model.parameters())
                 memory_mb = param_memory / 1024**2
         except Exception:
+            logger.debug("Memory measurement failed", exc_info=True)
             memory_mb = 0.0
 
         return latency_ms, throughput, memory_mb

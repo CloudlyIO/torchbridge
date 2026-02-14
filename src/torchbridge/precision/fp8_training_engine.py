@@ -17,6 +17,7 @@ References:
     - NVIDIA FP8 Training: https://developer.nvidia.com/blog/nvidia-h100-transformer-engine/
 """
 
+import logging
 import warnings
 from enum import Enum
 from typing import Any
@@ -39,6 +40,8 @@ try:
     HAL_AVAILABLE = True
 except ImportError:
     HAL_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 
 class FP8Format(Enum):
@@ -197,7 +200,7 @@ class FP8ScaleManager:
         # Reset growth tracker
         self.growth_tracker = 0
 
-        print(f"FP8 overflow detected at step {self.step_count}, reducing scale to {self.scale.item()}")
+        logger.warning("FP8 overflow detected at step %d, reducing scale to %.4f", self.step_count, self.scale.item())
 
     def _update_dynamic_scale(self, amax: torch.Tensor) -> bool:
         """Update scale dynamically based on AMAX history"""
@@ -206,7 +209,6 @@ class FP8ScaleManager:
 
         # Calculate recent AMAX statistics
         recent_amax = self.amax_history[-100:]
-        sum(recent_amax) / len(recent_amax)
         max_amax = max(recent_amax)
 
         # Determine if we can safely increase scale
@@ -232,7 +234,7 @@ class FP8ScaleManager:
                 self.scale = self.scale * self.config.growth_factor
                 self.inv_scale = 1.0 / self.scale
                 self.growth_tracker = 0
-                print(f"Growing FP8 scale to {self.scale.item()} at step {self.step_count}")
+                logger.info("Growing FP8 scale to %.4f at step %d", self.scale.item(), self.step_count)
                 return True
 
         return False
@@ -309,7 +311,7 @@ class FP8TrainingEngine:
             warnings.warn("FP8 training already setup", stacklevel=2)
             return True
 
-        print("Setting up FP8 training...")
+        logger.info("Setting up FP8 training...")
 
         # Check hardware compatibility
         if not self._check_hardware_compatibility():
@@ -326,11 +328,13 @@ class FP8TrainingEngine:
         self.fp8_enabled = True
         self.is_setup = True
 
-        print(" FP8 training setup complete")
-        print(f"   Forward format: {self.config.forward_format.value}")
-        print(f"   Backward format: {self.config.backward_format.value}")
-        print(f"   Transformer Engine: {'' if TRANSFORMER_ENGINE_AVAILABLE else ''}")
-        print(f"   Hardware optimization: {'' if self.hal else ''}")
+        logger.info(
+            "FP8 training setup complete — forward=%s, backward=%s, TE=%s, HAL=%s",
+            self.config.forward_format.value,
+            self.config.backward_format.value,
+            TRANSFORMER_ENGINE_AVAILABLE,
+            self.hal is not None,
+        )
 
         return True
 
@@ -387,7 +391,7 @@ class FP8TrainingEngine:
                 if replace_layer(module, child_name, child):
                     replaced_count += 1
 
-        print(f"   Replaced {replaced_count} Linear layers with FP8 versions")
+        logger.info("Replaced %d Linear layers with FP8 versions", replaced_count)
 
     def training_step(
         self,
@@ -563,7 +567,7 @@ class FP8TrainingEngine:
             setattr(module, parts[-1], original_layer)
 
         self.fp8_enabled = False
-        print(f"Restored {len(self.original_layers)} original layers")
+        logger.info("Restored %d original layers", len(self.original_layers))
 
     def __enter__(self):
         """Context manager entry"""

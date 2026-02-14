@@ -43,7 +43,7 @@ COPY src/ ./src/
 COPY pyproject.toml ./
 
 # Install TorchBridge
-RUN pip install -e .
+RUN pip install --no-cache-dir .
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \

@@ -2,12 +2,14 @@
 AMD ROCm Backend Implementation
 
 This module provides the main AMDBackend class that orchestrates AMD GPU
-operations through ROCm/HIP, supporting CDNA2 (MI200) and CDNA3 (MI300)
-architectures.
+operations through ROCm/HIP, supporting CDNA2 through CDNA4 data center
+and RDNA2/RDNA3 consumer architectures.
 
 Architecture Support:
 - CDNA2: MI210, MI250, MI250X (2nd gen, Matrix Cores)
-- CDNA3: MI300A, MI300X (3rd gen, Matrix Cores v2)
+- CDNA3: MI300A, MI300X, MI325X (3rd gen, Matrix Cores v2)
+- CDNA4: MI350X, MI355X (4th gen)
+- RDNA2/RDNA3: RX 6000/7000 consumer GPUs
 
 Key Features:
 - Automatic device detection and initialization
@@ -360,6 +362,7 @@ class AMDBackend(BaseBackend):
                 return torch.version.hip or "unknown"
             return "unknown"
         except Exception:
+            logger.debug("ROCm version detection failed", exc_info=True)
             return "unknown"
 
     def prepare_model(

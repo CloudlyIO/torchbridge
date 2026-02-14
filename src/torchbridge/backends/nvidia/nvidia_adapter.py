@@ -355,6 +355,7 @@ class NVIDIAAdapter(BaseAdapter):
             torch.quantization.fuse_modules(model, inplace=True)  # type: ignore[call-arg]
         except Exception:
             # Fusion may not be applicable for all models
+            logger.debug("BatchNorm layer fusion failed", exc_info=True)
             pass
         return model
 

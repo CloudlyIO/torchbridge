@@ -6,6 +6,7 @@ optimization levels and hardware configurations.
 """
 
 import argparse
+import logging
 import sys
 import time
 from pathlib import Path
@@ -14,6 +15,8 @@ import torch
 
 import torchbridge
 from torchbridge.utils.compiler_assistant import CompilerOptimizationAssistant
+
+logger = logging.getLogger(__name__)
 
 
 class OptimizeCommand:
@@ -216,6 +219,8 @@ Examples:
         """Parse input shape string or infer from model."""
         if input_shape_str:
             shape = tuple(map(int, input_shape_str.split(',')))
+            if any(d <= 0 for d in shape):
+                raise ValueError(f"All input shape dimensions must be positive, got {shape}")
         else:
             # Try to infer shape from model
             if hasattr(model, 'forward'):
@@ -264,6 +269,7 @@ Examples:
                 if verbose and result.optimization_opportunities:
                     print(f"   Found {len(result.optimization_opportunities)} optimization opportunities")
             except Exception:
+                logger.debug("HAL-aware compilation assistant failed, falling back to torch.compile", exc_info=True)
                 # Fallback to torch.compile
                 optimized_model = torch.compile(model, mode='max-autotune')  # type: ignore[assignment]
 
@@ -336,8 +342,11 @@ Examples:
         original_time = benchmark_model(original, "Original")
         optimized_time = benchmark_model(optimized, "Optimized")
 
-        speedup = original_time / optimized_time
-        print(f"    Speedup: {speedup:.2f}x")
+        if optimized_time > 0:
+            speedup = original_time / optimized_time
+            print(f"    Speedup: {speedup:.2f}x")
+        else:
+            print("    Speedup: N/A (optimized time too small to measure)")
 
     @staticmethod
     def _save_model(model: torch.nn.Module, output_path: str, verbose: bool) -> None:

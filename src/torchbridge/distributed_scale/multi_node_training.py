@@ -25,6 +25,8 @@ from ..optimizations.next_gen import (
     create_pygraph_optimizer,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ClusterConfig:
@@ -159,6 +161,7 @@ class AdvancedFSDPManager:
                 self.device = torch.device("cpu")
 
         except Exception:
+            logger.debug("Distributed initialization failed, falling back to single process", exc_info=True)
             # Fallback to single process
             self.rank = 0
             self.local_rank = 0

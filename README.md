@@ -32,12 +32,18 @@ Your model code
 ## Quick Start
 
 ```bash
-git clone https://github.com/CloudlyIO/torchbridge.git
-cd torchbridge
-pip install -r requirements.txt
+pip install torchbridge-ml
 
 # Verify
-PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
+python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
+```
+
+For development:
+
+```bash
+git clone https://github.com/CloudlyIO/torchbridge.git
+cd torchbridge
+pip install -e ".[dev]"
 ```
 
 ### Detect Hardware
@@ -84,6 +90,7 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 |---------|----------|-----------|--------|
 | **NVIDIA** | B200, H100, H200, A100, L4, T4 | FP4, FP8, BF16, FP16, FP32 | Production |
 | **AMD** | MI350X, MI325X, MI300X, MI200 | FP4, FP8, BF16, FP16, FP32 | Production |
+| **Trainium** | Trn1, Trn2, Trn3 (AWS NeuronX) | BF16, FP16, FP32 | Supported |
 | **TPU** | v4, v5e, v5p, v6e, v7 | BF16, FP32 | Production |
 | **CPU** | x86, ARM (Apple Silicon) | FP32, BF16 | Fallback |
 
@@ -164,6 +171,7 @@ src/torchbridge/
 ├── backends/          # Vendor-specific backend implementations
 │   ├── nvidia/        #   NVIDIA CUDA backend
 │   ├── amd/           #   AMD ROCm backend
+│   ├── trainium/      #   AWS Trainium/NeuronX backend
 │   └── tpu/           #   Google TPU/XLA backend
 ├── hardware/          # Hardware detection and abstraction
 ├── precision/         # FP8 training and precision management
@@ -201,14 +209,14 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **1,397+ tests** passing across all modules
+- **1,444+ tests** passing across all modules
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on NVIDIA A10G (AWS), L4 (GCP), and AMD MI300X -- 5/5 use cases pass
 - **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud
 
 ```bash
-PYTHONPATH=src python3 -m pytest tests/ -q
+python3 -m pytest tests/ -q
 ruff check src/ tests/
 ```
 

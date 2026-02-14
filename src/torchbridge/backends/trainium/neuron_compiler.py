@@ -238,6 +238,7 @@ class NeuronCompiler:
         try:
             neuron_utilities.sync()
         except Exception:
+            logger.debug("Neuron compilation cache sync failed", exc_info=True)
             pass
 
     def benchmark_compilation(self, model: nn.Module,

@@ -12,6 +12,7 @@ Key Features:
 - Full integration with TorchBridge attention registry
 """
 
+import logging
 import warnings
 from collections.abc import Callable
 from typing import Any
@@ -22,6 +23,8 @@ import torch.nn.functional as F
 from ..core.base import AttentionWithCache
 from ..core.config import AttentionConfig, AttentionPatterns
 from ..core.registry import register_attention
+
+logger = logging.getLogger(__name__)
 
 # Check for FlexAttention availability (PyTorch 2.5+)
 try:
@@ -164,6 +167,7 @@ class FlexAttentionMaskGenerators:
 
             return create_block_mask(mask_fn, B=batch_size, H=num_heads, Q_LEN=seq_len, KV_LEN=seq_len)
         except Exception:
+            logger.debug("Causal block mask creation failed", exc_info=True)
             return None
 
     @staticmethod
@@ -183,6 +187,7 @@ class FlexAttentionMaskGenerators:
 
             return create_block_mask(mask_fn, B=batch_size, H=num_heads, Q_LEN=seq_len, KV_LEN=seq_len)
         except Exception:
+            logger.debug("Sliding window block mask creation failed", exc_info=True)
             return None
 
     @staticmethod
@@ -200,6 +205,7 @@ class FlexAttentionMaskGenerators:
 
             return create_block_mask(mask_fn, B=batch_size, H=num_heads, Q_LEN=seq_len, KV_LEN=seq_len)
         except Exception:
+            logger.debug("Full attention block mask creation failed", exc_info=True)
             return None
 
 
