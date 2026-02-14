@@ -157,6 +157,7 @@ jobs:
   docker-build-amd:
     name: Build AMD Docker Image
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -180,6 +181,7 @@ jobs:
   report:
     name: AMD Test Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test-amd, benchmark-amd, docker-build-amd]
     if: always()
     steps:

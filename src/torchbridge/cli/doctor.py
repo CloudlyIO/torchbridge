@@ -177,8 +177,8 @@ Examples:
             results.append(DiagnosticResult(
                 "Python Version",
                 "fail",
-                f"Python {python_version} ( Requires Python 3.8+)",
-                recommendation="Upgrade to Python 3.8 or later"
+                f"Python {python_version} (Requires Python 3.10+)",
+                recommendation="Upgrade to Python 3.10 or later"
             ))
 
         # PyTorch version

@@ -41,9 +41,9 @@ def create_benchmark_suite() -> list[BenchmarkConfig]:
 
     # Model configurations for testing
     model_configs = {
-        "GPT2-Small": create_simple_gpt_config(hidden_size=768, num_layers=12, num_heads=12),
-        "GPT2-Medium": create_simple_gpt_config(hidden_size=1024, num_layers=24, num_heads=16),
-        "Custom-Large": create_simple_gpt_config(hidden_size=1536, num_layers=12, num_heads=24)
+        "Transformer-Small": create_simple_gpt_config(hidden_size=768, num_layers=12, num_heads=12),
+        "Transformer-Medium": create_simple_gpt_config(hidden_size=1024, num_layers=24, num_heads=16),
+        "Transformer-Large": create_simple_gpt_config(hidden_size=1536, num_layers=12, num_heads=24)
     }
 
     benchmark_configs = []
