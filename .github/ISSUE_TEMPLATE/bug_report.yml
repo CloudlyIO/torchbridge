@@ -138,6 +138,7 @@ body:
         - NVIDIA GPU (Datacenter - A100/H100)
         - NVIDIA GPU (Other)
         - AMD GPU (ROCm)
+        - AWS Trainium
         - Google TPU
         - Apple Silicon (MPS)
     validations:

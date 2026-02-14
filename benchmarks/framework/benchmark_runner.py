@@ -449,12 +449,12 @@ class BenchmarkRunner:
                 print(f"      {name}: {comp['speedup']:.2f}x speedup, {comp['throughput_improvement_pct']:+.1f}% throughput {status}")
 
 def create_simple_gpt_config(hidden_size: int = 768, num_layers: int = 12, num_heads: int = 12) -> dict[str, Any]:
-    """Create a simple GPT-style model configuration"""
+    """Create a simple transformer model configuration for benchmarking."""
     return {
         "hidden_size": hidden_size,
         "num_layers": num_layers,
         "num_heads": num_heads,
-        "vocab_size": 50257,
+        "vocab_size": 151936,
         "max_position_embeddings": 2048,
         "layer_norm_epsilon": 1e-5
     }

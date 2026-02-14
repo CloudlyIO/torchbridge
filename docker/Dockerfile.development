@@ -84,6 +84,10 @@ RUN echo 'alias ll="ls -la"' >> /home/devuser/.bashrc \
     && echo 'alias pytest="python -m pytest"' >> /home/devuser/.bashrc \
     && echo 'export PYTHONPATH=/workspace/src:$PYTHONPATH' >> /home/devuser/.bashrc
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import torchbridge; print('ok')" || exit 1
+
 # Metadata
 LABEL maintainer="TorchBridge Team" \
       version="0.5.22-dev" \

@@ -8,10 +8,11 @@ Every hardware backend implements the same `BaseBackend` interface:
 
 ```
 BaseBackend (abstract)
-├── NVIDIABackend   → CUDA
-├── AMDBackend      → ROCm / HIP
-├── TPUBackend      → XLA
-└── CPUBackend      → fallback
+├── NVIDIABackend     → CUDA
+├── AMDBackend        → ROCm / HIP
+├── TrainiumBackend   → NeuronX
+├── TPUBackend        → XLA
+└── CPUBackend        → fallback
 ```
 
 Your code interacts with the unified API. TorchBridge dispatches to the correct vendor-specific implementation underneath.

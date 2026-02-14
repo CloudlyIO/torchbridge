@@ -177,7 +177,7 @@ echo "=============================================="
 
 # 1. Environment Setup
 echo "[1/6] Setting up environment..."
-pip install -q torchbridge[all]
+pip install -q torchbridge-ml[all]
 
 # 2. Hardware Detection
 echo "[2/6] Detecting hardware..."
