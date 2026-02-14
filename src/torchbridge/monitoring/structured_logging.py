@@ -50,6 +50,21 @@ _correlation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "correlation_id", default=None
 )
 
+# Context variables for distributed tracing
+_trace_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "trace_id", default=None
+)
+_span_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "span_id", default=None
+)
+
+# Cached OpenTelemetry import — avoid per-record import overhead
+_OTEL_UNAVAILABLE = object()  # sentinel
+try:
+    from opentelemetry import trace as _otel_trace
+except ImportError:
+    _otel_trace: Any = _OTEL_UNAVAILABLE  # type: ignore[no-redef]
+
 # Context variable for additional context
 _log_context: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
     "log_context", default={}  # noqa: B039
@@ -82,6 +97,7 @@ class LogConfig:
     include_thread_info: bool = False
     include_process_info: bool = False
     include_hostname: bool = True
+    include_trace_context: bool = True
     output_file: str | None = None
     max_message_length: int = 10000
     sensitive_fields: list[str] = field(default_factory=lambda: [
@@ -100,6 +116,7 @@ class LogConfig:
             "include_thread_info": self.include_thread_info,
             "include_process_info": self.include_process_info,
             "include_hostname": self.include_hostname,
+            "include_trace_context": self.include_trace_context,
             "output_file": self.output_file,
             "max_message_length": self.max_message_length,
             "module_levels": self.module_levels,
@@ -163,6 +180,27 @@ class JSONFormatter(logging.Formatter):
             correlation_id = _correlation_id.get()
             if correlation_id:
                 log_entry["correlation_id"] = correlation_id
+
+        # Add distributed trace context
+        if self.config.include_trace_context:
+            trace_id = _trace_id.get()
+            span_id = _span_id.get()
+
+            # Try OpenTelemetry auto-extraction if available and no manual context set
+            if trace_id is None and _otel_trace is not _OTEL_UNAVAILABLE:
+                try:
+                    span = _otel_trace.get_current_span()
+                    ctx = span.get_span_context()
+                    if ctx and ctx.trace_id:
+                        trace_id = format(ctx.trace_id, "032x")
+                        span_id = format(ctx.span_id, "016x")
+                except Exception:
+                    pass
+
+            if trace_id:
+                log_entry["trace_id"] = trace_id
+            if span_id:
+                log_entry["span_id"] = span_id
 
         # Add caller information
         if self.config.include_caller:
@@ -329,6 +367,29 @@ class LogContext:
     def __exit__(self, *args: Any) -> None:
         if self._token is not None:
             _log_context.reset(self._token)
+
+
+class TraceContext:
+    """Context manager for distributed trace context propagation."""
+
+    def __init__(
+        self, trace_id: str | None = None, span_id: str | None = None
+    ):
+        self.trace_id = trace_id or uuid.uuid4().hex
+        self.span_id = span_id or uuid.uuid4().hex[:16]
+        self._trace_token: contextvars.Token | None = None
+        self._span_token: contextvars.Token | None = None
+
+    def __enter__(self) -> TraceContext:
+        self._trace_token = _trace_id.set(self.trace_id)
+        self._span_token = _span_id.set(self.span_id)
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        if self._trace_token is not None:
+            _trace_id.reset(self._trace_token)
+        if self._span_token is not None:
+            _span_id.reset(self._span_token)
 
 
 class StructuredLogger(logging.Logger):
@@ -544,6 +605,26 @@ def set_correlation_id(correlation_id: str) -> contextvars.Token:
     return _correlation_id.set(correlation_id)
 
 
+def get_trace_id() -> str | None:
+    """Get current trace ID from context."""
+    return _trace_id.get()
+
+
+def set_trace_id(trace_id: str) -> contextvars.Token:
+    """Set trace ID manually."""
+    return _trace_id.set(trace_id)
+
+
+def get_span_id() -> str | None:
+    """Get current span ID from context."""
+    return _span_id.get()
+
+
+def set_span_id(span_id: str) -> contextvars.Token:
+    """Set span ID manually."""
+    return _span_id.set(span_id)
+
+
 T = TypeVar("T", bound=Callable[..., Any])
 
 
@@ -717,6 +798,7 @@ __all__ = [
     "StructuredLogger",
     "CorrelationContext",
     "LogContext",
+    "TraceContext",
     "PerformanceLogger",
     "configure_logging",
     "get_logger",
@@ -724,6 +806,10 @@ __all__ = [
     "log_context",
     "get_correlation_id",
     "set_correlation_id",
+    "get_trace_id",
+    "set_trace_id",
+    "get_span_id",
+    "set_span_id",
     "log_function_call",
     "performance_log",
 ]
