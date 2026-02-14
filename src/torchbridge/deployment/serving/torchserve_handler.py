@@ -432,6 +432,7 @@ def package_for_torchserve(
                 scripted = torch.jit.script(model.eval())
                 torch.jit.save(scripted, model_path)
             except Exception:
+                logger.debug("TorchScript scripting failed, saving as serialized model", exc_info=True)
                 # Save as serialized model
                 model_path = temp_path / "model.pth"
                 torch.save(model, model_path)

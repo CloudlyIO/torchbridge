@@ -120,6 +120,7 @@ class TrainiumBackend(BaseBackend):
                 }
             )
         except Exception:
+            logger.debug("Trainium device info detection failed", exc_info=True)
             return DeviceInfo(
                 backend="trainium",
                 device_type="cpu",
@@ -298,6 +299,7 @@ class TrainiumBackend(BaseBackend):
         try:
             return neuron_utilities.get_device_count()
         except Exception:
+            logger.debug("NeuronCore device count query failed", exc_info=True)
             return 0
 
     def _apply_trainium_optimizations(self, model: nn.Module) -> nn.Module:
@@ -362,6 +364,7 @@ class TrainiumBackend(BaseBackend):
             if self.is_distributed:
                 neuron_utilities.rendezvous('sync')
         except Exception:
+            logger.debug("Trainium synchronization failed", exc_info=True)
             pass
 
     def get_memory_stats(self) -> dict[str, Any]:
@@ -378,6 +381,7 @@ class TrainiumBackend(BaseBackend):
         try:
             stats['xla_device_count'] = neuron_utilities.get_device_count()
         except Exception:
+            logger.debug("Trainium XLA device count query failed", exc_info=True)
             pass
 
         return stats
@@ -390,6 +394,7 @@ class TrainiumBackend(BaseBackend):
         try:
             neuron_utilities.sync()
         except Exception:
+            logger.debug("Trainium cache sync failed", exc_info=True)
             pass
 
     def save_model(self, model: nn.Module, path: str | Path,

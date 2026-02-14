@@ -10,6 +10,8 @@ Kubernetes and SLURM cluster management for distributed training:
 
 import logging
 import os
+import re
+import shlex
 import subprocess
 import tempfile
 import threading
@@ -25,6 +27,29 @@ from .job_management import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Pattern for valid Kubernetes/SLURM job identifiers
+_VALID_JOB_ID_PATTERN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9._-]{0,253}$')
+
+
+def _validate_job_id(job_id: str) -> str:
+    """Validate job ID to prevent injection attacks."""
+    if not _VALID_JOB_ID_PATTERN.match(job_id):
+        raise ValueError(
+            f"Invalid job ID '{job_id}': must be alphanumeric with "
+            f"optional hyphens, dots, or underscores (1-254 chars)"
+        )
+    return job_id
+
+
+def _validate_namespace(namespace: str) -> str:
+    """Validate Kubernetes namespace."""
+    if not re.match(r'^[a-z0-9][a-z0-9-]{0,62}$', namespace):
+        raise ValueError(
+            f"Invalid namespace '{namespace}': must be lowercase alphanumeric "
+            f"with optional hyphens (1-63 chars)"
+        )
+    return namespace
 
 
 class KubernetesDistributedOrchestrator:
@@ -397,7 +422,8 @@ class KubernetesDistributedOrchestrator:
         try:
             if self.k8s_available:
                 # Delete Kubernetes resources
-                cmd = ['kubectl', 'delete', 'pytorchjob', job_id, '-n', self.namespace]
+                _validate_job_id(job_id)
+                cmd = ['kubectl', 'delete', 'pytorchjob', '--', job_id, '-n', _validate_namespace(self.namespace)]
                 if self.kubeconfig_path:
                     cmd.extend(['--kubeconfig', self.kubeconfig_path])
 
@@ -542,6 +568,9 @@ class SLURMClusterManager:
     def _create_slurm_script(self, job_spec: TrainingJobSpec) -> str:
         """Create SLURM batch script for training job"""
 
+        # Validate job ID to prevent injection
+        _validate_job_id(job_spec.job_id)
+
         # Calculate nodes and tasks
         nodes = job_spec.world_size
         tasks_per_node = 1
@@ -589,14 +618,18 @@ class SLURMClusterManager:
             ""
         ])
 
-        # Add custom environment variables
+        # Add custom environment variables (sanitized)
         for key, value in job_spec.env_vars.items():
-            script_lines.append(f"export {key}={value}")
+            if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', key):
+                raise ValueError(f"Invalid environment variable name: {key}")
+            script_lines.append(f"export {key}={shlex.quote(str(value))}")
 
+        # Launch distributed training (sanitize command parts)
+        sanitized_cmd = ' '.join(shlex.quote(part) for part in job_spec.command)
         script_lines.extend([
             "",
             "# Launch distributed training",
-            f"srun {''.join(job_spec.command)}"
+            f"srun {sanitized_cmd}"
         ])
 
         return '\n'.join(script_lines)

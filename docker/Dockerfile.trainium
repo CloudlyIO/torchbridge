@@ -39,7 +39,7 @@ COPY src/ ./src/
 COPY pyproject.toml ./
 
 # Install TorchBridge
-RUN pip install -e .
+RUN pip install --no-cache-dir .
 
 # Verify Neuron + PyTorch
 RUN python3 -c "import torch; import torch_neuronx; print(f'PyTorch {torch.__version__}, Neuron SDK: OK')"

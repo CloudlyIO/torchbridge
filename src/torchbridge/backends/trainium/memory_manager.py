@@ -74,6 +74,7 @@ class TrainiumMemoryManager(BaseMemoryManager):
         try:
             return neuron_utilities.get_xla_device()
         except Exception:
+            logger.debug("Neuron SDK device acquisition failed", exc_info=True)
             warnings.warn("Neuron SDK not available. Using CPU fallback.", stacklevel=2)
             return torch.device("cpu")
 
@@ -118,6 +119,7 @@ class TrainiumMemoryManager(BaseMemoryManager):
         try:
             neuron_utilities.sync()
         except Exception:
+            logger.debug("Trainium device synchronization failed", exc_info=True)
             pass
 
     def _empty_device_cache(self) -> None:
@@ -126,6 +128,7 @@ class TrainiumMemoryManager(BaseMemoryManager):
             neuron_utilities.sync()
             gc.collect()
         except Exception:
+            logger.debug("Trainium cache clearing failed", exc_info=True)
             pass
 
     # =========================================================================
@@ -356,6 +359,7 @@ class TrainiumMemoryManager(BaseMemoryManager):
             logger.info("Trainium memory optimization completed")
 
         except Exception:
+            logger.debug("Trainium memory optimization failed", exc_info=True)
             pass
 
     def clear_memory_pools(self) -> None:

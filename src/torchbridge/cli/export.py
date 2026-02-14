@@ -6,11 +6,14 @@ including ONNX, TorchScript, and SafeTensors.
 """
 
 import argparse
+import logging
 import sys
 import time
 from pathlib import Path
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 class ExportCommand:
@@ -381,6 +384,7 @@ Examples:
                     try:
                         torch.onnx.export(model, sample_input, str(output_path), **export_kwargs)
                     except Exception:
+                        logger.debug("ONNX export with dynamic axes failed, retrying without", exc_info=True)
                         export_kwargs.pop('dynamic_axes', None)
                         torch.onnx.export(model, sample_input, str(output_path), **export_kwargs)
                 else:

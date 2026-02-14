@@ -410,6 +410,7 @@ class AMDAdapter:
                             optimized_count += 1
                             logger.debug("Converted %s to channels_last", name)
                         except Exception:
+                            logger.debug("Conv2d channels_last conversion failed for %s", name, exc_info=True)
                             pass
 
                 # Convert Conv3d to channels_last_3d (NDHWC)
@@ -419,6 +420,7 @@ class AMDAdapter:
                         optimized_count += 1
                         logger.debug("Converted %s to channels_last_3d", name)
                     except Exception:
+                        logger.debug("Conv3d channels_last_3d conversion failed for %s", name, exc_info=True)
                         pass
 
                 # Ensure Linear weights are contiguous for optimal rocBLAS

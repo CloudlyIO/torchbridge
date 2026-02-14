@@ -108,6 +108,7 @@ class XLADeviceManager:
             if self.world_size > 1:
                 xla_compat.rendezvous('sync_all')
         except Exception:
+            logger.debug("XLA device synchronization failed", exc_info=True)
             pass
 
     def get_device_stats(self) -> dict[str, Any]:
@@ -124,6 +125,7 @@ class XLADeviceManager:
                 'xla_device_count': xla_compat.get_device_count(),
             })
         except Exception:
+            logger.debug("XLA device count query failed", exc_info=True)
             pass
 
         return stats
@@ -402,6 +404,7 @@ class XLAUtilities:
                 'xrt_world_size': xla_compat.get_world_size()
             })
         except Exception:
+            logger.debug("XLA environment info detection failed", exc_info=True)
             env_info['xla_available'] = False
 
         return env_info
@@ -443,6 +446,7 @@ class XLAUtilities:
             }
 
         except Exception:
+            logger.debug("XLA compilation profiling failed", exc_info=True)
             return {'error': 'PyTorch/XLA not available'}
 
     @staticmethod
@@ -470,6 +474,7 @@ class XLAUtilities:
             return metrics_report
 
         except Exception:
+            logger.debug("XLA graph debugging failed", exc_info=True)
             return "PyTorch/XLA debug utilities not available"
 
     @staticmethod

@@ -8,9 +8,12 @@ Trainium uses XLA under the hood (same as TPU), differentiated by
 environment variables and torch_neuronx imports.
 """
 
+import logging
 import os
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 def get_xla_device() -> torch.device:
@@ -202,16 +205,27 @@ def detect_instance_type() -> str:
     if instance_type:
         return instance_type
 
-    # Try EC2 metadata (only works on actual EC2 instances)
+    # Try EC2 metadata via IMDSv2 (only works on actual EC2 instances)
     try:
         import urllib.request
-        req = urllib.request.Request(
-            'http://169.254.169.254/latest/meta-data/instance-type',
-            headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}
+        # Step 1: Get IMDSv2 token via PUT request
+        token_req = urllib.request.Request(
+            'http://169.254.169.254/latest/api/token',
+            headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'},
+            method='PUT',
         )
-        with urllib.request.urlopen(req, timeout=1) as resp:
+        with urllib.request.urlopen(token_req, timeout=1) as token_resp:
+            token = token_resp.read().decode('utf-8')
+
+        # Step 2: Use token to fetch metadata
+        metadata_req = urllib.request.Request(
+            'http://169.254.169.254/latest/meta-data/instance-type',
+            headers={'X-aws-ec2-metadata-token': token},
+        )
+        with urllib.request.urlopen(metadata_req, timeout=1) as resp:
             return resp.read().decode('utf-8')
     except Exception:
+        logger.debug("EC2 instance type detection failed", exc_info=True)
         pass
 
     return 'unknown'

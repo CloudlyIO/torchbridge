@@ -7,6 +7,7 @@ for understanding cross-backend GPU performance impact.
 
 """
 
+import logging
 import time
 from collections import defaultdict
 from collections.abc import Callable
@@ -15,6 +16,8 @@ from typing import Any
 
 import numpy as np
 import torch
+
+logger = logging.getLogger(__name__)
 
 try:
     import psutil
@@ -471,6 +474,7 @@ class KernelProfiler:
                 elif utilization < 0.3:
                     recommendations.append("  - Low memory utilization. Consider increasing batch size for better efficiency.")
             except Exception:
+                logger.debug("GPU memory utilization check failed", exc_info=True)
                 pass
 
         if not recommendations:

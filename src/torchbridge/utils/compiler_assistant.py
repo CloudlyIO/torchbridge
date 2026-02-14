@@ -8,6 +8,7 @@ Main orchestrator for the compiler optimization workflow:
 - Offers educational content and tutorials
 """
 
+import logging
 import textwrap
 import time
 from typing import Any
@@ -21,6 +22,8 @@ from .optimization_recommendations import (
     OptimizationRecommendation,
     OptimizationRecommendationEngine,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CompilerOptimizationAssistant:
@@ -285,6 +288,7 @@ if hasattr(F, 'scaled_dot_product_attention'):
             indices = [int(x.strip()) - 1 for x in selection.split(',')]
             return [recommendations[i] for i in indices if 0 <= i < len(recommendations)]
         except Exception:
+            logger.debug("Recommendation selection parsing failed", exc_info=True)
             print("Invalid selection, using all recommendations")
             return recommendations
 

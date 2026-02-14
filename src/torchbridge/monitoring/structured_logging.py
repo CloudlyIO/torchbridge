@@ -43,6 +43,8 @@ from enum import Enum
 from functools import wraps
 from typing import Any, TypeVar
 
+logger = logging.getLogger(__name__)
+
 # Context variable for correlation ID (thread-safe)
 _correlation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "correlation_id", default=None
@@ -122,6 +124,7 @@ class JSONFormatter(logging.Formatter):
             import socket
             return socket.gethostname()
         except Exception:
+            logger.debug("Hostname detection failed", exc_info=True)
             return "unknown"
 
     def _sanitize_value(self, value: Any, field_name: str = "") -> Any:

@@ -6,7 +6,11 @@ torch_xla APIs, supporting both old (2.x) and new (2.9+) versions.
 
 """
 
+import logging
+
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 def get_xla_device() -> torch.device:
@@ -190,6 +194,7 @@ def is_tpu_device() -> bool:
                 hw_type = xm.xla_device_hw(device)
                 return hw_type == 'TPU'
             except Exception:
+                logger.debug("XLA device hardware type check failed", exc_info=True)
                 pass
 
         # Fallback: check environment variable
@@ -227,6 +232,7 @@ def get_device_hw_type() -> str:
             try:
                 return xm.xla_device_hw(device)
             except Exception:
+                logger.debug("XLA device hardware type query failed", exc_info=True)
                 pass
 
         # Fallback: check environment
@@ -275,6 +281,7 @@ def get_torch_compile_backend() -> str | None:
                 elif 'openxla_eval' in backends:
                     return 'openxla_eval'
             except Exception:
+                logger.debug("OpenXLA backend availability check failed", exc_info=True)
                 pass
 
             # For torch_xla 2.9+, return None to use default compilation
@@ -288,6 +295,7 @@ def get_torch_compile_backend() -> str | None:
             if 'aot_torchxla_trace_once' in backends:
                 return 'aot_torchxla_trace_once'
         except Exception:
+            logger.debug("Legacy XLA compile backend check failed", exc_info=True)
             pass
 
         return None

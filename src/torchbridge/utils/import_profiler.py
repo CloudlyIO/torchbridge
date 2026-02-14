@@ -6,11 +6,14 @@ and other optimization techniques.
 """
 
 import importlib
+import logging
 import sys
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -96,6 +99,7 @@ class ImportProfiler:
                 try:
                     importlib.import_module(module_name)
                 except Exception:
+                    logger.debug("Import of module '%s' failed", module_name, exc_info=True)
                     pass  # Error handling in context manager
 
             if self.results:

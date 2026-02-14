@@ -64,6 +64,7 @@ def load_model(model_path: str) -> nn.Module:
         logger.info(f"Loaded TorchScript model from {model_path}")
         return model
     except Exception:
+        logger.debug("TorchScript model loading failed", exc_info=True)
         pass
 
     # Try loading as state dict (need architecture)
