@@ -63,11 +63,30 @@ and updated all user-facing references for 5-backend consistency.
 - Expanded data-handling guide with "Analyzing Performance Metrics" and
   "Privacy Best Practices" sections
 
+### Improved (Audit Round 6 — Production Readiness)
+- Fixed README test badge and count: `1,444+` → `1,464` (actual pytest collection)
+- Fixed `tb-doctor` Python version check: "Requires 3.8+" → "Requires 3.10+" to match
+  `pyproject.toml requires-python = ">=3.10"`
+- Fixed PyPI package name in 4 validation scripts: `torchbridge` → `torchbridge-ml`
+  (`cloud_orchestrator.py`, `cost_optimized_validation.py`, `colab_validation.md`,
+  `kaggle_validation.md`)
+- Added `AWS Trainium` to bug report issue template hardware dropdown
+- Added `TrainiumBackend` to architecture diagram in `docs/backends/overview.md`
+- Added `timeout-minutes` to 3 CI jobs missing it (`ci.yml:test`,
+  `amd-gpu-test.yml:docker-build-amd`, `amd-gpu-test.yml:report`)
+- Added `HEALTHCHECK` to `docker/Dockerfile.development` (was the only image without one)
+- Added `weights_only=True` to `demos/production_pipeline_demo.py` torch.load call
+- Replaced stale GPT-2/BERT model references in benchmark configs and scripts with
+  modern Qwen3-style transformer configs
+- Updated readiness assessment test counts (1,444 → 1,464, 64 → 65 test files)
+
 ### Stats
-- 30 files changed (Trainium parity), 1 workflow renamed, 3 reports renamed
-- 1,374 passed, 70 skipped, 0 failures
-- 0 ruff violations
-- 0 remaining "NVIDIA, AMD, TPU" (without Trainium) in non-historical files
+- 1,394 passed, 70 skipped, 0 failures (1,464 collected)
+- 0 ruff violations across 177 source modules
+- 0 stale BERT/GPT-2 references in source, tests, benchmarks, or docs
+- All 7 Docker images have HEALTHCHECK, non-root users, version 0.5.22
+- All CI jobs have timeout-minutes set
+- PyPI package name `torchbridge-ml` consistent across all files
 
 ---
 

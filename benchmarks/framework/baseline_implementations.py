@@ -146,12 +146,15 @@ class HuggingFaceBaseline(BaseImplementation):
         super().__init__("HuggingFace Transformers", device)
 
     def setup_model(self, model_config: dict[str, Any]) -> nn.Module:
-        """Create HuggingFace model"""
+        """Create HuggingFace causal LM model for benchmarking."""
         try:
+            # GPT2LMHeadModel is used as a generic decoder-only transformer
+            # architecture for benchmarking (accepts arbitrary config dimensions)
             from transformers import GPT2Config, GPT2LMHeadModel
 
+            vocab_size = model_config.get('vocab_size', 151936)
             config = GPT2Config(
-                vocab_size=model_config.get('vocab_size', 50257),
+                vocab_size=vocab_size,
                 n_positions=model_config.get('max_position_embeddings', 2048),
                 n_embd=model_config.get('hidden_size', 768),
                 n_layer=model_config.get('num_layers', 12),
@@ -165,26 +168,27 @@ class HuggingFaceBaseline(BaseImplementation):
             return StandardTransformerModel(model_config).to(self.device)
 
     def run_inference(self, model: nn.Module, inputs: torch.Tensor) -> torch.Tensor:
-        """Run HuggingFace inference"""
-        # HF models expect different input format
-        if hasattr(model, 'transformer'):  # GPT2LMHeadModel
+        """Run HuggingFace inference."""
+        # HF causal LM models expect input_ids
+        if hasattr(model, 'transformer'):
             batch_size, seq_len = inputs.shape[:2]
-            # Create input_ids from embeddings (simplified)
-            input_ids = torch.randint(0, 50257, (batch_size, seq_len), device=self.device)
+            vocab_size = model.config.vocab_size
+            input_ids = torch.randint(0, vocab_size, (batch_size, seq_len), device=self.device)
             outputs = model(input_ids=input_ids)
             return outputs.logits
         else:
             return model(inputs)
 
     def run_training_step(self, model: nn.Module, inputs: torch.Tensor, targets: torch.Tensor) -> float:
-        """Run HuggingFace training step"""
+        """Run HuggingFace training step."""
         optimizer = optim.AdamW(model.parameters(), lr=1e-4)
 
         optimizer.zero_grad()
 
-        if hasattr(model, 'transformer'):  # GPT2LMHeadModel
+        if hasattr(model, 'transformer'):
             batch_size, seq_len = inputs.shape[:2]
-            input_ids = torch.randint(0, 50257, (batch_size, seq_len), device=self.device)
+            vocab_size = model.config.vocab_size
+            input_ids = torch.randint(0, vocab_size, (batch_size, seq_len), device=self.device)
             outputs = model(input_ids=input_ids, labels=targets)
             loss = outputs.loss
         else:
