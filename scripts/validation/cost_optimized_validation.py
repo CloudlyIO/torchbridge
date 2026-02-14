@@ -233,7 +233,7 @@ class CostOptimizedValidator:
                     "metadata": {},
                     "source": [
                         "# Install TorchBridge\n",
-                        "!pip install -q torchbridge torch\n"
+                        "!pip install -q torchbridge-ml-ml torch\n"
                     ],
                     "execution_count": None,
                     "outputs": []
@@ -369,7 +369,7 @@ class CostOptimizedValidator:
 
 ```python
 # Cell 1: Install
-!pip install -q torchbridge torch
+!pip install -q torchbridge-ml-ml torch
 
 # Cell 2: Validate
 import torch
@@ -407,7 +407,7 @@ print(f"Output: {out.shape} - PASSED")
 3. Paste and run:
 
 ```python
-!pip install -q torchbridge
+!pip install -q torchbridge-ml
 
 import torch
 import torch.nn as nn

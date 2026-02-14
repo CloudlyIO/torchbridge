@@ -331,7 +331,7 @@ class ProductionPipeline:
         Returns:
             Epoch number from checkpoint
         """
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, weights_only=True)
 
         model.load_state_dict(checkpoint['model_state_dict'])
 

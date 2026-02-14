@@ -3,29 +3,29 @@
 
 # Model Configurations
 models:
-  gpt2_small:
+  qwen3_small:
     hidden_size: 768
     num_layers: 12
     num_heads: 12
-    vocab_size: 50257
+    vocab_size: 151936
     max_position_embeddings: 2048
-    description: "GPT-2 Small (124M parameters)"
+    description: "Qwen3-style small (124M parameters)"
 
-  gpt2_medium:
+  qwen3_medium:
     hidden_size: 1024
     num_layers: 24
     num_heads: 16
-    vocab_size: 50257
+    vocab_size: 151936
     max_position_embeddings: 2048
-    description: "GPT-2 Medium (355M parameters)"
+    description: "Qwen3-style medium (355M parameters)"
 
-  bert_base:
-    hidden_size: 768
+  minilm_base:
+    hidden_size: 384
     num_layers: 12
     num_heads: 12
     vocab_size: 30522
     max_position_embeddings: 512
-    description: "BERT Base (110M parameters)"
+    description: "MiniLM-style encoder (22M parameters)"
 
   llama_7b_config:
     hidden_size: 4096
@@ -39,7 +39,7 @@ models:
 test_suites:
   quick_validation:
     description: "Quick validation suite (5-10 minutes)"
-    models: ["gpt2_small"]
+    models: ["qwen3_small"]
     batch_sizes: [1, 4, 8]
     sequence_lengths: [128, 512]
     num_trials: 20
@@ -47,7 +47,7 @@ test_suites:
 
   comprehensive:
     description: "Comprehensive benchmark suite (1-2 hours)"
-    models: ["gpt2_small", "gpt2_medium", "bert_base"]
+    models: ["qwen3_small", "qwen3_medium", "minilm_base"]
     batch_sizes: [1, 2, 4, 8, 16, 32]
     sequence_lengths: [128, 256, 512, 1024, 2048]
     num_trials: 100
@@ -55,7 +55,7 @@ test_suites:
 
   scaling_analysis:
     description: "Scaling analysis across model sizes"
-    models: ["gpt2_small", "gpt2_medium", "llama_7b_config"]
+    models: ["qwen3_small", "qwen3_medium", "llama_7b_config"]
     batch_sizes: [1, 4, 8, 16]
     sequence_lengths: [512, 1024]
     num_trials: 50
@@ -63,7 +63,7 @@ test_suites:
 
   memory_analysis:
     description: "Memory efficiency analysis"
-    models: ["gpt2_small", "gpt2_medium"]
+    models: ["qwen3_small", "qwen3_medium"]
     batch_sizes: [1, 2, 4, 8, 16, 32, 64]
     sequence_lengths: [512]
     num_trials: 10
