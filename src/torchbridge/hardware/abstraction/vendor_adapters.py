@@ -1015,6 +1015,7 @@ class CPUAdapter(VendorAdapter):
             import platform
             return platform.processor() or "Generic CPU"
         except Exception:
+            logger.debug("CPU name detection failed", exc_info=True)
             return "Generic CPU"
 
     def _estimate_cpu_flops(self) -> float:
@@ -1027,6 +1028,7 @@ class CPUAdapter(VendorAdapter):
             # Conservative estimate: 2.5 GHz base, 8 FLOPS per cycle
             return core_count * 2.5e9 * 8
         except Exception:
+            logger.debug("CPU FLOPS estimation failed", exc_info=True)
             return 100e9  # 100 GFLOPS fallback
 
 
@@ -1084,6 +1086,7 @@ def auto_detect_best_adapter() -> VendorAdapter:
             if torch.version.hip is not None:
                 return AMDAdapter()
     except Exception:
+        logger.debug("AMD ROCm adapter auto-detection failed", exc_info=True)
         pass
 
     # Fallback to CPU
@@ -1478,6 +1481,7 @@ class CustomHardwareAdapter(VendorAdapter):
         try:
             tensor = tensor.to('privateuse1:0')
         except Exception:
+            logger.debug("ASIC PrivateUse1 tensor placement failed, falling back to CPU", exc_info=True)
             tensor = tensor.cpu()
 
         # ASIC typically prefers lower precision
@@ -1593,6 +1597,7 @@ class CustomHardwareAdapter(VendorAdapter):
             import os
             return os.environ.get('TPU_VERSION', 'v4')
         except Exception:
+            logger.debug("TPU version detection failed", exc_info=True)
             return 'v4'
 
 

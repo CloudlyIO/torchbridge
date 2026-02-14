@@ -325,8 +325,8 @@ class HealthCheckError(MonitoringError):
 # =============================================================================
 
 def raise_or_warn(
-    exception_class: type,
     message: str,
+    exception_class: type = TorchBridgeError,
     strict_mode: bool = False,
     log: logging.Logger | None = None,
     **kwargs
@@ -337,8 +337,8 @@ def raise_or_warn(
     This pattern allows flexible error handling based on configuration.
 
     Args:
-        exception_class: Exception class to raise/warn
         message: Error message
+        exception_class: Exception class to raise/warn
         strict_mode: If True, raise exception; if False, log warning
         log: Optional logger instance
         **kwargs: Additional arguments for exception

@@ -11,6 +11,7 @@ Based on latest PyTorch developments and CUDA Graph best practices.
 """
 
 import gc
+import logging
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
@@ -18,6 +19,8 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+
+logger = logging.getLogger(__name__)
 
 
 class CUDAGraphManager:
@@ -313,6 +316,7 @@ class SelectiveCUDAGraphs:
 
             except Exception:
                 # Graph capture failed
+                logger.debug("CUDA graph capture failed during benchmarking", exc_info=True)
                 avg_graph_time = float('inf')
                 speedup = 0.0
         else:

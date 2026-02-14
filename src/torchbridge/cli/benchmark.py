@@ -335,9 +335,21 @@ Examples:
             print(" Running regression benchmarks")
 
         # Use a standard set of models and optimizations
+        # MHA wrapped to accept single input (MHA.forward requires query, key, value)
+        mha = torch.nn.MultiheadAttention(768, 12, batch_first=True)
+
+        class _MHAWrapper(torch.nn.Module):
+            def __init__(self, mha):
+                super().__init__()
+                self.mha = mha
+
+            def forward(self, x):
+                out, _ = self.mha(x, x, x)
+                return out
+
         standard_benchmarks = [
             ("linear_512_512", torch.nn.Linear(512, 512), (16, 512)),
-            ("attention_mock", torch.nn.MultiheadAttention(768, 12, batch_first=True), (8, 512, 768)),
+            ("attention_mock", _MHAWrapper(mha), (8, 512, 768)),
         ]
 
         results = []
@@ -405,7 +417,10 @@ Examples:
     def _parse_input_shape(input_shape_str: str | None, model_name: str) -> tuple:
         """Parse input shape string or infer from model name."""
         if input_shape_str:
-            return tuple(map(int, input_shape_str.split(',')))
+            shape = tuple(map(int, input_shape_str.split(',')))
+            if any(d <= 0 for d in shape):
+                raise ValueError(f"All input shape dimensions must be positive, got {shape}")
+            return shape
 
         # Infer shape from model name
         if 'resnet' in model_name.lower() or 'vision' in model_name.lower():

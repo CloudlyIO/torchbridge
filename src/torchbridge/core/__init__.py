@@ -150,7 +150,10 @@ __all__ = [
 ]
 
 # Add dynamically available components
+import logging
 import sys
+
+logger = logging.getLogger(__name__)
 
 current_module = sys.modules[__name__]
 for attr_name in dir(current_module):
@@ -160,6 +163,7 @@ for attr_name in dir(current_module):
             if hasattr(attr, '__module__') and 'torchbridge.core' in str(getattr(attr, '__module__', '')):
                 __all__.append(attr_name)
         except Exception:
+            logger.debug("Failed to inspect attribute '%s' for __all__", attr_name, exc_info=True)
             pass
 
 # Backward compatibility
@@ -197,8 +201,6 @@ class _LegacyImportHelper:
         if hasattr(core_module, name):
             return getattr(core_module, name)
         raise AttributeError(f"module has no attribute '{name}'")
-
-import sys  # noqa: E402
 
 sys.modules['torchbridge.compiler_integration'] = _LegacyImportHelper()  # type: ignore[assignment]
 sys.modules['torchbridge.compiler_optimized'] = _LegacyImportHelper()  # type: ignore[assignment]

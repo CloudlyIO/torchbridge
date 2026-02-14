@@ -16,23 +16,26 @@ torchbridge optimize --model model.pt --output optimized.pt --level production
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--output` | Output path | `optimized_<input>` |
-| `--level` | Optimization level: `basic`, `jit`, `compile`, `triton`, `production` | `basic` |
-| `--backend` | Force backend: `cuda`, `rocm`, `neuron`, `tpu`, `cpu` | auto |
-| `--dtype` | Target dtype: `fp32`, `fp16`, `bf16` | auto |
-| `--verbose` | Enable verbose output | false |
+| `--output`, `-o` | Output path for optimized model | auto-generated |
+| `--level` | Optimization level: `basic`, `jit`, `compile`, `triton`, `production` | `compile` |
+| `--hardware` | Target hardware: `auto`, `cpu`, `cuda`, `mps` | `auto` |
+| `--input-shape` | Input tensor shape (e.g., `1,3,224,224`) | inferred |
+| `--benchmark` | Run performance benchmark after optimization | false |
+| `--validate` | Validate optimization correctness | false |
+| `--trust-source` | Allow loading untrusted model files (pickle deserialization) | false |
+| `--verbose`, `-v` | Enable verbose output | false |
 
 **Examples:**
 
 ```bash
-# Basic JIT optimization
-torchbridge optimize --model model.pt --level jit
+# Compile-level optimization (default)
+torchbridge optimize --model model.pt --level compile
 
-# Production with specific backend
-torchbridge optimize --model model.pt --level production --backend cuda
+# Production optimization with benchmarking
+torchbridge optimize --model model.pt --level production --benchmark
 
-# BF16 conversion
-torchbridge optimize --model model.pt --level compile --dtype bf16
+# JIT optimization with custom input shape
+torchbridge optimize --model model.pt --level jit --input-shape 1,3,224,224
 ```
 
 ### `torchbridge benchmark`
@@ -241,29 +244,18 @@ tb-validate --ci --level quick
 tb-init --name my_project --template training
 ```
 
-## Environment Variables
+## Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TORCHBRIDGE_BACKEND` | Force backend selection | auto |
-| `TORCHBRIDGE_LOG_LEVEL` | Logging level | `INFO` |
-| `TORCHBRIDGE_LOG_FORMAT` | Log format: `text`, `json` | `text` |
-| `TORCHBRIDGE_DEFAULT_DTYPE` | Default dtype | auto |
+TorchBridge is configured programmatically via `TorchBridgeConfig`:
 
-## Configuration File
+```python
+from torchbridge import TorchBridgeConfig, configure
 
-Create `torchbridge.yaml` in your project root:
-
-```yaml
-backend: auto
-optimization_level: O2
-precision:
-  enabled: true
-  dtype: bfloat16
-logging:
-  level: INFO
-  format: json
+config = TorchBridgeConfig.for_training()
+configure(config)
 ```
+
+See the [quickstart guide](../getting_started/quickstart.md) for configuration presets.
 
 ## Use Cases
 

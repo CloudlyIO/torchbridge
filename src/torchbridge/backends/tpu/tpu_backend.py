@@ -112,6 +112,7 @@ class TPUBackend(BaseBackend):
                 }
             )
         except Exception:
+            logger.debug("TPU device info detection failed", exc_info=True)
             return DeviceInfo(
                 backend="tpu",
                 device_type="cpu",
@@ -305,6 +306,7 @@ class TPUBackend(BaseBackend):
         try:
             return xla_compat.get_device_count()
         except Exception:
+            logger.debug("TPU device count query failed", exc_info=True)
             return 0
 
     def _apply_tpu_optimizations(self, model: nn.Module) -> nn.Module:
@@ -413,6 +415,7 @@ class TPUBackend(BaseBackend):
             if self.is_distributed:
                 xla_compat.rendezvous('sync')
         except Exception:
+            logger.debug("TPU synchronization failed", exc_info=True)
             pass
 
     def get_memory_stats(self) -> dict[str, Any]:
@@ -429,6 +432,7 @@ class TPUBackend(BaseBackend):
         try:
             stats['xla_device_count'] = xla_compat.get_device_count()
         except Exception:
+            logger.debug("TPU XLA device count query failed", exc_info=True)
             pass
 
         return stats
@@ -442,6 +446,7 @@ class TPUBackend(BaseBackend):
             # Clear XLA compilation cache
             xla_compat.sync()
         except Exception:
+            logger.debug("TPU cache sync failed", exc_info=True)
             pass
 
     def save_model(self, model: nn.Module, path: str | Path,

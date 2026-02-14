@@ -407,6 +407,7 @@ class TorchScriptExporter:
                 _extra_files=extra_files
             )
         except Exception:
+            logger.debug("TorchScript load with extra files failed, retrying without", exc_info=True)
             # Try loading without extra files
             model = torch.jit.load(str(model_path), map_location=map_location)
             extra_files = {}

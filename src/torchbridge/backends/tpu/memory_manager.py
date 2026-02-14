@@ -75,6 +75,7 @@ class TPUMemoryManager(BaseMemoryManager):
         try:
             return xla_compat.get_xla_device()
         except Exception:
+            logger.debug("PyTorch/XLA device acquisition failed", exc_info=True)
             warnings.warn("PyTorch/XLA not available. Using CPU fallback.", stacklevel=2)
             return torch.device("cpu")
 
@@ -119,6 +120,7 @@ class TPUMemoryManager(BaseMemoryManager):
         try:
             xla_compat.sync()
         except Exception:
+            logger.debug("TPU device synchronization failed", exc_info=True)
             pass
 
     def _empty_device_cache(self) -> None:
@@ -127,6 +129,7 @@ class TPUMemoryManager(BaseMemoryManager):
             xla_compat.sync()
             gc.collect()
         except Exception:
+            logger.debug("TPU cache clearing failed", exc_info=True)
             pass
 
     # =========================================================================
@@ -383,6 +386,7 @@ class TPUMemoryManager(BaseMemoryManager):
             logger.info("TPU memory optimization completed")
 
         except Exception:
+            logger.debug("TPU memory optimization failed", exc_info=True)
             pass
 
     def clear_memory_pools(self) -> None:

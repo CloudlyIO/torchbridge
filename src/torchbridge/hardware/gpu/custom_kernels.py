@@ -11,6 +11,7 @@ and CUDA kernel building utilities.
 - Kernel fusion: Eliminate memory bandwidth bottlenecks
 """
 
+import logging
 import math
 import warnings
 from collections.abc import Callable
@@ -19,6 +20,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 # Try to import Triton for kernel development
 try:
@@ -244,6 +247,7 @@ class TritonKernelOptimizer:
 
             except Exception:
                 # Configuration not suitable, skip
+                logger.debug("Triton kernel config (%d, %d, %d) not suitable", block_m, block_n, block_k, exc_info=True)
                 continue
 
         if best_config is None:

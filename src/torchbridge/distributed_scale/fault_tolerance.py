@@ -161,8 +161,10 @@ class HardwareHealthMonitor:
                     util = float(values[2]) if values[2] != '[Not Supported]' else 0.0
                     return temp, power, util
             except Exception:
+                logger.debug("nvidia-smi health check failed", exc_info=True)
                 pass
         except Exception:
+            logger.debug("pynvml health check failed", exc_info=True)
             pass
 
         return 0.0, 0.0, 0.0  # Fallback values
