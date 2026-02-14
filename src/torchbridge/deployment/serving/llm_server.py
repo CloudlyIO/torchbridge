@@ -738,6 +738,7 @@ class LLMInferenceServer:
                     self.tokenizer.decode([t]) for t in tokens
                 ]
             except Exception:
+                logger.debug("Token text decoding failed", exc_info=True)
                 pass
 
             return TokenCountResponse(

@@ -15,6 +15,7 @@ This module provides:
 Author: TorchBridge Team
 """
 
+import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
@@ -23,6 +24,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -360,6 +363,7 @@ class MemoryEfficientAttention(nn.Module):
                     is_causal=attn_mask is None  # Assume causal if no mask provided
                 )
             except Exception:
+                logger.debug("SDPA attention failed, falling back to manual attention", exc_info=True)
                 # Fallback to manual attention
                 attn_output = self._manual_attention(q, k, v, attn_mask)
         else:

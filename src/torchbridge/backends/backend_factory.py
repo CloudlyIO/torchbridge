@@ -305,6 +305,7 @@ class BackendFactory:
         try:
             return torch.cuda.is_available() and torch.version.cuda is not None
         except Exception:
+            logger.debug("NVIDIA CUDA availability check failed", exc_info=True)
             return False
 
     @classmethod
@@ -324,6 +325,7 @@ class BackendFactory:
                     return True
             return False
         except Exception:
+            logger.debug("AMD ROCm availability check failed", exc_info=True)
             return False
 
     @classmethod
@@ -360,6 +362,7 @@ class BackendFactory:
             xm.xla_device()
             return True
         except Exception:
+            logger.debug("TPU/XLA availability check failed", exc_info=True)
             return False
 
     @classmethod

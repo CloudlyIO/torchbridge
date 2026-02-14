@@ -300,6 +300,7 @@ def supports_privateuse1() -> bool:
         # Check if PrivateUse1 APIs are available
         return hasattr(torch.utils, 'rename_privateuse1_backend')
     except Exception:
+        logger.debug("PrivateUse1 support check failed", exc_info=True)
         return False
 
 

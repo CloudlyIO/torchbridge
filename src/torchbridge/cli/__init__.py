@@ -10,8 +10,6 @@ import logging
 import os
 import sys
 import warnings
-from typing import Optional  # noqa: F401
-
 # Suppress noisy warnings before any imports that trigger them
 # These are informational, not errors - we report hardware status via 'doctor' command
 warnings.filterwarnings("ignore", message=".*Redirects are currently not supported.*")

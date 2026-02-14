@@ -18,6 +18,7 @@ References:
     - NVIDIA FP8 Training: https://developer.nvidia.com/blog/nvidia-h100-transformer-engine/
 """
 
+import logging
 import warnings
 from dataclasses import dataclass
 from enum import Enum
@@ -26,6 +27,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 # Check PyTorch version for FP8 support
 PYTORCH_VERSION = tuple(int(x) for x in torch.__version__.split('.')[:2])
@@ -436,6 +439,7 @@ class NativeFP8Linear(nn.Module):
 
             return output
         except Exception:
+            logger.debug("Native FP8 forward pass failed, falling back to dequantize approach", exc_info=True)
             # If native fails, use dequantize approach
             return self._fp8_forward_dequant(input)
 

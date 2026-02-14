@@ -7,6 +7,7 @@ with multiple levels: quick, standard, full, and cloud.
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 import time
@@ -14,6 +15,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -303,6 +306,7 @@ Examples:
             torch.jit.trace(torch.nn.Linear(10, 1).eval(), torch.randn(1, 10))
             export_formats.append("TorchScript")
         except Exception:
+            logger.debug("TorchScript tracing check failed", exc_info=True)
             pass
 
         try:

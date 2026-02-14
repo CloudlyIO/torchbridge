@@ -444,6 +444,7 @@ class AdvancedCollectiveOps:
             # For testing without distributed setup, just return the tensor
             return tensor
         except Exception:
+            logger.debug("Allreduce operation failed, returning input tensor", exc_info=True)
             # Fallback for testing - just return the input tensor
             return tensor
 
@@ -473,6 +474,7 @@ class AdvancedCollectiveOps:
                 # For testing - simulate gather by replicating tensor
                 return torch.cat([tensor for _ in range(self.world_size)], dim=0)
         except Exception:
+            logger.debug("Allgather operation failed, simulating with tensor replication", exc_info=True)
             # Fallback for testing - simulate gather by replicating tensor
             return torch.cat([tensor for _ in range(self.world_size)], dim=0)
 

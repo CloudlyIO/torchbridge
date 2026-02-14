@@ -307,6 +307,7 @@ class HardwareTopologyManager:
             # Would use rocm-smi or similar tools
             pass
         except Exception:
+            logger.debug("AMD ROCm device discovery failed", exc_info=True)
             pass
 
         return devices
@@ -340,8 +341,10 @@ class HardwareTopologyManager:
                     util = float(values[2]) if values[2] != '[Not Supported]' else 0.0
                     return temp, power, util
             except Exception:
+                logger.debug("nvidia-smi device status query failed", exc_info=True)
                 pass
         except Exception:
+            logger.debug("pynvml device status query failed", exc_info=True)
             pass
 
         return 0.0, 0.0, 0.0  # Fallback values
@@ -417,6 +420,7 @@ class HardwareTopologyManager:
                         else:
                             return "ssd"
         except Exception:
+            logger.debug("Storage type detection failed", exc_info=True)
             pass
 
         return "unknown"
@@ -468,6 +472,7 @@ class HardwareTopologyManager:
                                 bandwidth = 600.0  # GB/s bidirectional
                                 nvlink_topology[(dev1.device_id, dev2.device_id)] = bandwidth
             except Exception:
+                logger.debug("NVLink topology discovery failed", exc_info=True)
                 pass
 
         return nvlink_topology

@@ -51,7 +51,7 @@ COPY pyproject.toml /app/
 COPY examples/ /app/examples/
 
 # Install the package
-RUN pip3 install --no-cache-dir -e .
+RUN pip3 install --no-cache-dir .
 
 # Create non-root user for production serving
 RUN groupadd -g 1000 appuser \

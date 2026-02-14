@@ -274,6 +274,7 @@ class EnhancedHealthMonitor(HealthMonitor):
                 y = x + x
                 return y.sum().item() == 6.0
             except Exception:
+                logger.debug("PyTorch functional check failed", exc_info=True)
                 return False
 
         # Check 3: GC is working
@@ -282,6 +283,7 @@ class EnhancedHealthMonitor(HealthMonitor):
                 gc.collect()
                 return True
             except Exception:
+                logger.debug("GC functional check failed", exc_info=True)
                 return False
 
         self._liveness_checks.extend([

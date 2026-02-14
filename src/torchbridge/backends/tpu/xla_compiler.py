@@ -300,6 +300,7 @@ class XLACompiler:
         try:
             xla_compat.sync()
         except Exception:
+            logger.debug("XLA compilation cache sync failed", exc_info=True)
             pass
 
     def benchmark_compilation(self, model: nn.Module,
