@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """
-Qwen2.5-Coder Cross-Backend Example
+Qwen3-VL Cross-Backend Example
 
-Demonstrates how to use TorchBridge to run Alibaba's Qwen2.5-Coder
-for code generation across CUDA, ROCm, and CPU backends.
+Demonstrates how to use TorchBridge to run Alibaba's Qwen3-VL
+vision-language model across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
-Qwen2.5-Coder is a top code model optimized for latency-critical
-IDE use cases (autocomplete, inline suggestions, code review).
+Qwen3-VL is the latest generation VLM with dual-component architecture
+(vision encoder + language model) that benefits from HAL-level
+backend optimization for both components, including visual grounding,
+document understanding, and video comprehension.
 
 Models covered:
-- Qwen/Qwen2.5-Coder-7B-Instruct (7B, primary)
-- Qwen/Qwen2.5-Coder-3B-Instruct (3B, efficient)
-- Qwen/Qwen2.5-Coder-1.5B-Instruct (1.5B, edge)
-- Qwen/Qwen2.5-Coder-32B-Instruct (32B, highest quality)
+- Qwen/Qwen3-VL-7B-Instruct (7B, primary)
+- Qwen/Qwen3-VL-3B-Instruct (3B, efficient)
+- Qwen/Qwen3-VL-72B-Instruct (72B, highest quality)
 
 Requirements:
-    pip install transformers accelerate
+    pip install transformers accelerate qwen-vl-utils
 
 Hardware requirements (7B):
     - FP16: ~14GB VRAM
@@ -23,10 +24,10 @@ Hardware requirements (7B):
     - INT4: ~4GB VRAM
 
 Usage:
-    python qwen25_coder_cross_backend.py
-    python qwen25_coder_cross_backend.py --model Qwen/Qwen2.5-Coder-3B-Instruct
-    python qwen25_coder_cross_backend.py --quantization int4
-    python qwen25_coder_cross_backend.py --benchmark
+    python qwen3_vl_cross_backend.py
+    python qwen3_vl_cross_backend.py --model Qwen/Qwen3-VL-3B-Instruct
+    python qwen3_vl_cross_backend.py --quantization int4
+    python qwen3_vl_cross_backend.py --benchmark
 """
 
 import argparse
@@ -90,7 +91,7 @@ def get_system_info() -> dict[str, Any]:
 
 
 def estimate_memory(model_name: str, quantization: str = "none") -> dict[str, float]:
-    """Estimate memory requirements for Qwen2.5-Coder."""
+    """Estimate memory requirements for Qwen3-VL."""
     try:
         from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
 
@@ -106,12 +107,10 @@ def estimate_memory(model_name: str, quantization: str = "none") -> dict[str, fl
         optimizer = LLMOptimizer(config)
         return optimizer.estimate_memory(model_name)
     except ImportError:
-        if "1.5b" in model_name.lower():
-            base_gb = 3.0
-        elif "3b" in model_name.lower():
+        if "3b" in model_name.lower():
             base_gb = 6.0
-        elif "32b" in model_name.lower():
-            base_gb = 64.0
+        elif "72b" in model_name.lower():
+            base_gb = 144.0
         else:
             base_gb = 14.0  # 7B default
         multipliers = {"none": 1.0, "int8": 0.5, "int4": 0.3}
@@ -125,7 +124,7 @@ def run_optimized_inference(
     prompt: str,
     max_new_tokens: int,
 ) -> dict[str, Any]:
-    """Run optimized code generation with TorchBridge."""
+    """Run optimized inference with TorchBridge on Qwen3-VL."""
     print_section(f"TorchBridge Optimized Inference - {model_name}")
 
     try:
@@ -142,7 +141,7 @@ def run_optimized_inference(
             use_flash_attention=True,
             use_torch_compile=True,
             compile_mode="reduce-overhead",
-            max_sequence_length=8192,
+            max_sequence_length=4096,
         )
         optimizer = LLMOptimizer(config)
 
@@ -157,6 +156,7 @@ def run_optimized_inference(
         for key in ["device", "dtype", "backend", "quantization", "flash_attention"]:
             print(f"  {key}: {opt_info.get(key, 'N/A')}")
 
+        # Text-only inference (no image for simplicity)
         print(f"\nPrompt: '{prompt}'")
         inputs = tokenizer(prompt, return_tensors="pt").to(optimizer.device)
 
@@ -173,8 +173,8 @@ def run_optimized_inference(
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 do_sample=True,
-                temperature=0.2,
-                top_p=0.95,
+                temperature=0.7,
+                top_p=0.9,
                 pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             )
         if torch.cuda.is_available():
@@ -212,7 +212,7 @@ def run_benchmark(
     quantization: str,
     num_runs: int = 5,
 ) -> dict[str, Any]:
-    """Run structured benchmark for Qwen2.5-Coder."""
+    """Run structured benchmark for Qwen3-VL."""
     print_section(f"Benchmark - {model_name} ({quantization})")
 
     try:
@@ -234,9 +234,9 @@ def run_benchmark(
         model, tokenizer = optimizer.optimize(model_name)
 
         prompts = [
-            "Write a Python function to find the longest common subsequence.",
-            "Implement a thread-safe LRU cache in Python.",
-            "Write a binary search tree with insert, delete, and search operations.",
+            "Describe the key differences between CNNs and Vision Transformers.",
+            "Explain how attention mechanisms work in multimodal models.",
+            "What are the advantages of vision-language models for document understanding?",
         ]
 
         latencies = []
@@ -254,7 +254,7 @@ def run_benchmark(
                 with torch.no_grad():
                     outputs = model.generate(
                         **inputs,
-                        max_new_tokens=200,
+                        max_new_tokens=100,
                         do_sample=False,
                         pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
                     )
@@ -305,12 +305,12 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Qwen2.5-Coder Cross-Backend Code Generation with TorchBridge"
+        description="Qwen3-VL Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
         type=str,
-        default="Qwen/Qwen2.5-Coder-7B-Instruct",
+        default="Qwen/Qwen3-VL-7B-Instruct",
         help="HuggingFace model name",
     )
     parser.add_argument(
@@ -323,18 +323,18 @@ def main():
     parser.add_argument(
         "--prompt",
         type=str,
-        default="Write a Python function that implements quicksort with type hints.",
-        help="Prompt for code generation",
+        default="Describe the architecture of a vision-language model.",
+        help="Prompt for generation",
     )
     parser.add_argument(
-        "--max-new-tokens", type=int, default=256, help="Max new tokens"
+        "--max-new-tokens", type=int, default=128, help="Max new tokens"
     )
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
     parser.add_argument("--output-json", type=str, help="Save results to JSON")
 
     args = parser.parse_args()
 
-    print_section("Qwen2.5-Coder Cross-Backend Code Generation with TorchBridge")
+    print_section("Qwen3-VL Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

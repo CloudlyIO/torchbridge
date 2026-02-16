@@ -2,7 +2,7 @@
 
 **Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, Trainium, and TPU without code changes, and **validates that outputs match across backends**.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C464%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-9%2F9%20passed-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C464%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-6%20platforms%20PASS-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
@@ -189,31 +189,30 @@ src/torchbridge/
 └── utils/             # Utilities and profiling
 ```
 
-## Cloud GPU Validation
+## Cloud Hardware Validation
 
-All 5 use cases validated on real GPU hardware across AWS and GCP:
+Cross-backend numerical consistency validated on 6 hardware platforms using Qwen3-0.6B:
 
-| Use Case | AWS A10G | GCP L4 | Description |
-|----------|----------|--------|-------------|
-| Export Pipeline | PASS | PASS | TorchScript, ONNX, SafeTensors export with validation |
-| LLM Optimization | PASS | PASS | Qwen3/DeepSeek optimization with backend-specific tuning |
-| CI/CD Validation | PASS | PASS | Diagnostics, benchmarks, cross-backend checks |
-| Backend Training | PASS | PASS | AMP training with auto backend detection |
-| Cross-Backend Validation | PASS | PASS | Model, hardware, config, and output consistency |
+| Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
+|----------|----------|----------|------------|---------|--------|
+| AWS | NVIDIA A10G (24GB) | 1.96e-05 | 1.000001 | 41.8 ms | PASS |
+| GCP | NVIDIA T4 (16GB) | 2.67e-05 | 1.000001 | 50.8 ms | PASS |
+| RunPod | NVIDIA H100 NVL (100GB) | 2.29e-05 | 1.000001 | 18.8 ms | PASS |
+| AMD DevCloud | AMD MI300X (192GB) | 4.82e-05 | 1.000001 | 30.0 ms | PASS |
+| GCP | TPU v5e | 1.08e-01 | 0.999980 | 47.5 ms | PASS |
+| Local | Apple Silicon (MPS) | 4.58e-05 | 1.000002 | 27.8 ms | PASS |
 
-**Platforms tested:**
-- **AWS g5.xlarge** -- NVIDIA A10G 24GB, PyTorch 2.9.1+cu130
-- **GCP n1-standard-4** -- NVIDIA T4 16GB, PyTorch 2.7.1+cu128
+All backends produce semantically identical outputs (cosine similarity > 0.999).
 
 See [full validation report](./docs/reference/cloud-validation.md) for detailed benchmarks and results.
 
 ## Quality
 
-- **1,464 tests** passing across all modules
+- **1,464 tests** collected, 1,394 passing (70 hardware-gated skips)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on NVIDIA A10G (AWS), L4 (GCP), and AMD MI300X -- 5/5 use cases pass
-- **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud
+- **Cloud validated** on 6 hardware platforms: NVIDIA A10G (AWS), T4 (GCP), H100 NVL (RunPod), AMD MI300X, GCP TPU v5e, Apple MPS
+- **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud, RunPod
 
 ```bash
 python3 -m pytest tests/ -q

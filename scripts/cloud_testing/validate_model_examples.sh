@@ -9,7 +9,7 @@
 # Usage:
 #   ./scripts/cloud_testing/validate_model_examples.sh [--results-dir DIR]
 #
-# Supports: AWS (A10G/H100), GCP (T4/L4), AMD (MI300X)
+# Supports: AWS (A10G/H100), GCP (T4/L4/TPU v5e), AMD (MI300X), RunPod (H100 NVL), Local (MPS)
 # =============================================================================
 
 set -eo pipefail
