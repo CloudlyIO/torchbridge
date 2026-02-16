@@ -121,7 +121,7 @@ def run_fsdp_training(
         dummy_labels = dummy_input_ids.clone()
 
         if rank == 0:
-            print(f"\nTraining config:")
+            print("\nTraining config:")
             print(f"  Steps: {num_steps}")
             print(f"  Batch size: {batch_size} x {world_size} GPUs")
             print(f"  Sequence length: {max_seq_len}")
@@ -145,7 +145,7 @@ def run_fsdp_training(
         elapsed = time.perf_counter() - start_time
 
         if rank == 0:
-            print(f"\nTraining complete:")
+            print("\nTraining complete:")
             print(f"  Total time: {elapsed:.1f}s")
             print(f"  Steps/sec: {num_steps / elapsed:.2f}")
             print(f"  Tokens/sec: {num_steps * batch_size * max_seq_len * world_size / elapsed:.0f}")

@@ -1,27 +1,35 @@
 #!/usr/bin/env python3
 """
-BGE-M3 Cross-Backend Example
+GTE-Qwen3 Embedding Cross-Backend Example
 
-Demonstrates how to use TorchBridge to run BAAI's BGE-M3 embedding model
-across CUDA, ROCm, Trainium, TPU, and CPU backends.
+Demonstrates how to use TorchBridge to run Alibaba's GTE-Qwen3
+embedding model across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
-BGE-M3 is a leading multilingual embedding model for RAG pipelines.
-Batch throughput varies significantly per backend, making it an ideal
-HAL validation target.
+GTE (General Text Embeddings) with Qwen3 backbone is a leading
+embedding model for RAG pipelines, semantic search, and retrieval.
+It supports flexible output dimensions and instruction-based embedding.
 
 Models covered:
-- BAAI/bge-m3 (568M, 1024-dim, 8192 max tokens)
+- Alibaba-NLP/gte-Qwen3-embedding (primary, ~1.5B params)
+
+Key features demonstrated:
+- Embedding generation across backends
+- Semantic similarity computation
+- Batch encoding throughput
+- Cross-backend output consistency
+- Comparison with BGE-M3 (see bge_m3_cross_backend.py)
 
 Requirements:
     pip install transformers sentence-transformers
 
 Hardware requirements:
-    - FP16: ~1.2GB VRAM
-    - FP32: ~2.4GB VRAM
+    - FP16: ~3GB VRAM
+    - FP32: ~6GB VRAM
 
 Usage:
-    python bge_m3_cross_backend.py
-    python bge_m3_cross_backend.py --benchmark
+    python gte_qwen3_cross_backend.py
+    python gte_qwen3_cross_backend.py --benchmark
+    python gte_qwen3_cross_backend.py --batch-size 64
 """
 
 import argparse
@@ -79,8 +87,8 @@ def get_system_info() -> dict[str, Any]:
 
 
 def run_embedding(model_name: str) -> dict[str, Any]:
-    """Run BGE-M3 embedding with cross-backend comparison."""
-    print_section(f"BGE-M3 Embedding - {model_name}")
+    """Run GTE-Qwen3 embedding with cross-backend comparison."""
+    print_section(f"GTE-Qwen3 Embedding - {model_name}")
 
     try:
         from transformers import AutoModel, AutoTokenizer
@@ -89,26 +97,51 @@ def run_embedding(model_name: str) -> dict[str, Any]:
         model = AutoModel.from_pretrained(model_name)
         model.eval()
 
-        sentences = [
-            "TorchBridge provides hardware abstraction for PyTorch.",
-            "The model runs on NVIDIA, AMD, Trainium, and TPU without code changes.",
-            "Cross-backend validation ensures output consistency.",
-            "RAG pipelines benefit from fast embedding throughput.",
+        # Diverse sentences to test embedding quality
+        queries = [
+            "How does TorchBridge handle cross-backend optimization?",
+            "What is the best GPU for training large language models?",
+        ]
+        documents = [
+            "TorchBridge provides hardware abstraction for PyTorch, enabling code "
+            "to run on NVIDIA, AMD, Trainium, TPU, and CPU without modifications.",
+            "The NVIDIA H100 with 80GB HBM3 is widely used for LLM training, "
+            "offering FP8 Transformer Engine for 2x throughput.",
+            "Apple's M-series chips use unified memory architecture for ML workloads.",
+            "RAG pipelines benefit from fast embedding throughput on GPU backends.",
         ]
 
+        all_sentences = queries + documents
+
         inputs = tokenizer(
-            sentences, padding=True, truncation=True, max_length=512, return_tensors="pt"
+            all_sentences, padding=True, truncation=True, max_length=512,
+            return_tensors="pt",
         )
 
         # CPU forward pass
         with torch.no_grad():
             cpu_out = model(**inputs)
-        # Use CLS token embedding
         cpu_embeddings = cpu_out.last_hidden_state[:, 0]
-        print(f"CPU embedding shape: {cpu_embeddings.shape}")
-        print(f"CPU embedding norm: {cpu_embeddings.norm(dim=-1).mean():.4f}")
+        cpu_embeddings = torch.nn.functional.normalize(cpu_embeddings, p=2, dim=1)
 
-        # GPU forward pass
+        print(f"Embedding shape: {cpu_embeddings.shape}")
+        print(f"Embedding dim: {cpu_embeddings.shape[1]}")
+
+        # Semantic similarity matrix (queries vs documents)
+        query_emb = cpu_embeddings[:len(queries)]
+        doc_emb = cpu_embeddings[len(queries):]
+        similarity = torch.mm(query_emb, doc_emb.t())
+
+        print("\nSemantic Similarity (queries vs documents):")
+        for i, query in enumerate(queries):
+            print(f"\n  Query: '{query[:60]}...'")
+            scores = similarity[i].tolist()
+            ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+            for rank, (doc_idx, score) in enumerate(ranked):
+                marker = " <-- best match" if rank == 0 else ""
+                print(f"    [{score:.4f}] {documents[doc_idx][:70]}...{marker}")
+
+        # GPU comparison
         if torch.cuda.is_available():
             device = torch.device("cuda")
             model_gpu = model.to(device)
@@ -117,8 +150,11 @@ def run_embedding(model_name: str) -> dict[str, Any]:
             with torch.no_grad():
                 gpu_out = model_gpu(**inputs_gpu)
             gpu_embeddings = gpu_out.last_hidden_state[:, 0]
+            gpu_embeddings = torch.nn.functional.normalize(gpu_embeddings, p=2, dim=1)
 
-            max_diff = torch.abs(cpu_embeddings - gpu_embeddings.cpu()).max().item()
+            max_diff = torch.abs(
+                cpu_embeddings - gpu_embeddings.cpu()
+            ).max().item()
             cos_sim = torch.nn.functional.cosine_similarity(
                 cpu_embeddings.flatten().unsqueeze(0),
                 gpu_embeddings.cpu().flatten().unsqueeze(0),
@@ -135,12 +171,14 @@ def run_embedding(model_name: str) -> dict[str, Any]:
                 "max_diff": max_diff,
                 "cosine_sim": cos_sim,
                 "status": "PASSED" if max_diff < 1e-4 else "REVIEW",
+                "similarity_matrix": similarity.tolist(),
             }
 
         return {
             "model_name": model_name,
             "embedding_shape": list(cpu_embeddings.shape),
             "status": "CPU_ONLY",
+            "similarity_matrix": similarity.tolist(),
         }
 
     except ImportError as e:
@@ -156,7 +194,7 @@ def run_benchmark(
     num_runs: int = 10,
     batch_size: int = 32,
 ) -> dict[str, Any]:
-    """Run structured benchmark for BGE-M3."""
+    """Run structured benchmark for GTE-Qwen3."""
     print_section(f"Benchmark - {model_name} (batch={batch_size})")
 
     try:
@@ -169,9 +207,13 @@ def run_benchmark(
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
 
-        sentences = [f"Benchmark sentence number {i} for embedding throughput." for i in range(batch_size)]
+        sentences = [
+            f"Benchmark sentence number {i} for embedding throughput testing."
+            for i in range(batch_size)
+        ]
         inputs = tokenizer(
-            sentences, padding=True, truncation=True, max_length=128, return_tensors="pt"
+            sentences, padding=True, truncation=True, max_length=128,
+            return_tensors="pt",
         )
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
@@ -201,7 +243,8 @@ def run_benchmark(
             "num_runs": num_runs,
             "latency_p50_ms": latencies[len(latencies) // 2],
             "latency_p95_ms": latencies[int(len(latencies) * 0.95)],
-            "throughput_sentences_per_sec": batch_size * 1000.0 / latencies[len(latencies) // 2],
+            "throughput_sentences_per_sec": batch_size * 1000.0
+            / latencies[len(latencies) // 2],
             "system_info": get_system_info(),
         }
 
@@ -223,12 +266,12 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="BGE-M3 Cross-Backend Embedding with TorchBridge"
+        description="GTE-Qwen3 Cross-Backend Embedding with TorchBridge"
     )
     parser.add_argument(
         "--model",
         type=str,
-        default="BAAI/bge-m3",
+        default="Alibaba-NLP/gte-Qwen3-embedding",
         help="HuggingFace model name",
     )
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
@@ -239,7 +282,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("BGE-M3 Cross-Backend Embedding with TorchBridge")
+    print_section("GTE-Qwen3 Cross-Backend Embedding with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")

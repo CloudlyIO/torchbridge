@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 """
-Llama 4 Scout Cross-Backend Example
+Mixture of Experts (MoE) Cross-Backend Example
 
-Demonstrates how to use TorchBridge to run Meta Llama 4 Scout for
-production inference across CUDA, ROCm, Trainium, TPU, and CPU backends. Llama 4 Scout
-uses a Mixture-of-Experts (MoE) architecture with 17B active parameters
-and 16 experts, fitting on a single H100/A100 GPU.
+Demonstrates how TorchBridge handles MoE architectures across CUDA,
+ROCm, Trainium, TPU, and CPU backends. MoE models activate only a subset of parameters
+per token, offering better quality per FLOP than dense models.
+
+As of Feb 2026, MoE dominates the model landscape — 9 of the top 15
+models use MoE architectures (DeepSeek-V3, Llama 4, Qwen3 MoE variants).
 
 Models covered:
-- meta-llama/Llama-4-Scout-17B-16E (base, 109B total / 17B active)
-- meta-llama/Llama-4-Scout-17B-16E-Instruct (instruction-tuned)
+- Qwen/Qwen3-30B-A3B (30B total / 3B active, primary — fits single GPU)
+- Qwen/Qwen3-235B-A22B (235B total / 22B active, multi-GPU)
+- deepseek-ai/DeepSeek-V3-0324 (685B total / 37B active, 256 experts, multi-node)
 
-Key features:
-- Native multimodal (text + image input)
-- 10M token context window
-- MoE with 16 experts (17B active per forward pass)
-- Outperforms Gemma 3, Gemini 2.0 Flash-Lite, Mistral 3.1
+Key features demonstrated:
+- MoE expert routing efficiency across backends
+- Expert load balancing analysis
+- Active parameter utilization vs total parameter count
+- Cross-backend consistency for sparse computation
 
 Requirements:
     pip install transformers accelerate
 
-Hardware requirements:
-    - FP16: ~35GB VRAM (H100, MI300X) — fits single GPU
-    - FP8:  ~18GB VRAM (H100, B200, MI350X)
-    - INT4: ~14GB VRAM (A10G, L4)
+Hardware requirements (Qwen3-30B-A3B):
+    - FP16: ~60GB VRAM (total params loaded, only 3B active per forward)
+    - INT4: ~15GB VRAM (fits on A10G 24GB with quantization)
+    - CPU: ~60GB RAM (slow but functional)
 
 Usage:
-    python llama4_cross_backend.py
-    python llama4_cross_backend.py --model meta-llama/Llama-4-Scout-17B-16E-Instruct
-    python llama4_cross_backend.py --quantization int4
-    python llama4_cross_backend.py --benchmark
-    python llama4_cross_backend.py --export safetensors
+    python moe_cross_backend.py
+    python moe_cross_backend.py --model Qwen/Qwen3-235B-A22B
+    python moe_cross_backend.py --quantization int4
+    python moe_cross_backend.py --analyze-experts
+    python moe_cross_backend.py --benchmark
 """
 
 import argparse
@@ -46,6 +49,35 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+# MoE model catalog with architecture details
+MOE_MODELS = {
+    "Qwen/Qwen3-30B-A3B": {
+        "total_params": "30B",
+        "active_params": "3B",
+        "num_experts": 128,
+        "top_k": 8,
+        "vram_fp16_gb": 60,
+        "vram_int4_gb": 15,
+    },
+    "Qwen/Qwen3-235B-A22B": {
+        "total_params": "235B",
+        "active_params": "22B",
+        "num_experts": 128,
+        "top_k": 8,
+        "vram_fp16_gb": 470,
+        "vram_int4_gb": 120,
+    },
+    "deepseek-ai/DeepSeek-V3-0324": {
+        "total_params": "685B",
+        "active_params": "37B",
+        "num_experts": 256,
+        "top_k": 8,
+        "vram_fp16_gb": 1370,
+        "vram_int4_gb": 340,
+    },
+}
 
 
 def print_section(title: str) -> None:
@@ -65,21 +97,17 @@ def check_dependencies() -> dict[str, bool]:
         logger.info(f"transformers version: {transformers.__version__}")
     except ImportError:
         deps["transformers"] = False
-        logger.error("transformers not installed")
-
     try:
         import accelerate  # noqa: F401
 
         deps["accelerate"] = True
     except ImportError:
         deps["accelerate"] = False
-        logger.warning("accelerate not installed (recommended for Llama 4)")
-
     return deps
 
 
 def get_system_info() -> dict[str, Any]:
-    """Gather system information for benchmarking context."""
+    """Gather system information."""
     info = {
         "pytorch_version": torch.__version__,
         "cuda_available": torch.cuda.is_available(),
@@ -88,9 +116,8 @@ def get_system_info() -> dict[str, Any]:
         info["gpu_name"] = torch.cuda.get_device_name(0)
         props = torch.cuda.get_device_properties(0)
         info["gpu_memory_gb"] = round(props.total_memory / 1e9, 1)
-        info["cuda_version"] = torch.version.cuda or "N/A"
+        info["gpu_count"] = torch.cuda.device_count()
     if hasattr(torch.version, "hip") and torch.version.hip:
-        info["rocm_version"] = torch.version.hip
         info["backend"] = "ROCm"
     elif torch.cuda.is_available():
         info["backend"] = "CUDA"
@@ -99,30 +126,19 @@ def get_system_info() -> dict[str, Any]:
     return info
 
 
-def estimate_memory(model_name: str, quantization: str = "none") -> dict[str, float]:
-    """Estimate memory requirements for Llama 4 Scout."""
-    try:
-        from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
-
-        quant_map = {
-            "none": QuantizationMode.NONE,
-            "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.INT4,
-            "fp8": QuantizationMode.FP8,
-        }
-        config = LLMConfig(
-            model_name=model_name,
-            quantization=quant_map.get(quantization, QuantizationMode.NONE),
-        )
-        optimizer = LLMOptimizer(config)
-        return optimizer.estimate_memory(model_name)
-    except ImportError:
-        # Fallback estimates for Llama 4 Scout (109B total, 17B active)
-        # Active parameters dominate VRAM during inference
-        base_gb = 35.0  # FP16 for active params + expert routing
-        multipliers = {"none": 1.0, "int8": 0.55, "int4": 0.4, "fp8": 0.5}
-        mem = base_gb * multipliers.get(quantization, 1.0)
-        return {"model_memory_gb": mem, "total_gb": mem * 1.15}
+def print_moe_info(model_name: str) -> None:
+    """Print MoE architecture details for the selected model."""
+    if model_name in MOE_MODELS:
+        info = MOE_MODELS[model_name]
+        print("MoE Architecture:")
+        print(f"  Total parameters: {info['total_params']}")
+        print(f"  Active per token: {info['active_params']}")
+        print(f"  Number of experts: {info['num_experts']}")
+        print(f"  Top-K routing: {info['top_k']}")
+        print(f"  VRAM (FP16): ~{info['vram_fp16_gb']}GB")
+        print(f"  VRAM (INT4): ~{info['vram_int4_gb']}GB")
+    else:
+        print(f"  Model: {model_name} (architecture details not cataloged)")
 
 
 def run_optimized_inference(
@@ -131,8 +147,9 @@ def run_optimized_inference(
     prompt: str,
     max_new_tokens: int,
 ) -> dict[str, Any]:
-    """Run optimized inference with TorchBridge on Llama 4 Scout."""
-    print_section("TorchBridge Optimized Inference - Llama 4 Scout")
+    """Run optimized MoE inference with TorchBridge."""
+    print_section(f"TorchBridge MoE Inference - {model_name}")
+    print_moe_info(model_name)
 
     try:
         from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
@@ -141,37 +158,30 @@ def run_optimized_inference(
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
             "int4": QuantizationMode.INT4,
-            "fp8": QuantizationMode.FP8,
         }
+
         config = LLMConfig(
             model_name=model_name,
             quantization=quant_map.get(quantization, QuantizationMode.NONE),
             use_flash_attention=True,
             use_torch_compile=True,
             compile_mode="reduce-overhead",
-            max_sequence_length=8192,
+            max_sequence_length=4096,
         )
+
         optimizer = LLMOptimizer(config)
 
         memory_est = optimizer.estimate_memory(model_name)
-        print(f"Estimated memory: {memory_est['total_gb']:.1f} GB")
-        print("Architecture: MoE (109B total, 17B active, 16 experts)")
+        print(f"\nEstimated memory: {memory_est['total_gb']:.1f} GB")
 
-        if torch.cuda.is_available():
-            available = torch.cuda.get_device_properties(0).total_memory / 1e9
-            print(f"Available VRAM: {available:.1f} GB")
-            if memory_est["total_gb"] > available * 0.9:
-                print("WARNING: Model may not fit — try --quantization int4 or fp8")
-
-        print("\nLoading model (MoE models take longer to load)...")
+        print("\nLoading model...")
         model, tokenizer = optimizer.optimize(model_name)
 
         opt_info = optimizer.get_optimization_info()
         print("\nOptimization applied:")
-        for key in ["device", "dtype", "backend", "quantization", "flash_attention"]:
+        for key in ["device", "dtype", "backend", "quantization"]:
             print(f"  {key}: {opt_info.get(key, 'N/A')}")
 
-        # Generation
         print(f"\nPrompt: '{prompt}'")
         inputs = tokenizer(prompt, return_tensors="pt").to(optimizer.device)
 
@@ -204,23 +214,118 @@ def run_optimized_inference(
         print("\nPerformance:")
         print(f"  Latency: {generation_time:.2f}s")
         print(f"  Tokens/sec: {tokens_generated / generation_time:.1f}")
-        print(f"  Time-to-first-token: ~{generation_time / max(tokens_generated, 1) * 1000:.1f}ms")
 
         return {
             "model_name": model_name,
-            "architecture": "MoE (17B active / 109B total, 16 experts)",
+            "architecture": "MoE",
             "quantization": quantization,
             "generation_time_s": generation_time,
             "tokens_generated": tokens_generated,
             "tokens_per_sec": tokens_generated / generation_time,
+            "moe_info": MOE_MODELS.get(model_name, {}),
             "optimization_info": opt_info,
         }
 
     except ImportError as e:
-        logger.error(f"TorchBridge import failed: {e}")
+        logger.error(f"Import failed: {e}")
         return {"error": str(e)}
     except Exception as e:
-        logger.error(f"Generation failed: {e}")
+        logger.error(f"Inference failed: {e}")
+        return {"error": str(e)}
+
+
+def analyze_moe_experts(model_name: str) -> dict[str, Any]:
+    """Analyze MoE expert routing and load balancing."""
+    print_section(f"MoE Expert Analysis - {model_name}")
+    print_moe_info(model_name)
+
+    try:
+        from torchbridge.mixture_of_experts import MoEConfig
+        from torchbridge.models.llm import LLMConfig, LLMOptimizer
+
+        config = LLMConfig(model_name=model_name, use_flash_attention=True)
+        optimizer = LLMOptimizer(config)
+        model, tokenizer = optimizer.optimize(model_name)
+
+        # Analyze model structure for MoE layers
+        moe_layers = []
+        total_experts = 0
+        for name, module in model.named_modules():
+            module_type = type(module).__name__
+            if "moe" in module_type.lower() or "expert" in module_type.lower():
+                moe_layers.append(name)
+                if hasattr(module, "num_experts"):
+                    total_experts += module.num_experts
+
+        print(f"\nMoE layers found: {len(moe_layers)}")
+        print(f"Total expert modules: {total_experts}")
+
+        if moe_layers:
+            print("\nMoE layer names:")
+            for layer_name in moe_layers[:10]:
+                print(f"  - {layer_name}")
+            if len(moe_layers) > 10:
+                print(f"  ... and {len(moe_layers) - 10} more")
+
+        # Run inference and track expert utilization
+        test_prompts = [
+            "What is the capital of France?",
+            "Solve: 2x + 5 = 15",
+            "Write a haiku about the ocean.",
+            "Explain the difference between TCP and UDP.",
+        ]
+
+        expert_activations = {}
+        for prompt in test_prompts:
+            inputs = tokenizer(prompt, return_tensors="pt").to(optimizer.device)
+            with torch.no_grad():
+                outputs = model(**inputs)
+
+            if hasattr(outputs, "router_logits") and outputs.router_logits:
+                for i, logits in enumerate(outputs.router_logits):
+                    layer_key = f"layer_{i}"
+                    if layer_key not in expert_activations:
+                        expert_activations[layer_key] = []
+                    selected = logits.argmax(dim=-1).flatten().tolist()
+                    expert_activations[layer_key].extend(selected)
+
+        # MoE configuration analysis
+        moe_config = MoEConfig()
+        print("\nTorchBridge MoE configuration:")
+        print(f"  Default num_experts: {moe_config.num_experts}")
+        print(f"  Default top_k: {moe_config.top_k}")
+        print(f"  Capacity factor: {moe_config.capacity_factor}")
+        print(f"  Load balance loss weight: {moe_config.load_balance_loss_weight}")
+
+        # Expert utilization report
+        if expert_activations:
+            print("\nExpert utilization per layer (first 3 layers):")
+            for layer in list(expert_activations.keys())[:3]:
+                activations = expert_activations[layer]
+                unique, counts = torch.tensor(activations).unique(return_counts=True)
+                total = len(activations)
+                print(f"  {layer}:")
+                for expert_id, count in zip(unique.tolist(), counts.tolist()):
+                    pct = count / total * 100
+                    bar = "#" * int(pct / 2)
+                    print(f"    Expert {expert_id}: {pct:5.1f}% {bar}")
+        else:
+            print("\nNote: Router logits not exposed in this model variant.")
+            print("Expert analysis available for models with explicit MoE routing.")
+
+        return {
+            "moe_layers": len(moe_layers),
+            "total_experts": total_experts,
+            "expert_activations": {
+                k: len(v) for k, v in expert_activations.items()
+            },
+        }
+
+    except ImportError as e:
+        logger.error(f"Analysis requires TorchBridge: {e}")
+        return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Analysis failed: {e}")
         return {"error": str(e)}
 
 
@@ -229,8 +334,9 @@ def run_benchmark(
     quantization: str,
     num_runs: int = 5,
 ) -> dict[str, Any]:
-    """Run structured benchmark across multiple iterations."""
-    print_section(f"Benchmark - Llama 4 Scout ({quantization})")
+    """Run structured benchmark for MoE model."""
+    print_section(f"MoE Benchmark - {model_name} ({quantization})")
+    print_moe_info(model_name)
 
     try:
         from torchbridge.models.llm import LLMConfig, LLMOptimizer, QuantizationMode
@@ -239,8 +345,8 @@ def run_benchmark(
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
             "int4": QuantizationMode.INT4,
-            "fp8": QuantizationMode.FP8,
         }
+
         config = LLMConfig(
             model_name=model_name,
             quantization=quant_map.get(quantization, QuantizationMode.NONE),
@@ -248,13 +354,14 @@ def run_benchmark(
             use_torch_compile=True,
             compile_mode="reduce-overhead",
         )
+
         optimizer = LLMOptimizer(config)
         model, tokenizer = optimizer.optimize(model_name)
 
         prompts = [
-            "Explain the theory of relativity in simple terms.",
-            "Write a Python function to sort a list of integers.",
-            "What are the key differences between TCP and UDP?",
+            "Explain how mixture of experts routing works in transformer models.",
+            "Compare the efficiency of dense vs sparse models for inference.",
+            "What are the trade-offs of having more experts with fewer active?",
         ]
 
         latencies = []
@@ -262,8 +369,6 @@ def run_benchmark(
 
         for prompt in prompts:
             inputs = tokenizer(prompt, return_tensors="pt").to(optimizer.device)
-
-            # Warmup
             with torch.no_grad():
                 _ = model.generate(**inputs, max_new_tokens=10, do_sample=False)
             if torch.cuda.is_available():
@@ -286,7 +391,6 @@ def run_benchmark(
                 throughputs.append(tokens / elapsed)
 
         latencies.sort()
-        throughputs.sort()
 
         memory_stats = {}
         if torch.cuda.is_available():
@@ -297,19 +401,18 @@ def run_benchmark(
 
         results = {
             "model": model_name,
-            "architecture": "MoE (17B active / 109B total, 16 experts)",
+            "architecture": "MoE",
             "quantization": quantization,
             "num_runs": num_runs * len(prompts),
             "latency_p50_s": latencies[len(latencies) // 2],
             "latency_p95_s": latencies[int(len(latencies) * 0.95)],
-            "latency_p99_s": latencies[int(len(latencies) * 0.99)],
             "throughput_avg_tok_s": sum(throughputs) / len(throughputs),
-            "throughput_max_tok_s": max(throughputs),
             **memory_stats,
+            "moe_info": MOE_MODELS.get(model_name, {}),
             "system_info": get_system_info(),
         }
 
-        print(f"Results ({results['num_runs']} runs):")
+        print(f"\nResults ({results['num_runs']} runs):")
         print(f"  Latency p50: {results['latency_p50_s']:.3f}s")
         print(f"  Latency p95: {results['latency_p95_s']:.3f}s")
         print(f"  Throughput avg: {results['throughput_avg_tok_s']:.1f} tok/s")
@@ -326,162 +429,80 @@ def run_benchmark(
         return {"error": str(e)}
 
 
-def run_export(model_name: str, export_format: str) -> dict[str, Any]:
-    """Export optimized model to production format."""
-    print_section(f"Export - Llama 4 Scout to {export_format}")
-
-    try:
-        from torchbridge.models.llm import LLMConfig, LLMOptimizer
-
-        config = LLMConfig(model_name=model_name, use_flash_attention=True)
-        optimizer = LLMOptimizer(config)
-        model, tokenizer = optimizer.optimize(model_name)
-
-        export_path = f"./exports/llama4_scout_{export_format}"
-
-        if export_format == "safetensors":
-            print("Exporting to SafeTensors...")
-            model.save_pretrained(export_path, safe_serialization=True)
-            tokenizer.save_pretrained(export_path)
-            print(f"Saved to {export_path}/")
-
-        elif export_format == "onnx":
-            print("Exporting to ONNX...")
-            example_input = tokenizer(
-                "Hello world", return_tensors="pt"
-            ).to(optimizer.device)
-            torch.onnx.export(
-                model,
-                (example_input["input_ids"],),
-                f"{export_path}.onnx",
-                input_names=["input_ids"],
-                output_names=["logits"],
-                dynamic_axes={
-                    "input_ids": {0: "batch", 1: "sequence"},
-                    "logits": {0: "batch", 1: "sequence"},
-                },
-                opset_version=17,
-            )
-            print(f"Saved to {export_path}.onnx")
-
-        else:
-            return {"error": f"Unknown format: {export_format}"}
-
-        return {"format": export_format, "path": export_path, "status": "success"}
-
-    except ImportError as e:
-        logger.error(f"Export requires TorchBridge and transformers: {e}")
-        return {"error": str(e)}
-    except Exception as e:
-        logger.error(f"Export failed: {e}")
-        return {"error": str(e)}
-
-
-def run_memory_comparison():
-    """Compare memory usage across quantization modes."""
-    print_section("Memory Comparison - Llama 4 Scout (17B active / 109B total)")
-
-    configs = [
-        ("FP16 (baseline)", "none"),
-        ("INT8 (dynamic)", "int8"),
-        ("INT4 (BnB/GPTQ)", "int4"),
-        ("FP8 (H100+)", "fp8"),
-    ]
-
-    model_name = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-
-    print(f"{'Configuration':<25} {'Model (GB)':<12} {'Total (GB)':<12}")
-    print("-" * 50)
-
-    for label, quant in configs:
-        est = estimate_memory(model_name, quant)
-        print(f"{label:<25} {est['model_memory_gb']:<12.1f} {est['total_gb']:<12.1f}")
-
-    print()
-    print("Notes:")
-    print("  - Llama 4 Scout fits on a single H100 (80GB) in FP16")
-    print("  - INT4 enables running on A10G (24GB) or L4 (24GB)")
-    print("  - FP8 requires H100, B200, or MI350X hardware")
-    print("  - MoE: only 17B of 109B total params active per forward pass")
-
-
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Llama 4 Scout Cross-Backend Inference with TorchBridge"
+        description="MoE Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
         type=str,
-        default="meta-llama/Llama-4-Scout-17B-16E-Instruct",
-        help="HuggingFace model name",
+        default="Qwen/Qwen3-30B-A3B",
+        help="HuggingFace model name (MoE model)",
     )
     parser.add_argument(
         "--quantization",
         type=str,
         default="none",
-        choices=["none", "int8", "int4", "fp8"],
+        choices=["none", "int8", "int4"],
         help="Quantization mode",
     )
     parser.add_argument(
         "--prompt",
         type=str,
-        default="Explain how neural networks learn from data in simple terms.",
+        default="Explain how mixture of experts improves model efficiency.",
         help="Prompt for generation",
     )
     parser.add_argument(
         "--max-new-tokens",
         type=int,
-        default=128,
+        default=256,
         help="Maximum new tokens to generate",
     )
-    parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
     parser.add_argument(
-        "--export",
-        type=str,
-        choices=["onnx", "safetensors"],
-        help="Export model to format",
-    )
-    parser.add_argument(
-        "--memory-only",
+        "--analyze-experts",
         action="store_true",
-        help="Only show memory comparison",
+        help="Analyze MoE expert routing and load balancing",
     )
-    parser.add_argument("--output-json", type=str, help="Save results to JSON file")
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Run structured benchmark",
+    )
+    parser.add_argument(
+        "--output-json",
+        type=str,
+        help="Save results to JSON file",
+    )
 
     args = parser.parse_args()
 
-    print_section("Llama 4 Scout Cross-Backend Inference with TorchBridge")
+    print_section("MoE Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")
     for k, v in sys_info.items():
         print(f"  {k}: {v}")
 
+    print()
+    print_moe_info(args.model)
+
     deps = check_dependencies()
     if not deps.get("transformers"):
-        print("\nERROR: transformers required. Install: pip install transformers")
+        print("\nERROR: transformers is required. Install with: pip install transformers")
         return
 
-    results = {}
-
-    if args.memory_only:
-        run_memory_comparison()
-        return
-
-    if args.benchmark:
+    if args.analyze_experts:
+        results = analyze_moe_experts(args.model)
+    elif args.benchmark:
         results = run_benchmark(args.model, args.quantization)
-    elif args.export:
-        results = run_export(args.model, args.export)
     else:
         results = run_optimized_inference(
             args.model, args.quantization, args.prompt, args.max_new_tokens
         )
 
     if "error" in results:
-        print(f"\nFull demo requires model access. Error: {results['error']}")
-        print("\nShowing memory comparison instead:")
-        run_memory_comparison()
+        print(f"\nNote: Full demo requires model access. Error: {results['error']}")
 
     if args.output_json and results:
         with open(args.output_json, "w") as f:

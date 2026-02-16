@@ -3,7 +3,7 @@
 Gemma 3 12B Cross-Backend Example
 
 Demonstrates how to use TorchBridge to run Google DeepMind's Gemma 3
-for efficient inference across CUDA, ROCm, and CPU backends.
+for efficient inference across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 Gemma 3 is multimodal (text + image), supports 128K context window,
 140+ languages, and runs efficiently on a single GPU.
