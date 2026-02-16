@@ -123,6 +123,12 @@ Examples:
             help='Enable verbose output'
         )
 
+        parser.add_argument(
+            '--quantized',
+            action='store_true',
+            help='Include quantization subsystem checks'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
@@ -147,6 +153,12 @@ Examples:
                 model_path = getattr(args, 'model', None)
                 report.results.extend(
                     ValidateCommand._run_standard_checks(model_path, verbose)
+                )
+
+            # Quantization checks (if --quantized flag)
+            if getattr(args, 'quantized', False):
+                report.results.extend(
+                    ValidateCommand._run_quantization_checks(verbose)
                 )
 
             # Full level: add benchmark suite + cross-backend
@@ -496,6 +508,89 @@ Examples:
         return results
 
     @staticmethod
+    def _run_quantization_checks(verbose: bool) -> list[ValidationResult]:
+        """Run quantization subsystem checks."""
+        results = []
+
+        if verbose:
+            print(" Running quantization checks...")
+
+        # Import check
+        start = time.time()
+        try:
+            from torchbridge.precision.quantization import (
+                QuantizationEngine,
+            )
+
+            results.append(ValidationResult(
+                "Quantization Import",
+                "pass",
+                "Quantization subsystem imported successfully",
+                duration_ms=(time.time() - start) * 1000,
+            ))
+        except ImportError as e:
+            results.append(ValidationResult(
+                "Quantization Import",
+                "fail",
+                f"Quantization import failed: {e}",
+                duration_ms=(time.time() - start) * 1000,
+            ))
+            return results
+
+        # Engine creation
+        start = time.time()
+        try:
+            engine = QuantizationEngine()
+            optimal = engine.get_optimal_format()
+            results.append(ValidationResult(
+                "Quantization Engine",
+                "pass",
+                f"Engine created; optimal format: {optimal.value}",
+                duration_ms=(time.time() - start) * 1000,
+            ))
+        except Exception as e:
+            results.append(ValidationResult(
+                "Quantization Engine",
+                "fail",
+                f"Engine creation failed: {e}",
+                duration_ms=(time.time() - start) * 1000,
+            ))
+            return results
+
+        # INT8 dynamic quantization test
+        start = time.time()
+        try:
+            model = torch.nn.Sequential(
+                torch.nn.Linear(64, 32),
+                torch.nn.ReLU(),
+                torch.nn.Linear(32, 16),
+            )
+            result = engine.quantize(model, format="int8_dynamic")
+            if result.success:
+                results.append(ValidationResult(
+                    "INT8 Dynamic Quantization",
+                    "pass",
+                    f"INT8 quantization OK ({result.memory_reduction_pct:.0f}% reduction)",
+                    duration_ms=(time.time() - start) * 1000,
+                ))
+            else:
+                results.append(ValidationResult(
+                    "INT8 Dynamic Quantization",
+                    "fail",
+                    f"INT8 quantization failed: {result.errors}",
+                    duration_ms=(time.time() - start) * 1000,
+                ))
+        except Exception as e:
+            results.append(ValidationResult(
+                "INT8 Dynamic Quantization",
+                "fail",
+                f"INT8 test error: {e}",
+                duration_ms=(time.time() - start) * 1000,
+            ))
+
+        return results
+
+    @staticmethod
     def _output_ci_json(report: ValidationReport) -> int:
         """Output report as JSON for CI mode with structured exit codes.
 
@@ -655,6 +750,11 @@ def main():
         '--verbose', '-v',
         action='store_true',
         help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--quantized',
+        action='store_true',
+        help='Include quantization subsystem checks'
     )
 
     args = parser.parse_args()
