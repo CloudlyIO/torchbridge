@@ -7,10 +7,12 @@ import sys
 # Add source directory to path for autodoc
 sys.path.insert(0, os.path.abspath(os.path.join("..", "src")))
 
+from torchbridge import __version__  # noqa: E402
+
 # -- Project information --
 project = "TorchBridge"
 author = "TorchBridge Team"
-release = "0.5.24"
+release = __version__
 
 # -- General configuration --
 extensions = [

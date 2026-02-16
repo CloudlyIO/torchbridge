@@ -13,7 +13,6 @@ from pathlib import Path
 # __init__.py has a fallback for development installs.
 CRITICAL_VERSION_FILES = {
     'pyproject.toml': r'version\s*=\s*"(\d+\.\d+\.\d+)"',
-    'src/torchbridge/__init__.py': r'__version__\s*=\s*"(\d+\.\d+\.\d+)"',
     'CHANGELOG.md': r'## \[(\d+\.\d+\.\d+)\]',
 }
 
@@ -33,7 +32,7 @@ def extract_version(file_path: Path, pattern: str) -> str:
 
 def main():
     """Check version consistency across all files."""
-    project_root = Path(__file__).parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     critical_versions = {}
     secondary_versions = {}
     exit_code = 0

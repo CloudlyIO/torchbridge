@@ -15,6 +15,8 @@
 
 FROM nvidia/cuda:12.1-runtime-ubuntu22.04
 
+ARG TORCHBRIDGE_VERSION="0.0.0"
+
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -79,7 +81,7 @@ EXPOSE 8000
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Serving" \
       org.opencontainers.image.description="Production inference server with GPU support" \
-      org.opencontainers.image.version="0.5.24" \
+      org.opencontainers.image.version="${TORCHBRIDGE_VERSION}" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
 

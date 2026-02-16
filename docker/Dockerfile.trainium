@@ -12,6 +12,8 @@
 # Use AWS Neuron SDK base image with PyTorch
 FROM public.ecr.aws/neuron/pytorch-training-neuronx:2.5.1-neuronx-py311-sdk2.21.0-ubuntu22.04 AS base
 
+ARG TORCHBRIDGE_VERSION="0.0.0"
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -64,6 +66,6 @@ CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:a
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Trainium" \
       org.opencontainers.image.description="Training and inference container with AWS Trainium support" \
-      org.opencontainers.image.version="0.5.24" \
+      org.opencontainers.image.version="${TORCHBRIDGE_VERSION}" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

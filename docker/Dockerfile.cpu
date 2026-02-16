@@ -11,6 +11,8 @@
 
 FROM python:3.11-slim AS base
 
+ARG TORCHBRIDGE_VERSION="0.0.0"
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -63,5 +65,5 @@ CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:a
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge CPU" \
       org.opencontainers.image.description="Lightweight CPU-only inference container" \
-      org.opencontainers.image.version="0.5.24" \
+      org.opencontainers.image.version="${TORCHBRIDGE_VERSION}" \
       org.opencontainers.image.vendor="TorchBridge"

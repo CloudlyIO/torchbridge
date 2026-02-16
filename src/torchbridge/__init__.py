@@ -27,7 +27,15 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("torchbridge-ml")
 except PackageNotFoundError:
-    __version__ = "0.5.24"  # Fallback for development
+    try:
+        import re
+        from pathlib import Path
+
+        _pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+        _match = re.search(r'^version\s*=\s*"([^"]+)"', _pyproject.read_text(), re.MULTILINE)
+        __version__ = _match.group(1) if _match else "0.0.0"
+    except Exception:
+        __version__ = "0.0.0"
 
 # Unified Configuration System
 from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing
