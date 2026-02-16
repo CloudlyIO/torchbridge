@@ -80,6 +80,18 @@ and updated all user-facing references for 5-backend consistency.
   modern Qwen3-style transformer configs
 - Updated readiness assessment test counts (1,444 → 1,464, 64 → 65 test files)
 
+### Added (Production Readiness — 100/100)
+- Added runtime dependency upper bounds (`<NEXT_MAJOR`) to all 38 dependency specs
+  in `pyproject.toml` — prevents silent breakage from incompatible major versions
+- Added Hypothesis fuzz testing: 20 property-based tests in
+  `tests/unit/test_fuzz_validation.py` covering 5 config classes (PrecisionConfig,
+  MemoryConfig, AttentionConfig, DynamicSparseConfig, ValidationConfig) and error
+  serialization round-trips
+- Added distributed tracing to `structured_logging.py`: `trace_id`/`span_id` context
+  vars, `TraceContext` context manager, optional OpenTelemetry auto-extraction
+- Added `[tracing]` optional dependency group (`opentelemetry-api>=1.20.0,<2.0.0`)
+- Fixed remaining `torchbridge-ml-ml` typo in `cost_optimized_validation.py` (2 locations)
+
 ### Stats
 - 1,394 passed, 70 skipped, 0 failures (1,464 collected)
 - 0 ruff violations across 177 source modules
