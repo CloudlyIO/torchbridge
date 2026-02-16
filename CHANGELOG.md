@@ -8,10 +8,6 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.24 (FlexAttention & Kernel Dispatch)
-
----
-
 ## [0.5.24] - 2026-02-16 - FlexAttention & Kernel Dispatch
 
 ### **Summary**

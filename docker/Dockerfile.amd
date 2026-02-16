@@ -14,6 +14,8 @@
 # ROCm 6.0 base image with PyTorch support
 FROM rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 AS base
 
+ARG TORCHBRIDGE_VERSION="0.0.0"
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -71,6 +73,6 @@ CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:a
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge AMD" \
       org.opencontainers.image.description="Production inference container with AMD ROCm GPU support" \
-      org.opencontainers.image.version="0.5.24" \
+      org.opencontainers.image.version="${TORCHBRIDGE_VERSION}" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"
