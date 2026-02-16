@@ -32,6 +32,7 @@ from .init import InitCommand
 from .migrate import MigrateCommand
 from .optimize import OptimizeCommand
 from .profile import ProfileCommand
+from .quantize import QuantizeCommand
 from .validate import ValidateCommand
 
 
@@ -101,6 +102,7 @@ For command-specific help:
     DoctorCommand.register(subparsers)
     InitCommand.register(subparsers)
     ValidateCommand.register(subparsers)
+    QuantizeCommand.register(subparsers)
     MigrateCommand.register(subparsers)
 
     # Parse arguments
@@ -126,6 +128,7 @@ For command-specific help:
         'doctor': DoctorCommand,
         'init': InitCommand,
         'validate': ValidateCommand,
+        'quantize': QuantizeCommand,
         'migrate': MigrateCommand,
     }
 
