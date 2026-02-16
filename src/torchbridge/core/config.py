@@ -903,6 +903,28 @@ class HardwareConfig:
 
 
 @dataclass
+class QuantizationConfig:
+    """Backend-aware quantization configuration."""
+    enabled: bool = False
+    strategy: str = "auto"  # "auto" or explicit format name
+    format: str = "auto"  # QuantizationFormat value or "auto"
+    calibration_samples: int = 512
+    validate_after: bool = True
+    in_place: bool = False
+
+    def __post_init__(self):
+        valid_strategies = {"auto", "manual"}
+        if self.strategy not in valid_strategies:
+            raise ValueError(
+                f"strategy must be one of {valid_strategies}, got '{self.strategy}'"
+            )
+        if self.calibration_samples < 1:
+            raise ValueError(
+                f"calibration_samples must be >= 1, got {self.calibration_samples}"
+            )
+
+
+@dataclass
 class DistributedConfig:
     """Unified distributed training configuration."""
     enabled: bool = False
@@ -1069,6 +1091,7 @@ class TorchBridgeConfig:
     distributed: DistributedConfig = field(default_factory=DistributedConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
     kernel: KernelConfig = field(default_factory=KernelConfig)
+    quantization: QuantizationConfig = field(default_factory=QuantizationConfig)
 
     # Global settings
     device: torch.device = field(default_factory=lambda: TorchBridgeConfig._detect_device())

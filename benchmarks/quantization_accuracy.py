@@ -64,6 +64,9 @@ class QuantizationResult:
             "fp8": {"perplexity": 1.0, "accuracy": 1.0},
             "fp8_e4m3": {"perplexity": 1.0, "accuracy": 1.0},
             "fp8_e5m2": {"perplexity": 1.5, "accuracy": 1.5},
+            "nvfp4": {"perplexity": 2.0, "accuracy": 2.0},
+            "mxfp8": {"perplexity": 1.0, "accuracy": 1.0},
+            "smoothquant": {"perplexity": 1.0, "accuracy": 1.0},
         }
 
         mode_key = self.quantization_mode.lower()
@@ -154,7 +157,7 @@ def calculate_perplexity(
                 samples_processed += input_ids.size(0)
 
             except Exception as e:
-                warnings.warn(f"Error processing batch: {e}")
+                warnings.warn(f"Error processing batch: {e}", stacklevel=2)
                 continue
 
     if total_tokens == 0:
@@ -198,7 +201,7 @@ def calculate_classification_accuracy(
                 samples_processed += input_ids.size(0)
 
             except Exception as e:
-                warnings.warn(f"Error processing batch: {e}")
+                warnings.warn(f"Error processing batch: {e}", stacklevel=2)
                 continue
 
     return correct / total if total > 0 else 0.0
@@ -253,7 +256,7 @@ def quantize_model_fp8(model: nn.Module, device: torch.device) -> nn.Module:
         from torchbridge.precision.fp8_native import convert_model_to_native_fp8
         return convert_model_to_native_fp8(model, device=device)
     except Exception as e:
-        warnings.warn(f"FP8 conversion failed: {e}, returning original model")
+        warnings.warn(f"FP8 conversion failed: {e}, returning original model", stacklevel=2)
         return model
 
 
@@ -280,7 +283,7 @@ def quantize_model_int4_bitsandbytes(
         return model
 
     except ImportError:
-        warnings.warn("BitsAndBytes not available for INT4 quantization")
+        warnings.warn("BitsAndBytes not available for INT4 quantization", stacklevel=2)
         return None
 
 
@@ -350,7 +353,7 @@ class QuantizationBenchmark:
             return DataLoader(dataset, batch_size=self.config.batch_size, shuffle=False)
 
         except Exception as e:
-            warnings.warn(f"Could not load WikiText-2: {e}")
+            warnings.warn(f"Could not load WikiText-2: {e}", stacklevel=2)
             return None
 
     def benchmark_quantization_mode(
@@ -401,11 +404,30 @@ class QuantizationBenchmark:
             # INT4 via BitsAndBytes (requires reloading)
             quantized_model = quantize_model_int4_bitsandbytes(model_name, self.device)
             if quantized_model is None:
-                warnings.warn("INT4 quantization not available")
+                warnings.warn("INT4 quantization not available", stacklevel=2)
+                return result
+
+        elif quantization_mode.lower() in ["nvfp4", "mxfp8", "smoothquant"]:
+            # Use TorchBridge QuantizationEngine for new formats
+            try:
+                from torchbridge.precision.quantization import QuantizationEngine
+                engine = QuantizationEngine()
+                qr = engine.quantize(
+                    copy.deepcopy(baseline_model), format=quantization_mode
+                )
+                if qr.success and qr.model is not None:
+                    quantized_model = qr.model
+                else:
+                    warnings.warn(
+                        f"{quantization_mode} quantization failed: {qr.errors}", stacklevel=2
+                    )
+                    return result
+            except ImportError:
+                warnings.warn("QuantizationEngine not available", stacklevel=2)
                 return result
 
         else:
-            warnings.warn(f"Unknown quantization mode: {quantization_mode}")
+            warnings.warn(f"Unknown quantization mode: {quantization_mode}", stacklevel=2)
             return result
 
         # Quantized metrics
@@ -417,7 +439,7 @@ class QuantizationBenchmark:
                 quantized_model, dataloader, self.device, self.config.num_samples
             )
         except Exception as e:
-            warnings.warn(f"Could not calculate quantized perplexity: {e}")
+            warnings.warn(f"Could not calculate quantized perplexity: {e}", stacklevel=2)
             result.quantized_perplexity = float('inf')
 
         try:
@@ -426,7 +448,7 @@ class QuantizationBenchmark:
                            for k, v in sample_input.items()}
             result.quantized_latency_ms = measure_latency(quantized_model, sample_input_q)
         except Exception as e:
-            warnings.warn(f"Could not measure quantized latency: {e}")
+            warnings.warn(f"Could not measure quantized latency: {e}", stacklevel=2)
             result.quantized_latency_ms = result.baseline_latency_ms
 
         # Calculate deltas
@@ -523,7 +545,8 @@ def main():
     """Main entry point for quantization benchmarks."""
     parser = argparse.ArgumentParser(description="Quantization Accuracy Benchmarks")
     parser.add_argument("--model", default="gpt2", help="Model name or path")
-    parser.add_argument("--modes", nargs="+", default=["int8", "fp8"],
+    parser.add_argument("--modes", nargs="+",
+                       default=["int8", "fp8", "nvfp4", "mxfp8", "smoothquant"],
                        help="Quantization modes to benchmark")
     parser.add_argument("--samples", type=int, default=100, help="Number of evaluation samples")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
