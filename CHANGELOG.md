@@ -8,7 +8,33 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.23 (Backend-Aware Quantization)
+**Current Version**: v0.5.24 (FlexAttention & Kernel Dispatch)
+
+---
+
+## [0.5.24] - 2026-02-16 - FlexAttention & Kernel Dispatch
+
+### **Summary**
+
+Backend-aware attention kernel dispatch with GQA/MQA support. Auto-selects the
+optimal attention kernel per detected hardware with ordered fallback chains.
+
+### Added
+- New `attention/dispatch/` subpackage with 4 core modules
+- `AttentionKernelType` enum with 8 dispatchable attention algorithms
+- `AttentionDispatchMatrix` mapping every (backend, architecture) pair to optimal kernels
+- `AttentionDispatcher` with runtime availability checks and fallback chain walking
+- `KernelBenchmarkCache` with hardware fingerprint invalidation
+- GQA/MQA support: `num_kv_heads` field in `AttentionModuleConfig` with `kv_head_repeat_factor` property
+- GQA-aware K/V projections in `BaseAttention` via `repeat_interleave`
+- Backend-aware dispatcher integration in `_select_best_implementation()` (zero regression — existing logic preserved as fallback)
+- `docs/guides/attention.md` — dispatch overview, kernel compatibility table, GQA/MQA guide
+- `examples/models/llm/attention_cross_backend.py` — dispatch + GQA demo
+- 5 new test files with comprehensive coverage
+
+### Changed
+- `_select_best_implementation()` now tries the dispatcher first before falling back to the original heuristic
+- `BaseAttention` K/V projection dimensions are now GQA-aware (`kv_dim` instead of `embed_dim`)
 
 ---
 

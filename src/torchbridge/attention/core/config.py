@@ -37,6 +37,7 @@ class AttentionModuleConfig:
     embed_dim: int
     num_heads: int
     head_dim: int | None = None
+    num_kv_heads: int | None = None  # GQA/MQA: None = MHA (all heads)
 
     # Pattern and behavior
     pattern: AttentionPatterns = AttentionPatterns.FULL
@@ -78,12 +79,27 @@ class AttentionModuleConfig:
     legacy_mode: bool = False
     backward_compatible: bool = True
 
+    @property
+    def kv_head_repeat_factor(self) -> int:
+        """Number of times each KV head is repeated to match Q heads."""
+        if self.num_kv_heads is None:
+            return 1
+        return self.num_heads // self.num_kv_heads
+
     def __post_init__(self):
         """Validate and set defaults"""
         if self.head_dim is None:
             if self.embed_dim % self.num_heads != 0:
                 raise ValueError(f"embed_dim {self.embed_dim} must be divisible by num_heads {self.num_heads}")
             self.head_dim = self.embed_dim // self.num_heads
+
+        # Validate GQA/MQA settings
+        if self.num_kv_heads is not None:
+            if self.num_heads % self.num_kv_heads != 0:
+                raise ValueError(
+                    f"num_heads ({self.num_heads}) must be divisible by "
+                    f"num_kv_heads ({self.num_kv_heads})"
+                )
 
         # Set FP8 config defaults if using FP8
         if self.use_fp8 and self.fp8_config is None:
@@ -106,6 +122,7 @@ class AttentionModuleConfig:
         return {
             'embed_dim': self.embed_dim,
             'num_heads': self.num_heads,
+            'num_kv_heads': self.num_kv_heads,
             'head_dim': self.head_dim,
             'pattern': self.pattern.value,
             'causal': self.causal,

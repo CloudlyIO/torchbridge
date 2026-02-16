@@ -5,11 +5,14 @@ Provides a centralized registry for all attention implementations,
 enabling dynamic creation and configuration of attention layers.
 """
 
+import logging
 import warnings
 from functools import wraps
 
 from .base import BaseAttention
 from .config import AttentionConfig, AttentionPatterns
+
+logger = logging.getLogger(__name__)
 
 # Global registry for attention implementations
 _ATTENTION_REGISTRY: dict[str, type[BaseAttention]] = {}
@@ -89,9 +92,24 @@ def _select_best_implementation(config: AttentionConfig) -> str:
     """
     Automatically select the best attention implementation based on config.
 
-    This implements a heuristic to choose the most appropriate attention
-    implementation based on the configuration parameters.
+    Tries the backend-aware dispatcher first, then falls back to the
+    original heuristic-based selection.
     """
+    # Try backend-aware dispatcher first
+    try:
+        from torchbridge.attention.dispatch import AttentionDispatcher
+
+        dispatcher = AttentionDispatcher(use_benchmark_cache=False)
+        result = dispatcher.select_kernel(
+            seq_length=config.max_sequence_length,
+            num_heads=config.num_heads,
+            head_dim=config.head_dim or (config.embed_dim // config.num_heads),
+        )
+        if result.implementation_name in _ATTENTION_REGISTRY:
+            return result.implementation_name
+    except Exception as e:
+        logger.debug("Dispatcher unavailable, falling back to legacy selection: %s", e)
+
     # Pattern-specific selections
     if config.pattern == AttentionPatterns.RING:
         if 'ring_attention' in _ATTENTION_REGISTRY:
