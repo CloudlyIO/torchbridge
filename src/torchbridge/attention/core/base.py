@@ -32,10 +32,14 @@ class BaseAttention(nn.Module, ABC):
         self.head_dim = config.head_dim or (config.embed_dim // config.num_heads)
         self.scale = 1.0 / math.sqrt(self.head_dim)
 
+        # GQA/MQA support
+        self.num_kv_heads = config.num_kv_heads if config.num_kv_heads is not None else self.num_heads
+        self.kv_dim = self.num_kv_heads * self.head_dim
+
         # Initialize projection layers
         self.q_proj = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.k_proj = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.v_proj = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
+        self.k_proj = nn.Linear(self.embed_dim, self.kv_dim, bias=False)
+        self.v_proj = nn.Linear(self.embed_dim, self.kv_dim, bias=False)
         self.out_proj = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
 
         # Dropout layers
@@ -75,6 +79,14 @@ class BaseAttention(nn.Module, ABC):
     def _shape_for_multihead(self, x: torch.Tensor, batch_size: int, seq_len: int) -> torch.Tensor:
         """Reshape tensor for multi-head attention: [B, S, D] -> [B, H, S, D_h]"""
         return x.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
+
+    def _shape_for_multihead_kv(self, x: torch.Tensor, batch_size: int, seq_len: int) -> torch.Tensor:
+        """Reshape KV tensor for GQA: [B, S, kv_dim] -> [B, H_q, S, D_h] via repeat_interleave."""
+        x = x.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(1, 2).contiguous()
+        if self.num_kv_heads != self.num_heads:
+            repeat_factor = self.num_heads // self.num_kv_heads
+            x = x.repeat_interleave(repeat_factor, dim=1)
+        return x
 
     def _unshape_from_multihead(self, x: torch.Tensor, batch_size: int, seq_len: int) -> torch.Tensor:
         """Reshape tensor from multi-head attention: [B, H, S, D_h] -> [B, S, D]"""
@@ -154,10 +166,10 @@ class BaseAttention(nn.Module, ABC):
         k = self.k_proj(key)
         v = self.v_proj(value)
 
-        # Reshape for multi-head attention
+        # Reshape for multi-head attention (GQA-aware)
         q = self._shape_for_multihead(q, batch_size, seq_len)
-        k = self._shape_for_multihead(k, batch_size, seq_len)
-        v = self._shape_for_multihead(v, batch_size, seq_len)
+        k = self._shape_for_multihead_kv(k, batch_size, seq_len)
+        v = self._shape_for_multihead_kv(v, batch_size, seq_len)
 
         # Apply pattern-specific masking
         pattern_mask = self._create_pattern_mask(seq_len, q.device)

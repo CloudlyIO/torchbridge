@@ -18,6 +18,15 @@ from .core import (
     register_attention,
 )
 
+# Dispatch subpackage
+from .dispatch import (
+    AttentionDispatcher,
+    AttentionDispatchMatrix,
+    AttentionDispatchResult,
+    AttentionKernelType,
+    KernelBenchmarkCache,
+)
+
 # Main implementations
 from .implementations.flash_attention import FlashAttention2, FlashAttention3
 from .implementations.flex_attention import (
@@ -42,6 +51,13 @@ __all__ = [
     'RingAttentionConfig',
     'register_attention',
     'create_attention',
+
+    # Dispatch subpackage
+    'AttentionKernelType',
+    'AttentionDispatchMatrix',
+    'AttentionDispatcher',
+    'AttentionDispatchResult',
+    'KernelBenchmarkCache',
 
     # FlashAttention implementations
     'FlashAttention3',
