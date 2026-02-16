@@ -32,9 +32,13 @@ class LLMType(Enum):
 class QuantizationMode(Enum):
     """Quantization modes for LLMs."""
     NONE = "none"           # Full precision
+    AUTO = "auto"           # Auto-select optimal format per backend
     INT8 = "int8"           # INT8 dynamic quantization
     INT4 = "int4"           # INT4 weight quantization (GPTQ/AWQ)
     FP8 = "fp8"             # FP8 for H100+
+    NVFP4 = "nvfp4"         # NVFP4 for Blackwell DC
+    MXFP8 = "mxfp8"         # MXFP8 for AMD CDNA3/4
+    SMOOTHQUANT = "smoothquant"  # INT8 SmoothQuant
     BNBT4 = "bnb_4bit"      # BitsAndBytes 4-bit
 
 @dataclass
@@ -165,6 +169,10 @@ class LLMOptimizer:
                 }
             return None
 
+        # AUTO mode: defer to QuantizationEngine post-load
+        if self.config.quantization == QuantizationMode.AUTO:
+            return None
+
         if self.config.quantization == QuantizationMode.INT8:
             return {"load_in_8bit": True}
 
@@ -175,6 +183,15 @@ class LLMOptimizer:
                 "bnb_4bit_use_double_quant": True,
                 "bnb_4bit_quant_type": "nf4",
             }
+
+        # New modes (NVFP4, MXFP8, SMOOTHQUANT) are handled post-load
+        # by the QuantizationEngine in optimize()
+        if self.config.quantization in (
+            QuantizationMode.NVFP4,
+            QuantizationMode.MXFP8,
+            QuantizationMode.SMOOTHQUANT,
+        ):
+            return None
 
         return None
 
@@ -221,6 +238,15 @@ class LLMOptimizer:
         # Disable gradients
         for param in model.parameters():
             param.requires_grad = False
+
+        # Apply backend-aware quantization for AUTO/NVFP4/MXFP8/SMOOTHQUANT
+        if self.config.quantization in (
+            QuantizationMode.AUTO,
+            QuantizationMode.NVFP4,
+            QuantizationMode.MXFP8,
+            QuantizationMode.SMOOTHQUANT,
+        ):
+            model = self._apply_engine_quantization(model)
 
         # Apply torch.compile
         if self.config.use_torch_compile and not self._is_quantized(model):
@@ -347,6 +373,38 @@ class LLMOptimizer:
             if "Linear8bitLt" in module_type or "Linear4bit" in module_type:
                 return True
         return False
+
+    def _apply_engine_quantization(self, model: nn.Module) -> nn.Module:
+        """Apply backend-aware quantization via QuantizationEngine."""
+        try:
+            from torchbridge.precision.quantization import QuantizationEngine
+
+            engine = QuantizationEngine(backend=self._backend)
+
+            # Map QuantizationMode to format string
+            format_map = {
+                QuantizationMode.AUTO: "auto",
+                QuantizationMode.NVFP4: "nvfp4",
+                QuantizationMode.MXFP8: "mxfp8",
+                QuantizationMode.SMOOTHQUANT: "int8_smoothquant",
+            }
+            fmt = format_map.get(self.config.quantization, "auto")
+
+            result = engine.quantize(model, format=fmt, in_place=True)
+            if result.success and result.model is not None:
+                logger.info(
+                    "Applied %s quantization (%.1f%% memory reduction)",
+                    result.format_applied.value,
+                    result.memory_reduction_pct,
+                )
+                return result.model
+            else:
+                for err in result.errors:
+                    logger.warning("Quantization error: %s", err)
+                return model
+        except Exception as e:
+            logger.warning("QuantizationEngine failed: %s", e)
+            return model
 
     def _apply_torch_compile(self, model: nn.Module) -> nn.Module:
         """Apply torch.compile optimization."""
@@ -568,9 +626,13 @@ def create_optimized_llm(
     """
     quant_map = {
         "none": QuantizationMode.NONE,
+        "auto": QuantizationMode.AUTO,
         "int8": QuantizationMode.INT8,
         "int4": QuantizationMode.INT4,
         "fp8": QuantizationMode.FP8,
+        "nvfp4": QuantizationMode.NVFP4,
+        "mxfp8": QuantizationMode.MXFP8,
+        "smoothquant": QuantizationMode.SMOOTHQUANT,
         "bnb_4bit": QuantizationMode.BNBT4,
     }
 

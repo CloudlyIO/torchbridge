@@ -63,6 +63,17 @@ from .fp8_training_engine import (
     create_fp8_trainer,
     validate_fp8_setup,
 )
+from .quantization import (
+    FORMAT_SPECS,
+    TORCHAO_AVAILABLE,
+    FormatSpec,
+    QuantizationCompatibilityMatrix,
+    QuantizationEngine,
+    QuantizationFormat,
+    QuantizationResult,
+    TorchAOBackend,
+    get_format_spec,
+)
 
 __all__ = [
     # FP8 Training Engine
@@ -104,4 +115,15 @@ __all__ = [
     'FP4_AVAILABLE',
     'FP4_HARDWARE_AVAILABLE',
     'FP4_BLOCK_SIZE',
+
+    # Quantization subpackage
+    'QuantizationFormat',
+    'FormatSpec',
+    'FORMAT_SPECS',
+    'get_format_spec',
+    'QuantizationCompatibilityMatrix',
+    'QuantizationEngine',
+    'QuantizationResult',
+    'TorchAOBackend',
+    'TORCHAO_AVAILABLE',
 ]

@@ -8,7 +8,36 @@
 
 ## **v0.5.x - Public Release Series**
 
-**Current Version**: v0.5.22 (Codebase Consistency & Trainium Parity)
+**Current Version**: v0.5.23 (Backend-Aware Quantization)
+
+---
+
+## [0.5.23] - 2026-02-15 - Backend-Aware Quantization
+
+### **Summary**
+
+First inference differentiation feature: auto-selecting the optimal quantization
+format per detected backend with fallback chains and torchao integration.
+
+### Added
+- New `precision/quantization/` subpackage with 4 core modules
+- `QuantizationFormat` enum with 10 formats (INT8, INT4, FP8, NVFP4, MXFP8, BF16, etc.)
+- `QuantizationCompatibilityMatrix` mapping every (backend, architecture) pair to optimal formats
+- `QuantizationEngine` with auto-select, explicit format, and fallback chain support
+- `TorchAOBackend` soft-import wrapper for torchao integration
+- `tb-quantize` CLI command with --format, --backend, --validate, --ci flags
+- `QuantizationConfig` dataclass in `TorchBridgeConfig`
+- Extended `QuantizationMode` with AUTO, NVFP4, MXFP8, SMOOTHQUANT
+- 5 new test files (~1,200 lines): formats, compatibility, engine, CLI, integration
+- `docs/guides/quantization.md` format selection guide
+- `examples/models/llm/qwen3_quantized_cross_backend.py` end-to-end example
+- `--quantized` flag on `tb-validate` for quantization subsystem checks
+- `quantization` optional dependency group in pyproject.toml
+
+### Changed
+- Extended `benchmarks/quantization_accuracy.py` with NVFP4/MXFP8/SmoothQuant
+- Added quantization re-exports to `precision/__init__.py`
+- Wired `QuantizationEngine` into `LLMOptimizer.optimize()` for AUTO/NVFP4/MXFP8/SMOOTHQUANT modes
 
 ---
 

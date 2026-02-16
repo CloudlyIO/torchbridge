@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.22"
+version = "0.5.23"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Trainium, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -47,6 +47,7 @@ tb-doctor = "torchbridge.cli.doctor:main"
 tb-init = "torchbridge.cli.init:main"
 tb-validate = "torchbridge.cli.validate:main"
 tb-migrate = "torchbridge.cli.migrate:main"
+tb-quantize = "torchbridge.cli.quantize:main"
 
 [project.optional-dependencies]
 dev = [
@@ -101,6 +102,9 @@ benchmark = [
 ]
 tracing = [
     "opentelemetry-api>=1.20.0,<2.0.0",
+]
+quantization = [
+    "torchao>=0.4.0,<1.0.0",
 ]
 docs = [
     "sphinx>=7.0.0,<8.0.0",
