@@ -3,7 +3,7 @@
 Whisper v3 Turbo Cross-Backend Example
 
 Demonstrates how to use TorchBridge to run OpenAI's Whisper models
-for speech recognition across CUDA, ROCm, and CPU backends.
+for speech recognition across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 Whisper is the dominant ASR model. Its encoder-decoder architecture
 benefits from backend-specific optimization (e.g., flash attention
@@ -122,7 +122,7 @@ def run_transcription(model_name: str) -> dict[str, Any]:
                 gpu_features.cpu().flatten().unsqueeze(0),
             ).item()
 
-            print(f"\nCross-backend encoder comparison:")
+            print("\nCross-backend encoder comparison:")
             print(f"  Max diff: {max_diff:.2e}")
             print(f"  Cosine sim: {cos_sim:.6f}")
             print(f"  Status: {'PASSED' if max_diff < 1e-3 else 'REVIEW'}")

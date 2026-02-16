@@ -70,30 +70,35 @@ Complete hardware support table for TorchBridge backends.
 
 ## Cloud Platform Availability
 
-| GPU | AWS | GCP | Azure |
-|-----|-----|-----|-------|
-| NVIDIA B200 | Not yet available | Not yet available | Not yet available |
-| NVIDIA H100 | p5.48xlarge | a3-highgpu | ND H100 v5 |
-| NVIDIA A100 | p4d.24xlarge | a2-highgpu | ND A100 v4 |
-| NVIDIA L4 | g6.xlarge | g2-standard | -- |
-| NVIDIA A10G | g5.xlarge | -- | -- |
-| NVIDIA T4 | g4dn.xlarge | n1 + T4 | NC T4 v3 |
-| AMD MI300X | -- | -- | ND MI300X v5 |
-| AMD MI325X | -- | -- | -- |
-| TPU v6e | -- | ct6e-standard | -- |
-| TPU v5e | -- | ct5lp-hightpu | -- |
-| TPU v4 | -- | ct4p-hightpu | -- |
+| GPU | AWS | GCP | Azure | RunPod | AMD DevCloud |
+|-----|-----|-----|-------|--------|-------------|
+| NVIDIA B200 | Not yet | Not yet | Not yet | -- | -- |
+| NVIDIA H100 | p5.48xlarge | a3-highgpu | ND H100 v5 | **H100 NVL/SXM/PCIe** | -- |
+| NVIDIA A100 | p4d.24xlarge | a2-highgpu | ND A100 v4 | A100 SXM/PCIe | -- |
+| NVIDIA L4 | g6.xlarge | g2-standard | -- | L4 | -- |
+| NVIDIA A10G | g5.xlarge | -- | -- | -- | -- |
+| NVIDIA T4 | g4dn.xlarge | n1 + T4 | NC T4 v3 | -- | -- |
+| AMD MI300X | -- | -- | ND MI300X v5 | MI300X | **MI300X** |
+| AMD MI325X | -- | -- | -- | -- | -- |
+| TPU v6e | -- | ct6e-standard | -- | -- | -- |
+| TPU v5e | -- | **ct5lp/v5litepod** | -- | -- | -- |
+| TPU v4 | -- | ct4p-hightpu | -- | -- | -- |
+| Trainium | **trn1.2xlarge** | -- | -- | -- | -- |
 
 ## Validated Configurations
 
-These configurations have been tested and validated:
+These configurations have been tested and validated with Qwen3-0.6B cross-backend consistency:
 
-| Configuration | Platform | Tests | Status | Date |
-|--------------|----------|-------|--------|------|
-| NVIDIA A10G (Ampere) | AWS g5.xlarge | Qwen3-0.6B cross-backend | Passed (diff 2.34e-06) | 2026-02-07 |
-| NVIDIA T4 (Turing) | GCP n1 + T4 | Qwen3-0.6B cross-backend | Passed (diff 2.52e-06) | 2026-02-07 |
-| CPU (x86) | Local | Full test suite | Passed | 2026-02-07 |
-| CPU (ARM/Apple Silicon) | Local | Full test suite | Passed | 2026-02-07 |
+| Configuration | Platform | Max Diff | Cosine Sim | Latency | Date |
+|--------------|----------|----------|------------|---------|------|
+| NVIDIA H100 NVL (Hopper) | RunPod | 2.29e-05 | 1.000001 | 18.8 ms | 2026-02-15 |
+| Apple Silicon (MPS) | Local Mac | 4.58e-05 | 1.000002 | 27.8 ms | 2026-02-15 |
+| AMD MI300X (CDNA3) | AMD Developer Cloud | 4.82e-05 | 1.000001 | 30.0 ms | 2026-02-12 |
+| NVIDIA A10G (Ampere) | AWS g5.xlarge | 1.96e-05 | 1.000001 | 41.8 ms | 2026-02-12 |
+| TPU v5e | GCP TPU VM | 1.08e-01 | 0.999980 | 47.5 ms | 2026-02-15 |
+| NVIDIA T4 (Turing) | GCP n1 + T4 | 2.67e-05 | 1.000001 | 50.8 ms | 2026-02-12 |
+| CPU (x86) | Local | Full test suite | — | — | 2026-02-15 |
+| CPU (ARM/Apple Silicon) | Local | Full test suite | — | — | 2026-02-15 |
 
 ## See Also
 

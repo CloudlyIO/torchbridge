@@ -3,7 +3,7 @@
 SAM 3 (Segment Anything Model 3) Cross-Backend Example
 
 Demonstrates how to use TorchBridge to run Meta's SAM 3 for
-production vision segmentation across CUDA, ROCm, and CPU backends.
+production vision segmentation across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 SAM 3 introduces text and exemplar prompts, enabling detection,
 segmentation, and tracking of any visual concept across images and video.

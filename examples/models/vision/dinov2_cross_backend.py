@@ -3,7 +3,7 @@
 DINOv2 Cross-Backend Example
 
 Demonstrates how to use TorchBridge to run Meta's DINOv2 vision encoder
-for universal feature extraction across CUDA, ROCm, and CPU backends.
+for universal feature extraction across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 DINOv2 is a self-supervised ViT that produces universal visual features
 without needing fine-tuning. It serves as a backbone for classification,
@@ -123,7 +123,7 @@ def run_feature_extraction(
                 gpu_features.cpu().flatten().unsqueeze(0),
             ).item()
 
-            print(f"\nCross-backend comparison:")
+            print("\nCross-backend comparison:")
             print(f"  Max diff: {max_diff:.2e}")
             print(f"  Cosine sim: {cos_sim:.6f}")
             print(f"  Status: {'PASSED' if max_diff < 1e-4 else 'REVIEW'}")

@@ -3,7 +3,7 @@
 Qwen 3 8B Cross-Backend Example
 
 Demonstrates how to use TorchBridge to run Alibaba's Qwen 3 models
-for multilingual enterprise inference across CUDA, ROCm, and CPU backends.
+for multilingual enterprise inference across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 Qwen 3 supports hybrid thinking modes (thinking + non-thinking) and
 140+ languages, making it ideal for global enterprise deployments.

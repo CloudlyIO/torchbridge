@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-DeepSeek R1 Distill 7B Cross-Backend Example
+DeepSeek Cross-Backend Example
 
-Demonstrates how to use TorchBridge to run DeepSeek R1 Distill models
-for inference across backends, showcasing Mixture of Experts (MoE) handling.
+Demonstrates how to use TorchBridge to run DeepSeek models for inference
+across backends, showcasing Mixture of Experts (MoE) handling.
 
-Models covered:
-- deepseek-ai/DeepSeek-R1-Distill-Qwen-7B (7B active params)
-- deepseek-ai/DeepSeek-R1-Distill-Llama-8B (8B active params)
+The DeepSeek model family includes:
+- DeepSeek-R1-Distill-Qwen-7B (7B, dense distillation — runs on single GPU)
+- DeepSeek-R1-Distill-Llama-8B (8B, dense distillation — runs on single GPU)
+- DeepSeek-V3-0324 (685B total / 37B active, 256 experts — requires multi-GPU)
+
+This example defaults to the R1 Distill models which are single-GPU friendly.
+For DeepSeek-V3 (the flagship MoE model), see the --model flag below.
 
 Key features demonstrated:
 - MoE expert routing efficiency across CUDA / ROCm / CPU
@@ -18,14 +22,20 @@ Key features demonstrated:
 Requirements:
     pip install transformers accelerate
 
-Hardware requirements:
+Hardware requirements (R1-Distill-7B):
     - FP16: ~14GB VRAM (A10G, L4, MI300X)
     - INT8: ~7GB VRAM
     - INT4: ~4GB VRAM
 
+Hardware requirements (DeepSeek-V3-0324):
+    - FP16: ~1.3TB VRAM (multi-node, 8x H100 minimum)
+    - FP8: ~685GB VRAM (8x H100 80GB)
+    - INT4: ~340GB VRAM (4x H100 80GB with offloading)
+
 Usage:
     python deepseek_cross_backend.py
     python deepseek_cross_backend.py --model deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    python deepseek_cross_backend.py --model deepseek-ai/DeepSeek-V3-0324
     python deepseek_cross_backend.py --analyze-experts
     python deepseek_cross_backend.py --benchmark
 """
@@ -388,13 +398,13 @@ def run_benchmark(
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="DeepSeek R1 Distill 7B Cross-Backend Inference with TorchBridge"
+        description="DeepSeek Cross-Backend Inference with TorchBridge"
     )
     parser.add_argument(
         "--model",
         type=str,
         default="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
-        help="HuggingFace model name",
+        help="HuggingFace model name (try deepseek-ai/DeepSeek-V3-0324 for flagship MoE)",
     )
     parser.add_argument(
         "--quantization",
@@ -433,7 +443,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_section("DeepSeek R1 Distill Cross-Backend Inference with TorchBridge")
+    print_section("DeepSeek Cross-Backend Inference with TorchBridge")
 
     sys_info = get_system_info()
     print("System Info:")
