@@ -122,6 +122,7 @@ class LLMServerConfig:
     # Health check settings
     enable_health_checks: bool = True
     enable_metrics: bool = True
+    enable_llm_metrics: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -202,6 +203,15 @@ if FASTAPI_AVAILABLE:
         device: str
         memory_allocated_mb: float
         memory_reserved_mb: float
+        ttft_p50_ms: float = 0.0
+        ttft_p95_ms: float = 0.0
+        ttft_p99_ms: float = 0.0
+        tpot_p50_ms: float = 0.0
+        tpot_p95_ms: float = 0.0
+        tpot_p99_ms: float = 0.0
+        cache_hit_rate: float = 0.0
+        tokens_per_second: float = 0.0
+        avg_batch_size: float = 0.0
 else:
     # Stub classes when FastAPI not available
     GenerateRequest = dict[str, Any]  # type: ignore[assignment]
@@ -274,6 +284,12 @@ class LLMInferenceServer:
         self._last_generation_time = 0.0
         self._total_tokens_generated = 0
         self._lock = threading.Lock()
+
+        # LLM serving metrics
+        self._llm_metrics = None
+        if self.config.enable_llm_metrics:
+            from torchbridge.monitoring.llm_metrics import LLMMetricsCollector
+            self._llm_metrics = LLMMetricsCollector()
 
         # Dynamic batching
         self._batch_queue: deque = deque()
@@ -599,18 +615,35 @@ class LLMInferenceServer:
             else:
                 # Direct generation (no batching)
                 input_ids = input_ids.to(self.device)
+                prompt_tokens = input_ids.size(1)
 
-                with torch.no_grad():
-                    outputs = self.model.generate(
-                        input_ids,
-                        **gen_kwargs
-                    )
+                # Use GenerationTimer for LLM metrics
+                timer = None
+                if self._llm_metrics is not None:
+                    from torchbridge.monitoring.llm_metrics import GenerationTimer
+                    timer = GenerationTimer(prompt_tokens=prompt_tokens)
+
+                if timer is not None:
+                    with timer:
+                        with torch.no_grad():
+                            outputs = self.model.generate(
+                                input_ids,
+                                **gen_kwargs
+                            )
+                        timer.record_first_token()
+                else:
+                    with torch.no_grad():
+                        outputs = self.model.generate(
+                            input_ids,
+                            **gen_kwargs
+                        )
 
                 # Decode output
                 generated_ids = outputs[:, input_ids.size(1):]
                 generated_text = self.tokenizer.decode(
                     generated_ids[0], skip_special_tokens=True
                 )
+                num_generated = generated_ids.size(1)
 
                 # Calculate timing
                 inference_time = (time.time() - start_time) * 1000
@@ -620,12 +653,20 @@ class LLMInferenceServer:
                     self._generation_count += 1
                     self._total_generation_time += inference_time
                     self._last_generation_time = inference_time
-                    self._total_tokens_generated += generated_ids.size(1)
+                    self._total_tokens_generated += num_generated
+
+                # Record LLM metrics
+                if timer is not None and self._llm_metrics is not None:
+                    req_metrics = timer.finalize(num_generated)
+                    self._llm_metrics.record_request(
+                        req_metrics,
+                        model_name=self.config.model_name,
+                    )
 
                 return GenerateResponse(
                     generated_text=generated_text,
                     prompt=request.prompt,
-                    num_tokens=generated_ids.size(1),
+                    num_tokens=num_generated,
                     inference_time_ms=inference_time,
                     model_name=self.config.model_name,
                 )
@@ -791,6 +832,22 @@ class LLMInferenceServer:
             memory_allocated = 0.0
             memory_reserved = 0.0
 
+        # LLM metrics snapshot
+        llm_kwargs: dict = {}
+        if self._llm_metrics is not None:
+            snap = self._llm_metrics.get_snapshot()
+            llm_kwargs = {
+                "ttft_p50_ms": snap.ttft_p50_ms,
+                "ttft_p95_ms": snap.ttft_p95_ms,
+                "ttft_p99_ms": snap.ttft_p99_ms,
+                "tpot_p50_ms": snap.tpot_p50_ms,
+                "tpot_p95_ms": snap.tpot_p95_ms,
+                "tpot_p99_ms": snap.tpot_p99_ms,
+                "cache_hit_rate": snap.cache_hit_rate,
+                "tokens_per_second": snap.tokens_per_second,
+                "avg_batch_size": snap.avg_batch_size,
+            }
+
         return MetricsResponse(
             generation_count=self._generation_count,
             total_generation_time_ms=self._total_generation_time,
@@ -802,6 +859,7 @@ class LLMInferenceServer:
             device=str(self.device),
             memory_allocated_mb=memory_allocated,
             memory_reserved_mb=memory_reserved,
+            **llm_kwargs,
         )
 
 def create_llm_server(
