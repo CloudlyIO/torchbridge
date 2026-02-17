@@ -15,6 +15,13 @@ Features:
 
 """
 
+from .kv import (
+    KVCacheCompatibilityMatrix,
+    KVCacheDtype,
+    PrefixCache,
+    QuantizedCacheConfig,
+    QuantizedKVCache,
+)
 from .kv_cache import (
     KVCacheManager,
     PagedKVCache,
@@ -45,4 +52,10 @@ __all__ = [
     "KVCacheManager",
     "PagedKVCache",
     "SlidingWindowCache",
+    # KV Cache Optimization
+    "KVCacheDtype",
+    "KVCacheCompatibilityMatrix",
+    "QuantizedCacheConfig",
+    "QuantizedKVCache",
+    "PrefixCache",
 ]

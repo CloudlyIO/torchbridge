@@ -26,6 +26,7 @@ from torchbridge import __version__ as _tb_version
 from torchbridge.core.errors import TorchBridgeError
 
 from .benchmark import BenchmarkCommand
+from .cache import CacheCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
 from .init import InitCommand
@@ -104,6 +105,7 @@ For command-specific help:
     ValidateCommand.register(subparsers)
     QuantizeCommand.register(subparsers)
     MigrateCommand.register(subparsers)
+    CacheCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -130,6 +132,7 @@ For command-specific help:
         'validate': ValidateCommand,
         'quantize': QuantizeCommand,
         'migrate': MigrateCommand,
+        'cache': CacheCommand,
     }
 
     cmd_class = commands.get(parsed_args.command)
