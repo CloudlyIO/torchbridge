@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.25] - 2026-02-16 - KV-Cache Optimization & LLM Serving Metrics
+
+### **Summary**
+
+Backend-aware KV-cache quantization, prefix caching, and LLM serving metrics.
+Auto-selects optimal KV dtype per hardware with NVFP4 (Blackwell DC, 0.25x memory),
+FP8 (Hopper/Ada/CDNA3+, 0.5x memory), and BF16 fallbacks. Adds TTFT/TPOT/ITL
+metrics with optional Prometheus integration.
+
+### Added
+- New `models/llm/kv/` subpackage with 4 core modules
+- `KVCacheDtype` enum: FP16, BF16, FP8_E4M3, NVFP4, PASSTHROUGH
+- `KVCacheCompatibilityMatrix` mapping every (backend, architecture) pair to optimal KV dtypes
+- `QuantizedKVCache` wrapping `KVCacheManager` with backend-aware dtype casting
+- `PrefixCache` with SHA-256 hashing, LRU eviction, and hit rate tracking
+- `GenerationTimer` context manager for TTFT/TPOT/ITL measurement
+- `LLMMetricsCollector` with rolling windows, percentiles, and optional Prometheus export
+- `LLMMetricsSnapshot` aggregated dataclass with p50/p95/p99 for all latency metrics
+- `tb-cache` / `torchbridge cache` CLI command with `--show-matrix` and `--ci` modes
+- LLM metrics integration in `LLMInferenceServer` (`enable_llm_metrics` config, extended MetricsResponse)
+- `docs/guides/kv-cache.md` — compatibility matrix, API guide, Prometheus integration
+- `examples/models/llm/kv_cache_cross_backend.py` — full pipeline demo
+- 6 new test files with ~80 tests
+
+### Changed
+- `LLMServerConfig` gains `enable_llm_metrics: bool = True`
+- `MetricsResponse` extended with TTFT/TPOT p50/p95/p99, cache_hit_rate, tokens_per_second, avg_batch_size
+- CLI now has 11 commands (added `cache`)
+
 ## [0.5.24] - 2026-02-16 - FlexAttention & Kernel Dispatch
 
 ### **Summary**

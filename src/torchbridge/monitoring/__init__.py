@@ -67,6 +67,12 @@ from .health_monitor import (
     HealthStatus,
     create_health_monitor,
 )
+from .llm_metrics import (
+    GenerationTimer,
+    LLMMetricsCollector,
+    LLMMetricsSnapshot,
+    LLMRequestMetrics,
+)
 from .prometheus_exporter import (
     InferenceMetrics,
     MetricsConfig,
@@ -175,4 +181,9 @@ __all__ = [
     "create_default_alert_rules",
     "export_alert_rules_json",
     "export_alert_rules_yaml",
+    # LLM Serving Metrics
+    "LLMRequestMetrics",
+    "LLMMetricsSnapshot",
+    "GenerationTimer",
+    "LLMMetricsCollector",
 ]
