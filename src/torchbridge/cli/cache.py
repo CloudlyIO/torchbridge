@@ -106,6 +106,8 @@ Examples:
         if backend_str == "auto":
             import torch
             if torch.cuda.is_available():
+                if hasattr(torch.version, "hip") and torch.version.hip:
+                    return HardwareBackend.AMD
                 return HardwareBackend.CUDA
             return HardwareBackend.CPU
 

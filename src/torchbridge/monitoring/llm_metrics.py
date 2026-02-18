@@ -148,9 +148,10 @@ class GenerationTimer:
             ttft_ms = total_ms
 
         # TPOT (average decode time per token, excluding prefill)
-        if generated_tokens > 0 and self._first_token_time is not None:
+        # When first_token_time is known, decode covers tokens 2..N (N-1 intervals)
+        if generated_tokens > 1 and self._first_token_time is not None:
             decode_time = end - self._first_token_time
-            tpot_ms = (decode_time / generated_tokens) * 1000.0
+            tpot_ms = (decode_time / (generated_tokens - 1)) * 1000.0
         elif generated_tokens > 0:
             tpot_ms = total_ms / generated_tokens
         else:
