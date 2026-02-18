@@ -119,6 +119,15 @@ class LLMServerConfig:
     enable_streaming: bool = True
     stream_interval_tokens: int = 1
 
+    # Speculative decoding
+    enable_speculative_decoding: bool = False
+    speculative_method: str | None = None  # None = auto-select
+    draft_model_name: str | None = None
+    num_speculative_tokens: int = 5
+
+    # Structured output
+    enable_structured_output: bool = False
+
     # Health check settings
     enable_health_checks: bool = True
     enable_metrics: bool = True
@@ -285,6 +294,9 @@ class LLMInferenceServer:
         self._total_tokens_generated = 0
         self._lock = threading.Lock()
 
+        # Speculative decoding engine (initialized after _setup_device)
+        self._speculation_engine: Any = None
+
         # LLM serving metrics
         self._llm_metrics = None
         if self.config.enable_llm_metrics:
@@ -300,6 +312,10 @@ class LLMInferenceServer:
         # Initialize device and model
         self._setup_device()
         self._setup_model()
+
+        # Speculative decoding engine (after device is known)
+        if self.config.enable_speculative_decoding:
+            self._setup_speculation_engine()
 
         # Start batching thread if enabled
         if self.config.enable_dynamic_batching:
@@ -336,6 +352,34 @@ class LLMInferenceServer:
 
         self.status = HealthStatus.HEALTHY
         logger.info("LLM server setup complete")
+
+    def _setup_speculation_engine(self) -> None:
+        """Set up speculative decoding engine with detected backend."""
+        from torchbridge.core.config import HardwareBackend
+        from torchbridge.inference.speculative.engine import (
+            SpeculationConfig,
+            SpeculationEngine,
+        )
+        from torchbridge.inference.speculative.methods import SpeculativeMethod
+
+        # Map device type to HardwareBackend
+        if self.device is not None and self.device.type == "cuda":
+            backend = HardwareBackend.CUDA
+        else:
+            backend = HardwareBackend.CPU
+
+        method = None
+        if self.config.speculative_method:
+            method = SpeculativeMethod.from_string(self.config.speculative_method)
+        spec_config = SpeculationConfig(
+            method=method,
+            draft_model_name=self.config.draft_model_name,
+            num_speculative_tokens=self.config.num_speculative_tokens,
+        )
+        self._speculation_engine = SpeculationEngine(
+            config=spec_config,
+            backend=backend,
+        )
 
     def _start_batch_processor(self) -> None:
         """Start the background batch processing thread."""
@@ -630,7 +674,6 @@ class LLMInferenceServer:
                                 input_ids,
                                 **gen_kwargs
                             )
-                        timer.record_first_token()
                 else:
                     with torch.no_grad():
                         outputs = self.model.generate(
@@ -756,7 +799,7 @@ class LLMInferenceServer:
 
     def _prepare_generation_kwargs(self, request: GenerateRequest) -> dict[str, Any]:
         """Prepare generation kwargs from request."""
-        return {
+        kwargs = {
             'max_new_tokens': request.max_new_tokens or self.config.max_new_tokens,
             'temperature': request.temperature or self.config.temperature,
             'top_p': request.top_p or self.config.top_p,
@@ -766,6 +809,12 @@ class LLMInferenceServer:
             'pad_token_id': self.tokenizer.pad_token_id,
             'eos_token_id': self.tokenizer.eos_token_id,
         }
+
+        # Merge speculative decoding kwargs
+        if self._speculation_engine is not None:
+            kwargs.update(self._speculation_engine.get_generation_kwargs())
+
+        return kwargs
 
     def _count_tokens(self, text: str) -> TokenCountResponse:
         """Count tokens in text."""

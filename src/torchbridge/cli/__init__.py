@@ -34,6 +34,7 @@ from .migrate import MigrateCommand
 from .optimize import OptimizeCommand
 from .profile import ProfileCommand
 from .quantize import QuantizeCommand
+from .speculate import SpeculateCommand
 from .validate import ValidateCommand
 
 
@@ -106,6 +107,7 @@ For command-specific help:
     QuantizeCommand.register(subparsers)
     MigrateCommand.register(subparsers)
     CacheCommand.register(subparsers)
+    SpeculateCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -133,6 +135,7 @@ For command-specific help:
         'quantize': QuantizeCommand,
         'migrate': MigrateCommand,
         'cache': CacheCommand,
+        'speculate': SpeculateCommand,
     }
 
     cmd_class = commands.get(parsed_args.command)

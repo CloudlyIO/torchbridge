@@ -13,6 +13,7 @@ import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
+from typing import Any
 
 import torch
 
@@ -113,7 +114,7 @@ class PrefixCache:
                 or self._total_tokens + num_tokens > self._max_tokens
             ) and self._cache:
                 _, evicted = self._cache.popitem(last=False)
-                self._total_tokens -= evicted.num_tokens
+                self._total_tokens = max(0, self._total_tokens - evicted.num_tokens)
 
             # Check if single entry exceeds max
             if num_tokens > self._max_tokens:
@@ -284,12 +285,12 @@ class QuantizedKVCache:
             return False
         return self._prefix_cache.insert(token_ids, kv_tensors)
 
-    def get_memory_usage(self, cache=None) -> dict:
+    def get_memory_usage(self, cache=None) -> dict[str, Any]:
         """Get memory usage info, extended with KV dtype metadata."""
         if cache is not None:
-            base = self._inner.get_memory_usage(cache)
+            base: dict[str, Any] = self._inner.get_memory_usage(cache)
         else:
-            base = {"total_bytes": 0, "num_layers": 0}
+            base: dict[str, Any] = {"total_bytes": 0, "num_layers": 0}
 
         base["kv_dtype"] = self._kv_dtype.value
         if self._dtype_spec:
