@@ -8,6 +8,34 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.26] - 2026-02-17 - Speculative Decoding & Structured Output
+
+### **Summary**
+
+Backend-aware speculative decoding abstraction, XGrammar-based structured output,
+and disaggregated serving phase detection. Auto-selects optimal speculation method
+per hardware: EAGLE (Hopper+), draft model (Ampere/Ada/CDNA3+), layer skip
+(Trainium/TPU), and prompt lookup (universal). Adds constrained JSON/regex
+generation via xgrammar soft dependency.
+
+### Added
+- New `inference/` top-level package with 3 subpackages
+- `SpeculativeMethod` enum: NONE, DRAFT_MODEL, EAGLE, LAYER_SKIP, MEDUSA, PROMPT_LOOKUP
+- `SpeculationCompatibilityMatrix` mapping every (backend, architecture) pair to optimal methods
+- `SpeculationEngine` producing HuggingFace `model.generate()` kwargs
+- `OutputFormat` enum: TEXT, JSON, JSON_SCHEMA, REGEX
+- `StructuredOutputProcessor` with xgrammar soft dependency for grammar-guided generation
+- `PhaseType` enum: PREFILL, DECODE, MIXED with `PhaseDetector` for disaggregated serving
+- `tb-speculate` / `torchbridge speculate` CLI command with `--show-matrix` and `--ci` modes
+- `docs/guides/speculative-decoding.md` — compatibility matrix, API guide, method comparison
+- `examples/models/llm/speculative_cross_backend.py` — full pipeline demo
+- 7 new test files with ~105 tests
+
+### Changed
+- `LLMServerConfig` gains `enable_speculative_decoding`, `speculative_method`, `draft_model_name`, `num_speculative_tokens`, `enable_structured_output`
+- `LLMInferenceServer._prepare_generation_kwargs()` merges speculation kwargs
+- CLI now has 12 commands (added `speculate`)
+
 ## [0.5.25] - 2026-02-16 - KV-Cache Optimization & LLM Serving Metrics
 
 ### **Summary**

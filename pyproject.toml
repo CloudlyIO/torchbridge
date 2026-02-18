@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.25"
+version = "0.5.26"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Trainium, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -49,6 +49,7 @@ tb-validate = "torchbridge.cli.validate:main"
 tb-migrate = "torchbridge.cli.migrate:main"
 tb-quantize = "torchbridge.cli.quantize:main"
 tb-cache = "torchbridge.cli.cache:main"
+tb-speculate = "torchbridge.cli.speculate:main"
 
 [project.optional-dependencies]
 dev = [
