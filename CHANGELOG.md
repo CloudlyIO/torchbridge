@@ -8,6 +8,33 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.28] - 2026-02-19 - Checkpointing & Fault Tolerance
+
+### **Summary**
+
+Async checkpoint management wrapping PyTorch DCP with cross-backend
+portability, storage backend abstraction, and health-triggered saves.
+Checkpoints saved on one backend (e.g., NVIDIA) can be loaded on another
+(e.g., AMD) with automatic dtype normalization and device placement.
+
+### Added
+- New `checkpoint/` package with 5 core modules (config, storage, metadata, manager, frequency)
+- `CheckpointManager` with async DCP save, plan caching, metadata sidecar, and checkpoint rotation
+- `StorageBackendFactory` creating DCP StorageWriter/Reader for LOCAL, S3, GCS, and Azure backends
+- `PortabilityNormalizer` for cross-backend checkpoint portability (FP8→FP16 normalization, device placement)
+- `CheckpointMetadata` with hardware provenance (backend, architecture, world size, dtype/device maps)
+- `CheckpointFrequencyAdvisor` using Young's formula for optimal checkpoint interval from MTBF
+- `CheckpointHealthTrigger` for automatic checkpoint-on-degradation (temperature, memory errors, utilization)
+- `tb-checkpoint` / `torchbridge checkpoint` CLI with `info`, `list`, `advisor` subcommands
+- `docs/guides/checkpointing.md` — async DCP, cross-backend portability, frequency advisor, health triggers
+- `examples/models/distributed/checkpoint_cross_backend.py` — 4-scenario demo
+- 6 new test files with 135 tests
+- `checkpoint` optional dependency group for cloud storage (`s3fs`, `gcsfs`, `adlfs`)
+
+### Changed
+- CLI now has 13 commands (added `checkpoint`)
+- pyproject.toml gains `tb-checkpoint` entry point
+
 ## [0.5.27] - 2026-02-19 - FSDP2 & Distributed Config
 
 ### **Summary**

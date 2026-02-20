@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.27"
+version = "0.5.28"
 description = "Hardware abstraction layer for PyTorch across NVIDIA, AMD, Trainium, and TPU backends"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -51,6 +51,7 @@ tb-quantize = "torchbridge.cli.quantize:main"
 tb-cache = "torchbridge.cli.cache:main"
 tb-speculate = "torchbridge.cli.speculate:main"
 tb-advisor = "torchbridge.cli.advisor:main"
+tb-checkpoint = "torchbridge.cli.checkpoint:main"
 
 [project.optional-dependencies]
 dev = [
@@ -108,6 +109,11 @@ tracing = [
 ]
 quantization = [
     "torchao>=0.4.0,<1.0.0",
+]
+checkpoint = [
+    "s3fs>=2024.1.0,<2026.0.0",
+    "gcsfs>=2024.1.0,<2026.0.0",
+    "adlfs>=2024.1.0,<2026.0.0",
 ]
 docs = [
     "sphinx>=7.0.0,<8.0.0",
