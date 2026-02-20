@@ -25,6 +25,7 @@ os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 from torchbridge import __version__ as _tb_version
 from torchbridge.core.errors import TorchBridgeError
 
+from .adapter import AdapterCommand
 from .advisor import AdvisorCommand
 from .benchmark import BenchmarkCommand
 from .cache import CacheCommand
@@ -100,6 +101,7 @@ For command-specific help:
 
     # Register commands
     OptimizeCommand.register(subparsers)
+    AdapterCommand.register(subparsers)
     BenchmarkCommand.register(subparsers)
     ExportCommand.register(subparsers)
     ProfileCommand.register(subparsers)
@@ -130,6 +132,7 @@ For command-specific help:
 
     commands = {
         'optimize': OptimizeCommand,
+        'adapter': AdapterCommand,
         'benchmark': BenchmarkCommand,
         'export': ExportCommand,
         'profile': ProfileCommand,
