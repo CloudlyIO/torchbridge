@@ -8,6 +8,29 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.29] - 2026-02-20 - Adapter Training Abstraction
+
+### **Summary**
+
+Unified LoRA/QLoRA/DoRA/QDoRA API with backend-optimized PEFT. Lightweight
+adapter layers (pure PyTorch, no external deps), backend-aware method
+selection via compatibility matrix, and multi-adapter serving with LRU cache.
+
+### Added
+- New `adapters/` package with 5 core modules (config, compatibility, layers, engine, serving)
+- `LoRALinear` and `DoRALinear` adapter layers with merge-for-deployment support
+- `AdapterCompatibilityMatrix` mapping (backend, architecture) to optimal method with fallback chains
+- `AdapterEngine` for injecting/merging adapters, adapter param save/load, method auto-selection
+- `MultiAdapterManager` with LRU eviction, hot-swap, CPU offload for multi-adapter serving
+- `tb-adapter` / `torchbridge adapter` CLI with `recommend`, `info` subcommands
+- `docs/guides/adapter-training.md` — method comparison, backend matrix, multi-adapter serving
+- `examples/models/llm/adapter_cross_backend.py` — 4-scenario demo
+- 6 new test files with ~140 tests
+
+### Changed
+- CLI now has 14 commands (added `adapter`)
+- pyproject.toml gains `tb-adapter` entry point
+
 ## [0.5.28] - 2026-02-19 - Checkpointing & Fault Tolerance
 
 ### **Summary**
