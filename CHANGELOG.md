@@ -8,6 +8,33 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.27] - 2026-02-19 - FSDP2 & Distributed Config
+
+### **Summary**
+
+Topology-aware distributed training configuration with zero manual tuning.
+Auto-selects FSDP2 sharding strategy, mixed precision, pipeline schedule,
+and communication backend per hardware. Includes parallelism advisor CLI
+that recommends TP degree, PP stages, and FSDP strategy from model size
+and cluster topology.
+
+### Added
+- New `distributed/` package with 5 core modules
+- `FSDP2Manager` with backend-aware auto-configuration (mixed precision, float8 all-gather, hybrid sharding)
+- `TopologyDetector` — auto-detect cluster layout from SLURM, Kubernetes, or torch.distributed env vars
+- `PipelineScheduleFactory` — zero-bubble scheduling on Hopper+, 1F1B elsewhere, 5 schedule types
+- `CollectiveBackendMatrix` — NCCL, RCCL, Neuron CC, XLA, Gloo with symmetric memory and FP8 reduce detection
+- `DistributedConfig` unified config with `auto()` class method and TOML export
+- `ParallelismRecommendation` with TP/PP/FSDP strategy and memory/communication estimates
+- `tb-advisor` / `torchbridge advisor` CLI command with `--ci`, `--toml`, and `--topology` modes
+- `docs/guides/distributed-config.md` — topology detection, parallelism selection guide
+- `examples/models/distributed/distributed_cross_backend.py` — full pipeline demo
+- 7 new test files with ~147 tests
+
+### Changed
+- CLI now has 12 commands (added `advisor`)
+- pyproject.toml gains `tb-advisor` entry point
+
 ## [0.5.26] - 2026-02-17 - Speculative Decoding & Structured Output
 
 ### **Summary**
