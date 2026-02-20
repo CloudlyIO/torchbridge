@@ -28,6 +28,7 @@ from torchbridge.core.errors import TorchBridgeError
 from .advisor import AdvisorCommand
 from .benchmark import BenchmarkCommand
 from .cache import CacheCommand
+from .checkpoint import CheckpointCommand
 from .doctor import DoctorCommand
 from .export import ExportCommand
 from .init import InitCommand
@@ -110,6 +111,7 @@ For command-specific help:
     CacheCommand.register(subparsers)
     SpeculateCommand.register(subparsers)
     AdvisorCommand.register(subparsers)
+    CheckpointCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -139,6 +141,7 @@ For command-specific help:
         'cache': CacheCommand,
         'speculate': SpeculateCommand,
         'advisor': AdvisorCommand,
+        'checkpoint': CheckpointCommand,
     }
 
     cmd_class = commands.get(parsed_args.command)
