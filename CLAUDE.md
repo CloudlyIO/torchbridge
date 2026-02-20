@@ -439,6 +439,10 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-02-15 | MPS | Apple Silicon | Qwen3-0.6B | 4.58e-05 | 1.000002 | 27.8ms | PASSED |
 | 2026-02-15 | GCP TPU | v5e (v5litepod-1) | Qwen3-0.6B | 1.08e-01 | 0.999980 | 47.5ms | PASSED |
 | 2026-02-15 | RunPod CUDA | H100 NVL | Qwen3-0.6B | 2.29e-05 | 1.000001 | 18.8ms | PASSED |
+| 2026-02-19 | AMD ROCm | MI300X | Qwen3-0.6B | 4.82e-05 | 1.000001 | — | PASSED |
+| 2026-02-19 | AWS CUDA | A10G | Qwen3-0.6B | 1.86e-05 | 1.000001 | 42.4ms | PASSED |
+| 2026-02-19 | AWS Trainium | trn1.2xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
+| 2026-02-19 | AWS Inferentia2 | inf2.xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
 
 ---
 

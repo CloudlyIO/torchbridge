@@ -25,6 +25,7 @@ os.environ.setdefault("PYTORCH_NVML_SUPPRESS_DEPRECATION_WARNING", "1")
 from torchbridge import __version__ as _tb_version
 from torchbridge.core.errors import TorchBridgeError
 
+from .advisor import AdvisorCommand
 from .benchmark import BenchmarkCommand
 from .cache import CacheCommand
 from .doctor import DoctorCommand
@@ -108,6 +109,7 @@ For command-specific help:
     MigrateCommand.register(subparsers)
     CacheCommand.register(subparsers)
     SpeculateCommand.register(subparsers)
+    AdvisorCommand.register(subparsers)
 
     # Parse arguments
     if args is None:
@@ -136,6 +138,7 @@ For command-specific help:
         'migrate': MigrateCommand,
         'cache': CacheCommand,
         'speculate': SpeculateCommand,
+        'advisor': AdvisorCommand,
     }
 
     cmd_class = commands.get(parsed_args.command)
