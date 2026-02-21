@@ -6,6 +6,49 @@ This file contains permanent configuration and instructions that Claude must fol
 
 ---
 
+## TorchBridge Identity & Development Guardrails
+
+TorchBridge is a **cross-backend validation and configuration intelligence layer** for PyTorch. Its value is in *knowing what to configure per hardware* and *proving that outputs match across backends* — not in reimplementing PyTorch internals.
+
+### The Four Rules (apply to every feature, PR, and code change)
+
+**1. No-Wrapper Rule**
+Do not wrap a single PyTorch call in a TorchBridge class. If the entire method body is `return torch.something(...)`, delete the method. TorchBridge adds value through *selection logic* (compatibility matrices, fallback chains, hardware detection), not through pass-through wrappers.
+
+**Examples of violations:**
+- A "memory manager" that calls `torch.cuda.memory_allocated()`
+- An "optimizer" whose core is `model.to(device)`
+- A "compiler" that wraps `torch.compile()` with no additional logic
+
+**2. Benchmark-or-Delete Rule**
+Every claimed "optimization" must show measured improvement over vanilla PyTorch on real hardware. No feature ships without a benchmark result stored in `reports/`. If you cannot demonstrate a measurable difference, the feature is a facade — delete it.
+
+**3. Matrix-First Rule**
+New features should primarily be compatibility matrix entries or configuration generators, not runtime code. The pattern is:
+- **Good:** `(backend, architecture) → optimal_config` lookup table with fallback chain
+- **Good:** CLI tool that queries the matrix and prints a recommendation
+- **Bad:** Runtime wrapper that calls `torch.compile()` with hardcoded flags
+- **Bad:** "Fused layer" that is just `Linear` + `activation` in sequence
+
+**4. Two-Question Test (ask before writing any feature)**
+1. "Does this exist in PyTorch already?" → If yes, don't build it. Link to the PyTorch API instead.
+2. "Can I show a measurable difference vs vanilla PyTorch on real hardware?" → If no, don't ship it.
+
+### What TorchBridge Does (keep and deepen)
+- **Compatibility matrices**: `(backend, architecture) → optimal format/kernel/adapter` with fallback chains
+- **Backend detection**: Hardware identification, capability queries, device management
+- **Configuration generation**: FSDP2 configs, attention dispatch, quantization format selection
+- **Cross-backend validation**: Numerical correctness testing across hardware platforms
+- **CLI diagnostics**: `tb-doctor`, `tb-quantize`, `tb-advisor`, `tb-validate`
+
+### What TorchBridge Does NOT Do (never build)
+- Reimplement `torch.compile`, `torch.cuda`, or `torch.distributed`
+- Create thin wrapper classes around single PyTorch API calls
+- Claim "optimization" without measured benchmarks on real hardware
+- Ship "fused" layers that are just sequential PyTorch modules
+
+---
+
 ## Cloud Validation — Complete Step-by-Step Procedures
 
 ### Qwen3-0.6B Validation Script (Use on ALL Backends)

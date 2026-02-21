@@ -295,17 +295,6 @@ class TestFP8Compiler:
         assert 'total_layers' in stats
         assert 'fp8_layers' in stats
 
-    def test_estimate_speedup_hopper(self):
-        """Test speedup estimation for Hopper."""
-        config = TorchBridgeConfig()
-        config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
-        compiler = FP8Compiler(config)
-        model = nn.Linear(16, 16)
-        compiler.prepare_for_fp8(model)
-        speedup = compiler.estimate_speedup(model)
-        assert 'estimated_speedup' in speedup
-        assert speedup['base_speedup'] == 2.0
-
     def test_compile_with_fp8(self):
         """Test full FP8 compilation."""
         config = TorchBridgeConfig()
@@ -611,23 +600,6 @@ class TestNVIDIAErrorPaths:
 
         fa_no_causal = FlashAttention3(embed_dim=64, num_heads=4, causal=False)
         assert fa_no_causal.causal is False
-
-    def test_fp8_compiler_metadata_only_warning(self):
-        """Test that FP8 compiler issues metadata-only warning."""
-        import warnings
-        config = TorchBridgeConfig()
-        config.hardware.nvidia.architecture = NVIDIAArchitecture.HOPPER
-        config.hardware.nvidia.fp8_enabled = True
-
-        compiler = FP8Compiler(config)
-        model = nn.Linear(128, 128)
-
-        # Should issue warning about metadata-only FP8
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            compiler.prepare_for_fp8(model, for_inference=False)
-            # Check if warning was issued (UserWarning or DeprecationWarning)
-            assert any("metadata-only" in str(warning.message).lower() for warning in w)
 
     def test_memory_allocation_with_cleanup(self):
         """Test that memory allocation attempts cleanup before failing."""

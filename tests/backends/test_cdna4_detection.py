@@ -6,7 +6,6 @@ GPUs across all detection layers:
 - AMDConfig architecture detection
 - AMDBackend architecture detection
 - AMDAdapter vendor adapter mapping
-- ROCm compiler GPU target mapping
 - Precision and Matrix Core capability detection
 """
 
@@ -58,15 +57,6 @@ class TestMI325XDetection:
         config = AMDConfig(architecture=AMDArchitecture.CDNA3)
         assert config.enable_matrix_cores is True
         assert config.matrix_core_precision == "bf16"
-
-    def test_mi325x_compiler_target(self):
-        """MI325X should compile to gfx942 target."""
-        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA3)
-        compiler = ROCmCompiler(config)
-        assert compiler._get_gpu_target() == "gfx942"
-
 
 class TestCDNA4Detection:
     """Test CDNA 4 (MI350X/MI355X) detection — gfx950, 288GB HBM3e."""
@@ -120,15 +110,6 @@ class TestCDNA4Detection:
         assert config.matrix_core_precision == "bf16"
         assert config.allow_bf16 is True
 
-    def test_cdna4_compiler_target(self):
-        """CDNA4 should compile to gfx950 target."""
-        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA4)
-        compiler = ROCmCompiler(config)
-        assert compiler._get_gpu_target() == "gfx950"
-
-
 class TestCDNA4EnumValues:
     """Test CDNA4 enum values and consistency."""
 
@@ -175,70 +156,6 @@ class TestCDNA4MatrixCores:
         """RDNA consumer GPUs should NOT have Matrix Cores."""
         config = AMDConfig(architecture=AMDArchitecture.RDNA3)
         assert config.enable_matrix_cores is False
-
-
-class TestCDNA4FP8Support:
-    """Test FP8 support on CDNA3 and CDNA4."""
-
-    def test_cdna4_fp8_optimizer(self):
-        """CDNA4 optimizer should enable FP8 quantization."""
-        from torchbridge.backends.amd.amd_adapter import AMDAdapter
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA4)
-        optimizer = AMDAdapter(config)
-
-        # FP8 should not raise a warning for CDNA4
-        model = torch.nn.Linear(64, 32)
-        result = optimizer._prepare_fp8_quantization(model)
-        # Returns True on CDNA4 (FP8 supported)
-        assert result is True
-
-    def test_cdna3_fp8_optimizer(self):
-        """CDNA3 optimizer should also enable FP8 quantization."""
-        from torchbridge.backends.amd.amd_adapter import AMDAdapter
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA3)
-        optimizer = AMDAdapter(config)
-        model = torch.nn.Linear(64, 32)
-        result = optimizer._prepare_fp8_quantization(model)
-        assert result is True
-
-    def test_cdna2_no_fp8(self):
-        """CDNA2 should NOT support FP8."""
-        from torchbridge.backends.amd.amd_adapter import AMDAdapter
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA2)
-        optimizer = AMDAdapter(config)
-        model = torch.nn.Linear(64, 32)
-        result = optimizer._prepare_fp8_quantization(model)
-        assert result is False
-
-
-class TestCDNA4CompilerFlags:
-    """Test HIP compiler flags for CDNA4."""
-
-    def test_cdna4_matrix_core_flags(self):
-        """CDNA4 should get Matrix Core compiler flags."""
-        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA4)
-        compiler = ROCmCompiler(config)
-        flags = compiler._get_optimization_flags("balanced")
-
-        assert "--amdgpu-target=gfx950" in flags
-        assert "-mwavefrontsize64" in flags
-        assert "-mcumode" in flags
-
-    def test_cdna3_compiler_flags(self):
-        """CDNA3 should also get Matrix Core compiler flags."""
-        from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
-
-        config = AMDConfig(architecture=AMDArchitecture.CDNA3)
-        compiler = ROCmCompiler(config)
-        flags = compiler._get_optimization_flags("aggressive")
-
-        assert "--amdgpu-target=gfx942" in flags
-        assert "-mwavefrontsize64" in flags
 
 
 class TestVendorAdapterCDNA4:

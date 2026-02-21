@@ -244,18 +244,18 @@ class AMDAdapter:
                 "Gradient checkpointing increases training time by ~20%"
             )
 
-        # 8. Aggressive kernel fusion
-        fused_count = self._aggressive_kernel_fusion(model)
-        if fused_count:
-            result.optimizations_applied.append(
-                f"Aggressively fused {fused_count} kernel patterns"
-            )
-
-        # 9. FP8 support for CDNA3/CDNA4
-        if self.config.architecture in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
-            if self._prepare_fp8_quantization(model):
-                result.optimizations_applied.append("Prepared FP8 quantization (MI300/MI350)")
-                result.warnings.append("FP8 is experimental and may affect accuracy")
+        # 8. Apply torch.compile with max-autotune for aggressive optimization
+        if hasattr(torch, 'compile'):
+            try:
+                model = torch.compile(  # type: ignore[assignment]
+                    model,
+                    mode='max-autotune',
+                    fullgraph=False,
+                    dynamic=True
+                )
+                result.optimizations_applied.append("Applied torch.compile max-autotune")
+            except Exception as e:
+                logger.debug("torch.compile max-autotune not applied: %s", e)
 
         logger.debug("Aggressive optimizations: %d applied", len(result.optimizations_applied))
         return result
@@ -545,106 +545,6 @@ class AMDAdapter:
 
         except Exception as e:
             logger.warning("Failed to enable gradient checkpointing: %s", e)
-            return False
-
-    def _aggressive_kernel_fusion(self, model: torch.nn.Module) -> int:
-        """
-        Aggressively fuse kernel patterns for maximum performance.
-
-        This includes experimental fusions that may not work for all models:
-        - Multi-head attention patterns
-        - LayerNorm + residual connections
-        - Dropout fusion
-        - Flash attention enablement
-
-        Args:
-            model: Model to optimize
-
-        Returns:
-            Number of fused patterns
-        """
-        fused_count = 0
-
-        try:
-            modules = list(model.named_modules())
-
-            # 1. Identify and optimize attention patterns
-            for name, _module in modules:
-                if 'attention' in name.lower() or 'attn' in name.lower():
-                    self._fused_ops.add(f"{name}:attention_pattern")
-                    fused_count += 1
-
-            # 2. Look for LayerNorm + residual patterns
-            for _i, (name, module) in enumerate(modules):
-                if isinstance(module, torch.nn.LayerNorm):
-                    self._fused_ops.add(f"{name}:layernorm_fusion")
-                    fused_count += 1
-
-            # 3. Enable Flash attention if available
-            if hasattr(torch.nn.functional, 'scaled_dot_product_attention'):
-                # SDPA with flash attention backend works on AMD via Triton
-                try:
-                    # Enable flash attention backend
-                    with torch.backends.cuda.sdp_kernel(
-                        enable_flash=True,
-                        enable_math=True,
-                        enable_mem_efficient=True
-                    ):
-                        pass
-                    self._fused_ops.add("flash_attention_enabled")
-                    fused_count += 1
-                    logger.debug("Flash attention backend enabled for AMD")
-                except Exception as e:
-                    logger.debug("Flash attention not available: %s", e)
-
-            # 4. Apply torch.compile with max-autotune for aggressive optimization
-            if hasattr(torch, 'compile') and fused_count > 0:
-                try:
-                    model = torch.compile(  # type: ignore[assignment]
-                        model,
-                        mode='max-autotune',  # Maximum optimization
-                        fullgraph=False,
-                        dynamic=True
-                    )
-                    logger.debug("Applied max-autotune compilation")
-                except Exception as e:
-                    logger.debug("Max-autotune compilation not applied: %s", e)
-
-            logger.debug("Aggressive kernel fusion: %d patterns fused", fused_count)
-            return fused_count
-
-        except Exception as e:
-            logger.warning("Aggressive kernel fusion failed: %s", e)
-            return 0
-
-    def _prepare_fp8_quantization(self, model: torch.nn.Module) -> bool:
-        """
-        Prepare model for FP8 quantization (CDNA3 only).
-
-        MI300 series supports FP8 operations which can provide significant
-        speedup for inference and training.
-
-        Note: FP8 preparation is experimental and marks model as ready
-        for FP8 compute. Full quantization requires ROCm FP8 support.
-
-        Args:
-            model: Model to prepare
-
-        Returns:
-            True if FP8 preparation successful (CDNA3), False otherwise
-        """
-        if self.config.architecture not in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
-            logger.warning("FP8 only supported on CDNA3+ (MI300/MI350)")
-            return False
-
-        try:
-            # FP8 preparation: Mark model as FP8-ready
-            # Full quantization pending ROCm FP8 library support
-            logger.info("FP8 quantization prepared (experimental, CDNA3/CDNA4)")
-            return True
-
-        except Exception as e:
-            logger.warning("Failed to prepare FP8 quantization: %s", e)
             return False
 
     def get_optimization_summary(self) -> dict[str, Any]:

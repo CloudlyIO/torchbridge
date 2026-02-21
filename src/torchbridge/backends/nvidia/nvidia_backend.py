@@ -311,10 +311,6 @@ class NVIDIABackend(BaseBackend):
         # Apply memory optimizations
         model = self._optimize_memory_layout(model)
 
-        # Apply kernel fusion hints
-        if self.nvidia_config.kernel_fusion_enabled:
-            model = self._add_fusion_hints(model)
-
         return model
 
     def _optimize_for_tensor_cores(self, model: nn.Module) -> nn.Module:
@@ -348,16 +344,6 @@ class NVIDIABackend(BaseBackend):
                     except (RuntimeError, TypeError) as e:
                         # Not all modules support channels_last
                         logger.debug("Could not convert to channels_last: %s", e)
-
-        return model
-
-    def _add_fusion_hints(self, model: nn.Module) -> nn.Module:
-        """Add kernel fusion hints for CUDA compiler."""
-        # Mark modules for potential fusion
-        for module in model.modules():
-            if isinstance(module, (nn.Linear, nn.Conv2d)):
-                # Add metadata for torch.compile
-                module._cuda_fusible = True  # type: ignore[assignment]
 
         return model
 
@@ -442,8 +428,6 @@ class NVIDIABackend(BaseBackend):
             # Import custom kernels
             from torchbridge.hardware.gpu.custom_kernels import (
                 FlashAttentionV3,
-                FusedLinearGELU,
-                FusedLinearSiLU,
             )
 
             # Determine supported precisions based on architecture
@@ -465,33 +449,6 @@ class NVIDIABackend(BaseBackend):
                 )
                 self._kernel_registry.register_kernel(fa3_metadata)
 
-            # Register Fused Linear+GELU if enabled
-            if self.config.kernel.fused_gelu_enabled:
-                gelu_metadata = KernelMetadata(
-                    kernel_id="fused_linear_gelu",
-                    kernel_type=KernelType.FUSION,
-                    version="1.0",
-                    backend=KernelBackend.CUDA,
-                    description="Fused Linear + GELU activation",
-                    min_compute_capability=(7, 0),
-                    precision_support=precisions,
-                    kernel_fn=FusedLinearGELU
-                )
-                self._kernel_registry.register_kernel(gelu_metadata)
-
-            # Register Fused Linear+SiLU if enabled
-            if self.config.kernel.fused_silu_enabled:
-                silu_metadata = KernelMetadata(
-                    kernel_id="fused_linear_silu",
-                    kernel_type=KernelType.FUSION,
-                    version="1.0",
-                    backend=KernelBackend.CUDA,
-                    description="Fused Linear + SiLU activation",
-                    min_compute_capability=(7, 0),
-                    precision_support=precisions,
-                    kernel_fn=FusedLinearSiLU
-                )
-                self._kernel_registry.register_kernel(silu_metadata)
 
         except ImportError as e:
             warnings.warn(f"Could not import custom kernels: {e}", stacklevel=2)
@@ -535,97 +492,6 @@ class NVIDIABackend(BaseBackend):
             return kernel_metadata.kernel_fn
 
         return None
-
-    def prepare_model_with_custom_kernels(self, model: nn.Module) -> nn.Module:
-        """
-        Replace model layers with optimized custom kernels.
-
-        This method scans the model and replaces compatible layers with
-        fused kernel implementations for better performance.
-
-        Args:
-            model: PyTorch model to optimize
-
-        Returns:
-            Model with custom kernels applied
-        """
-        if not self.config.kernel.enabled or not self.is_cuda_available:
-            return model
-
-        try:
-            from torchbridge.hardware.gpu.custom_kernels import (
-                FusedLinearGELU,
-                FusedLinearSiLU,
-            )
-
-            # Track replacements
-            replacements = []
-
-            # Scan for patterns to replace
-            for name, module in list(model.named_modules()):
-                # Look for Linear + GELU pattern
-                if self.config.kernel.fuse_linear_activation and self.config.kernel.fused_gelu_enabled:
-                    if isinstance(module, nn.Sequential) and len(module) == 2:
-                        if isinstance(module[0], nn.Linear) and isinstance(module[1], nn.GELU):
-                            linear = module[0]
-                            fused = FusedLinearGELU(
-                                in_features=linear.in_features,
-                                out_features=linear.out_features,
-                                bias=linear.bias is not None
-                            )
-                            # Copy weights
-                            fused.weight.data.copy_(linear.weight.data)
-                            if linear.bias is not None:
-                                fused.bias.data.copy_(linear.bias.data)
-
-                            # Replace in parent
-                            parent_name = '.'.join(name.split('.')[:-1]) if '.' in name else ''
-                            child_name = name.split('.')[-1]
-                            if parent_name:
-                                parent = dict(model.named_modules())[parent_name]
-                                setattr(parent, child_name, fused)
-                            else:
-                                setattr(model, child_name, fused)
-
-                            replacements.append(f"{name}: Linear+GELU → FusedLinearGELU")
-
-                # Look for Linear + SiLU pattern
-                if self.config.kernel.fuse_linear_activation and self.config.kernel.fused_silu_enabled:
-                    if isinstance(module, nn.Sequential) and len(module) == 2:
-                        if isinstance(module[0], nn.Linear) and isinstance(module[1], nn.SiLU):
-                            linear = module[0]
-                            fused: nn.Module = FusedLinearSiLU(
-                                in_features=linear.in_features,
-                                out_features=linear.out_features,
-                                bias=linear.bias is not None
-                            )
-                            # Copy weights
-                            fused.weight.data.copy_(linear.weight.data)
-                            if linear.bias is not None:
-                                fused.bias.data.copy_(linear.bias.data)
-
-                            # Replace in parent
-                            parent_name = '.'.join(name.split('.')[:-1]) if '.' in name else ''
-                            child_name = name.split('.')[-1]
-                            if parent_name:
-                                parent = dict(model.named_modules())[parent_name]
-                                setattr(parent, child_name, fused)
-                            else:
-                                setattr(model, child_name, fused)
-
-                            replacements.append(f"{name}: Linear+SiLU → FusedLinearSiLU")
-
-            if replacements:
-                logger.info("Applied %d custom kernel replacements", len(replacements))
-                for r in replacements[:5]:  # Log first 5
-                    logger.debug("  %s", r)
-                if len(replacements) > 5:
-                    logger.debug("  ... and %d more", len(replacements) - 5)
-
-        except Exception as e:
-            warnings.warn(f"Could not apply custom kernels: {e}", stacklevel=2)
-
-        return model
 
     @property
     def kernel_registry(self) -> KernelRegistry:

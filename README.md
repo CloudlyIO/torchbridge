@@ -24,10 +24,11 @@ Your model code
 **What it does:**
 - **Backend detection** -- automatically identifies available accelerators
 - **Vendor adapters** -- translates unified API calls to vendor-specific operations
-- **Precision management** -- handles FP32/FP16/BF16/FP8 across backends
-- **Memory optimization** -- gradient checkpointing, activation offloading, memory pooling
-- **Checkpoint portability** -- save on one backend, load on another
-- **Distributed training** -- tensor/pipeline/data parallelism across backend types
+- **Precision management** -- handles FP32/FP16/BF16/FP8 across backends with compatibility matrices
+- **Quantization** -- backend-aware format selection with automatic fallback chains
+- **Attention dispatch** -- selects the best attention kernel (FlexAttention, Flash, Triton, etc.) per hardware
+- **Checkpoint portability** -- save on one backend, load on another with dtype normalization
+- **Distributed config** -- generates FSDP2, pipeline, and collective configs from detected topology
 
 ## Quick Start
 
@@ -89,7 +90,7 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 | Backend | Hardware | Precision | Status |
 |---------|----------|-----------|--------|
 | **NVIDIA** | B200, H100, H200, A100, L4, T4 | FP4, FP8, BF16, FP16, FP32 | Production |
-| **AMD** | MI350X, MI325X, MI300X, MI200 | FP4, FP8, BF16, FP16, FP32 | Production |
+| **AMD** | MI350X, MI325X, MI300X, MI200 | FP8, BF16, FP16, FP32 | Production |
 | **Trainium** | Trn1, Trn2, Trn3 (AWS NeuronX) | BF16, FP16, FP32 | Supported |
 | **TPU** | v4, v5e, v5p, v6e, v7 | BF16, FP32 | Production |
 | **CPU** | x86, ARM (Apple Silicon) | FP32, BF16 | Fallback |
@@ -107,14 +108,11 @@ Each backend implements a common `BaseBackend` interface. Your code calls `manag
 ### Precision Management
 Configure precision once. TorchBridge handles the details per backend -- FP8 on H100, BF16 where supported, FP16 as fallback. Mixed-precision training with `torch.amp` autocast works across all backends.
 
-### Memory Optimization
-Gradient checkpointing, activation offloading, optimizer state sharding, and memory pooling. These work consistently whether you're on a single GPU or a multi-node cluster.
-
 ### Checkpoint Portability
-Save a checkpoint on NVIDIA hardware, load it on AMD, Trainium, or TPU. TorchBridge handles device mapping and dtype conversion.
+Save a checkpoint on NVIDIA hardware, load it on AMD, Trainium, or TPU. TorchBridge handles device mapping, dtype normalization, and FP8-to-FP16 conversion via PyTorch Distributed Checkpoint (DCP).
 
-### Distributed Training
-Tensor parallelism, pipeline parallelism, and FSDP with a unified API. The same distributed training script runs on NVIDIA DGX, AMD Instinct, Trainium instances, or TPU pods.
+### Distributed Configuration
+Generates FSDP2 sharding strategies, pipeline schedules, and collective backend configs based on detected cluster topology. TorchBridge produces config objects that you pass to PyTorch's native distributed primitives -- it does not implement distributed training itself.
 
 ## Code Examples
 
@@ -208,7 +206,7 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **1,464 tests** collected, 1,394 passing (70 hardware-gated skips)
+- **2,232 tests** collected (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on 6 hardware platforms: NVIDIA A10G (AWS), T4 (GCP), H100 NVL (RunPod), AMD MI300X, GCP TPU v5e, Apple MPS
