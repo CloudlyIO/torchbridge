@@ -22,14 +22,14 @@ class TestQuantizationFormat:
         """All expected format members should exist."""
         expected = [
             "NONE", "INT8_DYNAMIC", "INT8_SMOOTHQUANT", "INT4_WEIGHT_ONLY",
-            "INT4_GPTQ", "FP8_E4M3", "FP8_E5M2", "NVFP4", "MXFP8", "BF16",
+            "FP8_E4M3", "FP8_E5M2", "NVFP4", "BF16",
         ]
         for name in expected:
             assert hasattr(QuantizationFormat, name), f"Missing format: {name}"
 
     def test_format_count(self):
         """Should have exactly 10 formats."""
-        assert len(QuantizationFormat) == 10
+        assert len(QuantizationFormat) == 8
 
     def test_string_round_trip(self):
         """Every format's value should parse back to itself."""
@@ -115,7 +115,7 @@ class TestFormatSpec:
 
     def test_int4_formats_have_75_pct_reduction(self):
         """INT4 formats should claim ~75% memory reduction."""
-        for fmt in (QuantizationFormat.INT4_WEIGHT_ONLY, QuantizationFormat.INT4_GPTQ):
+        for fmt in (QuantizationFormat.INT4_WEIGHT_ONLY,):
             assert FORMAT_SPECS[fmt].memory_reduction_pct == 75.0
 
     def test_smoothquant_requires_calibration(self):

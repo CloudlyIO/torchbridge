@@ -481,55 +481,6 @@ def register_default_kernels(registry: KernelRegistry | None = None) -> None:
     if registry is None:
         registry = get_kernel_registry()
 
-    # Try to import CUDA kernels
-    try:
-        import torchbridge_cuda
-        cuda_available = True
-    except ImportError:
-        cuda_available = False
-        warnings.warn("CUDA kernels not available - using fallbacks", stacklevel=2)
-
-    # Register FlashAttention v2 (existing CUDA kernel)
-    if cuda_available:
-        registry.register_kernel(KernelMetadata(
-            kernel_id="flash_attention_v2",
-            kernel_type=KernelType.ATTENTION,
-            version="2.0",
-            backend=KernelBackend.CUDA,
-            min_compute_capability=(8, 0),  # A100+
-            supported_architectures=[
-                NVIDIAArchitecture.AMPERE,
-                NVIDIAArchitecture.ADA,
-                NVIDIAArchitecture.HOPPER,
-                NVIDIAArchitecture.BLACKWELL_DC,
-                NVIDIAArchitecture.BLACKWELL_CONSUMER
-            ],
-            precision_support=[
-                PrecisionFormat.FP16,
-                PrecisionFormat.BF16
-            ],
-            expected_speedup=2.5,
-            kernel_fn=torchbridge_cuda.flash_attention if cuda_available else None,
-            description="FlashAttention-2 implementation"
-        ))
-
-    # Register LayerNorm (existing CUDA kernel)
-    if cuda_available:
-        registry.register_kernel(KernelMetadata(
-            kernel_id="layernorm_cuda",
-            kernel_type=KernelType.NORMALIZATION,
-            version="1.0",
-            backend=KernelBackend.CUDA,
-            min_compute_capability=(7, 0),
-            precision_support=[
-                PrecisionFormat.FP32,
-                PrecisionFormat.FP16
-            ],
-            expected_speedup=1.5,
-            kernel_fn=torchbridge_cuda.fused_layer_norm if cuda_available else None,
-            description="Fused LayerNorm with warp-level reductions"
-        ))
-
     # Register PyTorch reference implementations (always available)
     registry.register_kernel(KernelMetadata(
         kernel_id="attention_pytorch",

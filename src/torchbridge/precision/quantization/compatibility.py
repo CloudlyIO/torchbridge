@@ -71,12 +71,10 @@ _NVIDIA_FORMATS: dict[NVIDIAArchitecture, list[QuantizationFormat]] = {
 
 _AMD_FORMATS: dict[AMDArchitecture, list[QuantizationFormat]] = {
     AMDArchitecture.CDNA4: [
-        QuantizationFormat.MXFP8,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT8_DYNAMIC,
     ],
     AMDArchitecture.CDNA3: [
-        QuantizationFormat.MXFP8,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT8_DYNAMIC,
     ],

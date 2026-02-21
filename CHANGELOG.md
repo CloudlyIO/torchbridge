@@ -8,6 +8,29 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.30] - 2026-02-20 - Honest Cleanup
+
+### **Summary**
+
+Removed dead code, fake abstractions, and overclaimed features. Every claim in
+the codebase now corresponds to working, tested functionality. No new features
+added — this release only deletes and clarifies.
+
+### Removed
+- **NVIDIA backend dead code**: `CUDAKernelBuilder` (referenced non-existent `torchbridge_cuda` C extension), `FusedLinear` layer, `_cuda_fusible`/`_cuda_fusion_priority` metadata flags, `estimate_speedup()`, `prepare_model_with_custom_kernels()`
+- **AMD backend dead code**: `rocm_compiler.py` (548 lines — hipcc compilation framework that was never invoked), `hip_utilities.py` (448 lines — `torch.cuda` wrappers with no added value over PyTorch's native ROCm support), `memory_manager.py` (411 lines — `torch.cuda.memory` wrappers)
+- **AMD adapter stubs**: `_aggressive_kernel_fusion()` (pattern-matched by name but never fused), `_prepare_fp8_quantization()` (logged and returned True)
+- **Fake quantization formats**: `INT4_GPTQ` (just called INT4 weight-only, ignored calibration data), `MXFP8` (delegated to standard FP8 E4M3). Quantization formats reduced from 10 to 8
+- Tests for all deleted code removed; no test regressions
+
+### Changed
+- AMD aggressive optimization now uses `torch.compile(model, mode='max-autotune')` instead of deleted stub methods
+- AMD CDNA3/CDNA4 optimal quantization format changed from `MXFP8` to `FP8_E4M3` (same underlying implementation, honest label)
+- Attention kernel types: added comprehensive docstring documenting each type's distinct runtime dependency
+- Distributed module docstring clarified as "Configuration Advisor" — generates configs for PyTorch's native distributed primitives
+- README updated: honest feature descriptions, distributed training → distributed configuration, updated test count
+- Quantization guide and Trainium docs updated to reflect removed formats
+
 ## [0.5.29] - 2026-02-20 - Adapter Training Abstraction
 
 ### **Summary**

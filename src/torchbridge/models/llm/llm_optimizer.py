@@ -34,10 +34,9 @@ class QuantizationMode(Enum):
     NONE = "none"           # Full precision
     AUTO = "auto"           # Auto-select optimal format per backend
     INT8 = "int8"           # INT8 dynamic quantization
-    INT4 = "int4"           # INT4 weight quantization (GPTQ/AWQ)
+    INT4 = "int4"           # INT4 weight-only quantization
     FP8 = "fp8"             # FP8 for H100+
     NVFP4 = "nvfp4"         # NVFP4 for Blackwell DC
-    MXFP8 = "mxfp8"         # MXFP8 for AMD CDNA3/4
     SMOOTHQUANT = "smoothquant"  # INT8 SmoothQuant
     BNBT4 = "bnb_4bit"      # BitsAndBytes 4-bit
 
@@ -184,11 +183,10 @@ class LLMOptimizer:
                 "bnb_4bit_quant_type": "nf4",
             }
 
-        # New modes (NVFP4, MXFP8, SMOOTHQUANT) are handled post-load
+        # New modes (NVFP4, SMOOTHQUANT) are handled post-load
         # by the QuantizationEngine in optimize()
         if self.config.quantization in (
             QuantizationMode.NVFP4,
-            QuantizationMode.MXFP8,
             QuantizationMode.SMOOTHQUANT,
         ):
             return None
@@ -239,11 +237,10 @@ class LLMOptimizer:
         for param in model.parameters():
             param.requires_grad = False
 
-        # Apply backend-aware quantization for AUTO/NVFP4/MXFP8/SMOOTHQUANT
+        # Apply backend-aware quantization for AUTO/NVFP4/SMOOTHQUANT
         if self.config.quantization in (
             QuantizationMode.AUTO,
             QuantizationMode.NVFP4,
-            QuantizationMode.MXFP8,
             QuantizationMode.SMOOTHQUANT,
         ):
             model = self._apply_engine_quantization(model)
@@ -385,7 +382,6 @@ class LLMOptimizer:
             format_map = {
                 QuantizationMode.AUTO: "auto",
                 QuantizationMode.NVFP4: "nvfp4",
-                QuantizationMode.MXFP8: "mxfp8",
                 QuantizationMode.SMOOTHQUANT: "int8_smoothquant",
             }
             fmt = format_map.get(self.config.quantization, "auto")
@@ -631,7 +627,6 @@ def create_optimized_llm(
         "int4": QuantizationMode.INT4,
         "fp8": QuantizationMode.FP8,
         "nvfp4": QuantizationMode.NVFP4,
-        "mxfp8": QuantizationMode.MXFP8,
         "smoothquant": QuantizationMode.SMOOTHQUANT,
         "bnb_4bit": QuantizationMode.BNBT4,
     }

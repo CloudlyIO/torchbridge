@@ -164,56 +164,6 @@ def test_backend_optimal_kernel_selection_with_cuda():
     assert hasattr(kernel, '__init__')
 
 
-# ===== Model Preparation Tests =====
-
-def test_model_preparation_without_cuda(nvidia_backend):
-    """Test model preparation when CUDA not available."""
-    if torch.cuda.is_available():
-        pytest.skip("CUDA is available, test requires no CUDA")
-
-    model = SimpleTransformerBlock()
-    prepared = nvidia_backend.prepare_model_with_custom_kernels(model)
-
-    # Should return model unchanged
-    assert prepared is not None
-    assert isinstance(prepared, nn.Module)
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_model_preparation_with_cuda():
-    """Test model preparation with CUDA."""
-    config = TorchBridgeConfig()
-    config.kernel.enabled = True
-    config.kernel.fuse_linear_activation = True
-    backend = NVIDIABackend(config)
-
-    model = SimpleTransformerBlock()
-    prepared = backend.prepare_model_with_custom_kernels(model)
-
-    # Should return modified model
-    assert prepared is not None
-    assert isinstance(prepared, nn.Module)
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_model_fusion_replacement():
-    """Test that Linear+GELU gets replaced with fused kernel."""
-    config = TorchBridgeConfig()
-    config.kernel.enabled = True
-    config.kernel.fuse_linear_activation = True
-    config.kernel.fused_gelu_enabled = True
-    backend = NVIDIABackend(config)
-
-    # Create a model with fusible pattern
-    model = SimpleTransformerBlock()
-    type(model.ffn)
-
-    prepared = backend.prepare_model_with_custom_kernels(model)
-
-    # Model should be modified
-    assert prepared is not None
-
-
 # ===== Precision Support Tests =====
 
 def test_precision_format_support(kernel_config):
@@ -263,7 +213,7 @@ def test_e2e_transformer_forward_pass():
     # Create and prepare model
     model = SimpleTransformerBlock(dim=64, num_heads=4)
     model = backend.prepare_model(model)
-    model = backend.prepare_model_with_custom_kernels(model)
+
     model.eval()
 
     # Create input
@@ -291,7 +241,7 @@ def test_e2e_transformer_backward_pass():
     # Create and prepare model
     model = SimpleTransformerBlock(dim=64, num_heads=4)
     model = backend.prepare_model(model)
-    model = backend.prepare_model_with_custom_kernels(model)
+
     model.train()
 
     # Create input and target
@@ -326,7 +276,7 @@ def test_fallback_when_kernels_disabled():
 
     # Model preparation should still work
     model = SimpleTransformerBlock()
-    prepared = backend.prepare_model_with_custom_kernels(model)
+    prepared = backend.prepare_model(model)
     assert prepared is not None
 
 
@@ -364,7 +314,6 @@ def test_custom_kernels_maintain_correctness():
     # Prepare models
     model_baseline = backend_baseline.prepare_model(model_baseline)
     model_optimized = backend_optimized.prepare_model(model_optimized)
-    model_optimized = backend_optimized.prepare_model_with_custom_kernels(model_optimized)
 
     model_baseline.eval()
     model_optimized.eval()
@@ -391,7 +340,6 @@ def test_integration_test_coverage():
     key_areas = [
         'test_kernel_config_creation',
         'test_backend_kernel_registry_initialization',
-        'test_model_preparation_without_cuda',
         'test_precision_format_support',
         'test_fallback_when_kernels_disabled',
     ]

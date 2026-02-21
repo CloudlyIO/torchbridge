@@ -5,7 +5,6 @@ This module provides shared caching implementations used across backends:
 - LRUCache: Generic Least Recently Used cache with statistics tracking
 
 Consolidated from:
-- backends/amd/rocm_compiler.py
 - backends/tpu/cache_utils.py
 """
 

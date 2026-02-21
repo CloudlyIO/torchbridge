@@ -29,10 +29,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from torchbridge.backends.amd import (
     AMDBackend,
-    AMDMemoryManager,
     AMDAdapter,
-    HIPUtilities,
-    ROCmCompiler,
 )
 from torchbridge.core.config import AMDArchitecture, AMDConfig
 
@@ -236,178 +233,6 @@ def benchmark_amd_optimizer(iterations: int = 50) -> dict[str, BenchmarkResult]:
     return results
 
 
-def benchmark_rocm_compiler(iterations: int = 50) -> dict[str, BenchmarkResult]:
-    """Benchmark ROCm compiler performance."""
-    print_section("ROCm Compiler Benchmarks")
-
-    results = {}
-
-    # Simple kernel compilation
-    config = AMDConfig()
-    compiler = ROCmCompiler(config)
-
-    simple_kernel = "__global__ void add(float* a, float* b, float* c) { int i = threadIdx.x; c[i] = a[i] + b[i]; }"
-
-    # First compilation (cold cache)
-    result = run_timed_iterations(
-        lambda: compiler.compile_kernel(simple_kernel, f"add_{time.time_ns()}"),
-        iterations=iterations // 5,
-        warmup=0,  # No warmup for cold cache test
-    )
-    result.name = "Cold Cache Compilation"
-    results["cold_cache"] = result
-    print_result(result)
-
-    # Warm cache compilation
-    compiler.clear_cache()
-    _ = compiler.compile_kernel(simple_kernel, "add_cached")
-
-    result = run_timed_iterations(
-        lambda: compiler.compile_kernel(simple_kernel, "add_cached"),
-        iterations=iterations,
-    )
-    result.name = "Warm Cache Compilation"
-    results["warm_cache"] = result
-    print_result(result)
-
-    # Complex kernel compilation
-    complex_kernel = """
-    __global__ void matmul(float* A, float* B, float* C, int M, int N, int K) {
-        int row = blockIdx.y * blockDim.y + threadIdx.y;
-        int col = blockIdx.x * blockDim.x + threadIdx.x;
-        if (row < M && col < N) {
-            float sum = 0.0f;
-            for (int k = 0; k < K; ++k) {
-                sum += A[row * K + k] * B[k * N + col];
-            }
-            C[row * N + col] = sum;
-        }
-    }
-    """
-
-    result = run_timed_iterations(
-        lambda: compiler.compile_kernel(complex_kernel, f"matmul_{time.time_ns()}"),
-        iterations=iterations // 5,
-        warmup=0,
-    )
-    result.name = "Complex Kernel Compilation"
-    results["complex_kernel"] = result
-    print_result(result)
-
-    # Print cache statistics
-    stats = compiler.get_compilation_stats()
-    print("\n  Cache Statistics:")
-    print(f"    Total compilations: {stats['total_compilations']}")
-    print(f"    Cache hits: {stats['cache_hits']}")
-    print(f"    Cache hit rate: {stats['cache_hit_rate_percent']:.1f}%")
-
-    return results
-
-
-def benchmark_hip_utilities(iterations: int = 100) -> dict[str, BenchmarkResult]:
-    """Benchmark HIP utilities performance."""
-    print_section("HIP Utilities Benchmarks")
-
-    results = {}
-    config = AMDConfig(enable_profiling=True)
-    utils = HIPUtilities(config)
-
-    # Stream creation
-    stream_idx = [0]
-
-    def create_stream():
-        stream_idx[0] += 1
-        return utils.create_stream(f"stream_{stream_idx[0]}")
-
-    result = run_timed_iterations(
-        create_stream,
-        iterations=iterations // 2,
-    )
-    result.name = "Stream Creation"
-    results["stream_creation"] = result
-    print_result(result)
-    utils.cleanup()
-
-    # Event creation
-    utils = HIPUtilities(config)
-    event_idx = [0]
-
-    def create_event():
-        event_idx[0] += 1
-        return utils.create_event(f"event_{event_idx[0]}")
-
-    result = run_timed_iterations(
-        create_event,
-        iterations=iterations // 2,
-    )
-    result.name = "Event Creation"
-    results["event_creation"] = result
-    print_result(result)
-    utils.cleanup()
-
-    # Profiling overhead
-    utils = HIPUtilities(config)
-
-    def profile_operation():
-        with utils.profile_region("test"):
-            pass
-
-    result = run_timed_iterations(
-        profile_operation,
-        iterations=iterations,
-    )
-    result.name = "Profiling Overhead"
-    results["profiling_overhead"] = result
-    print_result(result)
-
-    return results
-
-
-def benchmark_memory_manager(iterations: int = 50) -> dict[str, BenchmarkResult]:
-    """Benchmark AMD memory manager performance."""
-    print_section("Memory Manager Benchmarks")
-
-    results = {}
-
-    try:
-        config = AMDConfig(memory_pool_size_gb=4.0)
-        manager = AMDMemoryManager(config)
-
-        # Stats retrieval
-        result = run_timed_iterations(
-            lambda: manager.get_memory_stats(),
-            iterations=iterations,
-        )
-        result.name = "Memory Stats Retrieval"
-        results["stats_retrieval"] = result
-        print_result(result)
-
-        # Allocation summary
-        result = run_timed_iterations(
-            lambda: manager.get_allocation_summary(),
-            iterations=iterations,
-        )
-        result.name = "Allocation Summary"
-        results["allocation_summary"] = result
-        print_result(result)
-
-    except (AssertionError, RuntimeError) as e:
-        print(f"  Skipped (no GPU): {e}")
-        # Return dummy results for summary
-        results["stats_retrieval"] = BenchmarkResult(
-            name="Memory Stats Retrieval",
-            iterations=0, total_time_ms=0, avg_time_ms=0,
-            min_time_ms=0, max_time_ms=0, std_dev_ms=0,
-        )
-        results["allocation_summary"] = BenchmarkResult(
-            name="Allocation Summary",
-            iterations=0, total_time_ms=0, avg_time_ms=0,
-            min_time_ms=0, max_time_ms=0, std_dev_ms=0,
-        )
-
-    return results
-
-
 # ============================================================================
 # Cross-Architecture Comparison
 # ============================================================================
@@ -461,16 +286,10 @@ def main():
     if args.quick:
         backend_iters = 20
         optimizer_iters = 10
-        compiler_iters = 10
-        utils_iters = 20
-        memory_iters = 10
         arch_iters = 5
     else:
         backend_iters = 100
         optimizer_iters = 50
-        compiler_iters = 50
-        utils_iters = 100
-        memory_iters = 50
         arch_iters = 30
 
     print("\n" + "=" * 70)
@@ -483,9 +302,6 @@ def main():
     # Run all benchmarks
     all_results["backend"] = benchmark_amd_backend(backend_iters)
     all_results["optimizer"] = benchmark_amd_optimizer(optimizer_iters)
-    all_results["compiler"] = benchmark_rocm_compiler(compiler_iters)
-    all_results["utilities"] = benchmark_hip_utilities(utils_iters)
-    all_results["memory"] = benchmark_memory_manager(memory_iters)
     all_results["architecture"] = benchmark_architecture_comparison(arch_iters)
 
     # Summary
@@ -499,7 +315,6 @@ def main():
     print(f"    Backend creation:     {all_results['backend']['backend_creation'].avg_time_ms:.4f} ms")
     print(f"    Model preparation:    {all_results['backend']['model_preparation_small'].avg_time_ms:.4f} ms")
     print(f"    Balanced optimization:{all_results['optimizer']['optimization_balanced'].avg_time_ms:.4f} ms")
-    print(f"    Warm cache compile:   {all_results['compiler']['warm_cache'].avg_time_ms:.4f} ms")
 
     print("\n  Benchmark complete!")
 

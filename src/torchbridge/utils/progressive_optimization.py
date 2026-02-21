@@ -28,12 +28,7 @@ except ImportError:
     TRITON_AVAILABLE = False
     print("Triton not available, skipping Triton optimizations")
 
-try:
-    import torchbridge_cuda  # noqa: F401
-    CUDA_AVAILABLE = True
-except ImportError:
-    CUDA_AVAILABLE = False
-    print("Custom CUDA kernels not available")
+CUDA_AVAILABLE = False
 
 
 class ProgressiveOptimizationDemo:
