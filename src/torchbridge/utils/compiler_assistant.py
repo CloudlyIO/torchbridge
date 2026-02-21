@@ -218,13 +218,8 @@ self.activation = nn.GELU()
 def forward(self, x):
     return self.activation(self.linear(x))
 
-# After: Fused operation
-from torchbridge.core.optimized_layers import FusedLinearGELU
-
-self.fused_layer = FusedLinearGELU(512, 1024)
-
-def forward(self, x):
-    return self.fused_layer(x)
+# After: Let torch.compile fuse operations automatically
+model = torch.compile(model)  # Automatically fuses Linear+GELU and more
 ```
 """,
             'attention_optimization': """

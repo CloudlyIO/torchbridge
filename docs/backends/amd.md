@@ -28,9 +28,6 @@ model = backend.prepare_model(your_model)
 
 - **`AMDBackend`** -- main backend implementing `BaseBackend`
 - **`AMDAdapter`** -- ROCm-specific optimization strategies
-- **`ROCmCompiler`** -- HIP kernel compilation with caching
-- **`AMDMemoryManager`** -- GPU memory pooling and monitoring
-- **`HIPUtilities`** -- low-level HIP runtime utilities
 
 ## Configuration
 
@@ -72,21 +69,6 @@ backend = AMDBackend(optimization_level="O3")
 | FP32 | All | Baseline |
 
 FP8 is not yet supported on AMD hardware through TorchBridge.
-
-## HIP Kernel Compilation
-
-The AMD backend compiles HIP kernels with caching for fast subsequent runs:
-
-```python
-from torchbridge.backends.amd import ROCmCompiler
-
-compiler = ROCmCompiler(config)
-stats = compiler.get_compilation_stats()
-print(f"Cache hit rate: {stats['cache_hit_rate_percent']:.1f}%")
-
-# Clear cache if needed
-compiler.clear_cache()
-```
 
 ## Memory Management
 

@@ -1,8 +1,10 @@
 """
-TorchBridge Distributed Training
+TorchBridge Distributed Training — Configuration Advisor
 
-Backend-aware FSDP2, topology detection, pipeline scheduling,
-communication backend selection, and parallelism advisor.
+Generates configurations for PyTorch's distributed APIs (FSDP2,
+pipeline parallelism, collective backends) based on detected hardware.
+Does not implement distributed training itself — it produces config
+objects that users pass to PyTorch's native distributed primitives.
 """
 
 from torchbridge.distributed.collective_backend import (

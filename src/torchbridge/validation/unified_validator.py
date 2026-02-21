@@ -1058,22 +1058,6 @@ class UnifiedValidator:
 
             self._add_success("CUDA is available")
 
-            # Try to import compiled CUDA extension
-            try:
-                import torchbridge_cuda
-                self._add_success("CUDA kernels extension compiled and importable")
-
-                # Check available kernels
-                kernel_attrs = dir(torchbridge_cuda)
-                kernel_count = sum(1 for attr in kernel_attrs if not attr.startswith('_'))
-                self._add_success(f"Found {kernel_count} CUDA kernel functions")
-
-            except ImportError:
-                self._add_warning(
-                    "CUDA kernels not compiled - will use PyTorch fallback. "
-                    "Run 'python setup.py build_ext --inplace' to compile kernels"
-                )
-
         except Exception as e:
             self._add_failure(f"CUDA availability check failed: {e}")
 
@@ -1157,40 +1141,10 @@ class UnifiedValidator:
                 self._add_warning("Fused Linear+Activation kernels disabled in configuration")
                 return
 
-            # Try to import fused kernels
-            try:
-                from ..hardware.gpu.custom_kernels import (
-                    FusedLinearGELU,
-                    FusedLinearSiLU,
-                    create_fused_ffn_layer,
-                )
-                self._add_success("Fused Linear+Activation modules importable")
-
-                # Test module creation
-                if config.kernel.fused_gelu_enabled:
-                    gelu_layer = FusedLinearGELU(512, 2048)
-                    self._add_success("FusedLinearGELU created successfully")
-
-                    if gelu_layer._cuda_kernel_available:
-                        self._add_success("FusedLinearGELU CUDA kernel available")
-                    else:
-                        self._add_warning("FusedLinearGELU using PyTorch fallback")
-
-                if config.kernel.fused_silu_enabled:
-                    silu_layer = FusedLinearSiLU(768, 3072)
-                    self._add_success("FusedLinearSiLU created successfully")
-
-                    if silu_layer._cuda_kernel_available:
-                        self._add_success("FusedLinearSiLU CUDA kernel available")
-                    else:
-                        self._add_warning("FusedLinearSiLU using PyTorch fallback")
-
-                # Test FFN layer factory
-                create_fused_ffn_layer(512, 2048, activation="gelu")
-                self._add_success("Fused FFN layer created successfully")
-
-            except ImportError as e:
-                self._add_failure(f"Fused kernel import failed: {e}")
+            self._add_warning(
+                "Fused Linear+Activation kernels enabled but no fused kernel "
+                "implementations are currently available"
+            )
 
         except Exception as e:
             self._add_failure(f"Fused kernel validation failed: {e}")

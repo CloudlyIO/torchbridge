@@ -23,11 +23,7 @@ def check_flash_attention_available() -> bool:
 
 def check_cuda_kernel_available() -> bool:
     """Check if custom CUDA kernel is available."""
-    try:
-        import torchbridge_cuda
-        return hasattr(torchbridge_cuda, 'flash_attention_v3')
-    except (ImportError, AttributeError):
-        return False
+    return False
 
 
 def validate_attention_inputs(
@@ -193,17 +189,6 @@ def flash_attention_forward(
 
         except Exception as e:
             warnings.warn(f"FlashAttention failed ({e}), using fallback", stacklevel=2)
-
-    # Try custom CUDA kernel
-    if check_cuda_kernel_available() and Q.is_cuda:
-        try:
-            import torchbridge_cuda
-            head_dim = Q.size(-1)
-            scale_val = compute_attention_scale(head_dim, scale)
-            output = torchbridge_cuda.flash_attention_v3(Q, K, V, scale_val, causal)
-            return output, None
-        except Exception as e:
-            warnings.warn(f"CUDA kernel failed ({e}), using fallback", stacklevel=2)
 
     # Fallback to PyTorch implementation
     return scaled_dot_product_attention(

@@ -277,11 +277,6 @@ class NVIDIAAdapter(BaseAdapter):
                 model = self._enable_mixed_precision(model)
                 applied.append("mixed_precision")
 
-            # Apply kernel fusion
-            if self.backend.nvidia_config.kernel_fusion_enabled:
-                model = self._enable_kernel_fusion(model)
-                applied.append("kernel_fusion")
-
             # Apply memory optimizations
             model = self._apply_aggressive_memory_optimizations(model, for_inference)
             applied.append("memory_optimization")
@@ -314,12 +309,6 @@ class NVIDIAAdapter(BaseAdapter):
                 self._optimization_warnings.append(
                     f"Failed to enable gradient checkpointing: {e}"
                 )
-        return model
-
-    def _enable_kernel_fusion(self, model: nn.Module) -> nn.Module:
-        """Enable kernel fusion optimizations."""
-        # Mark model for kernel fusion with torch.compile
-        model._kernel_fusion_enabled = True  # type: ignore[assignment]
         return model
 
     def _apply_aggressive_memory_optimizations(

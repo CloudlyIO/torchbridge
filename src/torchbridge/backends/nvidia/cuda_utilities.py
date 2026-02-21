@@ -142,9 +142,6 @@ class CUDAOptimizations:
         # Optimize layer dimensions for Tensor Cores
         model = self._optimize_layer_dimensions(model)
 
-        # Add CUDA kernel fusion hints
-        model = self._add_cuda_fusion_hints(model)
-
         # Optimize memory layout
         model = self._optimize_memory_layout(model)
 
@@ -164,15 +161,6 @@ class CUDAOptimizations:
                         f"Tensor Cores. Consider padding to multiples of {optimal_div}.",
                     stacklevel=2,
                     )
-
-        return model
-
-    def _add_cuda_fusion_hints(self, model: nn.Module) -> nn.Module:
-        """Add hints for CUDA kernel fusion."""
-        for module in model.modules():
-            if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv3d)):
-                module._cuda_fusible = True  # type: ignore[assignment]
-                module._cuda_fusion_priority = 1  # type: ignore[assignment]
 
         return model
 

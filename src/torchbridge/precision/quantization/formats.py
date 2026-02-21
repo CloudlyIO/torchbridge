@@ -17,11 +17,9 @@ class QuantizationFormat(Enum):
     INT8_DYNAMIC = "int8_dynamic"
     INT8_SMOOTHQUANT = "int8_smoothquant"
     INT4_WEIGHT_ONLY = "int4_weight_only"
-    INT4_GPTQ = "int4_gptq"
     FP8_E4M3 = "fp8_e4m3"
     FP8_E5M2 = "fp8_e5m2"
     NVFP4 = "nvfp4"
-    MXFP8 = "mxfp8"
     BF16 = "bf16"
 
     @classmethod
@@ -90,14 +88,6 @@ FORMAT_SPECS: dict[QuantizationFormat, FormatSpec] = {
         requires_calibration=False,
         requires_torchao=True,
     ),
-    QuantizationFormat.INT4_GPTQ: FormatSpec(
-        bits=4,
-        display_name="INT4 GPTQ",
-        perplexity_tolerance_pct=3.0,
-        memory_reduction_pct=75.0,
-        requires_calibration=True,
-        requires_torchao=True,
-    ),
     QuantizationFormat.FP8_E4M3: FormatSpec(
         bits=8,
         display_name="FP8 E4M3",
@@ -119,14 +109,6 @@ FORMAT_SPECS: dict[QuantizationFormat, FormatSpec] = {
         display_name="NVFP4 (Blackwell DC)",
         perplexity_tolerance_pct=2.0,
         memory_reduction_pct=87.5,
-        requires_calibration=False,
-        requires_torchao=False,
-    ),
-    QuantizationFormat.MXFP8: FormatSpec(
-        bits=8,
-        display_name="MXFP8 (AMD/Microscaling)",
-        perplexity_tolerance_pct=1.0,
-        memory_reduction_pct=50.0,
         requires_calibration=False,
         requires_torchao=False,
     ),

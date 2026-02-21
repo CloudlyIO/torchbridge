@@ -138,10 +138,6 @@ class TensorCoreOptimizer:
         # Step 2: Apply optimizations
         optimized_model = model
 
-        if self.config.optimal_shapes:
-            optimized_model, shape_opts = self._optimize_tensor_shapes(optimized_model, sample_input)
-            optimization_report["applied_optimizations"].extend(shape_opts)
-
         if self.config.enable_autocast:
             optimized_model = self._apply_autocast_optimization(optimized_model)
             optimization_report["applied_optimizations"].append("autocast_optimization")
@@ -149,11 +145,6 @@ class TensorCoreOptimizer:
         # Step 3: Re-analyze compatibility
         optimized_compatibility = self.analyze_tensor_core_compatibility(optimized_model, sample_input)
         optimization_report["optimized_compatibility"] = optimized_compatibility
-
-        # Step 4: Performance estimation
-        optimization_report["performance_estimate"] = self._estimate_tensor_core_speedup(
-            compatibility_analysis, optimized_compatibility
-        )
 
         return optimized_model, optimization_report
 
@@ -274,26 +265,6 @@ class TensorCoreOptimizer:
 
         return analysis
 
-    def _optimize_tensor_shapes(
-        self,
-        model: nn.Module,
-        sample_input: torch.Tensor
-    ) -> tuple[nn.Module, list[str]]:
-        """Optimize tensor shapes for Tensor Core alignment."""
-        applied_optimizations = []
-
-        # For educational purposes, we'll demonstrate the concept
-        # In practice, this would involve more complex shape transformations
-
-        for name, module in model.named_modules():
-            if isinstance(module, nn.Linear):
-                # Check if dimensions need padding for alignment
-                if module.in_features % 8 != 0 or module.out_features % 8 != 0:
-                    applied_optimizations.append(f"Shape optimization suggested for {name}")
-                    # In practice, would implement actual padding/reshaping
-
-        return model, applied_optimizations
-
     def _apply_autocast_optimization(self, model: nn.Module) -> nn.Module:
         """Apply autocast optimization for mixed precision."""
         # Wrap forward method with autocast for automatic mixed precision
@@ -308,26 +279,6 @@ class TensorCoreOptimizer:
 
         return AutocastWrapper(model)
 
-    def _estimate_tensor_core_speedup(
-        self,
-        original_analysis: dict[str, Any],
-        optimized_analysis: dict[str, Any]
-    ) -> dict[str, float]:
-        """Estimate performance improvement from Tensor Core optimization."""
-        original_potential = original_analysis.get("performance_potential", 0.0)
-        optimized_potential = optimized_analysis.get("performance_potential", 0.0)
-
-        # Simplified speedup estimation based on compatibility improvement
-        baseline_speedup = 1.0
-        tensor_core_speedup = 4.0  # Typical Tensor Core speedup for matrix ops
-
-        estimated_speedup = baseline_speedup + (optimized_potential * (tensor_core_speedup - baseline_speedup))
-
-        return {
-            "estimated_total_speedup": estimated_speedup,
-            "tensor_core_utilization": optimized_potential,
-            "improvement_over_original": estimated_speedup / max(1.0 + original_potential, 1.0)
-        }
 
 
 class MixedPrecisionManager:

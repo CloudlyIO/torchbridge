@@ -120,15 +120,6 @@ export PATH=$ROCM_HOME/bin:$PATH
 pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
 ```
 
-### HIP Compilation Errors
-
-```python
-# Clear kernel cache
-from torchbridge.backends.amd import ROCmCompiler
-compiler = ROCmCompiler(config)
-compiler.clear_cache()
-```
-
 ### Matrix Cores Not Used
 
 Only CDNA GPUs (MI100/MI200/MI300) have Matrix Cores. RDNA GPUs do not.

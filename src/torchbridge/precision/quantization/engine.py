@@ -111,7 +111,7 @@ class QuantizationEngine:
             format: Quantization format string or enum. ``"auto"`` selects
                 the optimal format for the detected backend.
             calibration_data: Optional calibration data for formats that
-                require it (SmoothQuant, GPTQ).
+                require it (SmoothQuant).
             in_place: If ``False`` (default), quantizes a deep copy.
 
         Returns:
@@ -301,17 +301,11 @@ class QuantizationEngine:
         if fmt == QuantizationFormat.INT4_WEIGHT_ONLY:
             return self._apply_int4_weight_only(model)
 
-        if fmt == QuantizationFormat.INT4_GPTQ:
-            return self._apply_int4_gptq(model, calibration_data)
-
         if fmt in (QuantizationFormat.FP8_E4M3, QuantizationFormat.FP8_E5M2):
             return self._apply_fp8(model, fmt)
 
         if fmt == QuantizationFormat.NVFP4:
             return self._apply_nvfp4(model)
-
-        if fmt == QuantizationFormat.MXFP8:
-            return self._apply_mxfp8(model)
 
         raise ValueError(f"Unhandled quantization format: {fmt.value}")
 
@@ -368,18 +362,6 @@ class QuantizationEngine:
         )
         return self._apply_int8_dynamic(model)
 
-    def _apply_int4_gptq(
-        self, model: nn.Module, calibration_data: Any | None
-    ) -> nn.Module:
-        """INT4 GPTQ quantization."""
-        if TORCHAO_AVAILABLE:
-            return TorchAOBackend.quantize_int4_weight_only(model)
-        warnings.warn(
-            "torchao not available for GPTQ; falling back to INT8 dynamic",
-            stacklevel=2,
-        )
-        return self._apply_int8_dynamic(model)
-
     def _apply_fp8(
         self, model: nn.Module, fmt: QuantizationFormat
     ) -> nn.Module:
@@ -417,10 +399,3 @@ class QuantizationEngine:
             )
             return self._apply_fp8(model, QuantizationFormat.FP8_E4M3)
 
-    def _apply_mxfp8(self, model: nn.Module) -> nn.Module:
-        """MXFP8 (AMD microscaling FP8).
-
-        Currently delegates to standard FP8; a dedicated MXFP8 kernel
-        path will be added when ROCm 7.x ships native support.
-        """
-        return self._apply_fp8(model, QuantizationFormat.FP8_E4M3)
