@@ -106,10 +106,6 @@ class FP8Compiler:
         # Apply FP8 transformations
         model = self._convert_to_fp8_compatible(model, for_inference)
 
-        # Add FP8 scaling hooks if training
-        if not for_inference:
-            model = self._add_fp8_scaling_hooks(model)
-
         return model
 
     def _convert_to_fp8_compatible(
@@ -187,66 +183,6 @@ class FP8Compiler:
                     "not optimal for FP8. Consider using head size divisible by 16."
                 )
 
-    def _add_fp8_scaling_hooks(self, model: nn.Module) -> nn.Module:
-        """Add FP8 scaling hooks for training.
-
-        **METADATA-ONLY BY DESIGN**:
-        FP8 support is METADATA-ONLY. The FP8Compiler marks layers as FP8-enabled
-        and estimates performance, but does NOT perform actual FP8 operations.
-        This is intentional to avoid duplicating NVIDIA Transformer Engine.
-
-        Current behavior:
-        - Marks layers with '_fp8_enabled' attribute
-        - Estimates 2x speedup for performance planning
-        - Does NOT quantize weights or activations
-        - Does NOT perform FP8 arithmetic
-
-        For actual FP8 training on H100/Blackwell, use NVIDIA Transformer Engine directly.
-
-        Raises:
-            UserWarning: FP8 hooks are metadata-only
-        """
-        import warnings
-        warnings.warn(
-            "FP8 support is metadata-only. Layers are marked for FP8 but "
-            "no actual FP8 operations are performed. For production FP8 training, "
-            "use NVIDIA Transformer Engine directly: pip install transformer-engine",
-            UserWarning,
-            stacklevel=2
-        )
-
-        # Add forward pre-hook for activation scaling (NO-OP - metadata only)
-        def fp8_forward_pre_hook(module, inputs):
-            """
-            Metadata-only hook - no actual FP8 operations.
-            For production FP8, use NVIDIA Transformer Engine directly.
-            """
-            if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
-                # DESIGN_NOTE: Actual FP8 scaling requires Transformer Engine integration.
-                # This module intentionally stays metadata-only to avoid duplication.
-                return inputs  # NO-OP by design
-            return inputs
-
-        # Add forward hook for gradient scaling (NO-OP - metadata only)
-        def fp8_forward_hook(module, inputs, outputs):
-            """
-            Metadata-only hook - no actual FP8 operations.
-            For production FP8, use NVIDIA Transformer Engine directly.
-            """
-            if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
-                # DESIGN_NOTE: Actual FP8 gradient scaling requires Transformer Engine.
-                # This module intentionally stays metadata-only to avoid duplication.
-                return outputs  # NO-OP by design
-            return outputs
-
-        # Register hooks on FP8-enabled layers
-        for _name, module in model.named_modules():
-            if hasattr(module, '_fp8_enabled') and module._fp8_enabled:
-                module.register_forward_pre_hook(fp8_forward_pre_hook)
-                module.register_forward_hook(fp8_forward_hook)
-
-        return model
-
     def compile_with_fp8(
         self,
         model: nn.Module,
@@ -314,36 +250,3 @@ class FP8Compiler:
             'architecture': self.nvidia_config.architecture.value
         }
 
-    def estimate_speedup(self, model: nn.Module) -> dict[str, Any]:
-        """
-        Estimate FP8 training/inference speedup.
-
-        Args:
-            model: PyTorch model
-
-        Returns:
-            Dictionary with speedup estimates
-        """
-        stats = self.get_fp8_stats(model)
-
-        # Theoretical speedups based on NVIDIA documentation
-        if self.nvidia_config.architecture == NVIDIAArchitecture.HOPPER:
-            base_speedup = 2.0  # H100 FP8 vs FP16
-        elif self.nvidia_config.architecture in [
-            NVIDIAArchitecture.BLACKWELL_DC,
-            NVIDIAArchitecture.BLACKWELL_CONSUMER,
-        ]:
-            base_speedup = 2.5  # Blackwell FP8 vs FP16
-        else:
-            base_speedup = 1.0  # No FP8 support
-
-        # Adjust for coverage
-        estimated_speedup = 1.0 + (base_speedup - 1.0) * stats['fp8_coverage']
-
-        return {
-            'estimated_speedup': estimated_speedup,
-            'base_speedup': base_speedup,
-            'fp8_coverage': stats['fp8_coverage'],
-            'architecture': self.nvidia_config.architecture.value,
-            'note': 'Theoretical estimate based on NVIDIA specs and layer coverage'
-        }

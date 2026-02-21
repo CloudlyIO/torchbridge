@@ -38,8 +38,8 @@ class TestOptimalFormat:
             (HardwareBackend.CUDA, NVIDIAArchitecture.TURING, QuantizationFormat.INT8_DYNAMIC),
             (HardwareBackend.CUDA, NVIDIAArchitecture.VOLTA, QuantizationFormat.INT8_DYNAMIC),
             (HardwareBackend.CUDA, NVIDIAArchitecture.PASCAL, QuantizationFormat.INT8_DYNAMIC),
-            (HardwareBackend.AMD, AMDArchitecture.CDNA4, QuantizationFormat.MXFP8),
-            (HardwareBackend.AMD, AMDArchitecture.CDNA3, QuantizationFormat.MXFP8),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA4, QuantizationFormat.FP8_E4M3),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA3, QuantizationFormat.FP8_E4M3),
             (HardwareBackend.AMD, AMDArchitecture.CDNA2, QuantizationFormat.INT8_DYNAMIC),
             (HardwareBackend.AMD, AMDArchitecture.RDNA3, QuantizationFormat.INT8_DYNAMIC),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, QuantizationFormat.FP8_E4M3),
@@ -154,16 +154,6 @@ class TestFallbackChain:
         )
         assert QuantizationFormat.NVFP4 not in chain
         assert len(chain) > 0
-        assert chain[0] == QuantizationFormat.MXFP8
-
-    def test_mxfp8_on_nvidia_falls_back(self):
-        """MXFP8 on NVIDIA should fall back to NVIDIA's supported formats."""
-        chain = QuantizationCompatibilityMatrix.get_fallback_chain(
-            QuantizationFormat.MXFP8,
-            HardwareBackend.CUDA,
-            NVIDIAArchitecture.HOPPER,
-        )
-        assert QuantizationFormat.MXFP8 not in chain
         assert chain[0] == QuantizationFormat.FP8_E4M3
 
     def test_fp8_on_cpu_falls_back(self):
@@ -210,18 +200,18 @@ class TestIsFormatSupported:
             NVIDIAArchitecture.AMPERE,
         )
 
-    def test_mxfp8_on_cdna3(self):
-        """MXFP8 should be supported on CDNA3."""
+    def test_fp8_on_cdna3(self):
+        """FP8 should be supported on CDNA3."""
         assert QuantizationCompatibilityMatrix.is_format_supported(
-            QuantizationFormat.MXFP8,
+            QuantizationFormat.FP8_E4M3,
             HardwareBackend.AMD,
             AMDArchitecture.CDNA3,
         )
 
-    def test_mxfp8_not_on_cdna2(self):
-        """MXFP8 should NOT be supported on CDNA2."""
+    def test_fp8_not_on_cdna2(self):
+        """FP8 should NOT be supported on CDNA2."""
         assert not QuantizationCompatibilityMatrix.is_format_supported(
-            QuantizationFormat.MXFP8,
+            QuantizationFormat.FP8_E4M3,
             HardwareBackend.AMD,
             AMDArchitecture.CDNA2,
         )

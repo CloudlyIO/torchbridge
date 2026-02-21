@@ -230,34 +230,6 @@ except Exception as e:
     print(f"  Operator Fusion: FAILED - {e}")
     results["features"]["operator_fusion"] = f"FAILED: {e}"
 
-# 2. Test HIP Compilation
-print("\n2. HIP Compilation Tests:")
-try:
-    from torchbridge.backends.amd.rocm_compiler import ROCmCompiler
-
-    config = AMDConfig(architecture=AMDArchitecture.CDNA3)
-    compiler = ROCmCompiler(config)
-
-    kernel_source = """
-    __global__ void test_kernel(float* a, float* b, int n) {
-        int idx = blockIdx.x * blockDim.x + threadIdx.x;
-        if (idx < n) b[idx] = a[idx] * 2.0f;
-    }
-    """
-
-    kernel = compiler.compile_kernel(kernel_source, "test_kernel")
-    print(f"  Kernel compilation: PASSED (binary: {len(kernel.binary) if kernel.binary else 0} bytes)")
-    results["features"]["hip_compilation"] = "PASSED"
-
-    # Test caching
-    kernel2 = compiler.compile_kernel(kernel_source, "test_kernel")
-    stats = compiler.get_compilation_stats()
-    print(f"  Compilation cache: PASSED (hit rate: {stats['cache_hit_rate_percent']:.1f}%)")
-    results["features"]["compilation_cache"] = f"PASSED ({stats['cache_hit_rate_percent']:.1f}% hit rate)"
-
-except Exception as e:
-    print(f"  HIP Compilation: FAILED - {e}")
-    results["features"]["hip_compilation"] = f"FAILED: {e}"
 
 # 3. Test Memory Layout Optimization
 print("\n3. Memory Layout Optimization:")
@@ -414,7 +386,6 @@ report += f"""
 ## Changes Validated
 
 - [x] Operator fusion (Conv+BN, Linear+GELU, aggressive)
-- [x] HIP kernel compilation pipeline
 - [x] Memory layout optimization (channels_last)
 - [x] torch.compile integration
 - [x] 64 AMD-specific tests

@@ -29,12 +29,7 @@ try:
 except ImportError:
     CUSTOM_KERNELS_AVAILABLE = False
 
-# Try to import compiled CUDA kernels
-try:
-    import torchbridge_cuda  # noqa: F401
-    CUDA_KERNELS_AVAILABLE = torch.cuda.is_available()
-except ImportError:
-    CUDA_KERNELS_AVAILABLE = False
+CUDA_KERNELS_AVAILABLE = torch.cuda.is_available()
 
 
 # Test configurations from test_configs.py pattern

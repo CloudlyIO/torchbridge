@@ -389,14 +389,24 @@ class GPUProfiler:
         # This is a simplified estimation - real implementation would query GPU properties
         gpu_name = torch.cuda.get_device_name(self.device)
 
-        # Rough estimates for common GPUs (in GB/s)
+        # Published manufacturer peak memory bandwidth (GB/s)
         bandwidth_estimates = {
             'V100': 900,
-            'A100': 1555,
-            'H100': 3000,
+            'A100': 2039,
+            'A10G': 600,
+            'H100': 3350,
+            'H200': 4800,
+            'B100': 8000,
+            'B200': 8000,
+            'L4': 300,
+            'L40': 864,
+            'T4': 300,
             'RTX 3080': 760,
             'RTX 3090': 936,
-            'RTX 4090': 1008
+            'RTX 4090': 1008,
+            'RTX 5090': 1792,
+            'MI300X': 5300,
+            'MI250X': 3276,
         }
 
         for gpu_type, bandwidth in bandwidth_estimates.items():
@@ -443,14 +453,24 @@ class GPUProfiler:
         # Get theoretical peak FLOPS for current GPU (simplified)
         gpu_name = torch.cuda.get_device_name(self.device)
 
-        # Rough estimates for peak FLOPS (in GFLOPS)
+        # Published manufacturer peak FP32 FLOPS (in GFLOPS)
         peak_flops_estimates = {
             'V100': 15700,
             'A100': 19500,
+            'A10G': 31200,
             'H100': 67000,
+            'H200': 67000,
+            'B100': 90000,
+            'B200': 180000,
+            'L4': 30300,
+            'L40': 90500,
+            'T4': 8100,
             'RTX 3080': 29700,
             'RTX 3090': 35600,
-            'RTX 4090': 83000
+            'RTX 4090': 83000,
+            'RTX 5090': 105000,
+            'MI300X': 163400,
+            'MI250X': 95700,
         }
 
         theoretical_peak = 10000 * 1e9  # Default 10 TFLOPS

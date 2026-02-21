@@ -143,13 +143,8 @@ self.activation = nn.GELU()
 def forward(self, x):
     return self.activation(self.linear(x))
 
-# After: Fused Linear + GELU
-from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU
-
-self.fused_linear_gelu = FusedLinearGELU(512, 1024)
-
-def forward(self, x):
-    return self.fused_linear_gelu(x)
+# After: Let torch.compile fuse operations automatically
+model = torch.compile(model)  # Fuses Linear+GELU and other patterns
 ''',
             educational_notes=[
                 'Fusion reduces memory bandwidth requirements',
@@ -392,15 +387,8 @@ optimized_model = torch.compile(model, mode='default')
 
         code = '''
 # Applied operation fusion optimization
-# Replaced Linear + Activation with fused implementations
-from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU
-
-# Example transformation:
-# self.linear = nn.Linear(in_features, out_features)
-# self.activation = nn.GELU()
-#
-# Becomes:
-# self.fused_linear_gelu = FusedLinearGELU(in_features, out_features)
+# Use torch.compile to automatically fuse Linear + Activation patterns
+optimized_model = torch.compile(model)
 '''
 
         return optimized_model, code
@@ -478,6 +466,6 @@ optimized_model = memory_optimizer.optimize_memory_layout(
         """Load code templates for optimization implementations."""
         return {
             'torch_compile': 'optimized_model = torch.compile(model)',
-            'operation_fusion': 'from torchbridge.optimizations.patterns.fusion_strategies import FusedLinearGELU',
+            'operation_fusion': 'optimized_model = torch.compile(model)  # Auto-fuses operations',
             'attention_optimization': 'from torchbridge.core.optimized_layers import CompilerOptimizedMultiHeadAttention'
         }

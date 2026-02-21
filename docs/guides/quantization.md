@@ -22,11 +22,9 @@ print(f"Memory reduction: {result.memory_reduction_pct:.1f}%")
 | INT8 Dynamic | 8 | 50% | No | No |
 | INT8 SmoothQuant | 8 | 50% | Yes | Yes |
 | INT4 Weight-Only | 4 | 75% | No | Yes |
-| INT4 GPTQ | 4 | 75% | Yes | Yes |
 | FP8 E4M3 | 8 | 50% | No | No |
 | FP8 E5M2 | 8 | 50% | No | No |
 | NVFP4 | 4 | 87.5% | No | No |
-| MXFP8 | 8 | 50% | No | No |
 | BF16 | 16 | 50% | No | No |
 
 ## Backend Compatibility Matrix
@@ -37,7 +35,7 @@ print(f"Memory reduction: {result.memory_reduction_pct:.1f}%")
 | NVIDIA | Blackwell Consumer | FP8 E4M3 | INT8 > INT4 |
 | NVIDIA | Hopper | FP8 E4M3 | INT8 SmoothQuant > INT4 |
 | NVIDIA | Ampere/Ada | INT8 SmoothQuant | FP8 E4M3 > INT4 |
-| AMD | CDNA3/CDNA4 | MXFP8 | FP8 E4M3 > INT8 |
+| AMD | CDNA3/CDNA4 | FP8 E4M3 | INT8 > INT4 |
 | AMD | CDNA2 | INT8 Dynamic | INT4 |
 | Trainium | TRN2/TRN3 | FP8 E4M3 | BF16 |
 | Trainium | TRN1/INF2 | BF16 | -- |

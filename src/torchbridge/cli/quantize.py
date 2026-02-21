@@ -36,7 +36,6 @@ Quantization Formats:
   int4_weight_only - INT4 weight-only quantization (requires torchao)
   fp8_e4m3         - FP8 E4M3 (Hopper/Blackwell/CDNA3+)
   nvfp4            - NVFP4 4-bit (Blackwell DC only)
-  mxfp8            - MXFP8 microscaling (AMD CDNA3/4)
   bf16             - BFloat16 (universal)
 
 Backend Detection:

@@ -6,8 +6,8 @@ TorchBridge Trainium backend provides unified access to AWS Trainium and Inferen
 
 | Generation | Chip | HBM | Key Features |
 |-----------|------|-----|--------------|
-| **Trn3** | NeuronCore v4 | 144GB HBM3e | MXFP4/MXFP8, highest throughput |
-| **Trn2** | NeuronCore v3 | 96GB HBM | MXFP8, large model training |
+| **Trn3** | NeuronCore v4 | 144GB HBM3e | FP8/FP4 hardware support, highest throughput |
+| **Trn2** | NeuronCore v3 | 96GB HBM | FP8 hardware support, large model training |
 | **Trn1** | NeuronCore v1 | 32GB HBM | cFP8, cost-efficient training |
 | **Inf2** | NeuronCore v1 | 32GB HBM | Inference-optimized |
 
@@ -63,7 +63,7 @@ config = TrainiumConfig(precision="bfloat16", cache_max_size=200)
 | BF16 | All | Default and recommended |
 | FP32 | All | Supported but slower |
 | cFP8 | Trn1+ | Configurable FP8 |
-| MXFP8 | Trn2+ | Microscaling FP8 |
+| FP8 | Trn2+ | FP8 E4M3 via Neuron SDK |
 | MXFP4 | Trn3 only | Microscaling FP4 |
 
 Trainium is optimized for BF16. TorchBridge auto-converts models to BF16 by default.
