@@ -8,6 +8,40 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.31] - 2026-02-21 - Real Hardware Validation
+
+### **Summary**
+
+First release where TorchBridge APIs are validated on real cloud hardware — not just
+PyTorch inference. All TorchBridge-specific APIs (backend detection, quantization engine,
+attention dispatch, adapter compatibility, distributed config, unified manager) are now
+exercised against real hardware. One genuine bug found and fixed in this process.
+
+### Added
+- **`scripts/validation/validate_torchbridge.py`**: Portable validation script that runs on any cloud instance, exercises all TorchBridge APIs (7 test groups, 25 tests), runs Qwen3-0.6B inference comparison (vanilla vs TorchBridge-optimized), outputs structured JSON report
+- **`reports/cloud_validation/2026-02-21/`**: Validation results for Apple MPS, GCP T4, AWS A10G, GCP TPU v5e
+
+### Fixed
+- **`unified_manager.py`**: `_optimize_with_tpu()` passed `for_inference` as a 4th positional argument to `TPUAdapter.optimize()` which only accepts 3. Fixed by dropping the extra argument — discovered through real TPU validation
+
+### Validation Results
+
+| Platform | Hardware | TorchBridge API Tests | Notes |
+|----------|----------|-----------------------|-------|
+| Apple MPS | Apple Silicon | **25/25 PASS** | Full API + inference comparison |
+| GCP T4 | NVIDIA Tesla T4 | **25/25 PASS** | Full API + inference comparison |
+| AWS A10G | NVIDIA A10G | **25/25 PASS** | Full API; inference blocked by CUBLAS/PyTorch version on DL AMI |
+| GCP TPU v5e | TPU v5e (v5litepod-1) | **24/25 PASS** (bug fixed, would be 25/25) | XLA detected; unified_manager bug found + fixed |
+| AMD MI300X | AMD Instinct MI300X | Blocked — SSH key rotation after instance relaunch | Requires AMD Developer Cloud re-provisioning |
+| RunPod H100 NVL | NVIDIA H100 NVL | Blocked — SSH key provisioning failure | RunPod container startup didn't load key |
+| AWS Trainium | AWS Trainium | Blocked — VcpuLimitExceeded (0 quota) | Quota request needed |
+| AWS Inferentia2 | AWS Inferentia2 | Blocked — VcpuLimitExceeded (0 quota) | Quota request needed |
+
+### Code Quality
+- 2129 tests passing, 0 ruff violations, 0 mypy errors
+
+---
+
 ## [0.5.30] - 2026-02-20 - Honest Cleanup
 
 ### **Summary**
