@@ -213,7 +213,7 @@ class UnifiedManager:
                 self._tpu_adapter = TPUAdapter(self.config)
 
             result = self._tpu_adapter.optimize(
-                model, sample_inputs, optimization_level, for_inference
+                model, sample_inputs, optimization_level
             )
 
             return result

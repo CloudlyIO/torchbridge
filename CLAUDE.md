@@ -486,6 +486,10 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-02-19 | AWS CUDA | A10G | Qwen3-0.6B | 1.86e-05 | 1.000001 | 42.4ms | PASSED |
 | 2026-02-19 | AWS Trainium | trn1.2xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
 | 2026-02-19 | AWS Inferentia2 | inf2.xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
+| 2026-02-21 | Apple MPS | Apple Silicon | Qwen3-0.6B | 4.58e-05 | 1.000002 | 27.0ms | PASSED (TorchBridge API 25/25) |
+| 2026-02-21 | GCP CUDA | Tesla T4 | Qwen3-0.6B | 2.67e-05 | 1.000001 | 48.8ms | PASSED (TorchBridge API 25/25) |
+| 2026-02-21 | AWS CUDA | NVIDIA A10G | Qwen3-0.6B | — | — | — | PASSED (TorchBridge API 25/25) |
+| 2026-02-21 | GCP TPU | v5e (v5litepod-1) | Qwen3-0.6B | — | — | — | PARTIAL (TorchBridge API 24/25, bug fixed in v0.5.31) |
 
 ---
 
