@@ -168,13 +168,13 @@ jobs:
           python-version: "3.12"
 
       - name: Download current benchmark results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: benchmark-results-cpu
           path: current-results/
 
       - name: Download baseline benchmarks
-        uses: dawidd6/action-download-artifact@v14
+        uses: dawidd6/action-download-artifact@v15
         with:
           workflow: benchmark.yml
           branch: main
