@@ -1,12 +1,39 @@
 # 📝 TorchBridge Changelog
 
-**Version history and release notes for the hardware abstraction layer for PyTorch.**
+**Version history and release notes for PyTorch cross-backend validation and configuration intelligence.**
 
 > **Note**: This changelog reflects actual implemented and tested functionality. Performance claims are based on measured results from working demos and tests.
 
 ---
 
 ## **v0.5.x - Public Release Series**
+
+## [0.5.32] - 2026-02-22 - Performance Depth + Security Foundation (Track 2 complete)
+
+### **Summary**
+
+Security track completed. Presentation deck reframed from HAL to validator identity.
+Performance track (NVIDIA torch.compile tuning) is v0.5.32 Track 1, still in progress.
+
+### Added
+- **`tests/security/test_input_validation.py`**: 7 tests — QuantizationFormat rejects unknown strings cleanly, AttentionDispatcher degrades gracefully on non-standard inputs, BackendFactory handles unknown backend names, CLI handles path traversal safely
+- **`tests/security/test_model_serialization.py`**: 8 tests — tb-quantize now covered (previously missing), regex scan confirms no ungated `weights_only=False` in any CLI command, source files (checkpoint, torchserve, backends) all use `weights_only=True`
+- **`tests/security/test_backend_isolation.py`**: 5 tests — QuantizationEngine, AttentionDispatcher, BackendFactory, auto_optimize all produce independent instances with no shared mutable state
+- **`tests/security/test_credential_handling.py`**: 5 tests — tb-doctor output contains no AWS key / secret patterns, exception messages don't expose home directory paths, DeviceInfo has no credential fields, DistributedConfig TOML export is secrets-free
+
+### Fixed
+- **`src/torchbridge/cli/quantize.py`**: `_load_model()` used `weights_only=False` with no user control — only CLI command without a `--trust-source` flag. Added `--trust-source` flag (default: False) matching the pattern from export/optimize/profile. Now uses `weights_only=not trust_source`
+
+### Changed
+- **`TorchBridge_Presentation.pptx`**: Reframed from HAL identity to validator identity across 11 slides — tagline "Validate once. Trust everywhere.", problem slide reframed as "no systematic cross-backend validation", architecture layer relabeled "Validation & Configuration Layer", version updated to v0.5.31, test count to 2,264, CLI count to 14, module count to 188, line count to 80,645
+- **`CHANGELOG.md`**: Updated identity description from "hardware abstraction layer" to "cross-backend validation and configuration intelligence"
+
+### Code Quality
+- 48/48 security tests passing (was 10/10 in v0.5.31), 0 ruff violations, 0 mypy errors
+- Security score: 65.0 → **85.0/100** (target was ≥80 ✓)
+- Weighted total: 92.1 → **92.5/100** (target is ≥93 pending Track 1)
+
+---
 
 ## [0.5.31] - 2026-02-21 - Real Hardware Validation
 
