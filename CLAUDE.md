@@ -484,12 +484,15 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-02-15 | RunPod CUDA | H100 NVL | Qwen3-0.6B | 2.29e-05 | 1.000001 | 18.8ms | PASSED |
 | 2026-02-19 | AMD ROCm | MI300X | Qwen3-0.6B | 4.82e-05 | 1.000001 | — | PASSED |
 | 2026-02-19 | AWS CUDA | A10G | Qwen3-0.6B | 1.86e-05 | 1.000001 | 42.4ms | PASSED |
-| 2026-02-19 | AWS Trainium | trn1.2xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
-| 2026-02-19 | AWS Inferentia2 | inf2.xlarge | Qwen3-0.6B | — | — | — | PASSED (NeuronX) |
 | 2026-02-21 | Apple MPS | Apple Silicon | Qwen3-0.6B | 4.58e-05 | 1.000002 | 27.0ms | PASSED (TorchBridge API 25/25) |
 | 2026-02-21 | GCP CUDA | Tesla T4 | Qwen3-0.6B | 2.67e-05 | 1.000001 | 48.8ms | PASSED (TorchBridge API 25/25) |
 | 2026-02-21 | AWS CUDA | NVIDIA A10G | Qwen3-0.6B | — | — | — | PASSED (TorchBridge API 25/25) |
-| 2026-02-21 | GCP TPU | v5e (v5litepod-1) | Qwen3-0.6B | — | — | — | PARTIAL (TorchBridge API 24/25, bug fixed in v0.5.31) |
+| 2026-02-21 | GCP TPU | v5e (v5litepod-1) | Qwen3-0.6B | — | — | — | PASSED (TorchBridge API 25/25, unified_manager bug fixed) |
+| 2026-02-22 | AWS Trainium | trn1.2xlarge (Neuron PT 2.9.0) | Qwen3-0.6B (CPU) | 0.00e+00 | 1.000001 | 103.3ms | PASSED (TorchBridge API 25/25; inference CPU-only) |
+| 2026-02-22 | AWS Inferentia2 | inf2.xlarge (Neuron PT 2.9.0) | Qwen3-0.6B (CPU) | 0.00e+00 | 1.000001 | 321.7ms | PASSED (TorchBridge API 25/25; inference CPU-only) |
+| 2026-02-22 | RunPod CUDA | 2× H100 NVL 95.8GB (Hopper) | Qwen3-0.6B | 2.87e-01 | 0.998960 | 17.0ms (0.9x) | PASSED (TorchBridge API 25/25; fp8_e4m3; inference PASSED) |
+| 2026-02-22 | AWS CUDA | A10G (PyTorch 2.6.0+cu124) | Qwen3-0.6B | 3.39e-02 | 0.999873 | 39.4ms (0.96x) | PASSED (TorchBridge API 25/25; int8_smoothquant; inference PASSED) |
+| 2026-02-22 | GCP TPU | v5e (v5litepod-1, PT/XLA 2.9.0) | Qwen3-0.6B | 1.91e-05 | 1.000001 | 139.9ms (CPU) | PASSED (TorchBridge API 25/25; inference on CPU after XLA→CPU) |
 
 ---
 
