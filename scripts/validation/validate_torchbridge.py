@@ -654,14 +654,19 @@ def run_inference_comparison(env: dict) -> dict:
 
         print(f"  Loading Qwen3-0.6B on {device_label}...")
         tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
-        # Use BF16 on CUDA/MPS for stable inference; FP32 on CPU
+        # Use FP16 on CUDA (BF16 triggers cuBLAS GEMM errors on some PyTorch/CUDA combos),
+        # FP16 on MPS, FP32 on CPU
         if device.type == "cuda":
-            infer_dtype = torch.bfloat16
+            infer_dtype = torch.float16
         elif device.type == "mps":
             infer_dtype = torch.float16
         else:
             infer_dtype = torch.float32
-        model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-0.6B", torch_dtype=infer_dtype)
+        model = AutoModelForCausalLM.from_pretrained(
+            "Qwen/Qwen3-0.6B",
+            torch_dtype=infer_dtype,
+            attn_implementation="eager",  # Avoids SDPA/Flash path that triggers CUBLAS_STATUS_INVALID_VALUE on some CUDA+cuBLAS combos
+        )
         model.eval()
 
         inputs = tokenizer("The capital of France is", return_tensors="pt")
@@ -723,12 +728,16 @@ def run_inference_comparison(env: dict) -> dict:
             manager = UnifiedManager(config)
 
             t_opt_start = time.perf_counter()
-            model_tb_opt = manager.auto_optimize(model_tb, for_inference=True)
+            model_tb_opt = manager.auto_optimize(
+                model_tb,
+                sample_inputs=inputs["input_ids"],
+                for_inference=True,
+            )
             optimization_ms = (time.perf_counter() - t_opt_start) * 1000
 
-            # Move to device
-            if device.type != "cpu":
-                model_tb_opt = model_tb_opt.to(device)
+            # Always move to target device — auto_optimize may route to a different
+            # backend (e.g. XLA on TPU VMs) so the model may not be on `device` yet
+            model_tb_opt = model_tb_opt.to(device)
             inputs_tb = {k: v.to(device) for k, v in inputs.items()}
 
             # Warmup

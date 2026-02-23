@@ -20,22 +20,26 @@ exercised against real hardware. One genuine bug found and fixed in this process
 ### Added
 - **`scripts/validation/validate_torchbridge.py`**: Portable validation script that runs on any cloud instance, exercises all TorchBridge APIs (7 test groups, 25 tests), runs Qwen3-0.6B inference comparison (vanilla vs TorchBridge-optimized), outputs structured JSON report
 - **`reports/cloud_validation/2026-02-21/`**: Validation results for Apple MPS, GCP T4, AWS A10G, GCP TPU v5e
+- **`reports/cloud_validation/2026-02-22/`**: Validation results for AWS Trainium (trn1.2xlarge), AWS Inferentia2 (inf2.xlarge), RunPod H100 NVL, AWS A10G (re-run), GCP TPU v5e (re-run)
 
 ### Fixed
 - **`unified_manager.py`**: `_optimize_with_tpu()` passed `for_inference` as a 4th positional argument to `TPUAdapter.optimize()` which only accepts 3. Fixed by dropping the extra argument — discovered through real TPU validation
+- **`jit_optimized.py`**: `@torch.jit.script` applied at module import time fails on PyTorch 2.9.0 (AWS Neuron venv) with `TypeError: got builtin_function_or_method`. Replaced decorator with `@_try_jit_script` which falls back to plain Python if JIT compilation fails — discovered through real Trainium/Inferentia2 validation
+- **`validate_torchbridge.py`**: Used `torch.bfloat16` for CUDA inference — fails with `CUBLAS_STATUS_INVALID_VALUE` on PyTorch ≥2.9.0+cu128. Switched to `torch.float16` which works across all tested CUDA builds
+- **`validate_torchbridge.py`**: `auto_optimize()` called without `sample_inputs` on TPU VM — XLA backend issued "No sample inputs provided, skipping validation" and returned model on XLA device while script expected CPU device, causing forward pass mismatch. Fixed by passing `sample_inputs=inputs["input_ids"]` and unconditionally calling `.to(device)` after optimization
 
 ### Validation Results
 
-| Platform | Hardware | TorchBridge API Tests | Notes |
-|----------|----------|-----------------------|-------|
-| Apple MPS | Apple Silicon | **25/25 PASS** | Full API + inference comparison |
-| GCP T4 | NVIDIA Tesla T4 | **25/25 PASS** | Full API + inference comparison |
-| AWS A10G | NVIDIA A10G | **25/25 PASS** | Full API; inference blocked by CUBLAS/PyTorch version on DL AMI |
-| GCP TPU v5e | TPU v5e (v5litepod-1) | **24/25 PASS** (bug fixed, would be 25/25) | XLA detected; unified_manager bug found + fixed |
-| AMD MI300X | AMD Instinct MI300X | Blocked — SSH key rotation after instance relaunch | Requires AMD Developer Cloud re-provisioning |
-| RunPod H100 NVL | NVIDIA H100 NVL | Blocked — SSH key provisioning failure | RunPod container startup didn't load key |
-| AWS Trainium | AWS Trainium | Blocked — VcpuLimitExceeded (0 quota) | Quota request needed |
-| AWS Inferentia2 | AWS Inferentia2 | Blocked — VcpuLimitExceeded (0 quota) | Quota request needed |
+| Platform | Hardware | TorchBridge API Tests | Inference | Notes |
+|----------|----------|-----------------------|-----------|-------|
+| Apple MPS | Apple Silicon | **25/25 PASS** | PASSED | max_diff=4.58e-05, cos_sim=1.000002, 27.8ms |
+| GCP T4 | NVIDIA Tesla T4 | **25/25 PASS** | PASSED | max_diff=2.67e-05, cos_sim=1.000001, 50.8ms |
+| AWS A10G | NVIDIA A10G | **25/25 PASS** | PASSED | max_diff=3.39e-02, cos_sim=0.9998728, 39.4ms (0.96x vanilla) |
+| GCP TPU v5e | TPU v5e (v5litepod-1) | **25/25 PASS** | PASSED | CPU-only (XLA device; inference on CPU after `.to("cpu")`) |
+| AWS Trainium | trn1.2xlarge (Neuron PyTorch 2.9.0) | **25/25 PASS** | PASSED (CPU) | neuronx_sdpa; fp8_e4m3; no GPU baseline on Trainium |
+| AWS Inferentia2 | inf2.xlarge (Neuron PyTorch 2.9.0) | **25/25 PASS** | PASSED (CPU) | Same NeuronX stack as Trainium |
+| RunPod H100 NVL | NVIDIA H100 NVL (2×95.8GB, Hopper) | **25/25 PASS** | PASSED | fp8_e4m3; qlora; max_diff=0.2873, cos_sim=0.9990, 17ms (0.9x vanilla) |
+| AMD MI300X | AMD Instinct MI300X | Pending | Pending | AMD Developer Cloud GPU availability |
 
 ### Code Quality
 - 2129 tests passing, 0 ruff violations, 0 mypy errors
