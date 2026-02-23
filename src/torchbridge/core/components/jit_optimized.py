@@ -11,7 +11,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-@torch.jit.script
+def _try_jit_script(fn):
+    """Apply torch.jit.script with a fallback to plain Python.
+
+    Neuron (PyTorch 2.9.0) and some other runtimes raise TypeError when
+    torch.jit.script is applied at import time. The fallback preserves
+    correct behavior — the function runs without JIT fusion.
+    """
+    try:
+        return torch.jit.script(fn)
+    except Exception:
+        return fn
+
+
+@_try_jit_script
 def fused_layer_norm(
     x: torch.Tensor,
     weight: torch.Tensor,
@@ -60,7 +73,7 @@ def fused_layer_norm(
     return (x - mean) / torch.sqrt(var + eps) * weight + bias  # Element-wise ops - highly fuseable
 
 
-@torch.jit.script
+@_try_jit_script
 def fused_swiglu(x: torch.Tensor, w_gate: torch.Tensor, w_up: torch.Tensor) -> torch.Tensor:
     """
     Fused SwiGLU activation demonstrating advanced JIT optimization patterns.
@@ -100,7 +113,7 @@ def fused_swiglu(x: torch.Tensor, w_gate: torch.Tensor, w_up: torch.Tensor) -> t
     return F.silu(gate) * up  # SiLU activation + element-wise multiplication
 
 
-@torch.jit.script
+@_try_jit_script
 def fused_attention_scores(
     q: torch.Tensor,
     k: torch.Tensor,
@@ -153,7 +166,7 @@ def fused_attention_scores(
     return F.softmax(scores, dim=-1)
 
 
-@torch.jit.script
+@_try_jit_script
 def rotary_embedding(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
     """
     JIT-compiled rotary positional embedding.
@@ -275,7 +288,7 @@ class JITRotaryAttention(nn.Module):
         return self.out_proj(attn_output)
 
 
-@torch.jit.script
+@_try_jit_script
 def fused_transformer_block_forward(
     x: torch.Tensor,
     # Attention parameters
