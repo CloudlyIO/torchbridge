@@ -99,6 +99,13 @@ Examples:
         )
 
         parser.add_argument(
+            "--trust-source",
+            action="store_true",
+            default=False,
+            help="Allow loading untrusted model files (enables weights_only=False for pickle deserialization)",
+        )
+
+        parser.add_argument(
             "--verbose",
             "-v",
             action="store_true",
@@ -120,6 +127,7 @@ Examples:
         fmt = getattr(args, "format", "auto")
         validate = getattr(args, "validate", False)
         output_path = getattr(args, "output", None)
+        trust_source = getattr(args, "trust_source", False)
 
         if not ci_mode:
             print(" TorchBridge Quantization Engine")
@@ -129,7 +137,7 @@ Examples:
 
         try:
             # Load model
-            model = QuantizeCommand._load_model(model_path, verbose)
+            model = QuantizeCommand._load_model(model_path, verbose, trust_source=trust_source)
             if model is None:
                 if ci_mode:
                     print(json.dumps({"error": f"Failed to load model: {model_path}"}))
@@ -190,7 +198,7 @@ Examples:
             return 1
 
     @staticmethod
-    def _load_model(model_path: str, verbose: bool) -> nn.Module | None:
+    def _load_model(model_path: str, verbose: bool, *, trust_source: bool = False) -> nn.Module | None:
         """Load a PyTorch model from file or create a test model."""
         from pathlib import Path
 
@@ -198,7 +206,7 @@ Examples:
         if path.exists():
             try:
                 model = torch.load(
-                    model_path, map_location="cpu", weights_only=False
+                    model_path, map_location="cpu", weights_only=not trust_source
                 )
                 if hasattr(model, "eval"):
                     model.eval()
@@ -341,6 +349,12 @@ def main():
     parser.add_argument("--validate", action="store_true", help="Validate quality")
     parser.add_argument(
         "--calibration-samples", type=int, default=512, help="Calibration samples"
+    )
+    parser.add_argument(
+        "--trust-source",
+        action="store_true",
+        default=False,
+        help="Allow loading untrusted model files (enables weights_only=False)",
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument("--ci", action="store_true", help="CI mode (JSON output)")
