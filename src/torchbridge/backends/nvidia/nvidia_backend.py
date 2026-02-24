@@ -95,6 +95,9 @@ class NVIDIABackend(BaseBackend):
             self._compute_capability = (props.major, props.minor)
             self._device_name = props.name
 
+            # Configure CUDA memory allocator for this architecture
+            self._configure_cuda_allocator()
+
             # Set up CUDA optimization flags
             if self.nvidia_config.cudnn_benchmark:
                 torch.backends.cudnn.benchmark = True
@@ -313,8 +316,37 @@ class NVIDIABackend(BaseBackend):
 
         return model
 
+    def _configure_cuda_allocator(self) -> None:
+        """Configure PYTORCH_CUDA_ALLOC_CONF based on GPU compute capability.
+
+        Sets architecture-appropriate allocator hints without overriding any
+        value the user has already set in their environment.
+        """
+        import os
+        if not self._compute_capability:
+            return
+        major, _ = self._compute_capability
+        if major >= 9:        # Hopper and newer (H100, H200, B100, B200)
+            os.environ.setdefault(
+                "PYTORCH_CUDA_ALLOC_CONF",
+                "expandable_segments:True,max_split_size_mb:512",
+            )
+        elif major >= 8:      # Ampere (A10G, A100, RTX 3090, RTX 3080)
+            os.environ.setdefault(
+                "PYTORCH_CUDA_ALLOC_CONF",
+                "max_split_size_mb:512",
+            )
+        # Older architectures: PyTorch defaults are fine
+
     def _optimize_for_tensor_cores(self, model: nn.Module) -> nn.Module:
-        """Optimize model for Tensor Core execution."""
+        """Advisory check for Tensor Core dimension alignment.
+
+        Inspects Linear layers and warns if dimensions are not optimal multiples
+        for Tensor Core execution. Returns the model unchanged — dimensions cannot
+        be silently modified without breaking the model's interface contract.
+        To act on these warnings, pad your model's Linear layers before passing
+        to TorchBridge.
+        """
         for name, module in model.named_modules():
             if isinstance(module, nn.Linear):
                 # Check if dimensions are optimal for Tensor Cores
@@ -333,17 +365,23 @@ class NVIDIABackend(BaseBackend):
         return model
 
     def _optimize_memory_layout(self, model: nn.Module) -> nn.Module:
-        """Optimize memory layout for CUDA execution."""
-        # Ensure model uses channels_last memory format for CNNs if beneficial
+        """Optimize memory layout for CUDA execution.
+
+        Converts Conv2d layers to channels_last (NHWC) and Conv3d layers to
+        channels_last_3d (NDHWC) memory format. NVIDIA GPUs execute convolutions
+        faster in NHWC layout due to Tensor Core alignment requirements.
+        """
         for module in model.modules():
-            if isinstance(module, (nn.Conv2d, nn.Conv3d)):
-                # channels_last can be beneficial for convolutions
-                if hasattr(module, 'to_memory_format'):
-                    try:
-                        module.to(memory_format=torch.channels_last)
-                    except (RuntimeError, TypeError) as e:
-                        # Not all modules support channels_last
-                        logger.debug("Could not convert to channels_last: %s", e)
+            if isinstance(module, nn.Conv2d):
+                try:
+                    module.to(memory_format=torch.channels_last)
+                except (RuntimeError, TypeError) as e:
+                    logger.debug("Could not convert Conv2d to channels_last: %s", e)
+            elif isinstance(module, nn.Conv3d):
+                try:
+                    module.to(memory_format=torch.channels_last_3d)
+                except (RuntimeError, TypeError) as e:
+                    logger.debug("Could not convert Conv3d to channels_last_3d: %s", e)
 
         return model
 

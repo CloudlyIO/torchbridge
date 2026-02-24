@@ -8,30 +8,36 @@
 
 ## **v0.5.x - Public Release Series**
 
-## [0.5.32] - 2026-02-22 - Performance Depth + Security Foundation (Track 2 complete)
+## [0.5.32] - 2026-02-23 - Performance Depth + Security Foundation
 
 ### **Summary**
 
-Security track completed. Presentation deck reframed from HAL to validator identity.
-Performance track (NVIDIA torch.compile tuning) is v0.5.32 Track 1, still in progress.
+Two-track release. Track 2 (security foundation) complete. Track 1 (NVIDIA performance)
+code fixes implemented — GPU benchmark validation pending on A10G/H100 to confirm score lift.
 
-### Added
+### Added (Track 2 — Security Foundation)
 - **`tests/security/test_input_validation.py`**: 7 tests — QuantizationFormat rejects unknown strings cleanly, AttentionDispatcher degrades gracefully on non-standard inputs, BackendFactory handles unknown backend names, CLI handles path traversal safely
 - **`tests/security/test_model_serialization.py`**: 8 tests — tb-quantize now covered (previously missing), regex scan confirms no ungated `weights_only=False` in any CLI command, source files (checkpoint, torchserve, backends) all use `weights_only=True`
 - **`tests/security/test_backend_isolation.py`**: 5 tests — QuantizationEngine, AttentionDispatcher, BackendFactory, auto_optimize all produce independent instances with no shared mutable state
 - **`tests/security/test_credential_handling.py`**: 5 tests — tb-doctor output contains no AWS key / secret patterns, exception messages don't expose home directory paths, DeviceInfo has no credential fields, DistributedConfig TOML export is secrets-free
 
-### Fixed
+### Fixed (Track 1 — NVIDIA Performance)
+- **`nvidia_backend.py` `_optimize_memory_layout()`**: Dead gate `hasattr(module, 'to_memory_format')` was always False — channels_last conversion never executed. Removed gate; Conv2d now converts to `torch.channels_last`, Conv3d to `torch.channels_last_3d`. Aligns with AMD adapter's correct pattern.
+- **`nvidia_backend.py` `_configure_cuda_allocator()`**: New method called on initialization. Sets `PYTORCH_CUDA_ALLOC_CONF` based on compute capability — Hopper+ (sm_90): `expandable_segments:True,max_split_size_mb:512`; Ampere (sm_80): `max_split_size_mb:512`. Uses `os.environ.setdefault` — never overrides user's existing config.
+- **`memory_manager.py` `enable_memory_efficient_mode()`**: Previous implementation set allocator config only when `memory_fraction < 1.0` (wrong condition). Updated to arch-aware check that respects any existing env var set by backend init.
+- **`nvidia_backend.py` `_optimize_for_tensor_cores()`**: Updated docstring to accurately describe advisory-only behavior (cannot silently reshape Linear layers without breaking model interface contracts).
+
+### Fixed (Track 2 — Security Foundation)
 - **`src/torchbridge/cli/quantize.py`**: `_load_model()` used `weights_only=False` with no user control — only CLI command without a `--trust-source` flag. Added `--trust-source` flag (default: False) matching the pattern from export/optimize/profile. Now uses `weights_only=not trust_source`
 
 ### Changed
-- **`TorchBridge_Presentation.pptx`**: Reframed from HAL identity to validator identity across 11 slides — tagline "Validate once. Trust everywhere.", problem slide reframed as "no systematic cross-backend validation", architecture layer relabeled "Validation & Configuration Layer", version updated to v0.5.31, test count to 2,264, CLI count to 14, module count to 188, line count to 80,645
+- **`TorchBridge_Presentation.pptx`**: Reframed from HAL identity to validator identity across 11 slides — tagline "Validate once. Trust everywhere.", problem slide reframed as "no systematic cross-backend validation", architecture layer relabeled "Validation & Configuration Layer", version updated to v0.5.31, test count to 2,306, CLI count to 14, module count to 188
 - **`CHANGELOG.md`**: Updated identity description from "hardware abstraction layer" to "cross-backend validation and configuration intelligence"
 
 ### Code Quality
-- 48/48 security tests passing (was 10/10 in v0.5.31), 0 ruff violations, 0 mypy errors
-- Security score: 65.0 → **85.0/100** (target was ≥80 ✓)
-- Weighted total: 92.1 → **92.5/100** (target is ≥93 pending Track 1)
+- 2,306 tests (2,201 pass, 105 skip on CPU), 0 ruff violations, 0 new mypy errors
+- Security score: 65.0 → **85.0/100** ✓
+- Weighted total: 92.1 → **92.5/100** (performance ≥90 pending GPU benchmark data)
 
 ---
 
