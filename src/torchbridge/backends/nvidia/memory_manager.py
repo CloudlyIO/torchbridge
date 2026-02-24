@@ -242,9 +242,21 @@ class NVIDIAMemoryManager(BaseMemoryManager):
             torch.backends.cudnn.benchmark = False
             torch.backends.cuda.matmul.allow_tf32 = True
 
+            # Architecture-aware allocator config (only if not already configured by backend init)
+            import os
+            if "PYTORCH_CUDA_ALLOC_CONF" not in os.environ:
+                props = torch.cuda.get_device_properties(0)
+                if props.major >= 9:
+                    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = (
+                        "expandable_segments:True,max_split_size_mb:512"
+                    )
+                elif props.major >= 8:
+                    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+
             if self.nvidia_config.memory_fraction < 1.0:
-                import os
-                os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:512'
+                torch.cuda.set_per_process_memory_fraction(
+                    self.nvidia_config.memory_fraction
+                )
 
     def _estimate_tensor_size(self, shape: tuple[int, ...], dtype: torch.dtype) -> float:
         """
