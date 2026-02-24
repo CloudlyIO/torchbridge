@@ -38,10 +38,9 @@ import platform
 import sys
 import time
 import traceback
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Result types
@@ -212,10 +211,8 @@ def test_backend_detection() -> list[TestResult]:
     # Test 1: detect_best_backend returns a valid BackendType
     try:
         from torchbridge.backends import BackendFactory, detect_best_backend
-        from torchbridge.core.config import HardwareBackend
 
         backend_type = detect_best_backend()
-        valid_backends = {b.value for b in HardwareBackend}
 
         results.append(TestResult(
             name="detect_best_backend",
@@ -262,18 +259,13 @@ def test_backend_detection() -> list[TestResult]:
     # Test 3: BackendFactory.get_available_backends includes detected backend
     try:
         available = BackendFactory.get_available_backends()
-        backend_in_available = any(
-            str(b).lower() in str(backend_type).lower() or
-            str(backend_type).lower() in str(b).lower()
-            for b in available
-        )
         results.append(TestResult(
             name="available_backends_includes_detected",
             passed=len(available) >= 1,
             value=[str(b) for b in available],
             message=f"Available backends: {[str(b) for b in available]}",
         ))
-    except Exception as e:
+    except Exception:
         results.append(TestResult(
             name="available_backends_includes_detected",
             passed=False,
@@ -289,7 +281,6 @@ def test_quantization_engine() -> list[TestResult]:
 
     try:
         from torchbridge.precision.quantization import (
-            QuantizationCompatibilityMatrix,
             QuantizationEngine,
         )
         from torchbridge.precision.quantization.formats import QuantizationFormat
@@ -341,7 +332,6 @@ def test_quantization_engine() -> list[TestResult]:
 
         # Test 6: quantize a small model with "auto" format
         try:
-            import torch
             import torch.nn as nn
 
             tiny_model = nn.Sequential(nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 32))
@@ -461,8 +451,7 @@ def test_adapter_compatibility() -> list[TestResult]:
     try:
         from torchbridge.adapters.compatibility import AdapterCompatibilityMatrix
         from torchbridge.adapters.config import AdapterMethod
-        from torchbridge.backends import detect_best_backend
-        from torchbridge.core.config import HardwareBackend, HardwareConfig
+        from torchbridge.core.config import HardwareConfig
 
         hw = HardwareConfig()
         backend = hw.backend
@@ -510,7 +499,7 @@ def test_distributed_config() -> list[TestResult]:
     results = []
 
     try:
-        from torchbridge.core.config import HardwareBackend, HardwareConfig
+        from torchbridge.core.config import HardwareConfig
         from torchbridge.distributed.config import DistributedConfig
 
         hw = HardwareConfig()
@@ -579,8 +568,8 @@ def test_unified_manager() -> list[TestResult]:
     results = []
 
     try:
-        import torch
         import torch.nn as nn
+
         from torchbridge import TorchBridgeConfig, UnifiedManager
 
         tiny_model = nn.Sequential(
