@@ -149,6 +149,54 @@ class TestNVIDIABackend:
         backend = NVIDIABackend(config)
         assert backend.nvidia_config.fp8_enabled is False
 
+    def test_optimize_memory_layout_channels_last_applied(self):
+        """_optimize_memory_layout() must actually convert Conv2d to channels_last."""
+        backend = NVIDIABackend()
+        model = nn.Sequential(nn.Conv2d(3, 64, 3, padding=1))
+        optimized = backend._optimize_memory_layout(model)
+        conv = [m for m in optimized.modules() if isinstance(m, nn.Conv2d)][0]
+        assert conv.weight.is_contiguous(memory_format=torch.channels_last), (
+            "_optimize_memory_layout() did not convert Conv2d to channels_last"
+        )
+
+    def test_configure_cuda_allocator_sets_env_for_hopper(self):
+        """_configure_cuda_allocator() with sm_90 sets expandable_segments."""
+        import os
+        backend = NVIDIABackend()
+        os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
+        backend._compute_capability = (9, 0)
+        backend._configure_cuda_allocator()
+        conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
+        assert "expandable_segments" in conf, (
+            "Hopper allocator config must include expandable_segments"
+        )
+        os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
+
+    def test_configure_cuda_allocator_sets_env_for_ampere(self):
+        """_configure_cuda_allocator() with sm_80 sets max_split_size_mb."""
+        import os
+        backend = NVIDIABackend()
+        os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
+        backend._compute_capability = (8, 0)
+        backend._configure_cuda_allocator()
+        conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
+        assert "max_split_size_mb" in conf, (
+            "Ampere allocator config must include max_split_size_mb"
+        )
+        os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
+
+    def test_configure_cuda_allocator_respects_existing_env(self):
+        """_configure_cuda_allocator() must not override user's PYTORCH_CUDA_ALLOC_CONF."""
+        import os
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "user_custom_value"
+        backend = NVIDIABackend()
+        backend._compute_capability = (9, 0)
+        backend._configure_cuda_allocator()
+        assert os.environ["PYTORCH_CUDA_ALLOC_CONF"] == "user_custom_value", (
+            "_configure_cuda_allocator() must not override user env var"
+        )
+        os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
+
 
 # ============================================================================
 # NVIDIA Optimizer Tests (10 tests)
