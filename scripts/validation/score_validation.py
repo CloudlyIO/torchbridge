@@ -23,6 +23,7 @@ Dimensions & Weights:
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import sys
@@ -272,6 +273,12 @@ def score_performance(reports: list[dict]) -> tuple[float, dict]:
         for t in r.get("tests", []):
             if t["name"] == "unified_manager_auto_optimize" and t["passed"]:
                 val = t.get("value", {})
+                # Reports serialize value as Python dict repr string — parse it
+                if isinstance(val, str):
+                    try:
+                        val = ast.literal_eval(val)
+                    except (ValueError, SyntaxError):
+                        val = {}
                 elapsed = val.get("elapsed_ms") if isinstance(val, dict) else None
                 if elapsed is not None:
                     if elapsed < 100:
@@ -313,8 +320,6 @@ def score_robustness(reports: list[dict], test_counts: dict[str, int]) -> tuple[
 
     for r in reports:
         env = r.get("environment", {})
-        has_gpu = env.get("cuda_available") or env.get("mps_available") or env.get("xla_available")
-
         for t in r.get("tests", []):
             if t["name"] == "attention_select_kernel" and t["passed"]:
                 fallback_total += 1
@@ -463,11 +468,7 @@ def score_usability(reports: list[dict]) -> tuple[float, dict]:
       30% — CLI command richness (inferred from known CLI count)
       30% — API simplicity: single auto_optimize() call works across all platforms
     """
-    # Inference pipeline: % of all tested platforms where inference ran to completion
-    inf_complete = sum(
-        1 for r in reports
-        if r.get("inference", {}).get("passed") is not None  # result exists, not skipped
-    )
+    # Inference pipeline: % of all tested platforms where inference passed
     inf_passed = sum(
         1 for r in reports
         if r.get("inference", {}).get("passed") is True
@@ -689,7 +690,7 @@ def print_report(report: dict, verbose: bool = False) -> None:
     # Dimension table
     print(f"  {'Dimension':<18} {'Wt':>4}  {'Score':>6}  {'Contrib':>7}  {'Bar'}")
     print("  " + "─" * 62)
-    for dim, d in report["dimension_scores"].items():
+    for _dim, d in report["dimension_scores"].items():
         bar_len = int(d["score"] / 5)  # 0-100 → 0-20 chars
         bar = "█" * bar_len + "░" * (20 - bar_len)
         print(
