@@ -449,6 +449,9 @@ class NVIDIABackend(BaseBackend):
         Converts Conv2d layers to channels_last (NHWC) and Conv3d layers to
         channels_last_3d (NDHWC) memory format. NVIDIA GPUs execute convolutions
         faster in NHWC layout due to Tensor Core alignment requirements.
+
+        This is a no-op for models without Conv2d/Conv3d layers (e.g.,
+        transformer-only models). Only convolutional models benefit.
         """
         for module in model.modules():
             if isinstance(module, nn.Conv2d):

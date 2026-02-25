@@ -92,24 +92,10 @@ def _select_best_implementation(config: AttentionConfig) -> str:
     """
     Automatically select the best attention implementation based on config.
 
-    Tries the backend-aware dispatcher first, then falls back to the
-    original heuristic-based selection.
+    Uses heuristic-based selection (pattern → memory_efficient → flash → default).
+    For backend-aware dispatch, use ``AttentionDispatcher.create_attention()`` which
+    calls ``select_kernel()`` and then delegates to this registry.
     """
-    # Try backend-aware dispatcher first
-    try:
-        from torchbridge.attention.dispatch import AttentionDispatcher
-
-        dispatcher = AttentionDispatcher(use_benchmark_cache=False)
-        result = dispatcher.select_kernel(
-            seq_length=config.max_sequence_length,
-            num_heads=config.num_heads,
-            head_dim=config.head_dim or (config.embed_dim // config.num_heads),
-        )
-        if result.implementation_name in _ATTENTION_REGISTRY:
-            return result.implementation_name
-    except Exception as e:
-        logger.debug("Dispatcher unavailable, falling back to legacy selection: %s", e)
-
     # Pattern-specific selections
     if config.pattern == AttentionPatterns.RING:
         if 'ring_attention' in _ATTENTION_REGISTRY:
