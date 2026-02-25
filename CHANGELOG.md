@@ -8,6 +8,46 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.33] - 2026-02-24 - AMD Targeted Depth
+
+### **Summary**
+
+Arch-aware ROCm tuning: TorchBridge now sets `PYTORCH_TUNABLEOP_ENABLED`,
+`HIPBLASLT_TUNING_ENABLED`, and arch-appropriate `torch.compile` modes automatically
+on AMD GPUs — mirroring the CUDA allocator tuning added in v0.5.32.
+CK FlashAttention availability check now correctly requires ROCm runtime.
+
+### Added
+- **`amd_backend.py` `_configure_amd_tuning()`**: New method called on AMD GPU init. Sets ROCm-specific env vars via `os.environ.setdefault` (never overrides user values):
+  - `PYTORCH_TUNABLEOP_ENABLED=1` for CDNA2+ — enables hipBLAS/rocBLAS TunableOp kernel autotuning
+  - `PYTORCH_TUNABLEOP_ROTATING_BUFFER_SIZE=512` for CDNA3/CDNA4 — broader tuning coverage on MI300/MI350 HBM
+  - `HIPBLASLT_TUNING_ENABLED=1` for CDNA3/CDNA4 — hipBLASLt GEMM autotuning on MI300X/MI350X
+- **`dispatcher.py` `_check_flash_attention_ck()`**: New static method for CK availability. Requires both `flash_attn` package AND ROCm runtime (`torch.version.hip is not None`). Previously shared the same check as FA2/FA3 — would falsely report CK as available on CUDA machines with flash_attn installed.
+
+### Fixed
+- **`amd_backend.py` `optimize_for_inference()`**: Hardcoded `torch.compile(mode='reduce-overhead')` for all AMD architectures. Now arch-aware: CDNA3/CDNA4 (MI300/MI350) use `max-autotune`; CDNA2 and older use `reduce-overhead`.
+
+### Code Quality
+- 5 new tests in `tests/backends/test_amd_backend.py` (`TestAMDTuning` class) — 36 total
+- 0 ruff violations, 0 new mypy errors
+
+### PyPI Release Hardening (2026-02-24)
+
+Hardening fixes applied before first-ever PyPI publish of v0.5.33:
+
+- **`pyproject.toml`**: Removed `pybind11` from runtime `[project.dependencies]` — it is a build-only dependency already present in `[build-system.requires]`; users do not call pybind11 directly
+- **`pyproject.toml`**: Widened `flash-attn` upper bound from `<3.0.0` to `<4.0.0` to allow Flash Attention 3 adoption
+- **`README.md`**: Updated test count from 2,232 → 2,311; updated framing from "hardware abstraction layer" to "cross-backend validation and configuration intelligence"
+- **`src/torchbridge/__init__.py`**: Fixed module docstring to match current identity
+- **`tests/integration/test_public_api_smoke.py`**: 8 public API smoke tests (new file) — import, detect, configure, quantize, dispatch, adapt, optimize
+- **`tests/e2e/test_cpu_e2e.py`**: 3 CPU-only end-to-end pipeline tests (new file)
+- **`tests/cli/test_cli_output.py`**: 3 CLI output validation tests (new file) — verifies actual stdout/stderr content
+- **`scripts/ci/check_release_readiness.py`**: Pre-release gate script (new file) — version consistency, pybind11 guard, ruff, test count
+- **`.github/workflows/publish.yml`**: PyPI publish workflow (new file) — OIDC trusted publishing, TestPyPI + production targets
+- Total tests: 2,325 (up from 2,311)
+
+---
+
 ## [0.5.32] - 2026-02-24 - Performance Depth + Security Foundation
 
 ### **Summary**

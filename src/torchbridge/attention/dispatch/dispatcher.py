@@ -184,9 +184,11 @@ class AttentionDispatcher:
         if kernel_type in (
             AttentionKernelType.FLASH_ATTENTION_3,
             AttentionKernelType.FLASH_ATTENTION_2,
-            AttentionKernelType.FLASH_ATTENTION_CK,
         ):
             return self._check_flash_attention()
+
+        if kernel_type == AttentionKernelType.FLASH_ATTENTION_CK:
+            return self._check_flash_attention_ck()
 
         if kernel_type == AttentionKernelType.TRITON_ATTENTION:
             return self._check_triton()
@@ -214,6 +216,23 @@ class AttentionDispatcher:
             import flash_attn  # noqa: F401
 
             return True
+        except (ImportError, ModuleNotFoundError):
+            return False
+
+    @staticmethod
+    def _check_flash_attention_ck() -> bool:
+        """Check CK FlashAttention availability.
+
+        Requires both the flash_attn package AND a ROCm runtime.
+        On ROCm, flash_attn ships Composable Kernel-backed kernels.
+        On CUDA, flash_attn uses NVIDIA kernels — CK is not relevant.
+        """
+        try:
+            import flash_attn  # noqa: F401
+            import torch
+
+            # CK kernels only activate on ROCm (torch.version.hip is set)
+            return getattr(torch.version, "hip", None) is not None
         except (ImportError, ModuleNotFoundError):
             return False
 
