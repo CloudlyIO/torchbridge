@@ -30,9 +30,9 @@ class TestOptimalMethod:
     @pytest.mark.parametrize(
         "backend, arch, expected",
         [
-            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC, SpeculativeMethod.EAGLE),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_CONSUMER, SpeculativeMethod.EAGLE),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, SpeculativeMethod.EAGLE),
+            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC, SpeculativeMethod.DRAFT_MODEL),
+            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_CONSUMER, SpeculativeMethod.DRAFT_MODEL),
+            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, SpeculativeMethod.DRAFT_MODEL),
             (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, SpeculativeMethod.DRAFT_MODEL),
             (HardwareBackend.CUDA, NVIDIAArchitecture.ADA, SpeculativeMethod.DRAFT_MODEL),
             (HardwareBackend.CUDA, NVIDIAArchitecture.TURING, SpeculativeMethod.DRAFT_MODEL),
@@ -44,13 +44,13 @@ class TestOptimalMethod:
             (HardwareBackend.AMD, AMDArchitecture.CDNA, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.AMD, AMDArchitecture.RDNA3, SpeculativeMethod.DRAFT_MODEL),
             (HardwareBackend.AMD, AMDArchitecture.RDNA2, SpeculativeMethod.PROMPT_LOOKUP),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN3, SpeculativeMethod.LAYER_SKIP),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, SpeculativeMethod.LAYER_SKIP),
+            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN3, SpeculativeMethod.PROMPT_LOOKUP),
+            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN1, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.INF2, SpeculativeMethod.PROMPT_LOOKUP),
-            (HardwareBackend.TPU, TPUVersion.V7, SpeculativeMethod.LAYER_SKIP),
-            (HardwareBackend.TPU, TPUVersion.V6E, SpeculativeMethod.LAYER_SKIP),
-            (HardwareBackend.TPU, TPUVersion.V5P, SpeculativeMethod.LAYER_SKIP),
+            (HardwareBackend.TPU, TPUVersion.V7, SpeculativeMethod.PROMPT_LOOKUP),
+            (HardwareBackend.TPU, TPUVersion.V6E, SpeculativeMethod.PROMPT_LOOKUP),
+            (HardwareBackend.TPU, TPUVersion.V5P, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.TPU, TPUVersion.V5E, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.TPU, TPUVersion.V4, SpeculativeMethod.PROMPT_LOOKUP),
             (HardwareBackend.CPU, None, SpeculativeMethod.PROMPT_LOOKUP),
@@ -72,17 +72,19 @@ class TestOptimalMethod:
 class TestSupportedMethods:
     """Tests for get_supported_methods."""
 
-    def test_nvidia_blackwell_all_methods(self):
-        """Blackwell DC supports all 5 methods."""
+    def test_nvidia_blackwell_methods(self):
+        """Blackwell DC supports DRAFT_MODEL and PROMPT_LOOKUP."""
         methods = SpeculationCompatibilityMatrix.get_supported_methods(
             HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC
         )
-        assert len(methods) == 5
-        assert SpeculativeMethod.EAGLE in methods
-        assert SpeculativeMethod.MEDUSA in methods
+        assert len(methods) == 2
+        assert SpeculativeMethod.DRAFT_MODEL in methods
+        assert SpeculativeMethod.PROMPT_LOOKUP in methods
+        # EAGLE/MEDUSA/LAYER_SKIP excluded — not implemented
+        assert SpeculativeMethod.EAGLE not in methods
 
-    def test_nvidia_ampere_no_eagle(self):
-        """Ampere does not support EAGLE."""
+    def test_nvidia_ampere_methods(self):
+        """Ampere supports DRAFT_MODEL and PROMPT_LOOKUP."""
         methods = SpeculationCompatibilityMatrix.get_supported_methods(
             HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
         )
@@ -96,23 +98,22 @@ class TestSupportedMethods:
         )
         assert methods == [SpeculativeMethod.PROMPT_LOOKUP]
 
-    def test_trainium_no_draft_model(self):
-        """Trainium TRN2 does not support DRAFT_MODEL."""
+    def test_trainium_prompt_lookup_only(self):
+        """Trainium TRN2 supports only PROMPT_LOOKUP."""
         methods = SpeculationCompatibilityMatrix.get_supported_methods(
             HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2
         )
-        assert SpeculativeMethod.DRAFT_MODEL not in methods
-        assert SpeculativeMethod.LAYER_SKIP in methods
+        assert methods == [SpeculativeMethod.PROMPT_LOOKUP]
 
     def test_amd_cdna3_methods(self):
-        """CDNA3 supports draft_model, layer_skip, prompt_lookup."""
+        """CDNA3 supports draft_model and prompt_lookup."""
         methods = SpeculationCompatibilityMatrix.get_supported_methods(
             HardwareBackend.AMD, AMDArchitecture.CDNA3
         )
         assert SpeculativeMethod.DRAFT_MODEL in methods
-        assert SpeculativeMethod.LAYER_SKIP in methods
         assert SpeculativeMethod.PROMPT_LOOKUP in methods
         assert SpeculativeMethod.EAGLE not in methods
+        assert SpeculativeMethod.LAYER_SKIP not in methods
 
     def test_supported_methods_returns_copy(self):
         """get_supported_methods returns a copy, not the original list."""
@@ -133,12 +134,11 @@ class TestSupportedMethods:
 class TestIsMethodSupported:
     """Tests for is_method_supported."""
 
-    def test_eagle_supported_on_hopper(self):
-        assert SpeculationCompatibilityMatrix.is_method_supported(
+    def test_eagle_not_supported_anywhere(self):
+        """EAGLE is not in the matrix — not implemented."""
+        assert not SpeculationCompatibilityMatrix.is_method_supported(
             SpeculativeMethod.EAGLE, HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
         )
-
-    def test_eagle_not_supported_on_ampere(self):
         assert not SpeculationCompatibilityMatrix.is_method_supported(
             SpeculativeMethod.EAGLE, HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
         )

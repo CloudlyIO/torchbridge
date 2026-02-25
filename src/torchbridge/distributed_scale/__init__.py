@@ -2,7 +2,7 @@
 Large-Scale Distributed Training and Inference Framework (2025)
 
 Advanced framework for training and serving models across thousands of GPUs using:
-- Enhanced FSDP2 with DTensor integration
+- Enhanced FSDP with DTensor integration
 - Multi-node PyGraph optimization
 - Adaptive communication patterns
 - Advanced inference serving with vLLM integration

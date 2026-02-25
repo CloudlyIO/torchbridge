@@ -471,3 +471,39 @@ class TestOptimizationStrategy:
         assert strategy.speedup_estimate == 1.0
         assert strategy.memory_impact == 1.0
         assert strategy.precision_impact == "none"
+
+
+# =============================================================================
+# B2: TPU Detection Timeout Tests
+# =============================================================================
+
+
+class TestTPUDetectionTimeout:
+    """B2: _check_tpu_available() must complete within 5 seconds on non-TPU machines."""
+
+    def test_tpu_check_completes_quickly_on_cpu_machine(self):
+        """TPU availability check must finish in <5s even when torch_xla is installed."""
+        import time
+        start = time.perf_counter()
+        # On CI/CPU machines this should return immediately (torch_xla not installed
+        # or TPU not present); the timeout guard prevents hanging.
+        result = BackendFactory._check_tpu_available()
+        elapsed = time.perf_counter() - start
+        assert isinstance(result, bool)
+        assert elapsed < 5.5, (
+            f"TPU check took {elapsed:.1f}s — should complete within 5s (B2 fix)"
+        )
+
+    def test_tpu_check_returns_false_without_tpu(self):
+        """On a non-TPU machine _check_tpu_available() must return False."""
+        # Check we're not accidentally on a TPU machine (would invalidate test)
+        has_xla = False
+        try:
+            import torch_xla.core.xla_model as xm  # noqa: F401
+            has_xla = True
+        except ImportError:
+            pass
+
+        if not has_xla:
+            # Without torch_xla installed, must always return False
+            assert BackendFactory._check_tpu_available() is False

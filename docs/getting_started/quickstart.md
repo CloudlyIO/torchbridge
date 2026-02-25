@@ -186,7 +186,7 @@ Small numerical differences (typically < 1e-4) are normal after optimization and
 
 ## Next Steps
 
-- [Backends Overview](../backends/overview.md) -- how the hardware abstraction layer works
+- [Backends Overview](../backends/overview.md) -- how the backend system works
 - [Backend Selection](../guides/backend-selection.md) -- choosing and configuring backends
 - [Distributed Training](../guides/distributed-training.md) -- multi-GPU and multi-node
 - [Deployment](../guides/deployment.md) -- serving and containerization

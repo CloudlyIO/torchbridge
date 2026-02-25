@@ -352,18 +352,63 @@ class BackendFactory:
 
     @classmethod
     def _check_tpu_available(cls) -> bool:
-        """Check if TPU/XLA is available."""
+        """Check if TPU/XLA is available.
+
+        Uses a 5-second timeout to avoid hanging on machines where
+        torch_xla is installed but no TPU device is present.
+        """
         if BackendType.TPU in cls._availability_checks:
             return cls._availability_checks[BackendType.TPU]()
 
         try:
             import torch_xla.core.xla_model as xm
-            # Try to get a device - this will fail if no TPU
-            xm.xla_device()
-            return True
-        except Exception:
-            logger.debug("TPU/XLA availability check failed", exc_info=True)
+        except ImportError:
             return False
+
+        # Wrap xla_device() in a timeout: it can block 30+ seconds on
+        # machines where XLA is installed but no TPU hardware is present.
+        import signal as _signal
+
+        if hasattr(_signal, "SIGALRM"):
+            # POSIX systems (Linux, macOS)
+            def _timeout_handler(signum, frame):  # noqa: ARG001
+                raise TimeoutError("TPU device enumeration timed out")
+
+            old_handler = _signal.signal(_signal.SIGALRM, _timeout_handler)
+            _signal.alarm(5)
+            try:
+                xm.xla_device()
+                _signal.alarm(0)
+                _signal.signal(_signal.SIGALRM, old_handler)
+                return True
+            except TimeoutError:
+                logger.debug("TPU device enumeration timed out after 5s — no TPU detected")
+                _signal.signal(_signal.SIGALRM, old_handler)
+                return False
+            except Exception:
+                _signal.alarm(0)
+                _signal.signal(_signal.SIGALRM, old_handler)
+                logger.debug("TPU/XLA availability check failed", exc_info=True)
+                return False
+        else:
+            # Windows fallback: threading-based timeout
+            import threading
+
+            _result: list[bool] = [False]
+
+            def _check() -> None:
+                try:
+                    xm.xla_device()
+                    _result[0] = True
+                except Exception:
+                    pass
+
+            t = threading.Thread(target=_check, daemon=True)
+            t.start()
+            t.join(timeout=5.0)
+            if t.is_alive():
+                logger.debug("TPU device enumeration timed out after 5s — no TPU detected")
+            return _result[0]
 
     @classmethod
     def get_backend_info(cls, backend_type: BackendType) -> dict[str, Any]:

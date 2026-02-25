@@ -428,6 +428,7 @@ class TestAMDTuning:
     def _make_backend_with_arch(self, arch: AMDArchitecture):
         """Create an AMDBackend in CPU-fallback mode and inject a mock device."""
         from unittest.mock import MagicMock
+
         from torchbridge.backends.amd.amd_backend import AMDBackend, AMDDeviceInfoLegacy
 
         backend = AMDBackend(AMDConfig(architecture=arch))
@@ -482,6 +483,7 @@ class TestAMDTuning:
     def test_check_flash_attention_ck_requires_rocm(self):
         """_check_flash_attention_ck() returns False on non-ROCm even if flash_attn installed."""
         import torch
+
         from torchbridge.attention.dispatch.dispatcher import AttentionDispatcher
 
         if getattr(torch.version, "hip", None) is not None:

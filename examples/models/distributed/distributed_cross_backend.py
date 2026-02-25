@@ -17,7 +17,7 @@ from torchbridge.core.config import (
 from torchbridge.distributed import (
     CollectiveBackendMatrix,
     DistributedConfig,
-    FSDP2Manager,
+    FSDPManager,
     PipelineScheduleFactory,
     TopologyDetector,
 )
@@ -39,9 +39,9 @@ def main():
         world_size=8,
     )
 
-    print(f"FSDP2 strategy:    {config.fsdp2.sharding_strategy.value}")
-    print(f"Mixed precision:   {config.fsdp2.mixed_precision.value}")
-    print(f"Float8 all-gather: {config.fsdp2.float8_all_gather}")
+    print(f"FSDP strategy:    {config.fsdp.sharding_strategy.value}")
+    print(f"Mixed precision:   {config.fsdp.mixed_precision.value}")
+    print(f"Float8 all-gather: {config.fsdp.float8_all_gather}")
     print(f"Pipeline schedule: {config.pipeline.schedule.value}")
     print(f"Collective:        {config.collective.backend.value}")
 
@@ -56,7 +56,7 @@ def main():
         gpus_per_node=8,
     )
 
-    print(f"FSDP2 strategy:    {config_mn.fsdp2.sharding_strategy.value}")
+    print(f"FSDP strategy:    {config_mn.fsdp.sharding_strategy.value}")
     print(f"Multi-node:        {config_mn.mesh.is_multi_node()}")
     print(f"Mesh shape:        {list(config_mn.mesh.mesh_shape)}")
 
@@ -72,7 +72,7 @@ def main():
 
     print(f"Collective:        {config_amd.collective.backend.value}")
     print(f"Symmetric memory:  {config_amd.collective.symmetric_memory}")
-    print(f"Mixed precision:   {config_amd.fsdp2.mixed_precision.value}")
+    print(f"Mixed precision:   {config_amd.fsdp.mixed_precision.value}")
 
     # ── Scenario 4: Parallelism recommendation ─────────────────
     print("\n--- Scenario 4: Parallelism Advisor ---\n")

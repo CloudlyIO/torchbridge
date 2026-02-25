@@ -30,9 +30,9 @@ class TestEndToEndConfigGeneration:
             architecture=NVIDIAArchitecture.HOPPER,
             world_size=8,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
-        assert config.fsdp2.float8_all_gather is True
-        assert config.fsdp2.sharding_strategy == ShardingStrategy.FULL_SHARD
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.float8_all_gather is True
+        assert config.fsdp.sharding_strategy == ShardingStrategy.FULL_SHARD
         assert config.mesh.world_size == 8
         assert config.mesh.is_multi_node() is False
 
@@ -45,7 +45,7 @@ class TestEndToEndConfigGeneration:
             world_size=16,
             gpus_per_node=8,
         )
-        assert config.fsdp2.sharding_strategy == ShardingStrategy.HYBRID_SHARD
+        assert config.fsdp.sharding_strategy == ShardingStrategy.HYBRID_SHARD
         assert config.mesh.is_multi_node() is True
         assert config.mesh.num_nodes == 2
 
@@ -57,8 +57,8 @@ class TestEndToEndConfigGeneration:
             architecture=AMDArchitecture.CDNA3,
             world_size=4,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
-        assert config.fsdp2.float8_all_gather is False
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.float8_all_gather is False
         assert config.collective.backend == CollectiveBackendType.RCCL
 
     def test_cpu_fallback(self):
@@ -68,8 +68,8 @@ class TestEndToEndConfigGeneration:
             backend=HardwareBackend.CPU,
             world_size=1,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.FP32
-        assert config.fsdp2.float8_all_gather is False
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.FP32
+        assert config.fsdp.float8_all_gather is False
         assert config.collective.backend == CollectiveBackendType.GLOO
 
     def test_trainium_8gpu(self):
@@ -80,7 +80,7 @@ class TestEndToEndConfigGeneration:
             architecture=TrainiumArchitecture.TRN2,
             world_size=8,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
         assert config.collective.backend == CollectiveBackendType.NEURON_CC
 
     def test_tpu_v5e(self):
@@ -91,7 +91,7 @@ class TestEndToEndConfigGeneration:
             architecture=TPUVersion.V5E,
             world_size=8,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
         assert config.collective.backend == CollectiveBackendType.XLA_COLLECTIVES
 
 
@@ -106,7 +106,7 @@ class TestTomlRoundTrip:
             world_size=8,
         )
         toml = config.to_toml()
-        assert "[fsdp2]" in toml
+        assert "[fsdp]" in toml
         assert "[pipeline]" in toml
         assert "[collective]" in toml
         assert "[mesh]" in toml
@@ -150,9 +150,9 @@ class TestRecommendationConsistency:
             world_size=world_size,
         )
         # Both should agree on FSDP strategy
-        assert config.fsdp2.sharding_strategy.value == rec.fsdp_strategy
+        assert config.fsdp.sharding_strategy.value == rec.fsdp_strategy
         # Both should agree on mixed precision
-        assert config.fsdp2.mixed_precision.value == rec.mixed_precision
+        assert config.fsdp.mixed_precision.value == rec.mixed_precision
 
 
 class TestPackageImports:
@@ -161,7 +161,8 @@ class TestPackageImports:
     def test_all_exports(self):
         from torchbridge.distributed import __all__
         expected_names = [
-            "FSDP2Config", "FSDP2Manager", "MixedPrecisionChoice", "ShardingStrategy",
+            "FSDPConfig", "FSDPManager", "FSDP2Config", "FSDP2Manager",
+            "MixedPrecisionChoice", "ShardingStrategy",
             "InterconnectType", "MeshConfig", "TopologyDetector",
             "PipelineConfig", "PipelineScheduleFactory", "PipelineScheduleType",
             "CollectiveBackendMatrix", "CollectiveBackendType", "CollectiveConfig",

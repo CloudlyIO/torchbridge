@@ -9,7 +9,6 @@ at runtime, and creates configured attention layers.
 from __future__ import annotations
 
 import logging
-import warnings
 from dataclasses import dataclass, field
 
 from torchbridge.core.config import (
@@ -105,12 +104,27 @@ class AttentionDispatcher:
                 "No preferred kernel available — falling back to PyTorch SDPA"
             )
 
-        # Optional benchmark lookup
+        # Benchmark lookup — lazy-warm cache on first miss (B4 fix)
+        # Skip benchmarking for extreme dimensions to avoid OOM/hangs
+        _MAX_BENCH_SEQ = 32_768
         latency: float | None = None
         if self._cache is not None:
             latency = self._cache.get_cached_latency(
                 chosen, seq_length, num_heads, head_dim
             )
+            if latency is None and seq_length <= _MAX_BENCH_SEQ:
+                try:
+                    entry = self._cache.run_benchmark(
+                        chosen, seq_length, num_heads, head_dim,
+                        warmup=1, iterations=5,
+                    )
+                    latency = entry.latency_ms
+                    logger.debug(
+                        "Lazy benchmark: %s at %s×%s×%s → %.2f ms",
+                        chosen.value, seq_length, num_heads, head_dim, latency,
+                    )
+                except Exception as _e:
+                    logger.debug("Lazy benchmark failed (non-fatal): %s", _e)
 
         fallback_chain = AttentionDispatchMatrix.get_fallback_chain(
             chosen, self._backend, self._architecture
@@ -146,17 +160,26 @@ class AttentionDispatcher:
             head_dim=config.head_dim or (config.embed_dim // config.num_heads),
         )
 
-        # Try the dispatched implementation first
+        # Try the dispatched implementation first (B1 fix)
         impl_name = result.implementation_name
         if impl_name in _ATTENTION_REGISTRY:
+            logger.debug("Using dispatched kernel: %s → %s", result.kernel_type.value, impl_name)
             return create_attention(config, implementation=impl_name, **kwargs)
 
-        # If specific impl not registered, fall back to auto-select
-        warnings.warn(
-            f"Dispatched implementation '{impl_name}' not in registry — "
-            "using default auto-select",
-            stacklevel=2,
+        # Walk the fallback chain before giving up (B1 fix)
+        logger.warning(
+            "Dispatched impl '%s' not in registry; walking fallback chain (%d candidates)",
+            impl_name,
+            len(result.fallback_chain),
         )
+        for fallback_kt in result.fallback_chain:
+            fb_impl = self._kernel_to_registry_name(fallback_kt)
+            if fb_impl in _ATTENTION_REGISTRY:
+                logger.info("Using fallback: %s → %s", fallback_kt.value, fb_impl)
+                return create_attention(config, implementation=fb_impl, **kwargs)
+
+        # Final fallback: auto-select (last resort)
+        logger.info("No dispatch or fallback matched registry; using auto-select")
         return create_attention(config, **kwargs)
 
     # ── properties ───────────────────────────────────────────────────

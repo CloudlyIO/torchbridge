@@ -35,6 +35,59 @@ from torchbridge.core.kernel_registry import (
 
 logger = logging.getLogger(__name__)
 
+
+def _ceil_to_multiple(n: int, multiple: int) -> int:
+    """Round *n* up to the nearest multiple of *multiple*."""
+    return ((n + multiple - 1) // multiple) * multiple
+
+
+class _TensorCoreAlignedLinear(nn.Module):
+    """Replace an ``nn.Linear`` whose dimensions are not Tensor Core multiples.
+
+    Zero-pads the weight (and bias) to the next multiple of ``optimal_multiple``
+    and pads/slices inputs/outputs in ``forward()``.  The output is numerically
+    identical to the original layer — padding columns/rows are all-zero.
+
+    This is an **inference-only** replacement: padded weights are registered as
+    non-trainable buffers.  For training, align model dimensions at design time.
+    """
+
+    def __init__(self, original: nn.Linear, optimal_multiple: int) -> None:
+        super().__init__()
+        orig_in = original.in_features
+        orig_out = original.out_features
+        padded_in = _ceil_to_multiple(orig_in, optimal_multiple)
+        padded_out = _ceil_to_multiple(orig_out, optimal_multiple)
+
+        padded_w = torch.zeros(padded_out, padded_in, dtype=original.weight.dtype)
+        padded_w[:orig_out, :orig_in].copy_(original.weight.data)
+        self.register_buffer("_padded_weight", padded_w)
+
+        if original.bias is not None:
+            padded_b = torch.zeros(padded_out, dtype=original.bias.dtype)
+            padded_b[:orig_out].copy_(original.bias.data)
+            self.register_buffer("_padded_bias", padded_b)
+        else:
+            self._padded_bias: torch.Tensor | None = None  # type: ignore[assignment]
+
+        self.orig_in = orig_in
+        self.orig_out = orig_out
+        self.padded_in = padded_in
+        self.padded_out = padded_out
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.shape[-1] < self.padded_in:
+            x = torch.nn.functional.pad(x, (0, self.padded_in - x.shape[-1]))
+        out = torch.nn.functional.linear(x, self._padded_weight, self._padded_bias)
+        return out[..., : self.orig_out]
+
+    def extra_repr(self) -> str:
+        return (
+            f"in_features={self.orig_in} (padded={self.padded_in}), "
+            f"out_features={self.orig_out} (padded={self.padded_out})"
+        )
+
+
 class NVIDIABackend(BaseBackend):
     """
     Core NVIDIA GPU backend for device management and model preparation.
@@ -339,28 +392,54 @@ class NVIDIABackend(BaseBackend):
         # Older architectures: PyTorch defaults are fine
 
     def _optimize_for_tensor_cores(self, model: nn.Module) -> nn.Module:
-        """Advisory check for Tensor Core dimension alignment.
+        """Align misaligned ``nn.Linear`` layers to Tensor Core dimension multiples.
 
-        Inspects Linear layers and warns if dimensions are not optimal multiples
-        for Tensor Core execution. Returns the model unchanged — dimensions cannot
-        be silently modified without breaking the model's interface contract.
-        To act on these warnings, pad your model's Linear layers before passing
-        to TorchBridge.
+        Replaces any ``nn.Linear`` whose ``in_features`` or ``out_features`` are not
+        multiples of the optimal Tensor Core divisor (16 for Ampere+, 8 for older)
+        with a :class:`_TensorCoreAlignedLinear` wrapper.  The wrapper zero-pads
+        weights and pads/slices activations so that the GEMM executes on aligned
+        dimensions — output is numerically identical to the original layer.
+
+        This replacement is **inference-only**: padded weights are registered as
+        non-trainable buffers.  If the model is in ``training`` mode, this method
+        logs a warning and returns the model unchanged.
         """
-        for name, module in model.named_modules():
-            if isinstance(module, nn.Linear):
-                # Check if dimensions are optimal for Tensor Cores
-                in_features, out_features = module.in_features, module.out_features
+        if model.training:
+            logger.warning(
+                "Skipping Tensor Core alignment: model is in training mode. "
+                "Align Linear layer dimensions at model-design time for training."
+            )
+            return model
 
-                # Tensor Cores work best with dimensions divisible by 8 (or 16 for newer)
-                optimal_divisor = 16 if self._compute_capability and self._compute_capability[0] >= 8 else 8
+        optimal_divisor = (
+            16
+            if self._compute_capability and self._compute_capability[0] >= 8
+            else 8
+        )
 
-                if in_features % optimal_divisor != 0 or out_features % optimal_divisor != 0:
-                    warnings.warn(
-                        f"Linear layer {name} dimensions ({in_features}x{out_features}) "
-                        f"not optimal for Tensor Cores. Consider padding to multiples of {optimal_divisor}.",
-                    stacklevel=2,
-                    )
+        replaced = 0
+        for parent_name, parent_module in list(model.named_modules()):
+            for child_name, child_module in list(parent_module.named_children()):
+                if not isinstance(child_module, nn.Linear):
+                    continue
+                in_f, out_f = child_module.in_features, child_module.out_features
+                if in_f % optimal_divisor == 0 and out_f % optimal_divisor == 0:
+                    continue
+                aligned = _TensorCoreAlignedLinear(child_module, optimal_divisor)
+                setattr(parent_module, child_name, aligned)
+                replaced += 1
+                full_name = f"{parent_name}.{child_name}" if parent_name else child_name
+                logger.debug(
+                    "Aligned %s: (%dx%d) → (%dx%d) for Tensor Cores",
+                    full_name, in_f, out_f, aligned.padded_in, aligned.padded_out,
+                )
+
+        if replaced:
+            logger.info(
+                "Tensor Core alignment: replaced %d Linear layer(s) "
+                "(optimal_divisor=%d).",
+                replaced, optimal_divisor,
+            )
 
         return model
 
