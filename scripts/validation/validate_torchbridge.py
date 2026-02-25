@@ -513,9 +513,9 @@ def test_distributed_config() -> list[TestResult]:
         )
         results.append(TestResult(
             name="distributed_config_auto_1gpu",
-            passed=config is not None and hasattr(config, "fsdp2") and hasattr(config, "pipeline"),
+            passed=config is not None and hasattr(config, "fsdp") and hasattr(config, "pipeline"),
             value={
-                "fsdp2_sharding": str(config.fsdp2.sharding_strategy) if hasattr(config.fsdp2, "sharding_strategy") else "present",
+                "fsdp_sharding": str(config.fsdp.sharding_strategy) if hasattr(config.fsdp, "sharding_strategy") else "present",
                 "pipeline_schedule": str(config.pipeline.schedule_type) if hasattr(config.pipeline, "schedule_type") else "present",
                 "collective_backend": str(config.collective.backend_type) if hasattr(config.collective, "backend_type") else "present",
             },

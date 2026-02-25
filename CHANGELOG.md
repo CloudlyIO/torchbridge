@@ -8,6 +8,103 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.34] - 2026-02-25 - Hardened Release + Cross-Backend Testing Framework
+
+### **Summary**
+
+4 critical bugs fixed, 11 docs aligned to v0.5.32 identity reframe, 3 facades replaced
+with real implementations, and a new `torchbridge.testing` package providing
+`@cross_backend`, `CrossBackendTestSuite`, `DivergenceTracer`, and `QualificationReport`.
+
+### **Track 1: Critical Bug Fixes**
+
+- **B1 (Attention Dispatch):** `AttentionDispatcher.create_attention()` now uses the
+  result of `select_kernel()` — walks the fallback chain before auto-select instead of
+  ignoring it silently
+- **B2 (TPU Detection Hang):** `_check_tpu_available()` wraps `xm.xla_device()` in a
+  5-second SIGALRM timeout (POSIX) / `threading.Thread.join(5.0)` fallback (Windows);
+  no more 30-second hangs on CPU machines
+- **B3 (AMD Quantization):** `TorchAOBackend.is_available_on_backend()` added; engine
+  now gates all torchao calls with `_torchao_backend_str()` — AMD no longer silently
+  falls into CUDA-only torchao paths
+- **B4 (Benchmark Cache Always Cold):** `select_kernel()` now calls `run_benchmark()`
+  lazily on cache miss (warmup=1, iterations=5); `latency_ms` is populated after the
+  first dispatch
+
+### **Track 2: Documentation Alignment (11 issues)**
+
+- Removed all "hardware abstraction layer (HAL)" references from README.md,
+  `docs/backends/overview.md`, `docs/getting_started/quickstart.md`,
+  `CONTRIBUTING.md`, `examples/models/README.md`, `tests/README.md`
+- Test count badges and prose updated: 1,270/1,464/2,311 → **2,325+**
+- Platform count updated: 6 → **8** (added Trainium + Inferentia2 throughout)
+- `docs/reference/cloud-validation.md` refreshed: date, Trainium/Inferentia2 rows,
+  8-platform history entry
+
+### **Track 3: Facade Fixes**
+
+- **FSDPManager.apply(model):** (renamed from FSDP2Manager) Wraps `nn.Module` with
+  `torch.distributed.fsdp.FullyShardedDataParallel` using the resolved backend-aware
+  config; raises `RuntimeError` immediately if `dist.is_initialized()` is False.
+  Renamed to honestly reflect that it uses the stable FSDP API, not FSDP2 composable API
+- **SpeculationEngine:** `get_generation_kwargs()` now raises `NotImplementedError` for
+  `EAGLE` and `MEDUSA` (require custom architectures not wired to HF generate()), and
+  raises `ValueError` for `DRAFT_MODEL` when `draft_model_name` is not set
+- **NVIDIABackend Tensor Cores:** `_optimize_for_tensor_cores()` now replaces misaligned
+  `nn.Linear` layers (in eval mode) with `_TensorCoreAlignedLinear` — zero-pads weights,
+  pads inputs, slices outputs; output is numerically identical to the original
+
+### **Track 4: Cross-Backend Testing Framework** (`src/torchbridge/testing/`)
+
+New package providing cross-backend test utilities:
+
+- **`@cross_backend`** decorator: runs a test on every available backend, collects
+  per-backend pass/fail, surfaces all failures in a single `AssertionError`
+- **`CrossBackendTestSuite`** base class: inherit + override `build_model()`,
+  `build_inputs()`, `forward()` to run on all backends with automatic CPU baseline
+  comparison; produces `BackendResult` objects
+- **`DivergenceTracer`**: forward-hook based layer-by-layer divergence tracing;
+  `compare_with(reference_tracer)` returns `LayerDivergence` sorted by `max_diff`
+- **`ToleranceDB`**: empirical tolerance DB seeded from v0.5.31 cloud validation results;
+  `get(backend, dtype)` returns `(atol, rtol)` per platform
+- **`QualificationReport`**: JSON report generator from `BackendResult` lists;
+  `save()` / `load()` round-trip; `summary()` one-line pass/fail
+- **`pytest plugin`**: `--torchbridge-backends=cuda,cpu,mps` CLI flag to restrict
+  `@cross_backend` to specific backends
+
+### **Track 5: API Consistency & Honesty Cleanup**
+
+- **`DistributedConfig.fsdp2` → `fsdp`:** Renamed the dataclass field to match the
+  honest naming (uses stable FSDP API, not FSDP2). Backward-compat `@property fsdp2`
+  preserved. `to_dict()` key and `to_toml()` section header also updated (`[fsdp]`)
+- **FSDP2 string scrub:** Replaced all "FSDP2" references in docstrings and comments
+  across `distributed/`, `distributed_scale/`, examples, and validation scripts with
+  "FSDP" — only kept where referring to the actual PyTorch composable FSDP2 API name
+  or backward-compat aliases
+- **Speculation matrix honesty:** Removed EAGLE, MEDUSA, and LAYER_SKIP from all
+  compatibility matrix entries — only DRAFT_MODEL and PROMPT_LOOKUP produce valid
+  HuggingFace `generate()` kwargs. CLI help text updated to document the distinction
+- **torchao CPU gate:** `TorchAOBackend.is_available_on_backend("cpu")` now returns
+  `True` (INT8 dynamic quantization works on CPU); previously hard-blocked
+- **Benchmark cache OOM guard:** `select_kernel()` lazy benchmarking now skips
+  `run_benchmark()` for seq_length > 32K to prevent OOM/hangs on extreme inputs
+
+### **Presentation Deck**
+
+- Slide 1: v0.5.33 → v0.5.34
+- Slide 12: 2,311 → 2,391 tests, FSDP2 → FSDP in milestone text
+- Slide 13: v0.5.31 → v0.5.34 footer
+- Slide 18: 2,306 → 2,391 test count
+- Slide 19: 188 → 229 modules, 2,311 → 2,391 tests, 80,645 → 81,921 lines
+
+### **Tests**
+
+- 2,311 → **2,391** tests (+80)
+- All new tests: Track 1 (+18), Track 3 (+31), Track 4 (+32)
+- 0 ruff violations
+
+---
+
 ## [0.5.33] - 2026-02-24 - AMD Targeted Depth
 
 ### **Summary**

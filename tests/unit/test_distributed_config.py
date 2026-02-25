@@ -14,7 +14,7 @@ from torchbridge.distributed.config import (
     recommend_parallelism,
 )
 from torchbridge.distributed.fsdp2 import (
-    FSDP2Config,
+    FSDPConfig,
     MixedPrecisionChoice,
     ShardingStrategy,
 )
@@ -132,7 +132,7 @@ class TestDistributedConfig:
 
     def test_defaults(self):
         config = DistributedConfig()
-        assert isinstance(config.fsdp2, FSDP2Config)
+        assert isinstance(config.fsdp, FSDPConfig)
         assert isinstance(config.pipeline, PipelineConfig)
         assert isinstance(config.collective, CollectiveConfig)
         assert config.mesh is None
@@ -140,7 +140,7 @@ class TestDistributedConfig:
     def test_to_dict(self):
         config = DistributedConfig()
         d = config.to_dict()
-        assert "fsdp2" in d
+        assert "fsdp" in d
         assert "pipeline" in d
         assert "collective" in d
         assert d["mesh"] is None
@@ -154,7 +154,7 @@ class TestDistributedConfig:
         )
         assert config.mesh is not None
         assert config.mesh.world_size == 1
-        assert config.fsdp2.sharding_strategy == ShardingStrategy.FULL_SHARD
+        assert config.fsdp.sharding_strategy == ShardingStrategy.FULL_SHARD
 
     def test_auto_multi_gpu(self):
         config = DistributedConfig.auto(
@@ -175,7 +175,7 @@ class TestDistributedConfig:
             gpus_per_node=8,
         )
         assert config.mesh.is_multi_node() is True
-        assert config.fsdp2.sharding_strategy == ShardingStrategy.HYBRID_SHARD
+        assert config.fsdp.sharding_strategy == ShardingStrategy.HYBRID_SHARD
 
     def test_to_toml(self):
         config = DistributedConfig.auto(
@@ -185,7 +185,7 @@ class TestDistributedConfig:
             world_size=8,
         )
         toml = config.to_toml()
-        assert "[fsdp2]" in toml
+        assert "[fsdp]" in toml
         assert "[pipeline]" in toml
         assert "[collective]" in toml
         assert "[mesh]" in toml
@@ -194,7 +194,7 @@ class TestDistributedConfig:
     def test_to_toml_no_mesh(self):
         config = DistributedConfig()
         toml = config.to_toml()
-        assert "[fsdp2]" in toml
+        assert "[fsdp]" in toml
         assert "[mesh]" not in toml
 
     def test_auto_cpu(self):
@@ -203,7 +203,7 @@ class TestDistributedConfig:
             backend=HardwareBackend.CPU,
             world_size=1,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.FP32
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.FP32
 
     def test_auto_amd(self):
         config = DistributedConfig.auto(
@@ -212,7 +212,7 @@ class TestDistributedConfig:
             architecture=AMDArchitecture.CDNA3,
             world_size=4,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_auto_trainium(self):
         config = DistributedConfig.auto(
@@ -221,4 +221,4 @@ class TestDistributedConfig:
             architecture=TrainiumArchitecture.TRN2,
             world_size=8,
         )
-        assert config.fsdp2.mixed_precision == MixedPrecisionChoice.BF16
+        assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16

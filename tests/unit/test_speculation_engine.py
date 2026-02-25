@@ -46,7 +46,7 @@ class TestSpeculationEngine:
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
         )
-        assert engine.method == SpeculativeMethod.EAGLE
+        assert engine.method == SpeculativeMethod.DRAFT_MODEL
 
     def test_auto_resolves_cpu(self):
         """Auto method resolves to PROMPT_LOOKUP on CPU."""
@@ -128,8 +128,8 @@ class TestSpeculationEngine:
         engine = SpeculationEngine(config=config, backend=HardwareBackend.CPU)
         assert engine.get_generation_kwargs() == {}
 
-    def test_kwargs_eagle(self):
-        """EAGLE method produces assistant_model kwarg."""
+    def test_eagle_explicit_falls_back(self):
+        """EAGLE is not in the matrix — explicit request falls back to DRAFT_MODEL."""
         config = SpeculationConfig(
             method=SpeculativeMethod.EAGLE,
             draft_model_name="eagle-model",
@@ -139,8 +139,8 @@ class TestSpeculationEngine:
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
         )
-        kwargs = engine.get_generation_kwargs()
-        assert kwargs["assistant_model"] == "eagle-model"
+        # EAGLE not supported → engine falls back via chain to DRAFT_MODEL
+        assert engine.method == SpeculativeMethod.DRAFT_MODEL
 
     def test_get_info(self):
         """get_info returns diagnostic dict."""
@@ -170,13 +170,13 @@ class TestSpeculationEngine:
         # since NONE is treated as auto
         assert engine.method == SpeculativeMethod.PROMPT_LOOKUP
 
-    def test_layer_skip_kwargs(self):
-        """Layer skip returns empty kwargs (no standard HF generate support)."""
+    def test_layer_skip_explicit_falls_back(self):
+        """LAYER_SKIP is not in the matrix — explicit request falls back."""
         config = SpeculationConfig(method=SpeculativeMethod.LAYER_SKIP)
         engine = SpeculationEngine(
             config=config,
             backend=HardwareBackend.TRAINIUM,
             architecture=None,
         )
-        kwargs = engine.get_generation_kwargs()
-        assert kwargs == {}
+        # LAYER_SKIP not supported → falls back to PROMPT_LOOKUP
+        assert engine.method == SpeculativeMethod.PROMPT_LOOKUP

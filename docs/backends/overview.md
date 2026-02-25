@@ -1,6 +1,6 @@
 # Backends Overview
 
-TorchBridge provides a hardware abstraction layer (HAL) that lets you write PyTorch code once and run it on any supported accelerator. This document explains how the backend system works.
+TorchBridge is cross-backend validation and configuration intelligence for PyTorch. It validates that model outputs match across hardware backends and generates optimal configurations per hardware. This document explains how the backend system works.
 
 ## Architecture
 

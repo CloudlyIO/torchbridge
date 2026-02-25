@@ -46,7 +46,21 @@ class SpeculationEngine:
     """Resolves and configures speculative decoding for model.generate().
 
     Selects the optimal speculative method based on backend/architecture
-    and produces the appropriate kwargs for HuggingFace generate().
+    and produces the appropriate kwargs for HuggingFace ``model.generate()``.
+
+    Supported methods that produce valid generate() kwargs:
+
+    - ``PROMPT_LOOKUP``: N-gram matching; produces ``prompt_lookup_num_tokens``.
+      No extra dependencies required.
+    - ``DRAFT_MODEL``: Standard assistant-model speculation; produces
+      ``assistant_model`` (a *name/path string* for lazy loading) and
+      ``num_assistant_tokens``.  Requires ``draft_model_name`` to be set.
+
+    Methods that require custom model architectures and are **not** wired to
+    standard HuggingFace generate() kwargs (``EAGLE``, ``MEDUSA``,
+    ``LAYER_SKIP``) will raise ``NotImplementedError`` if selected via
+    ``get_generation_kwargs()``.  Use ``get_info()`` to inspect the resolved
+    method without generating kwargs.
 
     Args:
         config: Speculation configuration.
@@ -109,10 +123,18 @@ class SpeculationEngine:
         return batch_size <= self._config.max_batch_size_for_speculation
 
     def get_generation_kwargs(self) -> dict[str, Any]:
-        """Return kwargs to pass to model.generate() for speculative decoding.
+        """Return kwargs to pass to ``model.generate()`` for speculative decoding.
 
         Returns:
-            Dict of kwargs. Empty dict if speculation is disabled.
+            Dict of kwargs. Empty dict if speculation is disabled or method is NONE.
+
+        Raises:
+            NotImplementedError: If the resolved method (``EAGLE``, ``MEDUSA``,
+                ``LAYER_SKIP``) does not map to standard HuggingFace generate() kwargs.
+                These methods require custom model architectures and cannot be applied
+                through generate() alone.
+            ValueError: If ``DRAFT_MODEL`` is selected but ``draft_model_name`` is
+                not set in the config.
         """
         if not self._config.enabled:
             return {}
@@ -123,44 +145,30 @@ class SpeculationEngine:
         kwargs: dict[str, Any] = {}
 
         if method == SpeculativeMethod.DRAFT_MODEL:
-            if self._config.draft_model_name:
-                kwargs["assistant_model"] = self._config.draft_model_name
-                kwargs["num_assistant_tokens"] = self._config.num_speculative_tokens
-            else:
-                logger.warning(
-                    "draft_model method selected but no draft_model_name configured; "
-                    "speculative decoding kwargs will be empty"
+            if not self._config.draft_model_name:
+                raise ValueError(
+                    "SpeculativeMethod.DRAFT_MODEL requires draft_model_name to be set "
+                    "in SpeculationConfig. Provide a HuggingFace model name or local path."
                 )
+            kwargs["assistant_model"] = self._config.draft_model_name
+            kwargs["num_assistant_tokens"] = self._config.num_speculative_tokens
 
         elif method == SpeculativeMethod.PROMPT_LOOKUP:
             kwargs["prompt_lookup_num_tokens"] = self._config.num_speculative_tokens
 
-        elif method == SpeculativeMethod.EAGLE:
-            if self._config.draft_model_name:
-                kwargs["assistant_model"] = self._config.draft_model_name
-                kwargs["num_assistant_tokens"] = self._config.num_speculative_tokens
-            else:
-                logger.warning(
-                    "eagle method selected but no draft_model_name configured; "
-                    "speculative decoding kwargs will be empty"
-                )
-
-        elif method == SpeculativeMethod.MEDUSA:
-            if self._config.draft_model_name:
-                kwargs["assistant_model"] = self._config.draft_model_name
-                kwargs["num_assistant_tokens"] = self._config.num_speculative_tokens
-            else:
-                logger.warning(
-                    "medusa method selected but no draft_model_name configured; "
-                    "speculative decoding kwargs will be empty"
-                )
+        elif method in (SpeculativeMethod.EAGLE, SpeculativeMethod.MEDUSA):
+            raise NotImplementedError(
+                f"SpeculativeMethod.{method.name} requires a custom model architecture "
+                "and does not map to standard HuggingFace generate() kwargs. "
+                "Use SpeculativeMethod.DRAFT_MODEL or SpeculativeMethod.PROMPT_LOOKUP "
+                "for generate()-compatible speculation."
+            )
 
         elif method == SpeculativeMethod.LAYER_SKIP:
-            # Layer-skip (self-speculative) doesn't have standard HF kwargs yet;
-            # requires custom model integration
-            logger.info(
-                "layer_skip selected; no standard HF generate kwargs available — "
-                "requires custom model with early-exit support"
+            raise NotImplementedError(
+                "SpeculativeMethod.LAYER_SKIP requires a model with early-exit support "
+                "and does not have standard HuggingFace generate() kwargs. "
+                "Use SpeculativeMethod.PROMPT_LOOKUP for generate()-compatible speculation."
             )
 
         return kwargs
