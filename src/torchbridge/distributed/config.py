@@ -1,7 +1,7 @@
 """
 Unified Distributed Training Configuration
 
-Single config for all distributed settings: FSDP2, pipeline parallelism,
+Single config for all distributed settings: FSDP, pipeline parallelism,
 collective backend, and topology. Includes auto-configuration from model
 size, backend, and world size.
 """
@@ -20,7 +20,7 @@ from torchbridge.core.config import (
     TrainiumArchitecture,
 )
 from torchbridge.distributed.collective_backend import CollectiveConfig
-from torchbridge.distributed.fsdp2 import FSDP2Config, FSDP2Manager, ShardingStrategy
+from torchbridge.distributed.fsdp2 import FSDPConfig, FSDPManager, ShardingStrategy
 from torchbridge.distributed.pipeline_schedules import (
     PipelineConfig,
     PipelineScheduleFactory,
@@ -121,11 +121,16 @@ class ParallelismRecommendation:
 class DistributedConfig:
     """Unified configuration for distributed training.
 
-    Combines FSDP2, pipeline, collective, and topology settings.
+    Combines FSDP, pipeline, collective, and topology settings.
     Use auto() for automatic configuration from model and hardware.
     """
 
-    fsdp2: FSDP2Config = field(default_factory=FSDP2Config)
+    fsdp: FSDPConfig = field(default_factory=FSDPConfig)
+
+    @property
+    def fsdp2(self) -> FSDPConfig:
+        """Backward-compatible alias for :attr:`fsdp`."""
+        return self.fsdp
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
     collective: CollectiveConfig = field(default_factory=CollectiveConfig)
     mesh: MeshConfig | None = None
@@ -174,9 +179,9 @@ class DistributedConfig:
             architecture=architecture,
         )
 
-        # Build FSDP2 config
-        fsdp2_manager = FSDP2Manager(
-            config=FSDP2Config(
+        # Build FSDP config
+        fsdp2_manager = FSDPManager(
+            config=FSDPConfig(
                 sharding_strategy=(
                     ShardingStrategy.HYBRID_SHARD
                     if multi_node
@@ -224,7 +229,7 @@ class DistributedConfig:
             )
 
         return cls(
-            fsdp2=fsdp2_manager.resolved_config,
+            fsdp=fsdp2_manager.resolved_config,
             pipeline=pipeline,
             collective=collective,
             mesh=mesh,
@@ -233,7 +238,7 @@ class DistributedConfig:
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
-            "fsdp2": self.fsdp2.to_dict(),
+            "fsdp": self.fsdp.to_dict(),
             "pipeline": self.pipeline.to_dict(),
             "collective": self.collective.to_dict(),
             "mesh": self.mesh.to_dict() if self.mesh else None,
@@ -243,9 +248,9 @@ class DistributedConfig:
         """Export as TOML string for reproducible configs."""
         lines = ["# TorchBridge Distributed Training Configuration", ""]
 
-        # FSDP2
-        lines.append("[fsdp2]")
-        fsdp = self.fsdp2.to_dict()
+        # FSDP
+        lines.append("[fsdp]")
+        fsdp = self.fsdp.to_dict()
         for key, value in fsdp.items():
             lines.append(f'{key} = {_toml_value(value)}')
         lines.append("")
@@ -366,7 +371,7 @@ def _recommend_parallelism(
         notes.append("TP all-reduce adds ~50% communication overhead")
 
     # Mixed precision
-    fsdp2_manager = FSDP2Manager(backend=backend, architecture=architecture)
+    fsdp2_manager = FSDPManager(backend=backend, architecture=architecture)
     mp = fsdp2_manager.mixed_precision.value
 
     # Memory warning

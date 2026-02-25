@@ -36,6 +36,31 @@ class TorchAOBackend:
     """
 
     @staticmethod
+    def is_available_on_backend(backend: str = "cuda") -> bool:
+        """Check if torchao is installed AND supports the given backend.
+
+        Args:
+            backend: One of ``"cuda"`` (NVIDIA), ``"rocm"`` (AMD), ``"cpu"``,
+                or ``"hip"`` (alias for ROCm).
+
+        Returns:
+            ``True`` if torchao is available and the backend is supported.
+        """
+        if not TORCHAO_AVAILABLE:
+            return False
+        # Normalize aliases
+        backend = backend.lower()
+        if backend in ("hip", "amd"):
+            backend = "rocm"
+        if backend == "rocm":
+            # torchao ROCm support: INT8 works; FP8 is experimental.
+            # Check that the running PyTorch is a ROCm build.
+            import torch
+            return getattr(torch.version, "hip", None) is not None
+        # CUDA is the primary supported backend; CPU supports INT8 dynamic
+        return backend in ("cuda", "cpu")
+
+    @staticmethod
     def _require_torchao() -> None:
         if not TORCHAO_AVAILABLE:
             raise RuntimeError(

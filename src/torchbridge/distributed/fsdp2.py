@@ -1,8 +1,12 @@
 """
-FSDP2 + DTensor Integration
+FSDP Configuration Manager
 
-Backend-aware FSDP2 wrapper that auto-selects sharding strategy,
+Backend-aware FSDP configuration that auto-selects sharding strategy,
 mixed precision policy, and communication optimizations per hardware.
+
+Note: ``apply()`` uses ``torch.distributed.fsdp.FullyShardedDataParallel``
+(the stable FSDP API).  The composable FSDP2 API
+(``torch.distributed._composable.fsdp``) is experimental and not yet used.
 """
 
 from __future__ import annotations
@@ -11,6 +15,8 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+
+import torch.nn as nn
 
 from torchbridge.core.config import (
     AMDArchitecture,
@@ -28,7 +34,7 @@ Architecture = (
 
 
 class ShardingStrategy(Enum):
-    """FSDP2 sharding strategies."""
+    """FSDP sharding strategies."""
 
     FULL_SHARD = "full_shard"
     SHARD_GRAD_OP = "shard_grad_op"
@@ -37,7 +43,7 @@ class ShardingStrategy(Enum):
 
 
 class MixedPrecisionChoice(Enum):
-    """Mixed precision configurations for FSDP2."""
+    """Mixed precision configurations for FSDP."""
 
     FP32 = "fp32"
     FP16 = "fp16"
@@ -93,8 +99,8 @@ _FLOAT8_ALLGATHER_ARCHS: set[NVIDIAArchitecture] = {
 
 
 @dataclass
-class FSDP2Config:
-    """Configuration for FSDP2 wrapping."""
+class FSDPConfig:
+    """Configuration for FSDP wrapping."""
 
     sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     cpu_offload: bool = False
@@ -119,15 +125,15 @@ class FSDP2Config:
         }
 
 
-class FSDP2Manager:
-    """Backend-aware FSDP2 configuration manager.
+class FSDPManager:
+    """Backend-aware FSDP configuration manager and applier.
 
-    Resolves optimal FSDP2 settings from hardware backend and architecture.
-    Does NOT call torch.distributed directly — produces configs that can
-    be applied in a real distributed environment.
+    Resolves optimal FSDP settings from hardware backend and architecture,
+    and can apply them via :meth:`apply`. Directly wraps ``torch.distributed.fsdp.FSDP``
+    when ``apply()`` is called in an initialized distributed environment.
 
     Args:
-        config: FSDP2 configuration (auto fields resolved on init).
+        config: FSDP configuration (auto fields resolved on init).
         backend: Hardware backend.
         architecture: Specific architecture for fine-grained selection.
         multi_node: Whether the training spans multiple nodes.
@@ -135,12 +141,12 @@ class FSDP2Manager:
 
     def __init__(
         self,
-        config: FSDP2Config | None = None,
+        config: FSDPConfig | None = None,
         backend: HardwareBackend = HardwareBackend.CPU,
         architecture: Architecture = None,
         multi_node: bool = False,
     ):
-        self._config = config or FSDP2Config()
+        self._config = config or FSDPConfig()
         self._backend = backend
         self._architecture = architecture
         self._multi_node = multi_node
@@ -148,7 +154,7 @@ class FSDP2Manager:
         # Resolve auto settings
         self._resolved = self._resolve(self._config)
 
-    def _resolve(self, config: FSDP2Config) -> FSDP2Config:
+    def _resolve(self, config: FSDPConfig) -> FSDPConfig:
         """Resolve auto settings based on hardware."""
         resolved_mp = config.mixed_precision
         if resolved_mp is None:
@@ -162,7 +168,7 @@ class FSDP2Manager:
         if not resolved_fp8:
             resolved_fp8 = self._supports_float8_all_gather()
 
-        return FSDP2Config(
+        return FSDPConfig(
             sharding_strategy=resolved_strategy,
             cpu_offload=config.cpu_offload,
             mixed_precision=resolved_mp,
@@ -189,8 +195,8 @@ class FSDP2Manager:
         return False
 
     @property
-    def resolved_config(self) -> FSDP2Config:
-        """Return the resolved FSDP2 config with all auto fields filled."""
+    def resolved_config(self) -> FSDPConfig:
+        """Return the resolved FSDP config with all auto fields filled."""
         return self._resolved
 
     @property
@@ -203,8 +209,88 @@ class FSDP2Manager:
         """Return the resolved sharding strategy."""
         return self._resolved.sharding_strategy
 
+    def apply(self, model: nn.Module) -> nn.Module:
+        """Wrap ``model`` with FSDP using the resolved backend-aware configuration.
+
+        Requires an initialized ``torch.distributed`` process group.  Call
+        ``torch.distributed.init_process_group()`` before invoking this method.
+
+        Args:
+            model: PyTorch module to wrap.
+
+        Returns:
+            ``torch.distributed.fsdp.FullyShardedDataParallel``-wrapped module.
+
+        Raises:
+            RuntimeError: If ``torch.distributed`` is not initialized.
+            ImportError: If ``torch.distributed.fsdp`` is not available.
+        """
+        import torch
+        import torch.distributed as dist
+        from torch.distributed.fsdp import BackwardPrefetch, CPUOffload, MixedPrecision
+        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+        from torch.distributed.fsdp import ShardingStrategy as TorchShardingStrategy
+
+        if not dist.is_initialized():
+            raise RuntimeError(
+                "torch.distributed is not initialized. "
+                "Call torch.distributed.init_process_group() before apply()."
+            )
+
+        # Map TorchBridge ShardingStrategy → torch.distributed.fsdp.ShardingStrategy
+        _strategy_map = {
+            ShardingStrategy.FULL_SHARD: TorchShardingStrategy.FULL_SHARD,
+            ShardingStrategy.SHARD_GRAD_OP: TorchShardingStrategy.SHARD_GRAD_OP,
+            ShardingStrategy.HYBRID_SHARD: TorchShardingStrategy.HYBRID_SHARD,
+            ShardingStrategy.NO_SHARD: TorchShardingStrategy.NO_SHARD,
+        }
+        torch_strategy = _strategy_map[self._resolved.sharding_strategy]
+
+        # Build MixedPrecision policy
+        mp = self._resolved.mixed_precision
+        _dtype_map = {
+            MixedPrecisionChoice.FP32: torch.float32,
+            MixedPrecisionChoice.FP16: torch.float16,
+            MixedPrecisionChoice.BF16: torch.bfloat16,
+            # FP8 training uses bfloat16 for reduction (FP8 tensors handled by model)
+            MixedPrecisionChoice.FP8: torch.bfloat16,
+        }
+        mp_dtype = _dtype_map.get(mp, torch.float32)
+        mixed_precision_policy = MixedPrecision(
+            param_dtype=mp_dtype,
+            reduce_dtype=mp_dtype,
+            buffer_dtype=mp_dtype,
+        )
+
+        backward_prefetch_setting = (
+            BackwardPrefetch.BACKWARD_PRE if self._resolved.backward_prefetch else None
+        )
+
+        cpu_offload_obj = (
+            CPUOffload(offload_params=True) if self._resolved.cpu_offload else None
+        )
+
+        device_id = torch.cuda.current_device() if torch.cuda.is_available() else None
+
+        logger.info(
+            "Applying FSDP: strategy=%s, mixed_precision=%s, cpu_offload=%s",
+            self._resolved.sharding_strategy.value,
+            mp.value if mp else "auto",
+            self._resolved.cpu_offload,
+        )
+
+        return FSDP(
+            model,
+            sharding_strategy=torch_strategy,
+            mixed_precision=mixed_precision_policy,
+            backward_prefetch=backward_prefetch_setting,
+            cpu_offload=cpu_offload_obj,
+            device_id=device_id,
+            limit_all_gathers=self._resolved.limit_all_gathers,
+        )
+
     def get_info(self) -> dict[str, Any]:
-        """Return diagnostic info about the FSDP2 configuration."""
+        """Return diagnostic info about the FSDP configuration."""
         return {
             "backend": self._backend.value,
             "architecture": (

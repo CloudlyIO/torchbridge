@@ -4,6 +4,11 @@ Backend-Aware Speculative Decoding Compatibility Matrix
 Maps (backend, architecture) pairs to supported speculative methods with
 optimal selection and fallback chains. Mirrors the pattern from
 precision/quantization/compatibility.py.
+
+Only methods that produce valid HuggingFace ``model.generate()`` kwargs are
+listed: DRAFT_MODEL and PROMPT_LOOKUP.  EAGLE, MEDUSA, and LAYER_SKIP require
+custom model architectures and adapter checkpoints that TorchBridge does not
+load — they are defined in the enum but excluded from the matrix.
 """
 
 from __future__ import annotations
@@ -32,46 +37,31 @@ Architecture = (
 
 _NVIDIA_METHODS: dict[NVIDIAArchitecture, list[SpeculativeMethod]] = {
     NVIDIAArchitecture.BLACKWELL_DC: [
-        SpeculativeMethod.EAGLE,
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
-        SpeculativeMethod.MEDUSA,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.BLACKWELL_CONSUMER: [
-        SpeculativeMethod.EAGLE,
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
-        SpeculativeMethod.MEDUSA,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.HOPPER: [
-        SpeculativeMethod.EAGLE,
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
-        SpeculativeMethod.MEDUSA,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.AMPERE: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
-        SpeculativeMethod.MEDUSA,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.ADA: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
-        SpeculativeMethod.MEDUSA,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.TURING: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.VOLTA: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     NVIDIAArchitecture.PASCAL: [
@@ -83,12 +73,10 @@ _NVIDIA_METHODS: dict[NVIDIAArchitecture, list[SpeculativeMethod]] = {
 _AMD_METHODS: dict[AMDArchitecture, list[SpeculativeMethod]] = {
     AMDArchitecture.CDNA4: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     AMDArchitecture.CDNA3: [
         SpeculativeMethod.DRAFT_MODEL,
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     AMDArchitecture.CDNA2: [
@@ -109,11 +97,9 @@ _AMD_METHODS: dict[AMDArchitecture, list[SpeculativeMethod]] = {
 
 _TRAINIUM_METHODS: dict[TrainiumArchitecture, list[SpeculativeMethod]] = {
     TrainiumArchitecture.TRN3: [
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     TrainiumArchitecture.TRN2: [
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     TrainiumArchitecture.TRN1: [
@@ -126,15 +112,12 @@ _TRAINIUM_METHODS: dict[TrainiumArchitecture, list[SpeculativeMethod]] = {
 
 _TPU_METHODS: dict[TPUVersion, list[SpeculativeMethod]] = {
     TPUVersion.V7: [
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     TPUVersion.V6E: [
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     TPUVersion.V5P: [
-        SpeculativeMethod.LAYER_SKIP,
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
     TPUVersion.V5E: [

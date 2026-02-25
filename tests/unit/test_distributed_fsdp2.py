@@ -1,4 +1,4 @@
-"""Tests for FSDP2 configuration and manager."""
+"""Tests for FSDP configuration and manager."""
 
 
 from torchbridge.core.config import (
@@ -9,18 +9,18 @@ from torchbridge.core.config import (
     TrainiumArchitecture,
 )
 from torchbridge.distributed.fsdp2 import (
-    FSDP2Config,
-    FSDP2Manager,
+    FSDPConfig,
+    FSDPManager,
     MixedPrecisionChoice,
     ShardingStrategy,
 )
 
 
-class TestFSDP2Config:
-    """Tests for FSDP2Config dataclass."""
+class TestFSDPConfig:
+    """Tests for FSDPConfig dataclass."""
 
     def test_defaults(self):
-        config = FSDP2Config()
+        config = FSDPConfig()
         assert config.sharding_strategy == ShardingStrategy.FULL_SHARD
         assert config.cpu_offload is False
         assert config.mixed_precision is None
@@ -31,19 +31,19 @@ class TestFSDP2Config:
         assert config.limit_all_gathers is True
 
     def test_to_dict(self):
-        config = FSDP2Config(mixed_precision=MixedPrecisionChoice.BF16)
+        config = FSDPConfig(mixed_precision=MixedPrecisionChoice.BF16)
         d = config.to_dict()
         assert d["sharding_strategy"] == "full_shard"
         assert d["mixed_precision"] == "bf16"
         assert d["cpu_offload"] is False
 
     def test_to_dict_auto_mixed_precision(self):
-        config = FSDP2Config()
+        config = FSDPConfig()
         d = config.to_dict()
         assert d["mixed_precision"] == "auto"
 
     def test_custom_config(self):
-        config = FSDP2Config(
+        config = FSDPConfig(
             sharding_strategy=ShardingStrategy.HYBRID_SHARD,
             cpu_offload=True,
             mixed_precision=MixedPrecisionChoice.FP8,
@@ -78,65 +78,65 @@ class TestMixedPrecisionChoice:
         assert MixedPrecisionChoice.FP8.value == "fp8"
 
 
-class TestFSDP2Manager:
-    """Tests for FSDP2Manager."""
+class TestFSDPManager:
+    """Tests for FSDPManager."""
 
     def test_default_cpu_backend(self):
-        manager = FSDP2Manager()
+        manager = FSDPManager()
         assert manager.mixed_precision == MixedPrecisionChoice.FP32
         assert manager.sharding_strategy == ShardingStrategy.FULL_SHARD
 
     def test_cuda_ampere_auto_precision(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.AMPERE,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_cuda_hopper_auto_precision(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_cuda_blackwell_dc_fp8(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.BLACKWELL_DC,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.FP8
 
     def test_cuda_turing_fp16(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.TURING,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.FP16
 
     def test_amd_cdna3_bf16(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.AMD,
             architecture=AMDArchitecture.CDNA3,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_trainium_bf16(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.TRAINIUM,
             architecture=TrainiumArchitecture.TRN2,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_tpu_bf16(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.TPU,
             architecture=TPUVersion.V7,
         )
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_multi_node_hybrid_shard(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
             multi_node=True,
@@ -144,7 +144,7 @@ class TestFSDP2Manager:
         assert manager.sharding_strategy == ShardingStrategy.HYBRID_SHARD
 
     def test_single_node_full_shard(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
             multi_node=False,
@@ -152,12 +152,12 @@ class TestFSDP2Manager:
         assert manager.sharding_strategy == ShardingStrategy.FULL_SHARD
 
     def test_explicit_strategy_not_overridden_single_node(self):
-        config = FSDP2Config(sharding_strategy=ShardingStrategy.NO_SHARD)
-        manager = FSDP2Manager(config=config, backend=HardwareBackend.CUDA)
+        config = FSDPConfig(sharding_strategy=ShardingStrategy.NO_SHARD)
+        manager = FSDPManager(config=config, backend=HardwareBackend.CUDA)
         assert manager.sharding_strategy == ShardingStrategy.NO_SHARD
 
     def test_float8_all_gather_hopper(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
         )
@@ -165,28 +165,28 @@ class TestFSDP2Manager:
         assert resolved.float8_all_gather is True
 
     def test_float8_all_gather_blackwell(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.BLACKWELL_DC,
         )
         assert manager.resolved_config.float8_all_gather is True
 
     def test_no_float8_all_gather_ampere(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.AMPERE,
         )
         assert manager.resolved_config.float8_all_gather is False
 
     def test_no_float8_all_gather_amd(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.AMD,
             architecture=AMDArchitecture.CDNA3,
         )
         assert manager.resolved_config.float8_all_gather is False
 
     def test_get_info(self):
-        manager = FSDP2Manager(
+        manager = FSDPManager(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
         )
@@ -199,17 +199,17 @@ class TestFSDP2Manager:
         assert info["float8_all_gather_supported"] is True
 
     def test_get_info_no_architecture(self):
-        manager = FSDP2Manager(backend=HardwareBackend.CPU)
+        manager = FSDPManager(backend=HardwareBackend.CPU)
         info = manager.get_info()
         assert info["architecture"] is None
 
     def test_resolved_config_is_fsdp2config(self):
-        manager = FSDP2Manager(backend=HardwareBackend.CUDA)
-        assert isinstance(manager.resolved_config, FSDP2Config)
+        manager = FSDPManager(backend=HardwareBackend.CUDA)
+        assert isinstance(manager.resolved_config, FSDPConfig)
 
     def test_explicit_mixed_precision_preserved(self):
-        config = FSDP2Config(mixed_precision=MixedPrecisionChoice.FP16)
-        manager = FSDP2Manager(
+        config = FSDPConfig(mixed_precision=MixedPrecisionChoice.FP16)
+        manager = FSDPManager(
             config=config,
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
@@ -217,9 +217,9 @@ class TestFSDP2Manager:
         assert manager.mixed_precision == MixedPrecisionChoice.FP16
 
     def test_cuda_no_architecture_defaults_bf16(self):
-        manager = FSDP2Manager(backend=HardwareBackend.CUDA)
+        manager = FSDPManager(backend=HardwareBackend.CUDA)
         assert manager.mixed_precision == MixedPrecisionChoice.BF16
 
     def test_amd_no_architecture_defaults_bf16(self):
-        manager = FSDP2Manager(backend=HardwareBackend.AMD)
+        manager = FSDPManager(backend=HardwareBackend.AMD)
         assert manager.mixed_precision == MixedPrecisionChoice.BF16

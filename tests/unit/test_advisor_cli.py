@@ -47,7 +47,7 @@ class TestAdvisorCLI:
         ])
         assert result == 0
         output = capsys.readouterr().out
-        assert "[fsdp2]" in output
+        assert "[fsdp]" in output
         assert "[pipeline]" in output
 
     def test_advisor_topology(self, capsys):

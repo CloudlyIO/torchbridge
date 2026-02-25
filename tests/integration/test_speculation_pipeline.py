@@ -32,7 +32,9 @@ class TestSpeculationPipeline:
         optimal = SpeculationCompatibilityMatrix.get_optimal_method(
             HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
         )
-        config = SpeculationConfig(method=optimal)
+        # DRAFT_MODEL requires a draft_model_name; provide one so get_generation_kwargs works
+        draft_name = "gpt2" if optimal == SpeculativeMethod.DRAFT_MODEL else None
+        config = SpeculationConfig(method=optimal, draft_model_name=draft_name)
         engine = SpeculationEngine(
             config=config,
             backend=HardwareBackend.CUDA,
@@ -121,7 +123,7 @@ class TestSpeculationPipeline:
                 backend, arch
             ).value
 
-        # Hopper should get EAGLE, others should not
-        assert results["NVIDIA Hopper"] == "eagle"
+        # Hopper gets DRAFT_MODEL (EAGLE not implemented), CPU gets PROMPT_LOOKUP
+        assert results["NVIDIA Hopper"] == "draft_model"
         assert results["CPU"] == "prompt_lookup"
         assert len(results) == 6

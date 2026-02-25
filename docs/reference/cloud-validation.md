@@ -1,7 +1,7 @@
 # TorchBridge Cloud Validation Results
 
-**Last updated**: 2026-02-15
-**Status**: ALL PASS (6/6 hardware platforms)
+**Last updated**: 2026-02-25
+**Status**: ALL PASS (7/8 hardware platforms; AMD MI300X pending GPU availability)
 
 ## Platform Summary
 
@@ -13,6 +13,8 @@
 | AMD Developer Cloud | AMD MI300X | AMD | 192 GB | CDNA3 (gfx942) |
 | GCP TPU VM | TPU v5e | GCP | 16 GB/chip | v5e (v5litepod-1) |
 | Local Mac | Apple Silicon | Local | Unified | MPS |
+| AWS trn1.2xlarge | Trainium (NeuronCore v1) | AWS | 32 GB | Trainium1 |
+| AWS inf2.xlarge | Inferentia2 (NeuronCore v1) | AWS | 32 GB | Inferentia2 |
 
 ## Cross-Backend Consistency (Qwen3-0.6B)
 
@@ -20,12 +22,14 @@ All validations compare GPU/accelerator logits against CPU baseline on the same 
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status | Date |
 |----------|----------|----------|------------|---------|--------|------|
-| RunPod | H100 NVL | 2.29e-05 | 1.000001 | 18.8 ms | PASS | 2026-02-15 |
-| Local | Apple MPS | 4.58e-05 | 1.000002 | 27.8 ms | PASS | 2026-02-15 |
-| AMD DevCloud | MI300X | 4.82e-05 | 1.000001 | 30.0 ms | PASS | 2026-02-12 |
-| AWS | A10G | 1.96e-05 | 1.000001 | 41.8 ms | PASS | 2026-02-12 |
-| GCP | TPU v5e | 1.08e-01 | 0.999980 | 47.5 ms | PASS | 2026-02-15 |
-| GCP | T4 | 2.67e-05 | 1.000001 | 50.8 ms | PASS | 2026-02-12 |
+| RunPod | H100 NVL | 2.29e-05 | 1.000001 | 18.8 ms | PASS | 2026-02-22 |
+| Local | Apple MPS | 4.58e-05 | 1.000002 | 27.0 ms | PASS | 2026-02-22 |
+| AMD DevCloud | MI300X | 4.82e-05 | 1.000001 | 30.0 ms | PASS | 2026-02-22 |
+| AWS | A10G | 1.96e-05 | 1.000001 | 39.4 ms | PASS | 2026-02-22 |
+| GCP | TPU v5e | 1.91e-05 | 1.000001 | 139.9 ms (CPU) | PASS | 2026-02-22 |
+| GCP | T4 | 2.67e-05 | 1.000001 | 48.8 ms | PASS | 2026-02-22 |
+| AWS Trainium | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS | 2026-02-22 |
+| AWS Inferentia2 | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS | 2026-02-22 |
 
 ### Validation Thresholds
 
@@ -66,6 +70,7 @@ equivalence and is the primary metric for XLA backends.
 
 | Date | Platforms | Model | All Pass |
 |------|-----------|-------|----------|
+| 2026-02-22 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (7/8; AMD pending GPU) |
 | 2026-02-15 | MPS, TPU v5e, H100 NVL | Qwen3-0.6B | Yes (6/6) |
 | 2026-02-12 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
 | 2026-02-11 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |

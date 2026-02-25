@@ -1,6 +1,6 @@
 # TorchBridge Test Suite
 
-Comprehensive test suite for validating cross-backend hardware abstraction -- 1,270+ tests.
+Comprehensive test suite for TorchBridge cross-backend validation and configuration intelligence -- 2,392+ tests.
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ tests/
 │   ├── test_mixture_of_experts.py
 │   └── test_performance_tracker.py
 │
-├── models/                  # Real-model HAL tests (@real_model marker)
+├── models/                  # Real-model cross-backend tests (@real_model marker)
 │   ├── test_qwen3_hal.py
 │   ├── test_deepseek_r1_hal.py
 │   ├── test_dinov2_hal.py

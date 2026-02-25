@@ -279,6 +279,14 @@ class QuantizationEngine:
 
         return hw_backend, arch
 
+    def _torchao_backend_str(self) -> str:
+        """Return the torchao backend identifier for the detected hardware."""
+        if self._hw_backend == HardwareBackend.AMD:
+            return "rocm"
+        if self._hw_backend == HardwareBackend.CUDA:
+            return "cuda"
+        return "cpu"
+
     def _apply_format(
         self,
         model: nn.Module,
@@ -317,11 +325,16 @@ class QuantizationEngine:
 
     def _apply_int8_dynamic(self, model: nn.Module) -> nn.Module:
         """INT8 dynamic quantization (PyTorch native, no torchao needed)."""
-        if TORCHAO_AVAILABLE:
+        if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
             try:
                 return TorchAOBackend.quantize_int8_dynamic(model)
             except Exception as e:
                 logger.debug("torchao INT8 failed, using PyTorch native: %s", e)
+        elif TORCHAO_AVAILABLE:
+            logger.debug(
+                "torchao not supported on %s backend; using PyTorch native INT8",
+                self._hw_backend.value,
+            )
 
         # PyTorch native fallback
         try:
@@ -342,7 +355,7 @@ class QuantizationEngine:
         self, model: nn.Module, calibration_data: Any | None
     ) -> nn.Module:
         """SmoothQuant via torchao."""
-        if TORCHAO_AVAILABLE:
+        if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
             return TorchAOBackend.quantize_smoothquant(model, calibration_data)
         # Fallback to regular INT8
         warnings.warn(
@@ -353,7 +366,7 @@ class QuantizationEngine:
 
     def _apply_int4_weight_only(self, model: nn.Module) -> nn.Module:
         """INT4 weight-only via torchao."""
-        if TORCHAO_AVAILABLE:
+        if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
             return TorchAOBackend.quantize_int4_weight_only(model)
         # Fallback to INT8
         warnings.warn(
@@ -373,8 +386,8 @@ class QuantizationEngine:
             return convert_model_to_native_fp8(model, device=device)
         except Exception as e:
             logger.warning("Native FP8 conversion failed: %s", e)
-            # Try torchao FP8
-            if TORCHAO_AVAILABLE:
+            # Try torchao FP8 (only on supported backends)
+            if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
                 try:
                     return TorchAOBackend.quantize_fp8(model)
                 except Exception as e:

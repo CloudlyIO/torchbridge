@@ -22,12 +22,14 @@ class SpeculateCommand:
             description="Display backend-aware speculative decoding information",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
-Speculative Methods:
+Supported Speculative Methods:
   draft_model    - Standard draft-verify with a smaller assistant model
-  eagle          - EAGLE with custom CUDA kernels (NVIDIA Hopper+ only)
-  layer_skip     - Self-speculative decoding by skipping later layers
-  medusa         - Multi-head speculative decoding with tree attention
-  prompt_lookup  - N-gram matching from prompt (universal)
+  prompt_lookup  - N-gram matching from prompt (universal, no dependencies)
+
+Not Implemented (enum-only, raise NotImplementedError):
+  eagle          - Requires custom CUDA kernels and adapter checkpoints
+  medusa         - Requires multi-head adapter checkpoints
+  layer_skip     - Requires early-exit model architecture
 
 Examples:
   torchbridge speculate                       # Auto-detect backend
