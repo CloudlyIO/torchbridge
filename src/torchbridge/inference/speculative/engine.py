@@ -150,7 +150,13 @@ class SpeculationEngine:
                     "SpeculativeMethod.DRAFT_MODEL requires draft_model_name to be set "
                     "in SpeculationConfig. Provide a HuggingFace model name or local path."
                 )
-            kwargs["assistant_model"] = self._config.draft_model_name
+            name = self._config.draft_model_name.strip()
+            if not name:
+                raise ValueError(
+                    "draft_model_name cannot be empty or whitespace. "
+                    "Provide a HuggingFace model name or local path."
+                )
+            kwargs["assistant_model"] = name
             kwargs["num_assistant_tokens"] = self._config.num_speculative_tokens
 
         elif method == SpeculativeMethod.PROMPT_LOOKUP:

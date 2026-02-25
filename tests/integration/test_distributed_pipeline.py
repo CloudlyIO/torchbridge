@@ -24,12 +24,16 @@ class TestEndToEndConfigGeneration:
 
     def test_hopper_8gpu_7b(self):
         """Typical single-node H100 training of a 7B model."""
-        config = DistributedConfig.auto(
-            model_params=int(7e9),
-            backend=HardwareBackend.CUDA,
-            architecture=NVIDIAArchitecture.HOPPER,
-            world_size=8,
-        )
+        from unittest.mock import MagicMock, patch
+        mock_dist = MagicMock()
+        mock_dist.get_nccl_version.return_value = (2, 21, 0)
+        with patch("torch.distributed", mock_dist):
+            config = DistributedConfig.auto(
+                model_params=int(7e9),
+                backend=HardwareBackend.CUDA,
+                architecture=NVIDIAArchitecture.HOPPER,
+                world_size=8,
+            )
         assert config.fsdp.mixed_precision == MixedPrecisionChoice.BF16
         assert config.fsdp.float8_all_gather is True
         assert config.fsdp.sharding_strategy == ShardingStrategy.FULL_SHARD
