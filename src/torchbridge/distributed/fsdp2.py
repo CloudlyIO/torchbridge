@@ -187,11 +187,24 @@ class FSDPManager:
         return backend_map.get(None, MixedPrecisionChoice.FP32)
 
     def _supports_float8_all_gather(self) -> bool:
-        """Check if Float8 all-gather is supported."""
+        """Check if Float8 all-gather is supported.
+
+        Requires NVIDIA Hopper+ architecture AND NCCL >= 2.20.
+        """
         if self._backend != HardwareBackend.CUDA:
             return False
-        if isinstance(self._architecture, NVIDIAArchitecture):
-            return self._architecture in _FLOAT8_ALLGATHER_ARCHS
+        if not isinstance(self._architecture, NVIDIAArchitecture):
+            return False
+        if self._architecture not in _FLOAT8_ALLGATHER_ARCHS:
+            return False
+        # NCCL >= 2.20 required for float8 all-gather
+        try:
+            import torch.distributed as dist
+            if hasattr(dist, 'get_nccl_version'):
+                nccl_version = dist.get_nccl_version()
+                return nccl_version >= (2, 20, 0)
+        except Exception:
+            pass
         return False
 
     @property
