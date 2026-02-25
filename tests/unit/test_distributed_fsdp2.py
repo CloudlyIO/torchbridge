@@ -157,19 +157,27 @@ class TestFSDPManager:
         assert manager.sharding_strategy == ShardingStrategy.NO_SHARD
 
     def test_float8_all_gather_hopper(self):
-        manager = FSDPManager(
-            backend=HardwareBackend.CUDA,
-            architecture=NVIDIAArchitecture.HOPPER,
-        )
-        resolved = manager.resolved_config
-        assert resolved.float8_all_gather is True
+        from unittest.mock import MagicMock, patch
+        mock_dist = MagicMock()
+        mock_dist.get_nccl_version.return_value = (2, 21, 0)
+        with patch("torch.distributed", mock_dist):
+            manager = FSDPManager(
+                backend=HardwareBackend.CUDA,
+                architecture=NVIDIAArchitecture.HOPPER,
+            )
+            resolved = manager.resolved_config
+            assert resolved.float8_all_gather is True
 
     def test_float8_all_gather_blackwell(self):
-        manager = FSDPManager(
-            backend=HardwareBackend.CUDA,
-            architecture=NVIDIAArchitecture.BLACKWELL_DC,
-        )
-        assert manager.resolved_config.float8_all_gather is True
+        from unittest.mock import MagicMock, patch
+        mock_dist = MagicMock()
+        mock_dist.get_nccl_version.return_value = (2, 21, 0)
+        with patch("torch.distributed", mock_dist):
+            manager = FSDPManager(
+                backend=HardwareBackend.CUDA,
+                architecture=NVIDIAArchitecture.BLACKWELL_DC,
+            )
+            assert manager.resolved_config.float8_all_gather is True
 
     def test_no_float8_all_gather_ampere(self):
         manager = FSDPManager(
@@ -186,17 +194,21 @@ class TestFSDPManager:
         assert manager.resolved_config.float8_all_gather is False
 
     def test_get_info(self):
-        manager = FSDPManager(
-            backend=HardwareBackend.CUDA,
-            architecture=NVIDIAArchitecture.HOPPER,
-        )
-        info = manager.get_info()
-        assert info["backend"] == "cuda"
-        assert info["architecture"] == "hopper"
-        assert info["multi_node"] is False
-        assert "resolved_config" in info
-        assert isinstance(info["resolved_config"], dict)
-        assert info["float8_all_gather_supported"] is True
+        from unittest.mock import MagicMock, patch
+        mock_dist = MagicMock()
+        mock_dist.get_nccl_version.return_value = (2, 21, 0)
+        with patch("torch.distributed", mock_dist):
+            manager = FSDPManager(
+                backend=HardwareBackend.CUDA,
+                architecture=NVIDIAArchitecture.HOPPER,
+            )
+            info = manager.get_info()
+            assert info["backend"] == "cuda"
+            assert info["architecture"] == "hopper"
+            assert info["multi_node"] is False
+            assert "resolved_config" in info
+            assert isinstance(info["resolved_config"], dict)
+            assert info["float8_all_gather_supported"] is True
 
     def test_get_info_no_architecture(self):
         manager = FSDPManager(backend=HardwareBackend.CPU)

@@ -8,6 +8,43 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.35] - 2026-02-25 - Benchmark-or-Delete: Prove It or Remove It
+
+### **Summary**
+
+Benchmark infrastructure to measure every performance claim against vanilla PyTorch
+baselines. 5 claims registered with concrete benchmarks. Facade cleanup: dual dispatch
+path consolidated, NCCL version guard for Float8 all-gather, draft_model_name validation
+for speculative decoding. 69 new tests (2,391 → 2,460).
+
+### **Track 1: Benchmark Infrastructure**
+
+- **New package:** `torchbridge.benchmarks` — `ClaimBenchmark`, `ClaimResult`, `BenchmarkSuite`, `BenchmarkReport`
+- **Claim registry:** 5 registered claims with baseline vs optimized timing:
+  - `tensor_core_alignment` — padded Linear (multiple of 16) vs unaligned
+  - `channels_last_layout` — NHWC vs NCHW for Conv2d workloads
+  - `attention_dispatch_overhead` — dispatch decision cost (negative threshold: <5% overhead)
+  - `quantization_int8_dynamic` — INT8 dynamic quantization speedup (FBGEMM, graceful fallback on macOS)
+  - `amd_tunableop` — requires ROCm hardware (skipped on non-AMD)
+- **CLI:** `tb-benchmark --type claims` runs all claims; `--claim <name>` runs single claim; `--ci` produces JSON
+
+### **Track 2: Facade Cleanup**
+
+- **Dual dispatch consolidation:** `_select_best_implementation()` no longer creates its own `AttentionDispatcher` — uses heuristic path only; `AttentionDispatcher.create_attention()` is the sole dispatch-aware entry point
+- **NCCL version guard:** Float8 all-gather requires NCCL ≥ 2.20 (was architecture-only check)
+- **draft_model_name validation:** Whitespace-only names now raise `ValueError` before reaching HuggingFace
+- **channels_last scope:** Docstring clarifies this is a no-op for non-convolutional models
+
+### **Stats**
+
+| Metric | v0.5.34 | v0.5.35 |
+|--------|---------|---------|
+| Tests | 2,391 | 2,460 (+69) |
+| Source modules | ~229 | ~232 |
+| Ruff violations | 0 | 0 |
+
+---
+
 ## [0.5.34] - 2026-02-25 - Hardened Release + Cross-Backend Testing Framework
 
 ### **Summary**

@@ -44,11 +44,14 @@ Benchmark Types:
   compare    - Compare multiple optimization levels
   regression - Performance regression testing
   stress     - Stress test with various batch sizes
+  claims     - Verify TorchBridge performance claims vs vanilla PyTorch
 
 Examples:
   tb-benchmark --model resnet50 --quick
   tb-benchmark --type compare --levels basic,compile,triton
   tb-benchmark --type stress --batch-sizes 1,8,16,32
+  tb-benchmark --type claims --ci
+  tb-benchmark --type claims --claim tensor_core_alignment
   tb-benchmark --predefined transformers --output results.json
             """
         )
@@ -61,9 +64,28 @@ Examples:
 
         parser.add_argument(
             '--type',
-            choices=['model', 'compare', 'regression', 'stress'],
+            choices=['model', 'compare', 'regression', 'stress', 'claims'],
             default='model',
             help='Benchmark type (default: model)'
+        )
+
+        parser.add_argument(
+            '--claim',
+            type=str,
+            help='Run a single claim benchmark by name (use with --type claims)'
+        )
+
+        parser.add_argument(
+            '--claims-threshold',
+            type=float,
+            default=3.0,
+            help='Speedup threshold for claim benchmarks (default: 3.0%%)'
+        )
+
+        parser.add_argument(
+            '--ci',
+            action='store_true',
+            help='Machine-readable JSON output (for CI pipelines)'
         )
 
         parser.add_argument(
@@ -170,6 +192,8 @@ Examples:
                 results = BenchmarkCommand._regression_benchmark(args, device)
             elif args.type == 'stress':
                 results = BenchmarkCommand._stress_test(args, device)
+            elif args.type == 'claims':
+                return BenchmarkCommand._run_claim_benchmarks(args, device)
             else:
                 raise ValueError(f"Unknown benchmark type: {args.type}")
 
@@ -386,6 +410,82 @@ Examples:
             results.append(result)
 
         return results
+
+    @staticmethod
+    def _run_claim_benchmarks(args, device: torch.device) -> int:
+        """Run claim-level benchmarks to verify TorchBridge performance claims."""
+        from torchbridge.benchmarks.claim_registry import (
+            build_claim_suite,
+            get_all_claim_benchmarks,
+        )
+
+        device_str = str(device)
+        ci_mode = getattr(args, 'ci', False)
+
+        if not ci_mode:
+            print("\n Claim Benchmark Suite")
+            print("-" * 60)
+
+        # Filter to single claim if requested
+        claim_name = getattr(args, 'claim', None)
+        if claim_name:
+            all_benchmarks = get_all_claim_benchmarks()
+            matched = [b for b in all_benchmarks if b.name == claim_name]
+            if not matched:
+                names = [b.name for b in all_benchmarks]
+                print(f" Unknown claim: {claim_name}")
+                print(f"  Available claims: {', '.join(names)}")
+                return 1
+            from torchbridge.benchmarks.claim_benchmarks import BenchmarkSuite
+            suite = BenchmarkSuite()
+            for b in matched:
+                suite.add(b)
+        else:
+            suite = build_claim_suite()
+
+        report = suite.run_all(device=device_str)
+
+        if ci_mode:
+            print(report.to_json())
+        else:
+            # Human-readable output
+            print(f"  Device: {report.device}")
+            print(f"  Timestamp: {report.timestamp}")
+            print()
+            print(f"{'Claim':<30} {'Baseline(ms)':<14} {'Optimized(ms)':<15} "
+                  f"{'Speedup':<10} {'Status':<8}")
+            print("-" * 80)
+
+            for r in report.results:
+                if r.runs == 0:
+                    print(f"{r.claim_name:<30} {'--':<14} {'--':<15} "
+                          f"{'--':<10} {'SKIP':<8}")
+                else:
+                    status = "PASS" if r.passed else "FAIL"
+                    print(f"{r.claim_name:<30} {r.baseline_ms:<14.3f} "
+                          f"{r.optimized_ms:<15.3f} {r.speedup_pct:<+9.1f}% "
+                          f"{status:<8}")
+
+            print("-" * 80)
+            print(f"  Summary: {report.summary()}")
+
+            to_delete = report.claims_to_delete()
+            if to_delete:
+                print("\n  Claims below threshold (candidates for deletion):")
+                for name in to_delete:
+                    print(f"    - {name}")
+
+        # Save if output requested
+        output_path = getattr(args, 'output', None)
+        if output_path:
+            report.save(output_path)
+            if not ci_mode:
+                print(f"\n  Results saved to: {output_path}")
+
+        # Return non-zero if any claim failed (excluding skipped)
+        ran = [r for r in report.results if r.runs > 0]
+        failed = [r for r in ran if not r.passed]
+        return 1 if failed else 0
 
     @staticmethod
     def _load_model(model_name: str, device: torch.device) -> torch.nn.Module:
@@ -641,9 +741,25 @@ def main():
     )
     parser.add_argument(
         '--type',
-        choices=['model', 'compare', 'regression', 'stress'],
+        choices=['model', 'compare', 'regression', 'stress', 'claims'],
         default='model',
         help='Benchmark type (default: model)'
+    )
+    parser.add_argument(
+        '--claim',
+        type=str,
+        help='Run a single claim benchmark by name (use with --type claims)'
+    )
+    parser.add_argument(
+        '--claims-threshold',
+        type=float,
+        default=3.0,
+        help='Speedup threshold for claim benchmarks (default: 3.0%%)'
+    )
+    parser.add_argument(
+        '--ci',
+        action='store_true',
+        help='Machine-readable JSON output (for CI pipelines)'
     )
     parser.add_argument(
         '--levels',
