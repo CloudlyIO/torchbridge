@@ -163,10 +163,42 @@ class AMDBackend(BaseBackend):
                 self._current_amd_device.name,
                 self._current_amd_device.architecture.value,
             )
+            # Configure architecture-aware ROCm tuning env vars
+            self._configure_amd_tuning()
         else:
             logger.warning("No AMD GPUs detected - using CPU fallback")
             self._cpu_fallback = True
             self._device = torch.device("cpu")
+
+    def _configure_amd_tuning(self) -> None:
+        """Configure ROCm environment tuning vars based on detected architecture.
+
+        Sets architecture-appropriate env vars without overriding any value the
+        user has already set (uses os.environ.setdefault throughout).
+
+        - PYTORCH_TUNABLEOP_ENABLED: enables hipBLAS/rocBLAS TunableOp
+          autotuning (measures wall time across kernel candidates) — CDNA2+
+        - PYTORCH_TUNABLEOP_ROTATING_BUFFER_SIZE: broader tuning coverage on
+          MI300+ which has ample HBM — CDNA3+
+        - HIPBLASLT_TUNING_ENABLED: hipBLASLt GEMM autotuning — CDNA3+
+        """
+        import os
+
+        if not self._current_amd_device:
+            return
+
+        arch = self._current_amd_device.architecture
+
+        # TunableOp: available on CDNA2 and newer
+        if arch in (AMDArchitecture.CDNA2, AMDArchitecture.CDNA3, AMDArchitecture.CDNA4):
+            os.environ.setdefault("PYTORCH_TUNABLEOP_ENABLED", "1")
+            logger.info("TunableOp enabled for %s", arch.value)
+
+        # hipBLASLt and larger rotating buffer: MI300/MI350 only
+        if arch in (AMDArchitecture.CDNA3, AMDArchitecture.CDNA4):
+            os.environ.setdefault("PYTORCH_TUNABLEOP_ROTATING_BUFFER_SIZE", "512")
+            os.environ.setdefault("HIPBLASLT_TUNING_ENABLED", "1")
+            logger.info("hipBLASLt tuning enabled for %s", arch.value)
 
     def _check_availability(self) -> bool:
         """Check if ROCm is available (implements BaseBackend abstract method)."""
@@ -444,10 +476,22 @@ class AMDBackend(BaseBackend):
         for param in model.parameters():
             param.requires_grad = False
 
-        # Apply torch.compile if available
+        # Apply torch.compile if available — arch-aware mode selection
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
-                model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
+                # CDNA3/CDNA4 (MI300/MI350): powerful enough for max-autotune
+                # CDNA2 and older: reduce-overhead is safer and faster to compile
+                arch = (
+                    self._current_amd_device.architecture
+                    if self._current_amd_device
+                    else AMDArchitecture.CDNA2
+                )
+                compile_mode = (
+                    'max-autotune'
+                    if arch in (AMDArchitecture.CDNA3, AMDArchitecture.CDNA4)
+                    else 'reduce-overhead'
+                )
+                model = torch.compile(model, mode=compile_mode)  # type: ignore[assignment]
                 with torch.no_grad():
                     _ = model(sample_input.to(self.device))
             except Exception as e:
