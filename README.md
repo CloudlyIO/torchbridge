@@ -1,6 +1,6 @@
 # TorchBridge
 
-**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a hardware abstraction layer that makes your models run on NVIDIA, AMD, Trainium, and TPU without code changes, and **validates that outputs match across backends**.
+**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a cross-backend validation and configuration intelligence layer for PyTorch: it **validates that outputs match across backends** and generates optimal configurations for NVIDIA, AMD, Trainium, and TPU hardware.
 
 [![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C464%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-6%20platforms%20PASS-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
@@ -206,7 +206,7 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **2,232 tests** collected (hardware-gated skips on non-GPU environments)
+- **2,311 tests** collected (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on 6 hardware platforms: NVIDIA A10G (AWS), T4 (GCP), H100 NVL (RunPod), AMD MI300X, GCP TPU v5e, Apple MPS

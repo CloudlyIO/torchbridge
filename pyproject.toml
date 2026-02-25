@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.32"
+version = "0.5.33"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -28,7 +28,6 @@ classifiers = [
 dependencies = [
     "torch>=2.0.0,<3.0.0",
     "numpy>=1.21.0,<3.0.0",
-    "pybind11>=2.10.0,<3.0.0",
 ]
 
 [project.urls]
@@ -75,7 +74,7 @@ all = [
     "datasets>=2.14.0,<3.0.0",
     "tokenizers>=0.14.0,<1.0.0",
     "triton>=2.1.0,<4.0.0",
-    "flash-attn>=2.3.0,<3.0.0",
+    "flash-attn>=2.3.0,<4.0.0",
     "accelerate>=0.24.0,<1.0.0",
 ]
 cloud = [

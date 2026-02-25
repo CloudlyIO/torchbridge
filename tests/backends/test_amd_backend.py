@@ -422,6 +422,75 @@ class TestAMDIntegrationV049:
         assert summary['matrix_cores_enabled'] is True
 
 
+class TestAMDTuning:
+    """Tests for v0.5.33 AMD tuning — _configure_amd_tuning() and arch-aware compile."""
+
+    def _make_backend_with_arch(self, arch: AMDArchitecture):
+        """Create an AMDBackend in CPU-fallback mode and inject a mock device."""
+        from unittest.mock import MagicMock
+        from torchbridge.backends.amd.amd_backend import AMDBackend, AMDDeviceInfoLegacy
+
+        backend = AMDBackend(AMDConfig(architecture=arch))
+        # Inject a synthetic device so _configure_amd_tuning() fires
+        mock_device = MagicMock(spec=AMDDeviceInfoLegacy)
+        mock_device.architecture = arch
+        mock_device.name = f"Mock AMD {arch.value}"
+        backend._current_amd_device = mock_device
+        return backend
+
+    def test_configure_amd_tuning_cdna3_sets_tunableop(self):
+        """CDNA3 must set PYTORCH_TUNABLEOP_ENABLED=1."""
+        import os
+        os.environ.pop("PYTORCH_TUNABLEOP_ENABLED", None)
+        backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
+        backend._configure_amd_tuning()
+        assert os.environ.get("PYTORCH_TUNABLEOP_ENABLED") == "1"
+        os.environ.pop("PYTORCH_TUNABLEOP_ENABLED", None)
+
+    def test_configure_amd_tuning_cdna3_sets_hipblaslt(self):
+        """CDNA3 must set HIPBLASLT_TUNING_ENABLED=1."""
+        import os
+        os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
+        backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
+        backend._configure_amd_tuning()
+        assert os.environ.get("HIPBLASLT_TUNING_ENABLED") == "1"
+        os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
+
+    def test_configure_amd_tuning_cdna2_no_hipblaslt(self):
+        """CDNA2 must NOT set HIPBLASLT_TUNING_ENABLED (not supported on MI200)."""
+        import os
+        os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
+        backend = self._make_backend_with_arch(AMDArchitecture.CDNA2)
+        backend._configure_amd_tuning()
+        assert os.environ.get("HIPBLASLT_TUNING_ENABLED") is None
+        # But TunableOp should still be set
+        assert os.environ.get("PYTORCH_TUNABLEOP_ENABLED") == "1"
+        os.environ.pop("PYTORCH_TUNABLEOP_ENABLED", None)
+
+    def test_configure_amd_tuning_respects_existing_env(self):
+        """_configure_amd_tuning() must not override user's existing env var."""
+        import os
+        os.environ["PYTORCH_TUNABLEOP_ENABLED"] = "0"
+        backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
+        backend._configure_amd_tuning()
+        # setdefault must NOT override the user's existing "0"
+        assert os.environ["PYTORCH_TUNABLEOP_ENABLED"] == "0"
+        os.environ.pop("PYTORCH_TUNABLEOP_ENABLED", None)
+        os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
+        os.environ.pop("PYTORCH_TUNABLEOP_ROTATING_BUFFER_SIZE", None)
+
+    def test_check_flash_attention_ck_requires_rocm(self):
+        """_check_flash_attention_ck() returns False on non-ROCm even if flash_attn installed."""
+        import torch
+        from torchbridge.attention.dispatch.dispatcher import AttentionDispatcher
+
+        if getattr(torch.version, "hip", None) is not None:
+            pytest.skip("Running on actual ROCm — CK check may legitimately return True")
+        # On CPU / CUDA test env, should be False regardless of flash_attn presence
+        result = AttentionDispatcher._check_flash_attention_ck()
+        assert result is False
+
+
 # Run tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
