@@ -1,7 +1,7 @@
 """
 TorchBridge Distributed Training — Configuration Advisor
 
-Generates configurations for PyTorch's distributed APIs (FSDP2,
+Generates configurations for PyTorch's distributed APIs (FSDP,
 pipeline parallelism, collective backends) based on detected hardware.
 Does not implement distributed training itself — it produces config
 objects that users pass to PyTorch's native distributed primitives.
@@ -17,8 +17,8 @@ from torchbridge.distributed.config import (
     ParallelismRecommendation,
 )
 from torchbridge.distributed.fsdp2 import (
-    FSDP2Config,
-    FSDP2Manager,
+    FSDPConfig,
+    FSDPManager,
     MixedPrecisionChoice,
     ShardingStrategy,
 )
@@ -33,8 +33,15 @@ from torchbridge.distributed.topology import (
     TopologyDetector,
 )
 
+# Backward compatibility aliases
+FSDP2Config = FSDPConfig
+FSDP2Manager = FSDPManager
+
 __all__ = [
-    # FSDP2
+    # FSDP
+    "FSDPConfig",
+    "FSDPManager",
+    # Backward compat
     "FSDP2Config",
     "FSDP2Manager",
     "MixedPrecisionChoice",

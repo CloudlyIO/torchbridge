@@ -2,7 +2,7 @@
 
 Cross-backend inference and training examples using modern HuggingFace models (Feb 2026).
 
-Each example demonstrates TorchBridge's hardware abstraction layer (HAL) with real pretrained models, comparing outputs across CPU, CUDA, ROCm, Trainium, and TPU backends.
+Each example demonstrates TorchBridge's cross-backend validation and configuration intelligence with real pretrained models, comparing outputs across CPU, CUDA, ROCm, Trainium, and TPU backends.
 
 ## Examples by Category
 

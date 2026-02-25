@@ -1,6 +1,6 @@
 # Contributing to TorchBridge
 
-Guide for developers contributing to the hardware abstraction layer for PyTorch.
+Guide for developers contributing to cross-backend validation and configuration intelligence for PyTorch.
 
 ## Prerequisites
 

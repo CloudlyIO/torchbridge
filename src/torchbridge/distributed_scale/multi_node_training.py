@@ -2,7 +2,7 @@
 Multi-Node Training Manager for Large-Scale Distributed Training
 
 Supports training across thousands of GPUs with advanced optimizations:
-- Enhanced FSDP2 with hybrid sharding strategies
+- Enhanced FSDP with hybrid sharding strategies
 - Automatic topology detection and optimization
 - Dynamic load balancing across heterogeneous hardware
 - Advanced gradient synchronization with compression
@@ -380,7 +380,7 @@ class MultiNodeTrainingManager:
         """Initialize distributed training environment"""
         self.logger.info(f"Initializing training across {self.cluster_config.total_gpus} GPUs")
 
-        # Setup model with FSDP2
+        # Setup model with FSDP
         self.model = self.fsdp_manager.setup_model()
 
         # Optimize for training
@@ -489,7 +489,7 @@ class MultiNodeTrainingManager:
             'gradient_norm': recent_metrics[-1].gradient_norm if recent_metrics else 0,
         }
 
-        # Add FSDP2 statistics
+        # Add FSDP statistics
         if self.fsdp_manager.fsdp_manager:
             stats.update(self.fsdp_manager.fsdp_manager.get_fsdp2_statistics())
 

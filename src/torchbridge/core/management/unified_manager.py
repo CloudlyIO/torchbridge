@@ -46,7 +46,7 @@ class UnifiedManager:
     - PyGraphCUDAOptimizer, FusionBoundaryOptimizer, LongSequenceOptimizer,
     - MemoryFragmentationOptimizer, AdaptiveCompressionOptimizer,
     - AdaptiveMemoryManager, MXFPOptimizer, DynamicSparsityOptimizer,
-    - HybridShardingOptimizer, FSDP2Manager, FP8ScaleManager, FP8Optimizer,
+    - HybridShardingOptimizer, FSDPManager, FP8ScaleManager, FP8Optimizer,
     - NetworkTopologyOptimizer, AutoScalingManager, FaultToleranceManager,
     - AdvancedFSDPManager, HeterogenousClusterManager, MultiNodeTrainingManager
 

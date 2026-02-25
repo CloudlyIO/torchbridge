@@ -2,7 +2,7 @@
 
 **Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a cross-backend validation and configuration intelligence layer for PyTorch: it **validates that outputs match across backends** and generates optimal configurations for NVIDIA, AMD, Trainium, and TPU hardware.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-1%2C464%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-6%20platforms%20PASS-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-2%2C392%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/cloud%20GPU-8%20platforms%20PASS-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## What is TorchBridge?
 
@@ -13,7 +13,7 @@ Most teams write hardware-specific code -- CUDA calls for NVIDIA, ROCm setup for
 ```
 Your model code
       |
-  TorchBridge HAL
+  TorchBridge
       |
   +---------+---------+-----------+---------+
   | NVIDIA  |   AMD   | Trainium  |   TPU   |
@@ -189,7 +189,7 @@ src/torchbridge/
 
 ## Cloud Hardware Validation
 
-Cross-backend numerical consistency validated on 6 hardware platforms using Qwen3-0.6B:
+Cross-backend numerical consistency validated on 8 hardware platforms using Qwen3-0.6B:
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
 |----------|----------|----------|------------|---------|--------|
@@ -199,6 +199,8 @@ Cross-backend numerical consistency validated on 6 hardware platforms using Qwen
 | AMD DevCloud | AMD MI300X (192GB) | 4.82e-05 | 1.000001 | 30.0 ms | PASS |
 | GCP | TPU v5e | 1.08e-01 | 0.999980 | 47.5 ms | PASS |
 | Local | Apple Silicon (MPS) | 4.58e-05 | 1.000002 | 27.8 ms | PASS |
+| AWS Trainium | Trn1.2xlarge (NeuronX) | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
+| AWS Inferentia2 | inf2.xlarge (NeuronX) | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
 
 All backends produce semantically identical outputs (cosine similarity > 0.999).
 
@@ -206,10 +208,10 @@ See [full validation report](./docs/reference/cloud-validation.md) for detailed 
 
 ## Quality
 
-- **2,311 tests** collected (hardware-gated skips on non-GPU environments)
+- **2,392 tests** collected (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on 6 hardware platforms: NVIDIA A10G (AWS), T4 (GCP), H100 NVL (RunPod), AMD MI300X, GCP TPU v5e, Apple MPS
+- **Cloud validated** on 8 hardware platforms: NVIDIA A10G (AWS), T4 (GCP), H100 NVL (RunPod), AMD MI300X, GCP TPU v5e, Apple MPS, AWS Trainium, AWS Inferentia2
 - **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud, RunPod
 
 ```bash
@@ -234,7 +236,7 @@ ruff check src/ tests/
 | [Installation](./docs/getting_started/installation.md) | Setup and requirements |
 | [Quick Start](./docs/getting_started/quickstart.md) | First steps with TorchBridge |
 | [Troubleshooting](./docs/getting_started/troubleshooting.md) | Common issues and fixes |
-| [Backends Overview](./docs/backends/overview.md) | How the HAL works |
+| [Backends Overview](./docs/backends/overview.md) | How the backend system works |
 | [Backend Selection](./docs/guides/backend-selection.md) | Choosing the right backend |
 | [Hardware Setup](./docs/guides/hardware-setup.md) | Driver and toolkit installation |
 | [Distributed Training](./docs/guides/distributed-training.md) | Multi-GPU and multi-node |
