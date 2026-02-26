@@ -45,6 +45,8 @@ class AdapterConfig:
         quantize_base: Quantize base model weights (auto-set for QLORA/QDORA).
         base_quant_format: Quantization format for base model. Auto-selected
             per backend if None.
+        auto_detect_targets: When True, engine auto-detects target modules
+            based on model family at inject time, overriding defaults.
         init_method: Weight initialization strategy for adapter matrices.
         merge_on_save: Merge adapter weights into base before saving.
     """
@@ -58,11 +60,18 @@ class AdapterConfig:
     )
     quantize_base: bool = False
     base_quant_format: QuantizationFormat | None = None
+    auto_detect_targets: bool = True
     init_method: InitMethod = InitMethod.KAIMING
     merge_on_save: bool = False
 
+    _DEFAULT_TARGET_MODULES = ["q_proj", "v_proj"]
+
     def __post_init__(self) -> None:
         """Validate configuration bounds."""
+        # Track whether target_modules was explicitly overridden
+        self._targets_explicitly_set = (
+            self.target_modules != self._DEFAULT_TARGET_MODULES
+        )
         if self.rank < 1:
             raise ValueError(f"rank must be >= 1, got {self.rank}")
         if self.alpha <= 0:
@@ -73,6 +82,10 @@ class AdapterConfig:
             )
         if not self.target_modules:
             raise ValueError("target_modules must not be empty")
+        if any(not t for t in self.target_modules):
+            raise ValueError(
+                "target_modules must not contain empty strings"
+            )
 
         # Auto-set quantize_base for QLoRA/QDoRA
         if self.method in (AdapterMethod.QLORA, AdapterMethod.QDORA):
@@ -92,6 +105,7 @@ class AdapterConfig:
                 if self.base_quant_format
                 else None
             ),
+            "auto_detect_targets": self.auto_detect_targets,
             "init_method": self.init_method.value,
             "merge_on_save": self.merge_on_save,
         }
