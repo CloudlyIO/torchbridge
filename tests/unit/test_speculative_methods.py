@@ -86,3 +86,45 @@ class TestSpeculativeMethodSpecs:
         spec = get_method_spec(SpeculativeMethod.EAGLE)
         assert spec.display_name == "EAGLE"
         assert spec.requires_hardware_support is True
+
+    def test_all_specs_have_is_generate_compatible(self):
+        """Every spec must have is_generate_compatible as a bool."""
+        for method, spec in SPECULATIVE_METHOD_SPECS.items():
+            assert hasattr(spec, "is_generate_compatible"), (
+                f"{method} spec missing is_generate_compatible"
+            )
+            assert isinstance(spec.is_generate_compatible, bool)
+
+    def test_generate_compatible_methods(self):
+        """NONE, DRAFT_MODEL, PROMPT_LOOKUP are generate-compatible."""
+        for method in (
+            SpeculativeMethod.NONE,
+            SpeculativeMethod.DRAFT_MODEL,
+            SpeculativeMethod.PROMPT_LOOKUP,
+        ):
+            assert SPECULATIVE_METHOD_SPECS[method].is_generate_compatible is True, (
+                f"{method} should be generate-compatible"
+            )
+
+    def test_non_generate_compatible_methods(self):
+        """EAGLE, MEDUSA, LAYER_SKIP are NOT generate-compatible."""
+        for method in (
+            SpeculativeMethod.EAGLE,
+            SpeculativeMethod.MEDUSA,
+            SpeculativeMethod.LAYER_SKIP,
+        ):
+            assert SPECULATIVE_METHOD_SPECS[method].is_generate_compatible is False, (
+                f"{method} should NOT be generate-compatible"
+            )
+
+    def test_non_generate_compatible_descriptions_note_limitation(self):
+        """EAGLE/MEDUSA/LAYER_SKIP descriptions must mention the limitation."""
+        for method in (
+            SpeculativeMethod.EAGLE,
+            SpeculativeMethod.MEDUSA,
+            SpeculativeMethod.LAYER_SKIP,
+        ):
+            spec = SPECULATIVE_METHOD_SPECS[method]
+            assert "Not supported via model.generate()" in spec.description, (
+                f"{method} description should document generate() incompatibility"
+            )

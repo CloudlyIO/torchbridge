@@ -8,6 +8,53 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.38] - 2026-02-25 - AMD Wire, Speculation Gate & GPU Benchmark Notes
+
+### **Summary**
+
+Three structural gaps closed. AMD optimizations (channels_last, Conv+BN fusion, matrix core
+flags) now flow through `AMDBackend.optimize_for_inference()` and `optimize_for_training()`
+via `AMDAdapter` — previously disconnected despite the adapter existing. Speculative decoding
+methods are now explicitly gated on `model.generate()` compatibility. GPU benchmark notes
+updated with literature-based expected speedup ranges for cloud GPU runs.
+
+### **Track 1: AMDAdapter Wiring (P1)**
+
+- **`AMDBackend.optimize_for_inference()`**: Now calls `AMDAdapter.optimize(model, level="balanced")`
+  when an AMD GPU is detected (`not _cpu_fallback and _current_amd_device`). Applies
+  channels_last layout, Conv+BN fusion, and matrix core flags before torch.compile.
+- **`AMDBackend.optimize_for_training()`**: Now calls `AMDAdapter.optimize(model, level="conservative")`
+  when an AMD GPU is detected. Conservative level avoids double-compile (torch.compile
+  in `_fuse_linear_gelu` creates local variable and is discarded — backend handles compile).
+- Both calls wrapped in try/except — adapter failure logs a warning and continues without AMD
+  optimizations rather than propagating to caller.
+- **New tests:** `tests/unit/test_amd_backend_adapter.py` — 11 tests covering adapter invoked
+  when AMD present, skipped in CPU fallback, skipped with no device, graceful failure recovery.
+
+### **Track 2: GPU Benchmark Notes (P2)**
+
+- **`tensor_core_alignment`**: Added expected GPU speedup: 5-25% for weight sizes near
+  multiple-of-16 boundary (source: NVIDIA cuBLAS alignment docs).
+- **`channels_last_layout`**: Added expected GPU speedup: 10-30% on Ampere/Ada for CNN
+  workloads (source: NVIDIA cuDNN — NHWC is native format; NCHW requires transposes).
+- **New script:** `scripts/benchmarks/run_claim_benchmarks.sh` — convenience wrapper for
+  cloud GPU runs with `--device cuda` and `--output` flags.
+
+### **Track 3: Speculative Decoding Gate (P3)**
+
+- **`SpeculativeMethodSpec`**: Added `is_generate_compatible: bool` field — explicitly
+  documents whether a method works via `model.generate()` kwargs.
+- **NONE / DRAFT_MODEL / PROMPT_LOOKUP**: Set to `is_generate_compatible=True`.
+- **EAGLE / MEDUSA / LAYER_SKIP**: Set to `is_generate_compatible=False`. Descriptions
+  updated to note they require custom model architectures and inference loops.
+- **`SpeculationCompatibilityMatrix`**: Added `get_generate_compatible_methods()` — filters
+  `get_supported_methods()` to only methods with `is_generate_compatible=True`.
+- **Tests:** 4 new tests in `test_speculative_methods.py` (flag presence, generate-compatible
+  set, non-compatible set, description wording). 5 new tests in `test_speculation_compatibility.py`
+  (`TestGetGenerateCompatibleMethods` class).
+
+---
+
 ## [0.5.37] - 2026-02-25 - Benchmark Honesty: GPU-Only Claim Guards
 
 ### **Summary**

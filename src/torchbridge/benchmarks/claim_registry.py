@@ -38,6 +38,8 @@ def build_tensor_core_alignment_benchmark() -> ClaimBenchmark:
         notes=[
             "Measures GEMM throughput for aligned (pad to 16) vs unaligned Linear.",
             "Benefit requires NVIDIA tensor cores — padding adds overhead on CPU/MPS.",
+            "Expected GPU speedup: 5-25% for weight sizes near a multiple-of-16 boundary.",
+            "Literature: NVIDIA cuBLAS docs — GEMM throughput scales with alignment.",
             "Will be SKIPPED on non-CUDA hardware.",
         ],
     )
@@ -78,7 +80,9 @@ def build_channels_last_benchmark() -> ClaimBenchmark:
         requires_backend="cuda",
         notes=[
             "Measures NHWC vs NCHW for Conv2d workloads.",
-            "Benefit is CUDA-specific (10-30%). CPU and MPS show near-zero or negative.",
+            "Benefit is CUDA-specific. CPU and MPS show near-zero or negative.",
+            "Expected GPU speedup: 10-30% on Ampere/Ada for typical CNN workloads.",
+            "Literature: NVIDIA cuDNN — NHWC is the native format; NCHW requires transposes.",
             "Will be SKIPPED on non-CUDA hardware.",
         ],
     )
