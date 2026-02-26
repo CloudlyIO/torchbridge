@@ -9,6 +9,13 @@ from torchbridge.adapters.compatibility import AdapterCompatibilityMatrix
 from torchbridge.adapters.config import AdapterConfig, AdapterMethod
 from torchbridge.adapters.engine import AdapterEngine, AdapterResult
 from torchbridge.adapters.layers import DoRALinear, LoRALinear
+from torchbridge.adapters.model_families import (
+    ModelFamily,
+    ModelFamilySpec,
+    detect_model_family,
+    get_model_family_spec,
+    get_target_modules,
+)
 from torchbridge.adapters.serving import MultiAdapterManager
 
 __all__ = [
@@ -19,5 +26,10 @@ __all__ = [
     "AdapterResult",
     "DoRALinear",
     "LoRALinear",
+    "ModelFamily",
+    "ModelFamilySpec",
     "MultiAdapterManager",
+    "detect_model_family",
+    "get_model_family_spec",
+    "get_target_modules",
 ]

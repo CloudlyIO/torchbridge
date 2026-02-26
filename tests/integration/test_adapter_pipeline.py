@@ -286,9 +286,12 @@ class TestAdapterCLI:
         )
         assert result.returncode == 0
         data = json.loads(result.stdout)
-        assert "cuda" in data
-        assert "trainium" in data
-        assert "cpu" in data
+        assert "backends" in data
+        assert "model_families" in data
+        assert "cuda" in data["backends"]
+        assert "trainium" in data["backends"]
+        assert "cpu" in data["backends"]
+        assert "llama" in data["model_families"]
 
     def test_recommend_human_output(self):
         result = subprocess.run(
