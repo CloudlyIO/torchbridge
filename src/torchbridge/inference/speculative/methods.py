@@ -50,6 +50,7 @@ class SpeculativeMethodSpec:
     requires_hardware_support: bool
     min_batch_size_benefit: int
     description: str
+    is_generate_compatible: bool  # True = works via model.generate() kwargs
 
 
 SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
@@ -59,6 +60,7 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
         requires_hardware_support=False,
         min_batch_size_benefit=0,
         description="No speculative decoding",
+        is_generate_compatible=True,
     ),
     SpeculativeMethod.DRAFT_MODEL: SpeculativeMethodSpec(
         display_name="Draft Model",
@@ -66,34 +68,54 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
         requires_hardware_support=False,
         min_batch_size_benefit=1,
         description="Standard draft-verify with a smaller assistant model",
+        is_generate_compatible=True,
     ),
     SpeculativeMethod.EAGLE: SpeculativeMethodSpec(
         display_name="EAGLE",
         requires_draft_model=True,
         requires_hardware_support=True,
         min_batch_size_benefit=1,
-        description="EAGLE speculative decoding with custom CUDA kernels",
+        description=(
+            "EAGLE speculative decoding (custom trained draft head). "
+            "Not supported via model.generate() — requires a separately "
+            "trained EAGLE checkpoint and custom inference loop."
+        ),
+        is_generate_compatible=False,
     ),
     SpeculativeMethod.LAYER_SKIP: SpeculativeMethodSpec(
         display_name="Layer Skip",
         requires_draft_model=False,
         requires_hardware_support=False,
         min_batch_size_benefit=1,
-        description="Self-speculative decoding by skipping later layers",
+        description=(
+            "Self-speculative decoding by skipping later transformer layers. "
+            "Not supported via model.generate() — requires a model with "
+            "early-exit support and a custom inference loop."
+        ),
+        is_generate_compatible=False,
     ),
     SpeculativeMethod.MEDUSA: SpeculativeMethodSpec(
         display_name="Medusa",
         requires_draft_model=True,
         requires_hardware_support=True,
         min_batch_size_benefit=1,
-        description="Multi-head speculative decoding with tree attention",
+        description=(
+            "Multi-head speculative decoding with tree attention verification. "
+            "Not supported via model.generate() — requires a separately "
+            "trained Medusa head and custom inference loop."
+        ),
+        is_generate_compatible=False,
     ),
     SpeculativeMethod.PROMPT_LOOKUP: SpeculativeMethodSpec(
         display_name="Prompt Lookup",
         requires_draft_model=False,
         requires_hardware_support=False,
         min_batch_size_benefit=1,
-        description="N-gram matching from prompt for speculative candidates",
+        description=(
+            "N-gram matching from prompt as speculative candidates. "
+            "Works via prompt_lookup_num_tokens in model.generate()."
+        ),
+        is_generate_compatible=True,
     ),
 }
 

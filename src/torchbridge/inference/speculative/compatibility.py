@@ -23,7 +23,7 @@ from torchbridge.core.config import (
     TrainiumArchitecture,
 )
 
-from .methods import SpeculativeMethod
+from .methods import SPECULATIVE_METHOD_SPECS, SpeculativeMethod
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,31 @@ class SpeculationCompatibilityMatrix:
             backend, architecture
         )
         return method in supported
+
+    @staticmethod
+    def get_generate_compatible_methods(
+        backend: HardwareBackend,
+        architecture: Architecture = None,
+    ) -> list[SpeculativeMethod]:
+        """Return supported methods that work via ``model.generate()`` kwargs.
+
+        Filters the supported list using ``SpeculativeMethodSpec.is_generate_compatible``.
+        Methods like EAGLE, MEDUSA, and LAYER_SKIP require custom model architectures
+        and are excluded even if listed in the compatibility table.
+
+        Args:
+            backend: Hardware backend enum.
+            architecture: Architecture enum (optional).
+
+        Returns:
+            List of generate-compatible SpeculativeMethod, ordered best-first.
+        """
+        supported = SpeculationCompatibilityMatrix.get_supported_methods(
+            backend, architecture
+        )
+        return [
+            m for m in supported if SPECULATIVE_METHOD_SPECS[m].is_generate_compatible
+        ]
 
     # ── private helpers ───────────────────────────────────────────────────
 

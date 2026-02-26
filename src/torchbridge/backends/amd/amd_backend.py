@@ -38,6 +38,7 @@ from torchbridge.backends.base_backend import (
 )
 from torchbridge.core.config import AMDArchitecture, AMDConfig
 
+from .amd_adapter import AMDAdapter
 from .amd_exceptions import (
     AMDBackendError,
     AMDConfigurationError,
@@ -476,6 +477,15 @@ class AMDBackend(BaseBackend):
         for param in model.parameters():
             param.requires_grad = False
 
+        # Apply AMD-specific optimizations (channels_last, Conv+BN fusion,
+        # matrix core flags) — only when an AMD GPU is actually present.
+        if not self._cpu_fallback and self._current_amd_device:
+            try:
+                adapter = AMDAdapter(self._amd_config)
+                model = adapter.optimize(model, level="balanced")
+            except Exception as e:
+                logger.warning("AMDAdapter optimization failed, continuing without: %s", e)
+
         # Apply torch.compile if available — arch-aware mode selection
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
@@ -518,6 +528,15 @@ class AMDBackend(BaseBackend):
         """
         model = self.prepare_model(model)
         model.train()
+
+        # Apply conservative AMD optimizations (no gradient checkpointing or
+        # aggressive torch.compile — those are the caller's responsibility).
+        if not self._cpu_fallback and self._current_amd_device:
+            try:
+                adapter = AMDAdapter(self._amd_config)
+                model = adapter.optimize(model, level="conservative")
+            except Exception as e:
+                logger.warning("AMDAdapter optimization failed, continuing without: %s", e)
 
         if optimizer:
             return model, optimizer
