@@ -8,6 +8,53 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.36] - 2026-02-25 - Adapter Depth: Model-Family Auto-Detection
+
+### **Summary**
+
+Model-family auto-detection for adapter injection. Instead of defaulting to LLaMA-style
+`["q_proj", "v_proj"]` for all models, the adapter engine now detects model architecture
+(LLaMA, Qwen, Mistral, Phi, Gemma, Falcon, GPT-NeoX, BLOOM) from HuggingFace config
+and selects the correct target modules automatically. New CLI subcommands: `tb-adapter detect`,
+`tb-adapter inject --dry-run`. 8-dimension audit with robustness/security hardening.
+
+### **Track 1: Model-Family Auto-Detection**
+
+- **New module:** `torchbridge.adapters.model_families` — `ModelFamily` enum (8 families + UNKNOWN), `ModelFamilySpec` dataclass, `MODEL_FAMILY_SPECS` registry
+- **Detection strategy:** HuggingFace `config.model_type` (primary) → unique module name heuristic (fallback, single-match-only to avoid false positives)
+- **Per-family target modules:** LLaMA/Mistral/Gemma `[q_proj, v_proj]`, Qwen `[q_proj, k_proj, v_proj]`, Falcon/GPT-NeoX/BLOOM `[query_key_value]`, Phi `[q_proj, v_proj]`
+- **Smart override:** Auto-detect only fires when user hasn't explicitly set target_modules
+- **Engine integration:** `AdapterEngine.inject()` auto-detects family and overrides defaults
+- **Config field:** `auto_detect_targets: bool = True` on `AdapterConfig`
+
+### **Track 2: CLI & Public API**
+
+- **New subcommand:** `tb-adapter detect --model <name>` — shows detected family, target modules, fused QKV status
+- **New subcommand:** `tb-adapter inject --model <name> --rank 8` — dry-run preview of adapter injection (module count, param estimate, memory)
+- **Enhanced:** `tb-adapter info` now shows model family summary alongside backend compatibility matrix
+- **CI output:** `--ci` flag for JSON output on all subcommands
+- **Re-exports:** `ModelFamily`, `ModelFamilySpec`, `detect_model_family`, `get_target_modules`, `get_model_family_spec` from `torchbridge.adapters`
+
+### **Robustness & Security Hardening**
+
+- **Security:** Removed `trust_remote_code=True` from CLI detect (arbitrary code execution risk)
+- **Validation:** Empty strings in `target_modules` now rejected in `AdapterConfig.__post_init__`
+- **Heuristic safety:** Module name detection requires unique single-family match (ambiguous matches fall through to UNKNOWN)
+- **Double injection guard:** `inject()` detects existing adapters and warns explicitly
+- **Better diagnostics:** "No modules matched" warning now distinguishes no-Linear-layers, already-adapted, and wrong-patterns
+- **CLI error handling:** Separate ImportError (missing transformers) vs OSError (bad model/network) messages
+
+### **Tests**
+
+- `test_model_families.py` — 26 tests: enum, specs, detection, target modules, fallback
+- `test_adapter_auto_detect.py` — 10 tests: engine auto-detection with various architectures
+- `test_adapter_cli_detect.py` — 5 tests: detect subcommand, CI JSON, backwards compat
+- `test_adapter_memory_report.py` — 5 tests: memory before/after reporting
+- `test_adapter_robustness.py` — 11 tests: empty string validation, heuristic ambiguity, double injection, no-linear warning, security checks
+- `test_adapter_auto_detect_pipeline.py` — 10 tests: E2E detect → inject → verify pipeline
+
+---
+
 ## [0.5.35] - 2026-02-25 - Benchmark-or-Delete: Prove It or Remove It
 
 ### **Summary**
