@@ -17,7 +17,10 @@ from torchbridge.core.config import (
 from torchbridge.inference.speculative.compatibility import (
     SpeculationCompatibilityMatrix,
 )
-from torchbridge.inference.speculative.methods import SpeculativeMethod
+from torchbridge.inference.speculative.methods import (
+    SPECULATIVE_METHOD_SPECS,
+    SpeculativeMethod,
+)
 
 # =============================================================================
 # Optimal Method Tests
@@ -255,3 +258,69 @@ class TestArchitectureResolution:
             HardwareBackend.CUSTOM
         )
         assert methods == [SpeculativeMethod.PROMPT_LOOKUP]
+
+
+# =============================================================================
+# get_generate_compatible_methods Tests
+# =============================================================================
+
+
+class TestGetGenerateCompatibleMethods:
+    """Tests for get_generate_compatible_methods."""
+
+    def test_all_returned_methods_have_flag_set(self):
+        """Every method in the result must have is_generate_compatible=True."""
+        gc_methods = SpeculationCompatibilityMatrix.get_generate_compatible_methods(
+            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+        )
+        assert len(gc_methods) > 0
+        for m in gc_methods:
+            assert SPECULATIVE_METHOD_SPECS[m].is_generate_compatible is True, (
+                f"{m} should have is_generate_compatible=True"
+            )
+
+    def test_is_subset_of_supported(self):
+        """generate-compatible methods must be a subset of supported methods."""
+        supported = SpeculationCompatibilityMatrix.get_supported_methods(
+            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+        )
+        gc_methods = SpeculationCompatibilityMatrix.get_generate_compatible_methods(
+            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+        )
+        for m in gc_methods:
+            assert m in supported
+
+    def test_cpu_returns_prompt_lookup(self):
+        """CPU generate-compatible methods should be [PROMPT_LOOKUP]."""
+        gc_methods = SpeculationCompatibilityMatrix.get_generate_compatible_methods(
+            HardwareBackend.CPU
+        )
+        assert gc_methods == [SpeculativeMethod.PROMPT_LOOKUP]
+
+    def test_cuda_includes_draft_model(self):
+        """CUDA generate-compatible list includes DRAFT_MODEL."""
+        gc_methods = SpeculationCompatibilityMatrix.get_generate_compatible_methods(
+            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+        )
+        assert SpeculativeMethod.DRAFT_MODEL in gc_methods
+
+    def test_eagle_medusa_layer_skip_never_returned(self):
+        """EAGLE, MEDUSA, LAYER_SKIP must never appear in generate-compatible list."""
+        excluded = {
+            SpeculativeMethod.EAGLE,
+            SpeculativeMethod.MEDUSA,
+            SpeculativeMethod.LAYER_SKIP,
+        }
+        test_cases = [
+            (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA3),
+            (HardwareBackend.CPU, None),
+        ]
+        for backend, arch in test_cases:
+            gc_methods = SpeculationCompatibilityMatrix.get_generate_compatible_methods(
+                backend, arch
+            )
+            for m in excluded:
+                assert m not in gc_methods, (
+                    f"{m} must not appear in generate_compatible list for {backend}/{arch}"
+                )
