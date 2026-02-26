@@ -8,6 +8,39 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.37] - 2026-02-25 - Benchmark Honesty: GPU-Only Claim Guards
+
+### **Summary**
+
+Fixes misleading benchmark failures for GPU- and platform-specific performance claims.
+Three claims now correctly skip on unsupported hardware instead of reporting FAIL results
+that would be incorrectly flagged for deletion under the Benchmark-or-Delete rule.
+Also fixes `optimize_for_inference()` eval-ordering bug and missing public API exports.
+
+### **Changes**
+
+- **`tensor_core_alignment`**: Added `requires_backend="cuda"` — padding to multiples-of-16
+  reduces GEMM overhead on NVIDIA tensor cores but adds overhead on CPU/MPS (-46.8%)
+- **`channels_last_layout`**: Added `requires_backend="cuda"` — NHWC memory layout yields
+  10-30% speedup on CUDA but near-zero or negative on CPU/MPS (-10.64%)
+- **`quantization_int8_dynamic`**: Added `skip_reason` when FBGEMM is unavailable (macOS,
+  non-x86) — previously ran as identity functions producing a 2% noise FAIL that falsely
+  triggered `claims_to_delete()`; now skips with an explanatory note
+- **`ClaimBenchmark`**: New `skip_reason: str | None` parameter — when set, `run()` returns
+  a zero-runs skipped result immediately without executing either benchmark function
+- **`nvidia_backend.py`**: Fixed eval-ordering bug in `optimize_for_inference()` — `model.eval()`
+  was called *after* `prepare_model()`, so `_optimize_for_tensor_cores()` always saw
+  a training-mode model and silently skipped Tensor Core alignment; now called first
+- **`torchbridge.benchmarks`**: Exported `build_claim_suite` and `get_all_claim_benchmarks`
+  from the package `__init__`; previously only importable via submodule path
+
+### **Impact**
+
+`tb-benchmark --type claims` on macOS: 4 skipped + 1 ran (was 1 skipped + 4 ran with 3
+misleading FAILs). On Linux x86_64 CPU: 3 skipped + 2 ran. Cloud GPU runs unchanged.
+
+---
+
 ## [0.5.36] - 2026-02-25 - Adapter Depth: Model-Family Auto-Detection
 
 ### **Summary**
