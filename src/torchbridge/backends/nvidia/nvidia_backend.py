@@ -305,11 +305,12 @@ class NVIDIABackend(BaseBackend):
         Returns:
             Inference-optimized model
         """
+        # Set eval mode before prepare_model so inference-only optimizations
+        # (Tensor Core alignment) are not silently skipped on training-mode models.
+        model.eval()
+
         # Prepare model with aggressive optimizations
         model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
-
-        # Set to eval mode
-        model.eval()
 
         # Disable gradients
         for param in model.parameters():

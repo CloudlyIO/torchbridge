@@ -22,6 +22,20 @@ from torchbridge.benchmarks.claim_registry import (
 )
 
 
+class TestPublicAPIExports:
+    """Tests that key functions are accessible from torchbridge.benchmarks package."""
+
+    def test_build_claim_suite_importable_from_package(self):
+        """build_claim_suite should be importable from torchbridge.benchmarks."""
+        from torchbridge.benchmarks import build_claim_suite as _bcs
+        assert callable(_bcs)
+
+    def test_get_all_claim_benchmarks_importable_from_package(self):
+        """get_all_claim_benchmarks should be importable from torchbridge.benchmarks."""
+        from torchbridge.benchmarks import get_all_claim_benchmarks as _gacb
+        assert callable(_gacb)
+
+
 class TestRegistryFunctions:
     """Tests for registry-level functions."""
 
@@ -62,14 +76,18 @@ class TestTensorCoreAlignmentBenchmark:
         bench = build_tensor_core_alignment_benchmark()
         assert bench.name == "tensor_core_alignment"
 
-    def test_runs_on_cpu(self):
-        """Should run on CPU and produce a result."""
+    def test_requires_cuda(self):
+        """Should require CUDA backend — tensor cores are NVIDIA-only."""
         bench = build_tensor_core_alignment_benchmark()
-        result = bench.run(device="cpu")
-        assert isinstance(result, ClaimResult)
-        assert result.runs > 0
-        assert result.baseline_ms > 0
-        assert result.optimized_ms > 0
+        assert bench.requires_backend == "cuda"
+
+    def test_skipped_on_cpu(self):
+        """Should be skipped when run via suite on CPU."""
+        suite = BenchmarkSuite()
+        suite.add(build_tensor_core_alignment_benchmark())
+        report = suite.run_all(device="cpu")
+        assert report.results[0].runs == 0
+        assert "SKIPPED" in report.results[0].notes[0]
 
 
 class TestChannelsLastBenchmark:
@@ -80,12 +98,18 @@ class TestChannelsLastBenchmark:
         bench = build_channels_last_benchmark()
         assert bench.name == "channels_last_layout"
 
-    def test_runs_on_cpu(self):
-        """Should run on CPU and produce a result."""
+    def test_requires_cuda(self):
+        """Should require CUDA backend — NHWC benefit is CUDA-specific."""
         bench = build_channels_last_benchmark()
-        result = bench.run(device="cpu")
-        assert isinstance(result, ClaimResult)
-        assert result.runs > 0
+        assert bench.requires_backend == "cuda"
+
+    def test_skipped_on_cpu(self):
+        """Should be skipped when run via suite on CPU."""
+        suite = BenchmarkSuite()
+        suite.add(build_channels_last_benchmark())
+        report = suite.run_all(device="cpu")
+        assert report.results[0].runs == 0
+        assert "SKIPPED" in report.results[0].notes[0]
 
 
 class TestAttentionDispatchBenchmark:
@@ -117,12 +141,20 @@ class TestQuantizationSpeedupBenchmark:
         bench = build_quantization_speedup_benchmark()
         assert bench.name == "quantization_int8_dynamic"
 
-    def test_runs_on_cpu(self):
-        """Should run on CPU and produce a result."""
+    def test_runs_or_skips_on_cpu(self):
+        """Should run when FBGEMM is available, or skip with a reason when it isn't."""
         bench = build_quantization_speedup_benchmark()
-        result = bench.run(device="cpu")
-        assert isinstance(result, ClaimResult)
-        assert result.runs > 0
+        if bench.skip_reason is not None:
+            # FBGEMM not available (e.g. macOS) — skip_reason should be set
+            assert "FBGEMM" in bench.skip_reason
+            result = bench.run(device="cpu")
+            assert result.runs == 0
+            assert "SKIPPED" in result.notes[0]
+        else:
+            # FBGEMM available (Linux x86_64) — should run and produce a result
+            result = bench.run(device="cpu")
+            assert isinstance(result, ClaimResult)
+            assert result.runs > 0
 
 
 class TestTunableOpBenchmark:
