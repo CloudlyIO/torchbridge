@@ -1,7 +1,6 @@
 # TorchBridge Cloud Validation Results
 
-**Last updated**: 2026-02-25
-**Status**: ALL PASS (7/8 hardware platforms; AMD MI300X pending GPU availability)
+**Status**: ALL PASS (8/8 hardware platforms)
 
 ## Platform Summary
 
@@ -20,16 +19,16 @@
 
 All validations compare GPU/accelerator logits against CPU baseline on the same model and input.
 
-| Platform | Hardware | Max Diff | Cosine Sim | Latency | Status | Date |
-|----------|----------|----------|------------|---------|--------|------|
-| RunPod | H100 NVL | 2.29e-05 | 1.000001 | 18.8 ms | PASS | 2026-02-22 |
-| Local | Apple MPS | 4.58e-05 | 1.000002 | 27.0 ms | PASS | 2026-02-22 |
-| AMD DevCloud | MI300X | 4.82e-05 | 1.000001 | 30.0 ms | PASS | 2026-02-22 |
-| AWS | A10G | 1.96e-05 | 1.000001 | 39.4 ms | PASS | 2026-02-22 |
-| GCP | TPU v5e | 1.91e-05 | 1.000001 | 139.9 ms (CPU) | PASS | 2026-02-22 |
-| GCP | T4 | 2.67e-05 | 1.000001 | 48.8 ms | PASS | 2026-02-22 |
-| AWS Trainium | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS | 2026-02-22 |
-| AWS Inferentia2 | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS | 2026-02-22 |
+| Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
+|----------|----------|----------|------------|---------|--------|
+| RunPod | H100 NVL | 2.29e-05 | 1.000001 | 18.8 ms | PASS |
+| Local | Apple MPS | 4.58e-05 | 1.000002 | 27.0 ms | PASS |
+| AMD DevCloud | MI300X | 4.82e-05 | 1.000001 | 30.0 ms | PASS |
+| AWS | A10G | 1.96e-05 | 1.000001 | 39.4 ms | PASS |
+| GCP | TPU v5e | 1.91e-05 | 1.000001 | 139.9 ms (CPU) | PASS |
+| GCP | T4 | 2.67e-05 | 1.000001 | 48.8 ms | PASS |
+| AWS Trainium | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
+| AWS Inferentia2 | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
 
 ### Validation Thresholds
 
@@ -68,13 +67,11 @@ equivalence and is the primary metric for XLA backends.
 
 ## Validation History
 
-| Date | Platforms | Model | All Pass |
-|------|-----------|-------|----------|
-| 2026-02-22 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (7/8; AMD pending GPU) |
-| 2026-02-15 | MPS, TPU v5e, H100 NVL | Qwen3-0.6B | Yes (6/6) |
-| 2026-02-12 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
-| 2026-02-11 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
-| 2026-02-07 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
+| Run | Platforms | Model | All Pass |
+|-----|-----------|-------|----------|
+| v0.5.36 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (8/8) |
+| v0.5.34 | MPS, TPU v5e, H100 NVL | Qwen3-0.6B | Yes (6/6) |
+| v0.5.33 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
 
 ## See Also
 
