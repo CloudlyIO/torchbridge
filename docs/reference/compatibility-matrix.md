@@ -39,7 +39,7 @@ Tested and supported versions for TorchBridge v0.5.x.
 | CPU | Native | 0 | Fallback (always available) |
 | Intel | -- | -- | **Removed in v0.5.11** |
 
-Intel support was removed in v0.5.11 due to Falcon Shores cancellation, Gaudi EOL, and IPEX sunset (March 2026).
+Intel support was removed in v0.5.11 due to Falcon Shores cancellation, Gaudi EOL, and IPEX sunset.
 
 ## Known Issues
 
