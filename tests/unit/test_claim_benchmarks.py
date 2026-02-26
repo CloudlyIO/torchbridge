@@ -220,6 +220,66 @@ class TestClaimBenchmark:
         result = bench.run(device="cuda:0")
         assert result.device == "cuda:0"
 
+    def test_skip_reason_attribute(self):
+        """skip_reason should be stored and accessible."""
+        bench = ClaimBenchmark(
+            name="skip_test",
+            baseline_fn=lambda: None,
+            optimized_fn=lambda: None,
+            skip_reason="library not installed",
+        )
+        assert bench.skip_reason == "library not installed"
+
+    def test_skip_reason_returns_zero_runs(self):
+        """When skip_reason is set, run() should return zero runs without executing fns."""
+        executed = []
+
+        bench = ClaimBenchmark(
+            name="no_exec",
+            baseline_fn=lambda: executed.append("baseline"),
+            optimized_fn=lambda: executed.append("optimized"),
+            warmup=5,
+            runs=20,
+            skip_reason="platform not supported",
+        )
+        result = bench.run()
+        assert result.runs == 0
+        assert len(executed) == 0  # neither function was called
+
+    def test_skip_reason_note_prefixed(self):
+        """skip_reason should appear as first note with SKIPPED: prefix."""
+        bench = ClaimBenchmark(
+            name="prefix_test",
+            baseline_fn=lambda: None,
+            optimized_fn=lambda: None,
+            notes=["extra context"],
+            skip_reason="no FBGEMM",
+        )
+        result = bench.run()
+        assert result.notes[0] == "SKIPPED: no FBGEMM"
+        assert result.notes[1] == "extra context"
+
+    def test_skip_reason_not_in_claims_to_delete(self):
+        """skip_reason benchmarks should not appear in claims_to_delete."""
+        suite = BenchmarkSuite()
+        suite.add(ClaimBenchmark(
+            name="skipped_claim",
+            baseline_fn=lambda: None,
+            optimized_fn=lambda: None,
+            skip_reason="not available here",
+        ))
+        report = suite.run_all()
+        assert "skipped_claim" not in report.claims_to_delete()
+
+    def test_no_skip_reason_by_default(self):
+        """skip_reason should default to None."""
+        bench = ClaimBenchmark(
+            name="normal",
+            baseline_fn=lambda: None,
+            optimized_fn=lambda: None,
+        )
+        assert bench.skip_reason is None
+
 
 class TestBenchmarkSuite:
     """Tests for BenchmarkSuite."""

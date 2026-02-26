@@ -34,10 +34,11 @@ def build_tensor_core_alignment_benchmark() -> ClaimBenchmark:
         warmup=10,
         runs=50,
         threshold_pct=3.0,
+        requires_backend="cuda",
         notes=[
             "Measures GEMM throughput for aligned (pad to 16) vs unaligned Linear.",
-            "Benefit is expected on NVIDIA GPUs with tensor cores, not on CPU.",
-            "CPU results are informational — overhead from padding is expected.",
+            "Benefit requires NVIDIA tensor cores — padding adds overhead on CPU/MPS.",
+            "Will be SKIPPED on non-CUDA hardware.",
         ],
     )
 
@@ -74,10 +75,11 @@ def build_channels_last_benchmark() -> ClaimBenchmark:
         warmup=5,
         runs=30,
         threshold_pct=3.0,
+        requires_backend="cuda",
         notes=[
             "Measures NHWC vs NCHW for Conv2d workloads.",
-            "Benefit is larger on CUDA (10-30%). CPU benefit is architecture-dependent.",
-            "Non-convolutional models see zero benefit (no conversion applied).",
+            "Benefit is CUDA-specific (10-30%). CPU and MPS show near-zero or negative.",
+            "Will be SKIPPED on non-CUDA hardware.",
         ],
     )
 
@@ -140,6 +142,7 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
 
     x = torch.randn(32, 512)
 
+    skip_reason: str | None = None
     try:
         model_int8 = torch.ao.quantization.quantize_dynamic(
             nn.Sequential(
@@ -151,29 +154,27 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
             dtype=torch.qint8,
         )
         model_int8.eval()
-        optimized_fn = lambda: model_int8(x)
-        notes = [
-            "Measures INT8 dynamic quantization speedup on CPU (FBGEMM backend).",
-            "This is a well-established PyTorch optimization — expected 10-40% speedup.",
-            "TorchBridge's value: auto-selecting this format per backend.",
-        ]
-    except RuntimeError:
-        # FBGEMM not available (e.g., macOS) — fall back to identity
-        optimized_fn = lambda: model_fp32(x)
-        notes = [
-            "FBGEMM quantization engine not available on this platform.",
-            "INT8 dynamic quantization requires FBGEMM (Linux x86_64).",
-            "Benchmark runs as identity — no speedup expected.",
-        ]
+        optimized_fn: torch.nn.Module = model_int8
+    except (RuntimeError, NotImplementedError):
+        # FBGEMM not available (macOS, non-x86) — skip instead of running
+        # identity functions that produce a misleading FAIL result.
+        optimized_fn = model_fp32
+        skip_reason = "FBGEMM not available on this platform (requires Linux x86_64)"
 
     return ClaimBenchmark(
         name="quantization_int8_dynamic",
         baseline_fn=lambda: model_fp32(x),
-        optimized_fn=optimized_fn,
+        optimized_fn=lambda: optimized_fn(x),
         warmup=10,
         runs=50,
         threshold_pct=3.0,
-        notes=notes,
+        skip_reason=skip_reason,
+        notes=[
+            "Measures INT8 dynamic quantization speedup on CPU (FBGEMM backend).",
+            "This is a well-established PyTorch optimization — expected 10-40% speedup.",
+            "TorchBridge's value: auto-selecting this format per backend.",
+            "Requires FBGEMM (Linux x86_64) — SKIPPED on other platforms.",
+        ],
     )
 
 

@@ -79,6 +79,7 @@ class ClaimBenchmark:
         threshold_pct: float = 3.0,
         notes: list[str] | None = None,
         requires_backend: str | None = None,
+        skip_reason: str | None = None,
     ) -> None:
         self.name = name
         self._baseline_fn = baseline_fn
@@ -88,9 +89,29 @@ class ClaimBenchmark:
         self._threshold_pct = threshold_pct
         self._notes = notes or []
         self.requires_backend = requires_backend
+        self.skip_reason = skip_reason
 
     def run(self, device: str = "cpu") -> ClaimResult:
-        """Time baseline vs optimized, compute speedup."""
+        """Time baseline vs optimized, compute speedup.
+
+        If ``skip_reason`` is set, returns a zero-runs skipped result immediately
+        without executing either function (e.g., required library not installed).
+        """
+        if self.skip_reason:
+            return ClaimResult(
+                claim_name=self.name,
+                baseline_ms=0.0,
+                optimized_ms=0.0,
+                speedup_pct=0.0,
+                passed=False,
+                threshold_pct=self._threshold_pct,
+                runs=0,
+                std_baseline_ms=0.0,
+                std_optimized_ms=0.0,
+                device=device,
+                notes=[f"SKIPPED: {self.skip_reason}"] + list(self._notes),
+            )
+
         base_mean, base_std = _time_fn(self._baseline_fn, self._warmup, self._runs)
         opt_mean, opt_std = _time_fn(self._optimized_fn, self._warmup, self._runs)
 
