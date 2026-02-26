@@ -12,10 +12,16 @@ from torchbridge.benchmarks.claim_benchmarks import (
     ClaimBenchmark,
     ClaimResult,
 )
+from torchbridge.benchmarks.claim_registry import (
+    build_claim_suite,
+    get_all_claim_benchmarks,
+)
 
 __all__ = [
     "ClaimBenchmark",
     "ClaimResult",
     "BenchmarkSuite",
     "BenchmarkReport",
+    "build_claim_suite",
+    "get_all_claim_benchmarks",
 ]
