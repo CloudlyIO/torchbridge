@@ -20,6 +20,7 @@ from torchbridge.precision.quantization.formats import QuantizationFormat
 from .compatibility import AdapterCompatibilityMatrix, Architecture
 from .config import AdapterConfig, AdapterMethod
 from .layers import DoRALinear, LoRALinear
+from .model_families import ModelFamily, detect_model_family, get_target_modules
 
 logger = logging.getLogger(__name__)
 
@@ -153,15 +154,49 @@ class AdapterEngine:
                 f"Fell back from {self._config.method.value} to {method.value}"
             )
 
+        # Auto-detect target modules based on model family (only when
+        # the user hasn't explicitly set target_modules)
+        effective_targets = self._config.target_modules
+        if (
+            self._config.auto_detect_targets
+            and not self._config._targets_explicitly_set
+        ):
+            family = detect_model_family(model)
+            if family != ModelFamily.UNKNOWN:
+                detected = get_target_modules(model, family)
+                if detected != effective_targets:
+                    logger.info(
+                        "Auto-detected model family %s, using target "
+                        "modules: %s",
+                        family.value,
+                        detected,
+                    )
+                    effective_targets = detected
+
+        self._effective_targets = effective_targets
+
         memory_before = _model_size_mb(model)
+
+        # Check for existing adapters (double injection guard)
+        existing_adapters = sum(
+            1 for _, m in model.named_modules()
+            if isinstance(m, (LoRALinear, DoRALinear))
+        )
+        if existing_adapters > 0:
+            warnings_list.append(
+                f"Model already has {existing_adapters} adapter(s). "
+                "Call merge() first to remove existing adapters."
+            )
 
         # Identify and replace target modules
         modules_adapted = 0
+        has_linear = False
         replacements: list[tuple[nn.Module, str, LoRALinear | DoRALinear]] = []
 
         for name, module in model.named_modules():
             if not isinstance(module, nn.Linear):
                 continue
+            has_linear = True
             if not self._is_target_module(name):
                 continue
             # Find parent module and attribute name
@@ -178,9 +213,18 @@ class AdapterEngine:
             setattr(parent, attr, adapter_layer)
 
         if modules_adapted == 0:
-            warnings_list.append(
-                f"No modules matched target patterns: {self._config.target_modules}"
-            )
+            if not has_linear and existing_adapters == 0:
+                warnings_list.append(
+                    "Model has no nn.Linear modules to adapt"
+                )
+            elif existing_adapters > 0:
+                warnings_list.append(
+                    "No new modules adapted (model may already be adapted)"
+                )
+            else:
+                warnings_list.append(
+                    f"No modules matched target patterns: {effective_targets}"
+                )
 
         # Count params
         trainable = sum(
@@ -334,7 +378,8 @@ class AdapterEngine:
 
     def _is_target_module(self, name: str) -> bool:
         """Check if a module name matches any target pattern."""
-        return any(name.endswith(t) for t in self._config.target_modules)
+        targets = getattr(self, "_effective_targets", self._config.target_modules)
+        return any(name.endswith(t) for t in targets)
 
     def _get_parent_and_attr(
         self, root: nn.Module, target_name: str
