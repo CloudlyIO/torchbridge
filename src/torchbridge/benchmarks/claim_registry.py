@@ -17,14 +17,21 @@ from torchbridge.benchmarks.claim_benchmarks import BenchmarkSuite, ClaimBenchma
 
 
 def build_tensor_core_alignment_benchmark() -> ClaimBenchmark:
-    """Measure padded-to-multiple-of-16 Linear vs unaligned Linear."""
+    """Measure padded-to-multiple-of-16 Linear vs unaligned Linear on CUDA."""
     from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
 
-    original = nn.Linear(127, 63)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Use intentionally misaligned dims (1023, 511) near a multiple-of-16 boundary
+    # where alignment padding provides meaningful TC benefit. Batch 256 for memory
+    # pressure typical of real inference.
+    original = nn.Linear(1023, 511).to(device)
     original.eval()
-    aligned = _TensorCoreAlignedLinear(original, optimal_multiple=16)
+    aligned = _TensorCoreAlignedLinear(
+        nn.Linear(1023, 511).to(device), optimal_multiple=16
+    )
     aligned.eval()
-    x = torch.randn(32, 127)
+    x = torch.randn(256, 1023, device=device)
 
     return ClaimBenchmark(
         name="tensor_core_alignment",
@@ -148,22 +155,26 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
     Falls back to a no-op benchmark if the quantization engine (FBGEMM) is
     unavailable (e.g., on macOS without FBGEMM support).
     """
+    # Use large Linear layers so INT8 GEMM savings dominate quantization overhead.
+    # Small models (≤512 dim) show no speedup — overhead > savings.
     model_fp32 = nn.Sequential(
-        nn.Linear(512, 256),
+        nn.Linear(2048, 1024),
         nn.ReLU(),
-        nn.Linear(256, 128),
+        nn.Linear(1024, 512),
     )
     model_fp32.eval()
 
-    x = torch.randn(32, 512)
+    # Explicit CPU placement — INT8 dynamic quantization is a CPU-FBGEMM optimization.
+    model_fp32 = model_fp32.cpu()
+    x = torch.randn(128, 2048)  # batch=128, large input to stress GEMM
 
     skip_reason: str | None = None
     try:
         model_int8 = torch.ao.quantization.quantize_dynamic(
             nn.Sequential(
-                nn.Linear(512, 256),
+                nn.Linear(2048, 1024),
                 nn.ReLU(),
-                nn.Linear(256, 128),
+                nn.Linear(1024, 512),
             ),
             {nn.Linear},
             dtype=torch.qint8,

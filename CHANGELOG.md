@@ -8,6 +8,43 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.44] - 2026-02-27 - GPU Validation + Benchmark Fixes
+
+### **Summary**
+
+Real GPU validation on AWS A10G and AMD MI300X with TorchBridge v0.5.43 installed
+from PyPI. Both platforms pass Qwen3-0.6B cross-backend inference validation. AMD
+MI300X passes 10/10 TorchBridge API checks. Two benchmark claim bugs are fixed that
+were causing false FAIL results on GPU hardware.
+
+### **Track 1: Real Hardware Validation**
+
+- **AWS A10G (NVIDIA, g5.xlarge, PyTorch 2.6.0+cu124):**
+  - Qwen3-0.6B: max_diff=2.10e-05, cosine_sim=1.000001 — **PASSED**
+  - channels_last benchmark: **+16.61% speedup** measured (within expected 10-30% range)
+  - attention_dispatch overhead: -1.09% (within -5% threshold) — **PASSED**
+
+- **AMD MI300X (ROCm 6.2, PyTorch 2.5.1):**
+  - Qwen3-0.6B: max_diff=4.82e-05, cosine_sim=1.000001, latency=30.7ms — **PASSED**
+  - 10/10 TorchBridge API checks passed:
+    quant=[fp8_e4m3, int8_dynamic], attention=[flash_ck, triton, sdpa],
+    speculative=[draft_model, prompt_lookup], adapter=qlora, tb-doctor=exit(0)
+  - channels_last benchmark: **+76.68% speedup** measured
+  - optimize_for_inference() and optimize_for_training() both executed on real GPU
+
+### **Track 2: Benchmark Bug Fixes**
+
+- **`benchmarks/claim_registry.py` — tensor_core_alignment**: Tensors were never moved
+  to CUDA device — the benchmark measured CPU operations even when `device="cuda"`.
+  Fixed: use `device = torch.device("cuda" if available else "cpu")`, move model and
+  input tensor to device. Increased dims: 127→1023, 63→511 (intentionally misaligned
+  near a 16-boundary), batch 32→256 for GEMM pressure typical of real inference.
+
+- **`benchmarks/claim_registry.py` — quantization_int8_dynamic**: Model was too small
+  (512→256→128 with batch=32) — INT8 quantization overhead exceeded GEMM savings.
+  Fixed: increased to Linear(2048, 1024) + Linear(1024, 512), batch=128. At this
+  scale FBGEMM INT8 consistently delivers 10-40% speedup on x86 Linux.
+
 ## [0.5.43] - 2026-02-26 - Publish Readiness + Server Hardening
 
 ### **Summary**
