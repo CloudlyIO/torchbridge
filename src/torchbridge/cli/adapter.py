@@ -304,10 +304,10 @@ def _show_detect(args: Any) -> int:
             family = fam
             break
 
-    spec = get_model_family_spec(family)
-    target_modules = spec.target_modules if spec else ["q_proj", "v_proj"]
-    all_linear = spec.all_linear_names if spec else target_modules
-    has_fused = spec.has_fused_qkv if spec else False
+    family_spec = get_model_family_spec(family)
+    target_modules = family_spec.target_modules if family_spec else ["q_proj", "v_proj"]
+    all_linear = family_spec.all_linear_names if family_spec else target_modules
+    has_fused = family_spec.has_fused_qkv if family_spec else False
 
     if getattr(args, "ci", False):
         output = {
@@ -376,9 +376,9 @@ def _show_inject_dryrun(args: Any) -> int:
             family = fam
             break
 
-    spec = get_model_family_spec(family)
-    target_modules = spec.target_modules if spec else ["q_proj", "v_proj"]
-    all_linear = spec.all_linear_names if spec else target_modules
+    family_spec = get_model_family_spec(family)
+    target_modules = family_spec.target_modules if family_spec else ["q_proj", "v_proj"]
+    all_linear = family_spec.all_linear_names if family_spec else target_modules
 
     # Estimate adapter parameters
     method = args.method
