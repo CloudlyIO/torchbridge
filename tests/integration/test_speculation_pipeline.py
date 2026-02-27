@@ -5,6 +5,8 @@ End-to-end tests combining speculation engine, structured output,
 and phase detection.
 """
 
+from unittest.mock import MagicMock, patch
+
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,
@@ -28,7 +30,7 @@ class TestSpeculationPipeline:
     """Integration tests for the speculation pipeline."""
 
     def test_compatibility_to_engine_pipeline(self):
-        """Compatibility matrix -> SpeculationEngine -> kwargs."""
+        """Compatibility matrix -> SpeculationEngine -> kwargs (model load is mocked)."""
         optimal = SpeculationCompatibilityMatrix.get_optimal_method(
             HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
         )
@@ -41,7 +43,12 @@ class TestSpeculationPipeline:
             architecture=NVIDIAArchitecture.AMPERE,
         )
         assert engine.method == optimal
-        kwargs = engine.get_generation_kwargs()
+        # Mock the model load — this test checks pipeline wiring, not HuggingFace
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        with patch("transformers.AutoModelForCausalLM") as mock_cls:
+            mock_cls.from_pretrained.return_value = mock_model
+            kwargs = engine.get_generation_kwargs()
         assert isinstance(kwargs, dict)
 
     def test_engine_with_phase_detection(self):

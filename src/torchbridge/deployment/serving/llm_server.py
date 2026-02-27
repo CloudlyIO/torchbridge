@@ -39,6 +39,7 @@ Example:
 
 import asyncio
 import logging
+import os
 import queue
 import threading
 import time
@@ -132,6 +133,17 @@ class LLMServerConfig:
     enable_health_checks: bool = True
     enable_metrics: bool = True
     enable_llm_metrics: bool = True
+
+    # Security settings
+    api_key: str | None = field(
+        default_factory=lambda: os.environ.get("LLM_SERVER_API_KEY")
+    )
+    """If set, all data endpoints require ``Authorization: Bearer <api_key>``.
+    Defaults to the ``LLM_SERVER_API_KEY`` environment variable if present."""
+    rate_limit_rpm: int | None = None
+    """Max requests per minute per client IP. ``None`` disables rate limiting."""
+    cors_origins: list = field(default_factory=lambda: ["*"])
+    """List of allowed CORS origins. Defaults to ``["*"]`` (all origins)."""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -232,6 +244,29 @@ else:
     HealthResponse = dict[str, Any]  # type: ignore[assignment]
     MetricsResponse = dict[str, Any]  # type: ignore[assignment]
 
+class _RateLimiter:
+    """Sliding-window (1 minute) in-memory rate limiter, keyed by client IP."""
+
+    def __init__(self, rpm: int) -> None:
+        self._rpm = rpm
+        self._window = 60.0
+        self._counts: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def is_allowed(self, client_ip: str) -> bool:
+        """Return True if the request is within the per-IP rate limit."""
+        now = time.time()
+        cutoff = now - self._window
+        with self._lock:
+            times = [t for t in self._counts.get(client_ip, []) if t > cutoff]
+            if len(times) >= self._rpm:
+                self._counts[client_ip] = times
+                return False
+            times.append(now)
+            self._counts[client_ip] = times
+            return True
+
+
 @dataclass
 class BatchItem:
     """Item in the dynamic batching queue."""
@@ -294,6 +329,13 @@ class LLMInferenceServer:
         self._total_tokens_generated = 0
         self._lock = threading.Lock()
 
+        # Rate limiter (None when disabled)
+        self._rate_limiter: _RateLimiter | None = (
+            _RateLimiter(self.config.rate_limit_rpm)
+            if self.config.rate_limit_rpm is not None
+            else None
+        )
+
         # Speculative decoding engine (initialized after _setup_device)
         self._speculation_engine: Any = None
 
@@ -324,6 +366,22 @@ class LLMInferenceServer:
         # Create FastAPI app
         self.app = self._create_app()
 
+        # Warn when binding to all interfaces without auth (easy to expose publicly)
+        if self.config.api_key is None and self.config.host == "0.0.0.0":
+            logger.warning(
+                "LLM server binding to 0.0.0.0 (all interfaces) with no API key. "
+                "Set LLMServerConfig(api_key=...) or the LLM_SERVER_API_KEY "
+                "environment variable before deploying to a shared or public network."
+            )
+
+        # Warn when CORS allows all origins on an authenticated server
+        if self.config.cors_origins == ["*"] and self.config.api_key is not None:
+            logger.warning(
+                "CORS allow_origins=['*'] permits any website to call this API. "
+                "Set LLMServerConfig(cors_origins=[...]) with explicit origins "
+                "for production deployments."
+            )
+
     def _setup_device(self) -> None:
         """Set up the inference device."""
         if self.config.device == "auto":
@@ -352,6 +410,48 @@ class LLMInferenceServer:
 
         self.status = HealthStatus.HEALTHY
         logger.info("LLM server setup complete")
+
+    # ------------------------------------------------------------------
+    # Security helpers
+    # ------------------------------------------------------------------
+
+    def _authenticate(self, request: "Request") -> None:
+        """Raise ``HTTPException(401)`` when auth is enabled and key is wrong.
+
+        Health and root endpoints are intentionally excluded from auth
+        requirements — they must remain accessible for infrastructure probes.
+        """
+        if self.config.api_key is None:
+            return
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization header required: Bearer <api_key>",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        token = auth_header[len("Bearer "):]
+        if not token or token != self.config.api_key:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    def _check_rate_limit(self, request: "Request") -> None:
+        """Raise ``HTTPException(429)`` when the per-IP rate limit is exceeded."""
+        if self._rate_limiter is None:
+            return
+        client_ip = request.client.host if request.client else "unknown"
+        if not self._rate_limiter.is_allowed(client_ip):
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Rate limit exceeded: max {self.config.rate_limit_rpm} "
+                    "requests/minute"
+                ),
+                headers={"Retry-After": "60"},
+            )
 
     def _setup_speculation_engine(self) -> None:
         """Set up speculative decoding engine with detected backend."""
@@ -506,6 +606,19 @@ class LLMInferenceServer:
             lifespan=lifespan,
         )
 
+        # CORS middleware
+        try:
+            from fastapi.middleware.cors import CORSMiddleware
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=list(self.config.cors_origins),
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["Authorization", "Content-Type"],
+            )
+        except ImportError:
+            pass
+
         # Register routes
         self._register_routes(app)
 
@@ -515,32 +628,36 @@ class LLMInferenceServer:
         """Register API routes."""
 
         @app.post("/generate")
-        async def generate(request: GenerateRequest):
+        async def generate(body: GenerateRequest, request: Request):
             """Text generation endpoint with optional streaming."""
-            if request.stream and self.config.enable_streaming:
+            self._authenticate(request)
+            self._check_rate_limit(request)
+            if body.stream and self.config.enable_streaming:
                 return StreamingResponse(
-                    self._generate_stream(request),
+                    self._generate_stream(body),
                     media_type="text/event-stream"
                 )
             else:
-                return await self._generate_non_stream(request)
+                return await self._generate_non_stream(body)
 
         @app.post("/chat")
-        async def chat_completion(request: ChatCompletionRequest):
+        async def chat_completion(body: ChatCompletionRequest, request: Request):
             """Chat completion endpoint."""
+            self._authenticate(request)
+            self._check_rate_limit(request)
             # Convert chat messages to prompt
-            prompt = self._format_chat_prompt(request.messages)
+            prompt = self._format_chat_prompt(body.messages)
 
             # Create generation request
             gen_request = GenerateRequest(  # type: ignore[call-arg]
                 prompt=prompt,
-                max_new_tokens=request.max_new_tokens,
-                temperature=request.temperature,
-                top_p=request.top_p,
-                stream=request.stream,
+                max_new_tokens=body.max_new_tokens,
+                temperature=body.temperature,
+                top_p=body.top_p,
+                stream=body.stream,
             )
 
-            if request.stream and self.config.enable_streaming:
+            if body.stream and self.config.enable_streaming:
                 return StreamingResponse(
                     self._generate_stream(gen_request),
                     media_type="text/event-stream"
@@ -549,30 +666,34 @@ class LLMInferenceServer:
                 return await self._generate_non_stream(gen_request)
 
         @app.post("/tokenize", response_model=TokenCountResponse)
-        async def tokenize(request: TokenCountRequest) -> TokenCountResponse:
+        async def tokenize(body: TokenCountRequest, request: Request) -> TokenCountResponse:
             """Token counting endpoint."""
-            return self._count_tokens(request.text)
+            self._authenticate(request)
+            self._check_rate_limit(request)
+            return self._count_tokens(body.text)
 
         @app.get("/health", response_model=HealthResponse)
         async def health() -> HealthResponse:
-            """Health check endpoint."""
+            """Health check endpoint (auth-exempt)."""
             return self._get_health_response()
 
         @app.get("/health/live")
         async def liveness() -> dict[str, str]:
-            """Kubernetes liveness probe."""
+            """Kubernetes liveness probe (auth-exempt)."""
             return {"status": "alive"}
 
         @app.get("/health/ready")
         async def readiness() -> dict[str, Any]:
-            """Kubernetes readiness probe."""
+            """Kubernetes readiness probe (auth-exempt)."""
             if self.status == HealthStatus.HEALTHY:
                 return {"status": "ready", "model_loaded": True}
             raise HTTPException(status_code=503, detail="Service not ready")
 
         @app.get("/metrics")
-        async def metrics() -> MetricsResponse:
+        async def metrics(request: Request) -> MetricsResponse:
             """Prometheus-style metrics endpoint."""
+            self._authenticate(request)
+            self._check_rate_limit(request)
             return self._get_metrics_response()
 
         @app.get("/")

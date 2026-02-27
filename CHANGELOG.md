@@ -8,6 +8,243 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.43] - 2026-02-26 - Publish Readiness + Server Hardening
+
+### **Summary**
+
+Closes the top remaining gaps from the v0.5.42 reassessment (8.0/10). Two tracks:
+(1) CORS wildcard startup warning when auth is enabled, (2) concurrent stress tests
+for the rate limiter proving thread safety under load. Also: version bump, test badge
+update (2,563 → 2,668), and PyPI publish to close the 9-version staleness gap.
+
+### **Track 1: CORS Wildcard Warning (P3)**
+
+- **`deployment/serving/llm_server.py`**: `LLMInferenceServer.__init__()` now logs a
+  `WARNING` when `config.api_key is not None` AND `config.cors_origins == ["*"]`:
+  > "CORS allow_origins=['*'] permits any website to call this API. Set
+  > LLMServerConfig(cors_origins=[...]) with explicit origins for production
+  > deployments."
+  No warning fires when auth is absent (open API anyway) or when origins are explicit.
+- **New tests (4)**: `TestCorsWildcardWarning` in `test_server_security_defaults.py` —
+  warning fires with auth+wildcard, no warning without auth, no warning with explicit
+  origins, warning mentions `cors_origins` config field.
+
+### **Track 2: Rate Limiter Concurrent Stress Tests (P4)**
+
+- **New tests (3)**: `TestRateLimiterConcurrency` in `test_server_security_defaults.py`:
+  - `test_concurrent_requests_respect_limit`: 20 threads × 5 requests against rpm=10 —
+    verifies at most 10 accepted.
+  - `test_no_deadlock_under_load`: 50 threads synchronized via `threading.Barrier`,
+    must all complete within timeout (no deadlock).
+  - `test_per_ip_isolation_under_concurrency`: Two IPs with separate rate limits do not
+    interfere with each other under concurrent access.
+
+### **Track 3: Stats Hygiene**
+
+- Version bump: 0.5.42 → 0.5.43
+- README test badge: 2,563 → 2,668
+- CHANGELOG entries for v0.5.38–v0.5.43 now complete
+
+---
+
+## [0.5.42] - 2026-02-26 - Mypy Clean, Security Startup Warning, Speculative Clarity
+
+### **Summary**
+
+Closes 3 remaining P2/P3 gaps from the v0.5.41 reassessment (7.6/10 → target 8.0+).
+Three tracks: (1) achieve true 0 mypy errors, (2) warn operators when the LLM server
+starts with insecure defaults, (3) make speculative decoding method availability
+programmatically queryable and provide env-var auth injection.
+
+### **Track 1: Mypy Clean (P2)**
+
+- **`cli/adapter.py`**: Renamed loop-variable `spec` to `family_spec` at two sites
+  (lines 307 and 379) where `get_model_family_spec()` (returning `ModelFamilySpec | None`)
+  was reassigned to a variable mypy had narrowed to `ModelFamilySpec` from the preceding
+  loop. Fixes `[assignment]` errors.
+- **`precision/quantization/engine.py`**: Removed the unused `device=device` kwarg
+  and preceding `device = next(model.parameters()).device` assignment from `_apply_fp8()`.
+  `convert_model_to_native_fp8()` does not accept a `device` parameter. Fixes
+  `[call-arg]` error and the resulting `F841` unused-variable ruff warning.
+- **Result**: `python3 -m mypy src/torchbridge/` → `Success: no issues found in 205
+  source files`. README claim "0 mypy errors" is now accurate.
+
+### **Track 2: Security Startup Warning + Env-Var API Key (P2/P3)**
+
+- **`deployment/serving/llm_server.py`**: Added `import os`.
+- **`LLMServerConfig.api_key`**: Changed from `= None` to
+  `field(default_factory=lambda: os.environ.get("LLM_SERVER_API_KEY"))`. When the
+  `LLM_SERVER_API_KEY` environment variable is set, auth is automatically enabled at
+  server instantiation without any code change. Explicit `api_key=` kwarg still takes
+  precedence.
+- **Startup warning**: `LLMInferenceServer.__init__()` now logs a `WARNING` when
+  `config.api_key is None` AND `config.host == "0.0.0.0"`:
+  > "LLM server binding to 0.0.0.0 (all interfaces) with no API key. Set
+  > `LLMServerConfig(api_key=...)` or the `LLM_SERVER_API_KEY` environment variable
+  > before deploying to a shared or public network."
+  Binding to `127.0.0.1` or having auth enabled suppresses the warning.
+- **New tests (11)**: `tests/unit/test_server_security_defaults.py` — warning logged,
+  warning mentions env-var, no warning on localhost, no warning when key set, env-var
+  populates api_key, absent env-var gives None, explicit kwarg overrides env-var,
+  env-var key authenticates/rejects requests.
+
+### **Track 3: Speculative Method Clarity (P3)**
+
+- **`inference/speculative/methods.py`**: Added `requires_custom_arch: bool = False`
+  field to `SpeculativeMethodSpec`. Set to `True` for `EAGLE`, `MEDUSA`, `LAYER_SKIP`
+  (all three require a custom model architecture or separately trained components that
+  do not integrate via standard `model.generate()` kwargs).
+- **`inference/speculative/engine.py`**: Added `SpeculativeMethodSpec` to imports.
+  Added `get_available_methods() -> list[SpeculativeMethod]` instance method: returns
+  all backend-compatible methods that do NOT have `requires_custom_arch=True`. On CPU
+  this returns `[PROMPT_LOOKUP]`; on NVIDIA Hopper/Blackwell it would return
+  `[DRAFT_MODEL, PROMPT_LOOKUP]`. Allows callers to programmatically discover safe
+  methods without hitting `NotImplementedError`.
+- **New tests (18)**: `tests/unit/test_speculative_clarity.py` — `requires_custom_arch`
+  flag set correctly for all 6 methods, `is_generate_compatible` alignment, descriptive
+  error messages for EAGLE/MEDUSA/LAYER_SKIP, `get_available_methods()` excludes
+  custom-arch methods, includes PROMPT_LOOKUP, all returned methods are
+  generate-compatible.
+
+### **Stats**
+- **New tests**: 29 (11 security defaults + 18 speculative clarity)
+- **Mypy errors**: 3 → **0**
+- **Ruff violations**: 0 (unchanged)
+
+## [0.5.41] - 2026-02-26 - Release Credibility & Security Hardening
+
+### **Summary**
+
+Closes all 4 release blockers identified in the comprehensive 2026-02-26 reassessment
+(score: 7.3/10 → target: 8.0+). Three tracks: LLM server security (P1), cloud
+validation honesty (P1), and benchmark transparency (P2). Test count badge updated
+to reflect the actual post-v0.5.40 suite.
+
+### **Track 1: LLM Server Auth & Rate Limiting (P1)**
+
+- **`LLMServerConfig`**: Three new security fields — `api_key: str | None`,
+  `rate_limit_rpm: int | None`, `cors_origins: list[str]` (default `["*"]`).
+- **`_authenticate(request)`**: When `api_key` is set, all data endpoints require
+  `Authorization: Bearer <api_key>`. Returns 401 with `WWW-Authenticate: Bearer` on
+  missing or wrong token. Health/liveness/readiness/root endpoints are intentionally
+  exempt (infrastructure probes must not require auth).
+- **`_check_rate_limit(request)`**: Sliding 60-second window per client IP using
+  `_RateLimiter`. Returns 429 with `Retry-After: 60` when exceeded.
+- **CORS middleware**: `CORSMiddleware` wired into `_create_app()` with configurable
+  `cors_origins`. Allows `Authorization` and `Content-Type` headers.
+- **New tests (19)**: `tests/e2e/test_llm_server_auth.py` — auth disabled, valid/
+  invalid/missing/malformed key, health exemptions, rate limiting burst/recovery,
+  CORS config, `Retry-After` and `WWW-Authenticate` header presence.
+
+### **Track 2: Cloud Validation Honesty (P1)**
+
+- **`README.md`**: Badge updated from `"8 platforms PASS"` to
+  `"8 validated, 6 GPU"`. Validation table: Trainium and Inferentia2 rows now carry
+  `†` footnote with explicit CPU-fallback explanation. Quality section updated.
+- **`docs/reference/cloud-validation.md`**: Summary header and table updated with
+  `†` markers. Added a blockquote note explaining that `max_diff = 0.00e+00` on
+  Trainium/Inferentia2 rows reflects CPU-vs-CPU comparison (NeuronX compilation
+  requires quota-enabled instances not available during validation).
+
+### **Track 3: Benchmark Transparency (P2)**
+
+- **`ClaimBenchmark`**: New `description: str = ""` field on all claim benchmarks.
+- **`claim_registry.py`**: All 5 registered claims now carry one-line descriptions
+  documenting what is measured, why it matters, and what hardware is required.
+- **`tb-benchmark --list-claims`**: New flag (also works as standalone, no `--type`
+  required). Prints a catalogue table showing each claim's name, `REQUIRES` backend,
+  speedup threshold, `RUNS?` status on current hardware, and description. Exits 0
+  without running any benchmarks. Useful for CI transparency and documentation.
+
+### **Track 4: Test Count Accuracy (P3)**
+
+- **`README.md`**: Badge updated from `tests-2,527` to `tests-2,563` (actual post-
+  v0.5.40 suite count confirmed by batched run: 2563 passed, 0 failed, 134 skipped).
+
+## [0.5.40] - 2026-02-26 - Multi-GPU Device, FBGEMM Skip, Unreachability Proof
+
+### **Summary**
+
+Three remaining gaps from the v0.5.39 audit closed. `get_generation_kwargs()` now accepts
+an explicit `device` argument for multi-GPU setups. The macOS FBGEMM test failure (present
+since v0.5.35) is fixed — it now skips cleanly on platforms where FBGEMM is unavailable.
+The EAGLE/MEDUSA/LAYER_SKIP `NotImplementedError` branches are documented and proved
+unreachable via 5 new tests across all backends.
+
+### **Track 1: Multi-GPU Device Override (P1)**
+
+- **`get_generation_kwargs(device: str | None = None)`**: New `device` parameter allows
+  callers to specify the exact PyTorch device for the draft model. Default (`None`) uses
+  the existing backend inference (`_infer_device()`). For multi-GPU setups, pass
+  `device="cuda:1"` to co-locate the draft model with the main model.
+- **New tests (3):** `test_get_generation_kwargs_explicit_device_overrides_inference`,
+  `test_get_generation_kwargs_multi_gpu_device` (verifies `.to("cuda:1")`),
+  `test_get_generation_kwargs_device_none_uses_inference` (backward compat).
+
+### **Track 2: FBGEMM Test Skip on macOS (P1)**
+
+- **`test_quantization_claim_shows_speedup`**: Was asserting `result.baseline_ms > 0`
+  unconditionally. On macOS (and Windows/ARM), FBGEMM is unavailable and the benchmark
+  reports `runs=0`. Test now calls `pytest.skip()` with the reason from `result.notes`
+  when `runs == 0`. Pre-existing failure since v0.5.35 eliminated.
+- Changed from: 1 FAILED → 1 SKIPPED on macOS. On Linux x86_64 (CI), runs and asserts normally.
+
+### **Track 3: NotImplementedError Unreachability Proof (P2)**
+
+- **`TestNotImplementedMethodsAreUnreachable` class (5 tests):** Proves that EAGLE,
+  MEDUSA, and LAYER_SKIP are never the optimal method on any of the 6 supported backends,
+  and that explicitly requesting them always falls back in `SpeculationEngine.__init__()`
+  before `get_generation_kwargs()` is reached. One test force-triggers the branch via
+  monkeypatching to document the safety-net guard.
+- Added safety-net comments to the EAGLE/MEDUSA/LAYER_SKIP branches in
+  `get_generation_kwargs()`.
+
+## [0.5.39] - 2026-02-26 - DRAFT_MODEL Fix, CLI Smoke Tests & PROMPT_LOOKUP E2E
+
+### **Summary**
+
+Three hardening tracks. Fixed a latent runtime bug where `SpeculationEngine` passed
+`assistant_model` as a string path instead of a loaded `PreTrainedModel` — HuggingFace
+`model.generate()` silently ignores or errors on a string. Added 30 CLI smoke tests
+covering all 15 entry points for the first time. Proved PROMPT_LOOKUP kwargs actually
+work end-to-end in `model.generate()` with a tiny random-weight model.
+
+### **Track 1: DRAFT_MODEL Bug Fix (P1)**
+
+- **Root cause:** `get_generation_kwargs()` set `kwargs["assistant_model"] = name` where
+  `name` is a string path. HuggingFace `model.generate()` requires `assistant_model` to be
+  a loaded `PreTrainedModel` instance — a string is silently wrong at runtime.
+- **Fix:** Added `load_draft_model(device: str = "cpu") -> None` method that soft-imports
+  `transformers.AutoModelForCausalLM`, loads the model, and caches it in
+  `self._loaded_draft_model`. Called lazily on the first `get_generation_kwargs()` invocation
+  and reuses the cached object on subsequent calls.
+- Added `is_draft_model_loaded` property for introspection.
+- `ImportError` with clear pip install hint if `transformers` is not installed.
+- **New tests:** 7 new tests in `TestDraftModelLoading` class —
+  `is_draft_model_loaded` property, lazy-load on first call, load-once caching,
+  explicit `load_draft_model()`, ImportError path, `get_info()` still returns string name.
+
+### **Track 2: CLI Smoke Tests (P2)**
+
+- **New file:** `tests/cli/test_cli_smoke.py` — 30 parametrized tests (15 import +
+  15 help) covering every entry point in `[project.scripts]`:
+  `torchbridge`, `tb-optimize`, `tb-benchmark`, `tb-export`, `tb-profile`, `tb-doctor`,
+  `tb-init`, `tb-validate`, `tb-migrate`, `tb-quantize`, `tb-cache`, `tb-speculate`,
+  `tb-advisor`, `tb-checkpoint`, `tb-adapter`.
+- Handles both exit patterns: `SystemExit(0)` (subcommand CLIs) and return value 0
+  (top-level CLI catches argparse's `SystemExit` internally).
+- Five entry points (`quantize`, `cache`, `advisor`, `checkpoint`, `adapter`) had
+  **zero test coverage** before this track.
+
+### **Track 3: PROMPT_LOOKUP End-to-End Test (P3)**
+
+- **New file:** `tests/integration/test_speculation_e2e.py` — 8 tests that call
+  `model.generate()` with a tiny random-weight `GPT2LMHeadModel` (no network download).
+- Proves PROMPT_LOOKUP kwargs work: output is longer than input, different
+  `num_speculative_tokens` values are accepted, `prompt_lookup_num_tokens > seq_len`
+  doesn't crash (HuggingFace clips internally), disabled engine's empty dict is safe.
+- Skipped automatically if `transformers` is not installed.
+
 ## [0.5.38] - 2026-02-25 - AMD Wire, Speculation Gate & GPU Benchmark Notes
 
 ### **Summary**
