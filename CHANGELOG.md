@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.45] - 2026-02-27 - User Testing Run: 3 API Bugs Fixed
+
+### **Summary**
+
+Fresh-machine user testing on AWS A10G (g5.xlarge, PyTorch 2.6.0+cu124) running
+`pip install torchbridge-ml` from PyPI. All 9 use cases exercised. Three real library
+bugs found and fixed; guide corrected for 4 API surface mismatches.
+
+### **Bug Fixes**
+
+- **`_TensorCoreAlignedLinear` device mismatch** (`backends/nvidia/nvidia_backend.py`):
+  Padded weight and bias buffers were created with `torch.zeros(...)` on CPU regardless
+  of where the source `nn.Linear` weights lived. Passing a CUDA-resident linear caused
+  a device mismatch crash in `forward()`. Fix: propagate `device=original.weight.device`
+  to both `torch.zeros` calls.
+
+- **`SpeculationEngine.get_info()` crash on string backend**
+  (`inference/speculative/engine.py`): `self._backend.value` raised `AttributeError`
+  when `backend` was passed as a plain string (`"cuda"`) rather than the
+  `HardwareBackend` enum. Fix: `backend.value if hasattr(backend, "value") else backend`.
+
+- **`AdapterCompatibilityMatrix.get_fallback_chain()` crash on string backend**
+  (`adapters/compatibility.py`): Same pattern — `backend.value` in a log warning
+  crashed when backend was a string. Fix: same `hasattr` guard.
+
+### **No new features — bug fix release only.**
+
+---
+
 ## [0.5.44] - 2026-02-27 - GPU Validation + Benchmark Fixes
 
 ### **Summary**
