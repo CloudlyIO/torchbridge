@@ -76,6 +76,17 @@ Examples:
         )
 
         parser.add_argument(
+            '--list-claims',
+            action='store_true',
+            dest='list_claims',
+            help=(
+                'List all registered claim benchmarks with hardware requirements '
+                'and whether they would run on the current hardware, then exit. '
+                'Does not run any benchmarks. Works with --type claims or alone.'
+            ),
+        )
+
+        parser.add_argument(
             '--claims-threshold',
             type=float,
             default=3.0,
@@ -174,6 +185,10 @@ Examples:
         print("=" * 50)
 
         try:
+            # --list-claims: print claim catalogue and exit (no benchmarks run)
+            if getattr(args, 'list_claims', None) is True:
+                return BenchmarkCommand._list_claims()
+
             # Adjust runs for quick mode
             if args.quick and args.runs == 100:  # Only adjust if default
                 args.runs = 20
@@ -488,6 +503,63 @@ Examples:
         return 1 if failed else 0
 
     @staticmethod
+    def _list_claims() -> int:
+        """Print all registered claim benchmarks and their hardware requirements."""
+        from torchbridge.benchmarks.claim_registry import get_all_claim_benchmarks
+
+        # Detect current device string for WOULD_RUN column
+        if torch.cuda.is_available():
+            current_device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            current_device = "mps"
+        else:
+            current_device = "cpu"
+
+        all_benchmarks = get_all_claim_benchmarks()
+
+        print("\n TorchBridge Claim Benchmark Catalogue")
+        print(f"  Current hardware: {current_device}")
+        print("=" * 100)
+        header = f"{'NAME':<32} {'REQUIRES':<10} {'THRESHOLD':>10}  {'RUNS?':<6}  DESCRIPTION"
+        print(header)
+        print("-" * 100)
+
+        for bench in all_benchmarks:
+            requires = bench.requires_backend or "any"
+            threshold_str = f"{bench._threshold_pct:+.0f}%"
+
+            if bench.skip_reason:
+                would_run = "SKIP"
+                run_note = f"(skip: {bench.skip_reason[:40]})"
+            elif bench.requires_backend and bench.requires_backend != current_device:
+                would_run = "SKIP"
+                run_note = f"(needs {bench.requires_backend})"
+            else:
+                would_run = "YES"
+                run_note = ""
+
+            desc = bench.description or "(no description)"
+            print(
+                f"{bench.name:<32} {requires:<10} {threshold_str:>10}  {would_run:<6}  {desc}"
+            )
+            if run_note:
+                print(f"{'':54}{run_note}")
+
+        print("-" * 100)
+        gpu_only = [b for b in all_benchmarks if b.requires_backend == "cuda"]
+        cpu_runnable = [
+            b for b in all_benchmarks
+            if not b.requires_backend and not b.skip_reason
+        ]
+        print(
+            f"\n  {len(all_benchmarks)} claims total: "
+            f"{len(cpu_runnable)} run on CPU, "
+            f"{len(gpu_only)} require GPU (CUDA), "
+            f"{sum(1 for b in all_benchmarks if b.skip_reason)} platform-skipped"
+        )
+        return 0
+
+    @staticmethod
     def _load_model(model_name: str, device: torch.device) -> torch.nn.Module:
         """Load or create a model for benchmarking."""
         if model_name == "linear_stress_test":
@@ -749,6 +821,15 @@ def main():
         '--claim',
         type=str,
         help='Run a single claim benchmark by name (use with --type claims)'
+    )
+    parser.add_argument(
+        '--list-claims',
+        action='store_true',
+        dest='list_claims',
+        help=(
+            'List all registered claim benchmarks with hardware requirements '
+            'and whether they would run on current hardware, then exit.'
+        ),
     )
     parser.add_argument(
         '--claims-threshold',

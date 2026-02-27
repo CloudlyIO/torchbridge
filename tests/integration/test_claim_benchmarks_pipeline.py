@@ -7,6 +7,8 @@ End-to-end tests: build suite → run all → generate report → verify output.
 import json
 import tempfile
 
+import pytest
+
 from torchbridge.benchmarks.claim_benchmarks import BenchmarkReport
 from torchbridge.benchmarks.claim_registry import (
     build_claim_suite,
@@ -60,15 +62,24 @@ class TestClaimBenchmarkPipeline:
         assert "claims_to_delete" in loaded
 
     def test_quantization_claim_shows_speedup(self):
-        """INT8 dynamic quantization should show measurable speedup on CPU."""
+        """INT8 dynamic quantization should show measurable speedup on CPU (FBGEMM)."""
         from torchbridge.benchmarks.claim_registry import (
             build_quantization_speedup_benchmark,
         )
 
         bench = build_quantization_speedup_benchmark()
         result = bench.run(device="cpu")
+
+        if result.runs == 0:
+            # FBGEMM requires Linux x86_64 — skip cleanly on macOS/Windows/ARM.
+            # The ClaimResult reports the reason in its notes.
+            skip_reason = next(
+                (n for n in result.notes if n.startswith("SKIPPED:")),
+                "FBGEMM not available on this platform (requires Linux x86_64)",
+            )
+            pytest.skip(skip_reason)
+
         # INT8 dynamic quant on CPU (FBGEMM) typically shows 10-40% speedup
-        # We just verify it ran and has positive timing, not pass/fail
         assert result.baseline_ms > 0
         assert result.optimized_ms > 0
         assert result.runs > 0

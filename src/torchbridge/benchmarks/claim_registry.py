@@ -13,7 +13,6 @@ import torch.nn as nn
 
 from torchbridge.benchmarks.claim_benchmarks import BenchmarkSuite, ClaimBenchmark
 
-
 # ── Claim 1: NVIDIA Tensor Core Alignment ────────────────────────────────────
 
 
@@ -35,6 +34,10 @@ def build_tensor_core_alignment_benchmark() -> ClaimBenchmark:
         runs=50,
         threshold_pct=3.0,
         requires_backend="cuda",
+        description=(
+            "Padding Linear weight dims to multiples-of-16 increases GEMM "
+            "throughput on NVIDIA tensor cores (5-25% speedup, GPU only)."
+        ),
         notes=[
             "Measures GEMM throughput for aligned (pad to 16) vs unaligned Linear.",
             "Benefit requires NVIDIA tensor cores — padding adds overhead on CPU/MPS.",
@@ -78,6 +81,10 @@ def build_channels_last_benchmark() -> ClaimBenchmark:
         runs=30,
         threshold_pct=3.0,
         requires_backend="cuda",
+        description=(
+            "NHWC (channels_last) memory layout eliminates NCHW→NHWC transposes "
+            "in cuDNN Conv2d kernels (10-30% speedup on Ampere/Ada, GPU only)."
+        ),
         notes=[
             "Measures NHWC vs NCHW for Conv2d workloads.",
             "Benefit is CUDA-specific. CPU and MPS show near-zero or negative.",
@@ -119,6 +126,10 @@ def build_attention_dispatch_benchmark() -> ClaimBenchmark:
         warmup=5,
         runs=30,
         threshold_pct=-5.0,  # Negative threshold: PASS if overhead < 5%
+        description=(
+            "AttentionDispatcher kernel-selection adds <5% overhead vs direct "
+            "SDPA call. Verifiable on CPU; kernel speedup requires GPU."
+        ),
         notes=[
             "Measures dispatch decision overhead, NOT kernel speedup.",
             "The dispatch call should add <1ms overhead to the SDPA call.",
@@ -173,6 +184,10 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
         runs=50,
         threshold_pct=3.0,
         skip_reason=skip_reason,
+        description=(
+            "INT8 dynamic quantization (FBGEMM) reduces Linear compute by 10-40% "
+            "on x86 CPU. TorchBridge auto-selects this format per backend."
+        ),
         notes=[
             "Measures INT8 dynamic quantization speedup on CPU (FBGEMM backend).",
             "This is a well-established PyTorch optimization — expected 10-40% speedup.",
@@ -201,6 +216,10 @@ def build_tunableop_benchmark() -> ClaimBenchmark:
         runs=10,
         threshold_pct=3.0,
         requires_backend="rocm",
+        description=(
+            "AMD TunableOp auto-tunes GEMM kernels via PYTORCH_TUNABLEOP_ENABLED=1 "
+            "(5-15% speedup on MI300X after warmup). AMD hardware required."
+        ),
         notes=[
             "Requires AMD ROCm hardware to measure TunableOp benefit.",
             "PYTORCH_TUNABLEOP_ENABLED=1 auto-tunes GEMM kernels on CDNA2+.",
