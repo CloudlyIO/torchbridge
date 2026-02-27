@@ -382,8 +382,7 @@ class QuantizationEngine:
         try:
             from torchbridge.precision.fp8_native import convert_model_to_native_fp8
 
-            device = next(model.parameters()).device
-            return convert_model_to_native_fp8(model, device=device)
+            return convert_model_to_native_fp8(model)
         except Exception as e:
             logger.warning("Native FP8 conversion failed: %s", e)
             # Try torchao FP8 (only on supported backends)

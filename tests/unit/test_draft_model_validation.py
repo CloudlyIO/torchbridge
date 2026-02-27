@@ -5,6 +5,8 @@ Tests that SpeculationEngine validates draft_model_name is non-empty
 and non-whitespace before returning generation kwargs.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from torchbridge.core.config import HardwareBackend
@@ -59,14 +61,23 @@ class TestDraftModelValidation:
             engine.get_generation_kwargs()
 
     def test_valid_draft_model_name_returns_kwargs(self):
-        """DRAFT_MODEL with valid name should return kwargs."""
+        """DRAFT_MODEL with valid name should return a loaded model in kwargs."""
         engine = _make_engine(draft_model_name="Qwen/Qwen3-0.6B")
-        kwargs = engine.get_generation_kwargs()
-        assert kwargs["assistant_model"] == "Qwen/Qwen3-0.6B"
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        with patch("transformers.AutoModelForCausalLM") as mock_cls:
+            mock_cls.from_pretrained.return_value = mock_model
+            kwargs = engine.get_generation_kwargs()
+        assert kwargs["assistant_model"] is mock_model
         assert kwargs["num_assistant_tokens"] == 5
 
     def test_draft_model_name_stripped(self):
-        """Leading/trailing whitespace should be stripped."""
+        """Leading/trailing whitespace should be stripped before loading."""
         engine = _make_engine(draft_model_name="  Qwen/Qwen3-0.6B  ")
-        kwargs = engine.get_generation_kwargs()
-        assert kwargs["assistant_model"] == "Qwen/Qwen3-0.6B"
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        with patch("transformers.AutoModelForCausalLM") as mock_cls:
+            mock_cls.from_pretrained.return_value = mock_model
+            kwargs = engine.get_generation_kwargs()
+        mock_cls.from_pretrained.assert_called_once_with("Qwen/Qwen3-0.6B")
+        assert kwargs["assistant_model"] is mock_model

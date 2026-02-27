@@ -51,6 +51,7 @@ class SpeculativeMethodSpec:
     min_batch_size_benefit: int
     description: str
     is_generate_compatible: bool  # True = works via model.generate() kwargs
+    requires_custom_arch: bool = False  # True = needs custom model architecture
 
 
 SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
@@ -81,6 +82,7 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
             "trained EAGLE checkpoint and custom inference loop."
         ),
         is_generate_compatible=False,
+        requires_custom_arch=True,
     ),
     SpeculativeMethod.LAYER_SKIP: SpeculativeMethodSpec(
         display_name="Layer Skip",
@@ -93,6 +95,7 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
             "early-exit support and a custom inference loop."
         ),
         is_generate_compatible=False,
+        requires_custom_arch=True,
     ),
     SpeculativeMethod.MEDUSA: SpeculativeMethodSpec(
         display_name="Medusa",
@@ -105,6 +108,7 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
             "trained Medusa head and custom inference loop."
         ),
         is_generate_compatible=False,
+        requires_custom_arch=True,
     ),
     SpeculativeMethod.PROMPT_LOOKUP: SpeculativeMethodSpec(
         display_name="Prompt Lookup",

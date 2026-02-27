@@ -80,8 +80,10 @@ class ClaimBenchmark:
         notes: list[str] | None = None,
         requires_backend: str | None = None,
         skip_reason: str | None = None,
+        description: str = "",
     ) -> None:
         self.name = name
+        self.description = description
         self._baseline_fn = baseline_fn
         self._optimized_fn = optimized_fn
         self._warmup = warmup

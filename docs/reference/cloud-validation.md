@@ -1,6 +1,6 @@
 # TorchBridge Cloud Validation Results
 
-**Status**: ALL PASS (8/8 hardware platforms)
+**Status**: ALL PASS (8/8 platforms — 6 GPU/accelerator-validated, 2 CPU-fallback†)
 
 ## Platform Summary
 
@@ -27,8 +27,18 @@ All validations compare GPU/accelerator logits against CPU baseline on the same 
 | AWS | A10G | 1.96e-05 | 1.000001 | 39.4 ms | PASS |
 | GCP | TPU v5e | 1.91e-05 | 1.000001 | 139.9 ms (CPU) | PASS |
 | GCP | T4 | 2.67e-05 | 1.000001 | 48.8 ms | PASS |
-| AWS Trainium | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
-| AWS Inferentia2 | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
+| AWS Trainium† | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
+| AWS Inferentia2† | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
+
+> **† CPU fallback — not real accelerator validation.**
+> NeuronX SDK compilation (`torch_neuronx.trace()`) requires a quota-enabled
+> `trn1` or `inf2` instance with the AWS Neuron SDK pre-installed. The validation
+> runs fell back to CPU execution when compilation failed, producing
+> `max_diff = 0.00e+00` (CPU-vs-CPU, not accelerator-vs-CPU). The "(CPU)" latency
+> annotation in the table reflects this. Real NeuronX accelerator validation is
+> pending AWS Trainium quota approval. The backend code (`trainium_backend.py`,
+> `neuron_compiler.py`) is implemented and exercised in unit tests; accelerator
+> execution requires instance access.
 
 ### Validation Thresholds
 
