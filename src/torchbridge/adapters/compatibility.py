@@ -181,7 +181,8 @@ class AdapterCompatibilityMatrix:
         arch_map = _BACKEND_METHODS.get(backend)
         if arch_map is None:
             logger.warning(
-                "Unknown backend %s, falling back to LORA", backend.value
+                "Unknown backend %s, falling back to LORA",
+                backend.value if hasattr(backend, "value") else backend,
             )
             return [AdapterMethod.LORA]
 

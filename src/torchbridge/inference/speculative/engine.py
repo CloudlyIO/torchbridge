@@ -300,7 +300,7 @@ class SpeculationEngine:
             "requested_method": (
                 self._config.method.value if self._config.method else "auto"
             ),
-            "backend": self._backend.value,
+            "backend": self._backend.value if hasattr(self._backend, "value") else self._backend,
             "architecture": (
                 self._architecture.value if self._architecture else None
             ),
