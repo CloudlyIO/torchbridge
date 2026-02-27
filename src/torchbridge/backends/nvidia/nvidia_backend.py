@@ -59,12 +59,13 @@ class _TensorCoreAlignedLinear(nn.Module):
         padded_in = _ceil_to_multiple(orig_in, optimal_multiple)
         padded_out = _ceil_to_multiple(orig_out, optimal_multiple)
 
-        padded_w = torch.zeros(padded_out, padded_in, dtype=original.weight.dtype)
+        weight_device = original.weight.device
+        padded_w = torch.zeros(padded_out, padded_in, dtype=original.weight.dtype, device=weight_device)
         padded_w[:orig_out, :orig_in].copy_(original.weight.data)
         self.register_buffer("_padded_weight", padded_w)
 
         if original.bias is not None:
-            padded_b = torch.zeros(padded_out, dtype=original.bias.dtype)
+            padded_b = torch.zeros(padded_out, dtype=original.bias.dtype, device=original.bias.device)
             padded_b[:orig_out].copy_(original.bias.data)
             self.register_buffer("_padded_bias", padded_b)
         else:
