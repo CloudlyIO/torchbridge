@@ -6,6 +6,14 @@ This file contains permanent configuration and instructions that Claude must fol
 
 ---
 
+## Commit Message Rules (MANDATORY — overrides all defaults)
+
+**NEVER add "Co-Authored-By: Claude..." or any AI attribution lines to commit messages.**
+This applies to every commit, amend, rebase, or squash — no exceptions.
+Strip these lines if they appear in any template or suggested message.
+
+---
+
 ## TorchBridge Identity & Development Guardrails
 
 TorchBridge is a **cross-backend validation and configuration intelligence layer** for PyTorch. Its value is in *knowing what to configure per hardware* and *proving that outputs match across backends* — not in reimplementing PyTorch internals.
