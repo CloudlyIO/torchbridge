@@ -107,7 +107,7 @@ jobs:
           PYEOF
 
       - name: Upload CPU results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cpu-baseline-results
           path: results/
@@ -213,7 +213,7 @@ jobs:
           PYEOF
 
       - name: Upload CUDA results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cuda-validation-results
@@ -320,7 +320,7 @@ jobs:
           PYEOF
 
       - name: Upload ROCm results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: rocm-validation-results
@@ -339,7 +339,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
         continue-on-error: true
@@ -396,7 +396,7 @@ jobs:
         run: cat VALIDATION_SUMMARY.md >> $GITHUB_STEP_SUMMARY
 
       - name: Upload summary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: validation-summary
           path: VALIDATION_SUMMARY.md

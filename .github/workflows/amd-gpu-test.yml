@@ -99,7 +99,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload test results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: amd-gpu-test-results
@@ -144,7 +144,7 @@ jobs:
             --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-amd.csv
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: benchmark-results-amd
@@ -186,14 +186,14 @@ jobs:
     if: always()
     steps:
       - name: Download test results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: amd-gpu-test-results
           path: results/
         continue-on-error: true
 
       - name: Download benchmark results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: benchmark-results-amd
           path: benchmarks/
