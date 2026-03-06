@@ -8,6 +8,34 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.46] - 2026-03-06 - Architecture Guard Patch
+
+### **Summary**
+
+Fresh-hardware validation run (2026-03-05) across AWS A10G, AMD MI300X, GCP T4, and
+RunPod H100 NVL confirmed one product bug in PyPI v0.5.45: `SpeculationEngine.get_info()`
+crashes with `AttributeError` when `architecture` is a plain string. The fix existed in
+local source but was not committed before the v0.5.45 PyPI build. This patch ships it.
+
+### **Bug Fix**
+
+- **`SpeculationEngine.get_info()` crash on string architecture**
+  (`inference/speculative/engine.py` line 305): `self._architecture.value` raised
+  `AttributeError: 'str' object has no attribute 'value'` when `architecture` was
+  passed as a plain string (e.g. `"ampere"`) rather than the `NVIDIAArchitecture` enum.
+  Fix: `architecture.value if hasattr(architecture, "value") else architecture`.
+  The backend guard added in v0.5.45 was correct; only the architecture guard was missing.
+
+### **Validation**
+
+Confirmed FAIL on all 4 GPU platforms with PyPI v0.5.45. Confirmed PASS with this fix.
+Full manual test suite: 15/15 CLI commands, 12/12 Python API checks, Qwen3-0.6B
+cross-backend validation on all platforms — all pass except R1 (this bug, now fixed).
+
+### **No new features — patch release only.**
+
+---
+
 ## [0.5.45] - 2026-02-27 - User Testing Run: 3 API Bugs Fixed
 
 ### **Summary**

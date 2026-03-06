@@ -135,11 +135,38 @@ class TestNVIDIABackend:
         assert 'reserved' in stats
 
     def test_optimize_for_tensor_cores(self):
-        """Test Tensor Core optimization."""
+        """_optimize_for_tensor_cores replaces child Linear layers with _TensorCoreAlignedLinear."""
+        from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
         backend = NVIDIABackend()
-        model = nn.Linear(10, 10)  # Not optimal dimensions
+        # Must be a container — bare nn.Linear has no named_children() to iterate
+        model = nn.Sequential(nn.Linear(10, 10))
+        model.eval()
         optimized = backend._optimize_for_tensor_cores(model)
         assert optimized is not None
+        child = list(optimized.children())[0]
+        assert isinstance(child, _TensorCoreAlignedLinear)
+        assert child.padded_in >= 10
+        assert child.padded_out >= 10
+
+    def test_tensor_core_aligned_linear_cpu_preserves_device(self):
+        """Regression v0.5.45: _TensorCoreAlignedLinear must keep buffers on CPU when source is CPU."""
+        from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
+        linear = nn.Linear(127, 63)
+        aligned = _TensorCoreAlignedLinear(linear, optimal_multiple=16)
+        assert aligned._padded_weight.device.type == "cpu"
+        out = aligned(torch.randn(4, 127))
+        assert out.shape == (4, 63)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_tensor_core_aligned_linear_cuda_preserves_device(self):
+        """Regression v0.5.45: _TensorCoreAlignedLinear must keep buffers on CUDA when source is CUDA."""
+        from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
+        linear = nn.Linear(1023, 511).cuda()
+        aligned = _TensorCoreAlignedLinear(linear, optimal_multiple=16)
+        assert aligned._padded_weight.device.type == "cuda"
+        x = torch.randn(4, 1023, device="cuda")
+        out = aligned(x)
+        assert out.shape == (4, 511)
 
     def test_backend_with_custom_config(self):
         """Test backend with custom configuration."""
