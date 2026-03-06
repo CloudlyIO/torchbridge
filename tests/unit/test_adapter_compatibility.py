@@ -109,6 +109,17 @@ class TestGetFallbackChain:
         )
         assert AdapterMethod.QLORA not in chain2
 
+    def test_get_fallback_chain_unknown_string_backend_does_not_crash(self):
+        """Regression v0.5.45: get_fallback_chain() must log warning and return [LORA], not crash."""
+        chain = AdapterCompatibilityMatrix.get_fallback_chain("unknown_string_backend")
+        assert len(chain) >= 1
+        assert chain[0] == AdapterMethod.LORA
+
+    def test_get_optimal_unknown_string_backend_does_not_crash(self):
+        """Regression v0.5.45: get_optimal() must return LORA fallback, not crash."""
+        result = AdapterCompatibilityMatrix.get_optimal("unknown_string_backend")
+        assert result == AdapterMethod.LORA
+
 
 class TestGetBaseQuantFormat:
     """Tests for base quantization format selection."""
