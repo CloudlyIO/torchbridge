@@ -179,6 +179,23 @@ class TestSpeculationEngine:
         assert info["resolved_method"] == "prompt_lookup"
         assert info["requested_method"] == "prompt_lookup"
 
+    def test_get_info_with_string_backend_does_not_crash(self):
+        """Regression v0.5.45: get_info() must not crash when backend is a plain string."""
+        engine = SpeculationEngine(backend="cuda", architecture="ampere")
+        info = engine.get_info()  # was: AttributeError: 'str' object has no attribute 'value'
+        assert isinstance(info["backend"], str)
+        assert "resolved_method" in info
+
+    def test_get_info_backend_always_returns_string(self):
+        """get_info() 'backend' field is always a plain string, never an enum object."""
+        engine = SpeculationEngine(
+            backend=HardwareBackend.CUDA,
+            architecture=NVIDIAArchitecture.AMPERE,
+        )
+        info = engine.get_info()
+        assert isinstance(info["backend"], str)
+        assert info["backend"] == "cuda"
+
     def test_none_method_disabled(self):
         """Explicitly setting NONE method means no speculation."""
         config = SpeculationConfig(method=SpeculativeMethod.NONE, enabled=True)

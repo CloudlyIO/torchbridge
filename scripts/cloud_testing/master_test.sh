@@ -10,7 +10,7 @@
 # - GCP TPU (v5e/v5p pods)
 #
 # Usage:
-#   ./v046_master_test.sh [platform] [options]
+#   ./master_test.sh [platform] [options]
 #
 # Platforms: aws-nvidia, aws-amd, gcp-nvidia, gcp-tpu, local, all
 #

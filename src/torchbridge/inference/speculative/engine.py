@@ -302,7 +302,7 @@ class SpeculationEngine:
             ),
             "backend": self._backend.value if hasattr(self._backend, "value") else self._backend,
             "architecture": (
-                self._architecture.value if self._architecture else None
+                self._architecture.value if hasattr(self._architecture, "value") else self._architecture
             ),
             "enabled": self._config.enabled,
             "num_speculative_tokens": self._config.num_speculative_tokens,
