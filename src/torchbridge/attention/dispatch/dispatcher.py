@@ -32,7 +32,6 @@ _KERNEL_REGISTRY_MAP: dict[AttentionKernelType, str] = {
     AttentionKernelType.FLASH_ATTENTION_3: "flash_attention3",
     AttentionKernelType.FLASH_ATTENTION_2: "flash_attention2",
     AttentionKernelType.FLASH_ATTENTION_CK: "flash_attention2",  # CK uses same interface
-    AttentionKernelType.TRITON_ATTENTION: "memory_efficient_attention",
     AttentionKernelType.NEURONX_SDPA: "memory_efficient_attention",
     AttentionKernelType.PALLAS_ATTENTION: "memory_efficient_attention",
     AttentionKernelType.PYTORCH_SDPA: "memory_efficient_attention",
@@ -213,9 +212,6 @@ class AttentionDispatcher:
         if kernel_type == AttentionKernelType.FLASH_ATTENTION_CK:
             return self._check_flash_attention_ck()
 
-        if kernel_type == AttentionKernelType.TRITON_ATTENTION:
-            return self._check_triton()
-
         if kernel_type == AttentionKernelType.NEURONX_SDPA:
             return self._check_neuronx()
 
@@ -256,15 +252,6 @@ class AttentionDispatcher:
 
             # CK kernels only activate on ROCm (torch.version.hip is set)
             return getattr(torch.version, "hip", None) is not None
-        except (ImportError, ModuleNotFoundError):
-            return False
-
-    @staticmethod
-    def _check_triton() -> bool:
-        try:
-            import triton  # noqa: F401
-
-            return True
         except (ImportError, ModuleNotFoundError):
             return False
 

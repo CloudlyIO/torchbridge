@@ -8,7 +8,7 @@ when torch.distributed is not initialized, and maps config values correctly.
 import pytest
 
 from torchbridge.core.config import HardwareBackend, NVIDIAArchitecture
-from torchbridge.distributed.fsdp2 import (
+from torchbridge.distributed.fsdp import (
     FSDPConfig,
     FSDPManager,
     MixedPrecisionChoice,

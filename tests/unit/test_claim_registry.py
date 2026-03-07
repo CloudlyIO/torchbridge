@@ -17,7 +17,6 @@ from torchbridge.benchmarks.claim_registry import (
     build_claim_suite,
     build_quantization_speedup_benchmark,
     build_tensor_core_alignment_benchmark,
-    build_tunableop_benchmark,
     get_all_claim_benchmarks,
 )
 
@@ -44,10 +43,10 @@ class TestRegistryFunctions:
         benchmarks = get_all_claim_benchmarks()
         assert isinstance(benchmarks, list)
 
-    def test_get_all_returns_five(self):
-        """Should have exactly 5 registered claims."""
+    def test_get_all_returns_four(self):
+        """Should have exactly 4 registered claims."""
         benchmarks = get_all_claim_benchmarks()
-        assert len(benchmarks) == 5
+        assert len(benchmarks) == 4
 
     def test_all_are_claim_benchmarks(self):
         """All returned items should be ClaimBenchmark instances."""
@@ -65,7 +64,7 @@ class TestRegistryFunctions:
         """build_claim_suite should return a BenchmarkSuite."""
         suite = build_claim_suite()
         assert isinstance(suite, BenchmarkSuite)
-        assert len(suite.benchmarks) == 5
+        assert len(suite.benchmarks) == 4
 
 
 class TestTensorCoreAlignmentBenchmark:
@@ -157,23 +156,3 @@ class TestQuantizationSpeedupBenchmark:
             assert result.runs > 0
 
 
-class TestTunableOpBenchmark:
-    """Tests for AMD TunableOp claim."""
-
-    def test_builds_without_error(self):
-        """Should build successfully."""
-        bench = build_tunableop_benchmark()
-        assert bench.name == "amd_tunableop"
-
-    def test_requires_rocm(self):
-        """Should require ROCm backend."""
-        bench = build_tunableop_benchmark()
-        assert bench.requires_backend == "rocm"
-
-    def test_skipped_on_cpu(self):
-        """Should be skipped when run via suite on CPU."""
-        suite = BenchmarkSuite()
-        suite.add(build_tunableop_benchmark())
-        report = suite.run_all(device="cpu")
-        assert report.results[0].runs == 0
-        assert "SKIPPED" in report.results[0].notes[0]

@@ -14,7 +14,6 @@ class TestAttentionKernelType:
             "FLASH_ATTENTION_3",
             "FLASH_ATTENTION_2",
             "FLASH_ATTENTION_CK",
-            "TRITON_ATTENTION",
             "NEURONX_SDPA",
             "PALLAS_ATTENTION",
             "PYTORCH_SDPA",
@@ -23,14 +22,13 @@ class TestAttentionKernelType:
         assert actual == expected
 
     def test_kernel_type_count(self):
-        assert len(AttentionKernelType) == 8
+        assert len(AttentionKernelType) == 7
 
     def test_string_values(self):
         assert AttentionKernelType.FLEX_ATTENTION.value == "flex_attention"
         assert AttentionKernelType.FLASH_ATTENTION_3.value == "flash_attention_3"
         assert AttentionKernelType.FLASH_ATTENTION_2.value == "flash_attention_2"
         assert AttentionKernelType.FLASH_ATTENTION_CK.value == "flash_attention_ck"
-        assert AttentionKernelType.TRITON_ATTENTION.value == "triton_attention"
         assert AttentionKernelType.NEURONX_SDPA.value == "neuronx_sdpa"
         assert AttentionKernelType.PALLAS_ATTENTION.value == "pallas_attention"
         assert AttentionKernelType.PYTORCH_SDPA.value == "pytorch_sdpa"
