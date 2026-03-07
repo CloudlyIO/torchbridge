@@ -171,13 +171,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from torchbridge import TorchBridgeConfig, get_config
-from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
-
-
-def detect_best_backend():
-    """Detect the best available backend."""
-    hal = HardwareAbstractionLayer()
-    return hal
 
 
 def build_model(hidden_size: int = 768, num_layers: int = 6):
@@ -197,7 +190,6 @@ def main():
     config = TorchBridgeConfig.for_training()
 
     # Hardware detection
-    hal = detect_best_backend()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {{device}}")
 
@@ -252,13 +244,6 @@ import torch
 import torch.nn as nn
 
 from torchbridge import TorchBridgeConfig
-from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
-
-
-def detect_best_backend():
-    """Detect the best available backend."""
-    hal = HardwareAbstractionLayer()
-    return hal
 
 
 def load_model(model_path: str, device: torch.device) -> nn.Module:

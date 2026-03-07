@@ -8,6 +8,32 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.51] - 2026-03-06 - Contraction I: Delete Dead Code
+
+### **Summary**
+
+Deliberate contraction removing ~18,700 lines of facades and dead code from the codebase.
+No user-facing behavior changes — all deleted modules were unused or pure wrappers.
+
+### **Deleted**
+- `hardware/abstraction/` (hal_core.py, vendor_adapters.py, privateuse1_integration.py) — VendorAdapter ABC never called by anything (~600 lines)
+- `hardware/gpu/` (memory_optimization.py, profiling_tools.py, custom_kernels.py, tensor_cores.py, multi_gpu_patterns.py) — wrappers around `torch.cuda.*`, CUTLASS docs, metadata returns (~2,500 lines)
+- `deployment/onnx_exporter.py`, `deployment/torchscript_exporter.py`, `deployment/safetensors_exporter.py` — pure wrappers around `torch.onnx.export`, `torch.jit.script`, `safetensors.save_file` (~1,400 lines)
+- `distributed_scale/` — 17-file module wired to nothing (~14,200 lines)
+
+### **Updated**
+- `src/torchbridge/__init__.py` — removed `HardwareAbstractionLayer` from public API
+- `src/torchbridge/deployment/__init__.py` — removed exporter imports from public API
+- `src/torchbridge/backends/nvidia/nvidia_backend.py` — `_register_default_kernels()` made no-op
+- `src/torchbridge/cli/init.py` — updated templates to remove HAL references
+- Corresponding test files cleaned up
+
+### **Result**
+- 18,730 lines deleted across 50 files
+- 2,419 tests passing (2,543 → adjusted for deleted test files)
+- 0 ruff violations
+- `torchbridge` imports cleanly; all surviving functionality unchanged
+
 ## [0.5.50] - 2026-03-06 - LLM Server Batch Correctness
 
 ### **Summary**

@@ -68,9 +68,6 @@ from .core.config import (
 from .core.management import UnifiedManager, get_manager
 from .core.optimized_layers.activation_functions import FusedGELU
 
-# Hardware Abstraction
-from .hardware.abstraction.hal_core import HardwareAbstractionLayer
-
 # Mixture of Experts
 from .mixture_of_experts import (
     FeedForwardExpert,
@@ -113,9 +110,6 @@ __all__ = [
 
     # Memory
     "DeepOptimizerStates", "CPUGPUHybridOptimizer", "SelectiveGradientCheckpointing",
-
-    # Hardware
-    "HardwareAbstractionLayer",
 
     # Validation
     "UnifiedValidator",

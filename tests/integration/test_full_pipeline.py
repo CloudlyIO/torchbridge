@@ -277,21 +277,6 @@ class TestCLIIntegration:
 class TestDeploymentIntegration:
     """Test deployment module integration."""
 
-    def test_onnx_exporter_import(self):
-        """Test ONNX exporter can be imported."""
-        from torchbridge.deployment import ONNXExporter
-        assert ONNXExporter is not None
-
-    def test_torchscript_exporter_import(self):
-        """Test TorchScript exporter can be imported."""
-        from torchbridge.deployment import TorchScriptExporter
-        assert TorchScriptExporter is not None
-
-    def test_safetensors_exporter_import(self):
-        """Test SafeTensors exporter can be imported."""
-        from torchbridge.deployment import SafeTensorsExporter
-        assert SafeTensorsExporter is not None
-
     def test_production_validator_import(self):
         """Test production validator can be imported."""
         from torchbridge.deployment import ProductionValidator
@@ -327,14 +312,6 @@ class TestBackendIntegration:
         from torchbridge.backends.tpu import TPUAdapter, TPUBackend
         assert TPUBackend is not None
         assert TPUAdapter is not None
-
-    def test_hal_import(self):
-        """Test Hardware Abstraction Layer can be imported."""
-        from torchbridge.hardware.abstraction.hal_core import (
-            HardwareAbstractionLayer,
-        )
-        assert HardwareAbstractionLayer is not None
-
 
 class TestDistributedIntegration:
     """Test distributed training integration."""

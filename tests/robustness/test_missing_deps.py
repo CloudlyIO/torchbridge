@@ -134,12 +134,6 @@ class TestMissingOptionalDeps:
             out = moe(x)
         assert out.shape == (1, 4, 64)
 
-    def test_hal_without_cuda(self):
-        """HardwareAbstractionLayer works on CPU-only systems."""
-        from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
-        hal = HardwareAbstractionLayer()
-        assert isinstance(hal, HardwareAbstractionLayer)
-
     def test_config_without_optional_deps(self):
         """Configuration system works without optional deps."""
         import torchbridge
