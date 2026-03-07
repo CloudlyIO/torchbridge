@@ -15,7 +15,7 @@ class QuantizationFormat(Enum):
     """Internal quantization formats for dispatch."""
     NONE = "none"
     INT8_DYNAMIC = "int8_dynamic"
-    INT8_SMOOTHQUANT = "int8_smoothquant"
+    INT8_DYNAMIC_ACTIVATIONS = "int8_dynamic_activations"
     INT4_WEIGHT_ONLY = "int4_weight_only"
     FP8_E4M3 = "fp8_e4m3"
     FP8_E5M2 = "fp8_e5m2"
@@ -72,12 +72,12 @@ FORMAT_SPECS: dict[QuantizationFormat, FormatSpec] = {
         requires_calibration=False,
         requires_torchao=False,
     ),
-    QuantizationFormat.INT8_SMOOTHQUANT: FormatSpec(
+    QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS: FormatSpec(
         bits=8,
-        display_name="INT8 SmoothQuant",
+        display_name="INT8 Dynamic Activations",
         perplexity_tolerance_pct=1.0,
         memory_reduction_pct=50.0,
-        requires_calibration=True,
+        requires_calibration=False,
         requires_torchao=True,
     ),
     QuantizationFormat.INT4_WEIGHT_ONLY: FormatSpec(
