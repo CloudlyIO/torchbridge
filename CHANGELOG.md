@@ -8,6 +8,57 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.53] - 2026-03-07 - Honest Labeling + PyPI Refresh
+
+### **Summary**
+
+Honest labeling sweep: module docstrings now accurately describe what TorchBridge
+adds vs. what upstream libraries (torchao, PyTorch DCP, PyTorch SDPA) provide.
+Dead export CLI deleted. All docs updated to remove references to deleted APIs.
+README rewritten to lead with validation identity. PyPI published.
+
+### **Changed (docstrings — honesty, no behavior change)**
+
+- `precision/quantization/engine.py` — "dispatches to torchao; TorchBridge adds
+  matrix selection and fallback chain"
+- `checkpoint/manager.py` — "thin DCP wrapper; TorchBridge adds cross-backend
+  metadata and rotation"
+- `attention/dispatch/dispatcher.py` — "compatibility matrix; PyTorch SDPA handles
+  runtime dispatch"
+- `inference/speculative/engine.py` — explicit note that EAGLE/MEDUSA/LAYER_SKIP
+  raise NotImplementedError (excluded from matrix under normal usage)
+- `distributed/config.py` — "config advisor; TorchBridge does not implement
+  distributed training itself"
+- `deployment/__init__.py` — removed references to deleted export functions
+
+### **Deleted**
+
+- `src/torchbridge/deployment/export_cli.py` — dead code; `tb-export` entry point
+  was removed in v0.5.52 but this file was missed
+
+### **Docs**
+
+- `README.md` — rewritten to lead with validation identity and hero command
+  (`tb-validate --compare cuda cpu`); added "What TorchBridge Is NOT"; fixed test
+  badge count (2,605 → 2,223); removed stale project structure entries; removed
+  open-source GitHub URL
+- `docs/guides/deployment.md` — replaced deleted export functions with PyTorch
+  native APIs; replaced deleted monitoring APIs with stdlib logging
+- `docs/getting_started/quickstart.md` — replaced deleted export section; replaced
+  `torchbridge optimize` CLI with `tb-validate`/`tb-benchmark`
+- `docs/guides/cli.md` — removed `torchbridge optimize` and `torchbridge export`
+  sections; replaced workflow example with cross-backend validation flow
+- `docs/guides/performance-tuning.md` — replaced `torchbridge optimize` CLI
+  references with TorchBridgeConfig + `tb-advisor`
+- `docs/getting_started/troubleshooting.md` — replaced deleted
+  `SelectiveGradientCheckpointing` with PyTorch native `torch.utils.checkpoint`
+
+### **PyPI**
+
+- Published `torchbridge-ml==0.5.53` (closes 7-version staleness gap since v0.5.46)
+
+---
+
 ## [0.5.52] - 2026-03-06 - Contraction II: Ruthless Cleanup
 
 ### **Summary**

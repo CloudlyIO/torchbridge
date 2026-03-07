@@ -1,9 +1,11 @@
 """
-Unified Distributed Training Configuration
+Distributed Training Configuration Advisor
 
-Single config for all distributed settings: FSDP, pipeline parallelism,
-collective backend, and topology. Includes auto-configuration from model
-size, backend, and world size.
+Generates FSDP, pipeline parallelism, and collective backend configs from
+detected topology. TorchBridge adds the hardware-aware config selection and
+fallback chain; the actual distributed training is handled by PyTorch
+Distributed. Use the returned config objects with PyTorch's native distributed
+primitives — TorchBridge does not implement distributed training itself.
 """
 
 from __future__ import annotations

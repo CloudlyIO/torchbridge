@@ -1,42 +1,8 @@
 # CLI Reference
 
-TorchBridge provides command-line tools for optimization, benchmarking, and diagnostics.
+TorchBridge provides command-line tools for validation, benchmarking, and diagnostics.
 
 ## Commands
-
-### `torchbridge optimize`
-
-Optimize a saved PyTorch model.
-
-```bash
-torchbridge optimize --model model.pt --output optimized.pt --level production
-```
-
-**Options:**
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--output`, `-o` | Output path for optimized model | auto-generated |
-| `--level` | Optimization level: `basic`, `jit`, `compile`, `triton`, `production` | `compile` |
-| `--hardware` | Target hardware: `auto`, `cpu`, `cuda`, `mps` | `auto` |
-| `--input-shape` | Input tensor shape (e.g., `1,3,224,224`) | inferred |
-| `--benchmark` | Run performance benchmark after optimization | false |
-| `--validate` | Validate optimization correctness | false |
-| `--trust-source` | Allow loading untrusted model files (pickle deserialization) | false |
-| `--verbose`, `-v` | Enable verbose output | false |
-
-**Examples:**
-
-```bash
-# Compile-level optimization (default)
-torchbridge optimize --model model.pt --level compile
-
-# Production optimization with benchmarking
-torchbridge optimize --model model.pt --level production --benchmark
-
-# JIT optimization with custom input shape
-torchbridge optimize --model model.pt --level jit --input-shape 1,3,224,224
-```
 
 ### `torchbridge benchmark`
 
@@ -121,23 +87,6 @@ tb-doctor --ci
 - GPU information (model, memory, compute capability)
 - Driver versions
 - TorchBridge version and configuration
-
-### `torchbridge export`
-
-Export a model to portable formats.
-
-```bash
-torchbridge export --model model.pt --format onnx --output model.onnx
-```
-
-**Options:**
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--format` | Export format: `torchscript`, `onnx`, `safetensors` | `torchscript` |
-| `--output` | Output path | auto |
-| `--input-shape` | Sample input shape for tracing | required |
-| `--opset` | ONNX opset version | `17` |
 
 ### `torchbridge profile`
 
@@ -270,20 +219,20 @@ tb-benchmark --predefined optimization --quick --output results.json
 tb-benchmark --predefined optimization --compare-baseline results.json
 ```
 
-### Model Optimization Workflow
+### Cross-Backend Validation Workflow
 
 ```bash
-# 1. Benchmark baseline
-torchbridge benchmark --model model.pt --output baseline.json
+# 1. Validate outputs match across backends
+tb-validate --compare cuda cpu --model model.pt --per-layer
 
-# 2. Optimize
-torchbridge optimize --model model.pt --level production --output optimized.pt
+# 2. Get hardware configuration recommendation
+tb-advisor
 
-# 3. Benchmark optimized
-torchbridge benchmark --model optimized.pt --output optimized.json
+# 3. Profile the model
+tb-profile --model model.pt --input-shape 1,128
 
-# 4. Export
-torchbridge export --model optimized.pt --format onnx --input-shape 1,128
+# 4. Benchmark
+tb-benchmark --model model.pt --output results.json
 ```
 
 ## See Also

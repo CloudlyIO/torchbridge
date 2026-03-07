@@ -94,29 +94,32 @@ print(f"Passed: {results.passed}/{results.total_tests}")
 
 ## Model Export
 
-Export to portable formats for deployment:
+Use PyTorch's native APIs to export your model:
 
 ```python
-from torchbridge.deployment import export_to_torchscript, export_to_onnx, export_to_safetensors
+import torch
 
 sample = torch.randn(1, 768)
 
-export_to_torchscript(model, "model.pt", sample_input=sample)
-export_to_onnx(model, "model.onnx", sample_input=sample, opset_version=17)
-export_to_safetensors(model, "model.safetensors")
+# TorchScript
+traced = torch.jit.trace(model, sample)
+traced.save("model.pt")
+
+# ONNX
+torch.onnx.export(model, sample, "model.onnx", opset_version=17)
 ```
 
 ## CLI Tools
 
 ```bash
 # System diagnostics
-torchbridge doctor
+tb-doctor
 
-# Optimize a saved model
-torchbridge optimize --model model.pt --level production
+# Cross-backend validation
+tb-validate --compare cuda cpu --model model.pt
 
 # Benchmark
-torchbridge benchmark --model model.pt --batch-sizes 1,8,32
+tb-benchmark --predefined optimization --quick
 ```
 
 ## Common Pitfalls

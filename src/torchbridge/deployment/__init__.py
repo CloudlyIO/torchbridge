@@ -1,40 +1,17 @@
 """
 Model Deployment Module for TorchBridge
 
-This module provides export and serving functionality for deploying HAL-managed
-PyTorch models to various formats and inference platforms.
+Provides serving infrastructure for cross-backend validation demos and
+production readiness checks. For model export (ONNX, TorchScript, safetensors),
+use PyTorch's native APIs directly — TorchBridge does not wrap them.
 
 Key Components:
-- ONNX Export: Export models to ONNX format with backend metadata
-- TorchScript Export: Export models to TorchScript (trace/script) format
-- Backend Metadata: Schema for preserving hardware abstraction information
-- Inference Serving: TorchServe, Triton, and FastAPI integrations
+- Production validation: readiness checks before deployment
+- Backend metadata: schema for preserving hardware configuration information
+- Inference serving: FastAPI, TorchServe, and Triton integrations
 
 Example:
     ```python
-    from torchbridge.deployment import (
-        ONNXExporter,
-        TorchScriptExporter,
-        export_to_onnx,
-        export_to_torchscript
-    )
-
-    # ONNX export
-    result = export_to_onnx(
-        model=optimized_model,
-        output_path="model.onnx",
-        sample_input=torch.randn(1, 512)
-    )
-
-    # TorchScript export
-    result = export_to_torchscript(
-        model=optimized_model,
-        output_path="model.pt",
-        sample_input=torch.randn(1, 512),
-        method="trace"
-    )
-
-    # FastAPI inference server
     from torchbridge.deployment.serving import create_fastapi_server
     server = create_fastapi_server(model, model_name="my_model")
     ```

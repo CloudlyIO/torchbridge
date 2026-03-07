@@ -1,53 +1,42 @@
 # TorchBridge
 
-**Your PyTorch code is locked to one GPU vendor.** CUDA calls, NCCL hardcoding, vendor-specific precision tricks -- they break the moment you switch hardware. TorchBridge is a cross-backend validation and configuration intelligence layer for PyTorch: it **validates that outputs match across backends** and generates optimal configurations for NVIDIA, AMD, Trainium, and TPU hardware.
+TorchBridge **validates that your model produces correct outputs across PyTorch backends** and recommends optimal hardware configurations. It answers two questions no other tool answers in a single command:
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-2%2C605%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-8%20validated%2C%206%20GPU-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+1. **"Does my model produce correct outputs across backends?"** — Run it on CUDA and ROCm and get max_diff, cosine_sim, per-layer divergence, pass/fail against empirical tolerances.
+2. **"What's the optimal configuration for my model on this hardware?"** — Compatibility matrices that translate `(backend, architecture) → format/kernel/method` with fallback chains.
 
-## What is TorchBridge?
-
-PyTorch lets you build models. TorchBridge lets you run them **anywhere**.
-
-Most teams write hardware-specific code -- CUDA calls for NVIDIA, ROCm setup for AMD, NeuronX setup for Trainium, XLA boilerplate for TPU. When the hardware changes, the code breaks. TorchBridge eliminates that problem with a **unified API** that detects your hardware and adapts automatically.
-
-```
-Your model code
-      |
-  TorchBridge
-      |
-  +---------+---------+-----------+---------+
-  | NVIDIA  |   AMD   | Trainium  |   TPU   |
-  | CUDA    |  ROCm   |  NeuronX  |   XLA   |
-  +---------+---------+-----------+---------+
-```
-
-**What it does:**
-- **Backend detection** -- automatically identifies available accelerators
-- **Vendor adapters** -- translates unified API calls to vendor-specific operations
-- **Precision management** -- handles FP32/FP16/BF16/FP8 across backends with compatibility matrices
-- **Quantization** -- backend-aware format selection with automatic fallback chains
-- **Attention dispatch** -- selects the best attention kernel (FlexAttention, Flash, Triton, etc.) per hardware
-- **Checkpoint portability** -- save on one backend, load on another with dtype normalization
-- **Distributed config** -- generates FSDP, pipeline, and collective configs from detected topology
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-2%2C223%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-8%20validated%2C%206%20GPU-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## Quick Start
 
 ```bash
 pip install torchbridge-ml
-
-# Verify
-python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
 ```
 
-For development:
+### Cross-Backend Validation (the hero command)
 
 ```bash
-git clone https://github.com/CloudlyIO/torchbridge.git
-cd torchbridge
-pip install -e ".[dev]"
+# Compare CUDA vs CPU outputs for your model
+tb-validate --compare cuda cpu --model ./model.pt
+
+# Per-layer divergence report
+tb-validate --compare cuda cpu --model ./model.pt --per-layer
+
+# CI mode — exits non-zero if max_diff exceeds tolerance
+tb-validate --compare cuda cpu --model ./model.pt --ci
 ```
 
-### Detect Hardware
+### Hardware Configuration Advisor
+
+```bash
+# What's the optimal config for this hardware?
+tb-advisor
+
+# Doctor — diagnose your hardware setup
+tb-doctor
+```
+
+### Python API
 
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
@@ -57,33 +46,31 @@ backend = BackendFactory.create(backend_type)
 print(backend.get_device_info())
 ```
 
-### Run on Any Backend
-
 ```python
-import torch
-from torchbridge import TorchBridgeConfig, UnifiedManager
-
-config = TorchBridgeConfig.for_training()
-manager = UnifiedManager(config)
-
-model = torch.nn.Sequential(
-    torch.nn.Linear(768, 3072),
-    torch.nn.GELU(),
-    torch.nn.Linear(3072, 768),
-)
-
-optimized_model = manager.optimize(model)
-```
-
-### Validate
-
-```python
+# Cross-backend validation
 from torchbridge import UnifiedValidator
 
 validator = UnifiedValidator()
-results = validator.validate_model(optimized_model, input_shape=(1, 768))
+results = validator.validate_model(model, input_shape=(1, 768))
 print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 ```
+
+## What TorchBridge Does
+
+| Capability | What TorchBridge adds |
+|------------|----------------------|
+| **Cross-backend validation** | Per-layer divergence tracing, empirical tolerance DB, pass/fail against cloud-validated thresholds |
+| **Compatibility matrices** | 110+ empirically-sourced entries: `(backend, architecture) → optimal quant format / attention kernel / adapter method` |
+| **Backend detection** | Hardware identification, capability queries, priority chain across NVIDIA/AMD/Trainium/TPU/CPU |
+| **Configuration generation** | FSDP sharding strategy, attention kernel selection, quantization format — from matrices, not hardcoded |
+| **CLI diagnostics** | `tb-doctor`, `tb-validate`, `tb-advisor`, `tb-quantize` |
+
+## What TorchBridge Is NOT
+
+- **Not a quantization library** — dispatches format selection to torchao; TorchBridge adds the compatibility matrix
+- **Not a serving runtime** — the inference server is a validation demo, not a production serving replacement for vLLM or TGI
+- **Not a training framework** — adapter math (LoRA/QLoRA) is correct and kept; use PEFT for full training workflows
+- **Not a PyTorch wrapper** — if a method body is `return torch.something(...)` with no selection logic, it doesn't belong here
 
 ## Supported Backends
 
@@ -96,96 +83,6 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 | **CPU** | x86, ARM (Apple Silicon) | FP32, BF16 | Fallback |
 
 See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
-
-## Key Features
-
-### Backend Detection and Adaptation
-Automatically identifies available hardware and selects the optimal backend. No code changes needed when moving between GPU vendors or cloud providers.
-
-### Vendor Adapters
-Each backend implements a common `BaseBackend` interface. Your code calls `manager.optimize(model)` and the correct vendor-specific operations execute underneath -- CUDA on NVIDIA, HIP on AMD, NeuronX on Trainium, XLA on TPU.
-
-### Precision Management
-Configure precision once. TorchBridge handles the details per backend -- FP8 on H100, BF16 where supported, FP16 as fallback. Mixed-precision training with `torch.amp` autocast works across all backends.
-
-### Checkpoint Portability
-Save a checkpoint on NVIDIA hardware, load it on AMD, Trainium, or TPU. TorchBridge handles device mapping, dtype normalization, and FP8-to-FP16 conversion via PyTorch Distributed Checkpoint (DCP).
-
-### Distributed Configuration
-Generates FSDP sharding strategies, pipeline schedules, and collective backend configs based on detected cluster topology. TorchBridge produces config objects that you pass to PyTorch's native distributed primitives -- it does not implement distributed training itself.
-
-## Code Examples
-
-### Backend-Agnostic Training
-
-```python
-import torch
-from torchbridge.backends import BackendFactory, detect_best_backend
-
-backend = BackendFactory.create(detect_best_backend())
-device = backend.device
-
-model = YourModel().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-
-# Use PyTorch native AMP -- works on any backend
-scaler = torch.amp.GradScaler(device.type)
-for inputs, targets in train_loader:
-    inputs, targets = inputs.to(device), targets.to(device)
-    with torch.amp.autocast(device.type):
-        loss = criterion(model(inputs), targets)
-    scaler.scale(loss).backward()
-    scaler.step(optimizer)
-    scaler.update()
-    optimizer.zero_grad()
-```
-
-### Hardware Capability Queries
-
-```python
-from torchbridge.backends.nvidia import NVIDIABackend
-
-nvidia = NVIDIABackend()
-print(nvidia.get_device_info())  # GPU model, compute capability, memory
-print(nvidia.supports_fp8())     # True on H100+
-```
-
-### Cross-Backend Model Export
-
-```python
-from torchbridge.deployment import export_to_torchscript, export_to_onnx, export_to_safetensors
-
-sample_input = torch.randn(1, 768)
-
-export_to_torchscript(model, output_path="model.pt", sample_input=sample_input)
-export_to_onnx(model, output_path="model.onnx", sample_input=sample_input)
-export_to_safetensors(model, output_path="model.safetensors")
-```
-
-## Project Structure
-
-```
-src/torchbridge/
-├── backends/          # Vendor-specific backend implementations
-│   ├── nvidia/        #   NVIDIA CUDA backend
-│   ├── amd/           #   AMD ROCm backend
-│   ├── trainium/      #   AWS Trainium/NeuronX backend
-│   └── tpu/           #   Google TPU/XLA backend
-├── hardware/          # Hardware detection and abstraction
-├── precision/         # FP8 training and precision management
-├── attention/         # Attention mechanisms (unified API)
-├── advanced_memory/   # Memory optimization strategies
-├── distributed_scale/ # Distributed training
-├── deployment/        # Model export and serving
-├── monitoring/        # Metrics, logging, health checks
-├── optimizations/     # Optimization patterns and strategies
-├── core/              # Core config, management, optimized layers
-├── cli/               # Command-line tools
-├── models/            # Model implementations
-├── mixture_of_experts/ # MoE layer support
-├── validation/        # Cross-backend validation
-└── utils/             # Utilities and profiling
-```
 
 ## Cloud Hardware Validation
 
@@ -202,34 +99,47 @@ Cross-backend numerical consistency validated on 8 platforms (6 real GPU/acceler
 | AWS Trainium† | Trn1.2xlarge (NeuronX) | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
 | AWS Inferentia2† | inf2.xlarge (NeuronX) | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
 
-† **CPU fallback:** NeuronX SDK compilation requires quota-enabled Trn1/Inf2 instances not available in the validation environment. These rows confirm correct CPU-path behavior (max_diff = 0.00e+00 is CPU-vs-CPU, not accelerator validation). Real NeuronX validation is pending quota approval.
+† **CPU fallback:** NeuronX SDK compilation requires quota-enabled Trn1/Inf2 instances not available in the validation environment. These rows confirm correct CPU-path behavior. Real NeuronX accelerator validation is pending quota approval.
 
 All GPU/accelerator backends produce semantically identical outputs (cosine similarity > 0.999).
 
 See [full validation report](./docs/reference/cloud-validation.md) for detailed benchmarks and results.
 
+## Project Structure
+
+```
+src/torchbridge/
+├── backends/          # Vendor-specific backend implementations
+│   ├── nvidia/        #   NVIDIA CUDA backend
+│   ├── amd/           #   AMD ROCm backend
+│   ├── trainium/      #   AWS Trainium/NeuronX backend
+│   └── tpu/           #   Google TPU/XLA backend
+├── precision/         # Quantization compatibility matrix + torchao dispatch
+├── attention/         # Attention kernel compatibility matrix + dispatcher
+├── distributed/       # FSDP/pipeline config advisor
+├── adapters/          # LoRA/QLoRA adapter injection (correct math)
+├── inference/         # Speculative decoding compatibility matrix
+├── checkpoint/        # DCP wrapper with cross-backend metadata
+├── testing/           # DivergenceTracer, ToleranceDB, @cross_backend
+├── deployment/        # Production validation + serving demo
+├── cli/               # Command-line tools
+├── models/            # LLM serving + KV cache
+├── mixture_of_experts/ # MoE layer support
+├── validation/        # Cross-backend validation framework
+└── utils/             # Utilities and profiling
+```
+
 ## Quality
 
-- **2,605 tests passing** (hardware-gated skips on non-GPU environments; 134 skipped on CPU-only)
+- **2,223 tests passing** (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
 - **Cloud validated** on 8 platforms (6 GPU-validated: A10G, T4, H100 NVL, MI300X, TPU v5e, MPS; 2 CPU-fallback†: Trainium, Inferentia2)
-- **Cross-platform** tested on macOS, Linux, AWS, GCP, AMD Developer Cloud, RunPod
 
 ```bash
 python3 -m pytest tests/ -q
 ruff check src/ tests/
 ```
-
-## Use Cases
-
-**Cross-vendor training** -- Train on NVIDIA in the cloud, fine-tune on AMD on-prem, deploy on Trainium or TPU. Same code throughout.
-
-**Cost optimization** -- Switch between cloud GPU types based on spot pricing without rewriting training scripts.
-
-**Hardware migration** -- Move from one GPU vendor to another without a code rewrite.
-
-**Research portability** -- Share models and training code that colleagues can run on whatever hardware they have.
 
 ## Documentation
 
@@ -242,10 +152,9 @@ ruff check src/ tests/
 | [Backend Selection](./docs/guides/backend-selection.md) | Choosing the right backend |
 | [Hardware Setup](./docs/guides/hardware-setup.md) | Driver and toolkit installation |
 | [Distributed Training](./docs/guides/distributed-training.md) | Multi-GPU and multi-node |
-| [Deployment](./docs/guides/deployment.md) | Export, serve, containerize |
+| [Deployment](./docs/guides/deployment.md) | Serving and containerization |
 | [CLI Reference](./docs/guides/cli.md) | Command-line tools |
 | [Hardware Matrix](./docs/reference/hardware-matrix.md) | Full hardware support table |
-| [Contributing](./CONTRIBUTING.md) | Development and contribution guide |
 | [Changelog](./CHANGELOG.md) | Version history |
 
 ## License

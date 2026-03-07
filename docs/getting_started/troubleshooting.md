@@ -83,7 +83,7 @@ backend.empty_cache()
 
 Mitigations:
 - Reduce batch size
-- Enable gradient checkpointing: `SelectiveGradientCheckpointing(model)`
+- Enable gradient checkpointing: `torch.utils.checkpoint.checkpoint_sequential(model, segments, input)`
 - Set memory fraction limit: `config.hardware.amd.memory_fraction = 0.9` (AMD) or reduce batch size (NVIDIA)
 
 ### FlashAttention Not Working
