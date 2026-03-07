@@ -109,7 +109,11 @@ _TPU_METHODS: dict[TPUVersion | None, list[AdapterMethod]] = {
     None: [AdapterMethod.LORA, AdapterMethod.DORA],
 }
 
-_CPU_METHODS: list[AdapterMethod] = [AdapterMethod.LORA, AdapterMethod.DORA]
+_CPU_METHODS: list[AdapterMethod] = [
+    AdapterMethod.LORA,
+    AdapterMethod.DORA,
+    AdapterMethod.QLORA,   # INT8 base on CPU (enables CPU-side unit testing)
+]
 
 # ── Base quantization format for QLoRA/QDoRA ──────────────────────────────────
 # Which quantization format to use for the base model when doing QLoRA/QDoRA.
@@ -117,9 +121,9 @@ _CPU_METHODS: list[AdapterMethod] = [AdapterMethod.LORA, AdapterMethod.DORA]
 _QLORA_BASE_FORMAT: dict[HardwareBackend, QuantizationFormat | None] = {
     HardwareBackend.CUDA: QuantizationFormat.INT4_WEIGHT_ONLY,
     HardwareBackend.AMD: QuantizationFormat.INT4_WEIGHT_ONLY,
+    HardwareBackend.CPU: QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,  # for testing
     HardwareBackend.TRAINIUM: None,  # QLoRA not supported
     HardwareBackend.TPU: None,       # QLoRA not supported
-    HardwareBackend.CPU: None,       # QLoRA not supported
 }
 
 # ── Top-level dispatch table ──────────────────────────────────────────────────

@@ -8,6 +8,59 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.48] - 2026-03-06 - QLoRA: Complete the Adapter System
+
+### **Summary**
+
+`AdapterMethod.QLORA` and `QDORA` were listed in the compatibility matrix as optimal
+on CUDA/AMD but silently produced plain `LoRALinear`/`DoRALinear`. `AdapterResult.base_quantized`
+was hardcoded `False`. This release wires the full quantized adapter path end-to-end.
+
+Practical impact: LoRA on a 7B model requires ~28GB VRAM. Real QLoRA with an INT4 base
+requires ~6–8GB — the difference between "requires A100" and "fits on a T4."
+
+### **Track 1 — `QLoRALinear` and `QDoRALinear` in `layers.py`**
+
+Added two new layer classes backed by torchao `quantize_()`:
+
+- **`QLoRALinear`**: quantizes `base_linear` in-place (INT4 on CUDA/AMD, INT8 on CPU)
+  before attaching adapter matrices. `forward()` is identical to `LoRALinear` — torchao
+  handles dequantization inside `base_linear(x)`. `merge()` raises `NotImplementedError`
+  (cannot merge into quantized weights).
+- **`QDoRALinear`**: captures FP32 column norms *before* quantization for `magnitude`
+  initialization. `forward()` dequantizes the base weight via `.dequantize()` for direction
+  computation, then applies DoRA decomposition. `merge()` raises `NotImplementedError`.
+- Both classes soft-gate on `_TORCHAO_AVAILABLE`; raising `RuntimeError` at construction
+  if torchao is absent.
+
+### **Track 2 — Wire engine in `engine.py`**
+
+- `_create_adapter_layer()` now dispatches: `QLORA → _create_qlora_layer`,
+  `QDORA → _create_qdora_layer`, `DORA → DoRALinear`, default `→ LoRALinear`.
+- `_create_qlora_layer()` / `_create_qdora_layer()`: query the compatibility matrix for
+  `quant_format`; fall back to plain LoRA/DoRA with a `logger.warning` if torchao is
+  unavailable or the backend has no format.
+- `inject()` now sets `AdapterResult.base_quantized=True` and `base_quant_format` when
+  `QLoRALinear`/`QDoRALinear` layers are created.
+- All `isinstance()` checks for adapter types updated to include the new classes.
+
+### **Track 3 — Compatibility matrix update in `compatibility.py`**
+
+- `_CPU_METHODS` now includes `AdapterMethod.QLORA` (INT8 base — enables CPU-side testing).
+- `_QLORA_BASE_FORMAT[CPU]` = `QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS`.
+
+### **Tests**
+
+- `tests/unit/test_adapter_layers.py`: `TestQLoRALinear` (5 tests), `TestQDoRALinear` (3 tests).
+  All guarded with `pytest.importorskip("torchao")`.
+- `tests/unit/test_adapter_engine.py`: `TestQLoRAInject` — `test_inject_qlora_cpu_sets_base_quantized`,
+  `test_inject_qlora_fallback_when_no_torchao` (monkeypatches `_TORCHAO_AVAILABLE=False`).
+- `tests/integration/test_adapter_pipeline.py`: `TestQLoRAIntegration` — inject+forward,
+  trainable ratio low.
+- `tests/unit/test_adapter_compatibility.py`: Updated 4 stale tests to reflect CPU-supports-QLORA.
+
+---
+
 ## [0.5.47] - 2026-03-06 - Integrity Sweep
 
 ### **Summary**

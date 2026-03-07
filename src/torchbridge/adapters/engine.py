@@ -16,10 +16,13 @@ import torch.nn as nn
 
 from torchbridge.core.config import HardwareBackend
 from torchbridge.precision.quantization.formats import QuantizationFormat
+from torchbridge.precision.quantization.torchao_integration import (
+    TORCHAO_AVAILABLE as _TORCHAO_AVAILABLE,
+)
 
 from .compatibility import AdapterCompatibilityMatrix, Architecture
 from .config import AdapterConfig, AdapterMethod
-from .layers import DoRALinear, LoRALinear
+from .layers import DoRALinear, LoRALinear, QDoRALinear, QLoRALinear
 from .model_families import ModelFamily, detect_model_family, get_target_modules
 
 logger = logging.getLogger(__name__)
@@ -180,7 +183,7 @@ class AdapterEngine:
         # Check for existing adapters (double injection guard)
         existing_adapters = sum(
             1 for _, m in model.named_modules()
-            if isinstance(m, (LoRALinear, DoRALinear))
+            if isinstance(m, (LoRALinear, DoRALinear, QLoRALinear, QDoRALinear))
         )
         if existing_adapters > 0:
             warnings_list.append(
@@ -192,6 +195,8 @@ class AdapterEngine:
         modules_adapted = 0
         has_linear = False
         replacements: list[tuple[nn.Module, str, LoRALinear | DoRALinear]] = []
+        _base_quantized = False
+        _base_quant_format = None
 
         for name, module in model.named_modules():
             if not isinstance(module, nn.Linear):
@@ -207,6 +212,11 @@ class AdapterEngine:
             adapter_layer = self._create_adapter_layer(module, method)
             replacements.append((parent, attr, adapter_layer))
             modules_adapted += 1
+            # Track quantization from the first adapter created
+            if modules_adapted == 1:
+                if isinstance(adapter_layer, (QLoRALinear, QDoRALinear)):
+                    _base_quantized = True
+                    _base_quant_format = adapter_layer._quant_format
 
         # Apply replacements
         for parent, attr, adapter_layer in replacements:
@@ -254,8 +264,8 @@ class AdapterEngine:
             trainable_params=trainable,
             total_params=total,
             trainable_ratio=ratio,
-            base_quantized=False,
-            base_quant_format=None,
+            base_quantized=_base_quantized,
+            base_quant_format=_base_quant_format,
             memory_before_mb=memory_before,
             memory_after_mb=memory_after,
             warnings=warnings_list,
@@ -277,7 +287,7 @@ class AdapterEngine:
         replacements: list[tuple[nn.Module, str, nn.Linear]] = []
 
         for name, module in model.named_modules():
-            if isinstance(module, (LoRALinear, DoRALinear)):
+            if isinstance(module, (LoRALinear, DoRALinear, QLoRALinear, QDoRALinear)):
                 parent, attr = self._get_parent_and_attr(model, name)
                 if parent is None:
                     continue
@@ -309,7 +319,7 @@ class AdapterEngine:
         # Collect prefixes of all adapter modules
         adapter_prefixes: list[str] = []
         for name, module in model.named_modules():
-            if isinstance(module, (LoRALinear, DoRALinear)):
+            if isinstance(module, (LoRALinear, DoRALinear, QLoRALinear, QDoRALinear)):
                 adapter_prefixes.append(name + ".")
 
         adapter_params: dict[str, torch.Tensor] = {}
@@ -351,7 +361,13 @@ class AdapterEngine:
         adapter_count = 0
         adapter_types: set[str] = set()
         for module in model.modules():
-            if isinstance(module, LoRALinear):
+            if isinstance(module, QLoRALinear):
+                adapter_count += 1
+                adapter_types.add("qlora")
+            elif isinstance(module, QDoRALinear):
+                adapter_count += 1
+                adapter_types.add("qdora")
+            elif isinstance(module, LoRALinear):
                 adapter_count += 1
                 adapter_types.add("lora")
             elif isinstance(module, DoRALinear):
@@ -401,14 +417,78 @@ class AdapterEngine:
         self,
         base_linear: nn.Linear,
         method: AdapterMethod,
-    ) -> LoRALinear | DoRALinear:
+    ) -> LoRALinear | DoRALinear | QLoRALinear | QDoRALinear:
         """Create the appropriate adapter layer."""
-        use_dora = method in (AdapterMethod.DORA, AdapterMethod.QDORA)
-        cls = DoRALinear if use_dora else LoRALinear
-        return cls(
+        if method == AdapterMethod.QLORA:
+            return self._create_qlora_layer(base_linear)
+        if method == AdapterMethod.QDORA:
+            return self._create_qdora_layer(base_linear)
+        if method == AdapterMethod.DORA:
+            return DoRALinear(
+                base_linear=base_linear,
+                rank=self._config.rank,
+                alpha=self._config.alpha,
+                dropout=self._config.dropout,
+                init_method=self._config.init_method,
+            )
+        return LoRALinear(
             base_linear=base_linear,
             rank=self._config.rank,
             alpha=self._config.alpha,
             dropout=self._config.dropout,
             init_method=self._config.init_method,
+        )
+
+    def _create_qlora_layer(self, base_linear: nn.Linear) -> LoRALinear | QLoRALinear:
+        """Create a QLoRALinear, falling back to LoRALinear if torchao unavailable."""
+        quant_format = AdapterCompatibilityMatrix.get_base_quant_format(self._backend)
+        if quant_format is None or not _TORCHAO_AVAILABLE:
+            logger.warning(
+                "QLoRA not available on %s (torchao=%s, format=%s); "
+                "falling back to LoRA",
+                self._backend.value,
+                _TORCHAO_AVAILABLE,
+                quant_format,
+            )
+            return LoRALinear(
+                base_linear=base_linear,
+                rank=self._config.rank,
+                alpha=self._config.alpha,
+                dropout=self._config.dropout,
+                init_method=self._config.init_method,
+            )
+        return QLoRALinear(
+            base_linear=base_linear,
+            rank=self._config.rank,
+            alpha=self._config.alpha,
+            dropout=self._config.dropout,
+            init_method=self._config.init_method,
+            quant_format=quant_format,
+        )
+
+    def _create_qdora_layer(self, base_linear: nn.Linear) -> DoRALinear | QDoRALinear:
+        """Create a QDoRALinear, falling back to DoRALinear if torchao unavailable."""
+        quant_format = AdapterCompatibilityMatrix.get_base_quant_format(self._backend)
+        if quant_format is None or not _TORCHAO_AVAILABLE:
+            logger.warning(
+                "QDoRA not available on %s (torchao=%s, format=%s); "
+                "falling back to DoRA",
+                self._backend.value,
+                _TORCHAO_AVAILABLE,
+                quant_format,
+            )
+            return DoRALinear(
+                base_linear=base_linear,
+                rank=self._config.rank,
+                alpha=self._config.alpha,
+                dropout=self._config.dropout,
+                init_method=self._config.init_method,
+            )
+        return QDoRALinear(
+            base_linear=base_linear,
+            rank=self._config.rank,
+            alpha=self._config.alpha,
+            dropout=self._config.dropout,
+            init_method=self._config.init_method,
+            quant_format=quant_format,
         )
