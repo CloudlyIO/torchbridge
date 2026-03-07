@@ -36,14 +36,6 @@ class TestCLIMain:
         result = main(['invalid-command'])
         assert result == 1
 
-    @patch('torchbridge.cli.OptimizeCommand.execute')
-    def test_cli_optimize_command(self, mock_execute):
-        """Test optimize command routing."""
-        mock_execute.return_value = 0
-        result = main(['optimize', '--model', 'test.pt', '--level', 'basic'])
-        assert result == 0
-        mock_execute.assert_called_once()
-
     @patch('torchbridge.cli.BenchmarkCommand.execute')
     def test_cli_benchmark_command(self, mock_execute):
         """Test benchmark command routing."""
@@ -86,16 +78,16 @@ class TestCLIMain:
 
     def test_cli_keyboard_interrupt(self):
         """Test keyboard interrupt handling."""
-        with patch('torchbridge.cli.OptimizeCommand.execute') as mock_execute:
+        with patch('torchbridge.cli.BenchmarkCommand.execute') as mock_execute:
             mock_execute.side_effect = KeyboardInterrupt()
-            result = main(['optimize', '--model', 'test.pt'])
+            result = main(['benchmark', '--model', 'test.pt'])
             assert result == 130
 
     def test_cli_exception_handling(self):
         """Test general exception handling."""
-        with patch('torchbridge.cli.OptimizeCommand.execute') as mock_execute:
+        with patch('torchbridge.cli.BenchmarkCommand.execute') as mock_execute:
             mock_execute.side_effect = ValueError("Test error")
-            result = main(['optimize', '--model', 'test.pt'])
+            result = main(['benchmark', '--model', 'test.pt'])
             assert result == 1
 
 
@@ -144,17 +136,6 @@ class TestCLIIntegration:
 
 class TestCLIScriptEntryPoints:
     """Test script entry points defined in pyproject.toml."""
-
-    def test_optimize_entry_point(self):
-        """Test tb-optimize entry point."""
-        with patch('torchbridge.cli.optimize.OptimizeCommand.execute') as mock_execute:
-            mock_execute.return_value = 0
-
-            # Import and test the main function
-            from torchbridge.cli.optimize import main as optimize_main
-            with patch('sys.argv', ['tb-optimize', '--model', 'test.pt']):
-                result = optimize_main()
-                assert result == 0
 
     def test_benchmark_entry_point(self):
         """Test tb-benchmark entry point."""

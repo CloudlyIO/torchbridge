@@ -28,7 +28,6 @@ from torchbridge.core.config import (
 )
 from torchbridge.core.kernel_registry import (
     KernelBackend,
-    KernelMetadata,
     KernelRegistry,
     KernelType,
 )
@@ -545,35 +544,8 @@ class NVIDIABackend(BaseBackend):
     # ===== Custom Kernel Management =====
 
     def _register_default_kernels(self) -> None:
-        """Register default CUDA kernels based on hardware capabilities."""
-        try:
-            # Import custom kernels
-            from torchbridge.hardware.gpu.custom_kernels import (
-                FlashAttentionV3,
-            )
-
-            # Determine supported precisions based on architecture
-            precisions = [PrecisionFormat.FP32, PrecisionFormat.FP16, PrecisionFormat.BF16]
-            if self.supports_fp8:
-                precisions.append(PrecisionFormat.FP8_E4M3)
-
-            # Register FlashAttention-3 if enabled
-            if self.config.kernel.flash_attention_enabled:
-                fa3_metadata = KernelMetadata(
-                    kernel_id="flash_attention_v3",
-                    kernel_type=KernelType.ATTENTION,
-                    version="3.0",
-                    backend=KernelBackend.CUDA,
-                    description="FlashAttention-3 with FP8 support and Split-K optimization",
-                    min_compute_capability=(7, 0),  # Volta and newer
-                    precision_support=precisions,
-                    kernel_fn=FlashAttentionV3
-                )
-                self._kernel_registry.register_kernel(fa3_metadata)
-
-
-        except ImportError as e:
-            warnings.warn(f"Could not import custom kernels: {e}", stacklevel=2)
+        """No-op: custom kernel stubs removed in v0.5.51 contraction."""
+        pass
 
     def get_optimal_attention_kernel(self,
                                      head_dim: int,

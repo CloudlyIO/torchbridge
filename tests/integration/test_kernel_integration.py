@@ -10,18 +10,13 @@ Tests end-to-end integration of:
 - Config/backend integration
 """
 
-
 import pytest
 import torch
 import torch.nn as nn
 
 from torchbridge.backends.nvidia.nvidia_backend import NVIDIABackend
 from torchbridge.core.config import PrecisionFormat, TorchBridgeConfig
-from torchbridge.core.kernel_registry import (
-    KernelRegistry,
-    KernelType,
-)
-from torchbridge.validation.unified_validator import validate_custom_kernels
+from torchbridge.core.kernel_registry import KernelRegistry, KernelType
 
 
 # Test fixtures
@@ -100,15 +95,6 @@ def test_kernel_config_auto_configuration():
     # Verify kernel config was auto-configured in __post_init__
     assert hasattr(config.kernel, 'flash_attention_version')
     assert config.kernel.flash_attention_version in ['2', '3', 'auto']
-
-
-def test_kernel_validation_integration(kernel_config):
-    """Test validation system integration."""
-    result = validate_custom_kernels(kernel_config)
-
-    # Should complete without errors
-    assert result.total_tests >= 1
-    assert result.failed == 0
 
 
 # ===== Backend Integration Tests =====

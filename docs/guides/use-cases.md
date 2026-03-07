@@ -40,39 +40,7 @@ updates, or when debugging "CUDA not available" errors.
 
 ---
 
-## 2. One-Command Model Preparation
-
-**Problem:** You have a trained model and want to prepare it for inference on the
-current hardware — applying backend-specific optimizations like TensorCore layout,
-mixed precision, or operator fusion — without writing backend-specific code.
-
-**Command:**
-```bash
-tb-optimize model.pt --output optimized_model.pt
-```
-
-**Expected output:**
-```
-Loading model from model.pt...
-Detected backend: NVIDIA CUDA (A10G, sm_86)
-Applying optimizations:
-  [1/3] Mixed precision (FP16) for Ampere TensorCores
-  [2/3] Operator fusion (attention + linear)
-  [3/3] Memory layout optimization (channels-last)
-Saved optimized model to optimized_model.pt
-
-Optimization summary:
-  Original size:  440 MB
-  Optimized size: 224 MB
-  Expected speedup: ~1.8x on current hardware
-```
-
-**When to use:** Before deploying a model to production, when moving a model to
-new hardware, or when you want hardware-specific optimizations without manual tuning.
-
----
-
-## 3. Cross-Backend Performance Comparison
+## 2. Cross-Backend Performance Comparison
 
 **Problem:** You need to decide which GPU/accelerator to use for your workload.
 Running the same benchmark manually on each backend is tedious and error-prone.
@@ -103,40 +71,7 @@ optimization.
 
 ---
 
-## 4. Production Model Export
-
-**Problem:** You need to export a PyTorch model to ONNX or TorchScript for
-deployment in a serving framework, with hardware-specific optimizations baked in.
-
-**Command:**
-```bash
-tb-export model.pt --format onnx --optimize --output model_serving.onnx
-```
-
-**Expected output:**
-```
-Loading model from model.pt...
-Detected backend: NVIDIA CUDA (A10G, sm_86)
-Exporting to ONNX with optimizations:
-  [1/3] Graph optimization (constant folding, dead code elimination)
-  [2/3] Operator fusion for target hardware
-  [3/3] Dynamic axis configuration (batch dimension)
-Exported to model_serving.onnx
-
-Export summary:
-  Format:    ONNX (opset 18)
-  Size:      218 MB
-  Inputs:    input_ids [batch, seq_len], attention_mask [batch, seq_len]
-  Outputs:   logits [batch, seq_len, vocab_size]
-  Validated: inference matches PyTorch reference (max_diff < 1e-5)
-```
-
-**When to use:** When deploying models to ONNX Runtime, TensorRT, or other serving
-frameworks. The export includes validation that outputs match the original PyTorch model.
-
----
-
-## 5. Hardware Migration Validation
+## 3. Hardware Migration Validation
 
 **Problem:** You're moving a model from one GPU type to another (e.g., T4 → A10G,
 NVIDIA → AMD) and need to verify that inference outputs are numerically identical

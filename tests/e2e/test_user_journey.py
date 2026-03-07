@@ -32,13 +32,7 @@ class TestUserJourney:
         config = torchbridge.get_config()
         assert config is not None
 
-        # --- Step 2: Detect hardware ---
-        from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
-
-        hal = HardwareAbstractionLayer()
-        assert hal is not None
-
-        # --- Step 3: Create a model ---
+        # --- Step 2: Create a model ---
         model = torch.nn.Sequential(
             torch.nn.Linear(256, 512),
             torch.nn.GELU(),
@@ -109,15 +103,6 @@ class TestUserJourney:
         assert callable(torchbridge.create_attention)
         assert callable(torchbridge.create_moe)
 
-    def test_optimized_layer_journey(self):
-        """Test creating and using optimized layers."""
-        from torchbridge.core.optimized_layers import FusedGELU
-
-        layer = FusedGELU()
-        x = torch.randn(4, 128)
-        output = layer(x)
-        assert output.shape == (4, 128)
-
     def test_attention_journey(self):
         """Test creating and using attention via the public API."""
         attn = torchbridge.create_attention(d_model=128, num_heads=4)
@@ -145,11 +130,6 @@ class TestUserJourney:
 
     def test_hardware_detection_journey(self):
         """Test hardware detection produces a valid result."""
-        from torchbridge.hardware.abstraction.hal_core import HardwareAbstractionLayer
-
-        hal = HardwareAbstractionLayer()
-        assert hal is not None
-
         # Should detect at minimum CPU backend
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         assert device.type in ("cpu", "cuda", "mps")
