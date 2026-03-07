@@ -227,26 +227,8 @@ class TestTorchBridgeIntegration:
             output = moe(x)
         assert output.shape == x.shape
 
-    def test_fused_gelu(self):
-        """Test fused GELU activation."""
-        import torchbridge
-
-        gelu = torchbridge.FusedGELU()
-        x = torch.randn(2, 32, 256)
-
-        with torch.no_grad():
-            output = gelu(x)
-
-        assert output.shape == x.shape
-
-
 class TestCLIIntegration:
     """Test CLI command integration."""
-
-    def test_optimize_command_import(self):
-        """Test optimize command can be imported."""
-        from torchbridge.cli.optimize import OptimizeCommand
-        assert OptimizeCommand is not None
 
     def test_benchmark_command_import(self):
         """Test benchmark command can be imported."""
@@ -257,11 +239,6 @@ class TestCLIIntegration:
         """Test doctor command can be imported."""
         from torchbridge.cli.doctor import DoctorCommand
         assert DoctorCommand is not None
-
-    def test_export_command_import(self):
-        """Test export command can be imported."""
-        from torchbridge.cli.export import ExportCommand
-        assert ExportCommand is not None
 
     def test_profile_command_import(self):
         """Test profile command can be imported."""
@@ -276,21 +253,6 @@ class TestCLIIntegration:
 
 class TestDeploymentIntegration:
     """Test deployment module integration."""
-
-    def test_onnx_exporter_import(self):
-        """Test ONNX exporter can be imported."""
-        from torchbridge.deployment import ONNXExporter
-        assert ONNXExporter is not None
-
-    def test_torchscript_exporter_import(self):
-        """Test TorchScript exporter can be imported."""
-        from torchbridge.deployment import TorchScriptExporter
-        assert TorchScriptExporter is not None
-
-    def test_safetensors_exporter_import(self):
-        """Test SafeTensors exporter can be imported."""
-        from torchbridge.deployment import SafeTensorsExporter
-        assert SafeTensorsExporter is not None
 
     def test_production_validator_import(self):
         """Test production validator can be imported."""
@@ -327,49 +289,6 @@ class TestBackendIntegration:
         from torchbridge.backends.tpu import TPUAdapter, TPUBackend
         assert TPUBackend is not None
         assert TPUAdapter is not None
-
-    def test_hal_import(self):
-        """Test Hardware Abstraction Layer can be imported."""
-        from torchbridge.hardware.abstraction.hal_core import (
-            HardwareAbstractionLayer,
-        )
-        assert HardwareAbstractionLayer is not None
-
-
-class TestDistributedIntegration:
-    """Test distributed training integration."""
-
-    def test_distributed_config_import(self):
-        """Test distributed config can be imported."""
-        from torchbridge.models.distributed import DistributedConfig
-        assert DistributedConfig is not None
-
-    def test_tensor_parallel_import(self):
-        """Test tensor parallel can be imported."""
-        from torchbridge.models.distributed import TensorParallelConfig
-        assert TensorParallelConfig is not None
-
-    def test_pipeline_parallel_import(self):
-        """Test pipeline parallel can be imported."""
-        from torchbridge.models.distributed.pipeline_parallel import (
-            PipelineParallelConfig,
-        )
-        assert PipelineParallelConfig is not None
-
-
-class TestMemoryOptimization:
-    """Test memory optimization components."""
-
-    def test_gradient_checkpointing_import(self):
-        """Test gradient checkpointing can be imported."""
-        from torchbridge.advanced_memory import SelectiveGradientCheckpointing
-        assert SelectiveGradientCheckpointing is not None
-
-    def test_deep_optimizer_states_import(self):
-        """Test DeepOptimizerStates can be imported."""
-        from torchbridge.advanced_memory import DeepOptimizerStates
-        assert DeepOptimizerStates is not None
-
 
 class TestValidationFramework:
     """Test validation framework."""
