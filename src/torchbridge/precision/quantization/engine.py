@@ -1,9 +1,10 @@
 """
 Quantization Engine
 
-Core engine that auto-selects the optimal quantization format per detected
-backend, applies quantization, and provides fallback chains when a requested
-format is unavailable.
+Configuration advisor that selects the optimal quantization format from the
+compatibility matrix for the given hardware backend, then dispatches to torchao
+for the actual quantization operation. TorchBridge adds the matrix selection and
+fallback chain; quantization is performed by torchao.
 """
 
 from __future__ import annotations
