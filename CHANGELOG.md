@@ -8,6 +8,40 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.49] - 2026-03-06 - tb-validate --compare: Cross-Backend Output Comparison CLI
+
+### **Summary**
+
+Surfaces TorchBridge's cross-backend validation as a first-class CLI command.
+Users can now compare model outputs across two backends directly from the terminal,
+with structured JSON output for CI integration, optional per-layer divergence, and
+file-based report saving.
+
+### **Changes**
+
+- **Error: Backend 'BACKEND1' not available on this machine.**: new flag that short-circuits the
+  standard validation pipeline and runs dual inference, comparing output tensors
+- **Backend resolution**: , //,  — unknown or unavailable
+  backends return exit code 1 with a clear error message (CI-mode: JSON  key)
+- **Smoke model**: when  is not given, uses a small 
+  so the command always works without a checkpoint
+- **HuggingFace models**:  files load via ; unresolved paths are treated
+  as HF model IDs (loaded via )
+- **Metrics**: , ,  (from ),
+  , ,  list
+- **** (default ): tensor shape for smoke/file-based models
+- ****: activates  for per-layer breakdown (HF models only)
+- **** (//): model and input dtype
+- ****: outputs JSON to stdout instead of human-readable text
+- ****: saves JSON report to disk
+- **27 new tests** (17 unit, 10 integration): arg parsing, CPU-CPU pass, forced-fail,
+  CUDA-unavailable mock, report round-trip, per-layer key, human output format
+
+### **Test Count**
+2,543 passing (was 2,516 pre-v0.5.49, net +27)
+
+---
+
 ## [0.5.48] - 2026-03-06 - QLoRA: Complete the Adapter System
 
 ### **Summary**
