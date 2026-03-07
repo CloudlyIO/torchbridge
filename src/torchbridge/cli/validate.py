@@ -129,9 +129,41 @@ Examples:
             help='Include quantization subsystem checks'
         )
 
+        parser.add_argument(
+            '--compare',
+            nargs=2,
+            metavar=('BACKEND1', 'BACKEND2'),
+            help='Compare model outputs across two backends (e.g. --compare cuda cpu)'
+        )
+
+        parser.add_argument(
+            '--input-shape',
+            type=str,
+            default='1,64',
+            help='Comma-separated input tensor shape for --compare (default: 1,64)'
+        )
+
+        parser.add_argument(
+            '--per-layer',
+            action='store_true',
+            help='Show per-layer divergence breakdown (requires --compare)'
+        )
+
+        parser.add_argument(
+            '--dtype',
+            choices=['float32', 'float16', 'bfloat16'],
+            default='float32',
+            help='Model dtype for --compare (default: float32)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
+        # --compare short-circuits the standard pipeline
+        compare = getattr(args, 'compare', None)
+        if isinstance(compare, (list, tuple)) and len(compare) == 2:
+            return ValidateCommand._run_compare(args)
+
         ci_mode = getattr(args, 'ci', False)
         level = getattr(args, 'level', 'standard')
         verbose = getattr(args, 'verbose', False)
@@ -198,6 +230,222 @@ Examples:
                 import traceback
                 traceback.print_exc()
             return 1
+
+    @staticmethod
+    def _run_compare(args) -> int:
+        """Execute cross-backend output comparison and return exit code."""
+        import torch.nn as nn
+        import torch.nn.functional as F
+
+        backend1, backend2 = args.compare
+        model_path = getattr(args, 'model', None)
+        input_shape = tuple(int(x) for x in getattr(args, 'input_shape', '1,64').split(','))
+        per_layer = getattr(args, 'per_layer', False)
+        dtype_str = getattr(args, 'dtype', 'float32')
+        output_path = getattr(args, 'output', None)
+        ci_mode = getattr(args, 'ci', False)
+        dtype = getattr(torch, dtype_str)
+
+        # Resolve backend names → torch.device
+        def _resolve_device(name: str) -> torch.device | None:
+            name = name.lower()
+            if name in ('cuda', 'rocm', 'gpu'):
+                if not torch.cuda.is_available():
+                    return None
+                return torch.device('cuda')
+            if name == 'mps':
+                if not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
+                    return None
+                return torch.device('mps')
+            if name == 'cpu':
+                return torch.device('cpu')
+            return None  # unknown
+
+        dev1 = _resolve_device(backend1)
+        dev2 = _resolve_device(backend2)
+
+        if dev1 is None:
+            msg = f"Backend '{backend1}' not available on this machine."
+            if ci_mode:
+                print(json.dumps({'error': msg, 'backend': backend1}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        if dev2 is None:
+            msg = f"Backend '{backend2}' not available on this machine."
+            if ci_mode:
+                print(json.dumps({'error': msg, 'backend': backend2}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        # Load model
+        smoke_model = False
+        is_hf_model = False
+        try:
+            if model_path is None:
+                # No model provided — use a small smoke-test Linear
+                model = nn.Sequential(
+                    nn.Linear(input_shape[-1], input_shape[-1]),
+                    nn.ReLU(),
+                    nn.Linear(input_shape[-1], input_shape[-1]),
+                )
+                smoke_model = True
+                model_label = 'smoke_model (Linear)'
+            elif Path(model_path).exists():
+                model = torch.load(model_path, map_location='cpu', weights_only=True)
+                model_label = model_path
+            else:
+                # Treat as HuggingFace model ID
+                from transformers import AutoModelForCausalLM
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_path, torch_dtype=dtype
+                )
+                model_label = model_path
+                is_hf_model = True
+        except Exception as e:
+            msg = f"Failed to load model: {e}"
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        model.eval()
+
+        # Build input tensor
+        if is_hf_model:
+            # HuggingFace: use token IDs
+            x = torch.ones(*input_shape, dtype=torch.long)
+        else:
+            x = torch.randn(*input_shape, dtype=dtype)
+
+        # Run inference on both devices
+        t0 = time.perf_counter()
+        try:
+            m1 = model.to(dev1)
+            x1 = x.to(dev1)
+            with torch.no_grad():
+                out1 = m1(input_ids=x1) if is_hf_model else m1(x1)
+            logits1 = out1.logits[:, -1, :] if is_hf_model else out1
+            logits1_cpu = logits1.float().cpu()
+
+            m2 = model.to(dev2)
+            x2 = x.to(dev2)
+            with torch.no_grad():
+                out2 = m2(input_ids=x2) if is_hf_model else m2(x2)
+            logits2 = out2.logits[:, -1, :] if is_hf_model else out2
+            logits2_cpu = logits2.float().cpu()
+        except torch.cuda.OutOfMemoryError:
+            msg = "CUDA out of memory. Try a smaller --input-shape."
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+        except Exception as e:
+            msg = f"Inference failed: {e}"
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        duration_ms = (time.perf_counter() - t0) * 1000
+
+        # Compute metrics
+        max_diff = float(torch.abs(logits1_cpu - logits2_cpu).max())
+        cos_sim = float(F.cosine_similarity(
+            logits1_cpu.flatten().unsqueeze(0),
+            logits2_cpu.flatten().unsqueeze(0),
+        ))
+
+        # Tolerance check
+        from torchbridge.testing.tolerance_db import ToleranceDB
+        tol_db = ToleranceDB()
+        # Use backend1 tolerance (primary backend)
+        b1_key = backend1.lower() if backend1.lower() != 'rocm' else 'rocm'
+        tol = tol_db.get(b1_key, dtype_str)
+        passed = max_diff <= tol.atol
+
+        # Per-layer divergence
+        layer_rows: list[dict] = []
+        if per_layer and not smoke_model:
+            try:
+                from torchbridge.testing.divergence import DivergenceTracer
+                model_cpu = model.to('cpu')
+                x_cpu = x.to('cpu')
+                tracer = DivergenceTracer(model_cpu, device=torch.device('cpu'))
+                with tracer:
+                    with torch.no_grad():
+                        model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(x_cpu)
+                # compare_with the second device
+                model_dev2 = model.to(dev2)
+                x_dev2 = x.to(dev2)
+                divergences = tracer.compare_with(model_dev2, x_dev2)
+                for d in divergences:
+                    layer_rows.append({
+                        'layer': d.layer_name,
+                        'max_diff': d.max_diff,
+                        'cosine_sim': d.cosine_sim,
+                        'exceeds_threshold': d.exceeds_threshold,
+                    })
+            except Exception as e:
+                logger.debug("Per-layer divergence failed: %s", e)
+
+        # Build result dict
+        result = {
+            'backend1': backend1,
+            'backend2': backend2,
+            'model': model_label,
+            'dtype': dtype_str,
+            'input_shape': list(input_shape),
+            'max_diff': max_diff,
+            'cosine_sim': cos_sim,
+            'tolerance_atol': tol.atol,
+            'tolerance_rtol': tol.rtol,
+            'passed': passed,
+            'duration_ms': round(duration_ms, 3),
+            'per_layer': layer_rows,
+        }
+
+        # Output
+        if ci_mode:
+            print(json.dumps(result, indent=2))
+        else:
+            status_str = 'PASSED' if passed else 'FAILED'
+            print('TorchBridge Cross-Backend Comparison')
+            print('=' * 40)
+            print(f"Backends   : {backend1}  vs  {backend2}")
+            print(f"Model      : {model_label}")
+            if smoke_model:
+                print("           (no --model given; using smoke Linear)")
+            print(f"dtype      : {dtype_str}")
+            print(f"Shape      : {input_shape}")
+            print()
+            print(f"  Max diff   : {max_diff:.2e}")
+            print(f"  Cosine sim : {cos_sim:.6f}")
+            print(f"  Tolerance  : atol={tol.atol:.0e}  rtol={tol.rtol:.0e}  ({b1_key}/{dtype_str})")
+            print(f"  Duration   : {duration_ms:.1f}ms")
+            print(f"  Status     : {status_str}")
+            if layer_rows:
+                print()
+                print('  Per-layer divergence:')
+                for row in layer_rows:
+                    flag = ' *' if row['exceeds_threshold'] else ''
+                    print(f"    {row['layer']}: max_diff={row['max_diff']:.2e}  "
+                          f"cos={row['cosine_sim']:.4f}{flag}")
+
+        if output_path:
+            try:
+                Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, 'w') as f:
+                    json.dump(result, f, indent=2)
+            except Exception as e:
+                logger.warning("Could not save output to %s: %s", output_path, e)
+
+        return 0 if passed else 1
 
     @staticmethod
     def _run_quick_checks(verbose: bool) -> list[ValidationResult]:
@@ -755,6 +1003,33 @@ def main():
         '--quantized',
         action='store_true',
         help='Include quantization subsystem checks'
+    )
+
+    parser.add_argument(
+        '--compare',
+        nargs=2,
+        metavar=('BACKEND1', 'BACKEND2'),
+        help='Compare model outputs across two backends (e.g. --compare cuda cpu)'
+    )
+
+    parser.add_argument(
+        '--input-shape',
+        type=str,
+        default='1,64',
+        help='Comma-separated input tensor shape for --compare (default: 1,64)'
+    )
+
+    parser.add_argument(
+        '--per-layer',
+        action='store_true',
+        help='Show per-layer divergence breakdown (requires --compare)'
+    )
+
+    parser.add_argument(
+        '--dtype',
+        choices=['float32', 'float16', 'bfloat16'],
+        default='float32',
+        help='Model dtype for --compare (default: float32)'
     )
 
     args = parser.parse_args()
