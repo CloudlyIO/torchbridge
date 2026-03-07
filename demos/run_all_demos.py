@@ -69,11 +69,8 @@ def main():
 
     # Key demos to run in order of importance
     demos = [
-        ("💾 Deep Optimizer States", "memory/deep_states.py"),
-        ("⚡ Dynamic Shapes", "compiler/shapes.py"),
         ("🔬 FP8 Precision", "precision/fp8.py"),
         ("⚡ Flash Attention", "attention/flash.py"),
-        ("🧠 Memory Optimization", "memory/basic.py"),
     ]
 
     results = []

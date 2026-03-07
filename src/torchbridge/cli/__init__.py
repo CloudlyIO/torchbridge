@@ -31,10 +31,8 @@ from .benchmark import BenchmarkCommand
 from .cache import CacheCommand
 from .checkpoint import CheckpointCommand
 from .doctor import DoctorCommand
-from .export import ExportCommand
 from .init import InitCommand
 from .migrate import MigrateCommand
-from .optimize import OptimizeCommand
 from .profile import ProfileCommand
 from .quantize import QuantizeCommand
 from .speculate import SpeculateCommand
@@ -75,11 +73,10 @@ def main(args: list[str] | None = None) -> str | int | None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  torchbridge optimize --model model.pt --level production
   torchbridge benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --quick
-  torchbridge export --model model.pt --format onnx
   torchbridge profile --model model.pt --mode summary
   torchbridge doctor --full-report
+  torchbridge validate --compare cuda cpu --model model.pt
 
 For command-specific help:
   torchbridge <command> --help
@@ -100,10 +97,8 @@ For command-specific help:
     )
 
     # Register commands
-    OptimizeCommand.register(subparsers)
     AdapterCommand.register(subparsers)
     BenchmarkCommand.register(subparsers)
-    ExportCommand.register(subparsers)
     ProfileCommand.register(subparsers)
     DoctorCommand.register(subparsers)
     InitCommand.register(subparsers)
@@ -131,10 +126,8 @@ For command-specific help:
         return 1
 
     commands = {
-        'optimize': OptimizeCommand,
         'adapter': AdapterCommand,
         'benchmark': BenchmarkCommand,
-        'export': ExportCommand,
         'profile': ProfileCommand,
         'doctor': DoctorCommand,
         'init': InitCommand,

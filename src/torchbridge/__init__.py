@@ -38,14 +38,6 @@ except PackageNotFoundError:
     except Exception:
         __version__ = "0.0.0"
 
-# Unified Configuration System
-from .advanced_memory.advanced_checkpointing import SelectiveGradientCheckpointing
-
-# Memory Optimization
-from .advanced_memory.deep_optimizer_states import (
-    CPUGPUHybridOptimizer,
-    DeepOptimizerStates,
-)
 from .attention.core.base import BaseAttention as AttentionLayer
 from .attention.core.config import AttentionModuleConfig
 from .attention.implementations.memory_efficient import MemoryEfficientAttention
@@ -66,7 +58,6 @@ from .core.config import (
 
 # Unified Management System
 from .core.management import UnifiedManager, get_manager
-from .core.optimized_layers.activation_functions import FusedGELU
 
 # Mixture of Experts
 from .mixture_of_experts import (
@@ -96,9 +87,6 @@ __all__ = [
     "HardwareConfig", "DistributedConfig", "ValidationConfig",
     "get_config", "set_config", "configure",
 
-    # Core Components
-    "FusedGELU",
-
     # Management System
     "UnifiedManager", "get_manager",
 
@@ -107,9 +95,6 @@ __all__ = [
 
     # Precision
     "FP8TrainingEngine",
-
-    # Memory
-    "DeepOptimizerStates", "CPUGPUHybridOptimizer", "SelectiveGradientCheckpointing",
 
     # Validation
     "UnifiedValidator",
@@ -129,16 +114,6 @@ def create_attention(d_model: int, num_heads: int, **kwargs: Any) -> MemoryEffic
         **kwargs,
     )
     return MemoryEfficientAttention(attn_config)
-
-def create_memory_optimizer(optimizer: Any, model: torch.nn.Module, **kwargs: Any) -> DeepOptimizerStates:
-    """Create memory-optimized training setup."""
-    config = get_config()
-    return DeepOptimizerStates(
-        optimizer=optimizer,
-        model=model,
-        memory_config=config.memory,
-        **kwargs
-    )
 
 def optimize_model(model: torch.nn.Module, **kwargs: Any) -> Any:
     """Apply unified backend abstraction to model using global manager."""

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.51"
+version = "0.5.52"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -38,9 +38,7 @@ Repository = "https://github.com/CloudlyIO/torchbridge"
 
 [project.scripts]
 torchbridge = "torchbridge.cli:main"
-tb-optimize = "torchbridge.cli.optimize:main"
 tb-benchmark = "torchbridge.cli.benchmark:main"
-tb-export = "torchbridge.cli.export:main"
 tb-profile = "torchbridge.cli.profile:main"
 tb-doctor = "torchbridge.cli.doctor:main"
 tb-init = "torchbridge.cli.init:main"

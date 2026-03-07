@@ -103,15 +103,6 @@ class TestUserJourney:
         assert callable(torchbridge.create_attention)
         assert callable(torchbridge.create_moe)
 
-    def test_optimized_layer_journey(self):
-        """Test creating and using optimized layers."""
-        from torchbridge.core.optimized_layers import FusedGELU
-
-        layer = FusedGELU()
-        x = torch.randn(4, 128)
-        output = layer(x)
-        assert output.shape == (4, 128)
-
     def test_attention_journey(self):
         """Test creating and using attention via the public API."""
         attn = torchbridge.create_attention(d_model=128, num_heads=4)

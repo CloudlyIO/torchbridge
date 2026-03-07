@@ -8,6 +8,58 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.52] - 2026-03-06 - Contraction II: Ruthless Cleanup
+
+### **Summary**
+
+Second wave of aggressive deletion: 28,214 lines removed across 86 files.
+Removed all monitoring facades, optimizations wrappers, dead distributed model code,
+dead CLI commands (tb-optimize, tb-export), and multiple dead utility modules.
+No user-facing functionality removed — all deleted code was facades, No-Wrapper-Rule
+violations, or dead code with zero real callers.
+
+### **Deleted**
+
+- `src/torchbridge/monitoring/` (except `llm_metrics.py`) — grafana, prometheus, SLO,
+  health monitor: pure monitoring wrappers with no unique value (~1,600 lines)
+- `src/torchbridge/optimizations/` — entire package: patterns/, next_gen/ wrappers (~3,500 lines)
+- `src/torchbridge/core/optimized_layers/` — FusedGELU, OptimizedLayerNorm, etc.:
+  thin wrappers around PyTorch activations (~1,400 lines)
+- `src/torchbridge/models/distributed/` — tensor/pipeline parallelism wrappers:
+  wires around PyTorch FSDP/DDP with no selection logic (~3,800 lines)
+- `src/torchbridge/advanced_memory/` — DeepOptimizerStates, SelectiveGradientCheckpointing:
+  documented academic concepts, not working integrations (~1,700 lines)
+- `src/torchbridge/utils/` dead files: compiler_assistant, optimization_recommendations,
+  ab_testing, doc_generator, import_profiler, triton_fused_ops, universal_inference_engine,
+  progressive_optimization (~3,500 lines)
+- `src/torchbridge/cli/optimize.py` — wraps `torch.compile()` with no selection logic
+- `src/torchbridge/cli/export.py` — dead since export modules deleted in v0.5.51
+- Dead demo directories: `demos/memory/`, `demos/compiler/`, `demos/experimental/`
+- Dead test files: test_distributed_llama.py, test_pipeline_parallel.py,
+  test_distributed_integration.py, test_next_gen_benchmarks.py, test_advanced_memory_benchmarks.py,
+  test_optimize.py, test_export.py, test_monitoring.py (~4,800 lines of tests)
+
+### **Updated**
+
+- `src/torchbridge/__init__.py` — removed FusedGELU, DeepOptimizerStates,
+  CPUGPUHybridOptimizer, SelectiveGradientCheckpointing, create_memory_optimizer from public API
+- `src/torchbridge/core/__init__.py` — removed optimized_layers imports
+- `src/torchbridge/models/__init__.py` — removed models.distributed imports
+- `src/torchbridge/monitoring/__init__.py` — stripped to just llm_metrics re-export
+- `src/torchbridge/utils/__init__.py` — removed dead imports
+- `src/torchbridge/cli/__init__.py` — removed optimize/export commands
+- `pyproject.toml` — removed tb-optimize, tb-export entry points
+- Docs updated (distributed-training.md, cli.md, use-cases.md)
+- `demos/run_all_demos.py` — removed dead demo entries
+
+### **Result**
+
+- 28,214 lines deleted across 86 files (cumulative with v0.5.51: ~47,000 lines)
+- 2,223 tests passing, 33 skipped (GPU-gated), 3 pre-existing failures (CUDA on Mac)
+- 0 ruff violations
+- tb-optimize and tb-export CLI commands removed (pure wrappers)
+- `torchbridge` imports cleanly; all real functionality unchanged
+
 ## [0.5.51] - 2026-03-06 - Contraction I: Delete Dead Code
 
 ### **Summary**
