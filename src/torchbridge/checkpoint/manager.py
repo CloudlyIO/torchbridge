@@ -1,9 +1,10 @@
 """
 Checkpoint Manager
 
-Main entry point for backend-aware checkpoint saving and loading.
-Wraps PyTorch Distributed Checkpoint (DCP) with async saves, plan caching,
-storage backend abstraction, cross-backend portability, and rotation.
+Thin wrapper around PyTorch Distributed Checkpoint (DCP) with cross-backend
+metadata and checkpoint rotation. TorchBridge adds backend-portable metadata
+(dtype normalization, backend tagging) and rotation logic; the underlying
+serialization is PyTorch DCP.
 """
 
 from __future__ import annotations

@@ -1,46 +1,43 @@
 # Deployment Guide
 
-Export, serve, and containerize TorchBridge models for production.
+Serve and containerize your models for production. For model export, use PyTorch's
+native APIs directly — TorchBridge does not wrap them.
 
 ## Model Export
+
+TorchBridge does not provide export wrappers. Use PyTorch's native APIs:
 
 ### TorchScript
 
 ```python
-from torchbridge.deployment import export_to_torchscript
+# Trace (preferred for most models)
+traced = torch.jit.trace(model, sample_input)
+traced.save("model.pt")
 
-sample_input = torch.randn(1, 768)
-result = export_to_torchscript(model, output_path="model.pt", sample_input=sample_input)
+# Verify
+loaded = torch.jit.load("model.pt")
+assert torch.allclose(loaded(sample_input), model(sample_input), atol=1e-5)
 ```
 
 ### ONNX
 
 ```python
-from torchbridge.deployment import export_to_onnx
-
-result = export_to_onnx(model, output_path="model.onnx", sample_input=sample_input, opset_version=17)
+torch.onnx.export(
+    model,
+    sample_input,
+    "model.onnx",
+    opset_version=17,
+    input_names=["input"],
+    output_names=["output"],
+)
 ```
 
-### SafeTensors (weights only)
+### SafeTensors
 
 ```python
-from torchbridge.deployment import export_to_safetensors
+from safetensors.torch import save_file
 
-result = export_to_safetensors(model, output_path="model.safetensors")
-```
-
-### Export Validation
-
-Always validate exports:
-
-```python
-# Load and verify TorchScript
-ts_model = torch.jit.load("model.pt")
-ts_output = ts_model(sample_input)
-
-# Compare with original
-orig_output = model(sample_input)
-assert torch.allclose(ts_output, orig_output, atol=1e-5)
+save_file(model.state_dict(), "model.safetensors")
 ```
 
 ## Inference Server
@@ -226,34 +223,14 @@ spec:
 
 ## Monitoring
 
-### Prometheus Metrics
+Use Python's standard `logging` module and your preferred metrics stack (Prometheus,
+Datadog, etc.) directly — TorchBridge does not provide monitoring wrappers.
 
 ```python
-from torchbridge.monitoring import MetricsExporter, start_metrics_server
+import logging
 
-metrics = MetricsExporter(model_name="my_model")
-start_metrics_server(metrics, port=9090)
-
-# Record inference metrics
-metrics.record_inference(latency_ms=15.3, batch_size=8)
-```
-
-### Health Checks
-
-```python
-from torchbridge.monitoring import create_enhanced_health_monitor
-
-health = create_enhanced_health_monitor()
-status = health.check_health()
-```
-
-### Logging
-
-```python
-from torchbridge.monitoring import configure_logging, get_logger
-
-configure_logging(json_format=True, level="INFO")
-logger = get_logger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 logger.info("Inference complete", extra={"latency_ms": 15.3})
 ```
 

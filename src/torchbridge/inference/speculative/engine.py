@@ -1,8 +1,11 @@
 """
 Speculative Decoding Engine
 
-Core engine that resolves speculative decoding methods via the compatibility
-matrix and produces kwargs for HuggingFace model.generate().
+Compatibility matrix that resolves speculative decoding methods and produces
+kwargs for HuggingFace model.generate(). Only PROMPT_LOOKUP and DRAFT_MODEL
+are generate()-compatible. EAGLE, MEDUSA, and LAYER_SKIP require custom
+inference loops and raise NotImplementedError if resolved — they are excluded
+from the compatibility matrix under normal usage.
 """
 
 from __future__ import annotations

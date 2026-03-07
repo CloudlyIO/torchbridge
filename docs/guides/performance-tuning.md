@@ -16,12 +16,9 @@ TorchBridge supports four optimization levels:
 | O2 | BALANCED | Moderate optimizations | Most workloads (recommended) |
 | O3 | AGGRESSIVE | Maximum optimization | Throughput-critical batch jobs |
 
-```bash
-# CLI
-torchbridge optimize --model model.pt --level O2
+```python
+from torchbridge.core.config import OptimizationLevel, TorchBridgeConfig
 
-# Python
-from torchbridge.core.config import OptimizationLevel
 config = TorchBridgeConfig(optimization_level=OptimizationLevel.O2)
 ```
 
@@ -118,10 +115,11 @@ model.gradient_checkpointing_enable()
 
 ### Model Sharding
 
-For models too large for a single GPU:
+For models too large for a single GPU, use PyTorch's native FSDP. TorchBridge's
+`tb-advisor` generates the recommended FSDP config for your hardware topology:
 
 ```bash
-torchbridge optimize --model large-model.pt --strategy tensor-parallel --gpus 4
+tb-advisor
 ```
 
 ## Profiling
