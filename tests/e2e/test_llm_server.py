@@ -464,27 +464,19 @@ class TestRootEndpoint:
 # ============================================================================
 
 class TestDynamicBatching:
-    """Tests for dynamic batching functionality."""
+    """Tests for dynamic batching infrastructure."""
 
-    @pytest.mark.asyncio
-    async def test_batch_processing(self, llm_server):
-        """Test that requests are batched together."""
-        # This test requires the server to be running with batching enabled
-        assert llm_server.config.enable_dynamic_batching is True
-
-    def test_batch_queue(self, llm_server):
-        """Test batch queue exists."""
+    def test_batch_queue_exists(self, llm_server):
         assert hasattr(llm_server, '_batch_queue')
         assert hasattr(llm_server, '_batch_lock')
 
     def test_batch_thread_started(self, llm_server):
-        """Test batch processing thread is started."""
         if llm_server.config.enable_dynamic_batching:
             assert llm_server._batch_thread is not None
             assert llm_server._batch_thread.is_alive()
 
     def test_concurrent_requests(self, test_client):
-        """Test handling multiple concurrent requests."""
+        """Multiple concurrent requests all succeed."""
         import concurrent.futures
 
         def make_request(prompt):
@@ -493,18 +485,189 @@ class TestDynamicBatching:
                 json={"prompt": prompt, "max_new_tokens": 5}
             )
 
-        # Send multiple requests concurrently
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(make_request, f"Prompt {i}")
-                for i in range(3)
-            ]
-
+            futures = [executor.submit(make_request, f"Prompt {i}") for i in range(3)]
             results = [f.result() for f in futures]
 
-        # All should succeed
         for response in results:
             assert response.status_code == 200
+
+
+class TestProcessBatch:
+    """Unit tests for _process_batch() correctness — call directly, no HTTP."""
+
+    def _make_server(self):
+        """Return a server instance with dynamic batching enabled."""
+        from torchbridge.deployment.serving.llm_server import (
+            LLMInferenceServer,
+            LLMServerConfig,
+        )
+        config = LLMServerConfig(
+            enable_dynamic_batching=True,
+            model_name="test-model",
+        )
+        return LLMInferenceServer(MockLLMModel(), MockTokenizer(), config)
+
+    def _make_item(self, seq_len, max_new_tokens=10, pad_token_id=0):
+        """Create a BatchItem with a specific input sequence length."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+        return BatchItem(
+            request_id=f"r{seq_len}",
+            prompt="x" * seq_len,
+            input_ids=torch.ones(1, seq_len, dtype=torch.long),
+            generation_kwargs={"max_new_tokens": max_new_tokens},
+            result_queue=qmod.Queue(),
+        )
+
+    def test_left_padding_attention_mask(self, llm_server):
+        """Shorter item gets padding on the LEFT; attention mask is 0 there."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        short = BatchItem(
+            request_id="short",
+            prompt="hi",
+            input_ids=torch.ones(1, 3, dtype=torch.long),
+            generation_kwargs={"max_new_tokens": 5},
+            result_queue=qmod.Queue(),
+        )
+        long_ = BatchItem(
+            request_id="long",
+            prompt="hello world",
+            input_ids=torch.ones(1, 5, dtype=torch.long) * 2,
+            generation_kwargs={"max_new_tokens": 5},
+            result_queue=qmod.Queue(),
+        )
+
+        llm_server._process_batch([short, long_])
+
+        # Both queues should have results (no error)
+        r_short = short.result_queue.get(timeout=2)
+        r_long = long_.result_queue.get(timeout=2)
+        assert 'error' not in r_short
+        assert 'error' not in r_long
+
+    def test_right_side_content_preserved(self, llm_server):
+        """After left-padding, the original tokens appear on the right side."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        captured = {}
+
+        original_generate = llm_server.model.generate
+
+        def spy_generate(input_ids, **kwargs):
+            captured['input_ids'] = input_ids.clone()
+            return original_generate(input_ids, **kwargs)
+
+        llm_server.model.generate = spy_generate
+
+        short_ids = torch.tensor([[7, 8, 9]])   # len 3
+        long_ids  = torch.tensor([[1, 2, 3, 4, 5]])  # len 5
+
+        item_short = BatchItem("s", "x", short_ids, {"max_new_tokens": 5}, qmod.Queue())
+        item_long  = BatchItem("l", "x", long_ids,  {"max_new_tokens": 5}, qmod.Queue())
+
+        llm_server._process_batch([item_short, item_long])
+
+        # The short item (row 0) should be left-padded to length 5.
+        # Its original tokens [7, 8, 9] must appear at positions [-3:].
+        padded_short = captured['input_ids'][0]
+        assert padded_short[-3:].tolist() == [7, 8, 9]
+        # First two positions are padding
+        pad_id = llm_server.tokenizer.pad_token_id
+        assert padded_short[0].item() == pad_id
+        assert padded_short[1].item() == pad_id
+
+    def test_max_new_tokens_maximized(self, llm_server):
+        """model.generate() receives the MAX max_new_tokens across all items."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        captured = {}
+        original_generate = llm_server.model.generate
+
+        def spy_generate(input_ids, **kwargs):
+            captured['kwargs'] = kwargs
+            return original_generate(input_ids, **kwargs)
+
+        llm_server.model.generate = spy_generate
+
+        item_a = BatchItem("a", "x", torch.ones(1, 4, dtype=torch.long),
+                           {"max_new_tokens": 10}, qmod.Queue())
+        item_b = BatchItem("b", "x", torch.ones(1, 4, dtype=torch.long),
+                           {"max_new_tokens": 50}, qmod.Queue())
+
+        llm_server._process_batch([item_a, item_b])
+
+        assert captured['kwargs']['max_new_tokens'] == 50
+
+    def test_per_item_truncation(self, llm_server):
+        """Item requesting fewer tokens gets truncated output."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        item_short = BatchItem("s", "x", torch.ones(1, 3, dtype=torch.long),
+                               {"max_new_tokens": 5}, qmod.Queue())
+        item_long  = BatchItem("l", "x", torch.ones(1, 3, dtype=torch.long),
+                               {"max_new_tokens": 20}, qmod.Queue())
+
+        llm_server._process_batch([item_short, item_long])
+
+        r_short = item_short.result_queue.get(timeout=2)
+        r_long  = item_long.result_queue.get(timeout=2)
+
+        assert 'error' not in r_short
+        assert 'error' not in r_long
+        # Short item must be capped at 5 tokens
+        assert r_short['num_tokens'] <= 5
+        # Long item can use up to 20
+        assert r_long['num_tokens'] <= 20
+
+    def test_pad_token_id_none_uses_eos(self, llm_server):
+        """If tokenizer.pad_token_id is None, eos_token_id is used for padding."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        llm_server.tokenizer.pad_token_id = None
+        llm_server.tokenizer.eos_token_id = 99
+
+        item_a = BatchItem("a", "x", torch.ones(1, 3, dtype=torch.long),
+                           {"max_new_tokens": 5}, qmod.Queue())
+        item_b = BatchItem("b", "x", torch.ones(1, 5, dtype=torch.long),
+                           {"max_new_tokens": 5}, qmod.Queue())
+
+        # Must not raise TypeError from F.pad(..., value=None)
+        llm_server._process_batch([item_a, item_b])
+
+        r_a = item_a.result_queue.get(timeout=2)
+        assert 'error' not in r_a
+
+    def test_avg_batch_size_tracked(self, llm_server):
+        """_total_batches_processed and _total_batch_requests are updated."""
+        import queue as qmod
+
+        from torchbridge.deployment.serving.llm_server import BatchItem
+
+        assert llm_server._total_batches_processed == 0
+        assert llm_server._total_batch_requests == 0
+
+        item_a = BatchItem("a", "x", torch.ones(1, 4, dtype=torch.long),
+                           {"max_new_tokens": 5}, qmod.Queue())
+        item_b = BatchItem("b", "x", torch.ones(1, 4, dtype=torch.long),
+                           {"max_new_tokens": 5}, qmod.Queue())
+
+        llm_server._process_batch([item_a, item_b])
+
+        assert llm_server._total_batches_processed == 1
+        assert llm_server._total_batch_requests == 2
 
 # ============================================================================
 # Error Handling Tests
