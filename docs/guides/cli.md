@@ -237,7 +237,6 @@ tb-init --name big_model --template distributed --force
 For CI/CD pipelines, standalone commands are available:
 
 ```bash
-tb-optimize --model model.pt --level production
 tb-benchmark --model model.pt --quick
 tb-doctor --full-report
 tb-validate --ci --level quick

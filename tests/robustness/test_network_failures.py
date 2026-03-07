@@ -74,15 +74,6 @@ class TestNetworkFailures:
         moe = torchbridge.create_moe(hidden_size=64, num_experts=4, top_k=2)
         assert hasattr(moe, "forward")
 
-    def test_hal_works_offline(self):
-        """Hardware abstraction works without network access."""
-        from torchbridge.hardware.abstraction.hal_core import (
-            HardwareAbstractionLayer,
-        )
-
-        hal = HardwareAbstractionLayer()
-        assert isinstance(hal, HardwareAbstractionLayer)
-
     def test_validator_works_offline(self):
         """Validator works without network access."""
         from torchbridge.validation.unified_validator import UnifiedValidator

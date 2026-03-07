@@ -80,20 +80,6 @@ from .hardware_detector import (
     get_optimal_backend,
 )
 
-# Optimized layers
-from .optimized_layers.activation_functions import (
-    FusedGELU,
-    FusedReLU,
-    FusedSwiGLU,
-    create_optimized_activation,
-)
-from .optimized_layers.linear_transformations import (
-    FusedLinearSequence,
-    GroupedLinearTransformation,
-    MemoryEfficientLinear,
-    MultiHeadLinearProjection,
-)
-
 # Performance tracking and regression detection
 from .performance_tracker import (
     MetricType,
@@ -144,9 +130,6 @@ __all__ = [
     'PrecisionError', 'DeploymentError', 'ExportError', 'ServingError', 'ContainerError',
     'MonitoringError', 'MetricsError', 'HealthCheckError', 'raise_or_warn', 'format_error_chain',
 
-    # Optimized layers - available implementations
-    'FusedGELU', 'FusedSwiGLU', 'FusedReLU', 'create_optimized_activation',
-    'MultiHeadLinearProjection', 'GroupedLinearTransformation', 'MemoryEfficientLinear', 'FusedLinearSequence',
 ]
 
 # Add dynamically available components

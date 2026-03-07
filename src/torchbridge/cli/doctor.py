@@ -399,24 +399,6 @@ Examples:
                 recommendation="Check for model compatibility issues"
             ))
 
-        # TorchBridge components
-        try:
-            from torchbridge.utils.compiler_assistant import (
-                CompilerOptimizationAssistant,  # noqa: F401
-            )
-            results.append(DiagnosticResult(
-                "TorchBridge HAL",
-                "pass",
-                "Hardware abstraction layer ( Available)"
-            ))
-        except ImportError as e:
-            results.append(DiagnosticResult(
-                "TorchBridge HAL",
-                "fail",
-                f"Hardware abstraction layer not available ({e})",
-                recommendation="Reinstall TorchBridge package"
-            ))
-
         return results
 
     @staticmethod

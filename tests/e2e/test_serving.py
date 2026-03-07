@@ -600,36 +600,6 @@ class TestServingIntegration:
         assert TorchBridgeHandler is not None
         assert create_triton_config is not None
 
-    def test_full_workflow_torchscript(self, simple_model, sample_input, temp_dir):
-        """Test full workflow: export -> configure -> package."""
-        from torchbridge.deployment import (
-            create_triton_config,
-            export_to_torchscript,
-        )
-
-        # Export model
-        ts_path = os.path.join(temp_dir, "model.pt")
-        result = export_to_torchscript(
-            model=simple_model,
-            output_path=ts_path,
-            sample_input=sample_input,
-        )
-
-        assert result.success
-        assert os.path.exists(ts_path)
-
-        # Create Triton config
-        config = create_triton_config(
-            model_name="workflow_model",
-            inputs=[("input", "FP32", [10])],
-            outputs=[("output", "FP32", [5])],
-        )
-
-        config_path = os.path.join(temp_dir, "config.pbtxt")
-        config.save(config_path)
-
-        assert os.path.exists(config_path)
-
 
 # ============================================================================
 # Run Tests
