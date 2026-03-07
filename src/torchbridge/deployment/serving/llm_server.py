@@ -115,6 +115,9 @@ class LLMServerConfig:
     enable_dynamic_batching: bool = True
     max_batch_size: int = 8
     batch_timeout_ms: int = 50
+    # Requests within a batch are LEFT-padded so all sequence ends align,
+    # which is correct for causal (decoder-only) LMs. max_batch_size controls
+    # how many requests are packed into a single model.generate() call.
 
     # Performance settings
     enable_streaming: bool = True
@@ -327,6 +330,8 @@ class LLMInferenceServer:
         self._total_generation_time = 0.0
         self._last_generation_time = 0.0
         self._total_tokens_generated = 0
+        self._total_batch_requests = 0
+        self._total_batches_processed = 0
         self._lock = threading.Lock()
 
         # Rate limiter (None when disabled)
@@ -513,12 +518,23 @@ class LLMInferenceServer:
                 logger.error(f"Error in batch processor: {e}")
 
     def _process_batch(self, batch_items: list[BatchItem]) -> None:
-        """Process a batch of generation requests."""
+        """Process a batch of generation requests.
+
+        Pads all inputs LEFT so sequence ends align — required for causal LMs.
+        Generates once for the whole batch, then distributes and truncates
+        per-item outputs to each request's individual max_new_tokens limit.
+        """
         try:
-            # Prepare batch inputs
             input_ids_list = [item.input_ids for item in batch_items]
 
-            # Pad to same length
+            # Resolve pad token — many tokenizers (e.g. GPT-2) have pad_token_id=None.
+            pad_token_id = self.tokenizer.pad_token_id
+            if pad_token_id is None:
+                pad_token_id = self.tokenizer.eos_token_id
+
+            # LEFT-pad to the same length so all sequence ends are aligned.
+            # Causal LMs generate from the last real token; right-padding would
+            # shift that position and produce garbage for shorter sequences.
             max_len = max(ids.size(1) for ids in input_ids_list)
             padded_inputs = []
             attention_masks = []
@@ -527,21 +543,31 @@ class LLMInferenceServer:
                 pad_len = max_len - ids.size(1)
                 if pad_len > 0:
                     padded = torch.nn.functional.pad(
-                        ids, (0, pad_len), value=self.tokenizer.pad_token_id
+                        ids, (pad_len, 0), value=pad_token_id
                     )
                 else:
                     padded = ids
                 padded_inputs.append(padded)
-                attention_masks.append((padded != self.tokenizer.pad_token_id).long())
+                # 1 for real tokens (right side), 0 for left-side padding
+                attention_masks.append((padded != pad_token_id).long())
 
             batch_input_ids = torch.cat(padded_inputs, dim=0).to(self.device)
             batch_attention_mask = torch.cat(attention_masks, dim=0).to(self.device)
 
-            # Use first item's kwargs as template (merge common settings)
+            # Build shared gen_kwargs from first item, then maximize max_new_tokens
+            # so the item requesting the most tokens gets its full output.
+            # Each item's output is truncated to its individual limit below.
             gen_kwargs = batch_items[0].generation_kwargs.copy()
+            max_new_tokens_values = [
+                item.generation_kwargs.get('max_new_tokens')
+                for item in batch_items
+                if item.generation_kwargs.get('max_new_tokens') is not None
+            ]
+            if max_new_tokens_values:
+                gen_kwargs['max_new_tokens'] = max(max_new_tokens_values)
             gen_kwargs['attention_mask'] = batch_attention_mask
 
-            # Generate
+            # Single generate() call for the whole batch
             start_time = time.time()
             with torch.no_grad():
                 outputs = self.model.generate(
@@ -551,27 +577,31 @@ class LLMInferenceServer:
 
             generation_time = (time.time() - start_time) * 1000
 
-            # Distribute results
+            # Distribute and truncate results per item
             for i, item in enumerate(batch_items):
                 output_ids = outputs[i:i+1]
+                # Strip prompt tokens (original unpadded length)
                 generated_ids = output_ids[:, input_ids_list[i].size(1):]
+                # Truncate to this item's individually requested max_new_tokens
+                item_max = item.generation_kwargs.get('max_new_tokens')
+                if item_max is not None:
+                    generated_ids = generated_ids[:, :item_max]
                 generated_text = self.tokenizer.decode(
                     generated_ids[0], skip_special_tokens=True
                 )
-
-                result = {
+                item.result_queue.put({
                     'generated_text': generated_text,
                     'num_tokens': generated_ids.size(1),
                     'inference_time_ms': generation_time / len(batch_items),
-                }
-
-                item.result_queue.put(result)
+                })
 
             # Update metrics
             with self._lock:
                 self._generation_count += len(batch_items)
                 self._total_generation_time += generation_time
                 self._last_generation_time = generation_time
+                self._total_batch_requests += len(batch_items)
+                self._total_batches_processed += 1
                 total_tokens = sum(
                     outputs[i, input_ids_list[i].size(1):].numel()
                     for i in range(len(batch_items))
@@ -580,7 +610,6 @@ class LLMInferenceServer:
 
         except Exception as e:
             logger.error(f"Batch processing error: {e}")
-            # Send error to all waiting requests
             for item in batch_items:
                 item.result_queue.put({'error': str(e)})
 
@@ -1002,6 +1031,12 @@ class LLMInferenceServer:
             memory_allocated = 0.0
             memory_reserved = 0.0
 
+        # Compute avg_batch_size from tracked counters (real value, not always 0)
+        avg_batch_size = (
+            self._total_batch_requests / self._total_batches_processed
+            if self._total_batches_processed > 0 else 0.0
+        )
+
         # LLM metrics snapshot
         llm_kwargs: dict = {}
         if self._llm_metrics is not None:
@@ -1015,7 +1050,7 @@ class LLMInferenceServer:
                 "tpot_p99_ms": snap.tpot_p99_ms,
                 "cache_hit_rate": snap.cache_hit_rate,
                 "tokens_per_second": snap.tokens_per_second,
-                "avg_batch_size": snap.avg_batch_size,
+                "avg_batch_size": avg_batch_size,
             }
 
         return MetricsResponse(
