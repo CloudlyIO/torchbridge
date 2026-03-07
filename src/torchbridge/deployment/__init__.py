@@ -1,12 +1,11 @@
 """
 Model Deployment Module for TorchBridge
 
-Provides serving infrastructure for cross-backend validation demos and
-production readiness checks. For model export (ONNX, TorchScript, safetensors),
-use PyTorch's native APIs directly — TorchBridge does not wrap them.
+Provides serving infrastructure for cross-backend validation demos.
+For model export (ONNX, TorchScript, safetensors), use PyTorch's native
+APIs directly — TorchBridge does not wrap them.
 
 Key Components:
-- Production validation: readiness checks before deployment
 - Backend metadata: schema for preserving hardware configuration information
 - Inference serving: FastAPI, TorchServe, and Triton integrations
 
@@ -27,17 +26,6 @@ from .optimization_metadata import (
     PerformanceMetadata,
     PrecisionMetadata,
     create_metadata,
-)
-
-# Production validation
-from .production_validator import (
-    ProductionRequirements,
-    ProductionValidationResult,
-    ProductionValidator,
-    ValidationCheck,
-    ValidationSeverity,
-    ValidationStatus,
-    validate_production_readiness,
 )
 
 # Serving module
@@ -70,14 +58,6 @@ __all__ = [
     "ModelMetadata",
     "ExportFormat",
     "create_metadata",
-    # Production Validation
-    "ProductionValidator",
-    "ProductionRequirements",
-    "ProductionValidationResult",
-    "ValidationCheck",
-    "ValidationSeverity",
-    "ValidationStatus",
-    "validate_production_readiness",
     # Serving - TorchServe
     "TorchBridgeHandler",
     "BaseHandler",

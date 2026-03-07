@@ -376,24 +376,17 @@ class QuantizationEngine:
     def _apply_fp8(
         self, model: nn.Module, fmt: QuantizationFormat
     ) -> nn.Module:
-        """FP8 quantization using TorchBridge native precision module."""
-        try:
-            from torchbridge.precision.fp8_native import convert_model_to_native_fp8
-
-            return convert_model_to_native_fp8(model)
-        except Exception as e:
-            logger.warning("Native FP8 conversion failed: %s", e)
-            # Try torchao FP8 (only on supported backends)
-            if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
-                try:
-                    return TorchAOBackend.quantize_fp8(model)
-                except Exception as e:
-                    logger.debug("TorchAO FP8 fallback also failed: %s", e)
-            warnings.warn(
-                f"FP8 ({fmt.value}) not available; falling back to INT8 dynamic",
-                stacklevel=2,
-            )
-            return self._apply_int8_dynamic(model)
+        """FP8 quantization via torchao. Falls back to INT8 if unavailable."""
+        if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
+            try:
+                return TorchAOBackend.quantize_fp8(model)
+            except Exception as e:
+                logger.debug("TorchAO FP8 failed: %s", e)
+        warnings.warn(
+            f"FP8 ({fmt.value}) not available on this backend; falling back to INT8 dynamic",
+            stacklevel=2,
+        )
+        return self._apply_int8_dynamic(model)
 
     def _apply_nvfp4(self, model: nn.Module) -> nn.Module:
         """NVFP4 quantization using TorchBridge native precision module."""
