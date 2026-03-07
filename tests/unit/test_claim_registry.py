@@ -43,10 +43,10 @@ class TestRegistryFunctions:
         benchmarks = get_all_claim_benchmarks()
         assert isinstance(benchmarks, list)
 
-    def test_get_all_returns_four(self):
-        """Should have exactly 4 registered claims."""
+    def test_get_all_returns_five(self):
+        """Should have exactly 5 registered claims."""
         benchmarks = get_all_claim_benchmarks()
-        assert len(benchmarks) == 4
+        assert len(benchmarks) == 5
 
     def test_all_are_claim_benchmarks(self):
         """All returned items should be ClaimBenchmark instances."""
@@ -64,7 +64,7 @@ class TestRegistryFunctions:
         """build_claim_suite should return a BenchmarkSuite."""
         suite = build_claim_suite()
         assert isinstance(suite, BenchmarkSuite)
-        assert len(suite.benchmarks) == 4
+        assert len(suite.benchmarks) == 5
 
 
 class TestTensorCoreAlignmentBenchmark:

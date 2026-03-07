@@ -8,6 +8,28 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.50] - 2026-03-06 - LLM Server Batch Correctness
+
+### **Summary**
+
+Four correctness bugs in `_process_batch()` fixed: right-padding → left-padding for causal LMs,
+`max_new_tokens` now maximized across batch items with per-item truncation on output,
+`pad_token_id=None` falls back to `eos_token_id` (fixes crash on GPT-2 and others),
+and `avg_batch_size` in `/metrics` is now computed from real counters instead of hardcoded 0.
+Adds `batch_throughput` benchmark claim and 6 `TestProcessBatch` unit tests replacing 3 stubs.
+
+### **Changes**
+
+- `llm_server.py`: Left-pad `(pad_len, 0)` instead of right-pad `(0, pad_len)` for decoder-only LMs
+- `llm_server.py`: Resolve `pad_token_id` with `eos_token_id` fallback before padding
+- `llm_server.py`: `gen_kwargs['max_new_tokens']` = max across all batch items; per-item truncation in result distribution
+- `llm_server.py`: `_total_batch_requests`, `_total_batches_processed` counters; `avg_batch_size` computed in `_get_metrics_response()`
+- `claim_registry.py`: Add `build_batch_throughput_benchmark()` — sequential vs batched generate(), `requires_backend="cuda"`, graceful skip
+- `tests/e2e/test_llm_server.py`: Replace 3 stub `TestDynamicBatching` tests with 6 real `TestProcessBatch` unit tests
+- `tests/unit/test_claim_registry.py`, `tests/integration/test_claim_benchmarks_pipeline.py`: Update hardcoded counts 4→5
+
+---
+
 ## [0.5.49] - 2026-03-06 - tb-validate --compare: Cross-Backend Output Comparison CLI
 
 ### **Summary**

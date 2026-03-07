@@ -214,6 +214,96 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
 # baseline_fn and optimized_fn would run the same un-tuned kernels, producing
 # ~0% delta regardless of hardware.
 
+def build_batch_throughput_benchmark() -> ClaimBenchmark:
+    """Measure throughput gain of batched vs sequential model.generate().
+
+    Simulates 4 concurrent inference requests: sequential processes them one
+    at a time (4 separate generate calls); batched packs all 4 into a single
+    generate call with left-padded inputs.
+
+    Requires CUDA — batching benefit is negligible on CPU.
+    """
+    # Small sequence lengths to keep the benchmark fast on any GPU.
+    batch_size = 4
+    max_new_tokens = 8
+
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA not available")
+
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        model = AutoModelForCausalLM.from_pretrained(
+            "Qwen/Qwen3-0.6B", torch_dtype=torch.float16
+        ).cuda().eval()
+        tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = tokenizer.eos_token_id
+
+        prompts = ["The quick brown fox"] * batch_size
+        inputs = [
+            tokenizer(p, return_tensors="pt").input_ids.cuda() for p in prompts
+        ]
+
+        # Batch: pad left, single generate call
+        max_len = max(x.size(1) for x in inputs)
+        pad_id = tokenizer.pad_token_id
+        padded = [
+            torch.nn.functional.pad(x, (max_len - x.size(1), 0), value=pad_id)
+            for x in inputs
+        ]
+        batch_ids = torch.cat(padded, dim=0)
+        attn_mask = (batch_ids != pad_id).long()
+
+        def sequential_fn():
+            for x in inputs:
+                model.generate(x, max_new_tokens=max_new_tokens, do_sample=False)
+
+        def batched_fn():
+            model.generate(
+                batch_ids,
+                attention_mask=attn_mask,
+                max_new_tokens=max_new_tokens,
+                do_sample=False,
+            )
+
+        skip_reason = None
+        baseline_fn = sequential_fn
+        optimized_fn = batched_fn
+
+    except Exception as e:
+        # CUDA unavailable or model not cached — skip cleanly
+        skip_reason = f"CUDA or model unavailable: {e}"
+        dummy = torch.zeros(1)
+
+        def baseline_fn():
+            return dummy + 1
+
+        def optimized_fn():
+            return dummy + 1
+
+    return ClaimBenchmark(
+        name="batch_throughput",
+        baseline_fn=baseline_fn,
+        optimized_fn=optimized_fn,
+        warmup=2,
+        runs=10,
+        threshold_pct=30.0,  # batching 4 requests should be ≥30% faster than sequential
+        requires_backend="cuda",
+        skip_reason=skip_reason,
+        description=(
+            "Dynamic batching: 4 concurrent requests in one model.generate() call "
+            "vs 4 sequential calls. Expected ≥30% throughput improvement on GPU."
+        ),
+        notes=[
+            "Measures wall-clock time for batch_size=4 sequential vs batched generation.",
+            "Batching amortizes KV-cache setup and GPU kernel launch overhead.",
+            "Requires CUDA — batch benefit is negligible on CPU.",
+            "Benchmark uses left-padded inputs (correct for causal LMs).",
+        ],
+    )
+
+
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 
@@ -224,6 +314,7 @@ def get_all_claim_benchmarks() -> list[ClaimBenchmark]:
         build_channels_last_benchmark(),
         build_attention_dispatch_benchmark(),
         build_quantization_speedup_benchmark(),
+        build_batch_throughput_benchmark(),
     ]
 
 
