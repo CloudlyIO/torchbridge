@@ -177,8 +177,6 @@ class TestBenchmarkCommand:
         assert all(hasattr(r, 'name') for r in results)
         assert all(hasattr(r, 'mean_time_ms') for r in results)
         assert all(r.mean_time_ms > 0 for r in results)  # Should have valid timing
-        # Check that we have FusedGELU benchmark
-        assert any('FusedGELU' in r.name for r in results)
 
     def test_run_predefined_benchmarks_transformers(self):
         """Test running predefined transformer benchmarks."""

@@ -54,16 +54,18 @@ torchrun --nproc_per_node=4 train.py
 Best for: models too large for single-GPU memory.
 
 ```python
-from torchbridge.distributed_scale import AdvancedFSDPManager
+# Use PyTorch FSDP directly — TorchBridge provides config recommendations via tb-advisor
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, ShardingStrategy
 
-fsdp_manager = AdvancedFSDPManager(
-    sharding_strategy="FULL_SHARD",  # FULL_SHARD, SHARD_GRAD_OP, NO_SHARD
-    mixed_precision=True,
-    cpu_offload=False,
-    activation_checkpointing=True,
+model = FSDP(
+    model,
+    sharding_strategy=ShardingStrategy.FULL_SHARD,
+    mixed_precision=None,  # configure as needed
+    cpu_offload=None,
 )
-model = fsdp_manager.wrap_model(model)
 ```
+
+Use `tb-advisor --model-params <B> --world-size <N>` to get backend-specific FSDP config recommendations.
 
 Sharding strategies:
 - **FULL_SHARD**: Maximum memory savings, shard parameters + gradients + optimizer
@@ -118,14 +120,7 @@ print(f"Optimizer: {optimizer_bytes / 1e9:.1f} GB")
 
 ## Multi-Node Training
 
-TorchBridge provides `MultiNodeTrainingManager` for coordinating multi-node jobs:
-
-```python
-from torchbridge.distributed_scale import MultiNodeTrainingManager
-
-manager = MultiNodeTrainingManager()
-manager.setup(num_nodes=2, gpus_per_node=8)
-```
+Launch multi-node jobs directly with `torchrun` — no wrapper needed.
 
 ### Single-Node, Multi-GPU
 
@@ -147,16 +142,20 @@ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=1 \
 
 ## Memory Optimization
 
-Combine distributed training with memory optimization:
+Use PyTorch's built-in gradient checkpointing to reduce activation memory:
 
 ```python
-from torchbridge.advanced_memory import SelectiveGradientCheckpointing
+from torch.utils.checkpoint import checkpoint
 
-# Gradient checkpointing reduces activation memory
-checkpointing = SelectiveGradientCheckpointing(model, checkpoint_ratio=0.5)
+# Apply to specific layers
+def forward_with_checkpointing(layer, x):
+    return checkpoint(layer, x)
+```
 
-# CPU offloading for optimizer states
-fsdp_manager = AdvancedFSDPManager(cpu_offload=True)
+For FSDP with CPU offload:
+```python
+from torch.distributed.fsdp import CPUOffload
+model = FSDP(model, cpu_offload=CPUOffload(offload_params=True))
 ```
 
 ## Backend Compatibility

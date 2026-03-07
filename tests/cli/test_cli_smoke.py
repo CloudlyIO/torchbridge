@@ -19,9 +19,7 @@ import pytest
 # All entry points from pyproject.toml [project.scripts]
 _CLI_MODULES = [
     ("torchbridge.cli", "main"),
-    ("torchbridge.cli.optimize", "main"),
     ("torchbridge.cli.benchmark", "main"),
-    ("torchbridge.cli.export", "main"),
     ("torchbridge.cli.profile", "main"),
     ("torchbridge.cli.doctor", "main"),
     ("torchbridge.cli.init", "main"),

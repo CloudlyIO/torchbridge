@@ -189,14 +189,6 @@ class TestDoctorCommand:
         assert jit_result is not None
         assert jit_result.status == "pass"  # Should always be available
 
-    def test_check_optimization_frameworks_torchbridge(self):
-        """Test TorchBridge HAL availability."""
-        results = DoctorCommand._check_optimization_frameworks(verbose=False)
-
-        kpt_result = next((r for r in results if r.name == "TorchBridge HAL"), None)
-        assert kpt_result is not None
-        # Should pass since we're running tests from the package
-
     @patch('subprocess.run')
     def test_check_advanced_features_cuda_toolkit(self, mock_run):
         """Test CUDA toolkit detection."""

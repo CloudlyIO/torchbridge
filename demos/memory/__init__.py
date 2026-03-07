@@ -1,1 +1,0 @@
-# Memory demo modules

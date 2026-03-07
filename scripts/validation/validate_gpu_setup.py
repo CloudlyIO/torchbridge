@@ -120,12 +120,6 @@ class GPUSetupValidator:
             import torchbridge  # noqa: F401
             print("   torchbridge package: ✅")
 
-            # Test PyGraph optimizer from next_gen
-            from torchbridge.optimizations.next_gen import (
-                create_pygraph_optimizer,  # noqa: F401
-            )
-            print("   PyGraph optimizer: ✅")
-
             return True
         except ImportError as e:
             print(f"   Import error: {e}")
