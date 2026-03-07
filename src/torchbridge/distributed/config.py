@@ -20,7 +20,7 @@ from torchbridge.core.config import (
     TrainiumArchitecture,
 )
 from torchbridge.distributed.collective_backend import CollectiveConfig
-from torchbridge.distributed.fsdp2 import FSDPConfig, FSDPManager, ShardingStrategy
+from torchbridge.distributed.fsdp import FSDPConfig, FSDPManager, ShardingStrategy
 from torchbridge.distributed.pipeline_schedules import (
     PipelineConfig,
     PipelineScheduleFactory,

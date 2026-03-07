@@ -42,16 +42,16 @@ _NVIDIA_FORMATS: dict[NVIDIAArchitecture, list[QuantizationFormat]] = {
     ],
     NVIDIAArchitecture.HOPPER: [
         QuantizationFormat.FP8_E4M3,
-        QuantizationFormat.INT8_SMOOTHQUANT,
+        QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],
     NVIDIAArchitecture.AMPERE: [
-        QuantizationFormat.INT8_SMOOTHQUANT,
+        QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],
     NVIDIAArchitecture.ADA: [
-        QuantizationFormat.INT8_SMOOTHQUANT,
+        QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],

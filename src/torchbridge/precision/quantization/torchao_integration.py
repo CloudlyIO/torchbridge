@@ -1,14 +1,13 @@
 """
 torchao Integration Layer
 
-Provides a soft-import wrapper around torchao for INT8/INT4/SmoothQuant
+Provides a soft-import wrapper around torchao for INT8/INT4
 quantization. Falls back gracefully when torchao is not installed.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import torch.nn as nn
 
@@ -90,19 +89,13 @@ class TorchAOBackend:
         return model
 
     @staticmethod
-    def quantize_smoothquant(
-        model: nn.Module,
-        calibration_data: Any | None = None,
-    ) -> nn.Module:
-        """Apply SmoothQuant (INT8 with activation smoothing) via torchao.
+    def quantize_int8_dynamic_activations(model: nn.Module) -> nn.Module:
+        """Apply INT8 dynamic activation + INT8 weight quantization via torchao.
 
-        Args:
-            model: Model to quantize.
-            calibration_data: Optional calibration data for activation ranges.
+        Uses ``int8_dynamic_activation_int8_weight`` from torchao, which
+        quantizes activations dynamically per token and weights statically.
         """
         TorchAOBackend._require_torchao()
-        # SmoothQuant uses the same int8 dynamic API in torchao;
-        # the smoothing pass is implicit in newer torchao versions.
         quantize_(model, int8_dynamic_activation_int8_weight())
         return model
 

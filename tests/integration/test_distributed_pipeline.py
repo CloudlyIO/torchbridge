@@ -165,7 +165,7 @@ class TestPackageImports:
     def test_all_exports(self):
         from torchbridge.distributed import __all__
         expected_names = [
-            "FSDPConfig", "FSDPManager", "FSDP2Config", "FSDP2Manager",
+            "FSDPConfig", "FSDPManager", "FSDP2Config",
             "MixedPrecisionChoice", "ShardingStrategy",
             "InterconnectType", "MeshConfig", "TopologyDetector",
             "PipelineConfig", "PipelineScheduleFactory", "PipelineScheduleType",

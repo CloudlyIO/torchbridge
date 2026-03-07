@@ -13,7 +13,7 @@ from torchbridge.distributed.config import (
     ParallelismRecommendation,
     recommend_parallelism,
 )
-from torchbridge.distributed.fsdp2 import (
+from torchbridge.distributed.fsdp import (
     FSDPConfig,
     MixedPrecisionChoice,
     ShardingStrategy,

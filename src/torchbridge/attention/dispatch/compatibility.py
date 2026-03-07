@@ -65,12 +65,10 @@ _NVIDIA_KERNELS: dict[NVIDIAArchitecture, list[AttentionKernelType]] = {
 _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.CDNA4: [
         AttentionKernelType.FLASH_ATTENTION_CK,
-        AttentionKernelType.TRITON_ATTENTION,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA3: [
         AttentionKernelType.FLASH_ATTENTION_CK,
-        AttentionKernelType.TRITON_ATTENTION,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA2: [
