@@ -165,17 +165,14 @@ class TestCrossBackend:
         result = engine.inject(model)
         assert result.success
 
-    @pytest.mark.parametrize(
-        "backend",
-        [HardwareBackend.TRAINIUM, HardwareBackend.CPU],
-    )
-    def test_qlora_fallback_on_unsupported(self, backend):
+    def test_qlora_fallback_on_unsupported(self):
+        # TRAINIUM does not support QLORA; CPU now does (INT8).
         model = MiniLM(dim=16, n_layers=1)
         config = AdapterConfig(
             method=AdapterMethod.QLORA,
             target_modules=["q_proj"],
         )
-        engine = AdapterEngine(config, backend)
+        engine = AdapterEngine(config, HardwareBackend.TRAINIUM)
         result = engine.inject(model)
         assert result.used_fallback
         assert result.method_applied == AdapterMethod.LORA
@@ -349,6 +346,49 @@ class TestImports:
 
 
 # ── Trainable Parameter Ratio ────────────────────────────────────────────────
+
+
+class TestQLoRAIntegration:
+    """Integration tests for QLoRA inject + forward on CPU (INT8)."""
+
+    @pytest.fixture(autouse=True)
+    def require_torchao(self):
+        pytest.importorskip("torchao")
+
+    def test_qlora_inject_and_forward(self):
+        torch.manual_seed(42)
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 16))
+        config = AdapterConfig(
+            method=AdapterMethod.QLORA,
+            rank=4,
+            alpha=8.0,
+            target_modules=["0", "2"],
+        )
+        engine = AdapterEngine(config, HardwareBackend.CPU)
+        result = engine.inject(model)
+
+        assert result.success
+        assert result.modules_adapted == 2
+        assert result.base_quantized is True
+
+        x = torch.randn(2, 64)
+        out = model(x)
+        assert out.shape == (2, 16)
+
+    def test_qlora_trainable_ratio_low(self):
+        torch.manual_seed(42)
+        model = MiniLM(dim=64, n_layers=2)
+        config = AdapterConfig(
+            method=AdapterMethod.QLORA,
+            rank=4,
+            target_modules=["q_proj", "v_proj"],
+        )
+        engine = AdapterEngine(config, HardwareBackend.CPU)
+        result = engine.inject(model)
+
+        assert result.success
+        # Adapter params should be a small fraction of total
+        assert result.trainable_ratio < 0.15
 
 
 class TestTrainableRatio:
