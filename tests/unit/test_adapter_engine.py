@@ -1,5 +1,6 @@
 """Tests for adapter engine — injection, merge, and param lifecycle."""
 
+import pytest
 import torch
 import torch.nn as nn
 
@@ -150,6 +151,7 @@ class TestInject:
             method=AdapterMethod.QLORA,
             target_modules=["q_proj", "v_proj"],
         )
+        # TRAINIUM does not support QLORA — should fall back to LORA
         engine = AdapterEngine(config, HardwareBackend.TRAINIUM)
         result = engine.inject(model)
 
@@ -363,3 +365,51 @@ class TestGetInfo:
 
         assert info["config"]["rank"] == 8
         assert info["config"]["alpha"] == 16.0
+
+
+# ── QLoRA Inject Tests ───────────────────────────────────────────────────────
+
+
+class TestQLoRAInject:
+    """Tests for QLORA injection via AdapterEngine."""
+
+    def test_inject_qlora_cpu_sets_base_quantized(self):
+        """CPU backend with QLORA should produce QLoRALinear and set base_quantized."""
+        pytest.importorskip("torchao")
+        from torchbridge.adapters.layers import QLoRALinear
+        from torchbridge.precision.quantization.formats import QuantizationFormat
+
+        model = TinyTransformer()
+        config = AdapterConfig(
+            method=AdapterMethod.QLORA,
+            rank=4,
+            target_modules=["q_proj"],
+        )
+        engine = AdapterEngine(config, HardwareBackend.CPU)
+        result = engine.inject(model)
+
+        assert result.success
+        assert result.base_quantized is True
+        assert result.base_quant_format == QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS
+        assert isinstance(model.attn["q_proj"], QLoRALinear)
+
+    def test_inject_qlora_fallback_when_no_torchao(self, monkeypatch):
+        """When torchao unavailable, QLORA should produce plain LoRA, base_quantized=False."""
+        import torchbridge.adapters.engine as engine_mod
+
+        monkeypatch.setattr(engine_mod, "_TORCHAO_AVAILABLE", False)
+
+        model = TinyTransformer()
+        config = AdapterConfig(
+            method=AdapterMethod.QLORA,
+            rank=4,
+            target_modules=["q_proj"],
+        )
+        engine = AdapterEngine(config, HardwareBackend.CPU)
+        result = engine.inject(model)
+
+        assert result.success
+        assert result.base_quantized is False
+        assert result.method_applied == AdapterMethod.QLORA  # method unchanged
+        from torchbridge.adapters.layers import LoRALinear
+        assert isinstance(model.attn["q_proj"], LoRALinear)
