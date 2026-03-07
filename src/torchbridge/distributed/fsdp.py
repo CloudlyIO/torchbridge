@@ -4,9 +4,7 @@ FSDP Configuration Manager
 Backend-aware FSDP configuration that auto-selects sharding strategy,
 mixed precision policy, and communication optimizations per hardware.
 
-Note: ``apply()`` uses ``torch.distributed.fsdp.FullyShardedDataParallel``
-(the stable FSDP API).  The composable FSDP2 API
-(``torch.distributed._composable.fsdp``) is experimental and not yet used.
+Uses ``torch.distributed.fsdp.FullyShardedDataParallel`` (the stable FSDP1 API).
 """
 
 from __future__ import annotations

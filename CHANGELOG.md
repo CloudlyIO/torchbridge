@@ -8,6 +8,56 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.47] - 2026-03-06 - Integrity Sweep
+
+### **Summary**
+
+Code audit identified 5 integrity issues where source-level claims were technically
+incorrect. No new features. All 5 fixed.
+
+### **Track 1 — Renamed INT8_SMOOTHQUANT → INT8_DYNAMIC_ACTIVATIONS**
+
+`TorchAOBackend.quantize_smoothquant()` called `int8_dynamic_activation_int8_weight()` —
+the identical torchao function as `_apply_int8_dynamic`. Real SmoothQuant (per-channel
+activation scaling migration) was never implemented. Renamed throughout:
+`QuantizationFormat`, `FormatSpec` (`requires_calibration=False`), `QuantizationEngine`,
+`TorchAOBackend`, compatibility matrix (HOPPER/AMPERE/ADA rows), and all tests.
+
+### **Track 2 — Fixed KernelBenchmarkCache: benchmark the actual kernel**
+
+`run_benchmark()` always called `F.scaled_dot_product_attention` regardless of
+`kernel_type`. All cached "FlashAttention-3" / "Triton" latencies were SDPA latencies
+with wrong labels. Now routes per kernel type: Flash kernels → `flash_attn_func`
+(raises `RuntimeError` if not installed), FlexAttention → `flex_attention`
+(raises `RuntimeError` if unavailable), hardware-specific proxies → SDPA (correct).
+
+### **Track 3 — Deleted TRITON_ATTENTION (Benchmark-or-Delete)**
+
+`_check_triton()` only checked `import triton`. No Triton forward implementation
+existed. `TRITON_ATTENTION` mapped to `"memory_efficient_attention"` — same as
+`PYTORCH_SDPA`. Users on CDNA3 with triton installed received plain SDPA under a
+misleading label. Removed from enum, AMD fallback chains, dispatcher, and tests.
+
+### **Track 4 — Deleted AMD TunableOp Benchmark (Benchmark-or-Delete)**
+
+Both `baseline_fn` and `optimized_fn` were `lambda: model(x)` over the same model.
+`PYTORCH_TUNABLEOP_ENABLED=1` takes effect at kernel selection time and requires a
+process restart — in-process benchmarking always produces ~0% delta. Deleted.
+
+### **Track 5 — Renamed fsdp2.py → fsdp.py**
+
+Module named `fsdp2.py` implied the composable FSDP2 API
+(`torch.distributed._composable.fsdp`). It uses `torch.distributed.fsdp.FSDP` (FSDP1).
+Renamed to `fsdp.py`. Removed `FSDP2Manager` alias from `__init__.py` (`FSDP2Config`
+kept for import compatibility). Updated all internal imports and tests.
+
+### **Test delta**
+
+~8 tests removed (deleted enum values + tunableop class); ~8 tests added (kernel routing
+correctness, flash-attn RuntimeError). Net: slight decrease.
+
+---
+
 ## [0.5.46] - 2026-03-06 - Architecture Guard Patch
 
 ### **Summary**

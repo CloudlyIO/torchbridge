@@ -21,7 +21,7 @@ class TestQuantizationFormat:
     def test_all_formats_defined(self):
         """All expected format members should exist."""
         expected = [
-            "NONE", "INT8_DYNAMIC", "INT8_SMOOTHQUANT", "INT4_WEIGHT_ONLY",
+            "NONE", "INT8_DYNAMIC", "INT8_DYNAMIC_ACTIVATIONS", "INT4_WEIGHT_ONLY",
             "FP8_E4M3", "FP8_E5M2", "NVFP4", "BF16",
         ]
         for name in expected:
@@ -118,10 +118,10 @@ class TestFormatSpec:
         for fmt in (QuantizationFormat.INT4_WEIGHT_ONLY,):
             assert FORMAT_SPECS[fmt].memory_reduction_pct == 75.0
 
-    def test_smoothquant_requires_calibration(self):
-        """SmoothQuant should require calibration data."""
-        spec = FORMAT_SPECS[QuantizationFormat.INT8_SMOOTHQUANT]
-        assert spec.requires_calibration is True
+    def test_int8_dynamic_activations_spec(self):
+        """INT8_DYNAMIC_ACTIVATIONS should not require calibration but does need torchao."""
+        spec = FORMAT_SPECS[QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS]
+        assert spec.requires_calibration is False
         assert spec.requires_torchao is True
 
 

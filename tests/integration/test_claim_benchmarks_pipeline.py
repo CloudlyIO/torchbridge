@@ -24,7 +24,7 @@ class TestClaimBenchmarkPipeline:
         suite = build_claim_suite()
         report = suite.run_all(device="cpu")
         assert isinstance(report, BenchmarkReport)
-        assert len(report.results) == 5
+        assert len(report.results) == 4
 
     def test_all_non_skipped_have_timing_data(self):
         """Non-skipped results should have positive timing data."""
@@ -34,14 +34,6 @@ class TestClaimBenchmarkPipeline:
             if r.runs > 0:
                 assert r.baseline_ms > 0, f"{r.claim_name}: baseline_ms should be > 0"
                 assert r.optimized_ms > 0, f"{r.claim_name}: optimized_ms should be > 0"
-
-    def test_tunableop_skipped_on_cpu(self):
-        """AMD TunableOp should be skipped on CPU."""
-        suite = build_claim_suite()
-        report = suite.run_all(device="cpu")
-        tunableop = [r for r in report.results if r.claim_name == "amd_tunableop"]
-        assert len(tunableop) == 1
-        assert tunableop[0].runs == 0
 
     def test_report_save_and_reload(self):
         """Report should save to JSON and reload correctly."""
@@ -57,7 +49,7 @@ class TestClaimBenchmarkPipeline:
             loaded = json.load(f)
 
         assert loaded["device"] == "cpu"
-        assert len(loaded["results"]) == 5
+        assert len(loaded["results"]) == 4
         assert "summary" in loaded
         assert "claims_to_delete" in loaded
 
@@ -108,7 +100,6 @@ class TestClaimBenchmarkPipeline:
             "channels_last_layout",
             "attention_dispatch_overhead",
             "quantization_int8_dynamic",
-            "amd_tunableop",
         }
         actual_names = {b.name for b in benchmarks}
         assert actual_names == expected_names
