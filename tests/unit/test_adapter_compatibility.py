@@ -90,7 +90,10 @@ class TestGetFallbackChain:
         chain = AdapterCompatibilityMatrix.get_fallback_chain(
             HardwareBackend.CPU
         )
-        assert chain == [AdapterMethod.LORA, AdapterMethod.DORA]
+        # CPU now supports QLORA (INT8) for testing
+        assert AdapterMethod.LORA in chain
+        assert AdapterMethod.DORA in chain
+        assert AdapterMethod.QLORA in chain
 
     def test_tpu_chain_includes_dora(self):
         chain = AdapterCompatibilityMatrix.get_fallback_chain(
@@ -101,11 +104,11 @@ class TestGetFallbackChain:
     def test_chains_are_copies(self):
         """Modifying a returned chain should not affect future calls."""
         chain1 = AdapterCompatibilityMatrix.get_fallback_chain(
-            HardwareBackend.CPU
+            HardwareBackend.TRAINIUM
         )
         chain1.append(AdapterMethod.QLORA)
         chain2 = AdapterCompatibilityMatrix.get_fallback_chain(
-            HardwareBackend.CPU
+            HardwareBackend.TRAINIUM
         )
         assert AdapterMethod.QLORA not in chain2
 
@@ -148,11 +151,11 @@ class TestGetBaseQuantFormat:
         )
         assert fmt is None
 
-    def test_cpu_gets_none(self):
+    def test_cpu_gets_int8(self):
         fmt = AdapterCompatibilityMatrix.get_base_quant_format(
             HardwareBackend.CPU
         )
-        assert fmt is None
+        assert fmt == QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS
 
 
 class TestSupportsMethod:
@@ -169,8 +172,9 @@ class TestSupportsMethod:
             HardwareBackend.TRAINIUM, None, AdapterMethod.QLORA
         )
 
-    def test_qlora_not_on_cpu(self):
-        assert not AdapterCompatibilityMatrix.supports_method(
+    def test_qlora_on_cpu(self):
+        # CPU now supports QLORA (INT8 base for testing)
+        assert AdapterCompatibilityMatrix.supports_method(
             HardwareBackend.CPU, None, AdapterMethod.QLORA
         )
 

@@ -6,7 +6,8 @@ import torch
 import torch.nn as nn
 
 from torchbridge.adapters.config import InitMethod
-from torchbridge.adapters.layers import DoRALinear, LoRALinear
+from torchbridge.adapters.layers import DoRALinear, LoRALinear, QDoRALinear, QLoRALinear
+from torchbridge.precision.quantization.formats import QuantizationFormat
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -275,3 +276,107 @@ class TestDoRALinearParams:
         base_params = 32 * 64 + 64  # weight + bias
         adapter_params = 128 + 256 + 64
         assert layer.total_params == base_params + adapter_params
+
+
+# ── QLoRALinear Tests ─────────────────────────────────────────────────────────
+
+
+class TestQLoRALinear:
+    """Tests for QLoRALinear (quantized base + LoRA adapter)."""
+
+    @pytest.fixture(autouse=True)
+    def require_torchao(self):
+        pytest.importorskip("torchao")
+
+    @pytest.fixture
+    def base(self):
+        torch.manual_seed(42)
+        return nn.Linear(64, 32)
+
+    @pytest.fixture
+    def qlora(self, base):
+        return QLoRALinear(
+            base, rank=4, alpha=8.0,
+            quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
+        )
+
+    def test_forward_shape_matches_base(self, qlora):
+        x = torch.randn(2, 64)
+        out = qlora(x)
+        assert out.shape == (2, 32)
+
+    def test_only_adapter_params_trainable(self, qlora):
+        assert qlora.lora_A.weight.requires_grad
+        assert qlora.lora_B.weight.requires_grad
+        for param in qlora.base_linear.parameters():
+            assert not param.requires_grad
+
+    def test_merge_raises_not_implemented(self, qlora):
+        with pytest.raises(NotImplementedError, match="quantized base weights"):
+            qlora.merge()
+
+    def test_memory_reduced_vs_fp32(self, base):
+        torch.manual_seed(42)
+        plain = nn.Linear(64, 32)
+        lora_plain = LoRALinear(plain, rank=4, alpha=8.0)
+
+        torch.manual_seed(42)
+        base_q = nn.Linear(64, 32)
+        qlora = QLoRALinear(
+            base_q, rank=4, alpha=8.0,
+            quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
+        )
+
+        def size_bytes(m: nn.Module) -> int:
+            return sum(
+                p.untyped_storage().nbytes()
+                for p in m.parameters()
+                if hasattr(p, "untyped_storage")
+            )
+
+        # QLoRA base should use less storage than FP32 LoRA base
+        assert size_bytes(qlora.base_linear) < size_bytes(lora_plain.base_linear)
+
+    def test_batch_dims(self, qlora):
+        x = torch.randn(3, 5, 64)
+        out = qlora(x)
+        assert out.shape == (3, 5, 32)
+
+
+# ── QDoRALinear Tests ─────────────────────────────────────────────────────────
+
+
+class TestQDoRALinear:
+    """Tests for QDoRALinear (quantized base + DoRA adapter)."""
+
+    @pytest.fixture(autouse=True)
+    def require_torchao(self):
+        pytest.importorskip("torchao")
+
+    @pytest.fixture
+    def base(self):
+        torch.manual_seed(42)
+        return nn.Linear(64, 32)
+
+    @pytest.fixture
+    def qdora(self, base):
+        return QDoRALinear(
+            base, rank=4, alpha=8.0,
+            quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
+        )
+
+    def test_forward_shape_matches_base(self, qdora):
+        x = torch.randn(2, 64)
+        out = qdora(x)
+        assert out.shape == (2, 32)
+
+    def test_only_adapter_params_trainable(self, qdora):
+        assert qdora.lora_A.weight.requires_grad
+        assert qdora.lora_B.weight.requires_grad
+        assert qdora.magnitude.requires_grad
+        for param in qdora.base_linear.parameters():
+            assert not param.requires_grad
+
+    def test_merge_raises_not_implemented(self, qdora):
+        with pytest.raises(NotImplementedError, match="quantized base weights"):
+            qdora.merge()
