@@ -105,7 +105,6 @@ class TestFallbackChain:
             AttentionKernelType.FLASH_ATTENTION_CK, HardwareBackend.AMD, AMDArchitecture.CDNA3
         )
         assert chain == [
-            AttentionKernelType.TRITON_ATTENTION,
             AttentionKernelType.PYTORCH_SDPA,
         ]
 

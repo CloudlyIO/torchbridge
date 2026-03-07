@@ -110,8 +110,7 @@ class QuantizationEngine:
             model: PyTorch model to quantize.
             format: Quantization format string or enum. ``"auto"`` selects
                 the optimal format for the detected backend.
-            calibration_data: Optional calibration data for formats that
-                require it (SmoothQuant).
+            calibration_data: Reserved for future use (not currently consumed).
             in_place: If ``False`` (default), quantizes a deep copy.
 
         Returns:
@@ -303,8 +302,8 @@ class QuantizationEngine:
         if fmt == QuantizationFormat.INT8_DYNAMIC:
             return self._apply_int8_dynamic(model)
 
-        if fmt == QuantizationFormat.INT8_SMOOTHQUANT:
-            return self._apply_int8_smoothquant(model, calibration_data)
+        if fmt == QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS:
+            return self._apply_int8_dynamic_activations(model)
 
         if fmt == QuantizationFormat.INT4_WEIGHT_ONLY:
             return self._apply_int4_weight_only(model)
@@ -351,15 +350,13 @@ class QuantizationEngine:
                 return self._apply_bf16(model)
             raise
 
-    def _apply_int8_smoothquant(
-        self, model: nn.Module, calibration_data: Any | None
-    ) -> nn.Module:
-        """SmoothQuant via torchao."""
+    def _apply_int8_dynamic_activations(self, model: nn.Module) -> nn.Module:
+        """INT8 dynamic activation quantization via torchao."""
         if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
-            return TorchAOBackend.quantize_smoothquant(model, calibration_data)
+            return TorchAOBackend.quantize_int8_dynamic_activations(model)
         # Fallback to regular INT8
         warnings.warn(
-            "torchao not available for SmoothQuant; falling back to INT8 dynamic",
+            "torchao not available for INT8 dynamic activations; falling back to INT8 dynamic",
             stacklevel=2,
         )
         return self._apply_int8_dynamic(model)

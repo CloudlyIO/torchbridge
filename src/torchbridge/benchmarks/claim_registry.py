@@ -208,37 +208,11 @@ def build_quantization_speedup_benchmark() -> ClaimBenchmark:
     )
 
 
-# ── Claim 5: AMD TunableOp ───────────────────────────────────────────────────
-
-
-def build_tunableop_benchmark() -> ClaimBenchmark:
-    """Placeholder — requires AMD hardware to measure."""
-    # Cannot benchmark TunableOp on non-AMD hardware.
-    # The benchmark is registered but will be skipped on non-AMD systems.
-    model = nn.Linear(256, 128)
-    model.eval()
-    x = torch.randn(32, 256)
-
-    return ClaimBenchmark(
-        name="amd_tunableop",
-        baseline_fn=lambda: model(x),
-        optimized_fn=lambda: model(x),
-        warmup=3,
-        runs=10,
-        threshold_pct=3.0,
-        requires_backend="rocm",
-        description=(
-            "AMD TunableOp auto-tunes GEMM kernels via PYTORCH_TUNABLEOP_ENABLED=1 "
-            "(5-15% speedup on MI300X after warmup). AMD hardware required."
-        ),
-        notes=[
-            "Requires AMD ROCm hardware to measure TunableOp benefit.",
-            "PYTORCH_TUNABLEOP_ENABLED=1 auto-tunes GEMM kernels on CDNA2+.",
-            "Expected 5-15% speedup on MI300X after warmup tuning.",
-            "Will be SKIPPED on non-AMD systems.",
-        ],
-    )
-
+# NOTE: AMD TunableOp benchmark was removed (Benchmark-or-Delete rule).
+# PYTORCH_TUNABLEOP_ENABLED=1 takes effect at kernel selection time and requires
+# a process restart to measure. In-process benchmarking is not feasible —
+# baseline_fn and optimized_fn would run the same un-tuned kernels, producing
+# ~0% delta regardless of hardware.
 
 # ── Registry ──────────────────────────────────────────────────────────────────
 
@@ -250,7 +224,6 @@ def get_all_claim_benchmarks() -> list[ClaimBenchmark]:
         build_channels_last_benchmark(),
         build_attention_dispatch_benchmark(),
         build_quantization_speedup_benchmark(),
-        build_tunableop_benchmark(),
     ]
 
 

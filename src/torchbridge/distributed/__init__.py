@@ -16,7 +16,7 @@ from torchbridge.distributed.config import (
     DistributedConfig,
     ParallelismRecommendation,
 )
-from torchbridge.distributed.fsdp2 import (
+from torchbridge.distributed.fsdp import (
     FSDPConfig,
     FSDPManager,
     MixedPrecisionChoice,
@@ -33,9 +33,8 @@ from torchbridge.distributed.topology import (
     TopologyDetector,
 )
 
-# Backward compatibility aliases
+# Backward compatibility alias (FSDP2Config was a misnomer; kept for import compat)
 FSDP2Config = FSDPConfig
-FSDP2Manager = FSDPManager
 
 __all__ = [
     # FSDP
@@ -43,7 +42,6 @@ __all__ = [
     "FSDPManager",
     # Backward compat
     "FSDP2Config",
-    "FSDP2Manager",
     "MixedPrecisionChoice",
     "ShardingStrategy",
     # Topology

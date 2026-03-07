@@ -104,22 +104,70 @@ class KernelBenchmarkCache:
         warmup: int = 3,
         iterations: int = 10,
     ) -> BenchmarkEntry:
-        """Benchmark a kernel using PyTorch SDPA as a proxy and cache the result."""
+        """Benchmark the specified kernel and cache the result.
+
+        Each kernel type is benchmarked using its actual call path:
+        - PYTORCH_SDPA / NEURONX_SDPA / PALLAS_ATTENTION: F.scaled_dot_product_attention
+        - FLASH_ATTENTION_2/3/CK: flash_attn.flash_attn_func (raises RuntimeError if not installed)
+        - FLEX_ATTENTION: torch.nn.attention.flex_attention (raises RuntimeError if not available)
+        """
+        import torch.nn.functional as F
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         batch = 1
+        # SDPA layout: (B, H, Sq, D)
         q = torch.randn(batch, num_heads, seq_length, head_dim, device=device)
         k = torch.randn(batch, num_heads, seq_length, head_dim, device=device)
         v = torch.randn(batch, num_heads, seq_length, head_dim, device=device)
 
+        _FLASH_KERNELS = {
+            AttentionKernelType.FLASH_ATTENTION_2,
+            AttentionKernelType.FLASH_ATTENTION_3,
+            AttentionKernelType.FLASH_ATTENTION_CK,
+        }
+
+        if kernel_type in _FLASH_KERNELS:
+            try:
+                from flash_attn import flash_attn_func
+            except ImportError as exc:
+                raise RuntimeError(
+                    f"flash-attn is required to benchmark {kernel_type.value}. "
+                    "Install with: pip install flash-attn"
+                ) from exc
+            # flash_attn layout: (B, Sq, H, D)
+            q_fa = q.permute(0, 2, 1, 3).contiguous()
+            k_fa = k.permute(0, 2, 1, 3).contiguous()
+            v_fa = v.permute(0, 2, 1, 3).contiguous()
+
+            def _call():
+                flash_attn_func(q_fa, k_fa, v_fa)
+
+        elif kernel_type == AttentionKernelType.FLEX_ATTENTION:
+            try:
+                from torch.nn.attention.flex_attention import flex_attention
+            except (ImportError, ModuleNotFoundError) as exc:
+                raise RuntimeError(
+                    "flex_attention requires PyTorch >= 2.5. "
+                    "Upgrade with: pip install torch>=2.5"
+                ) from exc
+
+            def _call():
+                flex_attention(q, k, v)
+
+        else:
+            # PYTORCH_SDPA, NEURONX_SDPA, PALLAS_ATTENTION — SDPA proxy is correct
+            def _call():
+                F.scaled_dot_product_attention(q, k, v)
+
         # warm-up
         for _ in range(warmup):
-            torch.nn.functional.scaled_dot_product_attention(q, k, v)
+            _call()
         if device.type == "cuda":
             torch.cuda.synchronize()
 
         t0 = time.perf_counter()
         for _ in range(iterations):
-            torch.nn.functional.scaled_dot_product_attention(q, k, v)
+            _call()
         if device.type == "cuda":
             torch.cuda.synchronize()
         elapsed = (time.perf_counter() - t0) / iterations * 1000  # ms

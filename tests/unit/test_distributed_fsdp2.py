@@ -8,7 +8,7 @@ from torchbridge.core.config import (
     TPUVersion,
     TrainiumArchitecture,
 )
-from torchbridge.distributed.fsdp2 import (
+from torchbridge.distributed.fsdp import (
     FSDPConfig,
     FSDPManager,
     MixedPrecisionChoice,

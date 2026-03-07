@@ -14,7 +14,7 @@ class TestNCCLVersionCheck:
 
     def _make_manager(self, backend, architecture):
         """Create an FSDPManager with given backend/arch."""
-        from torchbridge.distributed.fsdp2 import FSDPConfig, FSDPManager
+        from torchbridge.distributed.fsdp import FSDPConfig, FSDPManager
 
         config = FSDPConfig()
         return FSDPManager(config=config, backend=backend, architecture=architecture)

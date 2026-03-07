@@ -1,10 +1,14 @@
-"""Tests for B4 fix: benchmark cache lazy-warming in AttentionDispatcher.
+"""Tests for benchmark cache correctness and lazy-warming in AttentionDispatcher.
 
-Verifies that select_kernel() populates the benchmark cache on the first
-call (lazy warm), so benchmark_latency_ms is no longer always None.
+Verifies that:
+- select_kernel() populates the benchmark cache on the first call (lazy warm)
+- Each kernel type is benchmarked using its actual call path
+- Requesting FlashAttention without flash-attn installed raises RuntimeError
 """
 
 import tempfile
+
+import pytest
 
 from torchbridge.attention.dispatch.benchmark_cache import KernelBenchmarkCache
 from torchbridge.attention.dispatch.dispatcher import (
@@ -78,3 +82,39 @@ class TestBenchmarkCacheLazyWarm:
             assert entry.seq_length == 64
             assert entry.num_heads == 2
             assert entry.head_dim == 32
+
+
+class TestKernelRoutingCorrectness:
+    """Verify that run_benchmark routes to the correct kernel call path."""
+
+    def test_sdpa_benchmark_succeeds(self):
+        """PYTORCH_SDPA benchmark should always succeed (no extra deps)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = KernelBenchmarkCache(cache_dir=tmp)
+            entry = cache.run_benchmark(
+                AttentionKernelType.PYTORCH_SDPA,
+                seq_length=32,
+                num_heads=2,
+                head_dim=16,
+                warmup=1,
+                iterations=2,
+            )
+            assert entry.latency_ms > 0.0
+
+    def test_flash_attention_raises_without_package(self):
+        """Benchmarking FlashAttention kernels without flash-attn raises RuntimeError."""
+        try:
+            import flash_attn  # noqa: F401
+            pytest.skip("flash-attn is installed — cannot test missing-package path")
+        except ImportError:
+            pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = KernelBenchmarkCache(cache_dir=tmp)
+            for kt in (
+                AttentionKernelType.FLASH_ATTENTION_2,
+                AttentionKernelType.FLASH_ATTENTION_3,
+                AttentionKernelType.FLASH_ATTENTION_CK,
+            ):
+                with pytest.raises(RuntimeError, match="flash-attn"):
+                    cache.run_benchmark(kt, seq_length=32, num_heads=2, head_dim=16)
