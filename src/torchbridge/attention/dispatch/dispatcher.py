@@ -1,9 +1,10 @@
 """
 Attention Kernel Dispatcher
 
-Selects the optimal attention kernel for the detected hardware,
-walks fallback chains when the preferred kernel is not available
-at runtime, and creates configured attention layers.
+Compatibility matrix that selects the best available attention kernel for the
+given hardware backend. PyTorch SDPA handles runtime dispatch; TorchBridge
+selects which backend context (FlashAttention, SDPA, math fallback) to use
+based on (backend, dtype, sequence_length) via the compatibility matrix.
 """
 
 from __future__ import annotations
