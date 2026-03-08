@@ -1,24 +1,11 @@
 """
-Unified Attention Framework
+Attention Dispatch Framework
 
-Consolidates all attention implementations from attention/ and advanced_attention/
-into a single, unified framework with consistent interfaces and enhanced capabilities.
+Backend-aware kernel selection for attention operations.
+TorchBridge identifies the optimal kernel (FlashAttention-3, SDPA, Pallas, etc.)
+for the given hardware; callers use the result to configure their own attention calls.
 """
 
-# Core framework
-from .core import (
-    AttentionConfig,  # Backward compat alias for AttentionModuleConfig
-    AttentionModuleConfig,
-    AttentionPatterns,
-    BaseAttention,
-    DynamicSparseConfig,
-    FP8AttentionConfig,
-    RingAttentionConfig,
-    create_attention,
-    register_attention,
-)
-
-# Dispatch subpackage
 from .dispatch import (
     AttentionDispatcher,
     AttentionDispatchMatrix,
@@ -27,31 +14,10 @@ from .dispatch import (
     KernelBenchmarkCache,
 )
 
-# Main implementations
-from .implementations.flash_attention import FlashAttention2, FlashAttention3
-
-# Build dynamic exports
 __all__ = [
-    # Core framework
-    'BaseAttention',
-    'AttentionConfig',  # Backward compat alias
-    'AttentionModuleConfig',
-    'AttentionPatterns',
-    'FP8AttentionConfig',
-    'DynamicSparseConfig',
-    'RingAttentionConfig',
-    'register_attention',
-    'create_attention',
-
-    # Dispatch subpackage
     'AttentionKernelType',
     'AttentionDispatchMatrix',
     'AttentionDispatcher',
     'AttentionDispatchResult',
     'KernelBenchmarkCache',
-
-    # FlashAttention implementations
-    'FlashAttention3',
-    'FlashAttention2',
-
 ]

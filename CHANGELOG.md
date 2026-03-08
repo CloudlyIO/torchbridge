@@ -8,6 +8,56 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.57] - 2026-03-08 - Contraction VI: Attention Implementations
+
+### **Summary**
+
+Removes the attention implementation layer (~2,800 lines) identified in the
+v0.5.55 existential audit. `FlashAttention2`, `FlashAttention3`,
+`MemoryEfficientAttention`, `ChunkedAttention`, `LongSequenceAttention`, and
+`DynamicSparseAttention` all violate Rule 1 (no-wrapper): each is a thin
+`nn.Module` around a single PyTorch or `flash_attn` call. The NVIDIA
+`FlashAttention3Optimizer` violates Rule 4 (competes with PyTorch-native
+attention optimisation). The shared `attention_ops.py` helper module contains
+6 functions that wrap `torch.matmul`, `F.softmax`, and `flash_attn_func` with
+no selection intelligence.
+
+The `attention/dispatch/` layer is **retained unchanged**: `AttentionKernelType`,
+`AttentionDispatchMatrix`, `AttentionDispatcher.select_kernel()`, and
+`KernelBenchmarkCache` are pure selection intelligence and constitute
+TorchBridge's actual value in the attention space.
+
+### **Deleted**
+
+- `attention/implementations/flash_attention.py` — `FlashAttention2/3` (Rule 1)
+- `attention/implementations/memory_efficient.py` — `MemoryEfficientAttention` et al. (Rule 1)
+- `attention/implementations/sparse.py` — `DynamicSparseAttention` (Rule 1)
+- `attention/core/attention_ops.py` — 6 torch wrapper functions (Rule 1)
+- `attention/core/registry.py` — registry for deleted implementations
+- `attention/core/base.py` — `BaseAttention` abstract base
+- `attention/core/config.py` — `AttentionModuleConfig` config dataclass
+- `backends/nvidia/flash_attention_integration.py` — `FlashAttention3(nn.Module)` (Rule 1), `FlashAttention3Optimizer` (Rule 4)
+
+### **Tombstoned**
+
+- `attention/implementations/__init__.py`, `attention/core/__init__.py`,
+  `attention/compatibility/__init__.py` — replaced with removal notices
+
+### **Updated**
+
+- `attention/dispatch/dispatcher.py` — removed `create_attention()` method
+  and `_KERNEL_REGISTRY_MAP`; `implementation_name` now returns `kernel_type.value`
+- `attention/__init__.py` — exports dispatch layer only
+- `backends/nvidia/__init__.py` — removed `FlashAttention3` export
+- `torchbridge/__init__.py` — removed `AttentionLayer`, `create_attention()`
+
+### **Stats**
+
+- **Lines removed**: ~2,800
+- **Tests**: ~1,876 passing, 0 ruff violations
+
+---
+
 ## [0.5.56] - 2026-03-08 - Contraction V: Serving Stack + Core Components
 
 ### **Summary**

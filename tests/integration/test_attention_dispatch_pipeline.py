@@ -1,68 +1,9 @@
 """Integration tests for the attention dispatch pipeline."""
 
-import torch
-
-from torchbridge.attention.core.config import AttentionModuleConfig
 from torchbridge.attention.dispatch import (
-    AttentionDispatcher,
     AttentionKernelType,
     KernelBenchmarkCache,
 )
-from torchbridge.core.config import HardwareBackend
-
-
-class TestEndToEndCPU:
-    """End-to-end dispatch on CPU."""
-
-    def test_dispatcher_select_and_create(self):
-        """Dispatcher selects kernel then creates a working attention layer."""
-        config = AttentionModuleConfig(embed_dim=64, num_heads=4)
-        dispatcher = AttentionDispatcher(
-            backend=HardwareBackend.CPU, use_benchmark_cache=False
-        )
-
-        result = dispatcher.select_kernel(
-            seq_length=config.max_sequence_length,
-            num_heads=config.num_heads,
-            head_dim=config.head_dim,
-        )
-        assert result.kernel_type == AttentionKernelType.PYTORCH_SDPA
-
-        attn = dispatcher.create_attention(config)
-        x = torch.randn(1, 16, 64)
-        with torch.no_grad():
-            out = attn(x)
-        assert out.shape == (1, 16, 64)
-
-    def test_gqa_forward_pass(self):
-        """GQA attention: fewer KV heads, output shape unchanged."""
-        config = AttentionModuleConfig(
-            embed_dim=64, num_heads=8, num_kv_heads=2
-        )
-        dispatcher = AttentionDispatcher(
-            backend=HardwareBackend.CPU, use_benchmark_cache=False
-        )
-        attn = dispatcher.create_attention(config)
-
-        x = torch.randn(2, 32, 64)
-        with torch.no_grad():
-            out = attn(x)
-        assert out.shape == (2, 32, 64)
-
-    def test_mqa_forward_pass(self):
-        """MQA: single KV head."""
-        config = AttentionModuleConfig(
-            embed_dim=64, num_heads=8, num_kv_heads=1
-        )
-        dispatcher = AttentionDispatcher(
-            backend=HardwareBackend.CPU, use_benchmark_cache=False
-        )
-        attn = dispatcher.create_attention(config)
-
-        x = torch.randn(1, 16, 64)
-        with torch.no_grad():
-            out = attn(x)
-        assert out.shape == (1, 16, 64)
 
 
 class TestBenchmarkCacheIntegration:
