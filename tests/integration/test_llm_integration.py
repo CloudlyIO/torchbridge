@@ -1,263 +1,13 @@
 """
-Test Suite for LLM Integration
+Test Suite for LLM KV-Cache Integration
 
-Tests for Llama, Mistral, Phi optimization wrappers and KV-cache.
-Validates optimization, quantization, and backend integration.
-
+Tests for KVCacheManager, PagedKVCache, SlidingWindowCache, and
+the KV-cache compatibility matrix.
 """
 
 import pytest
 import torch
-import torch.nn as nn
 
-
-class TestLLMTypes:
-    """Tests for LLMType enum."""
-
-    def test_llm_types_exist(self):
-        """Verify all LLM types are defined."""
-        from torchbridge.models.llm.llm_optimizer import LLMType
-
-        assert hasattr(LLMType, 'LLAMA')
-        assert hasattr(LLMType, 'MISTRAL')
-        assert hasattr(LLMType, 'PHI')
-        assert hasattr(LLMType, 'QWEN')
-        assert hasattr(LLMType, 'GEMMA')
-        assert hasattr(LLMType, 'CUSTOM')
-
-    def test_llm_type_values(self):
-        """Verify LLM type values."""
-        from torchbridge.models.llm.llm_optimizer import LLMType
-
-        assert LLMType.LLAMA.value == "llama"
-        assert LLMType.MISTRAL.value == "mistral"
-        assert LLMType.PHI.value == "phi"
-
-class TestQuantizationMode:
-    """Tests for QuantizationMode enum."""
-
-    def test_quantization_modes_exist(self):
-        """Verify all quantization modes are defined."""
-        from torchbridge.models.llm.llm_optimizer import QuantizationMode
-
-        assert hasattr(QuantizationMode, 'NONE')
-        assert hasattr(QuantizationMode, 'INT8')
-        assert hasattr(QuantizationMode, 'INT4')
-        assert hasattr(QuantizationMode, 'FP8')
-        assert hasattr(QuantizationMode, 'BNBT4')
-
-    def test_quantization_mode_values(self):
-        """Verify quantization mode values."""
-        from torchbridge.models.llm.llm_optimizer import QuantizationMode
-
-        assert QuantizationMode.NONE.value == "none"
-        assert QuantizationMode.INT8.value == "int8"
-        assert QuantizationMode.INT4.value == "int4"
-        assert QuantizationMode.FP8.value == "fp8"
-        assert QuantizationMode.BNBT4.value == "bnb_4bit"
-
-class TestGenerationConfig:
-    """Tests for GenerationConfig dataclass."""
-
-    def test_default_config(self):
-        """Test default generation config values."""
-        from torchbridge.models.llm.llm_optimizer import GenerationConfig
-
-        config = GenerationConfig()
-
-        assert config.max_new_tokens == 256
-        assert config.temperature == 0.7
-        assert config.top_p == 0.9
-        assert config.top_k == 50
-        assert config.repetition_penalty == 1.1
-        assert config.do_sample is True
-        assert config.use_cache is True
-
-    def test_custom_config(self):
-        """Test custom generation config."""
-        from torchbridge.models.llm.llm_optimizer import GenerationConfig
-
-        config = GenerationConfig(
-            max_new_tokens=512,
-            temperature=0.9,
-            do_sample=False
-        )
-
-        assert config.max_new_tokens == 512
-        assert config.temperature == 0.9
-        assert config.do_sample is False
-
-class TestLLMConfig:
-    """Tests for LLMConfig dataclass."""
-
-    def test_default_llm_config(self):
-        """Test default LLM config values."""
-        from torchbridge.models.llm.llm_optimizer import (
-            LLMConfig,
-            LLMType,
-            QuantizationMode,
-        )
-
-        config = LLMConfig()
-
-        assert config.model_name == "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
-        assert config.model_type == LLMType.LLAMA
-        assert config.max_sequence_length == 4096
-        assert config.quantization == QuantizationMode.NONE
-        assert config.use_flash_attention is True
-        assert config.use_torch_compile is True
-        assert config.compile_mode == "reduce-overhead"
-        assert config.use_kv_cache is True
-        assert config.device == "auto"
-        assert config.device_map == "auto"
-
-    def test_custom_llm_config(self):
-        """Test custom LLM config."""
-        from torchbridge.models.llm.llm_optimizer import (
-            LLMConfig,
-            LLMType,
-            QuantizationMode,
-        )
-
-        config = LLMConfig(
-            model_name="mistralai/Mistral-7B-v0.1",
-            model_type=LLMType.MISTRAL,
-            quantization=QuantizationMode.INT8,
-            max_sequence_length=8192,
-        )
-
-        assert config.model_name == "mistralai/Mistral-7B-v0.1"
-        assert config.model_type == LLMType.MISTRAL
-        assert config.quantization == QuantizationMode.INT8
-        assert config.max_sequence_length == 8192
-
-class TestLLMOptimizer:
-    """Tests for LLMOptimizer class."""
-
-    def test_optimizer_creation(self):
-        """Test optimizer instantiation."""
-        from torchbridge.models.llm.llm_optimizer import LLMOptimizer
-
-        optimizer = LLMOptimizer()
-
-        assert optimizer.device is not None
-        assert optimizer.dtype is not None
-        assert optimizer.config is not None
-
-    def test_optimizer_with_custom_config(self):
-        """Test optimizer with custom configuration."""
-        from torchbridge.models.llm.llm_optimizer import (
-            LLMConfig,
-            LLMOptimizer,
-            QuantizationMode,
-        )
-
-        config = LLMConfig(
-            quantization=QuantizationMode.INT8,
-            use_torch_compile=False,
-        )
-
-        optimizer = LLMOptimizer(config)
-
-        assert optimizer.config.quantization == QuantizationMode.INT8
-        assert optimizer.config.use_torch_compile is False
-
-    def test_get_optimization_info(self):
-        """Test optimization info retrieval."""
-        from torchbridge.models.llm.llm_optimizer import LLMOptimizer
-
-        optimizer = LLMOptimizer()
-        info = optimizer.get_optimization_info()
-
-        assert "device" in info
-        assert "dtype" in info
-        assert "backend" in info
-        assert "quantization" in info
-        assert "flash_attention" in info
-        assert "torch_compile" in info
-        assert "kv_cache" in info
-
-    def test_estimate_memory_7b(self):
-        """Test memory estimation for 7B model."""
-        from torchbridge.models.llm.llm_optimizer import LLMConfig, LLMOptimizer
-
-        config = LLMConfig()
-        optimizer = LLMOptimizer(config)
-
-        estimate = optimizer.estimate_memory("llama-7b")
-
-        assert "model_memory_gb" in estimate
-        assert "kv_cache_gb" in estimate
-        assert "total_gb" in estimate
-        assert estimate["model_memory_gb"] > 0
-
-    def test_estimate_memory_with_quantization(self):
-        """Test memory estimation with quantization."""
-        from torchbridge.models.llm.llm_optimizer import (
-            LLMConfig,
-            LLMOptimizer,
-            QuantizationMode,
-        )
-
-        # Test that INT4 uses less memory than INT8
-        config_int8 = LLMConfig(quantization=QuantizationMode.INT8)
-        optimizer_int8 = LLMOptimizer(config_int8)
-        estimate_int8 = optimizer_int8.estimate_memory("llama-7b")
-
-        config_int4 = LLMConfig(quantization=QuantizationMode.INT4)
-        optimizer_int4 = LLMOptimizer(config_int4)
-        estimate_int4 = optimizer_int4.estimate_memory("llama-7b")
-
-        # INT4 should use less memory than INT8
-        assert estimate_int4["model_memory_gb"] < estimate_int8["model_memory_gb"]
-        # Both should have valid memory estimates
-        assert estimate_int8["model_memory_gb"] > 0
-        assert estimate_int4["model_memory_gb"] > 0
-
-    def test_model_type_detection_llama(self):
-        """Test Llama model type detection."""
-        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
-
-        optimizer = LLMOptimizer()
-
-        class MockLlamaModel(nn.Module):
-            pass
-
-        MockLlamaModel.__name__ = "LlamaForCausalLM"
-        model = MockLlamaModel()
-
-        detected = optimizer._detect_model_type(model)
-        assert detected == LLMType.LLAMA
-
-    def test_model_type_detection_mistral(self):
-        """Test Mistral model type detection."""
-        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
-
-        optimizer = LLMOptimizer()
-
-        class MockMistralModel(nn.Module):
-            pass
-
-        MockMistralModel.__name__ = "MistralForCausalLM"
-        model = MockMistralModel()
-
-        detected = optimizer._detect_model_type(model)
-        assert detected == LLMType.MISTRAL
-
-    def test_model_type_detection_phi(self):
-        """Test Phi model type detection."""
-        from torchbridge.models.llm.llm_optimizer import LLMOptimizer, LLMType
-
-        optimizer = LLMOptimizer()
-
-        class MockPhiModel(nn.Module):
-            pass
-
-        MockPhiModel.__name__ = "PhiForCausalLM"
-        model = MockPhiModel()
-
-        detected = optimizer._detect_model_type(model)
-        assert detected == LLMType.PHI
 
 class TestKVCacheManager:
     """Tests for KVCacheManager class."""
@@ -312,7 +62,6 @@ class TestKVCacheManager:
         manager = KVCacheManager(config)
         cache = manager.create_cache(batch_size=1)
 
-        # Add some keys/values
         new_keys = torch.randn(1, 4, 10, 32)
         new_values = torch.randn(1, 4, 10, 32)
 
@@ -326,7 +75,7 @@ class TestKVCacheManager:
         from torchbridge.models.llm.kv_cache import CacheConfig, KVCacheManager
 
         config = CacheConfig(
-            max_length=20,  # Small max length
+            max_length=20,
             num_layers=1,
             num_heads=2,
             head_dim=16,
@@ -336,13 +85,11 @@ class TestKVCacheManager:
         manager = KVCacheManager(config)
         cache = manager.create_cache(batch_size=1)
 
-        # Add more than max_length
         for _ in range(5):
             new_keys = torch.randn(1, 2, 10, 16)
             new_values = torch.randn(1, 2, 10, 16)
             cache = manager.update_cache(cache, new_keys, new_values, 0)
 
-        # Should be truncated to max_length
         assert cache[0][0].shape[2] == 20
 
     def test_get_cache_length(self):
@@ -379,6 +126,7 @@ class TestKVCacheManager:
         assert "cache_length" in usage
         assert "num_layers" in usage
         assert usage["cache_memory_mb"] > 0
+
 
 class TestPagedKVCache:
     """Tests for PagedKVCache class."""
@@ -463,6 +211,7 @@ class TestPagedKVCache:
         assert usage["used_pages"] == 2
         assert usage["free_pages"] == 6
 
+
 class TestSlidingWindowCache:
     """Tests for SlidingWindowCache class."""
 
@@ -536,13 +285,11 @@ class TestSlidingWindowCache:
         sw_cache = SlidingWindowCache(config)
         cache = sw_cache.create_cache(batch_size=1)
 
-        # Add more than window size
         for _ in range(3):
             new_keys = torch.randn(1, 2, 30, 16)
             new_values = torch.randn(1, 2, 30, 16)
             cache = sw_cache.update_cache(cache, new_keys, new_values, 0)
 
-        # Should be truncated to window_size
         assert cache[0][0].shape[2] == 50
 
     def test_get_window_mask(self):
@@ -556,75 +303,6 @@ class TestSlidingWindowCache:
 
         assert mask.shape == (5, 25)  # seq_len x (cache_len + seq_len)
 
-class TestFactoryFunction:
-    """Tests for create_optimized_llm factory function."""
-
-    def test_factory_function_exists(self):
-        """Test factory function is importable."""
-        from torchbridge.models.llm import create_optimized_llm
-
-        assert callable(create_optimized_llm)
-
-    def test_factory_quantization_mapping(self):
-        """Test quantization string mapping."""
-        from torchbridge.models.llm.llm_optimizer import LLMConfig, QuantizationMode
-
-        quant_map = {
-            "none": QuantizationMode.NONE,
-            "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.INT4,
-            "fp8": QuantizationMode.FP8,
-            "bnb_4bit": QuantizationMode.BNBT4,
-        }
-
-        for quant_str, quant_enum in quant_map.items():
-            config = LLMConfig(
-                quantization=quant_map.get(quant_str, QuantizationMode.NONE)
-            )
-            assert config.quantization == quant_enum
-
-class TestModuleExports:
-    """Tests for module exports."""
-
-    def test_llm_module_exports(self):
-        """Test LLM module exports all required classes."""
-        from torchbridge.models.llm import (
-            GenerationConfig,
-            KVCacheManager,
-            LLMConfig,
-            LLMOptimizer,
-            OptimizedLlama,
-            OptimizedMistral,
-            OptimizedPhi,
-            PagedKVCache,
-            QuantizationMode,
-            SlidingWindowCache,
-            create_optimized_llm,
-        )
-
-        assert LLMOptimizer is not None
-        assert LLMConfig is not None
-        assert OptimizedLlama is not None
-        assert OptimizedMistral is not None
-        assert OptimizedPhi is not None
-        assert create_optimized_llm is not None
-        assert QuantizationMode is not None
-        assert GenerationConfig is not None
-        assert KVCacheManager is not None
-        assert PagedKVCache is not None
-        assert SlidingWindowCache is not None
-
-    def test_models_module_exports_llm(self):
-        """Test models module exports LLM components."""
-        from torchbridge.models import (
-            LLMConfig,
-            LLMOptimizer,
-            create_optimized_llm,
-        )
-
-        assert LLMOptimizer is not None
-        assert LLMConfig is not None
-        assert create_optimized_llm is not None
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

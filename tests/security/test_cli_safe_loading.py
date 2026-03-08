@@ -10,7 +10,7 @@ import argparse
 import pytest
 import torch
 
-from torchbridge.cli.profile import ProfileCommand
+from torchbridge.cli.quantize import QuantizeCommand
 
 
 @pytest.fixture
@@ -39,27 +39,28 @@ def safe_model_path(tmp_path):
     return path
 
 
-class TestProfileSafeLoading:
-    """Test that profile command defaults to safe loading."""
+class TestQuantizeSafeLoading:
+    """Test that quantize command defaults to safe loading."""
 
-    def test_profile_rejects_unsafe_model_by_default(self, unsafe_model_path):
-        """Profile should fail on full model file without --trust-source."""
-        with pytest.raises((RuntimeError, Exception)):
-            ProfileCommand._load_model(
-                str(unsafe_model_path), torch.float32, 'cpu', trust_source=False
-            )
+    def test_quantize_rejects_unsafe_model_by_default(self, unsafe_model_path):
+        """Quantize should fail on full model file without --trust-source."""
+        result = QuantizeCommand._load_model(
+            str(unsafe_model_path), verbose=False, trust_source=False
+        )
+        # _load_model catches the exception and returns None when safe loading fails
+        assert result is None
 
-    def test_profile_allows_unsafe_model_with_trust_source(self, unsafe_model_path):
-        """Profile should succeed on full model file with --trust-source."""
-        model = ProfileCommand._load_model(
-            str(unsafe_model_path), torch.float32, 'cpu', trust_source=True
+    def test_quantize_allows_unsafe_model_with_trust_source(self, unsafe_model_path):
+        """Quantize should succeed on full model file with --trust-source."""
+        model = QuantizeCommand._load_model(
+            str(unsafe_model_path), verbose=False, trust_source=True
         )
         assert isinstance(model, torch.nn.Module)
 
-    def test_profile_trust_source_in_help(self):
-        """Verify --trust-source appears in profile help."""
+    def test_quantize_trust_source_in_help(self):
+        """Verify --trust-source appears in quantize help."""
         sub_parser = argparse.ArgumentParser()
-        ProfileCommand.register(
+        QuantizeCommand.register(
             type('SP', (), {'add_parser': lambda *a, **k: sub_parser})()
         )
         assert '--trust-source' in sub_parser.format_help()
@@ -73,7 +74,7 @@ class TestNoUngatedWeightsOnlyFalse:
         import inspect
         import re
 
-        for cls in [ProfileCommand]:
+        for cls in [QuantizeCommand]:
             source = inspect.getsource(cls)
             torch_load_calls = re.findall(
                 r'torch\.load\([^)]*weights_only\s*=\s*False', source

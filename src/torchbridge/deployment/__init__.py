@@ -4,41 +4,15 @@ Model Deployment Module for TorchBridge
 Provides serving infrastructure for cross-backend validation demos.
 For model export (ONNX, TorchScript, safetensors), use PyTorch's native
 APIs directly — TorchBridge does not wrap them.
-
-Key Components:
-- Backend metadata: schema for preserving hardware configuration information
-- Inference serving: FastAPI, TorchServe, and Triton integrations
-
-Example:
-    ```python
-    from torchbridge.deployment.serving import create_fastapi_server
-    server = create_fastapi_server(model, model_name="my_model")
-    ```
-
 """
 
-from .optimization_metadata import (
-    ExportFormat,
-    FusionMetadata,
-    HardwareMetadata,
-    ModelMetadata,
-    OptimizationMetadata,
-    PerformanceMetadata,
-    PrecisionMetadata,
-    create_metadata,
-)
-
-# Serving module
 from .serving import (
     BaseHandler,
-    # FastAPI
     InferenceServer,
     ServerConfig,
-    # TorchServe
     TorchBridgeHandler,
     TritonBackend,
     TritonDataType,
-    # Triton
     TritonModelConfig,
     create_fastapi_server,
     create_torchserve_handler,
@@ -49,15 +23,6 @@ from .serving import (
 )
 
 __all__ = [
-    # Metadata
-    "OptimizationMetadata",
-    "HardwareMetadata",
-    "PrecisionMetadata",
-    "FusionMetadata",
-    "PerformanceMetadata",
-    "ModelMetadata",
-    "ExportFormat",
-    "create_metadata",
     # Serving - TorchServe
     "TorchBridgeHandler",
     "BaseHandler",

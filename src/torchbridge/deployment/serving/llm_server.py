@@ -344,11 +344,8 @@ class LLMInferenceServer:
         # Speculative decoding engine (initialized after _setup_device)
         self._speculation_engine: Any = None
 
-        # LLM serving metrics
+        # LLM serving metrics (monitoring module removed)
         self._llm_metrics = None
-        if self.config.enable_llm_metrics:
-            from torchbridge.monitoring.llm_metrics import LLMMetricsCollector
-            self._llm_metrics = LLMMetricsCollector()
 
         # Dynamic batching
         self._batch_queue: deque = deque()
@@ -809,27 +806,12 @@ class LLMInferenceServer:
             else:
                 # Direct generation (no batching)
                 input_ids = input_ids.to(self.device)
-                prompt_tokens = input_ids.size(1)
 
-                # Use GenerationTimer for LLM metrics
-                timer = None
-                if self._llm_metrics is not None:
-                    from torchbridge.monitoring.llm_metrics import GenerationTimer
-                    timer = GenerationTimer(prompt_tokens=prompt_tokens)
-
-                if timer is not None:
-                    with timer:
-                        with torch.no_grad():
-                            outputs = self.model.generate(
-                                input_ids,
-                                **gen_kwargs
-                            )
-                else:
-                    with torch.no_grad():
-                        outputs = self.model.generate(
-                            input_ids,
-                            **gen_kwargs
-                        )
+                with torch.no_grad():
+                    outputs = self.model.generate(
+                        input_ids,
+                        **gen_kwargs
+                    )
 
                 # Decode output
                 generated_ids = outputs[:, input_ids.size(1):]
@@ -847,14 +829,6 @@ class LLMInferenceServer:
                     self._total_generation_time += inference_time
                     self._last_generation_time = inference_time
                     self._total_tokens_generated += num_generated
-
-                # Record LLM metrics
-                if timer is not None and self._llm_metrics is not None:
-                    req_metrics = timer.finalize(num_generated)
-                    self._llm_metrics.record_request(
-                        req_metrics,
-                        model_name=self.config.model_name,
-                    )
 
                 return GenerateResponse(
                     generated_text=generated_text,
