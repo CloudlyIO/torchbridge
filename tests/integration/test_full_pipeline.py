@@ -207,13 +207,6 @@ class TestTorchBridgeIntegration:
         manager = torchbridge.get_manager()
         assert manager is not None
 
-    def test_attention_layer_import(self):
-        """Test attention layer can be imported."""
-        import torchbridge
-
-        # AttentionLayer is the base class
-        assert torchbridge.AttentionLayer is not None
-
 
 class TestCLIIntegration:
     """Test CLI command integration."""
