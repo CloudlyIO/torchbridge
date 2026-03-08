@@ -214,18 +214,6 @@ class TestTorchBridgeIntegration:
         # AttentionLayer is the base class
         assert torchbridge.AttentionLayer is not None
 
-    def test_create_moe(self):
-        """Test MoE layer creation."""
-        import torchbridge
-
-        moe = torchbridge.create_moe(hidden_size=256, num_experts=4, top_k=2)
-        assert moe is not None
-
-        # Test forward pass
-        x = torch.randn(2, 32, 256)
-        with torch.no_grad():
-            output = moe(x)
-        assert output.shape == x.shape
 
 class TestCLIIntegration:
     """Test CLI command integration."""
@@ -253,11 +241,6 @@ class TestCLIIntegration:
 
 class TestDeploymentIntegration:
     """Test deployment module integration."""
-
-    def test_production_validator_import(self):
-        """Test production validator can be imported."""
-        from torchbridge.deployment import ProductionValidator
-        assert ProductionValidator is not None
 
     def test_serving_imports(self):
         """Test serving components can be imported."""

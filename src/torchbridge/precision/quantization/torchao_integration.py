@@ -101,11 +101,7 @@ class TorchAOBackend:
 
     @staticmethod
     def quantize_fp8(model: nn.Module) -> nn.Module:
-        """Apply FP8 quantization via torchao (if supported).
-
-        Falls back to TorchBridge's native fp8_native module when
-        torchao FP8 is not available.
-        """
+        """Apply FP8 quantization via torchao (if supported)."""
         TorchAOBackend._require_torchao()
         try:
             from torchao.quantization import float8_dynamic_activation_float8_weight

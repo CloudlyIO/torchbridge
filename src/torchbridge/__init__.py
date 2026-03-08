@@ -59,21 +59,6 @@ from .core.config import (
 # Unified Management System
 from .core.management import UnifiedManager, get_manager
 
-# Mixture of Experts
-from .mixture_of_experts import (
-    FeedForwardExpert,
-    GLaMStyleMoE,
-    LoadBalancer,
-    MoEConfig,
-    MoELayer,
-    SparseMoELayer,
-    SwitchRouter,
-    SwitchTransformerMoE,
-    TopKRouter,
-    create_moe_layer,
-)
-from .precision.fp8_training_engine import FP8TrainingEngine
-
 # Validation Framework
 from .validation.unified_validator import UnifiedValidator
 
@@ -93,16 +78,8 @@ __all__ = [
     # Attention
     "AttentionLayer",
 
-    # Precision
-    "FP8TrainingEngine",
-
     # Validation
     "UnifiedValidator",
-
-    # Mixture of Experts
-    "MoELayer", "SparseMoELayer", "SwitchTransformerMoE", "GLaMStyleMoE",
-    "MoEConfig", "create_moe_layer", "create_moe",
-    "TopKRouter", "SwitchRouter", "LoadBalancer", "FeedForwardExpert",
 ]
 
 # Convenience functions for quick setup
@@ -118,24 +95,3 @@ def create_attention(d_model: int, num_heads: int, **kwargs: Any) -> MemoryEffic
 def optimize_model(model: torch.nn.Module, **kwargs: Any) -> Any:
     """Apply unified backend abstraction to model using global manager."""
     return get_manager().optimize(model, **kwargs)
-
-def create_moe(hidden_size: int, num_experts: int = 8, top_k: int = 2, moe_type: str = "standard", **kwargs):
-    """Create Mixture of Experts layer with automatic configuration.
-
-    Args:
-        hidden_size: Hidden dimension size
-        num_experts: Number of experts (default 8)
-        top_k: Number of experts per token (default 2)
-        moe_type: Type of MoE ("standard", "sparse", "switch", "glam", "adaptive")
-        **kwargs: Additional configuration options
-
-    Returns:
-        MoE layer instance
-    """
-    return create_moe_layer(
-        moe_type=moe_type,
-        hidden_size=hidden_size,
-        num_experts=num_experts,
-        top_k=top_k,
-        **kwargs
-    )

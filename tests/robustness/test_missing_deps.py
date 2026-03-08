@@ -124,16 +124,6 @@ class TestMissingOptionalDeps:
         )
         assert "OK" in result.stdout
 
-    def test_create_moe_without_optional_deps(self):
-        """create_moe works with only core deps."""
-        import torchbridge
-        moe = torchbridge.create_moe(hidden_size=64, num_experts=4, top_k=2)
-        assert moe is not None
-        x = torch.randn(1, 4, 64)
-        with torch.no_grad():
-            out = moe(x)
-        assert out.shape == (1, 4, 64)
-
     def test_config_without_optional_deps(self):
         """Configuration system works without optional deps."""
         import torchbridge
