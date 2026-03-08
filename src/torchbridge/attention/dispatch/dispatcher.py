@@ -27,17 +27,6 @@ from .kernel_types import AttentionKernelType
 
 logger = logging.getLogger(__name__)
 
-# Mapping from AttentionKernelType → attention registry name
-_KERNEL_REGISTRY_MAP: dict[AttentionKernelType, str] = {
-    AttentionKernelType.FLEX_ATTENTION: "flex_attention",
-    AttentionKernelType.FLASH_ATTENTION_3: "flash_attention3",
-    AttentionKernelType.FLASH_ATTENTION_2: "flash_attention2",
-    AttentionKernelType.FLASH_ATTENTION_CK: "flash_attention2",  # CK uses same interface
-    AttentionKernelType.NEURONX_SDPA: "memory_efficient_attention",
-    AttentionKernelType.PALLAS_ATTENTION: "memory_efficient_attention",
-    AttentionKernelType.PYTORCH_SDPA: "memory_efficient_attention",
-}
-
 
 @dataclass
 class AttentionDispatchResult:
@@ -132,55 +121,12 @@ class AttentionDispatcher:
 
         return AttentionDispatchResult(
             kernel_type=chosen,
-            implementation_name=self._kernel_to_registry_name(chosen),
+            implementation_name=chosen.value,
             used_fallback=used_fallback,
             fallback_chain=fallback_chain,
             benchmark_latency_ms=latency,
             warnings=result_warnings,
         )
-
-    def create_attention(self, config, **kwargs):
-        """End-to-end: dispatch kernel then create attention layer.
-
-        Args:
-            config: AttentionModuleConfig instance.
-            **kwargs: Extra arguments forwarded to the attention constructor.
-
-        Returns:
-            A BaseAttention subclass instance.
-        """
-        from torchbridge.attention.core.registry import (
-            _ATTENTION_REGISTRY,
-            create_attention,
-        )
-
-        result = self.select_kernel(
-            seq_length=config.max_sequence_length,
-            num_heads=config.num_heads,
-            head_dim=config.head_dim or (config.embed_dim // config.num_heads),
-        )
-
-        # Try the dispatched implementation first (B1 fix)
-        impl_name = result.implementation_name
-        if impl_name in _ATTENTION_REGISTRY:
-            logger.debug("Using dispatched kernel: %s → %s", result.kernel_type.value, impl_name)
-            return create_attention(config, implementation=impl_name, **kwargs)
-
-        # Walk the fallback chain before giving up (B1 fix)
-        logger.warning(
-            "Dispatched impl '%s' not in registry; walking fallback chain (%d candidates)",
-            impl_name,
-            len(result.fallback_chain),
-        )
-        for fallback_kt in result.fallback_chain:
-            fb_impl = self._kernel_to_registry_name(fallback_kt)
-            if fb_impl in _ATTENTION_REGISTRY:
-                logger.info("Using fallback: %s → %s", fallback_kt.value, fb_impl)
-                return create_attention(config, implementation=fb_impl, **kwargs)
-
-        # Final fallback: auto-select (last resort)
-        logger.info("No dispatch or fallback matched registry; using auto-select")
-        return create_attention(config, **kwargs)
 
     # ── properties ───────────────────────────────────────────────────
 
@@ -288,7 +234,3 @@ class AttentionDispatcher:
         elif self._backend == HardwareBackend.TPU:
             return self._hw.tpu.version
         return None
-
-    @staticmethod
-    def _kernel_to_registry_name(kernel_type: AttentionKernelType) -> str:
-        return _KERNEL_REGISTRY_MAP.get(kernel_type, "memory_efficient_attention")

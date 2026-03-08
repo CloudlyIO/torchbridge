@@ -100,17 +100,6 @@ class TestUserJourney:
 
         # Convenience factories
         assert callable(torchbridge.optimize_model)
-        assert callable(torchbridge.create_attention)
-
-    def test_attention_journey(self):
-        """Test creating and using attention via the public API."""
-        attn = torchbridge.create_attention(d_model=128, num_heads=4)
-        assert attn is not None
-
-        x = torch.randn(2, 16, 128)
-        with torch.no_grad():
-            output = attn(x)
-        assert output.shape == (2, 16, 128)
 
     def test_hardware_detection_journey(self):
         """Test hardware detection produces a valid result."""

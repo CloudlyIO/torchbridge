@@ -13,12 +13,10 @@ import torch.nn as nn
 from torchbridge.backends.nvidia import (
     CUDADeviceManager,
     CUDAOptimizations,
-    FlashAttention3,
     FP8Compiler,
     NVIDIAAdapter,
     NVIDIABackend,
     create_cuda_integration,
-    create_flash_attention_3,
 )
 from torchbridge.core.config import (
     NVIDIAArchitecture,
@@ -380,67 +378,6 @@ class TestFP8Compiler:
 # NVIDIA Memory Manager Tests (7 tests)
 # ============================================================================
 
-class TestFlashAttention3:
-    """Test FlashAttention-3 implementation."""
-
-    def test_flash_attention_creation(self):
-        """Test FlashAttention-3 creation."""
-        attn = FlashAttention3(embed_dim=512, num_heads=8)
-        assert attn.embed_dim == 512
-        assert attn.num_heads == 8
-
-    def test_flash_attention_forward(self):
-        """Test FlashAttention-3 forward pass."""
-        attn = FlashAttention3(embed_dim=64, num_heads=4)
-        x = torch.randn(2, 10, 64)
-        output, _ = attn(x)
-        assert output.shape == (2, 10, 64)
-
-    def test_flash_attention_with_mask(self):
-        """Test FlashAttention-3 with attention mask."""
-        attn = FlashAttention3(embed_dim=64, num_heads=4)
-        x = torch.randn(2, 10, 64)
-        mask = torch.zeros(2, 4, 10, 10)
-        output, _ = attn(x, attention_mask=mask)
-        assert output.shape == (2, 10, 64)
-
-    def test_flash_attention_return_weights(self):
-        """Test FlashAttention-3 returning attention weights."""
-        attn = FlashAttention3(embed_dim=64, num_heads=4)
-        x = torch.randn(2, 10, 64)
-        output, weights = attn(x, return_attention_weights=True)
-        assert output.shape == (2, 10, 64)
-        # Weights may be None if FlashAttention is used
-        assert weights is None or weights.shape == (2, 4, 10, 10)
-
-    def test_create_flash_attention_3(self):
-        """Test factory function for FlashAttention-3."""
-        attn = create_flash_attention_3(embed_dim=512, num_heads=8)
-        assert isinstance(attn, FlashAttention3)
-
-    def test_flash_attention_dropout(self):
-        """Test FlashAttention-3 with dropout."""
-        attn = FlashAttention3(embed_dim=64, num_heads=4, dropout=0.1)
-        attn.train()
-        x = torch.randn(2, 10, 64)
-        output, _ = attn(x)
-        assert output.shape == (2, 10, 64)
-
-    def test_flash_attention_invalid_dimensions(self):
-        """Test FlashAttention-3 with invalid dimensions."""
-        with pytest.raises(ValueError):
-            FlashAttention3(embed_dim=65, num_heads=8)  # Not divisible
-
-    def test_flash_attention_standard_fallback(self):
-        """Test FlashAttention-3 fallback to standard attention."""
-        attn = FlashAttention3(embed_dim=64, num_heads=4)
-        attn.use_flash_attention = False  # Force standard attention
-        x = torch.randn(2, 10, 64)
-        output, weights = attn(x, return_attention_weights=True)
-        assert output.shape == (2, 10, 64)
-        assert weights.shape == (2, 4, 10, 10)
-
-
 # ============================================================================
 # CUDA Utilities Tests (5 tests)
 # ============================================================================
@@ -559,15 +496,6 @@ class TestNVIDIAErrorPaths:
             # Should either return None unchanged or issue warning
             assert result is None or len(w) > 0
 
-    def test_flash_attention_causal_parameter(self):
-        """Test FlashAttention with causal masking enabled."""
-        # Test that causal parameter is properly set
-        fa = FlashAttention3(embed_dim=64, num_heads=4, causal=True)
-        assert fa.causal is True
-
-        fa_no_causal = FlashAttention3(embed_dim=64, num_heads=4, causal=False)
-        assert fa_no_causal.causal is False
-
     def test_optimizer_with_invalid_optimization_level(self):
         """Test optimizer with invalid optimization level."""
         optimizer = NVIDIAAdapter()
@@ -594,13 +522,6 @@ class TestNVIDIAErrorPaths:
             # Should not crash even with old compute capability
             assert isinstance(backend.compute_capability, tuple)
             assert len(backend.compute_capability) == 2
-
-    def test_flash_attention_invalid_embed_dim(self):
-        """Test FlashAttention with invalid embedding dimension."""
-        # embed_dim must be divisible by num_heads
-        with pytest.raises(ValueError) as exc_info:
-            FlashAttention3(embed_dim=63, num_heads=4)  # 63 not divisible by 4
-        assert "divisible" in str(exc_info.value).lower()
 
     def test_fp8_unsupported_architecture(self):
         """Test FP8 compiler on unsupported architecture."""
