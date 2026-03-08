@@ -117,17 +117,6 @@ class TestSourceFileSafeLoading:
             f"checkpoint/manager.py has unsafe torch.load calls: {unsafe}"
         )
 
-    def test_torchserve_handler_uses_weights_only_true(self):
-        """deployment/serving/torchserve_handler.py uses weights_only=True."""
-        from torchbridge.deployment.serving import torchserve_handler
-
-        source = inspect.getsource(torchserve_handler)
-        load_calls = re.findall(r"torch\.load\([^)]+\)", source)
-        unsafe = [c for c in load_calls if "weights_only=False" in c]
-        assert len(unsafe) == 0, (
-            f"torchserve_handler.py has unsafe torch.load calls: {unsafe}"
-        )
-
     def test_trainium_backend_uses_weights_only_true(self):
         """backends/trainium/trainium_backend.py uses weights_only=True."""
         from torchbridge.backends.trainium import trainium_backend

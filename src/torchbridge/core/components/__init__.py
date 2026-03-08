@@ -1,45 +1,9 @@
 """
-Kernel-Optimized PyTorch Components
+Core components removed in v0.5.56 (Rule 1 — No-Wrapper violations).
 
-This package provides neural network components optimized at different levels
-to demonstrate the progression from basic PyTorch operations to custom CUDA kernels.
+OptimizedLinear, OptimizedLayerNorm, FusedLinearActivation, JIT variants, etc.
+all reduced to single-call wrappers around F.linear(), F.layer_norm(), etc.
+Use nn.Linear, nn.LayerNorm, and torch.compile for fusion directly.
 """
 
-from .basic_optimized import (
-    FusedLinearActivation,
-    OptimizedLayerNorm,
-    OptimizedLinear,
-    OptimizedMLP,
-    OptimizedMultiHeadAttention,
-    OptimizedTransformerBlock,
-    PositionalEncoding,
-    SimpleTransformer,
-)
-from .jit_optimized import (
-    FullyJITTransformerBlock,
-    JITOptimizedLayerNorm,
-    JITOptimizedLinear,
-    JITOptimizedMLP,
-    JITOptimizedTransformer,
-    JITRotaryAttention,
-)
-
-__all__ = [
-    # Basic optimized components
-    'OptimizedLinear',
-    'FusedLinearActivation',
-    'OptimizedLayerNorm',
-    'OptimizedMultiHeadAttention',
-    'OptimizedMLP',
-    'OptimizedTransformerBlock',
-    'PositionalEncoding',
-    'SimpleTransformer',
-
-    # JIT optimized components
-    'JITOptimizedLinear',
-    'JITOptimizedLayerNorm',
-    'JITOptimizedMLP',
-    'JITRotaryAttention',
-    'FullyJITTransformerBlock',
-    'JITOptimizedTransformer'
-]
+__all__: list[str] = []
