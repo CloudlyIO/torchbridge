@@ -17,13 +17,8 @@ from torchbridge.backends.nvidia import (
     FP8Compiler,
     NVIDIAAdapter,
     NVIDIABackend,
-    NVIDIAMemoryManager,
     create_cuda_integration,
     create_flash_attention_3,
-)
-from torchbridge.backends.nvidia.nvidia_exceptions import (
-    MemoryAllocationError,
-    OutOfMemoryError,
 )
 from torchbridge.core.config import (
     NVIDIAArchitecture,
@@ -385,67 +380,6 @@ class TestFP8Compiler:
 # NVIDIA Memory Manager Tests (7 tests)
 # ============================================================================
 
-class TestNVIDIAMemoryManager:
-    """Test NVIDIA memory manager functionality."""
-
-    def test_memory_manager_creation(self):
-        """Test memory manager creation."""
-        manager = NVIDIAMemoryManager()
-        assert manager.config is not None
-
-    def test_allocate_tensor(self):
-        """Test tensor allocation."""
-        manager = NVIDIAMemoryManager()
-        tensor = manager.allocate_tensor((10, 10))
-        assert tensor.shape == (10, 10)
-
-    def test_allocate_with_pool(self):
-        """Test tensor allocation with pooling."""
-        manager = NVIDIAMemoryManager()
-        tensor1 = manager.allocate_tensor((10, 10), pool_id="test_pool")
-        manager.return_to_pool(tensor1, "test_pool")
-        tensor2 = manager.allocate_tensor((10, 10), pool_id="test_pool")
-        assert tensor2.shape == (10, 10)
-
-    def test_optimize_tensor_layout(self):
-        """Test tensor layout optimization."""
-        manager = NVIDIAMemoryManager()
-        tensor = torch.randn(10, 10)  # Not optimal dimension
-        optimized = manager.optimize_tensor_layout(tensor)
-        assert optimized is not None
-
-    def test_get_memory_stats(self):
-        """Test memory statistics."""
-        manager = NVIDIAMemoryManager()
-        stats = manager.get_memory_stats()
-        assert 'allocated_gb' in stats or 'allocated' in stats
-
-    def test_optimize_model_memory(self):
-        """Test model memory optimization."""
-        manager = NVIDIAMemoryManager()
-        model = nn.Sequential(
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 256)
-        )
-        results = manager.optimize_model_memory(model)
-        assert 'total_memory_mb' in results
-        assert 'recommendations' in results
-
-    def test_clear_pool(self):
-        """Test memory pool clearing."""
-        manager = NVIDIAMemoryManager()
-        tensor = manager.allocate_tensor((10, 10), pool_id="test_pool")
-        manager.return_to_pool(tensor, "test_pool")
-        manager.clear_pool("test_pool")
-        stats = manager.get_pool_stats("test_pool")
-        assert stats['tensor_count'] == 0
-
-
-# ============================================================================
-# FlashAttention-3 Tests (8 tests)
-# ============================================================================
-
 class TestFlashAttention3:
     """Test FlashAttention-3 implementation."""
 
@@ -578,13 +512,6 @@ class TestNVIDIAIntegration:
         assert result.optimized_model is not None
         assert len(result.optimizations_applied) > 0
 
-    def test_backend_with_memory_manager(self):
-        """Test backend integration with memory manager."""
-        backend = NVIDIABackend()
-        memory_manager = NVIDIAMemoryManager(backend.config)
-        tensor = memory_manager.allocate_tensor((10, 10))
-        assert tensor.device == backend.device
-
     def test_end_to_end_inference_optimization(self):
         """Test end-to-end inference optimization."""
         config = TorchBridgeConfig()
@@ -607,18 +534,6 @@ class TestNVIDIAIntegration:
 class TestNVIDIAErrorPaths:
     """Test error handling and failure scenarios in NVIDIA backend."""
 
-    def test_memory_allocation_error_handling(self):
-        """Test that memory allocation errors are properly caught and logged."""
-        memory_manager = NVIDIAMemoryManager()
-
-        # Test with extremely large tensor that should fail
-        with pytest.raises((OutOfMemoryError, MemoryAllocationError, RuntimeError)):
-            # Try to allocate 1TB tensor (will fail on most systems)
-            memory_manager.allocate_with_oom_protection(
-                shape=(1024, 1024, 1024, 1024),  # 1TB in float32
-                dtype=torch.float32
-            )
-
     @patch('torch.cuda.is_available', return_value=False)
     def test_cuda_not_available_graceful_fallback(self, mock_cuda):
         """Test graceful fallback when CUDA is not available."""
@@ -630,29 +545,6 @@ class TestNVIDIAErrorPaths:
         model = nn.Linear(10, 10)
         prepared = backend.prepare_model(model)
         assert prepared is not None
-
-    def test_memory_check_when_cuda_unavailable(self):
-        """Test memory check when CUDA is unavailable."""
-        with patch('torch.cuda.is_available', return_value=False):
-            memory_manager = NVIDIAMemoryManager()
-            result = memory_manager.check_memory_available(100.0)
-            assert result is False  # Should return False when CUDA unavailable
-
-    def test_oom_protection_with_insufficient_memory(self):
-        """Test OOM protection triggers when insufficient memory."""
-        memory_manager = NVIDIAMemoryManager()
-
-        with patch.object(memory_manager, 'check_memory_available', return_value=False):
-            with patch.object(memory_manager, 'get_memory_stats', return_value={
-                'allocated_gb': 10.0,
-                'reserved_gb': 15.0
-            }):
-                with pytest.raises(OutOfMemoryError) as exc_info:
-                    memory_manager.allocate_with_oom_protection(
-                        shape=(1000, 1000, 1000),
-                        dtype=torch.float32
-                    )
-                assert "Insufficient GPU memory" in str(exc_info.value)
 
     def test_invalid_model_input(self):
         """Test handling of invalid model inputs."""
@@ -676,27 +568,6 @@ class TestNVIDIAErrorPaths:
         fa_no_causal = FlashAttention3(embed_dim=64, num_heads=4, causal=False)
         assert fa_no_causal.causal is False
 
-    def test_memory_allocation_with_cleanup(self):
-        """Test that memory allocation attempts cleanup before failing."""
-        memory_manager = NVIDIAMemoryManager()
-
-        # Mock check_memory_available to return False initially, True after cleanup
-        call_count = [0]
-        def mock_check(required_mb):
-            call_count[0] += 1
-            return call_count[0] > 1  # False first time, True second time
-
-        with patch.object(memory_manager, 'check_memory_available', side_effect=mock_check):
-            with patch.object(memory_manager, 'clear_pool') as mock_clear:
-                # This should succeed on second attempt after cleanup
-                tensor = memory_manager.allocate_with_oom_protection(
-                    shape=(10, 10),
-                    dtype=torch.float32
-                )
-                # Verify cleanup was called
-                mock_clear.assert_called_once()
-                assert tensor is not None
-
     def test_optimizer_with_invalid_optimization_level(self):
         """Test optimizer with invalid optimization level."""
         optimizer = NVIDIAAdapter()
@@ -711,19 +582,6 @@ class TestNVIDIAErrorPaths:
             assert result is not None
             # May issue warning about invalid optimization level
             assert len(w) >= 0  # Graceful handling, with or without warning
-
-    def test_memory_stats_tensor_size_estimation(self):
-        """Test accurate tensor size estimation."""
-        memory_manager = NVIDIAMemoryManager()
-
-        # Test size estimation for various dtypes
-        size_fp32 = memory_manager._estimate_tensor_size((1000, 1000), torch.float32)
-        size_fp16 = memory_manager._estimate_tensor_size((1000, 1000), torch.float16)
-        size_int8 = memory_manager._estimate_tensor_size((1000, 1000), torch.int8)
-
-        # FP32 should be 2x FP16, FP16 should be 2x INT8
-        assert abs(size_fp32 - 2 * size_fp16) < 0.01
-        assert abs(size_fp16 - 2 * size_int8) < 0.01
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_unsupported_compute_capability(self):
@@ -744,23 +602,6 @@ class TestNVIDIAErrorPaths:
             FlashAttention3(embed_dim=63, num_heads=4)  # 63 not divisible by 4
         assert "divisible" in str(exc_info.value).lower()
 
-    def test_memory_pool_operations(self):
-        """Test memory pool allocation and cleanup."""
-        memory_manager = NVIDIAMemoryManager()
-
-        # Allocate tensor with pool
-        tensor1 = memory_manager.allocate_tensor((10, 10), pool_id="test_pool")
-        assert tensor1 is not None
-
-        # Return to pool
-        memory_manager.return_to_pool(tensor1, "test_pool")
-
-        # Clear pool
-        memory_manager.clear_pool("test_pool")
-
-        # Clear all pools
-        memory_manager.clear_pool()
-
     def test_fp8_unsupported_architecture(self):
         """Test FP8 compiler on unsupported architecture."""
         config = TorchBridgeConfig()
@@ -774,34 +615,3 @@ class TestNVIDIAErrorPaths:
         result = compiler.prepare_for_fp8(model)
         assert result is model  # Should be same object, unchanged
 
-    def test_backend_kernel_registry_integration(self):
-        """Test that backend properly integrates with kernel registry."""
-        config = TorchBridgeConfig()
-        config.kernel.enabled = True
-
-        backend = NVIDIABackend(config)
-        assert backend.kernel_registry is not None
-
-        # Should have registered default kernels
-        # (exact count depends on CUDA availability and hardware)
-
-    def test_memory_allocation_safety_margin(self):
-        """Test that safety margin is applied in OOM protection."""
-        memory_manager = NVIDIAMemoryManager()
-
-        # Mock check to verify safety margin is applied
-        with patch.object(memory_manager, 'check_memory_available') as mock_check:
-            mock_check.return_value = True
-            with patch.object(memory_manager, '_estimate_tensor_size', return_value=100.0):
-                try:
-                    memory_manager.allocate_with_oom_protection(
-                        shape=(10, 10),
-                        dtype=torch.float32,
-                        safety_margin=1.5  # 50% margin
-                    )
-                except Exception:
-                    pass  # May fail on actual allocation, we're testing the check
-
-                # Verify check was called with margin applied
-                if mock_check.called:
-                    assert mock_check.call_args[0][0] == 150.0  # 100.0 * 1.5

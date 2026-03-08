@@ -1,33 +1,27 @@
 """
 TorchBridge Model Integration Module
 
-Provides LLM inference utilities across NVIDIA, AMD, Trainium, and TPU backends.
+Provides LLM KV-cache utilities across NVIDIA, AMD, Trainium, and TPU backends.
 """
 
 from .llm import (
-    GenerationConfig,
+    KVCacheCompatibilityMatrix,
+    KVCacheDtype,
     KVCacheManager,
-    LLMConfig,
-    LLMOptimizer,
-    OptimizedLlama,
-    OptimizedMistral,
-    OptimizedPhi,
     PagedKVCache,
-    QuantizationMode,
+    PrefixCache,
+    QuantizedCacheConfig,
+    QuantizedKVCache,
     SlidingWindowCache,
-    create_optimized_llm,
 )
 
 __all__ = [
-    "LLMOptimizer",
-    "LLMConfig",
-    "OptimizedLlama",
-    "OptimizedMistral",
-    "OptimizedPhi",
-    "create_optimized_llm",
-    "QuantizationMode",
-    "GenerationConfig",
     "KVCacheManager",
     "PagedKVCache",
     "SlidingWindowCache",
+    "KVCacheDtype",
+    "KVCacheCompatibilityMatrix",
+    "QuantizedCacheConfig",
+    "QuantizedKVCache",
+    "PrefixCache",
 ]

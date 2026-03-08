@@ -58,13 +58,6 @@ from .base_exceptions import (
     raise_or_warn,
 )
 
-# Base memory manager
-from .base_memory_manager import (
-    BaseMemoryManager,
-    BaseMemoryStats,
-    MemoryAllocationInfo,
-)
-
 __all__ = [
     # Base exceptions
     'BackendError',
@@ -83,10 +76,6 @@ __all__ = [
     'KernelError',
     'KernelLaunchError',
     'raise_or_warn',
-    # Base memory manager
-    'BaseMemoryManager',
-    'BaseMemoryStats',
-    'MemoryAllocationInfo',
     # Base backend
     'BaseBackend',
     'CPUBackend',

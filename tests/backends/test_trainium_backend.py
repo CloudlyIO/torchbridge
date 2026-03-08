@@ -15,7 +15,6 @@ from torchbridge.backends.trainium import (
     NeuronCompiler,
     TrainiumAdapter,
     TrainiumBackend,
-    TrainiumMemoryManager,
 )
 from torchbridge.core.config import (
     TorchBridgeConfig,
@@ -381,105 +380,6 @@ class TestNeuronCompiler:
         assert "NeuronCompiler" in repr_str
 
 
-class TestTrainiumMemoryManager:
-    """Test Trainium memory manager functionality."""
-
-    def test_memory_manager_creation(self):
-        """Test memory manager creation."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        assert memory_manager is not None
-        assert memory_manager.config == config.hardware.trainium
-
-    def test_tensor_allocation(self):
-        """Test tensor allocation."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        tensor = memory_manager.allocate_tensor((8, 64), dtype=torch.float32)
-        assert tensor.shape == (8, 64)
-        assert tensor.dtype == torch.float32
-
-    def test_tensor_layout_optimization(self):
-        """Test tensor layout optimization."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        # Test 2D tensor optimization (non-aligned dimensions)
-        tensor = torch.randn(7, 7)
-        optimized_tensor = memory_manager.optimize_tensor_layout(tensor)
-        assert optimized_tensor.shape[0] % 8 == 0 or optimized_tensor.shape[0] == 7
-        assert optimized_tensor.shape[1] % 8 == 0 or optimized_tensor.shape[1] == 7
-
-    def test_memory_pool_creation(self):
-        """Test memory pool creation."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        pool_id = memory_manager.create_memory_pool(5, (8, 64))
-        assert isinstance(pool_id, str)
-
-        pool_stats = memory_manager.get_pool_stats()
-        assert pool_stats['total_pools'] == 1
-
-    def test_memory_pool_operations(self):
-        """Test memory pool tensor get/return operations."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        pool_id = memory_manager.create_memory_pool(3, (8, 64))
-
-        # Get tensor from pool
-        tensor = memory_manager.get_tensor_from_pool(pool_id)
-        assert tensor is not None
-        assert tensor.shape == (8, 64)
-
-        # Return tensor to pool
-        success = memory_manager.return_tensor_to_pool(pool_id, tensor)
-        assert success
-
-    def test_memory_stats(self):
-        """Test memory statistics."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        stats = memory_manager.get_memory_stats()
-        assert hasattr(stats, 'allocated_memory')
-        assert hasattr(stats, 'memory_fraction')
-        assert hasattr(stats, 'active_tensors')
-
-    def test_memory_optimization(self):
-        """Test memory optimization."""
-        config = TorchBridgeConfig()
-        memory_manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        # Should not raise an error
-        memory_manager.optimize_memory_usage()
-
-    def test_trainium_memory_capacity(self):
-        """Test Trainium memory capacity by architecture."""
-        # TRN1: 32GB
-        config = TrainiumConfig(architecture=TrainiumArchitecture.TRN1)
-        manager = TrainiumMemoryManager(config)
-        assert manager._get_trainium_memory_gb() == 32.0
-
-        # TRN2: 96GB
-        config = TrainiumConfig(architecture=TrainiumArchitecture.TRN2)
-        manager = TrainiumMemoryManager(config)
-        assert manager._get_trainium_memory_gb() == 96.0
-
-        # TRN3: 144GB
-        config = TrainiumConfig(architecture=TrainiumArchitecture.TRN3)
-        manager = TrainiumMemoryManager(config)
-        assert manager._get_trainium_memory_gb() == 144.0
-
-        # INF2: 32GB
-        config = TrainiumConfig(architecture=TrainiumArchitecture.INF2)
-        manager = TrainiumMemoryManager(config)
-        assert manager._get_trainium_memory_gb() == 32.0
-
-
 class TestTrainiumErrorHandling:
     """Test Trainium error handling and edge cases."""
 
@@ -558,27 +458,6 @@ class TestTrainiumErrorHandling:
         # Invalid optimization level should raise ValueError
         with pytest.raises(ValueError, match="Unknown optimization level"):
             optimizer._apply_optimization_level(model, "invalid_level")
-
-    def test_memory_stats_with_retention(self):
-        """Test memory allocation history retention."""
-        config = TorchBridgeConfig()
-        config.hardware.trainium.allocation_history_retention_seconds = 1
-        manager = TrainiumMemoryManager(config.hardware.trainium)
-
-        # Allocate some tensors
-        for _ in range(5):
-            manager.allocate_tensor((10, 10))
-
-        initial_history = len(manager._allocation_history)
-        assert initial_history == 5
-
-        # Wait for retention period and optimize
-        import time
-        time.sleep(1.1)
-        manager.optimize_memory_usage()
-
-        # Old allocations should be removed
-        assert len(manager._allocation_history) <= initial_history
 
     def test_cache_clear_operations(self):
         """Test cache clearing functionality."""

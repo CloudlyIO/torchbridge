@@ -20,9 +20,7 @@ import pytest
 _CLI_MODULES = [
     ("torchbridge.cli", "main"),
     ("torchbridge.cli.benchmark", "main"),
-    ("torchbridge.cli.profile", "main"),
     ("torchbridge.cli.doctor", "main"),
-    ("torchbridge.cli.init", "main"),
     ("torchbridge.cli.validate", "main"),
     ("torchbridge.cli.migrate", "main"),
     ("torchbridge.cli.quantize", "main"),
