@@ -103,27 +103,6 @@ class TestMissingOptionalDeps:
             # torch.compile may fail on some platforms, that's OK
             pass
 
-    def test_create_attention_without_flash_attn(self):
-        """create_attention works without flash_attn installed."""
-        result = _run_snippet("""\
-            import sys
-            sys.modules["flash_attn"] = None
-            import torch
-            import torchbridge
-            attn = torchbridge.create_attention(d_model=64, num_heads=4)
-            assert attn is not None
-            x = torch.randn(1, 8, 64)
-            with torch.no_grad():
-                out = attn(x)
-            assert out.shape == (1, 8, 64)
-            print("OK")
-        """)
-        assert result.returncode == 0, (
-            f"create_attention failed without flash_attn:\n"
-            f"stdout: {result.stdout}\nstderr: {result.stderr}"
-        )
-        assert "OK" in result.stdout
-
     def test_config_without_optional_deps(self):
         """Configuration system works without optional deps."""
         import torchbridge

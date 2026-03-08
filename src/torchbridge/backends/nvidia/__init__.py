@@ -7,10 +7,8 @@ for PyTorch models targeting H100, Blackwell, and other NVIDIA architectures.
 Key Components:
 - NVIDIA Device Management
 - FP8 Training Pipeline
-- FlashAttention-3 Integration
 - CUDA-specific Memory Management
 - Tensor Core Integration
-- NVIDIA Model Deployment Support
 
 Example:
     ```python
@@ -32,10 +30,6 @@ from .cuda_utilities import (
     CUDAUtilities,
     create_cuda_integration,
 )
-from .flash_attention_integration import (
-    FlashAttention3,
-    create_flash_attention_3,
-)
 from .fp8_compiler import FP8Compiler
 from .nvidia_adapter import NVIDIAAdapter
 from .nvidia_backend import NVIDIABackend
@@ -44,8 +38,6 @@ __all__ = [
     'NVIDIABackend',
     'NVIDIAAdapter',
     'FP8Compiler',
-    'FlashAttention3',
-    'create_flash_attention_3',
     'CUDADeviceManager',
     'CUDAOptimizations',
     'CUDAUtilities',

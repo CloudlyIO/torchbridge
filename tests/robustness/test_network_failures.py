@@ -66,10 +66,6 @@ class TestNetworkFailures:
             # torch.compile may fail, but not network-related
             pass
 
-        # Attention creation doesn't need network
-        attn = torchbridge.create_attention(d_model=64, num_heads=4)
-        assert hasattr(attn, "forward")
-
     def test_validator_works_offline(self):
         """Validator works without network access."""
         from torchbridge.validation.unified_validator import UnifiedValidator

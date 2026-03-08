@@ -40,7 +40,7 @@ class TestSelectKernelCPU:
             backend=HardwareBackend.CPU, use_benchmark_cache=False
         )
         result = dispatcher.select_kernel()
-        assert result.implementation_name == "memory_efficient_attention"
+        assert result.implementation_name == "pytorch_sdpa"
 
 
 class TestSelectKernelMocked:
