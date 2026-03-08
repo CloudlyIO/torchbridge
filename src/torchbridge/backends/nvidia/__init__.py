@@ -37,7 +37,6 @@ from .flash_attention_integration import (
     create_flash_attention_3,
 )
 from .fp8_compiler import FP8Compiler
-from .memory_manager import NVIDIAMemoryManager
 from .nvidia_adapter import NVIDIAAdapter
 from .nvidia_backend import NVIDIABackend
 
@@ -45,7 +44,6 @@ __all__ = [
     'NVIDIABackend',
     'NVIDIAAdapter',
     'FP8Compiler',
-    'NVIDIAMemoryManager',
     'FlashAttention3',
     'create_flash_attention_3',
     'CUDADeviceManager',

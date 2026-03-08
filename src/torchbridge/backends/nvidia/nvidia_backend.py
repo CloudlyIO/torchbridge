@@ -10,7 +10,6 @@ hardware backends while implementing NVIDIA-specific optimizations.
 
 import logging
 import warnings
-from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -23,13 +22,7 @@ from torchbridge.backends.base_backend import (
 )
 from torchbridge.core.config import (
     NVIDIAArchitecture,
-    PrecisionFormat,
     TorchBridgeConfig,
-)
-from torchbridge.core.kernel_registry import (
-    KernelBackend,
-    KernelRegistry,
-    KernelType,
 )
 
 logger = logging.getLogger(__name__)
@@ -117,18 +110,11 @@ class NVIDIABackend(BaseBackend):
         self._compute_capability: tuple[int, int] | None = None
         self._device_name: str | None = None
 
-        # Initialize kernel registry
-        self._kernel_registry = KernelRegistry()
-
         # Call parent init (which calls _setup_environment)
         super().__init__(config=self._full_config)
 
         # Alias for backward compatibility
         self.config = self._full_config
-
-        # Register default kernels after CUDA environment is set up
-        if self._full_config.kernel.enabled and self.is_cuda_available:
-            self._register_default_kernels()
 
     def _setup_environment(self) -> None:
         """Set up CUDA environment for NVIDIA GPUs (implements BaseBackend abstract method)."""
@@ -541,53 +527,3 @@ class NVIDIABackend(BaseBackend):
         if self.is_cuda_available:
             torch.cuda.reset_peak_memory_stats()
 
-    # ===== Custom Kernel Management =====
-
-    def _register_default_kernels(self) -> None:
-        """No-op: custom kernel stubs removed in v0.5.51 contraction."""
-        pass
-
-    def get_optimal_attention_kernel(self,
-                                     head_dim: int,
-                                     precision: PrecisionFormat | None = None) -> Callable | type[nn.Module] | None:
-        """
-        Select optimal attention kernel for current hardware.
-
-        Args:
-            head_dim: Attention head dimension
-            precision: Desired precision (auto-detected if None)
-
-        Returns:
-            Optimal attention kernel class, or None if no suitable kernel found
-        """
-        # Return None if CUDA is not available
-        if not torch.cuda.is_available():
-            return None
-
-        if not self.config.kernel.enabled or not self.config.kernel.flash_attention_enabled:
-            return None
-
-        # Auto-detect precision if not specified
-        if precision is None:
-            if self.supports_fp8 and self.config.kernel.fp8_attention:
-                precision = PrecisionFormat.FP8_E4M3
-            else:
-                precision = PrecisionFormat.BF16
-
-        # Get optimal kernel from registry
-        kernel_metadata = self._kernel_registry.get_optimal_kernel(
-            kernel_type=KernelType.ATTENTION,
-            device=self.device,
-            precision=precision,
-            prefer_backend=KernelBackend.CUDA
-        )
-
-        if kernel_metadata:
-            return kernel_metadata.kernel_fn
-
-        return None
-
-    @property
-    def kernel_registry(self) -> KernelRegistry:
-        """Get kernel registry instance."""
-        return self._kernel_registry

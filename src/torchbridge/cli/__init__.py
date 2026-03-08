@@ -1,8 +1,7 @@
 """
 TorchBridge Command Line Interface
 
-Professional CLI tools for cross-backend PyTorch support, benchmarking, profiling,
-model export, and system validation.
+CLI tools for cross-backend validation, benchmarking, diagnostics, and configuration.
 """
 
 import argparse
@@ -31,9 +30,7 @@ from .benchmark import BenchmarkCommand
 from .cache import CacheCommand
 from .checkpoint import CheckpointCommand
 from .doctor import DoctorCommand
-from .init import InitCommand
 from .migrate import MigrateCommand
-from .profile import ProfileCommand
 from .quantize import QuantizeCommand
 from .speculate import SpeculateCommand
 from .validate import ValidateCommand
@@ -73,10 +70,10 @@ def main(args: list[str] | None = None) -> str | int | None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  torchbridge benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --quick
-  torchbridge profile --model model.pt --mode summary
-  torchbridge doctor --full-report
   torchbridge validate --compare cuda cpu --model model.pt
+  torchbridge doctor --full-report
+  torchbridge benchmark --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --quick
+  torchbridge advisor --backend cuda
 
 For command-specific help:
   torchbridge <command> --help
@@ -99,9 +96,7 @@ For command-specific help:
     # Register commands
     AdapterCommand.register(subparsers)
     BenchmarkCommand.register(subparsers)
-    ProfileCommand.register(subparsers)
     DoctorCommand.register(subparsers)
-    InitCommand.register(subparsers)
     ValidateCommand.register(subparsers)
     QuantizeCommand.register(subparsers)
     MigrateCommand.register(subparsers)
@@ -128,9 +123,7 @@ For command-specific help:
     commands = {
         'adapter': AdapterCommand,
         'benchmark': BenchmarkCommand,
-        'profile': ProfileCommand,
         'doctor': DoctorCommand,
-        'init': InitCommand,
         'validate': ValidateCommand,
         'quantize': QuantizeCommand,
         'migrate': MigrateCommand,

@@ -99,17 +99,6 @@ class TestTrainiumBackendStress:
             # Expected without Neuron SDK
             pass
 
-    def test_trainium_memory_manager_creation(self):
-        """TrainiumMemoryManager should instantiate without crashing."""
-        from torchbridge.backends.trainium.memory_manager import TrainiumMemoryManager
-
-        try:
-            manager = TrainiumMemoryManager()
-            assert isinstance(manager, TrainiumMemoryManager)
-        except Exception:
-            # Expected without Neuron SDK
-            pass
-
     def test_neuron_utilities_safe(self):
         """Neuron utility functions should not crash without SDK."""
         from torchbridge.backends.trainium.neuron_utilities import (

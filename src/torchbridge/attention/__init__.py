@@ -29,15 +29,6 @@ from .dispatch import (
 
 # Main implementations
 from .implementations.flash_attention import FlashAttention2, FlashAttention3
-from .implementations.flex_attention import (
-    FlexAttentionCausal,
-    FlexAttentionLayer,
-    FlexAttentionScoreMods,
-    FlexAttentionSlidingWindow,
-    create_flex_attention,
-    get_flex_attention_info,
-    is_flex_attention_available,
-)
 
 # Build dynamic exports
 __all__ = [
@@ -63,12 +54,4 @@ __all__ = [
     'FlashAttention3',
     'FlashAttention2',
 
-    # FlexAttention implementations (PyTorch 2.5+)
-    'FlexAttentionLayer',
-    'FlexAttentionCausal',
-    'FlexAttentionSlidingWindow',
-    'FlexAttentionScoreMods',
-    'create_flex_attention',
-    'is_flex_attention_available',
-    'get_flex_attention_info',
 ]

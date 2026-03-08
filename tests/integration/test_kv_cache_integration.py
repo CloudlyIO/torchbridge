@@ -15,10 +15,6 @@ from torchbridge.models.llm.kv.quantized_cache import (
     QuantizedKVCache,
 )
 from torchbridge.models.llm.kv_cache import CacheConfig
-from torchbridge.monitoring.llm_metrics import (
-    GenerationTimer,
-    LLMMetricsCollector,
-)
 
 
 class TestKVCachePipeline:
@@ -87,29 +83,6 @@ class TestKVCachePipeline:
         assert stats is not None
         assert stats["hits"] == 7
         assert stats["misses"] == 3
-
-    def test_metrics_collector_with_timer(self):
-        """GenerationTimer -> LLMMetricsCollector -> snapshot pipeline."""
-        collector = LLMMetricsCollector()
-
-        for _ in range(10):
-            timer = GenerationTimer(prompt_tokens=32)
-            with timer:
-                timer.record_first_token()
-                for _ in range(5):
-                    timer.record_token()
-            metrics = timer.finalize(generated_tokens=5)
-            collector.record_request(
-                metrics,
-                model_name="test-model",
-                itl_series=timer.itl_series,
-            )
-
-        snap = collector.get_snapshot()
-        assert snap.total_requests == 10
-        assert snap.ttft_p50_ms > 0
-        assert snap.itl_p50_ms > 0
-        assert snap.tokens_per_second > 0
 
     def test_all_kv_dtypes_have_consistent_specs(self):
         """Every dtype in every compatibility table should have a KV_DTYPE_SPECS entry."""
