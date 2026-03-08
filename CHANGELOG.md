@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.54] - 2026-03-07 - Contraction III: Second Dead-Code Sweep
+
+### **Summary**
+
+Second contraction pass removes ~5,537 lines across 5 subsystems that failed the
+identity test (Rule 0) or No-Wrapper Rule (Rule 1): MoE architecture/training,
+FP8 reimplementation, profiling educational wrapper, and a production validator
+testing exporters deleted in v0.5.51.
+
+### **Changes**
+
+- `mixture_of_experts/` (entire dir, ~2,652 lines) — deleted; MoE is a training/architecture
+  concern with no cross-backend validation value. torch-moe/transformers do it better.
+- `precision/fp8_training_engine.py` (~686 lines) — deleted; competes with torchao
+  (first-party Meta FP8 training). Rule 4 violation.
+- `precision/fp8_native.py` (~804 lines) — deleted; reimplements FP8 quantization and
+  `FP8Linear` that torchao provides. TorchBridge's value is the compatibility matrix.
+- `utils/profiling.py` (~610 lines) — deleted; same problem as `hardware/gpu/profiling_tools.py`
+  deleted in v0.5.51 — educational wrapper around `torch.profiler`, no original code.
+- `deployment/production_validator.py` (~785 lines) — deleted; validated ONNX/TorchScript/
+  SafeTensors exportability — exporters deleted in v0.5.51; was testing non-existent capabilities.
+- `precision/quantization/engine.py`: `_apply_fp8()` rewritten — direct torchao path,
+  clean INT8 fallback; no fp8_native dependency.
+- 4 test files patched; 1 test file deleted (`test_mixture_of_experts.py`, 328 lines).
+
+**Net: ~5,537 source lines removed. 2,116 tests passing.**
+
+---
+
 ## [0.5.53] - 2026-03-07 - Honest Labeling + PyPI Refresh
 
 ### **Summary**

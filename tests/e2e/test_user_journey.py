@@ -101,7 +101,6 @@ class TestUserJourney:
         # Convenience factories
         assert callable(torchbridge.optimize_model)
         assert callable(torchbridge.create_attention)
-        assert callable(torchbridge.create_moe)
 
     def test_attention_journey(self):
         """Test creating and using attention via the public API."""
@@ -111,21 +110,6 @@ class TestUserJourney:
         x = torch.randn(2, 16, 128)
         with torch.no_grad():
             output = attn(x)
-        assert output.shape == (2, 16, 128)
-
-    def test_moe_journey(self):
-        """Test creating and using Mixture of Experts via the public API."""
-        moe = torchbridge.create_moe(
-            hidden_size=128,
-            num_experts=4,
-            top_k=2,
-            moe_type="standard",
-        )
-        assert moe is not None
-
-        x = torch.randn(2, 16, 128)
-        with torch.no_grad():
-            output = moe(x)
         assert output.shape == (2, 16, 128)
 
     def test_hardware_detection_journey(self):
