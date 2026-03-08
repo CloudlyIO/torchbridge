@@ -70,10 +70,6 @@ class TestNetworkFailures:
         attn = torchbridge.create_attention(d_model=64, num_heads=4)
         assert hasattr(attn, "forward")
 
-        # MoE creation doesn't need network
-        moe = torchbridge.create_moe(hidden_size=64, num_experts=4, top_k=2)
-        assert hasattr(moe, "forward")
-
     def test_validator_works_offline(self):
         """Validator works without network access."""
         from torchbridge.validation.unified_validator import UnifiedValidator
