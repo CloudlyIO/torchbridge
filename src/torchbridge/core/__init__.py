@@ -76,17 +76,6 @@ from .hardware_detector import (
     get_optimal_backend,
 )
 
-# NOTE: Core optimized layers are production-ready. Additional layer types can be
-# added by extending the patterns in optimized_layers/ module.
-
-# Basic components - using actual available exports
-try:
-    from .components.basic_optimized import *  # noqa: F403
-    from .components.jit_optimized import *  # noqa: F403
-except ImportError:
-    # Optional components — not available in all installations
-    pass
-
 __all__ = [
     # Hardware detection and auto-optimization
     'HardwareDetector', 'HardwareProfile', 'HardwareType', 'OptimizationCapability',

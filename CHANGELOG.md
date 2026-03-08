@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.56] - 2026-03-08 - Contraction V: Serving Stack + Core Components
+
+### **Summary**
+
+Removes the serving stack (~3,759 lines) and core component wrappers (~1,100 lines)
+identified in the v0.5.55 existential audit. The LLM server, FastAPI server,
+TorchServe handler, and Triton config generator all fail Rule 0 (don't validate
+or configure across backends) and Rule 4 (compete with vLLM, Ray Serve, TorchServe).
+OptimizedLinear and JIT variants fail Rule 1 — their forward() bodies reduce to
+single `F.linear()` / `F.layer_norm()` calls.
+
+### **Changes**
+
+**Deleted source (6 files, ~4,859 lines):**
+- `deployment/serving/llm_server.py` — REST LLM inference server
+- `deployment/serving/fastapi_server.py` — FastAPI server wrapper
+- `deployment/serving/torchserve_handler.py` — TorchServe handler
+- `deployment/serving/triton_config.py` — Triton Inference Server config
+- `core/components/basic_optimized.py` — OptimizedLinear, OptimizedLayerNorm, etc.
+- `core/components/jit_optimized.py` — JIT-compiled variants of the above
+
+**Patched:** 4 source `__init__.py` files; 2 test files (removed deleted references)
+**Deleted tests:** 4 test files (1,868 lines) — 100% tested deleted modules
+
+### **Test Delta**
+2,113 → 1,849 collected; 1,954 passing
+
+---
+
 ## [0.5.55] - 2026-03-07 - Contraction IV: Third Dead-Code Sweep
 
 ### **Summary**
