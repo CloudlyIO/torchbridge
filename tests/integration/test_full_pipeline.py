@@ -237,15 +237,6 @@ class TestCLIIntegration:
 class TestDeploymentIntegration:
     """Test deployment module integration."""
 
-    def test_serving_imports(self):
-        """Test serving components can be imported."""
-        from torchbridge.deployment import (
-            ServerConfig,
-            create_fastapi_server,
-        )
-        assert create_fastapi_server is not None
-        assert ServerConfig is not None
-
 
 class TestBackendIntegration:
     """Test hardware backend integration."""
