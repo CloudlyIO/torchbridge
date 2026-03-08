@@ -228,11 +228,6 @@ class TestCLIIntegration:
         from torchbridge.cli.doctor import DoctorCommand
         assert DoctorCommand is not None
 
-    def test_profile_command_import(self):
-        """Test profile command can be imported."""
-        from torchbridge.cli.profile import ProfileCommand
-        assert ProfileCommand is not None
-
     def test_main_cli_import(self):
         """Test main CLI can be imported."""
         from torchbridge.cli import main

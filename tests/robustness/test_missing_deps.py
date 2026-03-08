@@ -136,20 +136,6 @@ class TestMissingOptionalDeps:
         validator = UnifiedValidator()
         assert isinstance(validator, UnifiedValidator)
 
-    def test_performance_tracker_without_persistence(self):
-        """PerformanceTracker works in memory-only mode (no TORCHBRIDGE_METRICS env var)."""
-        # Ensure env var is NOT set
-        env_backup = os.environ.pop("TORCHBRIDGE_METRICS", None)
-        try:
-            from torchbridge.core.performance_tracker import PerformanceTracker
-            tracker = PerformanceTracker()
-            # Should not create files
-            assert not tracker._persist
-        finally:
-            if env_backup is not None:
-                os.environ["TORCHBRIDGE_METRICS"] = env_backup
-
-
 class TestDoctorOptionalDeps:
     """Test that torchbridge doctor reports missing optional deps as warnings."""
 

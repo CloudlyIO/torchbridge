@@ -52,14 +52,6 @@ class TestCLIMain:
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('torchbridge.cli.InitCommand.execute')
-    def test_cli_init_command(self, mock_execute):
-        """Test init command routing."""
-        mock_execute.return_value = 0
-        result = main(['init', '--name', 'test_project'])
-        assert result == 0
-        mock_execute.assert_called_once()
-
     @patch('torchbridge.cli.ValidateCommand.execute')
     def test_cli_validate_command(self, mock_execute):
         """Test validate command routing."""
@@ -155,16 +147,6 @@ class TestCLIScriptEntryPoints:
             from torchbridge.cli.doctor import main as doctor_main
             with patch('sys.argv', ['tb-doctor']):
                 result = doctor_main()
-                assert result == 0
-
-    def test_init_entry_point(self):
-        """Test tb-init entry point."""
-        with patch('torchbridge.cli.init.InitCommand.execute') as mock_execute:
-            mock_execute.return_value = 0
-
-            from torchbridge.cli.init import main as init_main
-            with patch('sys.argv', ['tb-init', '--name', 'test_proj']):
-                result = init_main()
                 assert result == 0
 
     def test_validate_entry_point(self):

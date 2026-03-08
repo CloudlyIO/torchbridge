@@ -14,7 +14,6 @@ import torch.nn as nn
 from torchbridge.backends.tpu import (
     TPUAdapter,
     TPUBackend,
-    TPUMemoryManager,
     XLACompiler,
     XLADeviceManager,
     XLADistributedTraining,
@@ -281,83 +280,6 @@ class TestXLACompiler:
         assert 'avg_time' in benchmark_results
 
 
-class TestTPUMemoryManager:
-    """Test TPU memory manager functionality."""
-
-    def test_memory_manager_creation(self):
-        """Test memory manager creation."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        assert memory_manager is not None
-        assert memory_manager.config == config.hardware.tpu
-
-    def test_tensor_allocation(self):
-        """Test tensor allocation."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        tensor = memory_manager.allocate_tensor((8, 64), dtype=torch.float32)
-        assert tensor.shape == (8, 64)
-        assert tensor.dtype == torch.float32
-
-    def test_tensor_layout_optimization(self):
-        """Test tensor layout optimization."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        # Test 2D tensor optimization
-        tensor = torch.randn(7, 7)  # Not divisible by 8
-        optimized_tensor = memory_manager.optimize_tensor_layout(tensor)
-        assert optimized_tensor.shape[0] % 8 == 0 or optimized_tensor.shape[0] == 7
-        assert optimized_tensor.shape[1] % 8 == 0 or optimized_tensor.shape[1] == 7
-
-    def test_memory_pool_creation(self):
-        """Test memory pool creation."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        pool_id = memory_manager.create_memory_pool(5, (8, 64))
-        assert isinstance(pool_id, str)
-
-        pool_stats = memory_manager.get_pool_stats()
-        assert pool_stats['total_pools'] == 1
-
-    def test_memory_pool_operations(self):
-        """Test memory pool tensor get/return operations."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        pool_id = memory_manager.create_memory_pool(3, (8, 64))
-
-        # Get tensor from pool
-        tensor = memory_manager.get_tensor_from_pool(pool_id)
-        assert tensor is not None
-        assert tensor.shape == (8, 64)
-
-        # Return tensor to pool
-        success = memory_manager.return_tensor_to_pool(pool_id, tensor)
-        assert success
-
-    def test_memory_stats(self):
-        """Test memory statistics."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        stats = memory_manager.get_memory_stats()
-        assert hasattr(stats, 'allocated_memory')
-        assert hasattr(stats, 'memory_fraction')
-        assert hasattr(stats, 'active_tensors')
-
-    def test_memory_optimization(self):
-        """Test memory optimization."""
-        config = TorchBridgeConfig()
-        memory_manager = TPUMemoryManager(config.hardware.tpu)
-
-        # Should not raise an error
-        memory_manager.optimize_memory_usage()
-
-
 class TestXLAIntegration:
     """Test XLA integration components."""
 
@@ -588,42 +510,6 @@ class TestTPUErrorPaths:
         assert issubclass(TPUOutOfMemoryError, TPUMemoryError)
         assert issubclass(TPUMemoryError, TPUBackendError)
 
-    def test_memory_stats_with_retention(self):
-        """Test memory allocation history retention."""
-        import time as time_mod
-
-        config = TorchBridgeConfig()
-        config.hardware.tpu.allocation_history_retention_seconds = 1  # 1 second
-        manager = TPUMemoryManager(config.hardware.tpu)
-
-        # Allocate some tensors
-        for _ in range(5):
-            manager.allocate_tensor((10, 10))
-
-        initial_history = len(manager._allocation_history)
-        assert initial_history == 5
-
-        # Backdate all allocation timestamps to 5 seconds ago
-        for alloc in manager._allocation_history:
-            alloc.timestamp = time_mod.time() - 5
-
-        # optimize_memory_usage should prune entries older than 1s
-        manager.optimize_memory_usage()
-
-        # Old allocations should be removed
-        assert len(manager._allocation_history) == 0
-
-    def test_configurable_tpu_memory_capacity(self):
-        """Test configurable TPU memory capacity overrides."""
-        config = TorchBridgeConfig()
-        config.hardware.tpu.version = TPUVersion.V6E
-        config.hardware.tpu.v6e_memory_gb = 64.0  # Custom value
-
-        manager = TPUMemoryManager(config.hardware.tpu)
-        capacity = manager._get_tpu_memory_gb()
-
-        assert capacity == 64.0  # Should use configured value
-
     def test_cache_utils_statistics(self):
         """Test LRU cache statistics tracking."""
         from torchbridge.backends.tpu.cache_utils import LRUCache
@@ -680,28 +566,6 @@ class TestTPUErrorPaths:
         # Invalid optimization level should raise ValueError
         with pytest.raises(ValueError, match="Unknown optimization level"):
             optimizer._apply_optimization_level(model, "invalid_level")
-
-    def test_memory_pool_operations(self):
-        """Test memory pool creation and retrieval."""
-        config = TorchBridgeConfig()
-        manager = TPUMemoryManager(config.hardware.tpu)
-
-        # Create pool
-        pool_id = manager.create_memory_pool(pool_size=5, tensor_size=(10, 10))
-        assert pool_id is not None
-
-        # Get tensor from pool
-        tensor = manager.get_tensor_from_pool(pool_id)
-        assert tensor is not None
-        assert tensor.shape == (10, 10)
-
-        # Return tensor to pool
-        success = manager.return_tensor_to_pool(pool_id, tensor)
-        assert success
-
-        # Get pool stats
-        pool_stats = manager.get_pool_stats()
-        assert pool_id in pool_stats['pool_details']
 
     def test_compilation_mode_configuration(self):
         """Test different XLA compilation modes."""

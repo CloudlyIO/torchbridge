@@ -8,6 +8,38 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.55] - 2026-03-07 - Contraction IV: Third Dead-Code Sweep
+
+### **Summary**
+
+Third contraction pass removes ~6,600 lines across 13 source modules and 6 test
+files that failed the identity test (Rule 0) or No-Wrapper Rule (Rule 1):
+`tb-profile`/`tb-init` CLIs, kernel_registry, performance_tracker, fp4_native,
+optimization_metadata, flex_attention wrapper, monitoring/llm_metrics,
+4× backend memory_managers, and llm_optimizer.
+
+### **Changes**
+
+**Deleted source (13 modules, ~6,600 lines):**
+- `cli/profile.py` — torch.profiler wrapper CLI
+- `cli/init.py` — project scaffolding
+- `core/kernel_registry.py` — hypothetical kernel registry
+- `core/performance_tracker.py` — generic perf tracking (duplicated `benchmarks/`)
+- `precision/fp4_native.py` — FP4 reimplementation (torchao already does this)
+- `deployment/optimization_metadata.py` — metadata for deleted exporters
+- `attention/implementations/flex_attention.py` — PyTorch FlexAttention wrapper
+- `monitoring/` (entire package) — LLM metrics competing with vLLM
+- `backends/base_memory_manager.py` + 3 backend memory_managers — `torch.cuda.memory_*` wrappers
+- `models/llm/llm_optimizer.py` — competing with vLLM/torchao
+
+**Patched:** 11 source files (import chains), 10 test files (removed deleted dependencies)
+**Removed `tb-profile` and `tb-init` entry points from `pyproject.toml`.**
+
+### **Test Delta**
+2,543 → 2,113 collected (−430 tests for deleted facades); 2,017 passing
+
+---
+
 ## [0.5.54] - 2026-03-07 - Contraction III: Second Dead-Code Sweep
 
 ### **Summary**

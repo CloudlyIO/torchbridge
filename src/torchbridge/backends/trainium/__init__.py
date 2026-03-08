@@ -29,7 +29,6 @@ Example:
     ```
 """
 
-from .memory_manager import TrainiumMemoryManager
 from .neuron_compiler import NeuronCompiler
 from .neuron_utilities import (
     get_neuron_env_info,
@@ -43,7 +42,6 @@ __all__ = [
     'TrainiumBackend',
     'TrainiumAdapter',
     'NeuronCompiler',
-    'TrainiumMemoryManager',
     'is_neuron_available',
     'get_neuron_sdk_version',
     'get_neuron_env_info',

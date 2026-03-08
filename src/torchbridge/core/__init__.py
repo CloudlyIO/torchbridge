@@ -1,11 +1,7 @@
 """
-TorchBridge Core Module - Unified Core HAL Components
+TorchBridge Core Module
 
-This module consolidates all core PyTorch hardware abstraction functionality:
-- Backend-aware layer implementations
-- Basic cross-backend components
-- Hardware detection and auto-configuration
-- Performance tracking and regression detection
+Hardware detection, auto-configuration, and cross-backend infrastructure.
 """
 
 # Configuration system (Phase 3)
@@ -80,18 +76,6 @@ from .hardware_detector import (
     get_optimal_backend,
 )
 
-# Performance tracking and regression detection
-from .performance_tracker import (
-    MetricType,
-    PerformanceMetrics,
-    PerformanceTracker,
-    RegressionResult,
-    RegressionSeverity,
-    detect_regression,
-    get_performance_tracker,
-    track_performance,
-)
-
 # NOTE: Core optimized layers are production-ready. Additional layer types can be
 # added by extending the patterns in optimized_layers/ module.
 
@@ -107,11 +91,6 @@ __all__ = [
     # Hardware detection and auto-optimization
     'HardwareDetector', 'HardwareProfile', 'HardwareType', 'OptimizationCapability',
     'detect_hardware', 'get_optimal_backend', 'get_hardware_detector',
-
-    # Performance tracking and regression detection
-    'PerformanceTracker', 'PerformanceMetrics', 'RegressionResult',
-    'MetricType', 'RegressionSeverity', 'get_performance_tracker',
-    'track_performance', 'detect_regression',
 
     # Configuration system
     'TorchBridgeConfig', 'PrecisionConfig', 'MemoryConfig', 'AttentionConfig',
