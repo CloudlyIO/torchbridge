@@ -20,7 +20,6 @@ import torch.nn as nn
 from torchbridge.core.config import OptimizationLevel
 
 from .base_exceptions import BackendError
-from .base_memory_manager import BaseMemoryManager, BaseMemoryStats
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +133,7 @@ class BaseBackend(ABC):
         self.config = config
         self._initialized = False
         self._device: torch.device | None = None
-        self._memory_manager: BaseMemoryManager | None = None
+        self._memory_manager: Any | None = None
         self._device_cache: dict[int, DeviceInfo] = {}
 
         # Setup environment
@@ -283,7 +282,7 @@ class BaseBackend(ABC):
         return self._initialized and self._check_availability()
 
     @property
-    def memory_manager(self) -> BaseMemoryManager | None:
+    def memory_manager(self) -> Any | None:
         """Get the memory manager for this backend."""
         return self._memory_manager
 
@@ -366,7 +365,7 @@ class BaseBackend(ABC):
         """
         if self._memory_manager:
             stats = self._memory_manager.get_memory_stats()
-            if isinstance(stats, BaseMemoryStats):
+            if hasattr(stats, 'to_dict'):
                 return stats.to_dict()
             return stats
 

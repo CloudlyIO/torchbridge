@@ -25,7 +25,6 @@ Example:
     ```
 """
 
-from .memory_manager import TPUMemoryManager
 from .tpu_adapter import TPUAdapter
 from .tpu_backend import TPUBackend
 from .xla_compiler import XLACompiler
@@ -41,7 +40,6 @@ __all__ = [
     'TPUBackend',
     'TPUAdapter',
     'XLACompiler',
-    'TPUMemoryManager',
     'XLADeviceManager',
     'XLADistributedTraining',
     'XLAOptimizations',

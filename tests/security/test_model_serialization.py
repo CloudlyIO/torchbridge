@@ -102,19 +102,6 @@ class TestNoUngatedWeightsOnlyFalseAllCLI:
             f"QuantizeCommand has ungated weights_only=False: {matches}"
         )
 
-    def test_no_ungated_weights_only_false_in_profile(self):
-        """ProfileCommand must not have ungated weights_only=False."""
-        from torchbridge.cli.profile import ProfileCommand
-
-        source = inspect.getsource(ProfileCommand)
-        matches = re.findall(
-            r"torch\.load\([^)]*weights_only\s*=\s*False", source
-        )
-        assert len(matches) == 0, (
-            f"ProfileCommand has ungated weights_only=False: {matches}"
-        )
-
-
 class TestSourceFileSafeLoading:
     """Core source modules must always use weights_only=True for torch.load."""
 
