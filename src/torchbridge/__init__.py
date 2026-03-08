@@ -38,10 +38,6 @@ except PackageNotFoundError:
     except Exception:
         __version__ = "0.0.0"
 
-from .attention.core.base import BaseAttention as AttentionLayer
-from .attention.core.config import AttentionModuleConfig
-from .attention.implementations.memory_efficient import MemoryEfficientAttention
-
 # Core Components (explicit imports)
 from .core.config import (
     AttentionConfig,
@@ -75,23 +71,11 @@ __all__ = [
     # Management System
     "UnifiedManager", "get_manager",
 
-    # Attention
-    "AttentionLayer",
-
     # Validation
     "UnifiedValidator",
 ]
 
 # Convenience functions for quick setup
-def create_attention(d_model: int, num_heads: int, **kwargs: Any) -> MemoryEfficientAttention:
-    """Create backend-aware attention layer with automatic configuration."""
-    attn_config = AttentionModuleConfig(
-        embed_dim=d_model,
-        num_heads=num_heads,
-        **kwargs,
-    )
-    return MemoryEfficientAttention(attn_config)
-
 def optimize_model(model: torch.nn.Module, **kwargs: Any) -> Any:
     """Apply unified backend abstraction to model using global manager."""
     return get_manager().optimize(model, **kwargs)
