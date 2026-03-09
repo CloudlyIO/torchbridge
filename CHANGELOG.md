@@ -8,6 +8,36 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.60] - 2026-03-09 - Disaggregated Fleet Config Advisor
+
+### **Summary**
+
+Hardware-aware configuration advisor for prefill-decode disaggregated LLM serving fleets.
+No existing tool tells you: for a 7B model on prefill:NVIDIA-Hopper + decode:AMD-CDNA3,
+what KV dtype, KV cache budget, max batch size, and inter-role transfer format should each
+side use? v0.5.60 fills that gap via three lookup matrices and a clean CLI extension.
+
+### **What's New**
+
+- **`src/torchbridge/inference/disaggregated.py`** (NEW): `DisaggregatedFleetAdvisor.recommend()` with three matrices:
+  - KV dtype per `(role, backend, arch)` — prefill uses quality dtypes (bfloat16/float16); decode uses int8 where stable
+  - KV transfer format per `(prefill_backend, decode_backend)` — float16 for cross-vendor, bfloat16 same-vendor
+  - Memory split per role — prefill 20%/80%, decode 80%/20%
+- **`tb-advisor --mode disaggregated`**: five new CLI args (`--mode`, `--prefill SPEC`, `--decode SPEC`, `--prefill-memory N`, `--decode-memory N`); backward-compatible (default mode is `training`)
+- **`torchbridge.inference` exports**: `DisaggregatedFleetAdvisor`, `DisaggregatedFleetConfig`, `DisaggregatedRoleConfig` added to `__init__.py`
+
+### **Bugs Fixed in Review**
+
+- `or` falsy-zero: `prefill_memory_gb or default` silently ignored `0.0` — fixed with `is not None` guard
+- Batch scaling floor: `max(1.0, memory/80)` prevented downscaling for small GPUs (T4 at 16 GB got same max_batch as H100) — removed floor
+- `inference/__init__.py` not updated — new public classes were missing from package exports
+
+### **Tests**
+
+- +55 new tests (35 unit, 20 integration); total 1726 passing
+
+---
+
 ## [0.5.59] - 2026-03-09 - Multi-Step Trace Validation
 
 ### **Summary**
