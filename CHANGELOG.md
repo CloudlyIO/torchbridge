@@ -8,6 +8,47 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.61] - 2026-03-09 - KV Handoff Spec + Compliance Certificates
+
+### **Summary**
+
+Physical KV-cache handoff specification negotiator for disaggregated serving, and tamper-evident compliance certificates for cross-backend validation runs.
+
+### **New: KV Handoff Physical Spec**
+
+`torchbridge.inference.KVHandoffNegotiator` — negotiates the physical KV-cache transfer spec between prefill and decode workers running on different hardware:
+
+- `_KV_HANDOFF_MATRIX`: 11 entries mapping `(backend, arch)` → `(page_size_tokens, alignment_bytes, layout)` for CUDA (Hopper/Blackwell/Ampere/Ada/generic), ROCm (CDNA4/CDNA3/CDNA2/generic), TPU, and CPU
+- `_lookup_hw_spec()`: fallback chain — arch → `(backend, None)` → `_SAFE_DEFAULT` (16 tokens, 64 bytes, separate)
+- `KVHandoffNegotiator.negotiate()`: safe intersection rules — `page_size = max(prefill, decode)`, `alignment = min(prefill, decode)`, `layout = "interleaved"` only if both backends prefer it
+- `KVHandoffSpec`: dataclass with `to_dict()` / `to_json()`; includes human-readable `notes` for runtime guidance
+
+### **New: Compliance Certificates**
+
+`torchbridge.testing.ComplianceCertificate` — tamper-evident JSON artifact for cross-backend validation runs:
+
+- `generate_certificate()`: creates cert with SHA256 fingerprint over canonical payload (sorted keys, no whitespace, 12-decimal float precision); validates `max_diff`, `cosine_sim`, `tolerance_atol` are finite (`ValueError` on `inf`/`nan`)
+- `_compute_fingerprint()`: deterministic — same inputs always produce the same 64-char hex digest; changing any key field changes the fingerprint
+- `ComplianceCertificate.to_json()`: pretty-printed JSON ready to save as artifact or embed in CI output
+- Exported from `torchbridge.testing` package
+
+### **CLI: `tb-validate --cert FILE`**
+
+`tb-validate --compare BACKEND1 BACKEND2 --cert /path/to/cert.json` writes a compliance certificate after comparison:
+- Creates parent directories if missing
+- Writes cert for both PASSED and FAILED runs (full audit trail)
+- Prints warning to stdout if cert cannot be saved (cert failure does not affect comparison exit code)
+
+### **Tests**
+
+- `tests/unit/test_kv_handoff.py`: 30 tests — matrix lookups, negotiation rules, dataclass serialisation, package exports
+- `tests/unit/test_compliance_cert.py`: 36 tests — field presence, status derivation, ISO 8601 timestamp, fingerprint determinism + sensitivity to each field, serialisation roundtrip, edge cases, `ValueError` guards for inf/nan
+- `tests/integration/test_cert_pipeline.py`: 14 tests — `--cert` arg registration in both `ValidateCommand.register()` and `main()`, smoke runs with cpu-cpu compare, parent-dir creation, CI mode compatibility, package imports
+
+**80 new tests. 0 new modules (files added to existing packages).**
+
+---
+
 ## [0.5.60] - 2026-03-09 - Disaggregated Fleet Config Advisor
 
 ### **Summary**
