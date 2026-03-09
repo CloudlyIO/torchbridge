@@ -10,6 +10,7 @@ from .disaggregated import (
     DisaggregatedFleetConfig,
     DisaggregatedRoleConfig,
 )
+from .kv_handoff import KVHandoffNegotiator, KVHandoffSpec
 from .phase_detection import PhaseDetector, PhaseProfile, PhaseType
 from .speculative import (
     SPECULATIVE_METHOD_SPECS,
@@ -25,6 +26,9 @@ __all__ = [
     "DisaggregatedFleetAdvisor",
     "DisaggregatedFleetConfig",
     "DisaggregatedRoleConfig",
+    # KV cache handoff physical spec
+    "KVHandoffNegotiator",
+    "KVHandoffSpec",
     # Speculative decoding compatibility
     "SpeculativeMethod",
     "SpeculativeMethodSpec",

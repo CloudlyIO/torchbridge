@@ -18,6 +18,10 @@ Example usage::
         assert out.shape == (4, 32)
 """
 
+from torchbridge.testing.compliance_cert import (
+    ComplianceCertificate,
+    generate_certificate,
+)
 from torchbridge.testing.decorator import cross_backend
 from torchbridge.testing.divergence import DivergenceTracer, LayerDivergence
 from torchbridge.testing.report import QualificationReport
@@ -25,6 +29,8 @@ from torchbridge.testing.suite import BackendTolerance, CrossBackendTestSuite
 from torchbridge.testing.tolerance_db import ToleranceDB
 
 __all__ = [
+    "ComplianceCertificate",
+    "generate_certificate",
     "BackendTolerance",
     "CrossBackendTestSuite",
     "DivergenceTracer",
