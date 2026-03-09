@@ -1,12 +1,14 @@
 """
-Speculative Decoding Subpackage
+Speculative Decoding Compatibility
 
-Backend-aware speculative decoding with compatibility matrix, method
-selection, and HuggingFace generate() integration.
+Backend-aware speculative method selection: which method (DRAFT_MODEL,
+PROMPT_LOOKUP, LAYER_SKIP, etc.) is supported on the given hardware backend.
+
+For speculative decoding execution use vLLM, SGLang, or HuggingFace
+generate() with assistant_model directly.
 """
 
 from .compatibility import SpeculationCompatibilityMatrix
-from .engine import SpeculationConfig, SpeculationEngine
 from .methods import (
     SPECULATIVE_METHOD_SPECS,
     SpeculativeMethod,
@@ -20,6 +22,4 @@ __all__ = [
     "SPECULATIVE_METHOD_SPECS",
     "get_method_spec",
     "SpeculationCompatibilityMatrix",
-    "SpeculationConfig",
-    "SpeculationEngine",
 ]

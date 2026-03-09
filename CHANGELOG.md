@@ -8,6 +8,50 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.58] - 2026-03-08 - Contraction VII: Engine Layer + Utils
+
+### **Summary**
+
+Removes execution-engine violations identified in the v0.5.55 audit (~2,481 lines).
+The adapter layer implementations (LoRALinear/DoRALinear/QLoRALinear), injection engine
+(AdapterEngine), and serving layer (MultiAdapterManager) violate Rule 1 and Rule 4 —
+PEFT and torchao handle LoRA math. The speculation engine (SpeculationEngine) violates
+Rule 4 — vLLM/SGLang handle draft-model generation. The structured output processor
+(StructuredOutputProcessor) violates Rule 4 — xgrammar/outlines handle constrained
+generation. Generic utils (deprecation_manager, model_analyzer) have no live callers.
+
+TorchBridge's value in all three areas is retained: `AdapterCompatibilityMatrix`
+(which method per hardware), `SpeculationCompatibilityMatrix` (which speculation
+method per backend), and `OutputFormat` (format enum).
+
+`utils/cache.py` is **kept** — LRUCache/TTLCache are used by TPU and Trainium backends.
+
+### **Deleted**
+
+- `adapters/layers.py` — LoRALinear, DoRALinear, QLoRALinear (Rule 1/4)
+- `adapters/engine.py` — AdapterEngine inject loop (Rule 1/4)
+- `adapters/serving.py` — MultiAdapterManager (Rule 0)
+- `adapters/model_families.py` — model family auto-detection heuristics (Rule 0)
+- `inference/speculative/engine.py` — SpeculationEngine (Rule 4)
+- `inference/structured/processor.py` — StructuredOutputProcessor xgrammar wrapper (Rule 4)
+- `utils/deprecation_manager.py` — not imported by any active source file
+- `utils/model_analyzer.py` — static analysis, not cross-backend validation
+
+### **Updated**
+
+- `adapters/__init__.py` — exports `AdapterCompatibilityMatrix`, `AdapterConfig`, `AdapterMethod` only
+- `inference/speculative/__init__.py` — exports matrix + method specs only
+- `inference/structured/__init__.py` — exports format enum only
+- `inference/__init__.py` — removes engine/processor exports
+- `cli/adapter.py` — removes `detect` and `inject` subcommands; `info` drops model families table; pure recommendation tool now
+
+### **Stats**
+
+- **Lines removed**: ~2,481 source + ~4,000 test lines
+- **Tests**: ~1,611 passing, 0 ruff violations
+
+---
+
 ## [0.5.57] - 2026-03-08 - Contraction VI: Attention Implementations
 
 ### **Summary**
