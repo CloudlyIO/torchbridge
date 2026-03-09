@@ -78,9 +78,50 @@ Examples:
             help="Detect and display cluster topology",
         )
 
+        parser.add_argument(
+            "--mode",
+            choices=["training", "disaggregated"],
+            default="training",
+            help="Operating mode: training (default) or disaggregated serving",
+        )
+
+        parser.add_argument(
+            "--prefill",
+            metavar="SPEC",
+            default=None,
+            help="Prefill hardware spec: BACKEND[:ARCH] (e.g. nvidia:hopper, amd:cdna3)",
+        )
+
+        parser.add_argument(
+            "--decode",
+            metavar="SPEC",
+            default=None,
+            help="Decode hardware spec: BACKEND[:ARCH] (e.g. amd:cdna3, nvidia:hopper)",
+        )
+
+        parser.add_argument(
+            "--prefill-memory",
+            type=float,
+            default=None,
+            metavar="N",
+            help="Prefill GPU memory in GB (overrides matrix default)",
+        )
+
+        parser.add_argument(
+            "--decode-memory",
+            type=float,
+            default=None,
+            metavar="N",
+            help="Decode GPU memory in GB (overrides matrix default)",
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the advisor command."""
+        # Disaggregated serving mode
+        if getattr(args, "mode", "training") == "disaggregated":
+            return AdvisorCommand._run_disaggregated(args)
+
         from torchbridge.distributed.config import (
             DistributedConfig,
             recommend_parallelism,
@@ -129,6 +170,99 @@ Examples:
         # Human-readable output
         _print_recommendation(model_params, world_size, backend, recommendation)
         return 0
+
+
+    @staticmethod
+    def _run_disaggregated(args) -> int:
+        """Execute the disaggregated fleet advisor."""
+        from torchbridge.inference.disaggregated import DisaggregatedFleetAdvisor
+
+        prefill_spec = getattr(args, "prefill", None)
+        decode_spec = getattr(args, "decode", None)
+
+        if not prefill_spec:
+            print("Error: --mode disaggregated requires --prefill BACKEND[:ARCH]")
+            return 1
+        if not decode_spec:
+            print("Error: --mode disaggregated requires --decode BACKEND[:ARCH]")
+            return 1
+
+        prefill_backend, prefill_arch = _parse_hw_spec(prefill_spec)
+        decode_backend, decode_arch = _parse_hw_spec(decode_spec)
+        model_params = int(getattr(args, "model_params", 0))
+
+        cfg = DisaggregatedFleetAdvisor.recommend(
+            model_params=model_params,
+            prefill_backend=prefill_backend,
+            prefill_arch=prefill_arch,
+            decode_backend=decode_backend,
+            decode_arch=decode_arch,
+            prefill_memory_gb=getattr(args, "prefill_memory", None),
+            decode_memory_gb=getattr(args, "decode_memory", None),
+        )
+
+        if getattr(args, "ci", False):
+            json.dump(cfg.to_dict(), sys.stdout, indent=2)
+            print()
+            return 0
+
+        _print_fleet_config(cfg)
+        return 0
+
+
+def _parse_hw_spec(spec: str) -> tuple[str, str | None]:
+    """Parse BACKEND[:ARCH] spec into (backend, arch) tuple.
+
+    Vendor aliases are normalised:
+      nvidia → cuda, amd → rocm
+    """
+    parts = spec.lower().split(":", 1)
+    raw_backend = parts[0].strip()
+    arch = parts[1].strip() if len(parts) > 1 else None
+
+    backend_aliases = {
+        "nvidia": "cuda",
+        "amd": "rocm",
+        "hip": "rocm",
+    }
+    backend = backend_aliases.get(raw_backend, raw_backend)
+    return backend, arch
+
+
+def _print_fleet_config(cfg) -> None:
+    """Print human-readable disaggregated fleet config table."""
+    from torchbridge.inference.disaggregated import _ARCH_LABELS
+
+    def arch_label(backend: str, arch) -> str:
+        return _ARCH_LABELS.get((backend, arch), f"{backend}/{arch or 'unknown'}")
+
+    print("TorchBridge Disaggregated Fleet Config")
+    print("=" * 55)
+    print(f"Model     : {cfg.model_params / 1e9:.1f}B parameters")
+    print(f"Prefill   : {arch_label(cfg.prefill.backend, cfg.prefill.architecture):<16}"
+          f"  ({cfg.prefill.backend} / {cfg.prefill.architecture or 'unknown'})")
+    print(f"Decode    : {arch_label(cfg.decode.backend, cfg.decode.architecture):<16}"
+          f"  ({cfg.decode.backend} / {cfg.decode.architecture or 'unknown'})")
+    print()
+    print(f"{'Role':<8}  {'KV dtype':<10}  {'KV budget':<10}  "
+          f"{'Max batch':<10}  {'Max seq':<8}  Transfer fmt")
+    print(f"{'─'*8}  {'─'*10}  {'─'*10}  {'─'*10}  {'─'*8}  {'─'*12}")
+
+    p = cfg.prefill
+    print(f"{'prefill':<8}  {p.kv_dtype:<10}  {p.kv_cache_budget_gb:<8.1f} GB"
+          f"  {p.max_batch_size:<10}  {p.max_seq_len:<8}  → {cfg.kv_transfer_format}")
+
+    d = cfg.decode
+    print(f"{'decode':<8}  {d.kv_dtype:<10}  {d.kv_cache_budget_gb:<8.1f} GB"
+          f"  {d.max_batch_size:<10}  {d.max_seq_len:<8}  ← {cfg.kv_transfer_format}")
+
+    all_notes = p.notes + d.notes + cfg.notes
+    if all_notes:
+        print()
+        print("Notes:")
+        for note in all_notes:
+            print(f"  - {note}")
+    print()
 
 
 def _resolve_backend(backend_str: str) -> HardwareBackend:
@@ -249,6 +383,16 @@ def main(args=None):
                         help="Output full TOML configuration")
     parser.add_argument("--topology", action="store_true",
                         help="Detect and display cluster topology")
+    parser.add_argument("--mode", choices=["training", "disaggregated"], default="training",
+                        help="Operating mode: training (default) or disaggregated serving")
+    parser.add_argument("--prefill", metavar="SPEC", default=None,
+                        help="Prefill hardware spec: BACKEND[:ARCH] (e.g. nvidia:hopper)")
+    parser.add_argument("--decode", metavar="SPEC", default=None,
+                        help="Decode hardware spec: BACKEND[:ARCH] (e.g. amd:cdna3)")
+    parser.add_argument("--prefill-memory", type=float, default=None, metavar="N",
+                        help="Prefill GPU memory in GB")
+    parser.add_argument("--decode-memory", type=float, default=None, metavar="N",
+                        help="Decode GPU memory in GB")
 
     if args is None:
         args = sys.argv[1:]
