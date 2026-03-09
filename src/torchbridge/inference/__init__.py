@@ -1,28 +1,31 @@
 """
 Inference Subpackage
 
-Speculative decoding, structured output, and disaggregated serving
-phase detection for TorchBridge.
+Backend-aware speculative method selection, structured output formats,
+and disaggregated serving phase detection for TorchBridge.
 """
 
 from .phase_detection import PhaseDetector, PhaseProfile, PhaseType
 from .speculative import (
+    SPECULATIVE_METHOD_SPECS,
     SpeculationCompatibilityMatrix,
-    SpeculationConfig,
-    SpeculationEngine,
     SpeculativeMethod,
+    SpeculativeMethodSpec,
+    get_method_spec,
 )
-from .structured import OutputFormat, StructuredOutputProcessor
+from .structured import OutputFormat, OutputFormatSpec, get_format_spec
 
 __all__ = [
-    # Speculative decoding
+    # Speculative decoding compatibility
     "SpeculativeMethod",
+    "SpeculativeMethodSpec",
+    "SPECULATIVE_METHOD_SPECS",
+    "get_method_spec",
     "SpeculationCompatibilityMatrix",
-    "SpeculationConfig",
-    "SpeculationEngine",
-    # Structured output
+    # Structured output formats
     "OutputFormat",
-    "StructuredOutputProcessor",
+    "OutputFormatSpec",
+    "get_format_spec",
     # Phase detection
     "PhaseType",
     "PhaseProfile",
