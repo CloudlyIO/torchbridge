@@ -183,6 +183,14 @@ Examples:
             help='Save per-step trace JSON to FILE (requires --trace)'
         )
 
+        parser.add_argument(
+            '--cert',
+            type=str,
+            metavar='FILE',
+            default=None,
+            help='Save a compliance certificate to FILE after --compare (JSON)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
@@ -478,6 +486,26 @@ Examples:
                     json.dump(result, f, indent=2)
             except Exception as e:
                 logger.warning("Could not save output to %s: %s", output_path, e)
+
+        cert_path = getattr(args, 'cert', None)
+        if cert_path:
+            try:
+                from torchbridge.testing.compliance_cert import generate_certificate
+                cert = generate_certificate(
+                    model_id=model_label,
+                    backend_a=backend1,
+                    backend_b=backend2,
+                    max_diff=max_diff,
+                    cosine_sim=cos_sim,
+                    tolerance_atol=tol.atol,
+                    passed=passed,
+                )
+                Path(cert_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(cert_path, 'w') as f:
+                    f.write(cert.to_json())
+            except Exception as e:
+                logger.warning("Could not save compliance certificate to %s: %s", cert_path, e)
+                print(f"WARNING: compliance certificate not saved: {e}")
 
         return 0 if passed else 1
 
@@ -1274,6 +1302,14 @@ def main():
         type=str,
         metavar='FILE',
         help='Save per-step trace JSON to FILE (requires --trace)'
+    )
+
+    parser.add_argument(
+        '--cert',
+        type=str,
+        metavar='FILE',
+        default=None,
+        help='Save a compliance certificate to FILE after --compare (JSON)'
     )
 
     args = parser.parse_args()
