@@ -156,13 +156,47 @@ Examples:
             help='Model dtype for --compare (default: float32)'
         )
 
+        parser.add_argument(
+            '--trace',
+            action='store_true',
+            help='Enable multi-step trace mode (only valid with --compare)'
+        )
+
+        parser.add_argument(
+            '--steps',
+            type=int,
+            default=10,
+            metavar='N',
+            help='Number of trace steps (default: 10, range: 1–1000; requires --trace)'
+        )
+
+        parser.add_argument(
+            '--autoregressive',
+            action='store_true',
+            help='LLM autoregressive mode: append greedy token at each step (requires --trace)'
+        )
+
+        parser.add_argument(
+            '--trace-output',
+            type=str,
+            metavar='FILE',
+            help='Save per-step trace JSON to FILE (requires --trace)'
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
         # --compare short-circuits the standard pipeline
         compare = getattr(args, 'compare', None)
         if isinstance(compare, (list, tuple)) and len(compare) == 2:
+            if getattr(args, 'trace', False) is True:
+                return ValidateCommand._run_trace(args)
             return ValidateCommand._run_compare(args)
+
+        # --trace without --compare is an error
+        if getattr(args, 'trace', False) is True:
+            print("Error: --trace requires --compare BACKEND1 BACKEND2")
+            return 1
 
         ci_mode = getattr(args, 'ci', False)
         level = getattr(args, 'level', 'standard')
@@ -446,6 +480,189 @@ Examples:
                 logger.warning("Could not save output to %s: %s", output_path, e)
 
         return 0 if passed else 1
+
+    @staticmethod
+    def _run_trace(args) -> int:
+        """Execute multi-step trace validation and return exit code."""
+        import torch.nn as nn
+
+        backend_a, backend_b = args.compare
+        steps = getattr(args, 'steps', 10)
+        autoregressive = getattr(args, 'autoregressive', False)
+        model_path = getattr(args, 'model', None)
+        input_shape = tuple(int(x) for x in getattr(args, 'input_shape', '1,64').split(','))
+        dtype_str = getattr(args, 'dtype', 'float32')
+        output_path = getattr(args, 'output', None)
+        trace_output_path = getattr(args, 'trace_output', None)
+        ci_mode = getattr(args, 'ci', False)
+        dtype = getattr(torch, dtype_str)
+
+        # Validate steps range
+        if not (1 <= steps <= 1000):
+            msg = f"--steps must be between 1 and 1000, got {steps}"
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        # Resolve backend names → torch.device (same logic as _run_compare)
+        def _resolve_device(name: str) -> torch.device | None:
+            name = name.lower()
+            if name in ('cuda', 'rocm', 'gpu'):
+                if not torch.cuda.is_available():
+                    return None
+                return torch.device('cuda')
+            if name == 'mps':
+                if not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
+                    return None
+                return torch.device('mps')
+            if name == 'cpu':
+                return torch.device('cpu')
+            return None
+
+        dev_a = _resolve_device(backend_a)
+        dev_b = _resolve_device(backend_b)
+
+        if dev_a is None:
+            msg = f"Backend '{backend_a}' not available on this machine."
+            if ci_mode:
+                print(json.dumps({'error': msg, 'backend': backend_a}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        if dev_b is None:
+            msg = f"Backend '{backend_b}' not available on this machine."
+            if ci_mode:
+                print(json.dumps({'error': msg, 'backend': backend_b}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        # Load model
+        is_lm = False
+        smoke_model = False
+        try:
+            if model_path is None:
+                model = nn.Sequential(
+                    nn.Linear(input_shape[-1], input_shape[-1]),
+                    nn.ReLU(),
+                    nn.Linear(input_shape[-1], input_shape[-1]),
+                )
+                smoke_model = True
+                model_label = 'smoke_model (Linear)'
+            elif Path(model_path).exists():
+                model = torch.load(model_path, map_location='cpu', weights_only=True)
+                model_label = model_path
+            else:
+                from transformers import AutoModelForCausalLM
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_path, torch_dtype=dtype
+                )
+                model_label = model_path
+                is_lm = True
+        except Exception as e:
+            msg = f"Failed to load model: {e}"
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        # Build initial input
+        if is_lm:
+            x = torch.ones(*input_shape, dtype=torch.long)
+        else:
+            x = torch.randn(*input_shape, dtype=dtype)
+
+        # Run trace
+        from torchbridge.testing.trace_validator import MultiStepTracer
+
+        tracer = MultiStepTracer(
+            model=model,
+            device_a=dev_a,
+            device_b=dev_b,
+            backend_a=backend_a,
+            backend_b=backend_b,
+            dtype=dtype_str,
+            is_lm=is_lm,
+        )
+
+        try:
+            result = tracer.run(input_ids=x, steps=steps, autoregressive=autoregressive)
+        except Exception as e:
+            msg = f"Trace failed: {e}"
+            if ci_mode:
+                print(json.dumps({'error': msg}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        result_dict = result.to_dict()
+        result_dict['model'] = model_label
+
+        # Output
+        if ci_mode:
+            print(json.dumps(result_dict, indent=2))
+        else:
+            mode_str = 'autoregressive' if autoregressive else 'standard'
+            status_str = 'PASSED' if result.final_passed else 'FAILED'
+            print('TorchBridge Multi-Step Trace Validation')
+            print('=' * 42)
+            print(f"Backends : {backend_a}  vs  {backend_b}")
+            print(f"Model    : {model_label}")
+            if smoke_model:
+                print("         (no --model given; using smoke Linear)")
+            print(f"Steps    : {steps}  ({mode_str})")
+            print(f"dtype    : {dtype_str}")
+            print()
+
+            # Print step table (all steps for short runs, every 5th for long)
+            print_every = 1 if steps <= 20 else 5
+            for sr in result.step_results:
+                if sr.step == 1 or sr.step % print_every == 0 or not sr.within_tolerance:
+                    flag = '  *' if not sr.within_tolerance else ''
+                    pass_fail = 'PASS' if sr.within_tolerance else 'FAIL'
+                    print(
+                        f"  Step {sr.step:3d}  "
+                        f"max_diff={sr.max_diff:.2e}  "
+                        f"cosine={sr.cosine_sim:.6f}  "
+                        f"amplif={sr.cumulative_amplification:6.1f}x  "
+                        f"{pass_fail}{flag}"
+                    )
+
+            print()
+            if result.first_divergence_step is not None:
+                div_sr = result.step_results[result.first_divergence_step - 1]
+                print(
+                    f"First divergence at step : {result.first_divergence_step}"
+                    f"  (amplification {div_sr.cumulative_amplification:.1f}x)"
+                )
+            else:
+                print("First divergence at step : None (all steps passed)")
+            print(f"Max amplification        : {result.max_amplification:.1f}x")
+            print(f"Status                   : {status_str}")
+
+        # Save main output if --output given
+        if output_path:
+            try:
+                Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, 'w') as f:
+                    json.dump(result_dict, f, indent=2)
+            except Exception as e:
+                logger.warning("Could not save output to %s: %s", output_path, e)
+
+        # Save per-step JSON if --trace-output given
+        if trace_output_path:
+            try:
+                Path(trace_output_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(trace_output_path, 'w') as f:
+                    json.dump(result_dict, f, indent=2)
+            except Exception as e:
+                logger.warning("Could not save trace output to %s: %s", trace_output_path, e)
+
+        return 0 if result.final_passed else 1
 
     @staticmethod
     def _run_quick_checks(verbose: bool) -> list[ValidationResult]:
@@ -1030,6 +1247,33 @@ def main():
         choices=['float32', 'float16', 'bfloat16'],
         default='float32',
         help='Model dtype for --compare (default: float32)'
+    )
+
+    parser.add_argument(
+        '--trace',
+        action='store_true',
+        help='Enable multi-step trace mode (only valid with --compare)'
+    )
+
+    parser.add_argument(
+        '--steps',
+        type=int,
+        default=10,
+        metavar='N',
+        help='Number of trace steps (default: 10, range: 1–1000; requires --trace)'
+    )
+
+    parser.add_argument(
+        '--autoregressive',
+        action='store_true',
+        help='LLM autoregressive mode: append greedy token at each step (requires --trace)'
+    )
+
+    parser.add_argument(
+        '--trace-output',
+        type=str,
+        metavar='FILE',
+        help='Save per-step trace JSON to FILE (requires --trace)'
     )
 
     args = parser.parse_args()

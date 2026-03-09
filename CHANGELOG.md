@@ -8,6 +8,37 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.59] - 2026-03-09 - Multi-Step Trace Validation
+
+### **Summary**
+
+Adds `MultiStepTracer` — the only tool in the 22-tool AI infrastructure landscape that
+detects compounding numerical divergence across N sequential inference steps. A single-step
+cross-backend divergence of 2e-5 can amplify 500× or more over 50 agentic reasoning steps,
+causing backends to branch semantically. No existing tool detects or characterises this.
+
+### **New**
+
+- `src/torchbridge/testing/trace_validator.py` — `MultiStepTracer`, `TraceStepResult`,
+  `TraceValidationResult` dataclasses. Two modes: standard (same input repeated N times,
+  divergence does not propagate) and autoregressive (greedy token from backend_a appended
+  at each step, simulates real LLM generation). Uses `ToleranceDB` for per-step pass/fail.
+  Tracks `cumulative_amplification`, `first_divergence_step`, `max_amplification`.
+- `tb-validate --trace` — new CLI flags: `--trace`, `--steps N` (1–1000, default 10),
+  `--autoregressive`, `--trace-output FILE`. Only valid with `--compare`. Text output
+  shows per-step table with amplification factor; CI JSON mode exposes full `step_results`
+  list. Exit code 0 = all steps pass, 1 = any step fails.
+
+### **Tests**
+
++60 tests (37 unit, 20 integration, 3 regression guards):
+correctness bugs caught and fixed during review — vacuous-truth `final_passed=True` on
+empty step_results, NaN cosine similarity crashing JSON serialisation, `_greedy_token`
+IndexError on 2D logits, `nn.Module.to()` in-place mutation requiring `copy.deepcopy`,
+and wrong `unsqueeze(0)` for autoregressive batch>1 token append.
+
+---
+
 ## [0.5.58] - 2026-03-08 - Contraction VII: Engine Layer + Utils
 
 ### **Summary**
