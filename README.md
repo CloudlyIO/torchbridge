@@ -5,7 +5,7 @@ TorchBridge **validates that your model produces correct outputs across PyTorch 
 1. **"Does my model produce correct outputs across backends?"** — Run it on CUDA and ROCm and get max_diff, cosine_sim, per-layer divergence, pass/fail against empirical tolerances.
 2. **"What's the optimal configuration for my model on this hardware?"** — Compatibility matrices that translate `(backend, architecture) → format/kernel/method` with fallback chains.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-2%2C223%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-8%20validated%2C%206%20GPU-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE) [![Tests](https://img.shields.io/badge/tests-1%2C900%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-8%20validated%2C%206%20GPU-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## Quick Start
 
@@ -157,6 +157,10 @@ ruff check src/ tests/
 | [Hardware Matrix](./docs/reference/hardware-matrix.md) | Full hardware support table |
 | [Changelog](./CHANGELOG.md) | Version history |
 
+## Community
+
+The empirical tolerance database (`testing/tolerance_db.py`) is only as strong as the hardware it has been measured on. Contributions that add or correct tolerance entries for hardware you have access to — AMD MI350X, Trainium2, TPU v7 Ironwood, new PyTorch versions — directly expand the validation coverage for everyone. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add entries and the source-label conventions (`"measured"`, `"derived"`, `"fallback"`).
+
 ## License
 
-See LICENSE file for licensing details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full text.
