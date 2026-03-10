@@ -8,6 +8,33 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.64] - 2026-03-10 - Observability Integration (OpenTelemetry)
+
+### **Summary**
+
+Adds `ValidationSpanExporter` to `torchbridge.testing` — emits a structured
+`torchbridge.validate.compare` OTEL span after `tb-validate --compare` completes, with
+optional child spans per layer. Span attributes are driven by `_SPAN_ATTRIBUTE_SCHEMA` and
+`_LAYER_SPAN_SCHEMA` (matrix-first design). Compatible with Langfuse, W&B Weave, and any
+OTLP HTTP backend. opentelemetry packages remain optional; absent packages degrade
+gracefully (logged warning, validation result unaffected).
+
+### **Changes**
+
+- **New** `src/torchbridge/testing/otel_exporter.py` — `ValidationSpanExporter`, `_SPAN_ATTRIBUTE_SCHEMA`, `_LAYER_SPAN_SCHEMA`, `OTEL_AVAILABLE` flag; soft-import guard; endpoint resolution (arg → env var → ConsoleSpanExporter)
+- **Modified** `src/torchbridge/testing/__init__.py` — exports `ValidationSpanExporter`, `OTEL_AVAILABLE`
+- **Modified** `src/torchbridge/cli/validate.py` — `--otel` and `--otel-endpoint` flags on both `ValidateCommand` and standalone `main()` parsers; OTEL wiring in `_run_compare()` with `try/finally` for guaranteed `shutdown()`
+- **Modified** `pyproject.toml` — `tracing` extra expanded with `opentelemetry-sdk` and `opentelemetry-exporter-otlp-proto-http`
+- **New** `tests/unit/test_otel_exporter.py` — 15 tests (schema contracts, unavailable guard, init modes, export/layer spans, shutdown)
+- **New** `tests/integration/test_otel_validate.py` — 9 tests (CLI flag registration, export wiring, graceful degradation, endpoint passthrough)
+
+### **Stats**
+
+- **Tests**: 1,949 → 1,973 (+24)
+- **New source lines**: ~150
+
+---
+
 ## [0.5.63] - 2026-03-09 - Open Source Launch Preparation (Apache 2.0)
 
 ### **Summary**
