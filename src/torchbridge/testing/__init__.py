@@ -26,7 +26,7 @@ from torchbridge.testing.decorator import cross_backend
 from torchbridge.testing.divergence import DivergenceTracer, LayerDivergence
 from torchbridge.testing.report import QualificationReport
 from torchbridge.testing.suite import BackendTolerance, CrossBackendTestSuite
-from torchbridge.testing.tolerance_db import ToleranceDB
+from torchbridge.testing.tolerance_db import ToleranceDB, TolerancePair
 
 __all__ = [
     "ComplianceCertificate",
@@ -37,5 +37,6 @@ __all__ = [
     "LayerDivergence",
     "QualificationReport",
     "ToleranceDB",
+    "TolerancePair",
     "cross_backend",
 ]
