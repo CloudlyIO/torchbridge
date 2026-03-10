@@ -22,6 +22,10 @@ from torchbridge.distributed.fsdp import (
     MixedPrecisionChoice,
     ShardingStrategy,
 )
+from torchbridge.distributed.hetero import (
+    HeterogeneousClusterAdvisor,
+    HeterogeneousClusterConfig,
+)
 from torchbridge.distributed.pipeline_schedules import (
     PipelineConfig,
     PipelineScheduleFactory,
@@ -59,4 +63,7 @@ __all__ = [
     # Config
     "DistributedConfig",
     "ParallelismRecommendation",
+    # Heterogeneous cluster
+    "HeterogeneousClusterAdvisor",
+    "HeterogeneousClusterConfig",
 ]

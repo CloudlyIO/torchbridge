@@ -8,6 +8,32 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.65] - 2026-03-10 - Heterogeneous Cluster Training Config Advisory
+
+### **Summary**
+
+Adds `HeterogeneousClusterAdvisor` to `torchbridge.distributed` — advises on collective
+bridge, partition strategy, and per-vendor FSDP config for mixed NVIDIA+AMD training
+clusters. The core is two lookup tables: `_COLLECTIVE_BRIDGE_MATRIX` maps
+`(NVIDIAArchitecture, AMDArchitecture)` → bridge name ("hetccl" for Hopper/Blackwell+CDNA3/4
+validated by arXiv 2601.22585, "ucc" otherwise); `_PARTITION_THRESHOLDS` maps AMD/NVIDIA
+memory ratio to partition strategy. Accessible via `tb-advisor --mode heterogeneous`.
+
+### **Changes**
+
+- **New** `src/torchbridge/distributed/hetero.py` — `_COLLECTIVE_BRIDGE_MATRIX` (10 entries), `_PARTITION_THRESHOLDS`, `HeterogeneousClusterConfig` dataclass, `HeterogeneousClusterAdvisor.recommend()`
+- **Modified** `src/torchbridge/distributed/__init__.py` — exports `HeterogeneousClusterAdvisor`, `HeterogeneousClusterConfig`
+- **Modified** `src/torchbridge/cli/advisor.py` — `--mode heterogeneous`, `--nvidia ARCH:COUNT`, `--amd ARCH:COUNT` on both parsers; `_run_heterogeneous()`, `_parse_hetero_spec()`, `_print_hetero_config()`
+- **New** `tests/unit/test_hetero_cluster.py` — 21 tests (matrix values, partition thresholds, advisor output, serialisation)
+- **New** `tests/integration/test_advisor_hetero.py` — 13 tests (CLI flags, return codes, CI JSON, fallback)
+
+### **Stats**
+
+- **Tests**: 1,973 → 2,007 (+34)
+- **New source lines**: ~240
+
+---
+
 ## [0.5.64] - 2026-03-10 - Observability Integration (OpenTelemetry)
 
 ### **Summary**
