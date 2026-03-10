@@ -191,6 +191,19 @@ Examples:
             help='Save a compliance certificate to FILE after --compare (JSON)'
         )
 
+        parser.add_argument(
+            '--model-family',
+            type=str,
+            metavar='FAMILY',
+            default=None,
+            dest='model_family',
+            help=(
+                'Model family for tolerance lookup with --compare '
+                '(choices: decoder-small, decoder-medium, decoder-large, '
+                'encoder, vision-language). Defaults to backend+dtype tolerances.'
+            ),
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
@@ -408,7 +421,8 @@ Examples:
         tol_db = ToleranceDB()
         # Use backend1 tolerance (primary backend)
         b1_key = backend1.lower() if backend1.lower() != 'rocm' else 'rocm'
-        tol = tol_db.get(b1_key, dtype_str)
+        model_family = getattr(args, 'model_family', None)
+        tol = tol_db.get(b1_key, dtype_str, model_family=model_family)
         passed = max_diff <= tol.atol
 
         # Per-layer divergence
@@ -1310,6 +1324,19 @@ def main():
         metavar='FILE',
         default=None,
         help='Save a compliance certificate to FILE after --compare (JSON)'
+    )
+
+    parser.add_argument(
+        '--model-family',
+        type=str,
+        metavar='FAMILY',
+        default=None,
+        dest='model_family',
+        help=(
+            'Model family for tolerance lookup with --compare '
+            '(choices: decoder-small, decoder-medium, decoder-large, '
+            'encoder, vision-language). Defaults to backend+dtype tolerances.'
+        ),
     )
 
     args = parser.parse_args()
