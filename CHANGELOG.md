@@ -8,6 +8,37 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.67] - 2026-03-10 - Real Hardware Validation (v0.5.66 build)
+
+### **Summary**
+
+Validates TorchBridge v0.5.66 on three production GPU platforms: AMD MI300X (ROCm 6.2),
+AWS A10G (CUDA, PyTorch 2.6.0+cu124), and GCP Tesla T4 (CUDA, PyTorch 2.7.1+cu128).
+All platforms: 25/25 API tests PASSED, Qwen3-0.6B inference PASSED, latency ratio ≤ 1.2×.
+Note: AWS A10G required downgrade from PyTorch 2.10.0+cu128 to 2.6.0+cu124 due to a
+pre-existing cuBLAS GEMM bug on A10G with float16.
+
+### **Results**
+
+| Platform | GPU | PyTorch | API Tests | max_diff | cos_sim | Latency | Ratio |
+|----------|-----|---------|-----------|----------|---------|---------|-------|
+| AMD ROCm | MI300X VF | 2.5.1+rocm6.2 | 25/25 ✓ | 3.65e-02 | 0.999678 | 21.2ms | 1.11× |
+| AWS CUDA | A10G | 2.6.0+cu124 | 25/25 ✓ | 3.39e-02 | 0.999873 | 38.4ms | 0.95× |
+| GCP CUDA | Tesla T4 | 2.7.1+cu128 | 25/25 ✓ | 3.49e-02 | 0.999873 | 43.5ms | 1.02× |
+
+### **Changes**
+
+- **Modified** `scripts/validation/validate_torchbridge.py` — updated version label v0.5.31 → v0.5.67
+- **Modified** `CLAUDE.md` — added 3 rows to Validation Results History table
+- **Modified** `pyproject.toml` — version bump 0.5.66 → 0.5.67
+
+### **Stats**
+
+- No new source code or tests (validation-only milestone)
+- Reports saved to `reports/cloud_validation/2026-03-10/` (gitignored)
+
+---
+
 ## [0.5.66] - 2026-03-10 - Contraction VIII: Dead-Code Sweep in unified_validator.py
 
 ### **Summary**
