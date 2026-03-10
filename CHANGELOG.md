@@ -8,6 +8,31 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.63] - 2026-03-09 - Open Source Launch Preparation (Apache 2.0)
+
+### **Summary**
+
+Converts TorchBridge from MIT to Apache 2.0 licensing and prepares the codebase for
+open-source publication. Apache 2.0 adds an explicit patent grant, which matters for
+enterprise adoption and hardware-vendor contributors. The repository is not yet public —
+all changes are internal preparation so the flip to public is a single GitHub settings action.
+
+### **Changes**
+
+| File | Change |
+|------|--------|
+| `LICENSE` | MIT → Apache 2.0 full SPDX text |
+| `pyproject.toml` | `MIT` → `Apache-2.0` license field + PyPI classifier |
+| `README.md` | Apache 2.0 badge added; test count corrected (2,223 → 1,900+); Community section added explaining tolerance DB contributions |
+| `CONTRIBUTING.md` | CloudlyIO clone URL annotated for post-launch update |
+| `.github/ISSUE_TEMPLATE/config.yml` | Discussions URL annotated for post-launch update |
+| `docs/getting_started/installation.md` | Dev clone URL annotated for post-launch update |
+| `CLAUDE.md` | "NOT open-source" instruction replaced with accurate Apache 2.0 / not-yet-public note |
+
+**0 new Python files. 0 new tests. 7 files changed.**
+
+---
+
 ## [0.5.62] - 2026-03-09 - Tolerance DB Expansion: 5 Model Families × 5 Backends
 
 ### **Summary**

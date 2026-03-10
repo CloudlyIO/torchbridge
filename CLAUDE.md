@@ -549,7 +549,7 @@ pip install torch --index-url https://download.pytorch.org/whl/rocm6.2 --break-s
 
 **File:** `TorchBridge_Presentation.pptx` (local only, gitignored — NEVER commit)
 
-**TorchBridge is NOT open-source. Never add open-source references to the deck or marketing materials.**
+**TorchBridge is licensed under Apache 2.0. The codebase is prepared for open-source release (v0.5.63). The repo has not yet been made public — do not treat it as public until explicitly instructed.**
 
 ### On Every Release, Update the Deck
 
@@ -593,6 +593,5 @@ prs.save('TorchBridge_Presentation.pptx')
 3. Update roadmap milestones (mark completed items, add new planned items)
 4. Update cloud validation status with any new hardware results
 5. Update CLI command count if new commands were added
-6. Verify NO "open source" or "open-source" text exists anywhere in the deck
-7. Verify pip install uses `torchbridge-ml` (the PyPI package name)
-8. Verify all benchmark data references real measured results only
+6. Verify pip install uses `torchbridge-ml` (the PyPI package name)
+7. Verify all benchmark data references real measured results only
