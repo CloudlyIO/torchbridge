@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.63"
+version = "0.5.64"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -102,6 +102,8 @@ benchmark = [
 ]
 tracing = [
     "opentelemetry-api>=1.20.0,<2.0.0",
+    "opentelemetry-sdk>=1.20.0,<2.0.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.20.0,<2.0.0",
 ]
 quantization = [
     "torchao>=0.4.0,<1.0.0",

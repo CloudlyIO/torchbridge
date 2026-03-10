@@ -204,6 +204,32 @@ Examples:
             ),
         )
 
+        parser.add_argument(
+            '--otel',
+            action='store_true',
+            default=False,
+            help=(
+                'Export validation result as an OpenTelemetry span. '
+                'Requires opentelemetry-sdk and opentelemetry-exporter-otlp-proto-http '
+                '(pip install torchbridge-ml[tracing]). '
+                'Compatible with Langfuse, W&B Weave, and any OTLP backend.'
+            ),
+        )
+
+        parser.add_argument(
+            '--otel-endpoint',
+            type=str,
+            metavar='URL',
+            default=None,
+            dest='otel_endpoint',
+            help=(
+                'OTLP HTTP endpoint for span export '
+                '(e.g. https://cloud.langfuse.com/api/public/otel). '
+                'Defaults to OTEL_EXPORTER_OTLP_ENDPOINT env var, '
+                'then stdout if neither is set.'
+            ),
+        )
+
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
@@ -520,6 +546,19 @@ Examples:
             except Exception as e:
                 logger.warning("Could not save compliance certificate to %s: %s", cert_path, e)
                 print(f"WARNING: compliance certificate not saved: {e}")
+
+        if getattr(args, 'otel', False):
+            try:
+                from torchbridge.testing.otel_exporter import ValidationSpanExporter
+                exporter = ValidationSpanExporter(
+                    endpoint=getattr(args, 'otel_endpoint', None)
+                )
+                try:
+                    exporter.export(result)
+                finally:
+                    exporter.shutdown()
+            except Exception as e:
+                logger.warning("Could not export OTEL span: %s", e)
 
         return 0 if passed else 1
 
@@ -1336,6 +1375,32 @@ def main():
             'Model family for tolerance lookup with --compare '
             '(choices: decoder-small, decoder-medium, decoder-large, '
             'encoder, vision-language). Defaults to backend+dtype tolerances.'
+        ),
+    )
+
+    parser.add_argument(
+        '--otel',
+        action='store_true',
+        default=False,
+        help=(
+            'Export validation result as an OpenTelemetry span. '
+            'Requires opentelemetry-sdk and opentelemetry-exporter-otlp-proto-http '
+            '(pip install torchbridge-ml[tracing]). '
+            'Compatible with Langfuse, W&B Weave, and any OTLP backend.'
+        ),
+    )
+
+    parser.add_argument(
+        '--otel-endpoint',
+        type=str,
+        metavar='URL',
+        default=None,
+        dest='otel_endpoint',
+        help=(
+            'OTLP HTTP endpoint for span export '
+            '(e.g. https://cloud.langfuse.com/api/public/otel). '
+            'Defaults to OTEL_EXPORTER_OTLP_ENDPOINT env var, '
+            'then stdout if neither is set.'
         ),
     )
 
