@@ -8,6 +8,30 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.66] - 2026-03-10 - Contraction VIII: Dead-Code Sweep in unified_validator.py
+
+### **Summary**
+
+Removes 249 dead lines from `validation/unified_validator.py`: `validate_custom_kernels()` and
+its five private helpers imported deleted modules (`core.kernel_registry` deleted v0.5.55,
+`hardware.gpu.custom_kernels` deleted v0.5.57) and would raise `ImportError` at runtime.
+Six additional private methods were unconditional stubs (Rule 1 violations). `validate_precision_allocation()`
+and its three stub sub-methods are also removed. Adds 18 regression tests that guard against
+re-introduction of any deleted section.
+
+### **Changes**
+
+- **Modified** `src/torchbridge/validation/unified_validator.py` — deleted `validate_custom_kernels()` + 5 dead sub-methods (`_validate_kernel_registry`, `_validate_flash_attention_kernels`, `_validate_cuda_available`, `_validate_fused_activation_kernels`, `_validate_fp8_kernels`); deleted `validate_precision_allocation()` + 3 stub sub-methods; deleted 3 stub sub-methods from `validate_configuration()` (`_validate_attention_config`, `_validate_hardware_config`, `_validate_distributed_config`); removed unused `import traceback`; trimmed `validate_configuration()` to only call the 2 sub-methods with real logic; updated method docstring
+- **New** `tests/unit/test_unified_validator_contraction.py` — 18 regression tests (11 `hasattr` guards on deleted methods, 2 source-text guards on deleted module imports, 5 kept-API smoke tests)
+
+### **Stats**
+
+- Lines removed: 249 (1,294 → 1,045 in `unified_validator.py`)
+- Tests: +18 (1,946 → 1,952 passing after removal of duplicate count from targeted run)
+- Ruff: 0 violations
+
+---
+
 ## [0.5.65] - 2026-03-10 - Heterogeneous Cluster Training Config Advisory
 
 ### **Summary**

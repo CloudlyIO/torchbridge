@@ -11,7 +11,6 @@ Replaces validation functions from:
 """
 
 import time
-import traceback
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -124,28 +123,12 @@ class UnifiedValidator:
         return self._generate_summary(time.time() - start_time)
 
     def validate_configuration(self, config: TorchBridgeConfig) -> ValidationSummary:
-        """Validate TorchBridge configuration."""
+        """Validate TorchBridge configuration (precision and memory bounds)."""
         self.reports.clear()
         start_time = time.time()
 
         self._validate_precision_config(config.precision)
         self._validate_memory_config(config.memory)
-        self._validate_attention_config(config.attention)
-        self._validate_hardware_config(config.hardware)
-        self._validate_distributed_config(config.distributed)
-
-        return self._generate_summary(time.time() - start_time)
-
-    def validate_precision_allocation(self,
-                                    model: nn.Module,
-                                    precision_config) -> ValidationSummary:
-        """Validate precision allocation strategy."""
-        self.reports.clear()
-        start_time = time.time()
-
-        self._validate_precision_formats(precision_config)
-        self._validate_entropy_thresholds(precision_config)
-        self._validate_memory_budget(precision_config)
 
         return self._generate_summary(time.time() - start_time)
 
@@ -437,27 +420,6 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Memory config validation failed: {e}")
 
-    def _validate_attention_config(self, config) -> None:
-        """Validate attention configuration."""
-        try:
-            self._add_success("Attention config valid")
-        except Exception as e:
-            self._add_failure(f"Attention config validation failed: {e}")
-
-    def _validate_hardware_config(self, config) -> None:
-        """Validate hardware configuration."""
-        try:
-            self._add_success("Hardware config valid")
-        except Exception as e:
-            self._add_failure(f"Hardware config validation failed: {e}")
-
-    def _validate_distributed_config(self, config) -> None:
-        """Validate distributed configuration."""
-        try:
-            self._add_success("Distributed config valid")
-        except Exception as e:
-            self._add_failure(f"Distributed config validation failed: {e}")
-
     # Hardware validation methods
     def _validate_device_availability(self, device: torch.device) -> None:
         """Validate device availability."""
@@ -535,28 +497,6 @@ class UnifiedValidator:
                 self._add_success("Compute capabilities validated")
         except Exception as e:
             self._add_failure(f"Compute validation failed: {e}")
-
-    # Precision validation methods
-    def _validate_precision_formats(self, config) -> None:
-        """Validate precision format settings."""
-        try:
-            self._add_success("Precision formats valid")
-        except Exception as e:
-            self._add_failure(f"Precision format validation failed: {e}")
-
-    def _validate_entropy_thresholds(self, config) -> None:
-        """Validate entropy threshold settings."""
-        try:
-            self._add_success("Entropy thresholds valid")
-        except Exception as e:
-            self._add_failure(f"Entropy threshold validation failed: {e}")
-
-    def _validate_memory_budget(self, config) -> None:
-        """Validate memory budget settings."""
-        try:
-            self._add_success("Memory budget valid")
-        except Exception as e:
-            self._add_failure(f"Memory budget validation failed: {e}")
 
     # Utility methods
     def _get_memory_usage(self) -> float:
@@ -996,189 +936,6 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"FlashAttention validation failed: {e}")
 
-    # =========================================================================
-    # CUSTOM CUDA KERNEL VALIDATION (Phase 4A)
-    # =========================================================================
-
-    def validate_custom_kernels(self, config: TorchBridgeConfig) -> ValidationSummary:
-        """
-        Validate custom CUDA kernel availability and functionality.
-
-        This validates:
-        - CUDA kernel compilation
-        - FlashAttention-2/3 kernels
-        - Fused Linear+Activation kernels
-        - FP8 kernels (H100+ only)
-        - Kernel registry functionality
-
-        Args:
-            config: TorchBridge configuration
-
-        Returns:
-            ValidationSummary with kernel validation results
-        """
-        self.reports.clear()
-        start_time = time.time()
-
-        try:
-            # Validate kernel configuration
-            if not config.kernel.enabled:
-                self._add_warning("Custom kernels disabled in configuration")
-                return self._generate_summary(time.time() - start_time)
-
-            # Check CUDA availability
-            self._validate_cuda_available()
-
-            # Validate kernel registry
-            self._validate_kernel_registry()
-
-            # Validate FlashAttention kernels
-            self._validate_flash_attention_kernels(config)
-
-            # Validate Fused Linear+Activation kernels
-            self._validate_fused_activation_kernels(config)
-
-            # Validate FP8 kernels (if enabled)
-            if config.kernel.fp8_attention or config.kernel.fp8_layernorm:
-                self._validate_fp8_kernels(config)
-
-        except Exception as e:
-            self._add_failure(f"Custom kernel validation failed: {e}")
-            self._add_failure(f"Traceback: {traceback.format_exc()}")
-
-        return self._generate_summary(time.time() - start_time)
-
-    def _validate_cuda_available(self) -> None:
-        """Validate CUDA compilation and availability."""
-        try:
-            # Check CUDA availability
-            if not torch.cuda.is_available():
-                self._add_warning("CUDA not available - custom kernels will use CPU fallback")
-                return
-
-            self._add_success("CUDA is available")
-
-        except Exception as e:
-            self._add_failure(f"CUDA availability check failed: {e}")
-
-    def _validate_kernel_registry(self) -> None:
-        """Validate kernel registry functionality."""
-        try:
-            from ..core.kernel_registry import (
-                KernelType,
-                get_kernel_registry,
-            )
-
-            # Test registry creation
-            registry = get_kernel_registry()
-            self._add_success("Kernel registry created successfully")
-
-            # Check registered kernels
-            all_kernels = registry.list_kernels()
-            self._add_success(f"Registry contains {len(all_kernels)} kernels")
-
-            # Check kernel types
-            for kernel_type in KernelType:
-                type_kernels = registry.list_kernels(kernel_type=kernel_type)
-                if type_kernels:
-                    self._add_success(f"Found {len(type_kernels)} {kernel_type.value} kernels")
-
-        except Exception as e:
-            self._add_failure(f"Kernel registry validation failed: {e}")
-
-    def _validate_flash_attention_kernels(self, config: TorchBridgeConfig) -> None:
-        """Validate FlashAttention kernel availability."""
-        try:
-            if not config.kernel.flash_attention_enabled:
-                self._add_warning("FlashAttention kernels disabled in configuration")
-                return
-
-            # Try to import FlashAttention wrapper
-            try:
-                from ..hardware.gpu.custom_kernels import FlashAttentionV3
-                self._add_success("FlashAttentionV3 module importable")
-
-                # Test module creation
-                fa3 = FlashAttentionV3(causal=True)
-                self._add_success("FlashAttentionV3 instance created successfully")
-
-                # Check kernel availability
-                if fa3._cuda_kernel_available:
-                    self._add_success("FlashAttention-3 CUDA kernel available")
-                else:
-                    self._add_warning("FlashAttention-3 CUDA kernel not available (using fallback)")
-
-                # Validate configuration settings
-                version = config.kernel.flash_attention_version
-                if version == "3":
-                    self._add_success("Configured for FlashAttention-3")
-                elif version == "2":
-                    self._add_success("Configured for FlashAttention-2")
-                elif version == "auto":
-                    self._add_success("Auto-selecting FlashAttention version")
-
-                # Check Split-K setting
-                if config.kernel.flash_attention_split_k:
-                    if torch.cuda.is_available():
-                        compute_cap = torch.cuda.get_device_capability(0)
-                        if compute_cap >= (8, 0):
-                            self._add_success("Split-K optimization enabled (supported)")
-                        else:
-                            self._add_warning(
-                                f"Split-K enabled but compute capability {compute_cap} < 8.0"
-                            )
-
-            except ImportError as e:
-                self._add_failure(f"FlashAttention import failed: {e}")
-
-        except Exception as e:
-            self._add_failure(f"FlashAttention validation failed: {e}")
-
-    def _validate_fused_activation_kernels(self, config: TorchBridgeConfig) -> None:
-        """Validate Fused Linear+Activation kernels."""
-        try:
-            if not config.kernel.fuse_linear_activation:
-                self._add_warning("Fused Linear+Activation kernels disabled in configuration")
-                return
-
-            self._add_warning(
-                "Fused Linear+Activation kernels enabled but no fused kernel "
-                "implementations are currently available"
-            )
-
-        except Exception as e:
-            self._add_failure(f"Fused kernel validation failed: {e}")
-
-    def _validate_fp8_kernels(self, config: TorchBridgeConfig) -> None:
-        """Validate FP8 kernels (H100/Blackwell only)."""
-        try:
-            if not torch.cuda.is_available():
-                self._add_warning("FP8 kernels require CUDA")
-                return
-
-            # Check compute capability
-            compute_cap = torch.cuda.get_device_capability(0)
-
-            if compute_cap >= (9, 0):
-                self._add_success(f"Compute capability {compute_cap} supports FP8")
-
-                # Check FP8 settings
-                if config.kernel.fp8_attention:
-                    self._add_success("FP8 attention enabled")
-                if config.kernel.fp8_layernorm:
-                    self._add_success("FP8 LayerNorm enabled")
-                if config.kernel.fp8_matmul:
-                    self._add_success("FP8 MatMul enabled")
-
-            else:
-                self._add_warning(
-                    f"FP8 kernels enabled but compute capability {compute_cap} < 9.0 (H100+). "
-                    "FP8 will be disabled at runtime."
-                )
-
-        except Exception as e:
-            self._add_failure(f"FP8 kernel validation failed: {e}")
-
     def _validate_nvidia_model_structure(self, model: nn.Module, nvidia_config) -> None:
         """Validate NVIDIA model structure."""
         total_params = sum(p.numel() for p in model.parameters())
@@ -1287,8 +1044,3 @@ def validate_nvidia_configuration(config: TorchBridgeConfig) -> ValidationSummar
 def validate_nvidia_model(model: nn.Module, nvidia_config, sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
     """Convenience function for NVIDIA model optimization validation."""
     return default_validator.validate_nvidia_model_optimization(model, nvidia_config, sample_inputs)
-
-
-def validate_custom_kernels(config: TorchBridgeConfig) -> ValidationSummary:
-    """Convenience function for custom CUDA kernel validation."""
-    return default_validator.validate_custom_kernels(config)
