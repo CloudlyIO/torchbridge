@@ -80,9 +80,29 @@ Examples:
 
         parser.add_argument(
             "--mode",
-            choices=["training", "disaggregated"],
+            choices=["training", "disaggregated", "heterogeneous"],
             default="training",
-            help="Operating mode: training (default) or disaggregated serving",
+            help="Operating mode: training (default), disaggregated serving, or heterogeneous cluster",
+        )
+
+        parser.add_argument(
+            "--nvidia",
+            metavar="ARCH:COUNT",
+            default=None,
+            help=(
+                "NVIDIA GPU spec for heterogeneous mode: ARCH:COUNT "
+                "(e.g. hopper:4, ampere:8, blackwell_dc:2)"
+            ),
+        )
+
+        parser.add_argument(
+            "--amd",
+            metavar="ARCH:COUNT",
+            default=None,
+            help=(
+                "AMD GPU spec for heterogeneous mode: ARCH:COUNT "
+                "(e.g. cdna3:8, cdna4:4, cdna2:16)"
+            ),
         )
 
         parser.add_argument(
@@ -121,6 +141,10 @@ Examples:
         # Disaggregated serving mode
         if getattr(args, "mode", "training") == "disaggregated":
             return AdvisorCommand._run_disaggregated(args)
+
+        # Heterogeneous cluster mode
+        if getattr(args, "mode", "training") == "heterogeneous":
+            return AdvisorCommand._run_heterogeneous(args)
 
         from torchbridge.distributed.config import (
             DistributedConfig,
@@ -207,6 +231,41 @@ Examples:
             return 0
 
         _print_fleet_config(cfg)
+        return 0
+
+    @staticmethod
+    def _run_heterogeneous(args) -> int:
+        """Execute the heterogeneous cluster config advisor."""
+        from torchbridge.distributed.hetero import HeterogeneousClusterAdvisor
+
+        nvidia_spec = getattr(args, "nvidia", None)
+        amd_spec = getattr(args, "amd", None)
+
+        if not nvidia_spec:
+            print("Error: --mode heterogeneous requires --nvidia ARCH:COUNT")
+            return 1
+        if not amd_spec:
+            print("Error: --mode heterogeneous requires --amd ARCH:COUNT")
+            return 1
+
+        nvidia_arch, nvidia_count = _parse_hetero_spec(nvidia_spec, "nvidia")
+        amd_arch, amd_count = _parse_hetero_spec(amd_spec, "amd")
+        model_params = int(getattr(args, "model_params", 0))
+
+        cfg = HeterogeneousClusterAdvisor.recommend(
+            nvidia_count=nvidia_count,
+            nvidia_arch=nvidia_arch,
+            amd_count=amd_count,
+            amd_arch=amd_arch,
+            model_params=model_params,
+        )
+
+        if getattr(args, "ci", False):
+            json.dump(cfg.to_dict(), sys.stdout, indent=2)
+            print()
+            return 0
+
+        _print_hetero_config(cfg)
         return 0
 
 
@@ -359,6 +418,74 @@ def _print_recommendation(
         print()
 
 
+def _parse_hetero_spec(spec: str, vendor: str) -> tuple:
+    """Parse ARCH:COUNT spec into (arch_enum_or_None, count).
+
+    Examples::
+        "hopper:4"   → (NVIDIAArchitecture.HOPPER, 4)
+        "cdna3:8"    → (AMDArchitecture.CDNA3, 8)
+        "unknown:2"  → (None, 2)
+    """
+    from torchbridge.core.config import AMDArchitecture, NVIDIAArchitecture
+
+    _NVIDIA_ARCH_MAP = {
+        "pascal": NVIDIAArchitecture.PASCAL,
+        "volta": NVIDIAArchitecture.VOLTA,
+        "turing": NVIDIAArchitecture.TURING,
+        "ampere": NVIDIAArchitecture.AMPERE,
+        "ada": NVIDIAArchitecture.ADA,
+        "hopper": NVIDIAArchitecture.HOPPER,
+        "blackwell_dc": NVIDIAArchitecture.BLACKWELL_DC,
+        "blackwell": NVIDIAArchitecture.BLACKWELL_DC,
+        "blackwell_consumer": NVIDIAArchitecture.BLACKWELL_CONSUMER,
+    }
+    _AMD_ARCH_MAP = {
+        "cdna": AMDArchitecture.CDNA,
+        "cdna2": AMDArchitecture.CDNA2,
+        "cdna3": AMDArchitecture.CDNA3,
+        "cdna4": AMDArchitecture.CDNA4,
+        "rdna2": AMDArchitecture.RDNA2,
+        "rdna3": AMDArchitecture.RDNA3,
+    }
+
+    parts = spec.lower().split(":", 1)
+    arch_str = parts[0].strip()
+    count = int(parts[1]) if len(parts) > 1 and parts[1].strip().isdigit() else 1
+
+    if vendor == "nvidia":
+        arch = _NVIDIA_ARCH_MAP.get(arch_str)
+    else:
+        arch = _AMD_ARCH_MAP.get(arch_str)
+
+    return arch, count
+
+
+def _print_hetero_config(cfg) -> None:
+    """Print human-readable heterogeneous cluster configuration."""
+    nvidia_label = cfg.nvidia_arch.value if cfg.nvidia_arch else "unknown"
+    amd_label = cfg.amd_arch.value if cfg.amd_arch else "unknown"
+
+    print("TorchBridge Heterogeneous Cluster Config")
+    print("=" * 55)
+    print(f"Model      : {cfg.model_params / 1e9:.1f}B parameters")
+    print(f"NVIDIA     : {cfg.nvidia_count}× {nvidia_label}")
+    print(f"AMD        : {cfg.amd_count}× {amd_label}")
+    print()
+    print(f"{'Setting':<28}  {'NVIDIA':<14}  AMD")
+    print(f"{'─'*28}  {'─'*14}  {'─'*14}")
+    print(f"{'Collective bridge':<28}  {cfg.collective_bridge:<14}")
+    print(f"{'Partition strategy':<28}  {cfg.partition_strategy:<14}")
+    print(f"{'FSDP strategy':<28}  {cfg.nvidia_fsdp_strategy:<14}  {cfg.amd_fsdp_strategy}")
+    print(f"{'Mixed precision':<28}  {cfg.nvidia_mixed_precision:<14}  {cfg.amd_mixed_precision}")
+    print(f"{'Est. cross-vendor comm':<28}  {cfg.estimated_cross_vendor_comm_gb:.2f} GB/step")
+    if cfg.notes:
+        print()
+        print("Notes:")
+        for note in cfg.notes:
+            print(f"  - {note}")
+    print()
+
+
 def main(args=None):
     """Entry point for tb-advisor."""
     parser = argparse.ArgumentParser(
@@ -383,8 +510,9 @@ def main(args=None):
                         help="Output full TOML configuration")
     parser.add_argument("--topology", action="store_true",
                         help="Detect and display cluster topology")
-    parser.add_argument("--mode", choices=["training", "disaggregated"], default="training",
-                        help="Operating mode: training (default) or disaggregated serving")
+    parser.add_argument("--mode", choices=["training", "disaggregated", "heterogeneous"],
+                        default="training",
+                        help="Operating mode: training (default), disaggregated serving, or heterogeneous cluster")
     parser.add_argument("--prefill", metavar="SPEC", default=None,
                         help="Prefill hardware spec: BACKEND[:ARCH] (e.g. nvidia:hopper)")
     parser.add_argument("--decode", metavar="SPEC", default=None,
@@ -393,6 +521,10 @@ def main(args=None):
                         help="Prefill GPU memory in GB")
     parser.add_argument("--decode-memory", type=float, default=None, metavar="N",
                         help="Decode GPU memory in GB")
+    parser.add_argument("--nvidia", metavar="ARCH:COUNT", default=None,
+                        help="NVIDIA GPU spec for heterogeneous mode: ARCH:COUNT (e.g. hopper:4)")
+    parser.add_argument("--amd", metavar="ARCH:COUNT", default=None,
+                        help="AMD GPU spec for heterogeneous mode: ARCH:COUNT (e.g. cdna3:8)")
 
     if args is None:
         args = sys.argv[1:]
