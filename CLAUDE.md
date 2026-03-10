@@ -501,6 +501,9 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-02-22 | RunPod CUDA | 2× H100 NVL 95.8GB (Hopper) | Qwen3-0.6B | 2.87e-01 | 0.998960 | 17.0ms (0.9x) | PASSED (TorchBridge API 25/25; fp8_e4m3; inference PASSED) |
 | 2026-02-22 | AWS CUDA | A10G (PyTorch 2.6.0+cu124) | Qwen3-0.6B | 3.39e-02 | 0.999873 | 39.4ms (0.96x) | PASSED (TorchBridge API 25/25; int8_smoothquant; inference PASSED) |
 | 2026-02-22 | GCP TPU | v5e (v5litepod-1, PT/XLA 2.9.0) | Qwen3-0.6B | 1.91e-05 | 1.000001 | 139.9ms (CPU) | PASSED (TorchBridge API 25/25; inference on CPU after XLA→CPU) |
+| 2026-03-10 | AMD ROCm | MI300X VF (ROCm 6.2, PT 2.5.1) | Qwen3-0.6B | 3.65e-02 | 0.999678 | 21.2ms (1.11x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic; inference PASSED) |
+| 2026-03-10 | AWS CUDA | A10G (PyTorch 2.6.0+cu124) | Qwen3-0.6B | 3.39e-02 | 0.999873 | 38.4ms (0.95x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic_activations; inference PASSED) |
+| 2026-03-10 | GCP CUDA | Tesla T4 (PyTorch 2.7.1+cu128) | Qwen3-0.6B | 3.49e-02 | 0.999873 | 43.5ms (1.02x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic; inference PASSED) |
 
 ---
 
