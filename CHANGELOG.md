@@ -8,6 +8,76 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.62] - 2026-03-09 - Tolerance DB Expansion: 5 Model Families × 5 Backends
+
+### **Summary**
+
+Expands the empirical tolerance database from a 2D `(backend, dtype)` key to a 3D
+`(model_family, backend, dtype)` key with 80 family entries covering 5 model families across
+6 backends. Adds `--model-family` to `tb-validate --compare`. This is the data asset
+milestone required before the open-source launch at v0.5.63.
+
+### **New: Model Family Dimension**
+
+`ToleranceEntry` replaces `TolerancePair` as the return type from `ToleranceDB.get()`,
+adding `source` and `notes` provenance fields. Three source labels:
+- `"measured"` — worst-case atol from real-hardware cloud validation (Qwen3-0.6B, v0.5.31)
+- `"derived"` — scaled from measured entries using the accumulated-error model
+- `"fallback"` — unknown backend; `_DEFAULT_TOLERANCE` used
+
+**5 model families** with documented scaling methodology:
+| Family | Examples | Source | Scaling vs decoder-small |
+|--------|----------|--------|--------------------------|
+| `decoder-small` | Qwen3-0.6B, Llama-3.2-1B | measured | baseline |
+| `decoder-medium` | Llama-3.1-8B, Qwen3-7B | derived | atol × 2 |
+| `decoder-large` | Llama-3.1-70B, Qwen3-72B | derived | atol × 4 |
+| `encoder` | BERT, RoBERTa, DeBERTa | derived | atol × 0.5 |
+| `vision-language` | CLIP, LLaVA, InternVL | derived | atol × 3 |
+
+**80 family entries**: 5 families × (4 standard backends × 3 dtypes + XLA × 2 dtypes +
+Trainium × 2 dtypes) = 5 × 16 = 80.
+
+### **API (all backward-compatible)**
+
+```python
+db = ToleranceDB()
+db.get("cuda", "float32")                                    # unchanged
+db.get("cuda", "float32", model_family="decoder-large")      # new
+db.is_measured("rocm", "bfloat16", model_family="decoder-small")
+db.families()   # → ["decoder-large", "decoder-medium", "decoder-small", "encoder", "vision-language"]
+db.register_family("my-model", "cuda", "float32", atol=5e-5, rtol=1e-5, source="measured")
+```
+
+`TolerancePair` remains exported (backward compat). `TolerancePair` is now also exported
+from `torchbridge.testing` package.
+
+### **CLI: `tb-validate --model-family`**
+
+```bash
+tb-validate --compare cuda rocm --model Llama-3.1-70B --model-family decoder-large
+```
+
+Passes the family to `ToleranceDB.get()` for the tolerance check. Default is `None`
+(existing behavior unchanged).
+
+### **Hardening (from 3-round review)**
+- `.strip()` on all key inputs — whitespace-padded backend/dtype/family now normalised
+- `"fallback"` source distinct from `"derived"` for unknown backends
+- Trainium family entries added (previously absent — silent fallback to base)
+- `register()` source label behaviour documented
+- `TolerancePair` exported from package `__init__`
+
+### **Tests**
+- `tests/unit/test_tolerance_db.py`: 60 tests — entry validation, 3-level fallback chain,
+  measured spot-checks, exact multiplier ratios (4×/2×/0.5×/3×), completeness (80 entries),
+  whitespace normalisation, empty string family, extra parameter, register_family new family
+- `tests/integration/test_validate_model_family.py`: 10 tests — arg registration,
+  tolerance effect, source labels, CLI wiring
+
+**70 new tests. 4 files changed. 0 new modules.**
+
+---
+
 ## [0.5.61] - 2026-03-09 - KV Handoff Spec + Compliance Certificates
 
 ### **Summary**
