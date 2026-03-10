@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TorchBridge API Validation Script — v0.5.31
+TorchBridge API Validation Script — v0.5.67
 
 Run this script ON each cloud instance to validate that TorchBridge APIs
 work correctly and produce consistent results for the detected hardware.
@@ -794,14 +794,14 @@ def run_inference_comparison(env: dict) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="TorchBridge v0.5.31 API Validation")
+    parser = argparse.ArgumentParser(description="TorchBridge v0.5.67 API Validation")
     parser.add_argument("--platform", default=None, help="Platform label (auto-detected if not set)")
     parser.add_argument("--output", default=None, help="Output JSON file path")
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference comparison (faster)")
     args = parser.parse_args()
 
     print("=" * 70)
-    print("  TorchBridge API Validation — v0.5.31")
+    print("  TorchBridge API Validation — v0.5.67")
     print("=" * 70)
 
     # Environment
