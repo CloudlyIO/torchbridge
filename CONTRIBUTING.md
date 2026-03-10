@@ -17,7 +17,7 @@ Optional (for GPU backend development):
 
 ```bash
 # Clone and install
-git clone https://github.com/CloudlyIO/torchbridge.git
+git clone https://github.com/CloudlyIO/torchbridge.git  # update URL when repo goes public
 cd torchbridge
 pip install -r requirements.txt
 
