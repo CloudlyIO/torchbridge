@@ -88,97 +88,62 @@ tb-doctor --ci
 - Driver versions
 - TorchBridge version and configuration
 
-### `torchbridge profile`
-
-Profile model performance.
-
-```bash
-torchbridge profile --model model.pt --input-shape 1,128 --output profile.json
-```
-
 ### `torchbridge validate`
 
-Run a structured validation pipeline with multiple levels.
+Cross-backend output validation — compares model outputs across two backends and reports
+numerical divergence, per-layer analysis, and multi-step agentic trace drift.
 
 ```bash
-torchbridge validate --level standard
+tb-validate --compare cuda rocm --model ./model.pt
 ```
 
-**Options:**
+**Core flags:**
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--level` | Validation level: `quick`, `standard`, `full`, `cloud` | `standard` |
-| `--model` | Path to a specific model to validate | -- |
-| `--output` | Save report to file | stdout |
-| `--format` | Output format: `json`, `yaml`, `text` | `text` |
-| `--ci` | CI mode: JSON to stdout, structured exit codes (0=pass, 1=fail, 2=warn) | false |
-| `--verbose` | Detailed output | false |
+| `--compare A B` | Compare backend A vs backend B (cuda, rocm, cpu, tpu, mps) | required |
+| `--model` | Path to model file or HuggingFace model ID | -- |
+| `--input-shape` | Input tensor shape | inferred |
+| `--per-layer` | Report per-layer divergence breakdown | false |
+| `--dtype` | Torch dtype: `float32`, `float16`, `bfloat16` | `float32` |
+| `--model-family` | Model family for tolerance lookup: `transformer`, `cnn`, `rnn`, `diffusion`, `custom` | auto |
+| `--ci` | CI mode: JSON to stdout, exits non-zero on failure | false |
+| `--output` | Save report to JSON file | stdout |
 
-**Levels:**
+**Agentic trace flags:**
 
-| Level | What it checks |
-|-------|----------------|
-| `quick` | Hardware detection + import checks |
-| `standard` | Quick + model validation + export format checks |
-| `full` | Standard + benchmark suite + cross-backend consistency |
-| `cloud` | Run cloud validation scripts via subprocess |
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--trace` | Enable multi-step trace mode | false |
+| `--steps N` | Number of autoregressive steps to trace | 10 |
+| `--autoregressive` | Feed greedy token from backend A as input at each step | false |
+| `--trace-output` | Save per-step trace report to JSON file | stdout |
+
+**Observability flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--otel` | Emit validation results as OpenTelemetry spans | false |
+| `--otel-endpoint` | OTLP endpoint URL (e.g. Langfuse, W&B, Honeycomb) | `OTEL_EXPORTER_OTLP_ENDPOINT` env |
+| `--cert` | Generate compliance certificate (SHA256 signed pass/fail) | false |
 
 **Examples:**
 
 ```bash
-# Quick hardware check
-torchbridge validate --level quick
+# Basic cross-backend comparison
+tb-validate --compare cuda rocm --model ./model.pt
 
-# Full validation with JSON report
-torchbridge validate --level full --output report.json --format json
+# Per-layer divergence
+tb-validate --compare cuda rocm --model ./model.pt --per-layer
 
-# CI/CD pipeline
-tb-validate --ci --level quick
-```
+# 50-step agentic trace — reports first-divergence-step and amplification factor
+tb-validate --compare cuda rocm --model ./model.pt --trace --steps 50 --autoregressive
 
-### `torchbridge init`
+# CI mode with JSON output
+tb-validate --compare cuda cpu --model ./model.pt --ci --output report.json
 
-Scaffold a new backend-agnostic PyTorch project from templates.
-
-```bash
-torchbridge init --name my_project --template training
-```
-
-**Options:**
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--name` | Project name (required) | -- |
-| `--template` | Template: `training`, `inference`, `distributed`, `serving` | `training` |
-| `--backend` | Backend hint: `auto`, `nvidia`, `amd`, `tpu`, `cpu` | `auto` |
-| `--output-dir` | Parent directory for generated project | `.` |
-| `--force` | Overwrite existing directory | false |
-| `--verbose` | Detailed output | false |
-
-**Generated files per template:**
-
-| File | training | inference | distributed | serving |
-|------|----------|-----------|-------------|---------|
-| `train.py` | yes | -- | yes | -- |
-| `serve.py` | -- | yes | -- | yes |
-| `config.yaml` | yes | yes | yes | yes |
-| `requirements.txt` | base | base | base + NCCL | base + FastAPI |
-| `Dockerfile` | CPU | CPU | multi-GPU note | port 8000 |
-| `README.md` | yes | yes | yes | yes |
-| `.gitignore` | yes | yes | yes | yes |
-
-**Examples:**
-
-```bash
-# Training project
-tb-init --name my_model --template training
-
-# Serving project with NVIDIA hint
-tb-init --name api_server --template serving --backend nvidia
-
-# Distributed training project (overwrites existing)
-tb-init --name big_model --template distributed --force
+# Compliance certificate + OTel export to Langfuse
+tb-validate --compare cuda rocm --model ./model.pt --cert --otel --otel-endpoint https://cloud.langfuse.com/api/public/otel
 ```
 
 ## Standalone Entry Points
@@ -188,8 +153,8 @@ For CI/CD pipelines, standalone commands are available:
 ```bash
 tb-benchmark --model model.pt --quick
 tb-doctor --full-report
-tb-validate --ci --level quick
-tb-init --name my_project --template training
+tb-validate --compare cuda rocm --model ./model.pt --ci
+tb-advisor --mode heterogeneous --nvidia hopper:8 --amd cdna3:4
 ```
 
 ## Configuration
@@ -223,13 +188,13 @@ tb-benchmark --predefined optimization --compare-baseline results.json
 
 ```bash
 # 1. Validate outputs match across backends
-tb-validate --compare cuda cpu --model model.pt --per-layer
+tb-validate --compare cuda rocm --model model.pt --per-layer
 
-# 2. Get hardware configuration recommendation
+# 2. Multi-step agentic trace
+tb-validate --compare cuda rocm --model model.pt --trace --steps 50 --autoregressive
+
+# 3. Get hardware configuration recommendation
 tb-advisor
-
-# 3. Profile the model
-tb-profile --model model.pt --input-shape 1,128
 
 # 4. Benchmark
 tb-benchmark --model model.pt --output results.json

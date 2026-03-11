@@ -74,23 +74,19 @@ python setup.py build_ext --inplace -v
 
 ```
 src/torchbridge/
-├── backends/          # Vendor-specific backend implementations
-│   ├── nvidia/        #   NVIDIA CUDA
-│   ├── amd/           #   AMD ROCm
-│   └── tpu/           #   Google TPU/XLA
-├── hardware/          # Hardware detection and abstraction layer
-├── precision/         # Mixed-precision training
-├── attention/         # Attention mechanisms (unified API)
-├── advanced_memory/   # Memory optimization
-├── distributed_scale/ # Distributed training
-├── deployment/        # Model export and serving
-├── monitoring/        # Metrics and logging
-├── optimizations/     # Optimization patterns
-├── core/              # Core components and layers
-├── cli/               # Command-line tools
-├── models/            # Model implementations
-├── mixture_of_experts/ # MoE support
-├── validation/        # Cross-backend validation
+├── backends/          # Vendor-specific backend implementations (NVIDIA, AMD, Trainium, TPU + factory)
+├── core/              # Hardware detection, config, architecture enums
+├── precision/         # Quantization compatibility matrix + torchao dispatch
+├── attention/         # Attention kernel compatibility matrix + dispatcher
+├── distributed/       # FSDP config advisor, heterogeneous cluster advisor, topology
+├── inference/         # Disaggregated fleet, KV handoff, speculative, phase detection
+├── models/            # LLM KV cache advisor
+├── checkpoint/        # DCP wrapper with cross-backend metadata normalization
+├── adapters/          # Adapter compatibility matrix + config (LoRA/QLoRA method selection)
+├── benchmarks/        # 5 claim benchmarks with real measured results
+├── testing/           # DivergenceTracer, ToleranceDB, MultiStepTracer, @cross_backend, OTel exporter
+├── validation/        # UnifiedValidator — model structure, hardware, numerical stability
+├── cli/               # 13 CLI entry points
 └── utils/             # Utilities
 ```
 
