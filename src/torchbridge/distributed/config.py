@@ -323,13 +323,19 @@ def _recommend_parallelism(
     if model_params > 10e9 and gpus_per_node >= 4:
         tp_degree = min(8, gpus_per_node)
         notes.append(
-            f"TP={tp_degree} recommended for {model_params/1e9:.0f}B model "
-            f"(large layers benefit from tensor parallelism)"
+            f"TP={tp_degree}: model exceeds 10B params — tensor parallelism splits "
+            f"weight matrices across {tp_degree} GPUs to reduce per-rank peak memory"
         )
     elif model_params > 3e9 and gpus_per_node >= 2:
         tp_degree = min(4, gpus_per_node)
         notes.append(
-            f"TP={tp_degree} for efficient large-model training"
+            f"TP={tp_degree}: model between 3B–10B params — moderate tensor parallelism "
+            f"reduces activation memory without excessive all-reduce overhead"
+        )
+    else:
+        notes.append(
+            f"TP=1: model ({model_params/1e9:.1f}B params) fits on a single rank — "
+            f"no tensor parallelism needed; FSDP sharding handles memory distribution"
         )
 
     # Pipeline parallelism: needed when model is very large
@@ -337,14 +343,19 @@ def _recommend_parallelism(
     if model_params > 70e9 and world_size >= 16:
         pp_stages = min(8, max(1, world_size // tp_degree))
         notes.append(
-            f"PP={pp_stages} stages for {model_params/1e9:.0f}B model "
-            f"across {world_size} ranks"
+            f"PP={pp_stages}: model exceeds 70B params — pipeline stages spread layers "
+            f"across {pp_stages} sequential ranks to fit the full model"
         )
     elif model_params > 30e9 and world_size >= 8:
         pp_stages = min(4, num_nodes) if num_nodes > 1 else 2
         notes.append(
-            f"PP={pp_stages} stages to distribute {model_params/1e9:.0f}B "
-            f"model layers across ranks"
+            f"PP={pp_stages}: model between 30B–70B params — pipeline parallelism "
+            f"distributes layers across {pp_stages} stages to reduce per-rank layer count"
+        )
+    else:
+        notes.append(
+            f"PP=1: model ({model_params/1e9:.1f}B params) does not require pipeline "
+            f"parallelism — all layers fit within the TP+FSDP configuration"
         )
 
     # FSDP strategy

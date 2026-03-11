@@ -25,8 +25,11 @@ Source labels:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Public types
@@ -314,6 +317,12 @@ class ToleranceDB:
             base = _DEFAULT_TOLERANCE
             source = "fallback"
             notes = f"unknown backend '{b}' — using safe default"
+            logger.warning(
+                "ToleranceDB: no entry for backend '%s' (dtype='%s') — "
+                "returning safe-default fallback (atol=%.0e). "
+                "Call ToleranceDB.register() to add measured tolerances for this backend.",
+                b, d, base.atol,
+            )
         return ToleranceEntry(atol=base.atol, rtol=base.rtol, source=source, notes=notes)
 
     def register(self, backend: str, dtype: str, atol: float, rtol: float) -> None:
@@ -324,7 +333,14 @@ class ToleranceDB:
         ``_TOLERANCE_TABLE`` (``"measured"``) or not (``"derived"``). It does not
         track the provenance of the custom value. Use :meth:`register_family` if
         you need explicit source metadata.
+
+        Raises:
+            ValueError: If ``atol`` or ``rtol`` is negative.
         """
+        if atol < 0:
+            raise ValueError(f"atol must be >= 0, got {atol}")
+        if rtol < 0:
+            raise ValueError(f"rtol must be >= 0, got {rtol}")
         self._table[(backend.strip().lower(), dtype.strip().lower())] = TolerancePair(
             atol=atol, rtol=rtol
         )
@@ -339,7 +355,15 @@ class ToleranceDB:
         source: str = "measured",
         notes: str = "",
     ) -> None:
-        """Register a custom tolerance for ``(model_family, backend, dtype)``."""
+        """Register a custom tolerance for ``(model_family, backend, dtype)``.
+
+        Raises:
+            ValueError: If ``atol`` or ``rtol`` is negative.
+        """
+        if atol < 0:
+            raise ValueError(f"atol must be >= 0, got {atol}")
+        if rtol < 0:
+            raise ValueError(f"rtol must be >= 0, got {rtol}")
         self._family_table[
             (model_family.strip().lower(), backend.strip().lower(), dtype.strip().lower())
         ] = ToleranceEntry(atol=atol, rtol=rtol, source=source, notes=notes)

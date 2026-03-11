@@ -100,6 +100,15 @@ class ValidationSpanExporter:
 
         resolved = endpoint or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
 
+        if resolved and not (
+            resolved.startswith("http://") or resolved.startswith("https://")
+        ):
+            logger.warning(
+                "OTel endpoint %r does not look like a valid HTTP(S) URL; "
+                "export may fail silently at span flush time. Expected https://...",
+                resolved,
+            )
+
         if resolved:
             raw_exporter = OTLPSpanExporter(endpoint=resolved)
         else:
