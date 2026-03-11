@@ -508,7 +508,8 @@ Examples:
             print()
             print(f"  Max diff   : {max_diff:.2e}")
             print(f"  Cosine sim : {cos_sim:.6f}")
-            print(f"  Tolerance  : atol={tol.atol:.0e}  rtol={tol.rtol:.0e}  ({b1_key}/{dtype_str})")
+            tol_annotation = "  (fallback — backend not in tolerance DB)" if tol.source == "fallback" else ""
+            print(f"  Tolerance  : atol={tol.atol:.0e}  rtol={tol.rtol:.0e}  ({b1_key}/{dtype_str}){tol_annotation}")
             print(f"  Duration   : {duration_ms:.1f}ms")
             print(f"  Status     : {status_str}")
             if layer_rows:

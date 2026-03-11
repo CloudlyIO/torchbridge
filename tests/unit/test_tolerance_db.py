@@ -403,3 +403,58 @@ class TestAPI:
         entry = d["decoder-small/cuda/float32"]
         assert "source" in entry
         assert entry["source"] == "measured"
+
+
+# ── v0.5.69: bounds validation and fallback warning ───────────────────────────
+
+class TestRegisterBoundsValidation:
+    def test_register_negative_atol_raises(self):
+        db = ToleranceDB()
+        with pytest.raises(ValueError, match="atol must be >= 0"):
+            db.register("cuda", "float32", atol=-0.1, rtol=0.0)
+
+    def test_register_negative_rtol_raises(self):
+        db = ToleranceDB()
+        with pytest.raises(ValueError, match="rtol must be >= 0"):
+            db.register("cuda", "float32", atol=0.0, rtol=-1e-5)
+
+    def test_register_zero_values_ok(self):
+        db = ToleranceDB()
+        db.register("cuda", "float32", atol=0.0, rtol=0.0)
+        tol = db.get("cuda", "float32")
+        assert tol.atol == 0.0
+        assert tol.rtol == 0.0
+
+    def test_register_family_negative_atol_raises(self):
+        db = ToleranceDB()
+        with pytest.raises(ValueError, match="atol must be >= 0"):
+            db.register_family("decoder-small", "cuda", "float32", atol=-1e-4, rtol=0.0)
+
+    def test_register_family_negative_rtol_raises(self):
+        db = ToleranceDB()
+        with pytest.raises(ValueError, match="rtol must be >= 0"):
+            db.register_family("decoder-small", "cuda", "float32", atol=1e-4, rtol=-1e-6)
+
+    def test_register_family_zero_values_ok(self):
+        db = ToleranceDB()
+        db.register_family("decoder-small", "cpu", "float64", atol=0.0, rtol=0.0, source="measured")
+        tol = db.get("cpu", "float64", model_family="decoder-small")
+        assert tol.atol == 0.0
+
+
+class TestFallbackWarning:
+    def test_unknown_backend_logs_warning(self, caplog):
+        import logging
+        db = ToleranceDB()
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.tolerance_db"):
+            tol = db.get("gaudi_v3", "float32")
+        assert tol.source == "fallback"
+        assert any("gaudi_v3" in msg for msg in caplog.messages)
+
+    def test_known_backend_no_fallback_warning(self, caplog):
+        import logging
+        db = ToleranceDB()
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.tolerance_db"):
+            tol = db.get("cuda", "float32")
+        assert tol.source in ("measured", "derived")
+        assert not any("fallback" in msg.lower() for msg in caplog.messages)
