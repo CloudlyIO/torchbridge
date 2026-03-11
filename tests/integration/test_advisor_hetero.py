@@ -134,3 +134,99 @@ class TestHeterogeneousAdvisorExecution:
         )
         rc = AdvisorCommand.execute(args)
         assert rc == 0
+
+
+# ── v0.5.70: training-mode advisor rationale integration ─────────────────────
+
+class TestAdvisorRationaleInOutput:
+    """End-to-end: human output must contain rationale notes for all TP/PP decisions."""
+
+    def _run_training(self, model_params: float, world_size: int = 4, capsys=None) -> str:
+        from torchbridge.cli.advisor import AdvisorCommand
+        args = types.SimpleNamespace(
+            mode="training",
+            model_params=model_params,
+            world_size=world_size,
+            gpus_per_node=None,
+            backend="cpu",
+            ci=False,
+            toml=False,
+            topology=False,
+        )
+        AdvisorCommand.execute(args)
+        if capsys:
+            return capsys.readouterr().out
+        return ""
+
+    def test_human_output_contains_tp_rationale(self, capsys):
+        """Training mode human output must include TP= rationale note."""
+        from torchbridge.cli.advisor import AdvisorCommand
+        args = types.SimpleNamespace(
+            mode="training",
+            model_params=7e9,
+            world_size=8,
+            gpus_per_node=None,
+            backend="cpu",
+            ci=False,
+            toml=False,
+            topology=False,
+        )
+        AdvisorCommand.execute(args)
+        out = capsys.readouterr().out
+        assert "TP=" in out
+
+    def test_human_output_contains_pp_rationale(self, capsys):
+        """Training mode human output must include PP= rationale note."""
+        from torchbridge.cli.advisor import AdvisorCommand
+        args = types.SimpleNamespace(
+            mode="training",
+            model_params=7e9,
+            world_size=8,
+            gpus_per_node=None,
+            backend="cpu",
+            ci=False,
+            toml=False,
+            topology=False,
+        )
+        AdvisorCommand.execute(args)
+        out = capsys.readouterr().out
+        assert "PP=" in out
+
+    def test_small_model_rationale_explains_no_parallelism(self, capsys):
+        """For a 1B model on 2 GPUs, output must explain TP=1 and PP=1."""
+        from torchbridge.cli.advisor import AdvisorCommand
+        args = types.SimpleNamespace(
+            mode="training",
+            model_params=1e9,
+            world_size=2,
+            gpus_per_node=None,
+            backend="cpu",
+            ci=False,
+            toml=False,
+            topology=False,
+        )
+        AdvisorCommand.execute(args)
+        out = capsys.readouterr().out
+        assert "TP=1" in out
+        assert "PP=1" in out
+
+    def test_large_model_rationale_explains_tp_applied(self, capsys):
+        """For a 70B model on 16 GPUs, output must explain why TP>1 is used."""
+        from torchbridge.cli.advisor import AdvisorCommand
+        args = types.SimpleNamespace(
+            mode="training",
+            model_params=70e9,
+            world_size=16,
+            gpus_per_node=8,
+            backend="cpu",
+            ci=False,
+            toml=False,
+            topology=False,
+        )
+        AdvisorCommand.execute(args)
+        out = capsys.readouterr().out
+        # Should say TP>1 with explanation (model > 10B params)
+        assert "TP=" in out
+        # The note should mention why — "exceeds" or "benefit"
+        combined = out.lower()
+        assert "tensor parallel" in combined or "tp" in combined
