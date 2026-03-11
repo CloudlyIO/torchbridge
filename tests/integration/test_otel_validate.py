@@ -9,16 +9,18 @@ Tests verify:
 - --otel-endpoint URL is passed through to the exporter constructor
 """
 
+import argparse
 import types
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from torchbridge.cli.validate import ValidateCommand
+
 # ── Parser registration (no opentelemetry needed) ─────────────────────────
 
 class TestOtelCLIFlags:
     def _get_parser(self):
-        import argparse
 
         from torchbridge.cli.validate import ValidateCommand
         parser = argparse.ArgumentParser()
@@ -153,3 +155,53 @@ class TestOtelExportWiring:
             ValidateCommand._run_compare(args)
 
         assert captured.get("endpoint") == "http://custom:4318"
+
+
+# ── v0.5.70: URL scheme validation integration ────────────────────────────────
+
+class TestOtelEndpointSchemeValidationPipeline:
+    """End-to-end: invalid URL scheme logs warning but pipeline still completes."""
+
+    def _make_args(self, **kwargs):
+        defaults = {
+            "compare": ["cpu", "cpu"],
+            "model": None,
+            "input_shape": "1,32",
+            "per_layer": False,
+            "dtype": "float32",
+            "output": None,
+            "ci": False,
+            "verbose": False,
+            "level": "standard",
+            "quantized": False,
+            "otel": True,
+            "otel_endpoint": None,
+        }
+        defaults.update(kwargs)
+        return argparse.Namespace(**defaults)
+
+    def test_invalid_scheme_warning_logged_in_pipeline(self, caplog):
+        """ftp:// endpoint must log a URL-scheme warning from within validate pipeline."""
+        import logging
+
+        # Only run when opentelemetry is available
+        pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+            ValidateCommand._run_compare(
+                self._make_args(otel_endpoint="ftp://invalid.example.com")
+            )
+        assert any("ftp://" in msg for msg in caplog.messages)
+
+    def test_valid_https_no_scheme_warning_in_pipeline(self, caplog):
+        """https:// endpoint must not log a URL-scheme warning."""
+        import logging
+
+        pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+            ValidateCommand._run_compare(
+                self._make_args(otel_endpoint="https://cloud.langfuse.com/api/public/otel")
+            )
+        url_warnings = [m for m in caplog.messages if "does not look like" in m]
+        assert len(url_warnings) == 0
