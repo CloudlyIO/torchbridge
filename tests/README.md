@@ -1,6 +1,6 @@
 # TorchBridge Test Suite
 
-Comprehensive test suite for TorchBridge cross-backend validation and configuration intelligence -- 2,392+ tests.
+Comprehensive test suite for TorchBridge cross-backend validation and configuration intelligence — 1,950+ tests.
 
 ## Quick Start
 
@@ -29,10 +29,6 @@ tests/
 ├── README.md
 │
 ├── unit/                    # Fast, isolated tests (<1s each)
-│   ├── test_configs.py
-│   ├── test_kernel_registry.py
-│   ├── test_mixture_of_experts.py
-│   └── test_performance_tracker.py
 │
 ├── models/                  # Real-model cross-backend tests (@real_model marker)
 │   ├── test_qwen3_hal.py
@@ -66,11 +62,6 @@ tests/
 │   └── test_distributed_scale.py
 │
 ├── e2e/                     # End-to-end tests
-│   ├── test_deployment.py
-│   ├── test_export_pipeline.py
-│   ├── test_llm_server.py
-│   ├── test_monitoring.py
-│   └── test_serving.py
 │
 ├── distributed/             # Distributed training tests
 │   ├── test_distributed_llama.py
@@ -82,15 +73,6 @@ tests/
 │   └── test_next_gen_benchmarks.py
 │
 ├── cli/                     # CLI command tests
-│   ├── test_benchmark.py
-│   ├── test_cli_main.py
-│   ├── test_doctor.py
-│   ├── test_export.py
-│   ├── test_init.py
-│   ├── test_migrate.py
-│   ├── test_optimize.py
-│   ├── test_profile.py
-│   └── test_validate.py
 │
 ├── regression/              # Regression detection tests
 │   ├── test_baseline_manager.py

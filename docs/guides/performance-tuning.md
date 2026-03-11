@@ -124,14 +124,20 @@ tb-advisor
 
 ## Profiling
 
-Use TorchBridge's built-in profiler to find bottlenecks:
+Use PyTorch's built-in profiler to find bottlenecks:
 
-```bash
-# Summary view
-torchbridge profile --model model.pt --mode summary
+```python
+import torch
+from torch.profiler import profile, record_function, ProfilerActivity
 
-# Detailed trace (viewable in Chrome trace viewer)
-torchbridge profile --model model.pt --mode trace --output profile.json
+with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
+    with record_function("model_inference"):
+        model(inputs)
+
+print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+
+# Export for Chrome trace viewer
+prof.export_chrome_trace("profile.json")
 ```
 
 ## Benchmarking
