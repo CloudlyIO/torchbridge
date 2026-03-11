@@ -8,6 +8,27 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.70] - 2026-03-10 - Integration Test Expansion
+
+### **Summary**
+
+Addresses the unit-only gap after v0.5.69: adds integration tests verifying fixes work
+in multi-component pipeline scenarios.
+
+### **Changes**
+
+- **Added** `tests/integration/test_divergence_tracer_pipeline.py` — 9 tests: max_layers
+  caps hook count on deep models, empty-tensor layers silently skipped, per-layer pipeline integration
+- **Added** `tests/integration/test_tolerance_fallback_pipeline.py` — 9 tests: fallback
+  annotation human vs CI JSON output, custom tolerance roundtrip, bounds enforcement does not
+  corrupt the table
+- **Modified** `tests/integration/test_otel_validate.py` — 2 new tests: invalid URL scheme
+  logs warning in full pipeline; valid https:// logs no warning
+- **Modified** `tests/integration/test_trace_pipeline.py` — 3 new tests: no NaN in step
+  results, all steps within tolerance, cumulative_amplification present
+- **Modified** `tests/integration/test_advisor_hetero.py` — 4 new tests: human output contains
+  TP= and PP= rationale; small model explains TP=1/PP=1; large model explains TP applied
+
 ## [0.5.69] - 2026-03-10 - Quality Hardening (All Dimensions ≥ 8/10)
 
 ### **Summary**

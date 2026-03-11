@@ -225,3 +225,51 @@ class TestStepsValidation:
     def test_steps_1000_is_valid(self):
         rc = ValidateCommand.execute(_args(steps=1000))
         assert rc == 0
+
+
+# ── v0.5.70: edge case coverage for robustness fixes ────────────────────────
+
+class TestTraceEdgeCases:
+    """Integration tests for v0.5.69 robustness fixes in the trace pipeline."""
+
+    def test_trace_ci_output_step_results_no_nan(self):
+        """No step result should contain NaN max_diff or cosine_sim."""
+        import io
+        import json
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ValidateCommand.execute(_args(steps=5, ci=True))
+        data = json.loads(buf.getvalue())
+        for sr in data.get("step_results", []):
+            assert sr["max_diff"] == sr["max_diff"], "max_diff is NaN"
+            assert sr["cosine_sim"] == sr["cosine_sim"], "cosine_sim is NaN"
+
+    def test_trace_cpu_cpu_all_steps_within_tolerance(self):
+        """CPU-vs-CPU trace must have all steps within tolerance."""
+        import io
+        import json
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ValidateCommand.execute(_args(steps=10, ci=True))
+        data = json.loads(buf.getvalue())
+        assert data["final_passed"] is True
+        for sr in data.get("step_results", []):
+            assert sr["within_tolerance"] is True
+
+    def test_trace_ci_contains_amplification_field(self):
+        """Each step_result must contain cumulative_amplification."""
+        import io
+        import json
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ValidateCommand.execute(_args(steps=3, ci=True))
+        data = json.loads(buf.getvalue())
+        for sr in data.get("step_results", []):
+            assert "cumulative_amplification" in sr
+            assert sr["cumulative_amplification"] >= 0.0
