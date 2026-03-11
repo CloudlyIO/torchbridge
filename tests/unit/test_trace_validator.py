@@ -141,6 +141,12 @@ class TestStepsValidation:
         result = tracer.run(x, steps=1)
         assert len(result.step_results) == 1
 
+    def test_empty_input_ids_raises(self):
+        tracer = _make_tracer(_IdentityModel())
+        empty = torch.zeros(0, 4)
+        with pytest.raises(ValueError, match="non-empty"):
+            tracer.run(empty, steps=1)
+
 
 # ── CPU vs CPU — identical outputs ───────────────────────────────────────────
 

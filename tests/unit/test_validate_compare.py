@@ -198,3 +198,29 @@ class TestHumanReadableOutput:
         ValidateCommand._run_compare(args)
         out = capsys.readouterr().out
         assert 'cpu' in out
+
+
+# ── v0.5.69: fallback tolerance annotation ───────────────────────────────────
+
+class TestFallbackToleranceAnnotation:
+    def test_fallback_source_annotated_in_output(self, capsys):
+        """When tolerance source is 'fallback', Tolerance line must include annotation."""
+        from unittest.mock import patch
+
+        from torchbridge.testing.tolerance_db import ToleranceEntry
+
+        fallback_entry = ToleranceEntry(atol=1e-3, rtol=1e-3, source="fallback",
+                                        notes="unknown backend")
+        args = _make_args(compare=['cpu', 'cpu'], ci=False)
+        with patch("torchbridge.testing.tolerance_db.ToleranceDB.get",
+                   return_value=fallback_entry):
+            ValidateCommand._run_compare(args)
+        out = capsys.readouterr().out
+        assert 'fallback' in out.lower()
+
+    def test_known_backend_no_fallback_annotation(self, capsys):
+        """Known backend (cpu) must not show fallback annotation."""
+        args = _make_args(compare=['cpu', 'cpu'], ci=False)
+        ValidateCommand._run_compare(args)
+        out = capsys.readouterr().out
+        assert 'fallback — backend not in tolerance DB' not in out
