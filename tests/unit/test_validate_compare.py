@@ -224,3 +224,48 @@ class TestFallbackToleranceAnnotation:
         ValidateCommand._run_compare(args)
         out = capsys.readouterr().out
         assert 'fallback — backend not in tolerance DB' not in out
+
+
+# ── v0.5.71: model path privacy ──────────────────────────────────────────────
+
+class TestModelPathPrivacy:
+    def test_local_model_path_uses_filename_only_in_ci_json(self, tmp_path):
+        """CI JSON 'model' field must contain only the filename, not the full path."""
+        import io
+        from contextlib import redirect_stdout
+        from unittest.mock import MagicMock, patch
+
+        import torch.nn as nn
+
+        model_file = str(tmp_path / "private_model.pt")
+        fake_model = nn.Linear(4, 4)
+
+        # Mock Path so the code takes the local-file branch and torch.load returns
+        # a real nn.Module (no actual file I/O needed to test the label logic).
+        mock_path_instance = MagicMock()
+        mock_path_instance.exists.return_value = True
+        mock_path_instance.name = "private_model.pt"
+
+        buf = io.StringIO()
+        args = _make_args(model=model_file, input_shape='1,4', ci=True)
+        with patch("torchbridge.cli.validate.Path", return_value=mock_path_instance), \
+             patch("torchbridge.cli.validate.torch.load", return_value=fake_model), \
+             redirect_stdout(buf):
+            ValidateCommand._run_compare(args)
+        data = json.loads(buf.getvalue())
+        # Must contain only the filename, not the full path
+        assert data['model'] == 'private_model.pt'
+        assert str(tmp_path) not in data['model']
+
+    def test_otel_endpoint_help_mentions_data_retention(self):
+        """--otel-endpoint help text must include a data-retention note."""
+        import argparse
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        ValidateCommand.register(subparsers)
+        # Retrieve the help string for --otel-endpoint
+        action = next(
+            a for a in parser._subparsers._group_actions[0].choices['validate']._actions
+            if getattr(a, 'dest', None) == 'otel_endpoint'
+        )
+        assert 'data-retention' in action.help
