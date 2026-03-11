@@ -27,7 +27,7 @@ attention = dispatcher.create_attention(config)
 | NVIDIA | Hopper | FlexAttention | FA-3 > FA-2 > PyTorch SDPA |
 | NVIDIA | Ampere/Ada | FlashAttention-2 | FlexAttention > PyTorch SDPA |
 | NVIDIA | Turing/Volta/Pascal | PyTorch SDPA | — |
-| AMD | CDNA3/CDNA4 | FA-2 (Composable Kernel) | Triton > PyTorch SDPA |
+| AMD | CDNA3/CDNA4 | FA-2 (Composable Kernel) | PyTorch SDPA |
 | AMD | CDNA2/RDNA | PyTorch SDPA | — |
 | Trainium | TRN2/TRN3 | NeuronX SDPA | PyTorch SDPA |
 | Trainium | TRN1/INF2 | PyTorch SDPA | — |

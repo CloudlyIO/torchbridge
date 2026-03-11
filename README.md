@@ -16,14 +16,20 @@ pip install torchbridge-ml
 ### Cross-Backend Validation (the hero command)
 
 ```bash
-# Compare CUDA vs CPU outputs for your model
-tb-validate --compare cuda cpu --model ./model.pt
+# Compare CUDA vs ROCm outputs — max_diff, cosine_sim, pass/fail
+tb-validate --compare cuda rocm --model ./model.pt
 
 # Per-layer divergence report
-tb-validate --compare cuda cpu --model ./model.pt --per-layer
+tb-validate --compare cuda rocm --model ./model.pt --per-layer
+
+# Multi-step agentic trace — track divergence amplification across 50 steps
+tb-validate --compare cuda rocm --model ./model.pt --trace --steps 50 --autoregressive
+
+# Compliance certificate + OTel span export (Langfuse, W&B, etc.)
+tb-validate --compare cuda rocm --model ./model.pt --cert --otel
 
 # CI mode — exits non-zero if max_diff exceeds tolerance
-tb-validate --compare cuda cpu --model ./model.pt --ci
+tb-validate --compare cuda rocm --model ./model.pt --ci
 ```
 
 ### Hardware Configuration Advisor
@@ -31,6 +37,12 @@ tb-validate --compare cuda cpu --model ./model.pt --ci
 ```bash
 # What's the optimal config for this hardware?
 tb-advisor
+
+# Disaggregated prefill/decode fleet config
+tb-advisor --mode disaggregated --prefill-backend nvidia --decode-backend amd
+
+# Heterogeneous cluster training config (NVIDIA + AMD mixed)
+tb-advisor --mode heterogeneous --nvidia hopper:8 --amd cdna3:4
 
 # Doctor — diagnose your hardware setup
 tb-doctor
@@ -59,11 +71,15 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 
 | Capability | What TorchBridge adds |
 |------------|----------------------|
-| **Cross-backend validation** | Per-layer divergence tracing, empirical tolerance DB, pass/fail against cloud-validated thresholds |
-| **Compatibility matrices** | 110+ empirically-sourced entries: `(backend, architecture) → optimal quant format / attention kernel / adapter method` |
+| **Cross-backend validation** | `tb-validate --compare cuda rocm` — per-layer divergence, empirical tolerance DB (5 model families × 5 backends × 3 dtypes), CI-ready JSON |
+| **Multi-step agentic trace** | `tb-validate --trace --steps 50 --autoregressive` — tracks how max_diff amplifies across N autoregressive steps; reports first-divergence-step and amplification factor |
+| **Compliance certificates** | `tb-validate --cert` — SHA256-signed pass/fail certificate for KV handoff physical spec (page size, alignment, layout) |
+| **Observability integration** | `tb-validate --otel` — emits validation spans (max_diff, cosine_sim, per-layer child spans) to any OTLP endpoint (Langfuse, W&B Weave, Honeycomb) |
+| **Compatibility matrices** | 12 empirically-sourced matrices: `(backend, architecture) → optimal quant format / attention kernel / adapter method / FSDP strategy` |
+| **Config advisory** | `tb-advisor` — FSDP, quantization, KV cache, speculative decoding, disaggregated fleet (`--mode disaggregated`), heterogeneous clusters (`--mode heterogeneous`) |
 | **Backend detection** | Hardware identification, capability queries, priority chain across NVIDIA/AMD/Trainium/TPU/CPU |
-| **Configuration generation** | FSDP sharding strategy, attention kernel selection, quantization format — from matrices, not hardcoded |
-| **CLI diagnostics** | `tb-doctor`, `tb-validate`, `tb-advisor`, `tb-quantize` |
+| **Tolerance DB** | 80 empirical entries, 3-level fallback, `--model-family` flag — tolerances sourced from real Qwen3-0.6B runs across 6 GPU platforms |
+| **CLI diagnostics** | `tb-doctor`, `tb-validate`, `tb-advisor`, `tb-quantize`, `tb-migrate`, `tb-benchmark` |
 
 ## What TorchBridge Is NOT
 
@@ -120,13 +136,11 @@ src/torchbridge/
 ├── adapters/          # LoRA/QLoRA adapter injection (correct math)
 ├── inference/         # Speculative decoding compatibility matrix
 ├── checkpoint/        # DCP wrapper with cross-backend metadata
-├── testing/           # DivergenceTracer, ToleranceDB, @cross_backend
-├── deployment/        # Production validation + serving demo
-├── cli/               # Command-line tools
-├── models/            # LLM serving + KV cache
-├── mixture_of_experts/ # MoE layer support
-├── validation/        # Cross-backend validation framework
-└── utils/             # Utilities and profiling
+├── testing/           # DivergenceTracer, ToleranceDB, MultiStepTracer, @cross_backend
+├── validation/        # UnifiedValidator — model structure, hardware, numerical stability
+├── cli/               # Command-line tools (13 entry points)
+├── models/            # LLM KV cache advisor
+└── utils/             # Utilities
 ```
 
 ## Quality

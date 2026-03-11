@@ -90,15 +90,18 @@ Mitigations:
 
 FlashAttention v2 works on Ampere and newer GPUs (sm_80+). FlashAttention v3 requires H100/Blackwell (sm_90+). Install with `pip install flash-attn>=2.3.0`.
 
-```python
-# FlashAttention v2 (Ampere+: A100, RTX 3090, etc.)
-config.hardware.nvidia.flash_attention_version = "2"
-config.hardware.nvidia.flash_attention_enabled = True
+TorchBridge selects the best available attention kernel automatically via `AttentionDispatcher`. Check what kernel was selected:
 
-# FlashAttention v3 (Hopper+: H100, Blackwell, etc.)
-config.hardware.nvidia.flash_attention_version = "3"
-config.hardware.nvidia.flash_attention_enabled = True
+```python
+from torchbridge.attention import AttentionDispatcher
+
+dispatcher = AttentionDispatcher()
+result = dispatcher.select_kernel(seq_length=2048, num_heads=32, head_dim=128)
+print(f"Selected: {result.kernel_type.value}")
+print(f"Fallback chain: {[k.value for k in result.fallback_chain]}")
 ```
+
+If FlashAttention is not being selected, verify `flash-attn` is installed and your GPU architecture meets the requirement (Ampere+ for FA-2, Hopper+ for FA-3).
 
 ---
 

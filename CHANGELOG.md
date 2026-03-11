@@ -8,6 +8,45 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.68] - 2026-03-10 - Documentation Integrity Sweep
+
+### **Summary**
+
+Fixes 7 categories of stale or inaccurate documentation found in a pre-launch audit across 26 doc files.
+Two CRITICAL blockers removed (`tb-profile`/`tb-init` phantom CLI commands, `mixture_of_experts/` phantom
+module). README updated to cover 8 features added since v0.5.49 (multi-step trace, compliance certs,
+OTel, disaggregated fleet, hetero cluster, `--model-family`). All flash_attention_version/enabled config
+attribute references removed (deleted v0.5.57). Triton removed from AMD fallback chain (deleted v0.5.47).
+
+### **Changes**
+
+- **Modified** `docs/guides/cli.md` — removed phantom `torchbridge profile` section; removed phantom
+  `torchbridge init` section (both deleted v0.5.55); updated `torchbridge validate` to document current
+  `--compare`, `--trace`, `--steps`, `--cert`, `--otel` flags; removed `tb-init`/`tb-profile` from examples
+- **Modified** `README.md` — removed `mixture_of_experts/` from project structure (deleted v0.5.54);
+  corrected structure block to reflect current 14 subpackages; added 5 new rows to "What TorchBridge
+  Does" table (multi-step trace, compliance certs, OTel, config advisory, tolerance DB);
+  updated Quick Start with `--trace`, `--mode disaggregated`, `--mode heterogeneous` examples
+- **Modified** `docs/guides/backend-selection.md` — removed `flash_attention_version` /
+  `flash_attention_enabled` config attributes (deleted v0.5.57); replaced with `AttentionDispatcher` note
+- **Modified** `docs/getting_started/troubleshooting.md` — same flash_attention_* removal; replaced
+  with `AttentionDispatcher.select_kernel()` diagnostic pattern
+- **Modified** `docs/guides/attention.md` — removed "Triton" from AMD CDNA3/4 fallback chain (deleted v0.5.47)
+- **Modified** `docs/guides/performance-tuning.md` — removed `torchbridge profile` command (deleted v0.5.55); replaced with standard `torch.profiler` usage
+- **Modified** `docs/reference/cloud-validation.md` — added v0.5.67 row to validation history
+- **Modified** `CONTRIBUTING.md` — updated project structure block (removed 9 deleted subpackages)
+- **Modified** `tests/README.md` — removed stale file listings (`test_kernel_registry.py`,
+  `test_mixture_of_experts.py`, `test_performance_tracker.py`, `test_init.py`, `test_profile.py`,
+  `test_llm_server.py`, `test_monitoring.py`, `test_serving.py`); updated test count
+
+### **Stats**
+
+- No new source code or tests (documentation-only milestone)
+- 9 doc files corrected
+- 0 ruff violations (docs-only change)
+
+---
+
 ## [0.5.67] - 2026-03-10 - Real Hardware Validation (v0.5.66 build)
 
 ### **Summary**
