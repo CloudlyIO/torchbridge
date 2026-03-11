@@ -226,7 +226,9 @@ Examples:
                 'OTLP HTTP endpoint for span export '
                 '(e.g. https://cloud.langfuse.com/api/public/otel). '
                 'Defaults to OTEL_EXPORTER_OTLP_ENDPOINT env var, '
-                'then stdout if neither is set.'
+                'then stdout if neither is set. '
+                'Validation spans (model name, backend, dtype, max_diff) are sent to '
+                'this endpoint — ensure it complies with your data-retention policy.'
             ),
         )
 
@@ -376,14 +378,14 @@ Examples:
                 model_label = 'smoke_model (Linear)'
             elif Path(model_path).exists():
                 model = torch.load(model_path, map_location='cpu', weights_only=True)
-                model_label = model_path
+                model_label = Path(model_path).name  # filename only — avoid leaking full filesystem path
             else:
                 # Treat as HuggingFace model ID
                 from transformers import AutoModelForCausalLM
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path, torch_dtype=dtype
                 )
-                model_label = model_path
+                model_label = model_path  # HuggingFace model ID is a public identifier
                 is_hf_model = True
         except Exception as e:
             msg = f"Failed to load model: {e}"
@@ -636,13 +638,13 @@ Examples:
                 model_label = 'smoke_model (Linear)'
             elif Path(model_path).exists():
                 model = torch.load(model_path, map_location='cpu', weights_only=True)
-                model_label = model_path
+                model_label = Path(model_path).name  # filename only — avoid leaking full filesystem path
             else:
                 from transformers import AutoModelForCausalLM
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path, torch_dtype=dtype
                 )
-                model_label = model_path
+                model_label = model_path  # HuggingFace model ID is a public identifier
                 is_lm = True
         except Exception as e:
             msg = f"Failed to load model: {e}"
@@ -1401,7 +1403,9 @@ def main():
             'OTLP HTTP endpoint for span export '
             '(e.g. https://cloud.langfuse.com/api/public/otel). '
             'Defaults to OTEL_EXPORTER_OTLP_ENDPOINT env var, '
-            'then stdout if neither is set.'
+            'then stdout if neither is set. '
+            'Validation spans (model name, backend, dtype, max_diff) are sent to '
+            'this endpoint — ensure it complies with your data-retention policy.'
         ),
     )
 

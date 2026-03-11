@@ -8,6 +8,30 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.71] - 2026-03-10 - Privacy Gap Close
+
+### **Summary**
+
+Closes the final quality gap from the v0.5.70 audit (Privacy 7.5→8): local model file
+paths no longer appear in CLI output or CI JSON (filename only), and `--otel-endpoint`
+help text now includes a data-retention notice.
+
+### **Changes**
+- `src/torchbridge/cli/validate.py`: `model_label` for local files now uses
+  `Path(model_path).name` (filename only) instead of the full path — prevents
+  filesystem structure leakage in human output, CI JSON, and OTel spans.
+  HuggingFace model IDs (public identifiers) are unchanged.
+- `src/torchbridge/cli/validate.py`: Both `--otel-endpoint` help strings now include
+  "ensure it complies with your data-retention policy" to inform users that spans are
+  sent to a third-party endpoint.
+- `tests/unit/test_validate_compare.py`: Added `TestModelPathPrivacy` (2 tests)
+
+### **Test Impact**
+- **Net new:** 2 tests
+- **Total passing:** 1,401
+
+---
+
 ## [0.5.70] - 2026-03-10 - Integration Test Expansion
 
 ### **Summary**
