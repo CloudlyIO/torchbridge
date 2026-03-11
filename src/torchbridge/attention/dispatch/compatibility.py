@@ -8,6 +8,8 @@ precision/quantization/compatibility.py.
 
 from __future__ import annotations
 
+import logging
+
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,
@@ -17,6 +19,8 @@ from torchbridge.core.config import (
 )
 
 from .kernel_types import AttentionKernelType
+
+logger = logging.getLogger(__name__)
 
 # ── NVIDIA kernel tables ─────────────────────────────────────────────
 
@@ -146,15 +150,39 @@ class AttentionDispatchMatrix:
         """Return ordered list of supported kernels (best first)."""
         if backend == HardwareBackend.CUDA:
             arch = architecture or NVIDIAArchitecture.AMPERE
+            if arch not in _NVIDIA_KERNELS:
+                logger.warning(
+                    "Unknown NVIDIA architecture %r — falling back to Pascal kernel list. "
+                    "Update AttentionDispatchMatrix for this architecture.",
+                    arch,
+                )
             return list(_NVIDIA_KERNELS.get(arch, _NVIDIA_KERNELS[NVIDIAArchitecture.PASCAL]))
         elif backend == HardwareBackend.AMD:
             arch = architecture or AMDArchitecture.CDNA3
+            if arch not in _AMD_KERNELS:
+                logger.warning(
+                    "Unknown AMD architecture %r — falling back to CDNA2 kernel list. "
+                    "Update AttentionDispatchMatrix for this architecture.",
+                    arch,
+                )
             return list(_AMD_KERNELS.get(arch, _AMD_KERNELS[AMDArchitecture.CDNA2]))
         elif backend == HardwareBackend.TRAINIUM:
             arch = architecture or TrainiumArchitecture.TRN2
+            if arch not in _TRAINIUM_KERNELS:
+                logger.warning(
+                    "Unknown Trainium architecture %r — falling back to TRN1 kernel list. "
+                    "Update AttentionDispatchMatrix for this architecture.",
+                    arch,
+                )
             return list(_TRAINIUM_KERNELS.get(arch, _TRAINIUM_KERNELS[TrainiumArchitecture.TRN1]))
         elif backend == HardwareBackend.TPU:
             arch = architecture or TPUVersion.V5E
+            if arch not in _TPU_KERNELS:
+                logger.warning(
+                    "Unknown TPU version %r — falling back to v4 kernel list. "
+                    "Update AttentionDispatchMatrix for this TPU version.",
+                    arch,
+                )
             return list(_TPU_KERNELS.get(arch, _TPU_KERNELS[TPUVersion.V4]))
         else:
             return list(_CPU_KERNELS)
