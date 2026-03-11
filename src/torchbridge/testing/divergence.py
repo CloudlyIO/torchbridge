@@ -68,19 +68,31 @@ class DivergenceTracer:
     Args:
         model: The PyTorch module to trace.
         device: Device to run the model on.  CPU is used as the reference.
+        max_layers: If set, only hook the first ``max_layers`` named modules.
+            Useful on very large models (ResNets, 1000+ blocks) where hooking
+            every layer would exhaust memory or registration overhead.
     """
 
-    def __init__(self, model: nn.Module, device: torch.device | None = None) -> None:
+    def __init__(
+        self,
+        model: nn.Module,
+        device: torch.device | None = None,
+        max_layers: int | None = None,
+    ) -> None:
         self._model = model
         self._device = device or torch.device("cpu")
+        self._max_layers = max_layers
         self._captures: dict[str, _LayerCapture] = {}
         self._handles: list[Any] = []
 
     def __enter__(self) -> DivergenceTracer:
         self._captures.clear()
+        registered = 0
         for name, module in self._model.named_modules():
             if not name:
                 continue  # skip root
+            if self._max_layers is not None and registered >= self._max_layers:
+                break
             capture = _LayerCapture(name=name)
             self._captures[name] = capture
 
@@ -90,6 +102,7 @@ class DivergenceTracer:
 
             handle = module.register_forward_hook(_hook)
             self._handles.append(handle)
+            registered += 1
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -127,6 +140,9 @@ class DivergenceTracer:
                 continue
             test_out = cap.outputs[-1]
             ref_out = ref_cap.outputs[-1]
+            if test_out.numel() == 0 or ref_out.numel() == 0:
+                logger.debug("Skipping empty tensor at layer %s", name)
+                continue
             if test_out.shape != ref_out.shape:
                 continue
             try:
@@ -170,6 +186,9 @@ class DivergenceTracer:
                 continue
             # Compare consecutive forward passes
             a, b = cap.outputs[-2], cap.outputs[-1]
+            if a.numel() == 0 or b.numel() == 0:
+                logger.debug("Skipping empty tensor at layer %s", name)
+                continue
             if a.shape != b.shape:
                 continue
             diff = torch.abs(a - b)

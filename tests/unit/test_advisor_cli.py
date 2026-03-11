@@ -123,3 +123,44 @@ class TestAdvisorCLI:
     def test_advisor_missing_model_params(self):
         result = cli_main(["advisor"])
         assert result != 0
+
+
+# ── v0.5.69: rationale in recommendation output ──────────────────────────────
+
+class TestAdvisorRationale:
+    def test_recommendation_notes_include_tp_rationale(self, capsys):
+        from torchbridge.core.config import HardwareBackend
+        from torchbridge.distributed.config import recommend_parallelism
+        rec = recommend_parallelism(
+            model_params=int(7e9),
+            backend=HardwareBackend.CUDA,
+            world_size=4,
+        )
+        combined = " ".join(rec.notes)
+        # Should explain why TP=N was chosen (or not chosen)
+        assert "TP=" in combined
+
+    def test_recommendation_notes_include_pp_rationale(self):
+        from torchbridge.core.config import HardwareBackend
+        from torchbridge.distributed.config import recommend_parallelism
+        rec = recommend_parallelism(
+            model_params=int(7e9),
+            backend=HardwareBackend.CUDA,
+            world_size=4,
+        )
+        combined = " ".join(rec.notes)
+        # Should explain PP decision
+        assert "PP=" in combined
+
+    def test_small_model_tp1_pp1_rationale_present(self):
+        from torchbridge.core.config import HardwareBackend
+        from torchbridge.distributed.config import recommend_parallelism
+        # 1B model, 2 GPUs — should be TP=1, PP=1 with explanation
+        rec = recommend_parallelism(
+            model_params=int(1e9),
+            backend=HardwareBackend.CUDA,
+            world_size=2,
+        )
+        combined = " ".join(rec.notes)
+        assert "TP=1" in combined
+        assert "PP=1" in combined

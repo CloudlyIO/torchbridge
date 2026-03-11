@@ -176,6 +176,8 @@ class MultiStepTracer:
         """
         if steps < 1:
             raise ValueError(f"steps must be >= 1, got {steps}")
+        if input_ids.numel() == 0:
+            raise ValueError("input_ids must be non-empty (got a tensor with 0 elements)")
 
         tol = self._tol_db.get(self._backend_a, self._dtype)
 

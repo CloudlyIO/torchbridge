@@ -213,3 +213,36 @@ class TestValidationSpanExporterExport:
     def test_shutdown_does_not_raise(self, monkeypatch):
         exp = self._make_exporter(monkeypatch)
         exp.shutdown()  # Must not raise
+
+
+# ── v0.5.69: URL scheme validation ─────────────────────────────────────────
+
+class TestEndpointUrlValidation:
+    def test_invalid_scheme_logs_warning(self, monkeypatch, caplog):
+        import logging
+        monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+        from torchbridge.testing.otel_exporter import ValidationSpanExporter
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+            exp = ValidationSpanExporter(endpoint="ftp://invalid-url.example.com")
+            exp.shutdown()
+        assert any("ftp://" in msg for msg in caplog.messages)
+
+    def test_valid_https_scheme_no_warning(self, monkeypatch, caplog):
+        import logging
+        monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+        from torchbridge.testing.otel_exporter import ValidationSpanExporter
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+            exp = ValidationSpanExporter(endpoint="https://cloud.langfuse.com/api/public/otel")
+            exp.shutdown()
+        url_warnings = [m for m in caplog.messages if "does not look like" in m]
+        assert len(url_warnings) == 0
+
+    def test_valid_http_scheme_no_warning(self, monkeypatch, caplog):
+        import logging
+        monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+        from torchbridge.testing.otel_exporter import ValidationSpanExporter
+        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+            exp = ValidationSpanExporter(endpoint="http://localhost:4318")
+            exp.shutdown()
+        url_warnings = [m for m in caplog.messages if "does not look like" in m]
+        assert len(url_warnings) == 0
