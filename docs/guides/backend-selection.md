@@ -94,10 +94,10 @@ Compare backends by cost-per-token on your workload:
 from torchbridge import TorchBridgeConfig
 
 config = TorchBridgeConfig.for_training()
-config.hardware.nvidia.fp8_enabled = True              # H100+
-config.hardware.nvidia.flash_attention_version = "3"   # H100+
-config.hardware.nvidia.flash_attention_enabled = True
+config.hardware.nvidia.fp8_enabled = True  # H100+
 ```
+
+FlashAttention kernel selection is handled automatically by `AttentionDispatcher` — it queries the compatibility matrix for your architecture (Hopper, Ampere, etc.) and selects the best available kernel (FlexAttention > FA-3 > FA-2 > PyTorch SDPA). No manual flag needed.
 
 ### AMD
 

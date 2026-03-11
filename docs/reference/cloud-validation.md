@@ -79,6 +79,8 @@ equivalence and is the primary metric for XLA backends.
 
 | Run | Platforms | Model | All Pass |
 |-----|-----------|-------|----------|
+| v0.5.67 | AMD MI300X (ROCm 6.2), AWS A10G (CUDA 2.6.0+cu124), GCP T4 (CUDA 2.7.1+cu128) | Qwen3-0.6B | Yes (3/3) |
+| v0.5.45 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (8/8) |
 | v0.5.36 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (8/8) |
 | v0.5.34 | MPS, TPU v5e, H100 NVL | Qwen3-0.6B | Yes (6/6) |
 | v0.5.33 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
