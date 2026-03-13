@@ -5,16 +5,9 @@ Precision Module
    :members:
    :show-inheritance:
 
-FP8 Native
-----------
+Quantization
+------------
 
-.. automodule:: torchbridge.precision.fp8_native
-   :members:
-   :show-inheritance:
-
-FP8 Training Engine
--------------------
-
-.. automodule:: torchbridge.precision.fp8_training_engine
+.. automodule:: torchbridge.precision.quantization
    :members:
    :show-inheritance:

@@ -54,7 +54,6 @@ Write once, run on NVIDIA, AMD, TPU, Trainium, and CPU without code changes.
    api/core
    api/backends
    api/cli
-   api/deployment
    api/precision
 
 API Reference
@@ -67,7 +66,6 @@ API Reference
    torchbridge.core
    torchbridge.backends
    torchbridge.cli
-   torchbridge.deployment
    torchbridge.precision
 
 Indices and tables

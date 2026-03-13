@@ -6,11 +6,6 @@ against state-of-the-art implementations.
 
 """
 
-from .baseline_implementations import (
-    FlashAttentionBaseline,
-    HuggingFaceBaseline,
-    PyTorchNativeBaseline,
-)
 from .benchmark_runner import BenchmarkConfig, BenchmarkRunner
 from .metrics_collector import MetricsCollector, PerformanceMetrics
 
@@ -44,10 +39,6 @@ __all__ = [
     # Runner and config
     "BenchmarkRunner",
     "BenchmarkConfig",
-    # Baselines
-    "PyTorchNativeBaseline",
-    "FlashAttentionBaseline",
-    "HuggingFaceBaseline",
     # Metrics
     "MetricsCollector",
     "PerformanceMetrics",

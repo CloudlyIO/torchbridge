@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.71"
+version = "0.5.72"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"
@@ -197,11 +197,8 @@ exclude = [
 module = [
     "torchbridge.utils.*",
     "torchbridge.precision.*",
-    "torchbridge.mixture_of_experts.*",
     "torchbridge.hardware.gpu.*",
     "torchbridge.backends.*",
-    "torchbridge.deployment.serving.*",
-    "torchbridge.optimizations.*",
 ]
 disallow_untyped_defs = false
 warn_return_any = false

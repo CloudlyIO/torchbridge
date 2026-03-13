@@ -8,6 +8,45 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.72] - 2026-03-12 - Repo Cleanup & Compaction
+
+### **Summary**
+
+Deep sweep to remove all stale files accumulated across contractions v0.5.53–v0.5.58.
+Deleted 28 files importing deleted modules (MoE, optimized_layers, fp8_native,
+attention implementations, serving stack), removed 6 empty stub directories, and
+updated docs/CI/Docker to match current codebase.
+
+### **Deleted**
+- **4 demos**: flex_attention, moe, performance_regression, production_pipeline
+- **12 benchmarks**: attention_efficiency, custom_kernel, dynamic_shapes,
+  baseline_implementations, enhanced_benchmark_runner, hardware_abstraction,
+  quantization_accuracy, quick, comprehensive, simple, demo_cutting_edge, next_gen.md
+- **5 examples**: deepseek, moe, kv_cache, serving/run_llm_server, serving/README
+- **2 scripts**: v0545_manual_test.py, cost_optimized_validation.py
+- **6 empty stub packages**: attention/{compatibility,core,implementations},
+  core/components, deployment/{,serving}
+- **1 Docker**: Dockerfile.serving (serving stack removed in v0.5.56)
+- **1 docs**: api/deployment.rst (both export and serving deleted)
+
+### **Updated**
+- `docs/guides/attention.md` — removed deleted API refs
+- `docs/api/cli.rst` — removed init/profile/optimize/export, added 6 current modules
+- `docs/api/precision.rst` — removed fp8, added quantization
+- `docs/index.rst` — removed deployment from toctree
+- `.github/workflows/ci.yml` — removed doctest refs to deleted modules
+- `.github/workflows/docker.yml` — removed build-serving job
+- `benchmarks/framework/__init__.py` — removed broken baseline import
+- `benchmarks/README.md`, `examples/models/README.md` — updated listings
+- `scripts/cloud_testing/master_test.sh` — fp8_native → quantization tests
+- `pyproject.toml` — removed mypy overrides for deleted modules
+
+### **Impact**
+- **Net:** ~10,672 lines removed across 42 files
+- **Tests:** 1,574 passing (unchanged)
+
+---
+
 ## [0.5.71] - 2026-03-10 - Privacy Gap Close
 
 ### **Summary**
