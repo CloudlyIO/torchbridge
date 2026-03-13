@@ -82,8 +82,6 @@ jobs:
         run: |
           pytest --doctest-modules \
             src/torchbridge/models/llm/kv_cache.py \
-            src/torchbridge/precision/fp8_native.py \
-            src/torchbridge/precision/fp8_training_engine.py \
             -v
 
   type-check:

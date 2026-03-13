@@ -188,36 +188,22 @@ PYEOF
 }
 
 run_fp8_tests() {
-    log_step "4/5" "Running FP8 Tests"
+    log_step "4/5" "Running Quantization Tests"
 
     cd "$REPO_ROOT"
 
-    # Check FP8 support
-    FP8_SUPPORTED=$(python3 -c "
-from torchbridge.precision.fp8_native import is_fp8_available
-print('yes' if is_fp8_available() else 'no')
-" 2>/dev/null || echo "no")
-
-    if [ "$FP8_SUPPORTED" = "no" ]; then
-        log_info "FP8 not supported on this hardware, running basic tests only"
-    fi
-
-    # Unit tests
-    log_info "Running FP8 native tests..."
-    python3 -m pytest tests/test_fp8_native.py -v --json-report --json-report-file="$REPORT_DIR/fp8_test_results.json" 2>&1 | tee "$REPORT_DIR/fp8_test_output.txt" || true
-
-    # Demo
-    log_info "Running FP8 demo..."
-    python3 demos/fp8_native_demo.py 2>&1 | tee "$REPORT_DIR/fp8_demo_output.txt" || true
+    # Run quantization unit tests (fp8_native removed in v0.5.54; quantization module is current)
+    log_info "Running quantization tests..."
+    python3 -m pytest tests/unit/test_quantization_formats.py tests/unit/test_quantization_compatibility.py -v --json-report --json-report-file="$REPORT_DIR/quant_test_results.json" 2>&1 | tee "$REPORT_DIR/quant_test_output.txt" || true
 
     # Count results
-    if [ -f "$REPORT_DIR/fp8_test_results.json" ]; then
+    if [ -f "$REPORT_DIR/quant_test_results.json" ]; then
         python3 << PYEOF
 import json
-with open("$REPORT_DIR/fp8_test_results.json") as f:
+with open("$REPORT_DIR/quant_test_results.json") as f:
     data = json.load(f)
     summary = data.get("summary", {})
-    print(f"FP8 Tests: {summary.get('passed', 0)} passed, {summary.get('failed', 0)} failed")
+    print(f"Quantization Tests: {summary.get('passed', 0)} passed, {summary.get('failed', 0)} failed")
 PYEOF
     fi
 }
