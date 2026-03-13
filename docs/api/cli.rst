@@ -11,13 +11,7 @@ Main Entry Point
 Commands
 --------
 
-.. automodule:: torchbridge.cli.optimize
-   :members:
-
 .. automodule:: torchbridge.cli.benchmark
-   :members:
-
-.. automodule:: torchbridge.cli.export
    :members:
 
 .. automodule:: torchbridge.cli.doctor
@@ -26,11 +20,23 @@ Commands
 .. automodule:: torchbridge.cli.validate
    :members:
 
-.. automodule:: torchbridge.cli.init
-   :members:
-
-.. automodule:: torchbridge.cli.profile
-   :members:
-
 .. automodule:: torchbridge.cli.migrate
+   :members:
+
+.. automodule:: torchbridge.cli.quantize
+   :members:
+
+.. automodule:: torchbridge.cli.cache
+   :members:
+
+.. automodule:: torchbridge.cli.speculate
+   :members:
+
+.. automodule:: torchbridge.cli.advisor
+   :members:
+
+.. automodule:: torchbridge.cli.checkpoint
+   :members:
+
+.. automodule:: torchbridge.cli.adapter
    :members:

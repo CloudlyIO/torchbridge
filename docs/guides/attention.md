@@ -6,17 +6,13 @@ with ordered fallback chains when the preferred kernel is unavailable at runtime
 ## Quick Start
 
 ```python
-from torchbridge.attention import AttentionDispatcher, AttentionModuleConfig
+from torchbridge.attention import AttentionDispatcher
 
 # Auto-detect hardware and select optimal kernel
 dispatcher = AttentionDispatcher()
 result = dispatcher.select_kernel(seq_length=2048, num_heads=32, head_dim=128)
 print(f"Selected: {result.kernel_type.value}")
 print(f"Fallbacks: {[k.value for k in result.fallback_chain]}")
-
-# Create an attention layer with the best kernel
-config = AttentionModuleConfig(embed_dim=4096, num_heads=32)
-attention = dispatcher.create_attention(config)
 ```
 
 ## Kernel Compatibility Matrix
@@ -34,49 +30,6 @@ attention = dispatcher.create_attention(config)
 | TPU | v5+/v7 | Pallas Attention | PyTorch SDPA |
 | TPU | v4 | PyTorch SDPA | — |
 | CPU | any | PyTorch SDPA | — |
-
-## GQA and MQA Support
-
-Grouped-Query Attention (GQA) reduces KV cache memory by using fewer KV heads
-than query heads. Multi-Query Attention (MQA) is the extreme case with a single
-KV head.
-
-```python
-from torchbridge.attention import AttentionModuleConfig
-
-# Llama 3 style: 32 query heads, 8 KV heads
-gqa_config = AttentionModuleConfig(
-    embed_dim=4096, num_heads=32, num_kv_heads=8
-)
-print(f"KV repeat factor: {gqa_config.kv_head_repeat_factor}")  # 4
-
-# Multi-query attention: 1 KV head
-mqa_config = AttentionModuleConfig(
-    embed_dim=4096, num_heads=32, num_kv_heads=1
-)
-print(f"KV repeat factor: {mqa_config.kv_head_repeat_factor}")  # 32
-
-# Standard MHA (default): num_kv_heads=None
-mha_config = AttentionModuleConfig(embed_dim=4096, num_heads=32)
-```
-
-**Validation rules:**
-- `num_heads` must be evenly divisible by `num_kv_heads`
-- `num_kv_heads=None` (default) means standard multi-head attention
-
-## FlexAttention Score Modifiers
-
-On Hopper+ GPUs, FlexAttention supports custom score modifiers compiled via
-`torch.compile` for causal masking, sliding windows, and ALiBi:
-
-```python
-from torchbridge.attention import create_flex_attention, FlexAttentionScoreMods
-
-# Causal FlexAttention
-attn = create_flex_attention(
-    embed_dim=512, num_heads=8, score_mod=FlexAttentionScoreMods.causal
-)
-```
 
 ## Benchmark Cache
 
@@ -122,7 +75,3 @@ The dispatch system lives in `torchbridge.attention.dispatch` and consists of:
 - **`compatibility.py`** — `AttentionDispatchMatrix` with static lookup tables
 - **`dispatcher.py`** — `AttentionDispatcher` that walks fallback chains
 - **`benchmark_cache.py`** — `KernelBenchmarkCache` with fingerprint invalidation
-
-The dispatcher integrates with the existing attention registry via
-`_select_best_implementation()` in `attention/core/registry.py`, which tries
-the dispatcher first and falls back to the original heuristic logic.

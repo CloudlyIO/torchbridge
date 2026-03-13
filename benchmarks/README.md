@@ -5,9 +5,6 @@ Benchmarking suite for validating cross-backend performance across NVIDIA, AMD, 
 ## Quick Start
 
 ```bash
-# Quick validation
-python3 benchmarks/simple_benchmark_test.py
-
 # Backend comparison
 python3 benchmarks/backend_comparison.py --quick
 
@@ -22,13 +19,6 @@ benchmarks/
 ├── README.md
 ├── __init__.py
 │
-├── Core Benchmarks
-│   ├── simple_benchmark_test.py     # Quick validation
-│   ├── quick_benchmark.py           # Fast benchmark suite
-│   ├── unified_runner.py            # All-in-one runner
-│   ├── run_comprehensive_benchmark.py
-│   └── regression_benchmark.py      # Regression detection
-│
 ├── Backend Benchmarks
 │   ├── backend_comparison.py        # Cross-backend comparison
 │   ├── nvidia_integration_benchmark.py  # NVIDIA-specific
@@ -36,9 +26,6 @@ benchmarks/
 │   └── tpu_integration_benchmark.py # TPU-specific
 │
 ├── Feature Benchmarks
-│   ├── custom_kernel_benchmark.py
-│   ├── hardware_abstraction_benchmark.py
-│   ├── dynamic_shapes_benchmark.py
 │   └── cli_performance_benchmark.py
 │
 ├── framework/                       # Benchmark infrastructure
@@ -46,24 +33,14 @@ benchmarks/
 │   ├── metrics_collector.py
 │   ├── timing_utils.py
 │   ├── analysis_engine.py
-│   └── baseline_implementations.py
+│   ├── cutting_edge_baselines.py
+│   └── results_analyzer.py
 │
 ├── regression/                      # Regression testing
 │   ├── baseline_manager.py
 │   ├── regression_detector.py
 │   ├── threshold_manager.py
 │   └── reporting/
-│
-├── next_gen/                        # Cutting-edge benchmarks
-│   ├── demo_cutting_edge_benchmark.py
-│   ├── enhanced_benchmark_runner.py
-│   └── cutting_edge_baselines.py
-│
-├── models/                          # Model-specific benchmarks
-│   └── small_model_benchmark.py
-│
-├── configs/                         # Benchmark configurations
-│   └── *.yaml
 │
 └── results/                         # Benchmark results (gitignored)
     └── *.json
@@ -73,25 +50,16 @@ benchmarks/
 
 | Benchmark | Focus | Hardware |
 |-----------|-------|----------|
-| `simple_benchmark_test.py` | Quick validation | Any |
 | `nvidia_integration_benchmark.py` | NVIDIA backend | NVIDIA GPU |
 | `amd_integration_benchmark.py` | AMD backend | AMD GPU |
 | `tpu_integration_benchmark.py` | TPU backend | Cloud TPU |
 | `backend_comparison.py` | Cross-backend | Any GPU |
-| `custom_kernel_benchmark.py` | CUDA kernels | CUDA GPU |
-| `hardware_abstraction_benchmark.py` | Hardware layer | Any |
-| `dynamic_shapes_benchmark.py` | Dynamic shapes | Any |
-| `regression_benchmark.py` | Regression detection | Any |
+| `cli_performance_benchmark.py` | CLI latency | Any |
+| `unified_runner.py` | All-in-one runner | Any |
 
 ## Running Benchmarks
 
 ```bash
-# Quick validation (30 seconds)
-python3 benchmarks/simple_benchmark_test.py
-
-# Full benchmark suite
-python3 benchmarks/run_comprehensive_benchmark.py
-
 # Unified runner with options
 python3 benchmarks/unified_runner.py --quick
 python3 benchmarks/unified_runner.py --backends nvidia,amd
