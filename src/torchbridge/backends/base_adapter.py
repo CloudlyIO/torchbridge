@@ -192,19 +192,6 @@ class BaseAdapter(ABC):
                 model, level, sample_input, dtype
             )
 
-            # Apply mode-specific optimizations
-            if for_inference:
-                optimized_model = self._apply_inference_optimizations(
-                    optimized_model, sample_input, dtype
-                )
-                result.optimizations_applied.append('inference_mode')
-
-            if for_training:
-                optimized_model = self._apply_training_optimizations(
-                    optimized_model, dtype
-                )
-                result.optimizations_applied.append('training_mode')
-
             # Record in history
             self._record_optimization(model, result)
 
@@ -269,56 +256,6 @@ class BaseAdapter(ABC):
             dtype=dtype,
             for_training=True
         )
-
-    def _apply_inference_optimizations(
-        self,
-        model: nn.Module,
-        sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
-    ) -> nn.Module:
-        """
-        Apply inference-specific optimizations.
-
-        Override in subclasses for device-specific inference optimizations.
-
-        Args:
-            model: Model to optimize
-            sample_input: Optional sample input
-            dtype: Optional dtype
-
-        Returns:
-            Optimized model
-        """
-        # Set to eval mode
-        model = model.eval()
-
-        # Disable gradient computation
-        for param in model.parameters():
-            param.requires_grad = False
-
-        return model
-
-    def _apply_training_optimizations(
-        self,
-        model: nn.Module,
-        dtype: torch.dtype | None = None
-    ) -> nn.Module:
-        """
-        Apply training-specific optimizations.
-
-        Override in subclasses for device-specific training optimizations.
-
-        Args:
-            model: Model to optimize
-            dtype: Optional dtype
-
-        Returns:
-            Optimized model
-        """
-        # Ensure train mode
-        model = model.train()
-
-        return model
 
     def get_optimization_recommendations(
         self,

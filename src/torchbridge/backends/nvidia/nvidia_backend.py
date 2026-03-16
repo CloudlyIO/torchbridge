@@ -18,9 +18,10 @@ import torch.nn as nn
 from torchbridge.backends.base_backend import (
     BaseBackend,
     DeviceInfo,
-    OptimizationLevel,
 )
+from torchbridge.backends.compile_compatibility import CompileCompatibility
 from torchbridge.core.config import (
+    HardwareBackend,
     NVIDIAArchitecture,
     TorchBridgeConfig,
 )
@@ -233,127 +234,51 @@ class NVIDIABackend(BaseBackend):
             NVIDIAArchitecture.BLACKWELL_CONSUMER
         ]
 
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
-        """
-        Prepare model for NVIDIA GPU execution (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model to prepare
-            optimization_level: Optional optimization level (O0, O1, O2, O3)
-
-        Returns:
-            Prepared model ready for NVIDIA GPU execution
-        """
+    def prepare_model(self, model: nn.Module) -> nn.Module:
+        """Move model to NVIDIA GPU (implements BaseBackend abstract method)."""
         if model is None:
             warnings.warn("Model is None, returning unchanged", stacklevel=2)
             return model
-
         if not self.is_cuda_available:
             warnings.warn("CUDA not available, returning model unchanged", stacklevel=2)
             return model
-
-        # Move model to device
-        model = model.to(self.device)
-
-        # Apply NVIDIA-specific optimizations based on level
-        if optimization_level is None or optimization_level == OptimizationLevel.O0:
-            # O0: Minimal optimizations (just device placement)
-            pass
-        else:
-            # O1+: Apply NVIDIA-specific optimizations
-            model = self._apply_nvidia_optimizations(model)
-
-            # O2+: Enable gradient checkpointing if configured
-            if optimization_level in (OptimizationLevel.O2, OptimizationLevel.O3, "O2", "O3", "balanced", "aggressive"):
-                if self.config.memory.gradient_checkpointing:
-                    model = self._enable_gradient_checkpointing(model)
-
-        return model
+        return model.to(self.device)
 
     def optimize_for_inference(
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
-        """
-        Optimize a model for inference (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            sample_input: Optional sample input for tracing
-            dtype: Optional dtype for precision
-
-        Returns:
-            Inference-optimized model
-        """
-        # Set eval mode before prepare_model so inference-only optimizations
-        # (Tensor Core alignment) are not silently skipped on training-mode models.
+        """Optimize model for NVIDIA inference (implements BaseBackend abstract method)."""
+        # eval before tensor-core alignment so training-mode guard passes
         model.eval()
-
-        # Prepare model with aggressive optimizations
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
-
-        # Disable gradients
+        model = self.prepare_model(model)
         for param in model.parameters():
             param.requires_grad = False
-
-        # Apply torch.compile if available and sample input provided
+        # NVIDIA-specific layout optimizations (legitimate — benchmarked)
+        model = self._optimize_for_tensor_cores(model)
+        model = self._optimize_memory_layout(model)
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
-                mode = 'max-autotune' if (self.is_h100 or self.is_blackwell) else 'reduce-overhead'
+                mode = CompileCompatibility.get_compile_mode(
+                    HardwareBackend.CUDA, self.nvidia_config.architecture
+                )
                 model = torch.compile(model, mode=mode)  # type: ignore[assignment]
-                # Warm up
                 with torch.no_grad():
                     _ = model(sample_input.to(self.device))
             except Exception as e:
-                logger.warning(f"torch.compile failed: {e}")
-
+                logger.warning("torch.compile failed: %s", e)
         return model
 
     def optimize_for_training(
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
-        """
-        Optimize a model for training (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            optimizer: Optional optimizer to optimize along with model
-            dtype: Optional dtype for precision
-
-        Returns:
-            Training-optimized model, or tuple of (model, optimizer)
-        """
-        # Prepare model with balanced optimizations
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O1)
-
-        # Ensure train mode
-        model.train()
-
-        # Apply mixed precision settings if configured
-        if self.nvidia_config.mixed_precision_enabled:
-            model._mixed_precision_enabled = True  # type: ignore[assignment]
-
+        """Optimize model for NVIDIA training (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).train()
         if optimizer:
             return model, optimizer
-        return model
-
-    def _apply_nvidia_optimizations(self, model: nn.Module) -> nn.Module:
-        """Apply NVIDIA-specific optimizations to model."""
-        # Apply Tensor Core optimizations
-        model = self._optimize_for_tensor_cores(model)
-
-        # Apply memory optimizations
-        model = self._optimize_memory_layout(model)
-
         return model
 
     def _configure_cuda_allocator(self) -> None:

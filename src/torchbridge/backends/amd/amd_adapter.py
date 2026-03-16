@@ -24,7 +24,7 @@ import torch
 
 from torchbridge.core.config import AMDArchitecture, AMDConfig
 
-from .amd_exceptions import AMDOptimizationError, MatrixCoreError
+from .amd_exceptions import AMDOptimizationError
 
 logger = logging.getLogger(__name__)
 
@@ -158,11 +158,7 @@ class AMDAdapter:
                     f"Fused {fused} Conv+BatchNorm+ReLU blocks"
                 )
 
-        # 2. Memory layout optimization
-        if self._optimize_memory_layout(model):
-            result.optimizations_applied.append("Optimized memory layouts for HBM")
-
-        # 3. Set cuDNN benchmarking (rocBLAS equivalent)
+        # 2. Set cuDNN benchmarking (rocBLAS equivalent)
         if self.config.enable_rocblas_tuning:
             torch.backends.cudnn.benchmark = True
             result.optimizations_applied.append("Enabled rocBLAS auto-tuning")
@@ -199,13 +195,7 @@ class AMDAdapter:
                     f"Fused {fused} Linear+GELU blocks"
                 )
 
-        # 5. Enable Matrix Core utilization for GEMM
-        if self._enable_matrix_cores(model):
-            result.optimizations_applied.append(
-                f"Enabled Matrix Cores for {self.config.architecture.value}"
-            )
-
-        # 6. Mixed precision optimization
+        # 5. Mixed precision optimization
         if self.config.enable_mixed_precision:
             if self._setup_mixed_precision(model):
                 result.optimizations_applied.append(
@@ -378,108 +368,6 @@ class AMDAdapter:
             parent[int(parts[-1])] = new_module
         else:
             setattr(parent, parts[-1], new_module)
-
-    def _optimize_memory_layout(self, model: torch.nn.Module) -> bool:
-        """
-        Optimize memory layouts for HBM efficiency.
-
-        AMD CDNA architectures benefit from specific memory layouts
-        that maximize HBM2e/HBM3 bandwidth utilization.
-
-        Optimizations:
-        - channels_last for Conv2d (NHWC format)
-        - channels_last_3d for Conv3d (NDHWC format)
-        - contiguous tensors for better memory access
-
-        Args:
-            model: Model to optimize
-
-        Returns:
-            True if layouts were optimized
-        """
-        try:
-            optimized_count = 0
-
-            for name, module in model.named_modules():
-                # Convert Conv2d to channels_last (NHWC)
-                if isinstance(module, torch.nn.Conv2d):
-                    # Check if weight needs conversion
-                    if module.weight.is_contiguous():
-                        try:
-                            module.to(memory_format=torch.channels_last)
-                            optimized_count += 1
-                            logger.debug("Converted %s to channels_last", name)
-                        except Exception:
-                            logger.debug("Conv2d channels_last conversion failed for %s", name, exc_info=True)
-                            pass
-
-                # Convert Conv3d to channels_last_3d (NDHWC)
-                elif isinstance(module, torch.nn.Conv3d):
-                    try:
-                        module.to(memory_format=torch.channels_last_3d)
-                        optimized_count += 1
-                        logger.debug("Converted %s to channels_last_3d", name)
-                    except Exception:
-                        logger.debug("Conv3d channels_last_3d conversion failed for %s", name, exc_info=True)
-                        pass
-
-                # Ensure Linear weights are contiguous for optimal rocBLAS
-                elif isinstance(module, torch.nn.Linear):
-                    if not module.weight.is_contiguous():
-                        module.weight.data = module.weight.data.contiguous()
-                        optimized_count += 1
-
-            logger.debug("Memory layouts optimized: %d modules", optimized_count)
-            return optimized_count > 0
-
-        except Exception as e:
-            logger.warning("Failed to optimize memory layouts: %s", e)
-            return False
-
-    def _enable_matrix_cores(self, model: torch.nn.Module) -> bool:
-        """
-        Enable Matrix Core utilization for GEMM operations.
-
-        CDNA2 (MI200) and CDNA3 (MI300) have Matrix Cores that accelerate
-        matrix multiplication operations. This method configures PyTorch
-        to utilize them effectively.
-
-        Args:
-            model: Model to optimize
-
-        Returns:
-            True if Matrix Cores were enabled
-
-        Raises:
-            MatrixCoreError: If Matrix Core setup fails
-        """
-        # Only CDNA2, CDNA3, and CDNA4 have Matrix Cores
-        if self.config.architecture not in [
-            AMDArchitecture.CDNA2,
-            AMDArchitecture.CDNA3,
-            AMDArchitecture.CDNA4,
-        ]:
-            logger.warning(
-                "Matrix Cores not available on %s", self.config.architecture.value
-            )
-            return False
-
-        try:
-            # Enable TF32 tensor cores (AMD equivalent)
-            # ROCm uses similar optimization flags as CUDA
-            torch.backends.cuda.matmul.allow_tf32 = self.config.enable_matrix_cores
-
-            logger.info(
-                "Matrix Cores enabled for %s", self.config.architecture.value
-            )
-            return True
-
-        except Exception as e:
-            raise MatrixCoreError(
-                "enable",
-                self.config.architecture.value,
-                str(e),
-            ) from e
 
     def _setup_mixed_precision(self, model: torch.nn.Module) -> bool:
         """

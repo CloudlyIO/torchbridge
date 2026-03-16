@@ -196,49 +196,32 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
+    def prepare_model(self, model: nn.Module) -> nn.Module:
         """
         Prepare a model for this backend.
 
-        This method should:
-        - Move model to the appropriate device
-        - Apply backend-specific optimizations
-        - Configure memory layout
+        Moves the model to the appropriate device. No other transformations.
 
         Args:
             model: PyTorch model
-            optimization_level: Optional optimization level
 
         Returns:
-            Prepared model on this backend's device
-
-        Raises:
-            TypeError: If model is not an nn.Module
+            Model on this backend's device
         """
-        if not isinstance(model, nn.Module):
-            raise TypeError(
-                f"Expected nn.Module, got {type(model).__name__}"
-            )
-        return model
+        pass
 
     @abstractmethod
     def optimize_for_inference(
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """
         Optimize a model for inference.
 
         Args:
             model: PyTorch model
-            sample_input: Optional sample input for tracing
-            dtype: Optional dtype for precision
+            sample_input: Optional sample input for arch-aware torch.compile
 
         Returns:
             Inference-optimized model
@@ -250,18 +233,16 @@ class BaseBackend(ABC):
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """
         Optimize a model for training.
 
         Args:
             model: PyTorch model
-            optimizer: Optional optimizer to optimize along with model
-            dtype: Optional dtype for precision
+            optimizer: Optional optimizer
 
         Returns:
-            Training-optimized model, or tuple of (model, optimizer)
+            Training-ready model, or tuple of (model, optimizer)
         """
         pass
 
@@ -517,41 +498,33 @@ class CPUBackend(BaseBackend):
             }
         )
 
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
-        """Prepare model for CPU."""
+    def prepare_model(self, model: nn.Module) -> nn.Module:
+        """Prepare model for CPU — device placement only."""
         return model.to('cpu')
 
     def optimize_for_inference(
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
         """Optimize for CPU inference."""
-        model = model.eval()
-
-        # Apply torch.compile if available (PyTorch 2.0+)
-        if hasattr(torch, 'compile'):
+        model = self.prepare_model(model).eval()
+        for param in model.parameters():
+            param.requires_grad = False
+        if sample_input is not None and hasattr(torch, 'compile'):
             try:
                 model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
             except Exception as e:
-                logger.warning(f"torch.compile failed: {e}")
-
+                logger.warning("torch.compile failed: %s", e)
         return model
 
     def optimize_for_training(
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
         """Optimize for CPU training."""
-        model = model.train()
-
+        model = self.prepare_model(model).train()
         if optimizer:
             return model, optimizer
         return model
