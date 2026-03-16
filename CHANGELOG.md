@@ -8,6 +8,27 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.75] - 2026-03-16 - CLI Cleanup: 9 Correctness Fixes Across 5 Commands
+
+### **Summary**
+
+9 correctness fixes across `quantize`, `benchmark`, `doctor`, `adapter`, and `validate` CLIs. Removed two dead options (`--strategy`, `--calibration-samples`) from `tb-quantize`. Added latency metrics to `_validate_quality()`. `tb-benchmark` now raises `ValueError` on unknown model names and calls `CompileCompatibility.get_compile_mode()` at `level='compile'`. `tb-doctor --fix` no longer implies auto-repair. `tb-adapter` backend choice corrected (`cuda` → `nvidia`), `--hidden-dim`/`--num-modules` params added to `recommend` subcommand, CI JSON output includes them. `tb-validate` yaml import error prints `pip install pyyaml` instead of silently falling back to JSON. 26 new tests; 2 stale tests removed.
+
+### **Fixed**
+
+- **`cli/quantize.py`** — removed dead `--strategy` and `--calibration-samples` options; `_validate_quality()` reports `original_latency_ms`, `quantized_latency_ms`, `speedup_ratio` in CI JSON and human output
+- **`cli/benchmark.py`** — `_load_model()` raises `ValueError` on unknown model; `_apply_optimization(level='compile')` calls `CompileCompatibility.get_compile_mode()` for correct backend mode
+- **`cli/doctor.py`** — `--fix` help text: "Print remediation steps for detected issues (does not modify your system)"
+- **`cli/adapter.py`** — backend choice `cuda` → `nvidia`; added `--hidden-dim` (default 4096) and `--num-modules` (default 4); CI JSON now includes those fields
+- **`cli/validate.py`** — yaml `ImportError` prints `pip install pyyaml` and returns instead of silently writing JSON
+
+### **Tests**
+
+- 26 new unit tests across 5 new test files (`test_cli_quantize.py`, `test_cli_benchmark.py`, `test_cli_adapter.py`, `test_cli_doctor.py`, `test_cli_validate.py`)
+- Removed 2 stale tests from `test_quantization_cli.py` (tested deleted options)
+
+---
+
 ## [0.5.74] - 2026-03-16 - Contraction IX: Backend Adapter Cleanup
 
 ### **Summary**

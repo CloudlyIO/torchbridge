@@ -22,7 +22,7 @@ def _register_subcommands(subparsers: Any) -> None:
         "--backend",
         type=str,
         default="cpu",
-        choices=["cuda", "amd", "trainium", "tpu", "cpu"],
+        choices=["nvidia", "amd", "trainium", "tpu", "cpu"],
         help="Target hardware backend (default: cpu)",
     )
     rec_parser.add_argument(
@@ -30,6 +30,18 @@ def _register_subcommands(subparsers: Any) -> None:
         type=int,
         default=16,
         help="LoRA rank (default: 16)",
+    )
+    rec_parser.add_argument(
+        "--hidden-dim",
+        type=int,
+        default=4096,
+        help="Hidden dimension for adapter parameter estimate (default: 4096)",
+    )
+    rec_parser.add_argument(
+        "--num-modules",
+        type=int,
+        default=4,
+        help="Number of projected modules for parameter estimate (default: 4)",
     )
     rec_parser.add_argument(
         "--ci",
@@ -62,7 +74,7 @@ class AdapterCommand:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
-  torchbridge adapter recommend --backend cuda
+  torchbridge adapter recommend --backend nvidia
   torchbridge adapter recommend --backend amd --rank 8 --ci
   torchbridge adapter info
   torchbridge adapter info --ci
@@ -96,7 +108,7 @@ def _show_recommend(args: Any) -> int:
     from torchbridge.core.config import HardwareBackend
 
     backend_map = {
-        "cuda": HardwareBackend.CUDA,
+        "nvidia": HardwareBackend.CUDA,
         "amd": HardwareBackend.AMD,
         "trainium": HardwareBackend.TRAINIUM,
         "tpu": HardwareBackend.TPU,
@@ -112,6 +124,8 @@ def _show_recommend(args: Any) -> int:
         output = {
             "backend": args.backend,
             "rank": args.rank,
+            "hidden_dim": args.hidden_dim,
+            "num_modules": args.num_modules,
             "optimal_method": optimal.value,
             "fallback_chain": [m.value for m in chain],
             "base_quant_format": base_fmt.value if base_fmt else None,
@@ -138,13 +152,14 @@ def _show_recommend(args: Any) -> int:
 
     # Param estimate
     r = args.rank
-    hidden = 4096  # typical LLM hidden dim
+    hidden = args.hidden_dim
+    n_modules = args.num_modules
     params_per_module = 2 * hidden * r  # A + B
-    total_4_modules = 4 * params_per_module
-    print("Estimated adapter parameters (4096 hidden, 4 modules):")
-    print(f"  LoRA:  {total_4_modules:,} ({total_4_modules / 1e6:.1f}M)")
-    print(f"  DoRA:  {total_4_modules + 4 * hidden:,} "
-          f"({(total_4_modules + 4 * hidden) / 1e6:.1f}M)")
+    total_modules = n_modules * params_per_module
+    print(f"Estimated adapter parameters ({hidden} hidden, {n_modules} modules):")
+    print(f"  LoRA:  {total_modules:,} ({total_modules / 1e6:.1f}M)")
+    print(f"  DoRA:  {total_modules + n_modules * hidden:,} "
+          f"({(total_modules + n_modules * hidden) / 1e6:.1f}M)")
     print()
     return 0
 

@@ -58,13 +58,6 @@ Examples:
         )
 
         parser.add_argument(
-            "--strategy",
-            choices=["auto", "manual"],
-            default="auto",
-            help="Selection strategy (default: auto)",
-        )
-
-        parser.add_argument(
             "--format",
             type=str,
             default="auto",
@@ -89,13 +82,6 @@ Examples:
             "--validate",
             action="store_true",
             help="Run quality validation after quantization",
-        )
-
-        parser.add_argument(
-            "--calibration-samples",
-            type=int,
-            default=512,
-            help="Number of calibration samples for formats that need it",
         )
 
         parser.add_argument(
@@ -292,6 +278,29 @@ Examples:
 
             max_diff = torch.abs(orig_out - quant_out).max().item()
 
+            # Latency measurement: 10 warmup + 50 timed passes
+            _WARMUP = 10
+            _TIMED = 50
+            with torch.no_grad():
+                for _ in range(_WARMUP):
+                    original(test_input)
+            t0 = time.perf_counter()
+            with torch.no_grad():
+                for _ in range(_TIMED):
+                    original(test_input)
+            original_latency_ms = (time.perf_counter() - t0) / _TIMED * 1000
+
+            with torch.no_grad():
+                for _ in range(_WARMUP):
+                    quantized(test_input)
+            t0 = time.perf_counter()
+            with torch.no_grad():
+                for _ in range(_TIMED):
+                    quantized(test_input)
+            quantized_latency_ms = (time.perf_counter() - t0) / _TIMED * 1000
+
+            speedup_ratio = original_latency_ms / max(quantized_latency_ms, 1e-9)
+
             if ci_mode:
                 print(
                     json.dumps(
@@ -299,6 +308,9 @@ Examples:
                             "validation": {
                                 "cosine_similarity": cos_sim,
                                 "max_diff": max_diff,
+                                "original_latency_ms": float(original_latency_ms),
+                                "quantized_latency_ms": float(quantized_latency_ms),
+                                "speedup_ratio": float(speedup_ratio),
                                 "status": "pass" if cos_sim > 0.99 else "warning",
                             }
                         }
@@ -308,6 +320,9 @@ Examples:
                 print("\n Quality Validation:")
                 print(f"  Cosine similarity: {cos_sim:.6f}")
                 print(f"  Max difference: {max_diff:.2e}")
+                print(f"  Original latency: {original_latency_ms:.3f} ms")
+                print(f"  Quantized latency: {quantized_latency_ms:.3f} ms")
+                print(f"  Speedup: {speedup_ratio:.2f}x")
                 status = "PASS" if cos_sim > 0.99 else "WARNING"
                 print(f"  Status: {status}")
 
@@ -332,12 +347,6 @@ def main():
         required=True,
         help="Path to model or HuggingFace name",
     )
-    parser.add_argument(
-        "--strategy",
-        choices=["auto", "manual"],
-        default="auto",
-        help="Selection strategy",
-    )
     parser.add_argument("--format", type=str, default="auto", help="Quantization format")
     parser.add_argument(
         "--backend",
@@ -347,9 +356,6 @@ def main():
     )
     parser.add_argument("--output", "-o", type=str, help="Save quantized model to path")
     parser.add_argument("--validate", action="store_true", help="Validate quality")
-    parser.add_argument(
-        "--calibration-samples", type=int, default=512, help="Calibration samples"
-    )
     parser.add_argument(
         "--trust-source",
         action="store_true",
