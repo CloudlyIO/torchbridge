@@ -164,12 +164,6 @@ class TPUAdapter:
             if hasattr(model, 'gradient_checkpointing_enable'):
                 model.gradient_checkpointing_enable()
 
-        # Apply layer fusion for common patterns
-        model = self._apply_layer_fusion(model)
-
-        # Optimize attention layers if present
-        model = self._optimize_attention_layers(model)
-
         return model
 
     def _apply_aggressive_optimizations(self, model: nn.Module) -> nn.Module:
@@ -187,47 +181,6 @@ class TPUAdapter:
 
         # Apply model-specific optimizations
         model = self._apply_model_specific_optimizations(model)
-
-        return model
-
-    def _apply_layer_fusion(self, model: nn.Module) -> nn.Module:
-        """
-        Apply layer fusion optimizations.
-
-        Note: XLA compiler automatically fuses operations during compilation,
-        including Linear+Activation patterns, conv+batch_norm, and other
-        common patterns. No explicit marking is required.
-
-        This method serves as a placeholder for future manual fusion hints
-        if needed, but currently relies on XLA's automatic fusion capabilities.
-        """
-        # XLA handles layer fusion automatically during compilation
-        # Common fusions include:
-        # - Linear + Activation (ReLU, GELU, SiLU)
-        # - Conv + BatchNorm
-        # - ElementWise operations
-        return model
-
-    def _optimize_attention_layers(self, model: nn.Module) -> nn.Module:
-        """Optimize attention layers for TPU."""
-
-        for module in model.modules():
-            # Look for attention patterns
-            if hasattr(module, 'attention') or 'attention' in module.__class__.__name__.lower():
-                # Enable flash attention if available
-                if hasattr(module, 'flash_attention'):
-                    module.flash_attention = True  # type: ignore[assignment]
-
-                # Optimize for TPU memory layout
-                if hasattr(module, 'num_heads'):
-                    # Ensure head dimension is divisible by 8 for TPU efficiency
-                    head_dim = getattr(module, 'head_dim', None)
-                    if head_dim and head_dim % 8 != 0:
-                        warnings.warn(
-                            f"Attention head dimension {head_dim} not optimal for TPU. "
-                            "Consider using dimensions divisible by 8.",
-                        stacklevel=2,
-                        )
 
         return model
 

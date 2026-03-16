@@ -24,7 +24,6 @@ import torch.nn as nn
 from torchbridge.backends.base_backend import (
     BaseBackend,
     DeviceInfo,
-    OptimizationLevel,
 )
 from torchbridge.core.config import (
     TorchBridgeConfig,
@@ -211,61 +210,28 @@ class TrainiumBackend(BaseBackend):
         """Get the total number of processes."""
         return self._world_size
 
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
-        """
-        Prepare a PyTorch model for Trainium execution.
+    def prepare_model(self, model: nn.Module) -> nn.Module:
+        """Move model to Trainium device with id-based cache (implements BaseBackend abstract method).
 
-        Args:
-            model: PyTorch model to prepare
-            optimization_level: Optional optimization level
-
-        Returns:
-            Model prepared for Trainium execution
+        Neuron compilation is expensive, so we cache by object identity.
         """
         model_id = id(model)
-        cached_model = self._model_cache.get(model_id)
-        if cached_model is not None:
-            return cached_model
-
-        # Move model to Trainium device
+        cached = self._model_cache.get(model_id)
+        if cached is not None:
+            return cached
         model = model.to(self.device)
-
-        # Apply Trainium-specific optimizations
-        if optimization_level != OptimizationLevel.O0 and optimization_level != "O0":
-            model = self._apply_trainium_optimizations(model)
-
-        # Cache the prepared model
         self._model_cache.set(model_id, model)
-
         return model
 
     def optimize_for_inference(
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
-        """
-        Optimize a model for inference on Trainium.
-
-        Args:
-            model: PyTorch model
-            sample_input: Optional sample input for tracing
-            dtype: Optional dtype for precision
-
-        Returns:
-            Inference-optimized model
-        """
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
-        model.eval()
-
+        """Optimize model for Trainium inference (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).eval()
         for param in model.parameters():
             param.requires_grad = False
-
         self.synchronize()
         return model
 
@@ -273,22 +239,9 @@ class TrainiumBackend(BaseBackend):
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
-        """
-        Optimize a model for training on Trainium.
-
-        Args:
-            model: PyTorch model
-            optimizer: Optional optimizer to optimize along with model
-            dtype: Optional dtype for precision
-
-        Returns:
-            Training-optimized model, or tuple of (model, optimizer)
-        """
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O1)
-        model.train()
-
+        """Optimize model for Trainium training (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).train()
         if optimizer:
             return model, optimizer
         return model
@@ -301,30 +254,6 @@ class TrainiumBackend(BaseBackend):
         except Exception:
             logger.debug("NeuronCore device count query failed", exc_info=True)
             return 0
-
-    def _apply_trainium_optimizations(self, model: nn.Module) -> nn.Module:
-        """Apply Trainium-specific model optimizations."""
-
-        # Enable gradient checkpointing if configured
-        if self.trainium_config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
-                model.gradient_checkpointing_enable()
-
-        # Apply mixed precision if enabled
-        if self.trainium_config.mixed_precision:
-            model = self._enable_mixed_precision(model)
-
-        return model
-
-    def _enable_mixed_precision(self, model: nn.Module) -> nn.Module:
-        """Enable mixed precision for Trainium.
-
-        Trainium natively supports BF16. The Neuron SDK handles
-        mixed precision through XLA, requiring consistent dtype.
-        """
-        if self.trainium_config.precision == "bfloat16":
-            model = model.to(dtype=torch.bfloat16)
-        return model
 
     def prepare_data(self, data: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | dict[str, torch.Tensor]:
         """
