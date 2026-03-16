@@ -1264,9 +1264,8 @@ Examples:
                 with open(output_path, 'w') as f:
                     yaml.dump(data, f, default_flow_style=False)
             except ImportError:
-                # Fall back to JSON if yaml not available
-                with open(output_path, 'w') as f:
-                    json.dump(data, f, indent=2)
+                print("yaml output requires pyyaml: pip install pyyaml")
+                return
         else:  # text
             with open(output_path, 'w') as f:
                 f.write("TorchBridge Validation Report\n")

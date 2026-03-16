@@ -34,11 +34,6 @@ class TestQuantizeCommandRegistration:
         args = parser.parse_args(["quantize", "--model", "test.pt"])
         assert args.format == "auto"
 
-    def test_default_strategy_is_auto(self, parser):
-        """Default strategy should be 'auto'."""
-        args = parser.parse_args(["quantize", "--model", "test.pt"])
-        assert args.strategy == "auto"
-
     def test_default_backend_is_auto(self, parser):
         """Default backend should be 'auto'."""
         args = parser.parse_args(["quantize", "--model", "test.pt"])
@@ -80,12 +75,6 @@ class TestQuantizeCommandRegistration:
         )
         assert args.output == "output.pt"
 
-    def test_calibration_samples_default(self, parser):
-        """Calibration samples should default to 512."""
-        args = parser.parse_args(["quantize", "--model", "test.pt"])
-        assert args.calibration_samples == 512
-
-
 class TestQuantizeCommandExecution:
     """Tests for QuantizeCommand.execute."""
 
@@ -94,11 +83,9 @@ class TestQuantizeCommandExecution:
         args = argparse.Namespace(
             model="/nonexistent/model.pt",
             format="auto",
-            strategy="auto",
             backend="auto",
             output=None,
             validate=False,
-            calibration_samples=512,
             verbose=False,
             ci=False,
         )
@@ -110,11 +97,9 @@ class TestQuantizeCommandExecution:
         args = argparse.Namespace(
             model="/nonexistent/model.pt",
             format="auto",
-            strategy="auto",
             backend="auto",
             output=None,
             validate=False,
-            calibration_samples=512,
             verbose=False,
             ci=True,
         )
