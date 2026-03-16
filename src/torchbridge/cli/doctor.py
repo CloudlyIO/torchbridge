@@ -66,7 +66,7 @@ Examples:
         parser.add_argument(
             '--fix',
             action='store_true',
-            help='Attempt to fix detected issues (where possible)'
+            help='Print remediation steps for detected issues (does not modify your system)'
         )
 
         parser.add_argument(

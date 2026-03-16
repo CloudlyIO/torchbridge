@@ -53,7 +53,7 @@ TorchBridge automatically selects the optimal method per backend:
 Use the CLI to check recommendations for your hardware:
 
 ```bash
-torchbridge adapter recommend --backend cuda
+torchbridge adapter recommend --backend nvidia
 torchbridge adapter info
 ```
 
@@ -174,7 +174,7 @@ torchbridge adapter recommend --backend cuda
 torchbridge adapter recommend --backend amd --rank 8
 
 # JSON output for CI pipelines
-torchbridge adapter recommend --backend cuda --ci
+torchbridge adapter recommend --backend nvidia --ci
 
 # Show compatibility matrix for all backends
 torchbridge adapter info
