@@ -8,6 +8,31 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.73] - 2026-03-13 - Model Loading Fix + Manual Testing Audit
+
+### **Summary**
+
+Bugs caught during a full manual testing run through every CLI command.
+
+### **Bug Fixes**
+
+- **`validate.py` — `--model` flag now works with full model files** (`torch.save(model, path)`).
+  Three `torch.load(..., weights_only=True)` calls in `_run_compare`, `_run_trace`, and
+  `_run_validate` silently accepted state dicts (returning an `OrderedDict`) then crashed at
+  `model.eval()`. Replaced with `_load_model_file()` helper that uses `weights_only=False`
+  (required for pickled `nn.Module`), checks the loaded type, and raises a descriptive
+  `ValueError` if a state dict is passed instead.
+
+- **`docs/guides/quantization.md`** — Removed stale reference to deleted `fp8_native.py` module
+  (deleted in v0.5.54). Line now correctly states FP8 requires torchao.
+
+### **Testing**
+
+- 2,010 passed, 13 skipped (GPU-gated), 0 failures across all test batches
+- 0 ruff violations
+
+---
+
 ## [0.5.72] - 2026-03-12 - Repo Cleanup & Compaction
 
 ### **Summary**
