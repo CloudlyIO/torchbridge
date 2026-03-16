@@ -1,14 +1,8 @@
 """
 NVIDIA Backend Module for TorchBridge
 
-This module provides NVIDIA GPU-specific backend implementations and HAL-aware support
-for PyTorch models targeting H100, Blackwell, and other NVIDIA architectures.
-
-Key Components:
-- NVIDIA Device Management
-- FP8 Training Pipeline
-- CUDA-specific Memory Management
-- Tensor Core Integration
+This module provides NVIDIA GPU-specific backend implementations for
+PyTorch models targeting H100, Blackwell, Ampere, and other NVIDIA architectures.
 
 Example:
     ```python
@@ -30,14 +24,12 @@ from .cuda_utilities import (
     CUDAUtilities,
     create_cuda_integration,
 )
-from .fp8_compiler import FP8Compiler
 from .nvidia_adapter import NVIDIAAdapter
 from .nvidia_backend import NVIDIABackend
 
 __all__ = [
     'NVIDIABackend',
     'NVIDIAAdapter',
-    'FP8Compiler',
     'CUDADeviceManager',
     'CUDAOptimizations',
     'CUDAUtilities',

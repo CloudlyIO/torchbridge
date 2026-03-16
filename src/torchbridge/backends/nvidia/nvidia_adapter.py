@@ -18,9 +18,9 @@ import torch.nn as nn
 
 from torchbridge.backends.base_adapter import BaseAdapter, OptimizationStrategy
 from torchbridge.backends.base_backend import OptimizationLevel, OptimizationResult
-from torchbridge.core.config import TorchBridgeConfig
+from torchbridge.backends.compile_compatibility import CompileCompatibility
+from torchbridge.core.config import HardwareBackend, TorchBridgeConfig
 
-from .fp8_compiler import FP8Compiler
 from .nvidia_backend import NVIDIABackend
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,6 @@ class NVIDIAAdapter(BaseAdapter):
         """
         self._full_config = config or TorchBridgeConfig()
         self.backend = NVIDIABackend(self._full_config)
-        self.fp8_compiler = FP8Compiler(self._full_config)
 
         # Call parent init
         super().__init__(config=self._full_config, device=device or self.backend.device)
@@ -235,52 +234,28 @@ class NVIDIAAdapter(BaseAdapter):
         applied = []
 
         if level == "conservative":
-            # Minimal optimizations for maximum stability
             if self.backend.is_cuda_available:
                 applied.append("device_placement")
-
             if for_inference:
                 model.eval()
                 applied.append("eval_mode")
 
         elif level == "balanced":
-            # Standard optimizations for good performance/stability balance
             if self.backend.is_cuda_available:
                 applied.append("device_placement")
-
-            # Apply mixed precision if supported
-            if self.backend.nvidia_config.mixed_precision_enabled:
-                model = self._enable_mixed_precision(model)
-                applied.append("mixed_precision")
-
-            # Apply gradient checkpointing if training
             if not for_inference and self.config.memory.gradient_checkpointing:
                 model = self._enable_gradient_checkpointing(model)
                 applied.append("gradient_checkpointing")
-
             if for_inference:
                 model.eval()
                 applied.append("eval_mode")
 
         elif level == "aggressive":
-            # Maximum optimizations for best performance
             if self.backend.is_cuda_available:
                 applied.append("device_placement")
-
-            # Apply FP8 if supported
-            if self.backend.supports_fp8 and self.backend.nvidia_config.fp8_enabled:
-                model = self.fp8_compiler.prepare_for_fp8(model, for_inference)
-                applied.append("fp8_training" if not for_inference else "fp8_inference")
-
-            # Apply mixed precision if not using FP8
-            elif self.backend.nvidia_config.mixed_precision_enabled:
-                model = self._enable_mixed_precision(model)
-                applied.append("mixed_precision")
-
-            # Apply memory optimizations
-            model = self._apply_aggressive_memory_optimizations(model, for_inference)
-            applied.append("memory_optimization")
-
+            if not for_inference and self.config.memory.gradient_checkpointing:
+                model = self._enable_gradient_checkpointing(model)
+                applied.append("gradient_checkpointing")
             if for_inference:
                 model.eval()
                 applied.append("eval_mode")
@@ -293,13 +268,6 @@ class NVIDIAAdapter(BaseAdapter):
 
         return model, applied
 
-    def _enable_mixed_precision(self, model: nn.Module) -> nn.Module:
-        """Enable mixed precision training/inference."""
-        # This is typically handled via torch.cuda.amp.autocast during training
-        # Here we just mark the model as mixed-precision ready
-        model._mixed_precision_enabled = True  # type: ignore[assignment]
-        return model
-
     def _enable_gradient_checkpointing(self, model: nn.Module) -> nn.Module:
         """Enable gradient checkpointing for memory efficiency."""
         if hasattr(model, 'gradient_checkpointing_enable'):
@@ -309,43 +277,6 @@ class NVIDIAAdapter(BaseAdapter):
                 self._optimization_warnings.append(
                     f"Failed to enable gradient checkpointing: {e}"
                 )
-        return model
-
-    def _apply_aggressive_memory_optimizations(
-        self,
-        model: nn.Module,
-        for_inference: bool
-    ) -> nn.Module:
-        """Apply aggressive memory optimizations."""
-        # Use memory-efficient attention if available
-        for module in model.modules():
-            if hasattr(module, 'set_use_memory_efficient_attention_xformers'):
-                try:
-                    module.set_use_memory_efficient_attention_xformers(True)
-                except (AttributeError, RuntimeError) as e:
-                    # Method exists but may not be supported on this hardware
-                    logger.debug("Could not enable memory-efficient attention: %s", e)
-
-        # For inference, enable additional optimizations
-        if for_inference:
-            # Disable gradient computation
-            for param in model.parameters():
-                param.requires_grad = False
-
-            # Convert BatchNorm to eval mode and fuse if possible
-            model = self._fuse_bn_layers(model)
-
-        return model
-
-    def _fuse_bn_layers(self, model: nn.Module) -> nn.Module:
-        """Fuse BatchNorm layers for inference."""
-        try:
-            # Fuse Conv + BatchNorm layers
-            torch.quantization.fuse_modules(model, inplace=True)  # type: ignore[call-arg]
-        except Exception:
-            # Fusion may not be applicable for all models
-            logger.debug("BatchNorm layer fusion failed", exc_info=True)
-            pass
         return model
 
     def _compile_model(
@@ -362,17 +293,14 @@ class NVIDIAAdapter(BaseAdapter):
             return model
 
         try:
-            # Prepare compilation kwargs
+            mode = CompileCompatibility.get_compile_mode(
+                HardwareBackend.CUDA, self.backend.nvidia_config.architecture
+            )
             compile_kwargs = {
-                'mode': 'reduce-overhead' if for_inference else 'default',
-                'fullgraph': False,  # Allow graph breaks for robustness
-                'dynamic': False,  # Static shapes for better optimization
+                'mode': mode,
+                'fullgraph': False,
+                'dynamic': False,
             }
-
-            # Add backend-specific options
-            if self.backend.is_h100 or self.backend.is_blackwell:
-                # Use max-autotune for latest hardware
-                compile_kwargs['mode'] = 'max-autotune'
 
             compiled_model = torch.compile(model, **compile_kwargs)
 
@@ -388,54 +316,6 @@ class NVIDIAAdapter(BaseAdapter):
                 f"torch.compile failed: {e}, using uncompiled model"
             )
             return model
-
-    def optimize_for_inference_legacy(
-        self,
-        model: nn.Module,
-        sample_inputs: torch.Tensor | None = None,
-        optimization_level: str = "aggressive"
-    ) -> NVIDIAOptimizationResult:
-        """
-        Legacy inference optimization method for backward compatibility.
-
-        Args:
-            model: PyTorch model to optimize
-            sample_inputs: Sample inputs for compilation
-            optimization_level: Optimization level
-
-        Returns:
-            NVIDIAOptimizationResult with inference-optimized model
-        """
-        return self.optimize_legacy(
-            model=model,
-            sample_inputs=sample_inputs,
-            optimization_level=optimization_level,
-            for_inference=True
-        )
-
-    def optimize_for_training_legacy(
-        self,
-        model: nn.Module,
-        sample_inputs: torch.Tensor | None = None,
-        optimization_level: str = "balanced"
-    ) -> NVIDIAOptimizationResult:
-        """
-        Legacy training optimization method for backward compatibility.
-
-        Args:
-            model: PyTorch model to optimize
-            sample_inputs: Sample inputs for compilation
-            optimization_level: Optimization level
-
-        Returns:
-            NVIDIAOptimizationResult with training-optimized model
-        """
-        return self.optimize_legacy(
-            model=model,
-            sample_inputs=sample_inputs,
-            optimization_level=optimization_level,
-            for_inference=False
-        )
 
     def get_optimization_recommendations(self, model: nn.Module) -> dict[str, Any]:
         """

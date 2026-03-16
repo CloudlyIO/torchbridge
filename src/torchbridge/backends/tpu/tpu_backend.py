@@ -20,7 +20,6 @@ import torch.nn as nn
 from torchbridge.backends.base_backend import (
     BaseBackend,
     DeviceInfo,
-    OptimizationLevel,
 )
 from torchbridge.core.config import (
     TorchBridgeConfig,
@@ -214,88 +213,38 @@ class TPUBackend(BaseBackend):
         """Get the total number of processes."""
         return self._world_size
 
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
-        """
-        Prepare a PyTorch model for TPU execution (implements BaseBackend abstract method).
+    def prepare_model(self, model: nn.Module) -> nn.Module:
+        """Move model to TPU device with id-based cache (implements BaseBackend abstract method).
 
-        Args:
-            model: PyTorch model to prepare
-            optimization_level: Optional optimization level
-
-        Returns:
-            Model prepared for TPU execution
+        XLA compilation is expensive, so we cache by object identity.
         """
-        # Check cache
         model_id = id(model)
-        cached_model = self._model_cache.get(model_id)
-        if cached_model is not None:
-            return cached_model
-
-        # Move model to TPU device
+        cached = self._model_cache.get(model_id)
+        if cached is not None:
+            return cached
         model = model.to(self.device)
-
-        # Apply TPU-specific optimizations if level is not O0
-        if optimization_level != OptimizationLevel.O0 and optimization_level != "O0":
-            model = self._apply_tpu_optimizations(model)
-
-        # Cache the prepared model
         self._model_cache.set(model_id, model)
-
         return model
 
     def optimize_for_inference(
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
-        """
-        Optimize a model for inference (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            sample_input: Optional sample input for tracing
-            dtype: Optional dtype for precision
-
-        Returns:
-            Inference-optimized model
-        """
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O2)
-        model.eval()
-
-        # Disable gradients
+        """Optimize model for TPU inference (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).eval()
         for param in model.parameters():
             param.requires_grad = False
-
-        # Synchronize
         self.synchronize()
-
         return model
 
     def optimize_for_training(
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
-        """
-        Optimize a model for training (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            optimizer: Optional optimizer to optimize along with model
-            dtype: Optional dtype for precision
-
-        Returns:
-            Training-optimized model, or tuple of (model, optimizer)
-        """
-        model = self.prepare_model(model, optimization_level=OptimizationLevel.O1)
-        model.train()
-
+        """Optimize model for TPU training (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).train()
         if optimizer:
             return model, optimizer
         return model
@@ -308,39 +257,6 @@ class TPUBackend(BaseBackend):
         except Exception:
             logger.debug("TPU device count query failed", exc_info=True)
             return 0
-
-    def _apply_tpu_optimizations(self, model: nn.Module) -> nn.Module:
-        """Apply TPU-specific model optimizations."""
-
-        # Enable gradient checkpointing if configured
-        if self.tpu_config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
-                model.gradient_checkpointing_enable()
-
-        # Apply mixed precision if enabled
-        if self.tpu_config.mixed_precision:
-            model = self._enable_mixed_precision(model)
-
-        # Apply model-specific optimizations based on TPU version
-        if self.tpu_config.version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
-            # High-performance TPU optimizations
-            model = self._apply_high_performance_optimizations(model)
-
-        return model
-
-    def _enable_mixed_precision(self, model: nn.Module) -> nn.Module:
-        """Enable mixed precision for TPU.
-
-        TPU requires consistent precision across computation graphs.
-        Unlike CUDA's autocast which handles mixed precision automatically,
-        TPU/XLA requires explicit dtype management.
-        """
-        if self.tpu_config.precision == "bfloat16":
-            # Convert entire model to bfloat16 for TPU consistency
-            # This avoids mixed precision errors in XLA compilation
-            model = model.to(dtype=torch.bfloat16)
-
-        return model
 
     def prepare_data(self, data: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | dict[str, torch.Tensor]:
         """
@@ -374,39 +290,6 @@ class TPUBackend(BaseBackend):
             return result
         else:
             raise ValueError(f"Unsupported data type: {type(data)}")
-
-    def _apply_high_performance_optimizations(self, model: nn.Module) -> nn.Module:
-        """Apply optimizations for high-performance TPUs (v5p+)."""
-
-        # Enable optimizations specific to newer TPU generations
-        try:
-            # Sync for efficient compilation using compatibility layer
-            xla_compat.sync()
-
-            # Enable faster collective operations for distributed training
-            if self.is_distributed:
-                self._setup_distributed_optimizations()
-
-        except ImportError:
-            pass
-
-        return model
-
-    def _setup_distributed_optimizations(self) -> None:
-        """Set up optimizations for distributed TPU training."""
-        try:
-            import torch_xla.distributed.xla_backend as xla_backend  # noqa: F401
-
-            # Initialize process group for distributed training
-            if not torch.distributed.is_initialized():
-                torch.distributed.init_process_group(
-                    backend='xla',
-                    rank=self.rank,
-                    world_size=self.world_size
-                )
-
-        except ImportError:
-            warnings.warn("Distributed training setup failed - XLA backend not available", stacklevel=2)
 
     def synchronize(self) -> None:
         """Synchronize TPU operations."""
