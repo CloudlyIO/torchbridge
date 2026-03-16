@@ -34,11 +34,10 @@ import torch.nn as nn
 from torchbridge.backends.base_backend import (
     BaseBackend,
     DeviceInfo,
-    OptimizationLevel,
 )
-from torchbridge.core.config import AMDArchitecture, AMDConfig
+from torchbridge.backends.compile_compatibility import CompileCompatibility
+from torchbridge.core.config import AMDArchitecture, AMDConfig, HardwareBackend
 
-from .amd_adapter import AMDAdapter
 from .amd_exceptions import (
     AMDBackendError,
     AMDConfigurationError,
@@ -398,58 +397,16 @@ class AMDBackend(BaseBackend):
             logger.debug("ROCm version detection failed", exc_info=True)
             return "unknown"
 
-    def prepare_model(
-        self,
-        model: nn.Module,
-        optimization_level: str | OptimizationLevel | None = None
-    ) -> nn.Module:
-        """
-        Prepare a PyTorch model for AMD GPU execution (implements BaseBackend abstract method).
-
-        This method:
-        1. Moves the model to AMD GPU (or keeps on CPU if fallback)
-        2. Applies ROCm-specific optimizations
-        3. Compiles HIP kernels if needed
-        4. Sets up memory management
-
-        Args:
-            model: PyTorch model to prepare
-            optimization_level: Optimization level
-
-        Returns:
-            Prepared model ready for execution
-
-        Raises:
-            AMDBackendError: If model preparation fails
-        """
+    def prepare_model(self, model: nn.Module) -> nn.Module:
+        """Move model to AMD GPU device (implements BaseBackend abstract method)."""
         if not self._initialized:
             raise AMDBackendError("Backend not initialized")
-
         try:
-            # Handle CPU fallback mode
             if self._cpu_fallback:
-                logger.info("Preparing model in CPU fallback mode")
-                model = model.to(torch.device("cpu"))
-                return model
-
+                return model.to(torch.device("cpu"))
             if not self._current_amd_device:
                 raise AMDBackendError("No AMD GPU device available")
-
-            logger.info("Preparing model for AMD GPU: %s", self._current_amd_device.name)
-
-            # Move model to GPU
-            device = torch.device(f"cuda:{self._amd_config.device_id}")
-            model = model.to(device)
-
-            # Set precision if specified
-            if self._amd_config.default_precision == "fp16":
-                model = model.half()
-            elif self._amd_config.default_precision == "bf16":
-                model = model.bfloat16()
-
-            logger.info("Model prepared successfully for AMD GPU")
-            return model
-
+            return model.to(torch.device(f"cuda:{self._amd_config.device_id}"))
         except Exception as e:
             raise AMDBackendError(f"Model preparation failed: {e}") from e
 
@@ -457,87 +414,33 @@ class AMDBackend(BaseBackend):
         self,
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module:
-        """
-        Optimize a model for inference (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            sample_input: Optional sample input for tracing
-            dtype: Optional dtype for precision
-
-        Returns:
-            Inference-optimized model
-        """
-        model = self.prepare_model(model)
-        model.eval()
-
-        # Disable gradients
+        """Optimize model for AMD inference (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).eval()
         for param in model.parameters():
             param.requires_grad = False
-
-        # Apply AMD-specific optimizations (channels_last, Conv+BN fusion,
-        # matrix core flags) — only when an AMD GPU is actually present.
-        if not self._cpu_fallback and self._current_amd_device:
-            try:
-                adapter = AMDAdapter(self._amd_config)
-                model = adapter.optimize(model, level="balanced")
-            except Exception as e:
-                logger.warning("AMDAdapter optimization failed, continuing without: %s", e)
-
-        # Apply torch.compile if available — arch-aware mode selection
         if sample_input is not None and hasattr(torch, 'compile'):
             try:
-                # CDNA3/CDNA4 (MI300/MI350): powerful enough for max-autotune
-                # CDNA2 and older: reduce-overhead is safer and faster to compile
                 arch = (
                     self._current_amd_device.architecture
                     if self._current_amd_device
-                    else AMDArchitecture.CDNA2
+                    else None
                 )
-                compile_mode = (
-                    'max-autotune'
-                    if arch in (AMDArchitecture.CDNA3, AMDArchitecture.CDNA4)
-                    else 'reduce-overhead'
-                )
-                model = torch.compile(model, mode=compile_mode)  # type: ignore[assignment]
+                mode = CompileCompatibility.get_compile_mode(HardwareBackend.AMD, arch)
+                model = torch.compile(model, mode=mode)  # type: ignore[assignment]
                 with torch.no_grad():
                     _ = model(sample_input.to(self.device))
             except Exception as e:
-                logger.warning(f"torch.compile failed: {e}")
-
+                logger.warning("torch.compile failed: %s", e)
         return model
 
     def optimize_for_training(
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer | None = None,
-        dtype: torch.dtype | None = None
     ) -> nn.Module | tuple[nn.Module, torch.optim.Optimizer]:
-        """
-        Optimize a model for training (implements BaseBackend abstract method).
-
-        Args:
-            model: PyTorch model
-            optimizer: Optional optimizer to optimize along with model
-            dtype: Optional dtype for precision
-
-        Returns:
-            Training-optimized model, or tuple of (model, optimizer)
-        """
-        model = self.prepare_model(model)
-        model.train()
-
-        # Apply conservative AMD optimizations (no gradient checkpointing or
-        # aggressive torch.compile — those are the caller's responsibility).
-        if not self._cpu_fallback and self._current_amd_device:
-            try:
-                adapter = AMDAdapter(self._amd_config)
-                model = adapter.optimize(model, level="conservative")
-            except Exception as e:
-                logger.warning("AMDAdapter optimization failed, continuing without: %s", e)
-
+        """Optimize model for AMD training (implements BaseBackend abstract method)."""
+        model = self.prepare_model(model).train()
         if optimizer:
             return model, optimizer
         return model

@@ -1,12 +1,14 @@
 """
-Tests for AMDAdapter wiring in AMDBackend
+Tests for AMDBackend optimize_for_inference / optimize_for_training
 
-Verifies that optimize_for_inference() and optimize_for_training() call
-AMDAdapter when an AMD GPU is present, and skip it in CPU fallback mode.
+Verifies device-placement-only prepare_model, eval/train mode switches,
+param freezing, and arch-aware compile mode selection.  No AMDAdapter
+delegation — that was removed in v0.5.74 (Contraction IX).
 """
 
 from unittest.mock import MagicMock, patch
 
+import torch
 import torch.nn as nn
 
 from torchbridge.backends.amd.amd_adapter import AMDAdapter
@@ -17,7 +19,6 @@ from torchbridge.core.config import AMDArchitecture, AMDConfig
 def _make_cpu_backend() -> AMDBackend:
     """Create an AMDBackend in CPU fallback mode (no ROCm hardware required)."""
     backend = AMDBackend(AMDConfig())
-    # Ensure CPU fallback regardless of test environment
     backend._cpu_fallback = True
     backend._current_amd_device = None
     return backend
@@ -50,166 +51,92 @@ class TestAMDAdapterImport:
         assert adapter.config is config
 
 
-class TestAdapterCalledWhenAMDPresent:
-    """Verify AMDAdapter is invoked when an AMD GPU device is detected."""
+class TestAMDOptimizeForInference:
+    """optimize_for_inference: eval mode, param freeze, returns nn.Module."""
 
-    def test_optimize_for_inference_calls_adapter(self):
-        """optimize_for_inference must call AMDAdapter.optimize with 'balanced'."""
-        backend = _make_amd_backend_mock()
-        model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch(
-                "torchbridge.backends.amd.amd_backend.AMDAdapter"
-            ) as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.return_value = model
-            MockAdapter.return_value = mock_instance
-
-            backend.optimize_for_inference(model)
-
-        MockAdapter.assert_called_once_with(backend._amd_config)
-        mock_instance.optimize.assert_called_once_with(model, level="balanced")
-
-    def test_optimize_for_training_calls_adapter(self):
-        """optimize_for_training must call AMDAdapter.optimize with 'conservative'."""
-        backend = _make_amd_backend_mock()
-        model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch(
-                "torchbridge.backends.amd.amd_backend.AMDAdapter"
-            ) as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.return_value = model
-            MockAdapter.return_value = mock_instance
-
-            backend.optimize_for_training(model)
-
-        MockAdapter.assert_called_once_with(backend._amd_config)
-        mock_instance.optimize.assert_called_once_with(model, level="conservative")
-
-    def test_optimize_for_inference_returns_model(self):
-        """optimize_for_inference must return a model even when adapter is called."""
-        backend = _make_amd_backend_mock()
-        model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch("torchbridge.backends.amd.amd_backend.AMDAdapter") as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.return_value = model
-            MockAdapter.return_value = mock_instance
-
-            result = backend.optimize_for_inference(model)
-
-        assert isinstance(result, nn.Module)
-
-    def test_optimize_for_training_returns_model(self):
-        """optimize_for_training must return a model even when adapter is called."""
-        backend = _make_amd_backend_mock()
-        model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch("torchbridge.backends.amd.amd_backend.AMDAdapter") as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.return_value = model
-            MockAdapter.return_value = mock_instance
-
-            result = backend.optimize_for_training(model)
-
-        assert isinstance(result, nn.Module)
-
-
-class TestAdapterSkippedInCPUFallback:
-    """Verify AMDAdapter is NOT invoked when CPU fallback is active."""
-
-    def test_optimize_for_inference_skips_adapter_on_cpu_fallback(self):
-        """AMDAdapter must not be called when _cpu_fallback is True."""
+    def test_returns_nn_module(self):
+        """optimize_for_inference must return an nn.Module."""
         backend = _make_cpu_backend()
         model = _simple_model()
+        result = backend.optimize_for_inference(model)
+        assert isinstance(result, nn.Module)
 
-        with patch(
-            "torchbridge.backends.amd.amd_backend.AMDAdapter"
-        ) as MockAdapter:
-            backend.optimize_for_inference(model)
-
-        MockAdapter.assert_not_called()
-
-    def test_optimize_for_training_skips_adapter_on_cpu_fallback(self):
-        """AMDAdapter must not be called when _cpu_fallback is True."""
+    def test_model_in_eval_mode(self):
+        """optimize_for_inference must set the model to eval mode."""
         backend = _make_cpu_backend()
         model = _simple_model()
+        result = backend.optimize_for_inference(model)
+        assert not result.training
 
-        with patch(
-            "torchbridge.backends.amd.amd_backend.AMDAdapter"
-        ) as MockAdapter:
-            backend.optimize_for_training(model)
-
-        MockAdapter.assert_not_called()
-
-    def test_optimize_for_inference_skips_adapter_when_no_device(self):
-        """AMDAdapter must not be called when _current_amd_device is None."""
-        backend = AMDBackend(AMDConfig())
-        backend._cpu_fallback = False
-        backend._current_amd_device = None
+    def test_params_frozen(self):
+        """optimize_for_inference must freeze all parameters."""
+        backend = _make_cpu_backend()
         model = _simple_model()
+        result = backend.optimize_for_inference(model)
+        for param in result.parameters():
+            assert not param.requires_grad
 
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch(
-                "torchbridge.backends.amd.amd_backend.AMDAdapter"
-            ) as MockAdapter,
-        ):
-            backend.optimize_for_inference(model)
-
-        MockAdapter.assert_not_called()
-
-
-class TestAdapterFailureGraceful:
-    """Verify that AMDAdapter failure is caught and does not propagate."""
-
-    def test_inference_continues_if_adapter_raises(self):
-        """If AMDAdapter.optimize raises, optimize_for_inference must still return model."""
+    def test_amd_device_path_returns_model(self):
+        """optimize_for_inference on AMD path also returns eval-mode model."""
         backend = _make_amd_backend_mock()
         model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch(
-                "torchbridge.backends.amd.amd_backend.AMDAdapter"
-            ) as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.side_effect = RuntimeError("ROCm kernel error")
-            MockAdapter.return_value = mock_instance
-
+        with patch.object(backend, "prepare_model", return_value=model):
             result = backend.optimize_for_inference(model)
+        assert isinstance(result, nn.Module)
+        assert not result.training
 
+
+class TestAMDOptimizeForTraining:
+    """optimize_for_training: train mode, optional optimizer tuple."""
+
+    def test_returns_nn_module(self):
+        """optimize_for_training must return an nn.Module."""
+        backend = _make_cpu_backend()
+        model = _simple_model()
+        result = backend.optimize_for_training(model)
         assert isinstance(result, nn.Module)
 
-    def test_training_continues_if_adapter_raises(self):
-        """If AMDAdapter.optimize raises, optimize_for_training must still return model."""
+    def test_model_in_train_mode(self):
+        """optimize_for_training must set the model to train mode."""
+        backend = _make_cpu_backend()
+        model = _simple_model()
+        result = backend.optimize_for_training(model)
+        assert result.training
+
+    def test_returns_tuple_with_optimizer(self):
+        """When optimizer is provided, a (model, optimizer) tuple is returned."""
+        backend = _make_cpu_backend()
+        model = _simple_model()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        result = backend.optimize_for_training(model, optimizer=optimizer)
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert isinstance(result[0], nn.Module)
+
+    def test_amd_device_path_returns_model(self):
+        """optimize_for_training on AMD path also returns train-mode model."""
         backend = _make_amd_backend_mock()
         model = _simple_model()
-
-        with (
-            patch.object(backend, "prepare_model", return_value=model),
-            patch(
-                "torchbridge.backends.amd.amd_backend.AMDAdapter"
-            ) as MockAdapter,
-        ):
-            mock_instance = MagicMock()
-            mock_instance.optimize.side_effect = RuntimeError("ROCm kernel error")
-            MockAdapter.return_value = mock_instance
-
+        with patch.object(backend, "prepare_model", return_value=model):
             result = backend.optimize_for_training(model)
-
         assert isinstance(result, nn.Module)
+        assert result.training
+
+
+class TestAMDPrepareModel:
+    """prepare_model: device placement only."""
+
+    def test_cpu_fallback_returns_model(self):
+        """prepare_model in CPU fallback mode returns a model."""
+        backend = _make_cpu_backend()
+        model = _simple_model()
+        result = backend.prepare_model(model)
+        assert isinstance(result, nn.Module)
+
+    def test_cpu_fallback_places_on_cpu(self):
+        """prepare_model in CPU fallback mode places model on CPU."""
+        backend = _make_cpu_backend()
+        model = _simple_model()
+        result = backend.prepare_model(model)
+        for param in result.parameters():
+            assert param.device.type == "cpu"

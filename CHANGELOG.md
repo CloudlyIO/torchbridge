@@ -8,6 +8,44 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.74] - 2026-03-16 - Contraction IX: Backend Adapter Cleanup
+
+### **Summary**
+
+17+ violations removed from the backend and adapter layer. Deleted one fake file (`fp8_compiler.py`), one broken flag (`_enable_matrix_cores` set a CUDA/Ampere flag on ROCm), two pure no-ops (`_apply_layer_fusion` body was `return model`; `_optimize_attention_layers` set attributes XLA ignores), and nine more thin wrappers with no benchmark backing. Added the 13th compatibility matrix: `(backend, architecture) → torch.compile mode`.
+
+### **Deleted**
+
+- **`backends/nvidia/fp8_compiler.py`** — file header admitted "NOT performing actual FP8 quantization"; stamped `_fp8_enabled = True` on layers; nothing read it. Real FP8 advisory is in `precision/quantization/compatibility.py`.
+- **`nvidia_adapter._enable_mixed_precision`** — set `model._mixed_precision_enabled = True`; attribute was never read anywhere.
+- **`nvidia_adapter.optimize_for_inference_legacy` / `optimize_for_training_legacy`** — thin delegation wrappers with no additional logic.
+- **`nvidia_adapter._apply_aggressive_memory_optimizations` / `_fuse_bn_layers`** — no benchmark in `reports/`.
+- **`amd_adapter._enable_matrix_cores`** — set `torch.backends.cuda.matmul.allow_tf32` on ROCm; that flag is CUDA/Ampere-only and has no effect on HIP.
+- **`amd_adapter._optimize_memory_layout`** — claimed channels_last is faster on CDNA HBM; no benchmark.
+- **`tpu_adapter._apply_layer_fusion`** — entire method body was `return model`.
+- **`tpu_adapter._optimize_attention_layers`** — set `module.flash_attention = True` dynamically; XLA ignores dynamic attribute assignment.
+- **`base_adapter._apply_inference_optimizations` / `_apply_training_optimizations`** — wrapped `model.eval()` and `model.train()` respectively.
+- **`tpu_backend._apply_tpu_optimizations`, `_enable_mixed_precision`, `_apply_high_performance_optimizations`, `_setup_distributed_optimizations`** — entire cluster became unreachable after `prepare_model` simplification.
+- **`trainium_backend._apply_trainium_optimizations`, `_enable_mixed_precision`** — same.
+
+### **Added**
+
+- **`backends/compile_compatibility.py`** — 13th compatibility matrix. `CompileCompatibility.get_compile_mode(backend, arch)` returns `max-autotune` for H100/Blackwell/CDNA3/CDNA4, `reduce-overhead` for Ampere/CDNA2, `None` for CPU/TPU/Trainium. Replaces inline `is_h100 or is_blackwell` conditionals in `nvidia_backend` and `nvidia_adapter`.
+
+### **Simplified**
+
+- All 5 backends: `prepare_model` is device placement only; `optimize_for_inference`/`optimize_for_training` drop `dtype` and `optimization_level` params.
+- `amd_backend.optimize_for_inference`: removed `AMDAdapter` delegation (which exercised the now-deleted broken CUDA flag).
+
+### **Tests**
+
+- 22 new tests for `CompileCompatibility`.
+- `test_nvidia_backend.py`: removed `TestFP8Compiler` (8 tests), fixed 3 assertions that depended on dead side-effects.
+- `test_amd_backend_adapter.py`: fully rewritten to test actual new behavior.
+- **1956 passing, 13 skipped** (GPU-gated).
+
+---
+
 ## [0.5.73] - 2026-03-13 - Model Loading Fix + Manual Testing Audit
 
 ### **Summary**
