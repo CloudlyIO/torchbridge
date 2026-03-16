@@ -13,6 +13,8 @@ from pathlib import Path
 
 import torch
 
+from torchbridge.backends.compile_compatibility import CompileCompatibility
+
 
 @dataclass
 class BenchmarkResult:
@@ -579,8 +581,10 @@ Examples:
             if Path(model_name).exists():
                 return torch.load(model_name, map_location=device, weights_only=True).eval()
             else:
-                # Default fallback
-                return torch.nn.Linear(512, 512).to(device).eval()
+                raise ValueError(
+                    f"Model '{model_name}' not found as a file or predefined name. "
+                    "Predefined names: linear_stress_test, resnet50"
+                )
 
     @staticmethod
     def _parse_input_shape(input_shape_str: str | None, model_name: str) -> tuple:
@@ -612,7 +616,15 @@ Examples:
             sample_input = torch.randn(input_shape, device=device)
             return torch.jit.trace(model_copy, sample_input)
         elif level == 'compile':
-            return torch.compile(model_copy, mode='default')  # type: ignore[return-value]
+            from torchbridge.core.config import HardwareBackend
+            _DEVICE_TO_BACKEND = {
+                'cuda': HardwareBackend.CUDA,
+                'xla': HardwareBackend.TPU,
+                'cpu': HardwareBackend.CPU,
+            }
+            hw_backend = _DEVICE_TO_BACKEND.get(device.type, HardwareBackend.CPU)
+            compile_mode = CompileCompatibility.get_compile_mode(hw_backend, None)
+            return torch.compile(model_copy, mode=compile_mode)  # type: ignore[return-value]
         elif level == 'triton':
             return torch.compile(model_copy, mode='max-autotune')  # type: ignore[return-value]
         else:
