@@ -15,8 +15,36 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
+
+
+def _load_model_file(path: str) -> nn.Module:
+    """Load a full nn.Module from a .pt file.
+
+    Supports model files saved with ``torch.save(model, path)``.
+    State-dict files (``torch.save(model.state_dict(), path)``) are not
+    supported — they require knowing the architecture to reconstruct.
+    """
+    # weights_only=False required for pickled nn.Module objects.
+    # The user explicitly passes their own trusted file via --model.
+    try:
+        loaded = torch.load(path, map_location="cpu", weights_only=False)
+    except Exception as e:
+        raise RuntimeError(f"Cannot open model file: {e}") from e
+    if isinstance(loaded, nn.Module):
+        return loaded
+    if isinstance(loaded, dict):
+        raise ValueError(
+            "Model file contains a state dict, not a full model. "
+            "Save the complete model object instead:\n"
+            "  torch.save(model, path)   # correct\n"
+            "  torch.save(model.state_dict(), path)  # not supported by --model"
+        )
+    raise ValueError(
+        f"Expected an nn.Module in the model file, got {type(loaded).__name__}."
+    )
 
 
 @dataclass
@@ -377,7 +405,7 @@ Examples:
                 smoke_model = True
                 model_label = 'smoke_model (Linear)'
             elif Path(model_path).exists():
-                model = torch.load(model_path, map_location='cpu', weights_only=True)
+                model = _load_model_file(model_path)
                 model_label = Path(model_path).name  # filename only — avoid leaking full filesystem path
             else:
                 # Treat as HuggingFace model ID
@@ -637,7 +665,7 @@ Examples:
                 smoke_model = True
                 model_label = 'smoke_model (Linear)'
             elif Path(model_path).exists():
-                model = torch.load(model_path, map_location='cpu', weights_only=True)
+                model = _load_model_file(model_path)
                 model_label = Path(model_path).name  # filename only — avoid leaking full filesystem path
             else:
                 from transformers import AutoModelForCausalLM
@@ -836,7 +864,7 @@ Examples:
             model_file = Path(model_path)
             if model_file.exists():
                 try:
-                    model = torch.load(model_path, map_location='cpu', weights_only=True)
+                    model = _load_model_file(model_path)
                     if hasattr(model, 'eval'):
                         model.eval()
                     results.append(ValidationResult(
