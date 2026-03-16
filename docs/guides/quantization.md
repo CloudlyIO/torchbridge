@@ -122,7 +122,7 @@ pip install torchao
 When torchao is not installed:
 - INT8 Dynamic falls back to PyTorch native `torch.quantization.quantize_dynamic`
 - INT4/SmoothQuant emit a warning and fall back to INT8 Dynamic
-- FP8 uses TorchBridge's native `precision/fp8_native.py` module
+- FP8 requires torchao (INT4/FP8 formats not available without it)
 
 ## Troubleshooting
 
