@@ -24,8 +24,6 @@ from ..config import TorchBridgeConfig
 
 class ManagerType(Enum):
     """Types of management domains."""
-    HARDWARE = "hardware"
-    OPTIMIZATION = "optimization"
     INFRASTRUCTURE = "infrastructure"
 
 class ManagerState(Enum):
