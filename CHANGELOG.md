@@ -8,6 +8,29 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.76] - 2026-03-17 - Contraction X: management/ Cleanup
+
+### **Summary**
+
+Deleted `HardwareManager` (152 lines, all stubs: no-op `_optimize_tensor_cores`, no-op `_optimize_distributed`, single-call `_optimize_memory` wrapper) and `OptimizationManager` (140 lines, all stubs: string-appending `_apply_precision_optimization`, string-appending `_apply_fusion_optimization`, thin `_apply_compilation_optimization` wrapper). Removed orphaned `ManagerType.HARDWARE` and `ManagerType.OPTIMIZATION` enum values. Simplified `UnifiedManager` by 180 lines: `optimize()` now delegates directly to `auto_optimize()` for `nn.Module`; `get_status()` returns infrastructure key only; lifecycle methods operate on `infrastructure_manager` directly. Fixed stale AMD adapter call (`optimize_for_inference` → `optimize(level=...)`) and TPU kwarg (`sample_input` → `sample_inputs`). 23 new regression tests.
+
+### **Deleted**
+
+- `src/torchbridge/core/management/hardware_manager.py` — entire file (152 lines); all methods were stubs or single-call PyTorch wrappers
+- `src/torchbridge/core/management/optimization_manager.py` — entire file (140 lines); all "apply" methods appended strings to a list and returned target unchanged
+
+### **Changed**
+
+- **`management/base.py`** — removed orphaned `ManagerType.HARDWARE` and `ManagerType.OPTIMIZATION` enum values; only `INFRASTRUCTURE` remains
+- **`management/unified_manager.py`** — removed `HardwareManager`/`OptimizationManager` instantiation and `_managers` dict; `optimize()` delegates to `auto_optimize()` for `nn.Module`; `get_status()` returns `{"infrastructure": ...}`; fixed AMD adapter call to use correct `optimize(level=...)` API; fixed TPU kwarg to use `sample_inputs=` (not `sample_input=`)
+- **`management/__init__.py`** — removed `HardwareManager` and `OptimizationManager` from imports and `__all__`
+
+### **Tests**
+
+- 23 new regression tests in `tests/unit/test_management_contraction.py` across 5 classes: deleted-class import guards, removed attributes, `optimize()` delegation, `get_status()` shape, preserved public API
+
+---
+
 ## [0.5.75] - 2026-03-16 - CLI Cleanup: 9 Correctness Fixes Across 5 Commands
 
 ### **Summary**
