@@ -62,10 +62,10 @@ class TestKVHandoffSpecFields:
         for key in ("dtype", "layout", "page_size_tokens", "alignment_bytes", "notes"):
             assert key in d, f"Missing key: {key}"
 
-    def test_to_json_returns_valid_json(self):
+    def test_to_dict_roundtrips_through_json(self):
         spec = KVHandoffSpec(dtype="float16", layout="separate",
                              page_size_tokens=16, alignment_bytes=128)
-        parsed = json.loads(spec.to_json())
+        parsed = json.loads(json.dumps(spec.to_dict()))
         assert parsed["page_size_tokens"] == 16
 
 

@@ -79,14 +79,13 @@ class TestRoleConfigFields:
         serialised = json.dumps(d)
         assert len(serialised) > 0
 
-    def test_to_json_returns_valid_json(self):
+    def test_to_dict_roundtrips_through_json(self):
         cfg = DisaggregatedFleetAdvisor.recommend(
             model_params=7_000_000_000,
             prefill_backend="cuda",
             decode_backend="rocm",
         )
-        raw = cfg.to_json()
-        parsed = json.loads(raw)
+        parsed = json.loads(json.dumps(cfg.to_dict()))
         assert "prefill" in parsed
         assert "decode" in parsed
 

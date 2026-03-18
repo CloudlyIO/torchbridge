@@ -16,7 +16,6 @@ for the runtime. TorchBridge's role: (prefill_hw, decode_hw) → safe layout spe
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -84,8 +83,6 @@ class KVHandoffSpec:
             "notes": list(self.notes),
         }
 
-    def to_json(self, indent: int = 2) -> str:
-        return json.dumps(self.to_dict(), indent=indent)
 
 
 # ---------------------------------------------------------------------------

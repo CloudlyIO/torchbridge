@@ -72,7 +72,3 @@ OUTPUT_FORMAT_SPECS: dict[OutputFormat, OutputFormatSpec] = {
     ),
 }
 
-
-def get_format_spec(fmt: OutputFormat) -> OutputFormatSpec:
-    """Get the metadata spec for an output format."""
-    return OUTPUT_FORMAT_SPECS[fmt]

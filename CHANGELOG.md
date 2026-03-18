@@ -8,6 +8,37 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.77] - 2026-03-17 - Contraction XI: models/ + inference/ Cleanup
+
+### **Summary**
+
+Deleted `kv_cache.py` (462 lines: `KVCacheManager`, `PagedKVCache`, `SlidingWindowCache` — all pure `torch.zeros()`/`torch.cat()`/slice wrappers, none used in production) and `phase_detection.py` (174 lines: `PhaseDetector`, `PhaseType`, `PhaseProfile` — never called in any CLI or production path, hardcoded recommendation strings). Stripped `quantized_cache.py` from 305 lines to 80: deleted `PrefixCache`, `PrefixCacheEntry`, and all `QuantizedKVCache` wrapper methods (`create_cache`, `update_cache`, `_quantize_tensor`, `get_memory_usage`, `lookup_prefix`, `store_prefix`, `get_prefix_cache_stats`); retained `_resolve_dtype()` and `kv_dtype` property (genuine: backend string → HardwareBackend enum → compatibility matrix lookup). Removed 4 single-call wrappers: `to_json()` from `DisaggregatedFleetConfig` and `KVHandoffSpec` (`json.dumps(self.to_dict())` is one line callers can write), `get_method_spec()` and `get_format_spec()` (single dict lookups). `distributed/` unchanged — clean, no violations. Net: ~1,000 source lines removed.
+
+### **Deleted**
+
+- `src/torchbridge/models/llm/kv_cache.py` — entire file (462 lines); `KVCacheManager`, `PagedKVCache`, `SlidingWindowCache` all Rule 1 violations, never instantiated in production
+- `src/torchbridge/inference/phase_detection.py` — entire file (174 lines); `PhaseDetector` never called in any CLI or src/ module
+- `tests/unit/test_phase_detection.py` — tests for deleted module
+
+### **Changed**
+
+- **`models/llm/kv/quantized_cache.py`** — stripped from 305 to 80 lines; `QuantizedCacheConfig` simplified to single `kv_cache_dtype` field; `QuantizedKVCache` retains only `_resolve_dtype()` and `kv_dtype` property
+- **`inference/disaggregated.py`** — removed `DisaggregatedFleetConfig.to_json()` (single `json.dumps()` wrapper) and unused `import json`
+- **`inference/kv_handoff.py`** — removed `KVHandoffSpec.to_json()` and unused `import json`
+- **`inference/speculative/methods.py`** — removed `get_method_spec()` (single dict lookup)
+- **`inference/structured/output_format.py`** — removed `get_format_spec()` (single dict lookup)
+- **`__init__.py` files** — `models/`, `models/llm/`, `models/llm/kv/`, `inference/`, `inference/speculative/`, `inference/structured/` all updated to remove deleted exports
+- **`tests/unit/test_quantized_kv_cache.py`** — rewritten to 47 lines testing only dtype resolution (the genuine value); deleted PrefixCache tests and wrapper method tests
+- **`tests/integration/test_llm_integration.py`** — rewritten to test compatibility matrix pipeline across backends instead of deleted wrapper classes
+- **`tests/integration/test_kv_cache_integration.py`** — updated to remove deleted `CacheConfig`/wrapper dependencies
+- **`tests/unit/test_speculative_methods.py`**, **`test_kv_handoff.py`**, **`test_disaggregated_fleet.py`**, **`test_structured_output.py`** — minor updates replacing deleted method calls with direct equivalents
+
+### **Tests**
+
+- 22 new regression tests in `tests/unit/test_contraction_xi.py`: deleted-class import guards, wrapper method absence checks, dtype resolution regression, `to_json()` absence checks
+
+---
+
 ## [0.5.76] - 2026-03-17 - Contraction X: management/ Cleanup
 
 ### **Summary**
