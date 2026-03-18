@@ -13,13 +13,11 @@ from .methods import (
     SPECULATIVE_METHOD_SPECS,
     SpeculativeMethod,
     SpeculativeMethodSpec,
-    get_method_spec,
 )
 
 __all__ = [
     "SpeculativeMethod",
     "SpeculativeMethodSpec",
     "SPECULATIVE_METHOD_SPECS",
-    "get_method_spec",
     "SpeculationCompatibilityMatrix",
 ]

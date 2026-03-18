@@ -123,7 +123,3 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
     ),
 }
 
-
-def get_method_spec(method: SpeculativeMethod) -> SpeculativeMethodSpec:
-    """Get the metadata spec for a speculative method."""
-    return SPECULATIVE_METHOD_SPECS[method]
