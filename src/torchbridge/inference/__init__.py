@@ -2,7 +2,7 @@
 Inference Subpackage
 
 Backend-aware speculative method selection, structured output formats,
-and disaggregated serving phase detection for TorchBridge.
+and disaggregated serving configuration for TorchBridge.
 """
 
 from .disaggregated import (
@@ -11,15 +11,13 @@ from .disaggregated import (
     DisaggregatedRoleConfig,
 )
 from .kv_handoff import KVHandoffNegotiator, KVHandoffSpec
-from .phase_detection import PhaseDetector, PhaseProfile, PhaseType
 from .speculative import (
     SPECULATIVE_METHOD_SPECS,
     SpeculationCompatibilityMatrix,
     SpeculativeMethod,
     SpeculativeMethodSpec,
-    get_method_spec,
 )
-from .structured import OutputFormat, OutputFormatSpec, get_format_spec
+from .structured import OutputFormat, OutputFormatSpec
 
 __all__ = [
     # Disaggregated serving fleet advisor
@@ -33,14 +31,8 @@ __all__ = [
     "SpeculativeMethod",
     "SpeculativeMethodSpec",
     "SPECULATIVE_METHOD_SPECS",
-    "get_method_spec",
     "SpeculationCompatibilityMatrix",
     # Structured output formats
     "OutputFormat",
     "OutputFormatSpec",
-    "get_format_spec",
-    # Phase detection
-    "PhaseType",
-    "PhaseProfile",
-    "PhaseDetector",
 ]
