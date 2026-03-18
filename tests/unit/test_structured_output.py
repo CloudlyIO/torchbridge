@@ -7,7 +7,6 @@ import pytest
 from torchbridge.inference.structured.output_format import (
     OUTPUT_FORMAT_SPECS,
     OutputFormat,
-    get_format_spec,
 )
 
 
@@ -53,6 +52,7 @@ class TestOutputFormatSpecs:
         spec = OUTPUT_FORMAT_SPECS[OutputFormat.JSON]
         assert spec.requires_grammar_engine is True
 
-    def test_get_format_spec(self):
-        spec = get_format_spec(OutputFormat.REGEX)
+    def test_spec_dict_lookup(self):
+        """Direct dict lookup returns correct spec."""
+        spec = OUTPUT_FORMAT_SPECS[OutputFormat.REGEX]
         assert spec.display_name == "Regex"

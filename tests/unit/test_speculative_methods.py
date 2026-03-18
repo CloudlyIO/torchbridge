@@ -10,7 +10,6 @@ from torchbridge.inference.speculative.methods import (
     SPECULATIVE_METHOD_SPECS,
     SpeculativeMethod,
     SpeculativeMethodSpec,
-    get_method_spec,
 )
 
 
@@ -81,9 +80,9 @@ class TestSpeculativeMethodSpecs:
         assert spec.requires_draft_model is False
         assert spec.requires_hardware_support is False
 
-    def test_get_method_spec(self):
-        """get_method_spec returns correct spec."""
-        spec = get_method_spec(SpeculativeMethod.EAGLE)
+    def test_spec_dict_lookup(self):
+        """SPECULATIVE_METHOD_SPECS dict lookup returns correct spec."""
+        spec = SPECULATIVE_METHOD_SPECS[SpeculativeMethod.EAGLE]
         assert spec.display_name == "EAGLE"
         assert spec.requires_hardware_support is True
 

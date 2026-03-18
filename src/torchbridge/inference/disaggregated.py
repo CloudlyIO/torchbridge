@@ -13,7 +13,6 @@ TorchBridge's role: (prefill_hw, decode_hw, model_params) → optimal per-role c
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -189,8 +188,6 @@ class DisaggregatedFleetConfig:
             "notes": list(self.notes),
         }
 
-    def to_json(self, indent: int = 2) -> str:
-        return json.dumps(self.to_dict(), indent=indent)
 
 
 # ---------------------------------------------------------------------------
