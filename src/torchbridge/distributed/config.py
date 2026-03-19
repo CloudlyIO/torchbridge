@@ -158,6 +158,15 @@ class DistributedConfig:
         Returns:
             Fully configured DistributedConfig.
         """
+        if world_size < 1:
+            raise ValueError(f"world_size must be >= 1, got {world_size}")
+        if model_params <= 0:
+            raise ValueError(f"model_params must be positive, got {model_params}")
+        if gpus_per_node is not None and gpus_per_node > world_size:
+            raise ValueError(
+                f"gpus_per_node ({gpus_per_node}) cannot exceed world_size ({world_size})"
+            )
+
         if gpus_per_node is None:
             gpus_per_node = world_size
         num_nodes = max(1, world_size // gpus_per_node)

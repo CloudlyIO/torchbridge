@@ -70,6 +70,13 @@ class AttentionDispatcher:
         head_dim: int = 64,
     ) -> AttentionDispatchResult:
         """Select the best available attention kernel for current hardware."""
+        if seq_length <= 0:
+            raise ValueError(f"seq_length must be positive, got {seq_length}")
+        if num_heads <= 0:
+            raise ValueError(f"num_heads must be positive, got {num_heads}")
+        if head_dim <= 0:
+            raise ValueError(f"head_dim must be positive, got {head_dim}")
+
         supported = AttentionDispatchMatrix.get_supported_kernels(
             self._backend, self._architecture
         )
@@ -83,9 +90,9 @@ class AttentionDispatcher:
                 chosen = kernel
                 used_fallback = i > 0
                 break
-            result_warnings.append(
-                f"{kernel.value} not available at runtime, trying next"
-            )
+            msg = f"{kernel.value} not available at runtime, trying next"
+            result_warnings.append(msg)
+            logger.warning(msg)
 
         if chosen is None:
             chosen = AttentionKernelType.PYTORCH_SDPA

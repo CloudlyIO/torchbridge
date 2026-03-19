@@ -1,0 +1,47 @@
+name: GPU Validation
+
+# Triggered manually or weekly (Monday 06:00 UTC).
+# The job is gated with `if: false` until a self-hosted GPU runner is registered.
+on:
+  workflow_dispatch:
+    inputs:
+      backend:
+        description: 'Backend to validate (cuda, rocm)'
+        required: false
+        default: 'cuda'
+      model:
+        description: 'Model to validate'
+        required: false
+        default: 'Qwen/Qwen3-0.6B'
+  schedule:
+    - cron: '0 6 * * 1'  # weekly Monday 06:00 UTC
+
+jobs:
+  gpu-validation:
+    # Remove `if: false` once a self-hosted GPU runner is registered.
+    if: false
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install torchbridge
+        run: |
+          pip install -e ".[dev]" --quiet
+
+      - name: Run GPU validation
+        run: |
+          python scripts/validation/run_gpu_validation.py \
+            --backend "${{ github.event.inputs.backend || 'cuda' }}" \
+            --model "${{ github.event.inputs.model || 'Qwen/Qwen3-0.6B' }}" \
+            --output-json validation_result.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-validation-result-${{ github.run_id }}
+          path: validation_result.json
+          retention-days: 90

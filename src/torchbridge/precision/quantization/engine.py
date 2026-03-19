@@ -117,6 +117,11 @@ class QuantizationEngine:
         Returns:
             QuantizationResult with the quantized model and metadata.
         """
+        if not isinstance(model, nn.Module):
+            raise TypeError(
+                f"model must be an nn.Module, got {type(model).__name__}"
+            )
+
         # Resolve format
         is_auto = False
         if isinstance(format, str):
@@ -325,9 +330,9 @@ class QuantizationEngine:
             try:
                 return TorchAOBackend.quantize_int8_dynamic(model)
             except Exception as e:
-                logger.debug("torchao INT8 failed, using PyTorch native: %s", e)
+                logger.warning("torchao INT8 failed, using PyTorch native: %s", e)
         elif TORCHAO_AVAILABLE:
-            logger.debug(
+            logger.info(
                 "torchao not supported on %s backend; using PyTorch native INT8",
                 self._hw_backend.value,
             )
