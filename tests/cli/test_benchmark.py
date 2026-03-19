@@ -7,6 +7,7 @@ import os
 import tempfile
 from unittest.mock import MagicMock, patch
 
+import pytest
 import torch
 
 from torchbridge.cli.benchmark import BenchmarkCommand, BenchmarkResult
@@ -90,11 +91,11 @@ class TestBenchmarkCommand:
             # Verify eval was called
             mock_model.to.return_value.eval.assert_called_once()
 
-    def test_load_model_fallback(self):
-        """Test loading model fallback."""
+    def test_load_model_unknown_raises(self):
+        """Unknown model names that are not files should raise ValueError."""
         device = torch.device('cpu')
-        model = BenchmarkCommand._load_model('unknown_model', device)
-        assert isinstance(model, torch.nn.Linear)
+        with pytest.raises(ValueError, match="not found as a file or predefined name"):
+            BenchmarkCommand._load_model('unknown_model', device)
 
     def test_parse_input_shape_explicit(self):
         """Test parsing explicit input shape."""
@@ -143,7 +144,8 @@ class TestBenchmarkCommand:
         with patch('torch.compile') as mock_compile:
             mock_compile.return_value = model
             BenchmarkCommand._apply_optimization(model, 'compile', input_shape, device)
-            mock_compile.assert_called_with(model, mode='default')
+            # CPU backend uses 'reduce-overhead' via CompileCompatibility matrix
+            mock_compile.assert_called_with(model, mode='reduce-overhead')
 
     def test_benchmark_model(self):
         """Test benchmarking a single model."""
