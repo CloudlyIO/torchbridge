@@ -74,36 +74,19 @@ Sharding strategies:
 
 ## Tensor Parallelism
 
-Best for: models with very wide layers (large hidden dimensions).
+Best for: models with very wide layers (large hidden dimensions). Use PyTorch's native `torch.distributed.tensor.parallel` API directly.
 
-```python
-from torchbridge.models.distributed import ColumnParallelLinear, RowParallelLinear
-
-# Replace linear layers with tensor-parallel equivalents
-class ParallelMLP(nn.Module):
-    def __init__(self, hidden_size, intermediate_size):
-        super().__init__()
-        self.gate_proj = ColumnParallelLinear(hidden_size, intermediate_size)
-        self.down_proj = RowParallelLinear(intermediate_size, hidden_size)
-
-    def forward(self, x):
-        return self.down_proj(F.silu(self.gate_proj(x)))
+```bash
+# TorchBridge advisor shows optimal parallelism strategy for your hardware
+torchbridge advisor --model-params 70B --world-size 8
 ```
 
 ## Pipeline Parallelism
 
-Best for: very deep models (many layers).
+Best for: very deep models (many layers). Use PyTorch's native `torch.distributed.pipelining` API directly.
 
-```python
-from torchbridge.models.distributed import PipelineStage
-
-# Assign model layers to pipeline stages
-stages = [
-    PipelineStage(layers=model.layers[:8], device="cuda:0"),
-    PipelineStage(layers=model.layers[8:16], device="cuda:1"),
-    PipelineStage(layers=model.layers[16:24], device="cuda:2"),
-    PipelineStage(layers=model.layers[24:], device="cuda:3"),
-]
+```bash
+torchbridge advisor --model-params 70B --world-size 16
 ```
 
 ## Memory Estimation
