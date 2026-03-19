@@ -8,6 +8,32 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.79] - 2026-03-19 - Quality Hardening III: 5 Post-Assessment Fixes
+
+### **Summary**
+
+Addressed all 5 findings from the v0.5.78 multi-dimensional quality assessment. **Issue 1** (Scalability/Reliability): `LRUCache` and `TTLCache` now have `threading.RLock`; all mutating methods are wrapped; `__getitem__` inlines logic to avoid reentrant lock call; `keys()`/`values()`/`items()` return list snapshots under the lock; docstring corrected from self-contradictory "Thread-safe for single-threaded operations" to "Thread-safe." **Issue 2** (Reliability): silent feature downgrades now visible — torchao INT8 runtime failure raised from `logger.debug` to `logger.warning`; torchao absent for backend from `debug` to `info`; dispatcher kernel fallback now calls `logger.warning()` alongside `result_warnings.append()` so downgrades appear in logs even if caller never inspects `.warnings`. **Issue 3** (Scalability): `KernelBenchmarkCache` hardened — `max_entries=512` bounds RAM/JSON bloat via LRU eviction (`OrderedDict.popitem(last=False)`); `threading.Lock` with correct granularity (benchmark outside lock, write/evict/save inside); atomic file writes via `tempfile.mkstemp` + `os.replace` (original file untouched on failure); early-return cache check to avoid duplicate benchmark work under concurrency. **Issue 4** (Robustness): input bounds validation added to three entry points — `select_kernel()` (`ValueError` for ≤0 dimensions), `DistributedConfig.auto()` (`ValueError` for invalid world_size/model_params/gpus_per_node), `QuantizationEngine.quantize()` (`TypeError` for non-nn.Module). **Issue 5** (Accuracy/CI): GPU validation CI infrastructure added — `.github/workflows/gpu-validation.yml` (gated `if: false` until runner registered, weekly cron + manual dispatch) and `scripts/validation/run_gpu_validation.py` (standalone executable, exit 0/1/2, TolerationDB-backed thresholds). 28 new tests across 5 files.
+
+### **Changed**
+
+- `src/torchbridge/utils/cache.py` — `LRUCache` + `TTLCache`: `threading.RLock`, all methods locked, `__getitem__` inlined, `keys/values/items` return snapshots, docstring fixed
+- `src/torchbridge/precision/quantization/engine.py` — torchao fallback log levels raised (debug→warning, debug→info); `isinstance(model, nn.Module)` guard in `quantize()`
+- `src/torchbridge/attention/dispatch/dispatcher.py` — `logger.warning` added for kernel fallback; `ValueError` guards for non-positive `seq_length`/`num_heads`/`head_dim`
+- `src/torchbridge/attention/dispatch/benchmark_cache.py` — `max_entries=512`, LRU eviction, `threading.Lock`, atomic `_save()`, early-return cache check in `run_benchmark()`
+- `src/torchbridge/distributed/config.py` — `ValueError` guards for `world_size < 1`, `model_params ≤ 0`, `gpus_per_node > world_size` in `DistributedConfig.auto()`
+
+### **Added**
+
+- `.github/workflows/gpu-validation.yml` — GPU validation CI workflow (gated `if: false`; weekly Monday 06:00 UTC cron + `workflow_dispatch`)
+- `scripts/validation/run_gpu_validation.py` — standalone Qwen3-0.6B CPU↔GPU validation script; `--backend/--model/--output-json` flags; exit 0/1/2
+- `tests/unit/test_lru_cache_thread_safety.py` — 4 concurrency tests for `LRUCache` + `TTLCache`
+- `tests/unit/test_downgrade_logging.py` — 3 tests for WARNING/INFO log levels on feature downgrades
+- `tests/unit/test_benchmark_cache_hardening.py` — 5 tests for bounded size, LRU eviction, atomic write, concurrent safety
+- `tests/unit/test_input_validation_hardening.py` — 11 bounds validation tests across 3 entry points
+- `tests/unit/test_ci_validation_infra.py` — 5 infrastructure existence/correctness tests
+
+---
+
 ## [0.5.78] - 2026-03-18 - Contraction XII: Full Cleanup Pass (src/, benchmarks/, demos/, scripts/, docs/, tests/)
 
 ### **Summary**
