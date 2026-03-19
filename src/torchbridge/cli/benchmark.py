@@ -453,14 +453,15 @@ Examples:
             from torchbridge.benchmarks.claim_benchmarks import BenchmarkSuite
             suite = BenchmarkSuite()
             for b in matched:
-                suite.add(b)
+                suite._benchmarks.append(b)
         else:
             suite = build_claim_suite()
 
         report = suite.run_all(device=device_str)
 
         if ci_mode:
-            print(report.to_json())
+            import json
+            print(json.dumps(report.to_dict(), indent=2))
         else:
             # Human-readable output
             print(f"  Device: {report.device}")
@@ -492,7 +493,9 @@ Examples:
         # Save if output requested
         output_path = getattr(args, 'output', None)
         if output_path:
-            report.save(output_path)
+            import json
+            with open(output_path, "w") as _f:
+                _f.write(json.dumps(report.to_dict(), indent=2))
             if not ci_mode:
                 print(f"\n  Results saved to: {output_path}")
 
