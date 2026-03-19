@@ -11,7 +11,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
+import threading
 import time
+from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_CACHE_DIR = os.path.join(Path.home(), ".torchbridge")
 _DEFAULT_CACHE_FILE = "kernel_benchmarks.json"
+_DEFAULT_MAX_ENTRIES = 512
 
 
 @dataclass
@@ -72,13 +76,23 @@ class BenchmarkFingerprint:
 
 
 class KernelBenchmarkCache:
-    """Persistent benchmark cache with fingerprint invalidation."""
+    """Persistent benchmark cache with fingerprint invalidation.
 
-    def __init__(self, cache_dir: str | None = None) -> None:
+    Thread-safe (in-process lock) and process-safe (atomic file writes via
+    os.replace). Entries are bounded to ``max_entries`` via LRU eviction.
+    """
+
+    def __init__(
+        self,
+        cache_dir: str | None = None,
+        max_entries: int = _DEFAULT_MAX_ENTRIES,
+    ) -> None:
         self._cache_dir = cache_dir or _DEFAULT_CACHE_DIR
         self._cache_path = os.path.join(self._cache_dir, _DEFAULT_CACHE_FILE)
-        self._entries: dict[str, BenchmarkEntry] = {}
+        self._entries: OrderedDict[str, BenchmarkEntry] = OrderedDict()
         self._fingerprint: BenchmarkFingerprint | None = None
+        self._max_entries = max_entries
+        self._lock = threading.Lock()
         self._load()
 
     # ── public API ───────────────────────────────────────────────────
@@ -99,6 +113,13 @@ class KernelBenchmarkCache:
         - FLASH_ATTENTION_2/3/CK: flash_attn.flash_attn_func (raises RuntimeError if not installed)
         - FLEX_ATTENTION: torch.nn.attention.flex_attention (raises RuntimeError if not available)
         """
+        # Return cached result if already available (avoids duplicate benchmark work
+        # when two threads race to benchmark the same key).
+        key = f"{kernel_type.value}_{seq_length}_{num_heads}_{head_dim}"
+        with self._lock:
+            if key in self._entries:
+                return self._entries[key]
+
         import torch.nn.functional as F
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -173,9 +194,10 @@ class KernelBenchmarkCache:
             head_dim=head_dim,
         )
 
-        key = f"{kernel_type.value}_{seq_length}_{num_heads}_{head_dim}"
-        self._entries[key] = entry
-        self._save()
+        with self._lock:
+            self._entries[key] = entry
+            self._evict_if_needed()
+            self._save()
         return entry
 
     def warm_cache(
@@ -192,37 +214,54 @@ class KernelBenchmarkCache:
             results[kt.value] = entry.latency_ms
         return results
 
+    # ── eviction ─────────────────────────────────────────────────────
+
+    def _evict_if_needed(self) -> None:
+        """Evict oldest entries until len <= max_entries. Caller holds self._lock."""
+        while len(self._entries) > self._max_entries:
+            self._entries.popitem(last=False)  # remove oldest (FIFO of OrderedDict)
+
     # ── persistence ──────────────────────────────────────────────────
 
     def _load(self) -> None:
-        if not os.path.exists(self._cache_path):
-            return
-        try:
-            with open(self._cache_path) as f:
-                data = json.load(f)
-            stored_fp = data.get("fingerprint", {})
-            current_fp = asdict(BenchmarkFingerprint.current())
-            if stored_fp != current_fp:
-                logger.debug("Benchmark cache fingerprint mismatch — clearing cache")
-                self._entries = {}
+        with self._lock:
+            if not os.path.exists(self._cache_path):
                 return
-            self._fingerprint = BenchmarkFingerprint(**stored_fp)
-            for key, entry_dict in data.get("entries", {}).items():
-                self._entries[key] = BenchmarkEntry(**entry_dict)
-        except Exception:
-            logger.debug("Failed to load benchmark cache", exc_info=True)
-            self._entries = {}
+            try:
+                with open(self._cache_path) as f:
+                    data = json.load(f)
+                stored_fp = data.get("fingerprint", {})
+                current_fp = asdict(BenchmarkFingerprint.current())
+                if stored_fp != current_fp:
+                    logger.debug("Benchmark cache fingerprint mismatch — clearing cache")
+                    self._entries = OrderedDict()
+                    return
+                self._fingerprint = BenchmarkFingerprint(**stored_fp)
+                for key, entry_dict in data.get("entries", {}).items():
+                    self._entries[key] = BenchmarkEntry(**entry_dict)
+                self._evict_if_needed()
+            except Exception:
+                logger.debug("Failed to load benchmark cache", exc_info=True)
+                self._entries = OrderedDict()
 
     def _save(self) -> None:
+        """Atomic save: write to temp file then os.replace. Caller holds self._lock."""
         os.makedirs(self._cache_dir, exist_ok=True)
         fp = BenchmarkFingerprint.current()
         data = {
             "fingerprint": asdict(fp),
             "entries": {k: asdict(v) for k, v in self._entries.items()},
         }
+        tmp_fd, tmp_path = tempfile.mkstemp(
+            dir=self._cache_dir, prefix=".kb_cache_", suffix=".json"
+        )
         try:
-            with open(self._cache_path, "w") as f:
+            with os.fdopen(tmp_fd, "w") as f:
                 json.dump(data, f, indent=2)
+            os.replace(tmp_path, self._cache_path)
         except Exception:
             logger.debug("Failed to save benchmark cache", exc_info=True)
-
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
