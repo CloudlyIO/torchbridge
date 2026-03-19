@@ -153,17 +153,19 @@ class TestRuntimeAvailabilityChecks:
         assert isinstance(result, bool)
 
 
-class TestDispatcherProperties:
-    """Test backend_name and architecture_name properties."""
+class TestDispatcherInternalState:
+    """Test that backend and architecture are stored correctly on the dispatcher."""
 
-    def test_cpu_backend_name(self):
+    def test_cpu_backend_stored(self):
         d = AttentionDispatcher(backend=HardwareBackend.CPU, use_benchmark_cache=False)
-        assert d.backend_name == "cpu"
+        assert d._backend == HardwareBackend.CPU
+        assert d._backend.value == "cpu"
 
-    def test_nvidia_architecture_name(self):
+    def test_nvidia_architecture_stored(self):
         d = AttentionDispatcher(
             backend=HardwareBackend.CUDA,
             architecture=NVIDIAArchitecture.HOPPER,
             use_benchmark_cache=False,
         )
-        assert d.architecture_name == "hopper"
+        assert d._architecture == NVIDIAArchitecture.HOPPER
+        assert d._architecture.value == "hopper"

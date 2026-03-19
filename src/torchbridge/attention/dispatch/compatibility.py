@@ -188,15 +188,6 @@ class AttentionDispatchMatrix:
             return list(_CPU_KERNELS)
 
     @staticmethod
-    def get_optimal_kernel(
-        backend: HardwareBackend,
-        architecture: NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None = None,
-    ) -> AttentionKernelType:
-        """Return the single best kernel for the given hardware."""
-        kernels = AttentionDispatchMatrix.get_supported_kernels(backend, architecture)
-        return kernels[0]
-
-    @staticmethod
     def get_fallback_chain(
         requested: AttentionKernelType,
         backend: HardwareBackend,
@@ -209,11 +200,3 @@ class AttentionDispatchMatrix:
             return supported[idx + 1:]
         return supported
 
-    @staticmethod
-    def is_kernel_supported(
-        kernel_type: AttentionKernelType,
-        backend: HardwareBackend,
-        architecture: NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None = None,
-    ) -> bool:
-        """Check whether a specific kernel is supported on the hardware."""
-        return kernel_type in AttentionDispatchMatrix.get_supported_kernels(backend, architecture)

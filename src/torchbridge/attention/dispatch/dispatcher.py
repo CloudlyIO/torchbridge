@@ -9,6 +9,7 @@ based on (backend, dtype, sequence_length) via the compatibility matrix.
 
 from __future__ import annotations
 
+import importlib
 import logging
 from dataclasses import dataclass, field
 
@@ -98,9 +99,9 @@ class AttentionDispatcher:
         _MAX_BENCH_SEQ = 32_768
         latency: float | None = None
         if self._cache is not None:
-            latency = self._cache.get_cached_latency(
-                chosen, seq_length, num_heads, head_dim
-            )
+            _key = f"{chosen.value}_{seq_length}_{num_heads}_{head_dim}"
+            _entry = self._cache._entries.get(_key)
+            latency = _entry.latency_ms if _entry else None
             if latency is None and seq_length <= _MAX_BENCH_SEQ:
                 try:
                     entry = self._cache.run_benchmark(
@@ -128,59 +129,31 @@ class AttentionDispatcher:
             warnings=result_warnings,
         )
 
-    # ── properties ───────────────────────────────────────────────────
-
-    @property
-    def backend_name(self) -> str:
-        return self._backend.value
-
-    @property
-    def architecture_name(self) -> str:
-        if self._architecture is not None:
-            return self._architecture.value
-        return "unknown"
-
     # ── runtime availability checks ──────────────────────────────────
+
+    # Module paths for kernels whose availability is determined by a single import.
+    # FLASH_ATTENTION_CK is excluded — it requires both flash_attn AND ROCm detection.
+    _IMPORT_CHECKS: dict[AttentionKernelType, str] = {
+        AttentionKernelType.FLEX_ATTENTION: "torch.nn.attention.flex_attention",
+        AttentionKernelType.FLASH_ATTENTION_2: "flash_attn",
+        AttentionKernelType.FLASH_ATTENTION_3: "flash_attn",
+        AttentionKernelType.NEURONX_SDPA: "torch_neuronx",
+        AttentionKernelType.PALLAS_ATTENTION: "jax",
+    }
 
     def _check_kernel_availability(self, kernel_type: AttentionKernelType) -> bool:
         """Check if a kernel is actually usable at runtime."""
         if kernel_type == AttentionKernelType.PYTORCH_SDPA:
             return True  # always available
 
-        if kernel_type == AttentionKernelType.FLEX_ATTENTION:
-            return self._check_flex_attention()
-
-        if kernel_type in (
-            AttentionKernelType.FLASH_ATTENTION_3,
-            AttentionKernelType.FLASH_ATTENTION_2,
-        ):
-            return self._check_flash_attention()
-
         if kernel_type == AttentionKernelType.FLASH_ATTENTION_CK:
             return self._check_flash_attention_ck()
 
-        if kernel_type == AttentionKernelType.NEURONX_SDPA:
-            return self._check_neuronx()
-
-        if kernel_type == AttentionKernelType.PALLAS_ATTENTION:
-            return self._check_pallas()
-
-        return False
-
-    @staticmethod
-    def _check_flex_attention() -> bool:
-        try:
-            from torch.nn.attention.flex_attention import flex_attention  # noqa: F401
-
-            return True
-        except (ImportError, ModuleNotFoundError):
+        module_path = self._IMPORT_CHECKS.get(kernel_type)
+        if module_path is None:
             return False
-
-    @staticmethod
-    def _check_flash_attention() -> bool:
         try:
-            import flash_attn  # noqa: F401
-
+            importlib.import_module(module_path)
             return True
         except (ImportError, ModuleNotFoundError):
             return False
@@ -199,24 +172,6 @@ class AttentionDispatcher:
 
             # CK kernels only activate on ROCm (torch.version.hip is set)
             return getattr(torch.version, "hip", None) is not None
-        except (ImportError, ModuleNotFoundError):
-            return False
-
-    @staticmethod
-    def _check_neuronx() -> bool:
-        try:
-            import torch_neuronx  # noqa: F401
-
-            return True
-        except (ImportError, ModuleNotFoundError):
-            return False
-
-    @staticmethod
-    def _check_pallas() -> bool:
-        try:
-            import jax  # noqa: F401
-
-            return True
         except (ImportError, ModuleNotFoundError):
             return False
 

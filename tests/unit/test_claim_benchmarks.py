@@ -262,7 +262,7 @@ class TestClaimBenchmark:
     def test_skip_reason_not_in_claims_to_delete(self):
         """skip_reason benchmarks should not appear in claims_to_delete."""
         suite = BenchmarkSuite()
-        suite.add(ClaimBenchmark(
+        suite._benchmarks.append(ClaimBenchmark(
             name="skipped_claim",
             baseline_fn=lambda: None,
             optimized_fn=lambda: None,
@@ -284,19 +284,19 @@ class TestClaimBenchmark:
 class TestBenchmarkSuite:
     """Tests for BenchmarkSuite."""
 
-    def test_add_and_list(self):
-        """Should store added benchmarks."""
+    def test_register_and_list(self):
+        """Should store registered benchmarks."""
         suite = BenchmarkSuite()
         b1 = ClaimBenchmark(name="a", baseline_fn=lambda: None, optimized_fn=lambda: None)
         b2 = ClaimBenchmark(name="b", baseline_fn=lambda: None, optimized_fn=lambda: None)
-        suite.add(b1)
-        suite.add(b2)
-        assert len(suite.benchmarks) == 2
+        suite._benchmarks.append(b1)
+        suite._benchmarks.append(b2)
+        assert len(suite._benchmarks) == 2
 
     def test_run_all_returns_report(self):
         """run_all should return a BenchmarkReport."""
         suite = BenchmarkSuite()
-        suite.add(ClaimBenchmark(
+        suite._benchmarks.append(ClaimBenchmark(
             name="fast", baseline_fn=lambda: None, optimized_fn=lambda: None,
             warmup=1, runs=2,
         ))
@@ -307,7 +307,7 @@ class TestBenchmarkSuite:
     def test_skip_requires_backend(self):
         """Benchmarks requiring a different backend should be skipped."""
         suite = BenchmarkSuite()
-        suite.add(ClaimBenchmark(
+        suite._benchmarks.append(ClaimBenchmark(
             name="gpu_only", baseline_fn=lambda: None, optimized_fn=lambda: None,
             warmup=1, runs=2, requires_backend="rocm",
         ))
@@ -318,7 +318,7 @@ class TestBenchmarkSuite:
     def test_matching_backend_runs(self):
         """Benchmarks matching the device backend should run."""
         suite = BenchmarkSuite()
-        suite.add(ClaimBenchmark(
+        suite._benchmarks.append(ClaimBenchmark(
             name="cpu_ok", baseline_fn=lambda: None, optimized_fn=lambda: None,
             warmup=1, runs=2, requires_backend="cpu",
         ))
@@ -376,19 +376,20 @@ class TestBenchmarkReport:
         assert "claims_to_delete" in d
         assert len(d["results"]) == 3
 
-    def test_to_json_valid(self):
-        """to_json should produce valid JSON."""
+    def test_to_dict_is_json_serialisable(self):
+        """to_dict should produce a JSON-serialisable dict."""
         report = self._make_report()
-        j = report.to_json()
+        j = json.dumps(report.to_dict(), indent=2)
         parsed = json.loads(j)
         assert parsed["device"] == "cpu"
 
-    def test_save_to_file(self):
-        """save should write JSON to file."""
+    def test_to_dict_can_be_saved_to_file(self):
+        """to_dict output can be written to a JSON file."""
         report = self._make_report()
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
-        report.save(path)
+        with open(path, "w") as f:
+            f.write(json.dumps(report.to_dict(), indent=2))
         with open(path) as f:
             loaded = json.load(f)
         assert loaded["device"] == "cpu"

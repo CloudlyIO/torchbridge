@@ -20,12 +20,11 @@ class TestBenchmarkCacheIntegration:
         assert "pytorch_sdpa" in results
         assert results["pytorch_sdpa"] > 0.0
 
-        # Verify cached value
-        latency = cache.get_cached_latency(
-            AttentionKernelType.PYTORCH_SDPA, 64, 4, 16
-        )
-        assert latency is not None
-        assert latency == results["pytorch_sdpa"]
+        # Verify cached value via direct entry lookup
+        _key = f"{AttentionKernelType.PYTORCH_SDPA.value}_64_4_16"
+        _entry = cache._entries.get(_key)
+        assert _entry is not None
+        assert _entry.latency_ms == results["pytorch_sdpa"]
 
     def test_cache_persistence(self, tmp_path):
         """Cache survives re-instantiation."""
@@ -35,7 +34,6 @@ class TestBenchmarkCacheIntegration:
         )
 
         cache2 = KernelBenchmarkCache(cache_dir=str(tmp_path))
-        latency = cache2.get_cached_latency(
-            AttentionKernelType.PYTORCH_SDPA, 64, 4, 16
-        )
-        assert latency is not None
+        _key = f"{AttentionKernelType.PYTORCH_SDPA.value}_64_4_16"
+        _entry = cache2._entries.get(_key)
+        assert _entry is not None

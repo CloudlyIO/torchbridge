@@ -142,13 +142,6 @@ class BenchmarkSuite:
     def __init__(self) -> None:
         self._benchmarks: list[ClaimBenchmark] = []
 
-    def add(self, benchmark: ClaimBenchmark) -> None:
-        self._benchmarks.append(benchmark)
-
-    @property
-    def benchmarks(self) -> list[ClaimBenchmark]:
-        return list(self._benchmarks)
-
     def run_all(self, device: str = "cpu") -> BenchmarkReport:
         """Run all benchmarks, skipping those that require unavailable backends."""
         results: list[ClaimResult] = []
@@ -215,9 +208,3 @@ class BenchmarkReport:
             "claims_to_delete": self.claims_to_delete(),
         }
 
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict(), indent=2)
-
-    def save(self, path: str) -> None:
-        with open(path, "w") as f:
-            f.write(self.to_json())
