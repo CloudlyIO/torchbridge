@@ -298,7 +298,7 @@ class QuantizationEngine:
             return model
 
         if fmt == QuantizationFormat.BF16:
-            return self._apply_bf16(model)
+            return model.to(dtype=torch.bfloat16)
 
         if fmt == QuantizationFormat.INT8_DYNAMIC:
             return self._apply_int8_dynamic(model)
@@ -318,10 +318,6 @@ class QuantizationEngine:
         raise ValueError(f"Unhandled quantization format: {fmt.value}")
 
     # ── format implementations ────────────────────────────────────────────
-
-    def _apply_bf16(self, model: nn.Module) -> nn.Module:
-        """Convert model to BFloat16."""
-        return model.to(dtype=torch.bfloat16)
 
     def _apply_int8_dynamic(self, model: nn.Module) -> nn.Module:
         """INT8 dynamic quantization (PyTorch native, no torchao needed)."""
@@ -348,7 +344,7 @@ class QuantizationEngine:
                     "Falling back to BF16.",
                     e,
                 )
-                return self._apply_bf16(model)
+                return model.to(dtype=torch.bfloat16)
             raise
 
     def _apply_int8_dynamic_activations(self, model: nn.Module) -> nn.Module:
@@ -389,16 +385,10 @@ class QuantizationEngine:
         return self._apply_int8_dynamic(model)
 
     def _apply_nvfp4(self, model: nn.Module) -> nn.Module:
-        """NVFP4 quantization using TorchBridge native precision module."""
-        try:
-            from torchbridge.precision.fp4_native import convert_model_to_fp4
-
-            return convert_model_to_fp4(model)
-        except Exception as e:
-            logger.warning("Native FP4 conversion failed: %s", e)
-            warnings.warn(
-                "NVFP4 not available; falling back to FP8",
-                stacklevel=2,
-            )
-            return self._apply_fp8(model, QuantizationFormat.FP8_E4M3)
+        """NVFP4 quantization — falls back to FP8 until native FP4 support lands."""
+        warnings.warn(
+            "NVFP4 native support not yet available; falling back to FP8 E4M3",
+            stacklevel=2,
+        )
+        return self._apply_fp8(model, QuantizationFormat.FP8_E4M3)
 

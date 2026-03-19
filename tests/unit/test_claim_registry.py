@@ -13,10 +13,8 @@ from torchbridge.benchmarks.claim_benchmarks import (
 )
 from torchbridge.benchmarks.claim_registry import (
     build_attention_dispatch_benchmark,
-    build_channels_last_benchmark,
     build_claim_suite,
     build_quantization_speedup_benchmark,
-    build_tensor_core_alignment_benchmark,
     get_all_claim_benchmarks,
 )
 
@@ -43,10 +41,10 @@ class TestRegistryFunctions:
         benchmarks = get_all_claim_benchmarks()
         assert isinstance(benchmarks, list)
 
-    def test_get_all_returns_five(self):
-        """Should have exactly 5 registered claims."""
+    def test_get_all_returns_two(self):
+        """Should have exactly 2 registered claims (attention_dispatch + quantization)."""
         benchmarks = get_all_claim_benchmarks()
-        assert len(benchmarks) == 5
+        assert len(benchmarks) == 2
 
     def test_all_are_claim_benchmarks(self):
         """All returned items should be ClaimBenchmark instances."""
@@ -64,51 +62,12 @@ class TestRegistryFunctions:
         """build_claim_suite should return a BenchmarkSuite."""
         suite = build_claim_suite()
         assert isinstance(suite, BenchmarkSuite)
-        assert len(suite.benchmarks) == 5
+        assert len(suite._benchmarks) == 2
 
-
-class TestTensorCoreAlignmentBenchmark:
-    """Tests for tensor core alignment claim."""
-
-    def test_builds_without_error(self):
-        """Should build successfully."""
-        bench = build_tensor_core_alignment_benchmark()
-        assert bench.name == "tensor_core_alignment"
-
-    def test_requires_cuda(self):
-        """Should require CUDA backend — tensor cores are NVIDIA-only."""
-        bench = build_tensor_core_alignment_benchmark()
-        assert bench.requires_backend == "cuda"
-
-    def test_skipped_on_cpu(self):
-        """Should be skipped when run via suite on CPU."""
-        suite = BenchmarkSuite()
-        suite.add(build_tensor_core_alignment_benchmark())
-        report = suite.run_all(device="cpu")
-        assert report.results[0].runs == 0
-        assert "SKIPPED" in report.results[0].notes[0]
-
-
-class TestChannelsLastBenchmark:
-    """Tests for channels_last layout claim."""
-
-    def test_builds_without_error(self):
-        """Should build successfully."""
-        bench = build_channels_last_benchmark()
-        assert bench.name == "channels_last_layout"
-
-    def test_requires_cuda(self):
-        """Should require CUDA backend — NHWC benefit is CUDA-specific."""
-        bench = build_channels_last_benchmark()
-        assert bench.requires_backend == "cuda"
-
-    def test_skipped_on_cpu(self):
-        """Should be skipped when run via suite on CPU."""
-        suite = BenchmarkSuite()
-        suite.add(build_channels_last_benchmark())
-        report = suite.run_all(device="cpu")
-        assert report.results[0].runs == 0
-        assert "SKIPPED" in report.results[0].notes[0]
+    def test_registered_claim_names(self):
+        """Registry must contain exactly attention_dispatch and quantization claims."""
+        names = {b.name for b in get_all_claim_benchmarks()}
+        assert names == {"attention_dispatch_overhead", "quantization_int8_dynamic"}
 
 
 class TestAttentionDispatchBenchmark:
@@ -130,6 +89,13 @@ class TestAttentionDispatchBenchmark:
         result = bench.run(device="cpu")
         assert isinstance(result, ClaimResult)
         assert result.runs > 0
+
+    def test_tensors_not_created_inside_timed_functions(self):
+        """baseline and optimized functions must not create tensors internally."""
+        import inspect
+        bench = build_attention_dispatch_benchmark()
+        assert "torch.randn" not in inspect.getsource(bench._baseline_fn)
+        assert "torch.randn" not in inspect.getsource(bench._optimized_fn)
 
 
 class TestQuantizationSpeedupBenchmark:
@@ -154,5 +120,3 @@ class TestQuantizationSpeedupBenchmark:
             result = bench.run(device="cpu")
             assert isinstance(result, ClaimResult)
             assert result.runs > 0
-
-

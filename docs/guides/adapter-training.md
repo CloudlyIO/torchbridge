@@ -1,43 +1,10 @@
 # Adapter Training Guide
 
-TorchBridge provides a unified adapter training API that automatically selects the optimal fine-tuning method for your hardware. Four methods are supported: **LoRA**, **QLoRA**, **DoRA**, and **QDoRA**.
-
-## Quick Start
-
-```python
-import torch
-from torchbridge.adapters import AdapterConfig, AdapterEngine, AdapterMethod
-from torchbridge.core.config import HardwareBackend
-
-# Configure adapter
-config = AdapterConfig(
-    method=AdapterMethod.LORA,
-    rank=16,
-    alpha=32.0,
-    target_modules=["q_proj", "v_proj"],
-)
-
-# Inject into your model
-engine = AdapterEngine(config, backend=HardwareBackend.CUDA)
-result = engine.inject(model)
-
-print(f"Adapted {result.modules_adapted} modules")
-print(f"Trainable: {result.trainable_params:,} / {result.total_params:,} "
-      f"({result.trainable_ratio:.2%})")
-```
-
-## Adapter Methods
-
-| Method | Description | Best For |
-|--------|-------------|----------|
-| **LoRA** | Low-rank adaptation of linear layers | All hardware, general fine-tuning |
-| **QLoRA** | 4-bit quantized base + LoRA adapters | NVIDIA/AMD with INT4 support |
-| **DoRA** | Weight-decomposed LoRA (magnitude + direction) | Low-rank regimes (r=8-16) |
-| **QDoRA** | 4-bit quantized base + DoRA adapters | Blackwell/CDNA4 with FP8+INT4 |
+TorchBridge provides a compatibility matrix that selects the optimal fine-tuning adapter method for your hardware. Four methods are defined: **LoRA**, **QLoRA**, **DoRA**, and **QDoRA**. For the actual training loop and parameter injection use PEFT, torchao, or Unsloth directly.
 
 ## Backend Compatibility
 
-TorchBridge automatically selects the optimal method per backend:
+TorchBridge auto-selects the optimal method per backend:
 
 | Backend | Optimal | Supported Methods |
 |---------|---------|-------------------|
@@ -50,11 +17,34 @@ TorchBridge automatically selects the optimal method per backend:
 | TPU | LoRA | LoRA, DoRA |
 | CPU | LoRA | LoRA, DoRA |
 
-Use the CLI to check recommendations for your hardware:
+## Query the Compatibility Matrix
 
-```bash
-torchbridge adapter recommend --backend nvidia
-torchbridge adapter info
+```python
+from torchbridge.adapters import AdapterCompatibilityMatrix, AdapterMethod
+from torchbridge.core.config import HardwareBackend, NVIDIAArchitecture
+
+# Get optimal method for hardware
+optimal = AdapterCompatibilityMatrix.get_optimal_method(
+    HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+)
+# → AdapterMethod.QLORA
+
+# Get all supported methods
+supported = AdapterCompatibilityMatrix.get_supported_methods(
+    HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+)
+# → [QLORA, QDORA, DORA, LORA]
+
+# Check if a specific method is supported
+AdapterCompatibilityMatrix.is_method_supported(
+    AdapterMethod.QLORA, HardwareBackend.CPU
+)
+# → False
+
+# Get fallback chain (what to use if method unavailable)
+chain = AdapterCompatibilityMatrix.get_fallback_chain(
+    AdapterMethod.QLORA, HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+)
 ```
 
 ## Configuration
@@ -91,80 +81,6 @@ The `target_modules` parameter specifies which `nn.Linear` layers receive adapte
 | 8-16 | Moderate | General fine-tuning (recommended default: 16) |
 | 32-64 | Large | Complex tasks, large datasets |
 | 128-256 | Very large | Approaching full fine-tuning capacity |
-
-## Merge for Deployment
-
-After training, merge adapter weights into the base model for zero-overhead inference:
-
-```python
-# Before deployment
-model.eval()
-merged_count = engine.merge(model)
-print(f"Merged {merged_count} adapter layers")
-
-# Now model is a plain PyTorch model with no adapter overhead
-torch.save(model.state_dict(), "merged_model.pt")
-```
-
-## Saving and Loading Adapter Weights
-
-Save only the adapter parameters (typically <1% of model size):
-
-```python
-# Save adapter weights
-params = engine.get_adapter_params(model)
-torch.save(params, "adapter_weights.pt")
-
-# Load into a fresh adapted model
-params = torch.load("adapter_weights.pt")
-loaded = engine.load_adapter_params(model, params)
-print(f"Loaded {loaded} adapter parameters")
-```
-
-## Multi-Adapter Serving
-
-Serve multiple adapters on a single base model with LRU caching:
-
-```python
-from torchbridge.adapters import MultiAdapterManager
-
-# Create manager with LRU cache
-mgr = MultiAdapterManager(model, max_loaded=4)
-
-# Load adapters
-mgr.load_adapter("task_a", params_a, config_a)
-mgr.load_adapter("task_b", params_b, config_b)
-
-# Hot-swap between adapters
-mgr.activate("task_a")
-output_a = model(input_ids)
-
-mgr.activate("task_b")
-output_b = model(input_ids)
-
-# Deactivate for base-model-only inference
-mgr.deactivate()
-
-# List loaded adapters
-for adapter in mgr.list_adapters():
-    print(f"  {adapter['name']}: {adapter['method']} rank={adapter['rank']} "
-          f"active={adapter['active']}")
-```
-
-## Automatic Fallback
-
-If your requested method isn't supported on the target hardware, TorchBridge automatically falls back to the next best option:
-
-```python
-# Requesting QLoRA on Trainium (not supported)
-config = AdapterConfig(method=AdapterMethod.QLORA)
-engine = AdapterEngine(config, HardwareBackend.TRAINIUM)
-result = engine.inject(model)
-
-print(result.method_requested)  # qlora
-print(result.method_applied)    # lora (automatic fallback)
-print(result.used_fallback)     # True
-```
 
 ## CLI Reference
 

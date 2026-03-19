@@ -24,7 +24,7 @@ class TestClaimBenchmarkPipeline:
         suite = build_claim_suite()
         report = suite.run_all(device="cpu")
         assert isinstance(report, BenchmarkReport)
-        assert len(report.results) == 5
+        assert len(report.results) == 2
 
     def test_all_non_skipped_have_timing_data(self):
         """Non-skipped results should have positive timing data."""
@@ -43,13 +43,14 @@ class TestClaimBenchmarkPipeline:
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
 
-        report.save(path)
+        with open(path, "w") as f:
+            f.write(json.dumps(report.to_dict(), indent=2))
 
         with open(path) as f:
             loaded = json.load(f)
 
         assert loaded["device"] == "cpu"
-        assert len(loaded["results"]) == 5
+        assert len(loaded["results"]) == 2
         assert "summary" in loaded
         assert "claims_to_delete" in loaded
 
@@ -96,11 +97,8 @@ class TestClaimBenchmarkPipeline:
         """All claim names should follow naming convention."""
         benchmarks = get_all_claim_benchmarks()
         expected_names = {
-            "tensor_core_alignment",
-            "channels_last_layout",
             "attention_dispatch_overhead",
             "quantization_int8_dynamic",
-            "batch_throughput",
         }
         actual_names = {b.name for b in benchmarks}
         assert actual_names == expected_names

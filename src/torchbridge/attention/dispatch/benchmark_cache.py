@@ -83,18 +83,6 @@ class KernelBenchmarkCache:
 
     # ── public API ───────────────────────────────────────────────────
 
-    def get_cached_latency(
-        self,
-        kernel_type: AttentionKernelType,
-        seq_length: int,
-        num_heads: int,
-        head_dim: int,
-    ) -> float | None:
-        """Return cached latency in ms, or None if not cached."""
-        key = self._make_key(kernel_type, seq_length, num_heads, head_dim)
-        entry = self._entries.get(key)
-        return entry.latency_ms if entry else None
-
     def run_benchmark(
         self,
         kernel_type: AttentionKernelType,
@@ -185,7 +173,7 @@ class KernelBenchmarkCache:
             head_dim=head_dim,
         )
 
-        key = self._make_key(kernel_type, seq_length, num_heads, head_dim)
+        key = f"{kernel_type.value}_{seq_length}_{num_heads}_{head_dim}"
         self._entries[key] = entry
         self._save()
         return entry
@@ -238,13 +226,3 @@ class KernelBenchmarkCache:
         except Exception:
             logger.debug("Failed to save benchmark cache", exc_info=True)
 
-    # ── helpers ──────────────────────────────────────────────────────
-
-    @staticmethod
-    def _make_key(
-        kernel_type: AttentionKernelType,
-        seq_length: int,
-        num_heads: int,
-        head_dim: int,
-    ) -> str:
-        return f"{kernel_type.value}_{seq_length}_{num_heads}_{head_dim}"

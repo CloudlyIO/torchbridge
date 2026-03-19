@@ -8,6 +8,42 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.78] - 2026-03-18 - Contraction XII: Full Cleanup Pass (src/, benchmarks/, demos/, scripts/, docs/, tests/)
+
+### **Summary**
+
+Deep audit across all project directories. **Track 1** (Rule 1 src/): deleted 16 single-call wrapper methods across 5 files — `get_cached_latency()`, `_make_key()` from benchmark_cache.py; `get_optimal_kernel()`, `is_kernel_supported()` from attention dispatch compatibility; `backend_name`/`architecture_name` properties from dispatcher; 4 identical try/except import methods consolidated into `_IMPORT_CHECKS` dict; `_apply_bf16()` from quantization engine; `TTLCache` hidden from utils public API; `add()`, `benchmarks`, `to_json()`, `save()` from claim_benchmarks. **Track 2** (Rule 2): 3 claim registry benchmarks deleted (tensor_core_alignment, channels_last, batch_throughput — all claimed literature estimates as measured results); attention dispatch benchmark fixed (tensors pre-created outside timed loops). **Track 3**: entire top-level `benchmarks/` directory deleted (~8,973 lines, 0 files measured TorchBridge value); 5 broken demo files deleted; 2 one-time deck-update scripts deleted. **Track 4**: 4 docs rewritten to reflect deleted APIs (adapter-training, speculative-decoding, kv-cache, distributed-training). **Track 5**: `test_distributed_fsdp2.py` → `test_distributed_fsdp.py`, `test_fsdp2_apply.py` → `test_fsdp_apply.py`. Round-2 review found and removed dead `fp4_native` try-block from `_apply_nvfp4()` (permanently dead since v0.5.55, always caught `ModuleNotFoundError` silently). 49 new regression tests in `test_contraction_xii.py`. Net: ~9,500 source lines removed. 2036 tests passing.
+
+### **Deleted**
+
+- `benchmarks/` — entire top-level directory (~8,973 lines across 15 files); no file measured TorchBridge value; 3 files had broken imports from deleted classes
+- `demos/amd_backend_demo.py`, `demos/auto_backend_selection_demo.py`, `demos/nvidia_integration_demo.py`, `demos/run_all_demos.py`, `demos/fp8_native_demo.py` — all import deleted classes
+- `scripts/rebuild_deck_pass2.py`, `scripts/update_deck_v0572.py` — one-time v0.5.72 tasks, completed
+- `scripts/benchmarks/benchmark_suite.py` — imports deleted `LLMConfig`, `LLMOptimizer`
+- `tests/regression/test_baseline_manager.py`, `test_regression_detector.py`, `test_threshold_manager.py` — tested deleted benchmarks/ framework
+- `tests/benchmark/test_cli_benchmarks.py` — tested deleted benchmarks/cli_performance_benchmark
+
+### **Changed**
+
+- **`attention/dispatch/benchmark_cache.py`** — deleted `get_cached_latency()` (pure getter) and `_make_key()` (pure f-string); key format inlined at callsite
+- **`attention/dispatch/compatibility.py`** — deleted `get_optimal_kernel()` (returned `[0]`) and `is_kernel_supported()` (membership check)
+- **`attention/dispatch/dispatcher.py`** — deleted `backend_name`/`architecture_name` properties; replaced 4 identical try/except import methods with `_IMPORT_CHECKS` class-level dict + unified `_check_kernel_availability()`; moved `importlib` to module-level import
+- **`precision/quantization/engine.py`** — deleted `_apply_bf16()` (single `.to()` call); removed dead `fp4_native` try-block from `_apply_nvfp4()` (module deleted in v0.5.55)
+- **`utils/__init__.py`** — removed `TTLCache` from re-exports (never used in src/)
+- **`benchmarks/claim_benchmarks.py`** — deleted `BenchmarkSuite.add()`, `BenchmarkSuite.benchmarks`, `BenchmarkReport.to_json()`, `BenchmarkReport.save()`
+- **`benchmarks/claim_registry.py`** — deleted 3 unbenchmarked benchmarks; fixed attention dispatch benchmark (tensors pre-created outside timed loops); `get_all_claim_benchmarks()` returns 2 (was 5)
+- **`cli/benchmark.py`** — updated to use `_benchmarks.append()` and inline JSON; fixed pre-existing test failures
+- **`docs/guides/adapter-training.md`** — rewritten around `AdapterCompatibilityMatrix` API (deleted `AdapterEngine`/`MultiAdapterManager` removed)
+- **`docs/guides/speculative-decoding.md`** — rewritten around `SpeculationCompatibilityMatrix` API (deleted `SpeculationEngine`/`StructuredOutputProcessor`/`PhaseDetector` removed)
+- **`docs/guides/kv-cache.md`** — removed deleted `torchbridge.monitoring` section (`GenerationTimer`, `LLMMetricsCollector`, Prometheus integration)
+- **`docs/guides/distributed-training.md`** — replaced deleted `torchbridge.models.distributed` (ColumnParallelLinear, etc.) with PyTorch native API references
+- **`tests/unit/test_distributed_fsdp2.py`** → `tests/unit/test_distributed_fsdp.py` (renamed to match source)
+- **`tests/integration/test_fsdp2_apply.py`** → `tests/integration/test_fsdp_apply.py` (renamed to match source)
+
+### **Added**
+
+- **`tests/unit/test_contraction_xii.py`** — 49 regression tests confirming all deletions; includes tensor-creation-outside-timed-loops check and dead-fp4_native-import guard
+
 ## [0.5.77] - 2026-03-17 - Contraction XI: models/ + inference/ Cleanup
 
 ### **Summary**
