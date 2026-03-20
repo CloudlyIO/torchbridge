@@ -202,7 +202,7 @@ class FSDPManager:
                 nccl_version = dist.get_nccl_version()
                 return nccl_version >= (2, 20, 0)
         except Exception:
-            pass
+            logger.debug("NCCL version check failed", exc_info=True)
         return False
 
     @property

@@ -57,7 +57,7 @@ def pytest_configure(config: object) -> None:
         else:
             config._torchbridge_backends = None  # type: ignore[attr-defined]
     except Exception:
-        pass
+        logger.debug("Failed to finalize torchbridge backend config", exc_info=True)
 
 
 def get_enabled_backends(config: object | None = None) -> list[str] | None:
