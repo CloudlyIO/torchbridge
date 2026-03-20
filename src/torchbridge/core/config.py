@@ -688,7 +688,7 @@ class AMDConfig:
                 # Default to CDNA2 for unknown GPUs
                 return AMDArchitecture.CDNA2
         except (ImportError, AttributeError, Exception):
-            pass
+            logger.debug("AMD GPU architecture detection failed", exc_info=True)
 
         # Default to CDNA2 (most common data center GPU)
         return AMDArchitecture.CDNA2

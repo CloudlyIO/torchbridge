@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.80] - 2026-03-19 - Five-Gap Close: QLoRA + CI + Exception Logging + Perf Tests
+
+### **Summary**
+
+Closed 5 gaps identified in the v0.5.79 multi-dimensional quality assessment. **Gap 1 (QLoRA integrity):** `src/torchbridge/adapters/layers.py` and `engine.py` implemented — `LoRALinear`, `DoRALinear`, `QLoRALinear`, `QDoRALinear` layer classes with torchao soft-import guard; `AdapterEngine.inject()` wires the full fallback chain (QLoRA→LoRA when torchao unavailable) and returns accurate `AdapterResult.base_quantized` / `base_quant_format`. **Gap 2 (GPU CI automation):** `gpu-validation.yml` gains push/PR triggers and an unconditional CPU smoke job on `ubuntu-latest`; GPU job stays `if: false` until a self-hosted runner is registered. **Gap 3 (silent exceptions):** 5 bare `except … pass` sites replaced with `logger.debug(…, exc_info=True)` — AMD arch detection, NCCL version check, pytest plugin configure, and two OTel span attribute coercion paths. **Gap 4 (action version bug):** `security.yml` `@v6` references corrected to stable `checkout@v4`, `setup-python@v5`, `upload-artifact@v4`. **Gap 5 (config-path perf tests):** `tests/benchmark/test_config_path_perf.py` — 6 regression tests for matrix lookups (×4) and `DistributedConfig.auto()` + warm cache lookup; all `@pytest.mark.benchmark`; thresholds 50–100× expected latency. +35 new tests; 2090 passing.
+
+### **Added**
+
+- `src/torchbridge/adapters/layers.py` — `LoRALinear`, `DoRALinear`, `QLoRALinear`, `QDoRALinear`; torchao soft-import guard; `merge()` raises `NotImplementedError` for quantized variants
+- `src/torchbridge/adapters/engine.py` — `AdapterEngine` + `AdapterResult`; `_create_qlora_layer` / `_create_qdora_layer` fallback helpers; `_rsetattr` for nested module replacement
+- `tests/unit/test_adapter_layers.py` — 12 tests (LoRA ×4, QLoRA ×5, QDoRA ×3; torchao-guarded)
+- `tests/unit/test_adapter_engine.py` — 6 tests including torchao fallback mock
+- `tests/integration/test_adapter_pipeline.py` — 4 pipeline tests
+- `tests/unit/test_exception_logging.py` — 5 tests covering all newly-logged exception paths
+- `tests/benchmark/test_config_path_perf.py` — 6 performance regression tests
+- `tests/unit/test_ci_validation_infra.py` — +2 CPU smoke test assertions
+
+### **Changed**
+
+- `src/torchbridge/adapters/__init__.py` — exports all 4 layer classes + `AdapterEngine`, `AdapterResult`
+- `src/torchbridge/core/config.py` — AMD arch detection: `pass` → `logger.debug(..., exc_info=True)`
+- `src/torchbridge/distributed/fsdp.py` — NCCL check: `pass` → `logger.debug(..., exc_info=True)`
+- `src/torchbridge/testing/plugin.py` — pytest_configure: `pass` → `logger.debug(..., exc_info=True)`
+- `src/torchbridge/testing/otel_exporter.py` — 2× coercion `pass` → `logger.debug("Skipped span attribute %s — coercion failed: %s", ...)`
+- `.github/workflows/gpu-validation.yml` — push/PR triggers + CPU smoke job
+- `.github/workflows/security.yml` — corrected action versions (`@v6` → stable)
+
+---
+
 ## [0.5.79] - 2026-03-19 - Quality Hardening III: 5 Post-Assessment Fixes
 
 ### **Summary**
