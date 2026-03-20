@@ -136,8 +136,11 @@ class ValidationSpanExporter:
                 if key in result:
                     try:
                         span.set_attribute(attr_name, attr_type(result[key]))
-                    except (TypeError, ValueError):
-                        pass
+                    except (TypeError, ValueError) as e:
+                        logger.debug(
+                            "Skipped span attribute %s — coercion failed: %s",
+                            attr_name, e,
+                        )
 
             for row in result.get("per_layer", []):
                 with self._tracer.start_as_current_span(
@@ -147,8 +150,11 @@ class ValidationSpanExporter:
                         if key in row:
                             try:
                                 child.set_attribute(attr_name, attr_type(row[key]))
-                            except (TypeError, ValueError):
-                                pass
+                            except (TypeError, ValueError) as e:
+                                logger.debug(
+                                    "Skipped span attribute %s — coercion failed: %s",
+                                    attr_name, e,
+                                )
 
     def shutdown(self) -> None:
         """Flush pending spans and release resources."""

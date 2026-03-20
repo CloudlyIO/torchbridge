@@ -56,3 +56,48 @@ class TestCIValidationInfra:
             f"run_gpu_validation.py --help exited {result.returncode}.\n"
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
+
+    def test_cpu_mode_exits_zero_with_skipped_status(self):
+        """--backend cpu must exit 0 and print SKIPPED (no GPU needed)."""
+        result = subprocess.run(
+            [sys.executable, _SCRIPT, "--backend", "cpu"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, (
+            f"--backend cpu exited {result.returncode}.\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+        assert "no GPU comparison" in result.stdout or "SKIPPED" in result.stdout, (
+            f"Expected 'no GPU comparison' or 'SKIPPED' in stdout, got:\n{result.stdout}"
+        )
+
+    def test_cpu_mode_output_json_has_status_skipped(self):
+        """--backend cpu --output-json must write status=SKIPPED to file."""
+        import json
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            out_path = f.name
+
+        try:
+            result = subprocess.run(
+                [sys.executable, _SCRIPT, "--backend", "cpu", "--output-json", out_path],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            assert result.returncode == 0, (
+                f"--backend cpu --output-json exited {result.returncode}.\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+            assert os.path.isfile(out_path), "output JSON file was not created"
+            with open(out_path) as fh:
+                data = json.load(fh)
+            assert data.get("status") == "SKIPPED", (
+                f"Expected status=SKIPPED in JSON, got: {data}"
+            )
+        finally:
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
