@@ -77,7 +77,7 @@ jobs:
             --output ${{ env.BENCHMARK_RESULTS_DIR }}/benchmark-report.md
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results-cpu
           path: ${{ env.BENCHMARK_RESULTS_DIR }}/
@@ -147,7 +147,7 @@ jobs:
             -m "gpu and not slow"
 
       - name: Upload GPU benchmark results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results-gpu
           path: ${{ env.BENCHMARK_RESULTS_DIR }}/
@@ -168,13 +168,13 @@ jobs:
           python-version: "3.12"
 
       - name: Download current benchmark results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: benchmark-results-cpu
           path: current-results/
 
       - name: Download baseline benchmarks
-        uses: dawidd6/action-download-artifact@v14
+        uses: dawidd6/action-download-artifact@v19
         with:
           workflow: benchmark.yml
           branch: main
