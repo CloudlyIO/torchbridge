@@ -504,6 +504,12 @@ gcloud compute instances delete INSTANCE_NAME --zone=us-central1-a --project=sha
 | 2026-03-10 | AMD ROCm | MI300X VF (ROCm 6.2, PT 2.5.1) | Qwen3-0.6B | 3.65e-02 | 0.999678 | 21.2ms (1.11x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic; inference PASSED) |
 | 2026-03-10 | AWS CUDA | A10G (PyTorch 2.6.0+cu124) | Qwen3-0.6B | 3.39e-02 | 0.999873 | 38.4ms (0.95x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic_activations; inference PASSED) |
 | 2026-03-10 | GCP CUDA | Tesla T4 (PyTorch 2.7.1+cu128) | Qwen3-0.6B | 3.49e-02 | 0.999873 | 43.5ms (1.02x) | PASSED (TorchBridge v0.5.66 API 25/25; int8_dynamic; inference PASSED) |
+| 2026-03-26 | Apple MPS | Apple Silicon (PyTorch 2.11.0) | Qwen3-0.6B | 0.00e+00 | 1.000000 | 118.9ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19) |
+| 2026-03-26 | AWS CUDA | A10G (PyTorch 2.6.0+cu124) | Qwen3-0.6B | 2.10e-05 | 1.000001 | 40.0ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19) |
+| 2026-03-26 | GCP CUDA | Tesla T4 (PyTorch 2.7.1+cu128) | Qwen3-0.6B | 2.67e-05 | 1.000001 | 50.7ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19) |
+| 2026-03-26 | AWS Trainium | trn1.2xlarge (Neuron PT 2.8.0+cu128) | Qwen3-0.6B (CPU) | 0.00e+00 | 1.000000 | 115.8ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19; PJRT_DEVICE=CPU fix applied) |
+| 2026-03-26 | AWS Inferentia2 | inf2.xlarge (Neuron PT 2.8.0+cu128) | Qwen3-0.6B (CPU) | 0.00e+00 | 1.000000 | 321.8ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19; PJRT_DEVICE=CPU fix applied) |
+| 2026-03-27 | RunPod CUDA | H100 80GB HBM3 (PyTorch 2.4.1+cu124) | Qwen3-0.6B | 1.67e-05 | 1.000001 | 16.2ms | PASSED (TorchBridge v0.5.80 API+CLI 19/19) |
 
 ---
 
