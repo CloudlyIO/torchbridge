@@ -1,1 +1,0 @@
-# Hardware demo modules
