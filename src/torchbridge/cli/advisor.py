@@ -452,6 +452,7 @@ def _parse_hetero_spec(spec: str, vendor: str) -> tuple:
     arch_str = parts[0].strip()
     count = int(parts[1]) if len(parts) > 1 and parts[1].strip().isdigit() else 1
 
+    arch: NVIDIAArchitecture | AMDArchitecture | None
     if vendor == "nvidia":
         arch = _NVIDIA_ARCH_MAP.get(arch_str)
     else:

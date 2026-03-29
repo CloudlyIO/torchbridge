@@ -394,6 +394,7 @@ Examples:
         # Load model
         smoke_model = False
         is_hf_model = False
+        model: nn.Module
         try:
             if model_path is None:
                 # No model provided — use a small smoke-test Linear
@@ -655,6 +656,7 @@ Examples:
         # Load model
         is_lm = False
         smoke_model = False
+        model: nn.Module
         try:
             if model_path is None:
                 model = nn.Sequential(

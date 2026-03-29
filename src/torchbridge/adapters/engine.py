@@ -80,7 +80,7 @@ class AdapterEngine:
     def __init__(
         self,
         config: AdapterConfig,
-        backend: HardwareBackend = None,  # type: ignore[name-defined]
+        backend: HardwareBackend | None = None,
     ) -> None:
         from torchbridge.core.config import HardwareBackend
 

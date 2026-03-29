@@ -223,7 +223,7 @@ class QLoRALinear(nn.Module):
         alpha: float,
         dropout: float = 0.0,
         init_method: InitMethod = InitMethod.KAIMING,
-        quant_format: QuantizationFormat = None,  # type: ignore[name-defined]
+        quant_format: QuantizationFormat | None = None,
     ) -> None:
         super().__init__()
 
@@ -305,7 +305,7 @@ class QDoRALinear(nn.Module):
         alpha: float,
         dropout: float = 0.0,
         init_method: InitMethod = InitMethod.KAIMING,
-        quant_format: QuantizationFormat = None,  # type: ignore[name-defined]
+        quant_format: QuantizationFormat | None = None,
     ) -> None:
         super().__init__()
 
