@@ -37,7 +37,7 @@ jobs:
           python-version: '3.11'
       - run: pip install build
       - run: python -m build
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -50,7 +50,7 @@ jobs:
       name: testpypi
       url: https://test.pypi.org/p/torchbridge-ml
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -68,7 +68,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/torchbridge-ml
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
