@@ -79,13 +79,6 @@ cloud = [
     "azure-storage-blob>=12.17.0,<13.0.0",
     "kubernetes>=27.2.0,<32.0.0",
 ]
-serving = [
-    "fastapi>=0.103.0,<1.0.0",
-    "uvicorn[standard]>=0.23.0,<1.0.0",
-    "torchserve>=0.8.0,<1.0.0",
-    "gradio>=3.45.0,<6.0.0",
-    "streamlit>=1.27.0,<2.0.0",
-]
 monitoring = [
     "prometheus-client>=0.17.0,<1.0.0",
     "wandb>=0.16.0,<1.0.0",

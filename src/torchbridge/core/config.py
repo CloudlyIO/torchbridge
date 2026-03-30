@@ -58,8 +58,6 @@ class OptimizationLevel(Enum):
         Returns:
             OptimizationLevel enum value
         """
-        import logging
-        _logger = logging.getLogger(__name__)
         level_upper = level.upper()
 
         if level_upper in ("O0", "DEBUG"):
@@ -71,7 +69,7 @@ class OptimizationLevel(Enum):
         elif level_upper in ("O3", "AGGRESSIVE"):
             return cls.O3
         else:
-            _logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
+            logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
             return cls.O2
 
 
