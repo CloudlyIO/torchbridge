@@ -1,6 +1,6 @@
 # TorchBridge Cloud Validation Results
 
-**Status**: ALL PASS (8/8 platforms — 6 GPU/accelerator-validated, 2 CPU-fallback†)
+**Status**: 6/8 validated — 4 GPU PASS, 1 MPS PASS, 2 CPU-fallback†, 2 SKIPPED‡ (v0.5.80, re-validated 2026-03-30)
 
 ## Platform Summary
 
@@ -9,11 +9,11 @@
 | AWS g5.xlarge | NVIDIA A10G | AWS | 24 GB | Ampere (sm_86) |
 | GCP n1-standard-4 | NVIDIA T4 | GCP | 16 GB | Turing (sm_75) |
 | RunPod Community | NVIDIA H100 NVL | RunPod | 100 GB | Hopper (sm_90) |
-| AMD Developer Cloud | AMD MI300X | AMD | 192 GB | CDNA3 (gfx942) |
-| GCP TPU VM | TPU v5e | GCP | 16 GB/chip | v5e (v5litepod-1) |
 | Local Mac | Apple Silicon | Local | Unified | MPS |
 | AWS trn1.2xlarge | Trainium (NeuronCore v1) | AWS | 32 GB | Trainium1 |
 | AWS inf2.xlarge | Inferentia2 (NeuronCore v1) | AWS | 32 GB | Inferentia2 |
+| AMD Developer Cloud | AMD MI300X | AMD | 192 GB | CDNA3 (gfx942) |
+| GCP TPU VM | TPU v5e | GCP | 16 GB/chip | v5e (v5litepod-1) |
 
 ## Cross-Backend Consistency (Qwen3-0.6B)
 
@@ -21,14 +21,14 @@ All validations compare GPU/accelerator logits against CPU baseline on the same 
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
 |----------|----------|----------|------------|---------|--------|
-| RunPod | H100 NVL | 2.29e-05 | 1.000001 | 18.8 ms | PASS |
-| Local | Apple MPS | 4.58e-05 | 1.000002 | 27.0 ms | PASS |
-| AMD DevCloud | MI300X | 4.82e-05 | 1.000001 | 30.0 ms | PASS |
-| AWS | A10G | 1.96e-05 | 1.000001 | 39.4 ms | PASS |
-| GCP | TPU v5e | 1.91e-05 | 1.000001 | 139.9 ms (CPU) | PASS |
-| GCP | T4 | 2.67e-05 | 1.000001 | 48.8 ms | PASS |
-| AWS Trainium† | trn1.2xlarge | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
-| AWS Inferentia2† | inf2.xlarge | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
+| AWS | A10G | 2.10e-05 | 1.000001 | 40.0 ms | PASS |
+| GCP | T4 | 2.67e-05 | 1.000001 | 50.7 ms | PASS |
+| RunPod | H100 NVL | 1.67e-05 | 1.000001 | 16.2 ms | PASS |
+| Local | Apple MPS | 0.00e+00 | 1.000000 | 118.9 ms | PASS |
+| AWS Trainium† | trn1.2xlarge | 0.00e+00 | 1.000000 | 115.8 ms (CPU) | PASS |
+| AWS Inferentia2† | inf2.xlarge | 0.00e+00 | 1.000000 | 321.8 ms (CPU) | PASS |
+| AMD DevCloud‡ | MI300X | — | — | — | SKIPPED |
+| GCP‡ | TPU v5e | — | — | — | SKIPPED |
 
 > **† CPU fallback — not real accelerator validation.**
 > NeuronX SDK compilation (`torch_neuronx.trace()`) requires a quota-enabled
@@ -39,6 +39,11 @@ All validations compare GPU/accelerator logits against CPU baseline on the same 
 > pending AWS Trainium quota approval. The backend code (`trainium_backend.py`,
 > `neuron_compiler.py`) is implemented and exercised in unit tests; accelerator
 > execution requires instance access.
+
+> **‡ Capacity unavailable at validation time.**
+> AMD MI300X: no instance available in AMD Developer Cloud during v0.5.80 validation window.
+> GCP TPU v5e: quota exhausted globally — tried 20+ zones across 3 sessions.
+> These are infrastructure availability issues, not code issues.
 
 ### Validation Thresholds
 
@@ -70,20 +75,21 @@ equivalence and is the primary metric for XLA backends.
 | AWS | g5.xlarge | A10G | ~$1.00 | ~5 min | ~$0.08 |
 | GCP | n1-standard-4 + T4 | T4 | ~$0.35 | ~5 min | ~$0.03 |
 | RunPod | Community Cloud | H100 NVL | ~$2.59 | ~5 min | ~$0.22 |
-| AMD | Developer Cloud | MI300X | Free | ~5 min | $0.00 |
-| GCP | TPU VM (v5litepod-1) | TPU v5e | ~$1.20 | ~15 min | ~$0.30 |
 | Local | Mac | MPS | Free | ~5 min | $0.00 |
-| **Total** | | | | | **~$0.63** |
+| **Total** | | | | | **~$0.33** |
+
+> AMD Developer Cloud charges ~$750/month (not hourly). Always destroy instances from the
+> portal immediately after use — SSH `poweroff` does NOT stop billing.
+> GCP TPU v5litepod-1 costs ~$1.35/hr; terminate immediately after validation.
 
 ## Validation History
 
-| Run | Platforms | Model | All Pass |
-|-----|-----------|-------|----------|
-| v0.5.67 | AMD MI300X (ROCm 6.2), AWS A10G (CUDA 2.6.0+cu124), GCP T4 (CUDA 2.7.1+cu128) | Qwen3-0.6B | Yes (3/3) |
-| v0.5.45 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (8/8) |
-| v0.5.36 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium, Inferentia2 | Qwen3-0.6B | Yes (8/8) |
-| v0.5.34 | MPS, TPU v5e, H100 NVL | Qwen3-0.6B | Yes (6/6) |
-| v0.5.33 | A10G, T4, MI300X | Qwen3-0.6B | Yes (3/3) |
+| Run | Platforms | Model | Result |
+|-----|-----------|-------|--------|
+| v0.5.80 | MPS, A10G, T4, H100 NVL, Trainium†, Inferentia2† | Qwen3-0.6B | 4 GPU PASS + 2 CPU† PASS; AMD + TPU SKIPPED‡ |
+| v0.5.67 | AMD MI300X (ROCm 6.2), AWS A10G (CUDA 2.6.0+cu124), GCP T4 (CUDA 2.7.1+cu128) | Qwen3-0.6B | 3/3 PASS |
+| v0.5.45 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium†, Inferentia2† | Qwen3-0.6B | 6 GPU + 2 CPU† PASS |
+| v0.5.36 | MPS, A10G, T4, TPU v5e, H100 NVL, MI300X, Trainium†, Inferentia2† | Qwen3-0.6B | 6 GPU + 2 CPU† PASS |
 
 ## See Also
 
