@@ -9,7 +9,6 @@ Phase 4C-Pre Week 5: AMD Testing & Integration
 
 import logging
 
-import pytest
 import torch
 import torch.nn as nn
 
@@ -26,7 +25,10 @@ logger = logging.getLogger(__name__)
 # Test Models
 class SimpleModel(nn.Module):
     """Simple model for testing."""
-    def __init__(self, input_size: int = 64, hidden_size: int = 32, output_size: int = 10):
+
+    def __init__(
+        self, input_size: int = 64, hidden_size: int = 32, output_size: int = 10
+    ):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
@@ -43,6 +45,7 @@ class SimpleModel(nn.Module):
 # Test Class: Hardware Detection
 # ============================================================================
 
+
 class TestHardwareDetection:
     """Test hardware detection functionality."""
 
@@ -50,8 +53,8 @@ class TestHardwareDetection:
         """Test HardwareDetector initializes correctly."""
         detector = HardwareDetector()
         assert detector is not None
-        assert hasattr(detector, 'detect')
-        assert hasattr(detector, 'get_optimal_backend')
+        assert hasattr(detector, "detect")
+        assert hasattr(detector, "get_optimal_backend")
 
     def test_hardware_detection_runs(self):
         """Test hardware detection runs without errors."""
@@ -64,7 +67,7 @@ class TestHardwareDetection:
         """Test optimal backend can be selected."""
         detector = HardwareDetector()
         backend = detector.get_optimal_backend()
-        assert backend in ['nvidia', 'amd', 'trainium', 'tpu', 'cpu']
+        assert backend in ["nvidia", "amd", "trainium", "tpu", "cpu"]
 
     def test_cpu_always_available(self):
         """Test CPU backend is always available."""
@@ -78,6 +81,7 @@ class TestHardwareDetection:
 # Test Class: Backend Initialization
 # ============================================================================
 
+
 class TestBackendInitialization:
     """Test backend initialization."""
 
@@ -87,9 +91,9 @@ class TestBackendInitialization:
         backend = NVIDIABackend(config)
 
         assert backend is not None
-        assert hasattr(backend, 'prepare_model')
-        assert hasattr(backend, 'device')
-        assert backend.device.type in ['cuda', 'cpu']
+        assert hasattr(backend, "prepare_model")
+        assert hasattr(backend, "device")
+        assert backend.device.type in ["cuda", "cpu"]
 
     def test_tpu_backend_initializes(self):
         """Test TPU backend can be initialized."""
@@ -97,9 +101,9 @@ class TestBackendInitialization:
         backend = TPUBackend(config)
 
         assert backend is not None
-        assert hasattr(backend, 'prepare_model')
-        assert hasattr(backend, 'device')
-        assert backend.device.type in ['xla', 'cpu']
+        assert hasattr(backend, "prepare_model")
+        assert hasattr(backend, "device")
+        assert backend.device.type in ["xla", "cpu"]
 
     def test_nvidia_backend_prepares_model(self):
         """Test NVIDIA backend can prepare models."""
@@ -127,9 +131,9 @@ class TestBackendInitialization:
         backend = AMDBackend(config)
 
         assert backend is not None
-        assert hasattr(backend, 'prepare_model')
-        assert hasattr(backend, 'device')
-        assert backend.device.type in ['cuda', 'hip', 'cpu']
+        assert hasattr(backend, "prepare_model")
+        assert hasattr(backend, "device")
+        assert backend.device.type in ["cuda", "hip", "cpu"]
 
     def test_amd_backend_prepares_model(self):
         """Test AMD backend can prepare models."""
@@ -147,8 +151,8 @@ class TestBackendInitialization:
         optimizer = AMDAdapter(config)
 
         assert optimizer is not None
-        assert hasattr(optimizer, 'optimize')
-        assert hasattr(optimizer, 'get_optimization_summary')
+        assert hasattr(optimizer, "optimize")
+        assert hasattr(optimizer, "get_optimization_summary")
 
     def test_amd_optimizer_optimizes_model(self):
         """Test AMD optimizer can optimize models."""
@@ -164,6 +168,7 @@ class TestBackendInitialization:
 # ============================================================================
 # Test Class: Cross-Backend Consistency
 # ============================================================================
+
 
 class TestCrossBackendConsistency:
     """Test consistency across backends."""
@@ -208,7 +213,6 @@ class TestCrossBackendConsistency:
         amd_params = sum(p.numel() for p in amd_model.parameters())
         assert nvidia_params == amd_params
 
-    @pytest.mark.xfail(strict=False, reason="TPU backend uses bfloat16 which causes dtype mismatch — expected behavior, not a bug")
     def test_forward_pass_shapes_consistent(self):
         """Test forward pass output shapes are consistent."""
         config = TorchBridgeConfig()
@@ -259,6 +263,7 @@ class TestCrossBackendConsistency:
 # Test Class: Backend Capabilities
 # ============================================================================
 
+
 class TestBackendCapabilities:
     """Test backend capability APIs."""
 
@@ -297,12 +302,13 @@ class TestBackendCapabilities:
     def test_amd_backend_device_info(self):
         """Test AMD backend provides device info."""
         from torchbridge.backends import DeviceInfo
+
         config = AMDConfig()
         backend = AMDBackend(config)
 
         info = backend.get_device_info()
         assert isinstance(info, DeviceInfo)
-        assert hasattr(info, 'device_type')
+        assert hasattr(info, "device_type")
 
     def test_amd_backend_synchronization(self):
         """Test AMD backend can synchronize."""
@@ -322,13 +328,14 @@ class TestBackendCapabilities:
         summary = optimizer.get_optimization_summary()
 
         assert isinstance(summary, dict)
-        assert 'optimization_level' in summary
-        assert 'architecture' in summary
+        assert "optimization_level" in summary
+        assert "architecture" in summary
 
 
 # ============================================================================
 # Test Class: Validation Integration
 # ============================================================================
+
 
 class TestValidationIntegration:
     """Test validation works with backends."""
@@ -354,15 +361,14 @@ class TestValidationIntegration:
         assert result is not None
 
 
-
 # ============================================================================
 # Test Class: Multi-Backend Workflows
 # ============================================================================
 
+
 class TestMultiBackendWorkflows:
     """Test workflows using multiple backends."""
 
-    @pytest.mark.xfail(strict=False, reason="TPU backend uses bfloat16 which causes dtype mismatch — expected behavior, not a bug")
     def test_train_nvidia_infer_tpu(self):
         """Test training on NVIDIA and inference on TPU."""
         config = TorchBridgeConfig()
@@ -403,24 +409,27 @@ class TestMultiBackendWorkflows:
         nvidia_model = nvidia_backend.prepare_model(model)
 
         checkpoint = {
-            'model_state_dict': {k: v.cpu() for k, v in nvidia_model.state_dict().items()},
-            'epoch': 10,
-            'optimizer_config': {'lr': 0.001}
+            "model_state_dict": {
+                k: v.cpu() for k, v in nvidia_model.state_dict().items()
+            },
+            "epoch": 10,
+            "optimizer_config": {"lr": 0.001},
         }
 
         # Load on TPU
         tpu_backend = TPUBackend(config)
         tpu_model = tpu_backend.prepare_model(model)
-        tpu_model.load_state_dict(checkpoint['model_state_dict'])
+        tpu_model.load_state_dict(checkpoint["model_state_dict"])
 
         # Verify metadata
-        assert checkpoint['epoch'] == 10
-        assert checkpoint['optimizer_config']['lr'] == 0.001
+        assert checkpoint["epoch"] == 10
+        assert checkpoint["optimizer_config"]["lr"] == 0.001
 
 
 # ============================================================================
 # Integration Test Summary
 # ============================================================================
+
 
 def test_integration_summary():
     """Summary test verifying all integration components."""
@@ -431,7 +440,7 @@ def test_integration_summary():
 
     # 2. Backend selection works
     backend_name = detector.get_optimal_backend()
-    assert backend_name in ['nvidia', 'tpu', 'amd', 'cpu']
+    assert backend_name in ["nvidia", "tpu", "amd", "cpu"]
 
     # 3. Backends initialize
     config = TorchBridgeConfig()
