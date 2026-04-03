@@ -47,7 +47,7 @@ WORKDIR /workspace
 COPY . .
 
 # Install TorchBridge in development mode with all dependencies
-RUN pip install -e .[all,dev,cloud,serving,monitoring,benchmark]
+RUN pip install -e .[all,dev,cloud,monitoring,benchmark]
 
 # Install additional development tools
 RUN pip install --no-cache-dir \
