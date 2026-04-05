@@ -1,8 +1,8 @@
 """
 Trainium Backend Module for TorchBridge
 
-This module provides Trainium-specific backend implementations and HAL-aware
-support for PyTorch models using the AWS Neuron SDK (torch_neuronx).
+This module provides Trainium-specific backend implementations for cross-backend
+validation and configuration intelligence using the AWS Neuron SDK (torch_neuronx).
 
 The current integration (Neuron SDK 2.27, PyTorch 2.9) uses XLA under the
 hood (same as TPU, with torch.device('xla')). Trainium is differentiated
@@ -39,12 +39,12 @@ from .trainium_adapter import TrainiumAdapter
 from .trainium_backend import TrainiumBackend
 
 __all__ = [
-    'TrainiumBackend',
-    'TrainiumAdapter',
-    'NeuronCompiler',
-    'is_neuron_available',
-    'get_neuron_sdk_version',
-    'get_neuron_env_info',
+    "TrainiumBackend",
+    "TrainiumAdapter",
+    "NeuronCompiler",
+    "is_neuron_available",
+    "get_neuron_sdk_version",
+    "get_neuron_env_info",
 ]
 
 # Version compatibility
@@ -52,6 +52,7 @@ __trainium_support__ = True
 
 try:
     import torch_neuronx
+
     __neuron_available__ = True
     __neuron_sdk_version__ = torch_neuronx.__version__
 except ImportError:

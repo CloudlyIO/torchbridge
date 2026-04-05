@@ -6,8 +6,8 @@ Demonstrates how to use TorchBridge to run Alibaba's Qwen3-VL
 vision-language model across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 Qwen3-VL is the latest generation VLM with dual-component architecture
-(vision encoder + language model) that benefits from HAL-level
-backend optimization for both components, including visual grounding,
+(vision encoder + language model) that benefits from cross-backend
+optimization for both components, including visual grounding,
 document understanding, and video comprehension.
 
 Models covered:

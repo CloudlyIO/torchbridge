@@ -67,14 +67,13 @@ body:
       label: Component
       description: Which component is affected?
       options:
-        - Attention (FlashAttention, MultiHead)
-        - Precision (FP16, BF16, FP8)
+        - Attention (kernel dispatch / compatibility matrix)
+        - Precision (FP16, BF16, FP8, quantization)
         - Memory (Checkpointing, Optimizer States)
         - Hardware Backend (NVIDIA, AMD, Trainium, TPU)
         - Distributed Training (FSDP, Pipeline, Tensor Parallel)
         - Model Export (ONNX, TorchScript, SafeTensors)
-        - Deployment/Serving
-        - MoE (Mixture of Experts)
+        - Adapters (LoRA, QLoRA, DoRA)
         - CLI Tools
         - Configuration
         - Documentation

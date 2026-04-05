@@ -42,6 +42,8 @@ save_file(model.state_dict(), "model.safetensors")
 
 ## Inference Server
 
+> **Note:** TorchBridge does not provide a serving runtime. The patterns below show how to build a serving layer around a model that TorchBridge has validated. For production serving, use vLLM, TGI, or TorchServe directly.
+
 ### FastAPI
 
 ```python

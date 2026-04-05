@@ -84,7 +84,7 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 ## What TorchBridge Is NOT
 
 - **Not a quantization library** — dispatches format selection to torchao; TorchBridge adds the compatibility matrix
-- **Not a serving runtime** — the inference server is a validation demo, not a production serving replacement for vLLM or TGI
+- **Not a serving runtime** — use vLLM, TGI, or similar for production inference serving; TorchBridge validates correctness and advises configuration, it does not serve requests
 - **Not a training framework** — adapter math (LoRA/QLoRA) is correct and kept; use PEFT for full training workflows
 - **Not a PyTorch wrapper** — if a method body is `return torch.something(...)` with no selection logic, it doesn't belong here
 

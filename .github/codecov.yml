@@ -51,14 +51,11 @@ flags:
 
 ignore:
   - "tests/**/*"
-  - "benchmarks/**/*"
   - "examples/**/*"
-  - "demos/**/*"
   - "docs/**/*"
   - "scripts/**/*"
   - "**/__pycache__/**"
   - "**/conftest.py"
-  - "setup.py"
 
 # Component configuration for granular coverage
 component_management:
@@ -76,20 +73,11 @@ component_management:
       name: Precision Module
       paths:
         - src/torchbridge/precision/**
-    - component_id: memory
-      name: Memory Module
-      paths:
-        - src/torchbridge/advanced_memory/**
-    - component_id: hardware
+    - component_id: backends
       name: Hardware Backends
       paths:
-        - src/torchbridge/hardware/**
-    - component_id: deployment
-      name: Deployment
-      paths:
-        - src/torchbridge/deployment/**
+        - src/torchbridge/backends/**
     - component_id: distributed
       name: Distributed Training
       paths:
-        - src/torchbridge/models/distributed/**
-        - src/torchbridge/distributed_scale/**
+        - src/torchbridge/distributed/**
