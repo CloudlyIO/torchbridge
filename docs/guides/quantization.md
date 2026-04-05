@@ -1,8 +1,8 @@
 # Backend-Aware Quantization Guide
 
-TorchBridge v0.5.23 introduces backend-aware quantization that automatically
-selects the optimal quantization format based on detected hardware. This guide
-covers format selection, Python API, CLI usage, and troubleshooting.
+TorchBridge provides backend-aware quantization that automatically selects the
+optimal quantization format based on detected hardware. This guide covers format
+selection, Python API, CLI usage, and troubleshooting.
 
 ## Quick Start
 

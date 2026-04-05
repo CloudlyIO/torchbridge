@@ -68,7 +68,7 @@ def main(args: list[str] | None = None) -> str | int | None:
     """
     parser = argparse.ArgumentParser(
         prog="torchbridge",
-        description="TorchBridge: Production-grade PyTorch hardware abstraction CLI",
+        description="TorchBridge: Cross-backend validation and configuration intelligence for PyTorch",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

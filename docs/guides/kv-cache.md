@@ -33,15 +33,9 @@ from torchbridge.models.llm.kv import (
     QuantizedCacheConfig,
     QuantizedKVCache,
 )
-from torchbridge.models.llm.kv_cache import CacheConfig
-
-# Create base cache config
-cache_config = CacheConfig(
-    max_length=4096, num_layers=32, num_heads=32, head_dim=128,
-)
 
 # Auto-select optimal KV dtype
-qconfig = QuantizedCacheConfig(cache_config=cache_config)
+qconfig = QuantizedCacheConfig()
 qcache = QuantizedKVCache(qconfig, backend_name="cuda")
 print(f"Using: {qcache.kv_dtype.value}")  # e.g. "fp8_e4m3" on H100
 ```
