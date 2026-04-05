@@ -1,7 +1,7 @@
 # Development Docker image for TorchBridge
 # Includes all development tools and optional dependencies
 
-FROM nvidia/cuda:12.1-devel-ubuntu22.04
+FROM nvidia/cuda:12.6.0-devel-ubuntu22.04
 
 ARG TORCHBRIDGE_VERSION="0.0.0"
 
@@ -35,7 +35,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir \
     torch \
     torchvision \
-    --index-url https://download.pytorch.org/whl/cu121
+    --index-url https://download.pytorch.org/whl/cu126
 
 # Install Triton for GPU kernel development
 RUN pip install --no-cache-dir triton==2.1.0
