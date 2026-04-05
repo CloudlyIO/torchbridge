@@ -1,6 +1,5 @@
 """Integration tests for distributed config → recommendation pipeline."""
 
-
 import pytest
 
 from torchbridge.core.config import (
@@ -25,6 +24,7 @@ class TestEndToEndConfigGeneration:
     def test_hopper_8gpu_7b(self):
         """Typical single-node H100 training of a 7B model."""
         from unittest.mock import MagicMock, patch
+
         mock_dist = MagicMock()
         mock_dist.get_nccl_version.return_value = (2, 21, 0)
         with patch("torch.distributed", mock_dist):
@@ -131,14 +131,17 @@ class TestTomlRoundTrip:
 class TestRecommendationConsistency:
     """Verify recommendations are consistent with configs."""
 
-    @pytest.mark.parametrize("backend,arch,world_size", [
-        (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, 8),
-        (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, 4),
-        (HardwareBackend.AMD, AMDArchitecture.CDNA3, 4),
-        (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, 8),
-        (HardwareBackend.TPU, TPUVersion.V5E, 8),
-        (HardwareBackend.CPU, None, 1),
-    ])
+    @pytest.mark.parametrize(
+        "backend,arch,world_size",
+        [
+            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, 8),
+            (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, 4),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA3, 4),
+            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, 8),
+            (HardwareBackend.TPU, TPUVersion.V5E, 8),
+            (HardwareBackend.CPU, None, 1),
+        ],
+    )
     def test_recommendation_matches_config(self, backend, arch, world_size):
         """Recommendation and auto-config should agree on strategy."""
         rec = recommend_parallelism(
@@ -164,13 +167,24 @@ class TestPackageImports:
 
     def test_all_exports(self):
         from torchbridge.distributed import __all__
+
         expected_names = [
-            "FSDPConfig", "FSDPManager", "FSDP2Config",
-            "MixedPrecisionChoice", "ShardingStrategy",
-            "InterconnectType", "MeshConfig", "TopologyDetector",
-            "PipelineConfig", "PipelineScheduleFactory", "PipelineScheduleType",
-            "CollectiveBackendMatrix", "CollectiveBackendType", "CollectiveConfig",
-            "DistributedConfig", "ParallelismRecommendation",
+            "FSDPConfig",
+            "FSDPManager",
+            "FSDP2Config",
+            "MixedPrecisionChoice",
+            "ShardingStrategy",
+            "InterconnectType",
+            "MeshConfig",
+            "TopologyDetector",
+            "PipelineConfig",
+            "PipelineScheduleFactory",
+            "PipelineScheduleType",
+            "CollectiveBackendMatrix",
+            "CollectiveBackendType",
+            "CollectiveConfig",
+            "DistributedConfig",
+            "ParallelismRecommendation",
         ]
         for name in expected_names:
             assert name in __all__, f"{name} not in __all__"
@@ -178,5 +192,6 @@ class TestPackageImports:
     def test_imports_work(self):
         """All __all__ names should be importable."""
         import torchbridge.distributed as dist
+
         for name in dist.__all__:
             assert hasattr(dist, name), f"Cannot access distributed.{name}"

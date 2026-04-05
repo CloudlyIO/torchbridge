@@ -31,20 +31,17 @@ from typing import Any
 # ---------------------------------------------------------------------------
 _KV_HANDOFF_MATRIX: dict[tuple[str, str | None], tuple[int, int, str]] = {
     # (backend, arch) → (page_size_tokens, alignment_bytes, layout)
-    ("cuda", "hopper"):    (16, 128, "separate"),
+    ("cuda", "hopper"): (16, 128, "separate"),
     ("cuda", "blackwell"): (16, 128, "separate"),
-    ("cuda", "ampere"):    (16, 128, "separate"),
-    ("cuda", "ada"):       (16,  64, "separate"),   # RTX 40-series: 64-byte safe
-    ("cuda", None):        (16, 128, "separate"),   # unknown NVIDIA → conservative
-
-    ("rocm", "cdna4"):     (16,  64, "separate"),   # MI350X: 64-byte HIP alignment
-    ("rocm", "cdna3"):     (16,  64, "separate"),   # MI300X
-    ("rocm", "cdna2"):     (16,  64, "separate"),   # MI250X
-    ("rocm", None):        (16,  64, "separate"),
-
-    ("tpu", None):         (32, 128, "interleaved"),  # XLA paged-attn: 32-token pages
-
-    ("cpu", None):         (1,   64, "separate"),   # no paging; cache-line alignment
+    ("cuda", "ampere"): (16, 128, "separate"),
+    ("cuda", "ada"): (16, 64, "separate"),  # RTX 40-series: 64-byte safe
+    ("cuda", None): (16, 128, "separate"),  # unknown NVIDIA → conservative
+    ("rocm", "cdna4"): (16, 64, "separate"),  # MI350X: 64-byte HIP alignment
+    ("rocm", "cdna3"): (16, 64, "separate"),  # MI300X
+    ("rocm", "cdna2"): (16, 64, "separate"),  # MI250X
+    ("rocm", None): (16, 64, "separate"),
+    ("tpu", None): (32, 128, "interleaved"),  # XLA paged-attn: 32-token pages
+    ("cpu", None): (1, 64, "separate"),  # no paging; cache-line alignment
 }
 
 # Safe universal default if backend not in matrix
@@ -54,6 +51,7 @@ _SAFE_DEFAULT: tuple[int, int, str] = (16, 64, "separate")
 # ---------------------------------------------------------------------------
 # Dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class KVHandoffSpec:
@@ -84,10 +82,10 @@ class KVHandoffSpec:
         }
 
 
-
 # ---------------------------------------------------------------------------
 # Negotiator
 # ---------------------------------------------------------------------------
+
 
 class KVHandoffNegotiator:
     """Matrix-first negotiator for KV cache handoff physical spec.
@@ -136,11 +134,23 @@ class KVHandoffNegotiator:
 
         page_size = max(p_page, d_page)
         alignment = min(p_align, d_align)
-        layout = "interleaved" if (p_layout == "interleaved" and d_layout == "interleaved") else "separate"
+        layout = (
+            "interleaved"
+            if (p_layout == "interleaved" and d_layout == "interleaved")
+            else "separate"
+        )
 
         notes = _build_notes(
-            prefill_backend, prefill_arch, decode_backend, decode_arch,
-            p_page, d_page, p_align, d_align, p_layout, d_layout,
+            prefill_backend,
+            prefill_arch,
+            decode_backend,
+            decode_arch,
+            p_page,
+            d_page,
+            p_align,
+            d_align,
+            p_layout,
+            d_layout,
         )
 
         return KVHandoffSpec(
@@ -156,6 +166,7 @@ class KVHandoffNegotiator:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _lookup_hw_spec(backend: str, arch: str | None) -> tuple[int, int, str]:
     """Return (page_size, alignment, layout) for a backend/arch, with fallback."""
     key = (backend, arch)
@@ -169,8 +180,16 @@ def _lookup_hw_spec(backend: str, arch: str | None) -> tuple[int, int, str]:
 
 
 def _build_notes(
-    pb: str, pa: str | None, db: str, da: str | None,
-    pp: int, dp: int, pal: int, dal: int, pl: str, dl: str,
+    pb: str,
+    pa: str | None,
+    db: str,
+    da: str | None,
+    pp: int,
+    dp: int,
+    pal: int,
+    dal: int,
+    pl: str,
+    dl: str,
 ) -> list[str]:
     notes: list[str] = []
     if pp != dp:
@@ -187,8 +206,7 @@ def _build_notes(
         )
     if pl != dl:
         notes.append(
-            f"Layout set to 'separate' — sides differ "
-            f"({pb}={pl!r}, {db}={dl!r})"
+            f"Layout set to 'separate' — sides differ ({pb}={pl!r}, {db}={dl!r})"
         )
     notes.append(
         "Configure page_size_tokens and alignment_bytes in your vLLM/SGLang runtime config"

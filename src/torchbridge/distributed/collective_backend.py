@@ -204,9 +204,8 @@ class CollectiveConfig:
         architecture: Architecture = None,
     ) -> CollectiveConfig:
         """Resolve auto settings based on hardware."""
-        resolved_backend = (
-            self.backend
-            or CollectiveBackendMatrix.get_optimal_backend(hw, architecture)
+        resolved_backend = self.backend or CollectiveBackendMatrix.get_optimal_backend(
+            hw, architecture
         )
         resolved_symmetric = (
             self.symmetric_memory

@@ -36,9 +36,7 @@ class TestLargeBatchInference:
         prompts = ["Explain quantum computing in one sentence."] * batch_size
         inputs = tokenizer(prompts, padding=True, return_tensors="pt")
         with torch.no_grad():
-            generated = model.generate(
-                **inputs, max_new_tokens=20, do_sample=False
-            )
+            generated = model.generate(**inputs, max_new_tokens=20, do_sample=False)
         assert generated.shape[0] == batch_size
         assert generated.shape[1] > inputs["input_ids"].shape[1]
 

@@ -25,9 +25,11 @@ from .nvidia_backend import NVIDIABackend
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class NVIDIAOptimizationResult:
     """Results from NVIDIA model optimization (legacy format for backward compatibility)."""
+
     optimized_model: nn.Module
     optimization_level: str
     optimizations_applied: list[str]
@@ -35,6 +37,7 @@ class NVIDIAOptimizationResult:
     memory_stats: dict[str, Any]
     device_info: dict[str, Any]
     warnings: list[str]
+
 
 class NVIDIAAdapter(BaseAdapter):
     """
@@ -50,7 +53,11 @@ class NVIDIAAdapter(BaseAdapter):
     ADAPTER_NAME: str = "nvidia"
     DEFAULT_LEVEL = OptimizationLevel.O2
 
-    def __init__(self, config: TorchBridgeConfig | None = None, device: torch.device | None = None):
+    def __init__(
+        self,
+        config: TorchBridgeConfig | None = None,
+        device: torch.device | None = None,
+    ):
         """
         Initialize NVIDIA adapter.
 
@@ -74,7 +81,7 @@ class NVIDIAAdapter(BaseAdapter):
         model: nn.Module,
         level: OptimizationLevel,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
+        dtype: torch.dtype | None = None,
     ) -> tuple[nn.Module, OptimizationResult]:
         """
         Apply NVIDIA-specific optimizations (implements BaseAdapter abstract method).
@@ -93,7 +100,7 @@ class NVIDIAAdapter(BaseAdapter):
             OptimizationLevel.O0: "conservative",
             OptimizationLevel.O1: "conservative",
             OptimizationLevel.O2: "balanced",
-            OptimizationLevel.O3: "aggressive"
+            OptimizationLevel.O3: "aggressive",
         }
         level_str = level_map.get(level, "balanced")
 
@@ -102,7 +109,7 @@ class NVIDIAAdapter(BaseAdapter):
             model=model,
             sample_inputs=sample_input,
             optimization_level=level_str,
-            for_inference=False
+            for_inference=False,
         )
 
         # Convert to unified OptimizationResult
@@ -113,61 +120,76 @@ class NVIDIAAdapter(BaseAdapter):
             optimizations_applied=result.optimizations_applied,
             warnings=result.warnings,
             metrics={
-                'compilation_time': result.compilation_time,
-                'memory_stats': result.memory_stats,
-                'device_info': result.device_info
-            }
+                "compilation_time": result.compilation_time,
+                "memory_stats": result.memory_stats,
+                "device_info": result.device_info,
+            },
         )
 
     def get_available_strategies(self) -> list[OptimizationStrategy]:
         """Get available NVIDIA optimization strategies (implements BaseAdapter abstract method)."""
         strategies = [
             OptimizationStrategy(
-                name='device_placement',
-                description='Move model to CUDA device',
-                applicable_levels=[OptimizationLevel.O0, OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
-                speedup_estimate=1.0
+                name="device_placement",
+                description="Move model to CUDA device",
+                applicable_levels=[
+                    OptimizationLevel.O0,
+                    OptimizationLevel.O1,
+                    OptimizationLevel.O2,
+                    OptimizationLevel.O3,
+                ],
+                speedup_estimate=1.0,
             ),
             OptimizationStrategy(
-                name='mixed_precision',
-                description='FP16/BF16 mixed precision training',
-                applicable_levels=[OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
+                name="mixed_precision",
+                description="FP16/BF16 mixed precision training",
+                applicable_levels=[
+                    OptimizationLevel.O1,
+                    OptimizationLevel.O2,
+                    OptimizationLevel.O3,
+                ],
                 speedup_estimate=1.8,
-                precision_impact='minor',
-                requires=['compute_capability>=7.0']
+                precision_impact="minor",
+                requires=["compute_capability>=7.0"],
             ),
             OptimizationStrategy(
-                name='gradient_checkpointing',
-                description='Trade compute for memory during training',
-                applicable_levels=[OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3],
+                name="gradient_checkpointing",
+                description="Trade compute for memory during training",
+                applicable_levels=[
+                    OptimizationLevel.O1,
+                    OptimizationLevel.O2,
+                    OptimizationLevel.O3,
+                ],
                 speedup_estimate=0.9,  # Slightly slower
-                memory_impact=0.5
+                memory_impact=0.5,
             ),
             OptimizationStrategy(
-                name='torch_compile',
-                description='PyTorch 2.0 compilation with inductor',
+                name="torch_compile",
+                description="PyTorch 2.0 compilation with inductor",
                 applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3],
                 speedup_estimate=2.0,
-                requires=['torch>=2.0']
+                requires=["torch>=2.0"],
             ),
             OptimizationStrategy(
-                name='kernel_fusion',
-                description='Fuse operations for reduced memory bandwidth',
+                name="kernel_fusion",
+                description="Fuse operations for reduced memory bandwidth",
                 applicable_levels=[OptimizationLevel.O3],
-                speedup_estimate=1.3
+                speedup_estimate=1.3,
             ),
         ]
 
         # Add FP8 strategy if supported
         if self.backend.supports_fp8:
-            strategies.append(OptimizationStrategy(
-                name='fp8_precision',
-                description='FP8 precision for maximum throughput',
-                applicable_levels=[OptimizationLevel.O3],
-                speedup_estimate=2.5,
-                precision_impact='significant',
-                requires=['H100 or Blackwell GPU']
-            ))
+            strategies.append(
+                OptimizationStrategy(
+                    name="fp8_precision",
+                    description="FP8 precision for maximum throughput",
+                    applicable_levels=[OptimizationLevel.O3],
+                    speedup_estimate=2.5,
+                    precision_impact="significant",
+                    requires=["H100 or Blackwell GPU"],
+                )
+            )
 
         return strategies
 
@@ -176,7 +198,7 @@ class NVIDIAAdapter(BaseAdapter):
         model: nn.Module,
         sample_inputs: torch.Tensor | None = None,
         optimization_level: str = "balanced",
-        for_inference: bool = False
+        for_inference: bool = False,
     ) -> NVIDIAOptimizationResult:
         """
         Legacy optimize method for backward compatibility.
@@ -200,15 +222,17 @@ class NVIDIAAdapter(BaseAdapter):
 
         # Apply optimization level
         optimized_model, applied_optimizations = self._apply_optimization_level(
-            prepared_model,
-            optimization_level,
-            sample_inputs,
-            for_inference
+            prepared_model, optimization_level, sample_inputs, for_inference
         )
 
         # Compile if sample inputs provided and appropriate
-        if sample_inputs is not None and optimization_level in ["balanced", "aggressive"]:
-            optimized_model = self._compile_model(optimized_model, sample_inputs, for_inference)
+        if sample_inputs is not None and optimization_level in [
+            "balanced",
+            "aggressive",
+        ]:
+            optimized_model = self._compile_model(
+                optimized_model, sample_inputs, for_inference
+            )
             applied_optimizations.append("torch_compile")
 
         compilation_time = time.time() - start_time
@@ -220,7 +244,7 @@ class NVIDIAAdapter(BaseAdapter):
             compilation_time=compilation_time,
             memory_stats=self.backend.get_memory_stats(),
             device_info=self.backend.get_device_info_dict(),
-            warnings=self._optimization_warnings
+            warnings=self._optimization_warnings,
         )
 
     def _apply_optimization_level(
@@ -228,7 +252,7 @@ class NVIDIAAdapter(BaseAdapter):
         model: nn.Module,
         level: str,
         sample_inputs: torch.Tensor | None,
-        for_inference: bool
+        for_inference: bool,
     ) -> tuple[nn.Module, list[str]]:
         """Apply optimizations based on level."""
         applied = []
@@ -264,13 +288,15 @@ class NVIDIAAdapter(BaseAdapter):
             self._optimization_warnings.append(
                 f"Unknown optimization level '{level}', using 'balanced'"
             )
-            return self._apply_optimization_level(model, "balanced", sample_inputs, for_inference)
+            return self._apply_optimization_level(
+                model, "balanced", sample_inputs, for_inference
+            )
 
         return model, applied
 
     def _enable_gradient_checkpointing(self, model: nn.Module) -> nn.Module:
         """Enable gradient checkpointing for memory efficiency."""
-        if hasattr(model, 'gradient_checkpointing_enable'):
+        if hasattr(model, "gradient_checkpointing_enable"):
             try:
                 model.gradient_checkpointing_enable()
             except Exception as e:
@@ -280,13 +306,10 @@ class NVIDIAAdapter(BaseAdapter):
         return model
 
     def _compile_model(
-        self,
-        model: nn.Module,
-        sample_inputs: torch.Tensor,
-        for_inference: bool
+        self, model: nn.Module, sample_inputs: torch.Tensor, for_inference: bool
     ) -> nn.Module:
         """Compile model with torch.compile."""
-        if not hasattr(torch, 'compile'):
+        if not hasattr(torch, "compile"):
             self._optimization_warnings.append(
                 "torch.compile not available, skipping compilation"
             )
@@ -297,9 +320,9 @@ class NVIDIAAdapter(BaseAdapter):
                 HardwareBackend.CUDA, self.backend.nvidia_config.architecture
             )
             compile_kwargs = {
-                'mode': mode,
-                'fullgraph': False,
-                'dynamic': False,
+                "mode": mode,
+                "fullgraph": False,
+                "dynamic": False,
             }
 
             compiled_model = torch.compile(model, **compile_kwargs)
@@ -328,38 +351,46 @@ class NVIDIAAdapter(BaseAdapter):
             Dictionary with optimization recommendations
         """
         recommendations = {
-            'architecture': self.backend.nvidia_config.architecture.value,
-            'fp8_available': self.backend.supports_fp8,
-            'suggested_level': 'balanced',
-            'optimizations': []
+            "architecture": self.backend.nvidia_config.architecture.value,
+            "fp8_available": self.backend.supports_fp8,
+            "suggested_level": "balanced",
+            "optimizations": [],
         }
 
         # Recommend FP8 for H100/Blackwell
         if self.backend.supports_fp8:
-            recommendations['optimizations'].append({
-                'type': 'fp8_training',
-                'benefit': '2x training speedup',
-                'requirement': 'H100 or Blackwell GPU'
-            })
+            recommendations["optimizations"].append(
+                {
+                    "type": "fp8_training",
+                    "benefit": "2x training speedup",
+                    "requirement": "H100 or Blackwell GPU",
+                }
+            )
 
         # Recommend mixed precision for older GPUs
-        elif self.backend.compute_capability and self.backend.compute_capability[0] >= 7:
-            recommendations['optimizations'].append({
-                'type': 'mixed_precision',
-                'benefit': '1.5-2x training speedup',
-                'requirement': 'Volta or newer GPU'
-            })
+        elif (
+            self.backend.compute_capability and self.backend.compute_capability[0] >= 7
+        ):
+            recommendations["optimizations"].append(
+                {
+                    "type": "mixed_precision",
+                    "benefit": "1.5-2x training speedup",
+                    "requirement": "Volta or newer GPU",
+                }
+            )
 
         # Recommend torch.compile
-        if hasattr(torch, 'compile'):
-            recommendations['optimizations'].append({
-                'type': 'torch_compile',
-                'benefit': '1.5-3x speedup depending on model',
-                'requirement': 'PyTorch 2.0+'
-            })
+        if hasattr(torch, "compile"):
+            recommendations["optimizations"].append(
+                {
+                    "type": "torch_compile",
+                    "benefit": "1.5-3x speedup depending on model",
+                    "requirement": "PyTorch 2.0+",
+                }
+            )
 
         # Suggest aggressive for H100/Blackwell
         if self.backend.is_h100 or self.backend.is_blackwell:
-            recommendations['suggested_level'] = 'aggressive'
+            recommendations["suggested_level"] = "aggressive"
 
         return recommendations

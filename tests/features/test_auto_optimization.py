@@ -29,13 +29,14 @@ ALL_HARDWARE_TYPES = [
     HardwareType.TPU,
     HardwareType.CPU,
 ]
-ALL_BACKENDS = ['nvidia', 'amd', 'trainium', 'tpu', 'cpu']
+ALL_BACKENDS = ["nvidia", "amd", "trainium", "tpu", "cpu"]
 
 
 # Test fixtures
 @pytest.fixture
 def simple_model():
     """Simple test model."""
+
     class SimpleModel(nn.Module):
         def __init__(self):
             super().__init__()
@@ -98,8 +99,11 @@ class TestHardwareDetector:
         """Test CPU fallback when no GPU/TPU available."""
         detector = HardwareDetector()
 
-        with patch('torch.cuda.is_available', return_value=False):
-            with patch('torchbridge.core.hardware_detector.HardwareDetector._detect_tpu', return_value=None):
+        with patch("torch.cuda.is_available", return_value=False):
+            with patch(
+                "torchbridge.core.hardware_detector.HardwareDetector._detect_tpu",
+                return_value=None,
+            ):
                 profile = detector.detect(force_redetect=True)
 
                 assert profile.hardware_type == HardwareType.CPU
@@ -130,7 +134,7 @@ class TestHardwareDetector:
         )
 
         backend = detector.get_optimal_backend(profile)
-        assert backend == 'nvidia'
+        assert backend == "nvidia"
 
     def test_get_optimal_backend_tpu(self):
         """Test optimal backend selection for TPU."""
@@ -144,7 +148,7 @@ class TestHardwareDetector:
         )
 
         backend = detector.get_optimal_backend(profile)
-        assert backend == 'tpu'
+        assert backend == "tpu"
 
     def test_get_optimal_backend_cpu(self):
         """Test optimal backend selection for CPU."""
@@ -157,7 +161,7 @@ class TestHardwareDetector:
         )
 
         backend = detector.get_optimal_backend(profile)
-        assert backend == 'cpu'
+        assert backend == "cpu"
 
     def test_get_recommended_optimization_aggressive(self):
         """Test aggressive optimization recommendation."""
@@ -168,11 +172,11 @@ class TestHardwareDetector:
             device_name="NVIDIA H100",
             device_count=1,
             nvidia_architecture=NVIDIAArchitecture.HOPPER,
-            capabilities=[OptimizationCapability.FP8_TRAINING]
+            capabilities=[OptimizationCapability.FP8_TRAINING],
         )
 
         level = detector.get_recommended_optimization_level(profile)
-        assert level == 'aggressive'
+        assert level == "aggressive"
 
     def test_get_recommended_optimization_balanced(self):
         """Test balanced optimization recommendation."""
@@ -183,11 +187,11 @@ class TestHardwareDetector:
             device_name="NVIDIA A100",
             device_count=1,
             nvidia_architecture=NVIDIAArchitecture.AMPERE,
-            capabilities=[OptimizationCapability.TENSOR_CORES]
+            capabilities=[OptimizationCapability.TENSOR_CORES],
         )
 
         level = detector.get_recommended_optimization_level(profile)
-        assert level in ['balanced', 'conservative']
+        assert level in ["balanced", "conservative"]
 
     def test_get_recommended_optimization_conservative(self):
         """Test conservative optimization recommendation."""
@@ -200,7 +204,7 @@ class TestHardwareDetector:
         )
 
         level = detector.get_recommended_optimization_level(profile)
-        assert level == 'conservative'
+        assert level == "conservative"
 
 
 # Hardware Profile Tests
@@ -229,7 +233,7 @@ class TestHardwareProfile:
             capabilities=[
                 OptimizationCapability.FP8_TRAINING,
                 OptimizationCapability.FLASH_ATTENTION_3,
-            ]
+            ],
         )
 
         assert profile.has_capability(OptimizationCapability.FP8_TRAINING)
@@ -289,7 +293,7 @@ class TestHardwareProfile:
             device_name="NVIDIA H100",
             device_count=1,
             nvidia_architecture=NVIDIAArchitecture.HOPPER,
-            capabilities=[OptimizationCapability.FP8_TRAINING]
+            capabilities=[OptimizationCapability.FP8_TRAINING],
         )
 
         profile_basic = HardwareProfile(
@@ -309,13 +313,13 @@ class TestAutoOptimization:
     def test_manager_has_auto_optimize(self):
         """Test that manager has auto_optimize method."""
         manager = get_manager()
-        assert hasattr(manager, 'auto_optimize')
+        assert hasattr(manager, "auto_optimize")
         assert callable(manager.auto_optimize)
 
     def test_manager_has_hardware_detector(self):
         """Test that manager has hardware detector."""
         manager = get_manager()
-        assert hasattr(manager, 'hardware_detector')
+        assert hasattr(manager, "hardware_detector")
         assert isinstance(manager.hardware_detector, HardwareDetector)
 
     def test_auto_optimize_basic(self, simple_model, sample_inputs):
@@ -323,8 +327,7 @@ class TestAutoOptimization:
         manager = get_manager()
 
         optimized_model = manager.auto_optimize(
-            simple_model,
-            sample_inputs=sample_inputs
+            simple_model, sample_inputs=sample_inputs
         )
 
         # Should return a model
@@ -363,18 +366,17 @@ class TestAutoOptimization:
         recommendations = manager.get_optimization_recommendations()
 
         assert isinstance(recommendations, dict)
-        assert 'hardware_type' in recommendations
-        assert 'backend' in recommendations
-        assert 'optimization_level' in recommendations
-        assert 'capabilities' in recommendations
+        assert "hardware_type" in recommendations
+        assert "backend" in recommendations
+        assert "optimization_level" in recommendations
+        assert "capabilities" in recommendations
 
     def test_auto_optimize_with_custom_optimization_level(self, simple_model):
         """Test auto-optimization with custom level."""
         manager = get_manager()
 
         optimized_model = manager.auto_optimize(
-            simple_model,
-            optimization_level='conservative'
+            simple_model, optimization_level="conservative"
         )
 
         assert optimized_model is not None
@@ -383,10 +385,7 @@ class TestAutoOptimization:
         """Test auto-optimization for inference."""
         manager = get_manager()
 
-        optimized_model = manager.auto_optimize(
-            simple_model,
-            for_inference=True
-        )
+        optimized_model = manager.auto_optimize(simple_model, for_inference=True)
 
         assert optimized_model is not None
 
@@ -424,8 +423,7 @@ class TestAutoOptimizationIntegration:
 
         # Auto-optimize
         optimized_model = manager.auto_optimize(
-            simple_model,
-            sample_inputs=sample_inputs
+            simple_model, sample_inputs=sample_inputs
         )
 
         # Verify model works
@@ -435,7 +433,7 @@ class TestAutoOptimizationIntegration:
 
         # Get recommendations
         recommendations = manager.get_optimization_recommendations()
-        assert recommendations['backend'] in ALL_BACKENDS
+        assert recommendations["backend"] in ALL_BACKENDS
 
     def test_auto_optimization_consistency(self, simple_model):
         """Test that auto-optimization is consistent."""

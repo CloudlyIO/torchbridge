@@ -19,11 +19,11 @@ from torchbridge.core.config import AMDArchitecture, HardwareBackend, NVIDIAArch
 
 # (backend, architecture) → optimal torch.compile mode string
 _COMPILE_MODE_MATRIX: dict[tuple, str] = {
-    (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER):             "max-autotune",
-    (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC):       "max-autotune",
+    (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER): "max-autotune",
+    (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC): "max-autotune",
     (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_CONSUMER): "max-autotune",
-    (HardwareBackend.AMD,  AMDArchitecture.CDNA3):                 "max-autotune",
-    (HardwareBackend.AMD,  AMDArchitecture.CDNA4):                 "max-autotune",
+    (HardwareBackend.AMD, AMDArchitecture.CDNA3): "max-autotune",
+    (HardwareBackend.AMD, AMDArchitecture.CDNA4): "max-autotune",
 }
 
 _DEFAULT_COMPILE_MODE = "reduce-overhead"

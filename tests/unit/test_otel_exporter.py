@@ -18,54 +18,75 @@ import pytest
 
 # ── Schema tests (no opentelemetry needed) ─────────────────────────────────
 
+
 class TestSpanSchema:
     def test_schema_has_required_keys(self):
         from torchbridge.testing.otel_exporter import _SPAN_ATTRIBUTE_SCHEMA
+
         required = {
-            "backend1", "backend2", "model", "dtype",
-            "max_diff", "cosine_sim", "tolerance_atol", "tolerance_rtol",
-            "passed", "duration_ms",
+            "backend1",
+            "backend2",
+            "model",
+            "dtype",
+            "max_diff",
+            "cosine_sim",
+            "tolerance_atol",
+            "tolerance_rtol",
+            "passed",
+            "duration_ms",
         }
         assert required.issubset(_SPAN_ATTRIBUTE_SCHEMA.keys())
 
     def test_schema_values_are_tuples_of_str_and_type(self):
         from torchbridge.testing.otel_exporter import _SPAN_ATTRIBUTE_SCHEMA
+
         for key, val in _SPAN_ATTRIBUTE_SCHEMA.items():
             assert isinstance(val, tuple) and len(val) == 2, key
             attr_name, attr_type = val
-            assert isinstance(attr_name, str) and attr_name.startswith("torchbridge."), key
+            assert isinstance(attr_name, str) and attr_name.startswith(
+                "torchbridge."
+            ), key
             assert attr_type in (str, float, bool, int), key
 
     def test_layer_schema_has_required_keys(self):
         from torchbridge.testing.otel_exporter import _LAYER_SPAN_SCHEMA
+
         required = {"layer", "max_diff", "cosine_sim", "exceeds_threshold"}
         assert required.issubset(_LAYER_SPAN_SCHEMA.keys())
 
     def test_layer_schema_values_are_valid_tuples(self):
         from torchbridge.testing.otel_exporter import _LAYER_SPAN_SCHEMA
+
         for key, val in _LAYER_SPAN_SCHEMA.items():
             assert isinstance(val, tuple) and len(val) == 2, key
             attr_name, attr_type = val
-            assert isinstance(attr_name, str) and attr_name.startswith("torchbridge."), key
+            assert isinstance(attr_name, str) and attr_name.startswith(
+                "torchbridge."
+            ), key
 
     def test_otel_available_is_bool(self):
         from torchbridge.testing.otel_exporter import OTEL_AVAILABLE
+
         assert isinstance(OTEL_AVAILABLE, bool)
 
 
 # ── Unavailable guard ──────────────────────────────────────────────────────
 
+
 class TestValidationSpanExporterUnavailable:
     def test_raises_runtime_error_when_otel_unavailable(self):
         with patch("torchbridge.testing.otel_exporter._OTEL_AVAILABLE", False):
             from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
             with pytest.raises(RuntimeError, match="opentelemetry"):
                 ValidationSpanExporter()
 
 
 # ── Main exporter tests (require opentelemetry.sdk) ───────────────────────
 
-otel_sdk = pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+otel_sdk = pytest.importorskip(
+    "opentelemetry.sdk", reason="opentelemetry-sdk not installed"
+)
 
 
 class TestValidationSpanExporterInit:
@@ -74,6 +95,7 @@ class TestValidationSpanExporterInit:
         from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
         exp = ValidationSpanExporter(endpoint=None)
         assert isinstance(exp._raw_exporter, ConsoleSpanExporter)
         exp.shutdown()
@@ -85,6 +107,7 @@ class TestValidationSpanExporterInit:
         )
 
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
         exp = ValidationSpanExporter(endpoint="http://localhost:4318")
         assert isinstance(exp._raw_exporter, OTLPSpanExporter)
         exp.shutdown()
@@ -96,6 +119,7 @@ class TestValidationSpanExporterInit:
         )
 
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
         exp = ValidationSpanExporter(endpoint=None)
         assert isinstance(exp._raw_exporter, OTLPSpanExporter)
         exp.shutdown()
@@ -107,6 +131,7 @@ class TestValidationSpanExporterInit:
         )
 
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
         exp = ValidationSpanExporter(endpoint="http://explicit:4318")
         assert isinstance(exp._raw_exporter, OTLPSpanExporter)
         assert "explicit" in exp._raw_exporter._endpoint
@@ -131,10 +156,12 @@ class TestValidationSpanExporterExport:
     def _make_exporter(self, monkeypatch):
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
+
         return ValidationSpanExporter(endpoint=None)
 
     def test_export_sets_schema_attributes(self, monkeypatch):
         from torchbridge.testing.otel_exporter import _SPAN_ATTRIBUTE_SCHEMA
+
         exp = self._make_exporter(monkeypatch)
         recorded = {}
 
@@ -169,8 +196,18 @@ class TestValidationSpanExporterExport:
         exp = self._make_exporter(monkeypatch)
         result_with_layers = dict(self._RESULT)
         result_with_layers["per_layer"] = [
-            {"layer": "fc1", "max_diff": 1e-7, "cosine_sim": 1.0, "exceeds_threshold": False},
-            {"layer": "fc2", "max_diff": 2e-7, "cosine_sim": 0.9999, "exceeds_threshold": False},
+            {
+                "layer": "fc1",
+                "max_diff": 1e-7,
+                "cosine_sim": 1.0,
+                "exceeds_threshold": False,
+            },
+            {
+                "layer": "fc2",
+                "max_diff": 2e-7,
+                "cosine_sim": 0.9999,
+                "exceeds_threshold": False,
+            },
         ]
 
         child_spans_started = []
@@ -217,31 +254,46 @@ class TestValidationSpanExporterExport:
 
 # ── v0.5.69: URL scheme validation ─────────────────────────────────────────
 
+
 class TestEndpointUrlValidation:
     def test_invalid_scheme_logs_warning(self, monkeypatch, caplog):
         import logging
+
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.otel_exporter"
+        ):
             exp = ValidationSpanExporter(endpoint="ftp://invalid-url.example.com")
             exp.shutdown()
         assert any("ftp://" in msg for msg in caplog.messages)
 
     def test_valid_https_scheme_no_warning(self, monkeypatch, caplog):
         import logging
+
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
-            exp = ValidationSpanExporter(endpoint="https://cloud.langfuse.com/api/public/otel")
+
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.otel_exporter"
+        ):
+            exp = ValidationSpanExporter(
+                endpoint="https://cloud.langfuse.com/api/public/otel"
+            )
             exp.shutdown()
         url_warnings = [m for m in caplog.messages if "does not look like" in m]
         assert len(url_warnings) == 0
 
     def test_valid_http_scheme_no_warning(self, monkeypatch, caplog):
         import logging
+
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
         from torchbridge.testing.otel_exporter import ValidationSpanExporter
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.otel_exporter"
+        ):
             exp = ValidationSpanExporter(endpoint="http://localhost:4318")
             exp.shutdown()
         url_warnings = [m for m in caplog.messages if "does not look like" in m]

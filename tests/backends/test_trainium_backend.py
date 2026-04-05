@@ -42,15 +42,11 @@ class TestTrainiumBackend:
         config = TorchBridgeConfig()
         backend = TrainiumBackend(config)
 
-        model = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 16)
-        )
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 16))
 
         prepared_model = backend.prepare_model(model)
         assert prepared_model is not None
-        assert hasattr(prepared_model, 'forward')
+        assert hasattr(prepared_model, "forward")
 
     def test_trainium_backend_data_preparation(self):
         """Test data preparation for Trainium."""
@@ -63,7 +59,7 @@ class TestTrainiumBackend:
         assert prepared_tensor.device == backend.device
 
         # Test dict preparation
-        data_dict = {'input': torch.randn(8, 64), 'target': torch.randn(8, 10)}
+        data_dict = {"input": torch.randn(8, 64), "target": torch.randn(8, 10)}
         prepared_dict = backend.prepare_data(data_dict)
         assert isinstance(prepared_dict, dict)
         assert all(t.device == backend.device for t in prepared_dict.values())
@@ -75,9 +71,9 @@ class TestTrainiumBackend:
 
         stats = backend.get_memory_stats()
         assert isinstance(stats, dict)
-        assert 'device' in stats
-        assert 'world_size' in stats
-        assert 'rank' in stats
+        assert "device" in stats
+        assert "world_size" in stats
+        assert "rank" in stats
 
     def test_trainium_backend_synchronization(self):
         """Test Trainium synchronization."""
@@ -118,7 +114,7 @@ class TestTrainiumBackend:
         backend = TrainiumBackend(config)
 
         # Should work with CPU fallback
-        assert backend.device.type == 'cpu'
+        assert backend.device.type == "cpu"
 
 
 class TestTrainiumConfig:
@@ -188,15 +184,15 @@ class TestTrainiumConfig:
     def test_hardware_config_includes_trainium(self):
         """Test that HardwareConfig includes trainium field."""
         config = TorchBridgeConfig()
-        assert hasattr(config.hardware, 'trainium')
+        assert hasattr(config.hardware, "trainium")
         assert isinstance(config.hardware.trainium, TrainiumConfig)
 
     def test_torchbridge_config_serialization_includes_trainium(self):
         """Test that config serialization includes trainium."""
         config = TorchBridgeConfig()
         config_dict = config.to_dict()
-        assert 'hardware' in config_dict
-        assert 'trainium' in config_dict['hardware']
+        assert "hardware" in config_dict
+        assert "trainium" in config_dict["hardware"]
 
 
 class TestTrainiumAdapter:
@@ -220,7 +216,9 @@ class TestTrainiumAdapter:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        result = optimizer.optimize(model, sample_input, optimization_level="conservative")
+        result = optimizer.optimize(
+            model, sample_input, optimization_level="conservative"
+        )
 
         assert result is not None
         assert result.optimized_model is not None
@@ -248,7 +246,9 @@ class TestTrainiumAdapter:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        result = optimizer.optimize(model, sample_input, optimization_level="aggressive")
+        result = optimizer.optimize(
+            model, sample_input, optimization_level="aggressive"
+        )
 
         assert result is not None
         assert result.optimized_model is not None
@@ -287,7 +287,7 @@ class TestTrainiumAdapter:
 
         stats = optimizer.get_optimization_stats()
         assert isinstance(stats, dict)
-        assert 'total_optimizations' in stats
+        assert "total_optimizations" in stats
 
     def test_invalid_optimization_level(self):
         """Test invalid optimization level handling."""
@@ -353,10 +353,10 @@ class TestNeuronCompiler:
 
         stats = compiler.get_compilation_stats()
         assert isinstance(stats, dict)
-        assert 'compilation_cache' in stats
-        assert 'neuron_available' in stats
-        assert 'graph_caching_enabled' in stats
-        assert 'cache_max_size' in stats
+        assert "compilation_cache" in stats
+        assert "neuron_available" in stats
+        assert "graph_caching_enabled" in stats
+        assert "cache_max_size" in stats
 
     def test_neuron_compiler_benchmark(self):
         """Test compilation benchmarking."""
@@ -366,10 +366,12 @@ class TestNeuronCompiler:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        benchmark_results = compiler.benchmark_compilation(model, sample_input, num_runs=2)
+        benchmark_results = compiler.benchmark_compilation(
+            model, sample_input, num_runs=2
+        )
         assert isinstance(benchmark_results, dict)
-        assert 'min_time' in benchmark_results
-        assert 'avg_time' in benchmark_results
+        assert "min_time" in benchmark_results
+        assert "avg_time" in benchmark_results
 
     def test_neuron_compiler_repr(self):
         """Test Neuron compiler string representation."""
@@ -412,8 +414,8 @@ class TestTrainiumErrorHandling:
 
         # Cache should only hold 3 models (LRU eviction)
         cache_stats = backend._model_cache.get_stats()
-        assert cache_stats['size'] <= 3
-        assert cache_stats['evictions'] >= 2
+        assert cache_stats["size"] <= 3
+        assert cache_stats["evictions"] >= 2
 
     def test_compilation_cache_limits(self):
         """Test Neuron compiler cache size limits."""
@@ -428,7 +430,7 @@ class TestTrainiumErrorHandling:
 
         # Cache should respect max size
         cache_stats = compiler._compilation_cache.get_stats()
-        assert cache_stats['size'] <= 2
+        assert cache_stats["size"] <= 2
 
     def test_strict_validation_mode(self):
         """Test strict validation mode raises exceptions."""
@@ -486,9 +488,9 @@ class TestTrainiumNeuronUtilities:
 
         env_info = get_neuron_env_info()
         assert isinstance(env_info, dict)
-        assert 'neuron_available' in env_info
-        assert 'neuron_sdk_version' in env_info
-        assert 'PJRT_DEVICE' in env_info
+        assert "neuron_available" in env_info
+        assert "neuron_sdk_version" in env_info
+        assert "PJRT_DEVICE" in env_info
 
     def test_neuron_sdk_version(self):
         """Test getting Neuron SDK version."""
@@ -516,16 +518,16 @@ class TestTrainiumBackendFactory:
         """Test that TRAINIUM is in BackendType enum."""
         from torchbridge.backends.backend_factory import BackendType
 
-        assert hasattr(BackendType, 'TRAINIUM')
-        assert BackendType.TRAINIUM.value == 'trainium'
+        assert hasattr(BackendType, "TRAINIUM")
+        assert BackendType.TRAINIUM.value == "trainium"
 
     def test_backend_type_from_string(self):
         """Test BackendType.from_string with Trainium aliases."""
         from torchbridge.backends.backend_factory import BackendType
 
-        assert BackendType.from_string('trainium') == BackendType.TRAINIUM
-        assert BackendType.from_string('neuron') == BackendType.TRAINIUM
-        assert BackendType.from_string('trn') == BackendType.TRAINIUM
+        assert BackendType.from_string("trainium") == BackendType.TRAINIUM
+        assert BackendType.from_string("neuron") == BackendType.TRAINIUM
+        assert BackendType.from_string("trn") == BackendType.TRAINIUM
 
     def test_backend_factory_priority(self):
         """Test that Trainium has correct priority in factory."""
@@ -541,21 +543,21 @@ class TestTrainiumConfigurationModes:
     def test_inference_mode(self):
         """Test Trainium config in inference mode."""
         config = TorchBridgeConfig.for_inference()
-        assert hasattr(config.hardware, 'trainium')
+        assert hasattr(config.hardware, "trainium")
         assert config.hardware.trainium.enabled in [True, False]
 
     def test_training_mode(self):
         """Test Trainium config in training mode."""
         config = TorchBridgeConfig.for_training()
-        assert hasattr(config.hardware, 'trainium')
+        assert hasattr(config.hardware, "trainium")
         assert config.hardware.trainium.enabled in [True, False]
 
     def test_development_mode(self):
         """Test Trainium config in development mode."""
         config = TorchBridgeConfig.for_development()
-        assert hasattr(config.hardware, 'trainium')
+        assert hasattr(config.hardware, "trainium")
         assert config.hardware.trainium.enabled in [True, False]
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -51,7 +51,7 @@ class TestEndToEndQuantization:
 
         result.model.eval()
         # Cast input to match model dtype (may be BF16 if INT8 engine unavailable)
-        model_dtype = next(result.model.parameters()).dtype
+        model_dtype = next(iter(result.model.parameters()), torch.zeros(0)).dtype
         q_input = test_input.to(dtype=model_dtype)
         with torch.no_grad():
             quantized_output = result.model(q_input)
@@ -71,7 +71,7 @@ class TestEndToEndQuantization:
 
         # Verify the model is usable
         result.model.eval()
-        model_dtype = next(result.model.parameters()).dtype
+        model_dtype = next(iter(result.model.parameters()), torch.zeros(0)).dtype
         with torch.no_grad():
             output = result.model(torch.randn(2, 256, dtype=model_dtype))
         assert output.shape == (2, 32)
@@ -123,7 +123,7 @@ class TestEndToEndQuantization:
         assert result.model is not None
 
         result.model.eval()
-        model_dtype = next(result.model.parameters()).dtype
+        model_dtype = next(iter(result.model.parameters()), torch.zeros(0)).dtype
         with torch.no_grad():
             output = result.model(torch.randn(1, 256, dtype=model_dtype))
         assert output.shape == (1, 32)
@@ -140,7 +140,7 @@ class TestQuantizationQualityValidation:
         assert result.model is not None
 
         result.model.eval()
-        model_dtype = next(result.model.parameters()).dtype
+        model_dtype = next(iter(result.model.parameters()), torch.zeros(0)).dtype
         test_input = torch.randn(8, 256, dtype=model_dtype)
         with torch.no_grad():
             output = result.model(test_input)
@@ -158,7 +158,9 @@ class TestQuantizationQualityValidation:
             result = engine.quantize(medium_model, format=fmt_str)
             if result.success and result.model is not None:
                 result.model.eval()
-                model_dtype = next(result.model.parameters()).dtype
+                model_dtype = next(
+                    iter(result.model.parameters()), torch.zeros(0)
+                ).dtype
                 q_input = test_input.to(dtype=model_dtype)
                 with torch.no_grad():
                     output = result.model(q_input)

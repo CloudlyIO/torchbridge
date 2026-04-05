@@ -67,11 +67,13 @@ class XLADeviceManager:
                 len(self._devices),
                 self._current_device,
                 self._world_size,
-                self._rank
+                self._rank,
             )
 
         except ImportError:
-            warnings.warn("PyTorch/XLA not available. Using CPU fallback.", stacklevel=2)
+            warnings.warn(
+                "PyTorch/XLA not available. Using CPU fallback.", stacklevel=2
+            )
             self._current_device = torch.device("cpu")
 
     @property
@@ -99,14 +101,16 @@ class XLADeviceManager:
         if device_id < len(self._devices):
             self._current_device = self._devices[device_id]
         else:
-            warnings.warn(f"Device {device_id} not available, using default device", stacklevel=2)
+            warnings.warn(
+                f"Device {device_id} not available, using default device", stacklevel=2
+            )
 
     def sync_all_devices(self) -> None:
         """Synchronize all XLA devices."""
         try:
             xla_compat.sync()
             if self.world_size > 1:
-                xla_compat.rendezvous('sync_all')
+                xla_compat.rendezvous("sync_all")
         except Exception:
             logger.debug("XLA device synchronization failed", exc_info=True)
             pass
@@ -114,16 +118,18 @@ class XLADeviceManager:
     def get_device_stats(self) -> dict[str, Any]:
         """Get device statistics."""
         stats = {
-            'current_device': str(self._current_device),
-            'available_devices': len(self._devices),
-            'world_size': self._world_size,
-            'rank': self._rank
+            "current_device": str(self._current_device),
+            "available_devices": len(self._devices),
+            "world_size": self._world_size,
+            "rank": self._rank,
         }
 
         try:
-            stats.update({
-                'xla_device_count': xla_compat.get_device_count(),
-            })
+            stats.update(
+                {
+                    "xla_device_count": xla_compat.get_device_count(),
+                }
+            )
         except Exception:
             logger.debug("XLA device count query failed", exc_info=True)
             pass
@@ -161,16 +167,16 @@ class XLADistributedTraining:
             if not torch.distributed.is_initialized():
                 # Initialize process group
                 torch.distributed.init_process_group(
-                    backend='xla',
+                    backend="xla",
                     rank=self.device_manager.rank,
-                    world_size=self.device_manager.world_size
+                    world_size=self.device_manager.world_size,
                 )
                 self._is_initialized = True
 
                 logger.info(
                     "Distributed training initialized: backend=xla, world_size=%d, rank=%d",
                     self.device_manager.world_size,
-                    self.device_manager.rank
+                    self.device_manager.rank,
                 )
 
         except ImportError:
@@ -225,14 +231,14 @@ class XLADistributedTraining:
             import torch_xla.core.xla_model as xm
 
             if op == "sum":
-                return xm.all_reduce('sum', tensor)
+                return xm.all_reduce("sum", tensor)
             elif op == "mean":
-                result = xm.all_reduce('sum', tensor)
+                result = xm.all_reduce("sum", tensor)
                 return result / self.device_manager.world_size
             elif op == "max":
-                return xm.all_reduce('max', tensor)
+                return xm.all_reduce("max", tensor)
             elif op == "min":
-                return xm.all_reduce('min', tensor)
+                return xm.all_reduce("min", tensor)
             else:
                 raise ValueError(f"Unsupported reduction operation: {op}")
 
@@ -254,6 +260,7 @@ class XLADistributedTraining:
 
         try:
             import torch_xla.core.xla_model as xm
+
             return xm.all_gather(tensor)
         except ImportError:
             return [tensor]
@@ -263,7 +270,8 @@ class XLADistributedTraining:
         if self.is_distributed:
             try:
                 import torch_xla.core.xla_model as xm
-                xm.rendezvous('barrier')
+
+                xm.rendezvous("barrier")
             except ImportError:
                 pass
 
@@ -313,7 +321,7 @@ class XLAOptimizations:
                     warnings.warn(
                         f"Linear layer {name} dimensions ({in_features}x{out_features}) "
                         "not optimal for TPU. Consider padding to multiples of 8.",
-                    stacklevel=2,
+                        stacklevel=2,
                     )
 
         return model
@@ -322,14 +330,14 @@ class XLAOptimizations:
         """Optimize attention mechanisms for XLA."""
         for name, module in model.named_modules():
             # Look for attention patterns
-            if hasattr(module, 'num_attention_heads'):
-                head_dim = getattr(module, 'attention_head_size', None)
+            if hasattr(module, "num_attention_heads"):
+                head_dim = getattr(module, "attention_head_size", None)
 
                 if head_dim and head_dim % 8 != 0:
                     warnings.warn(
                         f"Attention layer {name} head dimension {head_dim} "
                         "not optimal for TPU. Consider using dimensions divisible by 8.",
-                    stacklevel=2,
+                        stacklevel=2,
                     )
 
         return model
@@ -356,7 +364,7 @@ class XLAOptimizations:
         # Add static shape hints where possible
         for module in model.modules():
             # Mark modules that have static shapes
-            if hasattr(module, 'forward'):
+            if hasattr(module, "forward"):
                 # Add metadata for XLA compiler
                 module._xla_static_shapes = True  # type: ignore[assignment]
 
@@ -368,8 +376,8 @@ class XLAOptimizations:
         if self.config.enable_xla_dynamic_shapes:
             # Configure model for dynamic shapes
             for module in model.modules():
-                if hasattr(module, '_xla_static_shapes'):
-                    delattr(module, '_xla_static_shapes')
+                if hasattr(module, "_xla_static_shapes"):
+                    delattr(module, "_xla_static_shapes")
 
         return model
 
@@ -386,32 +394,37 @@ class XLAUtilities:
     def get_xla_env_info() -> dict[str, Any]:
         """Get XLA environment information."""
         env_info: dict[str, Any] = {
-            'XLA_FLAGS': os.environ.get('XLA_FLAGS', ''),
-            'XLA_PYTHON_CLIENT_MEM_FRACTION': os.environ.get('XLA_PYTHON_CLIENT_MEM_FRACTION', ''),
-            'TPU_TYPE': os.environ.get('TPU_TYPE', ''),
-            'TPU_NAME': os.environ.get('TPU_NAME', ''),
+            "XLA_FLAGS": os.environ.get("XLA_FLAGS", ""),
+            "XLA_PYTHON_CLIENT_MEM_FRACTION": os.environ.get(
+                "XLA_PYTHON_CLIENT_MEM_FRACTION", ""
+            ),
+            "TPU_TYPE": os.environ.get("TPU_TYPE", ""),
+            "TPU_NAME": os.environ.get("TPU_NAME", ""),
         }
 
         try:
             import torch_xla
-            env_info.update({
-                'torch_xla_version': torch_xla.__version__,
-                'xla_available': True
-            })
 
-            env_info.update({
-                'xla_device_count': xla_compat.get_device_count(),
-                'xrt_world_size': xla_compat.get_world_size()
-            })
+            env_info.update(
+                {"torch_xla_version": torch_xla.__version__, "xla_available": True}
+            )
+
+            env_info.update(
+                {
+                    "xla_device_count": xla_compat.get_device_count(),
+                    "xrt_world_size": xla_compat.get_world_size(),
+                }
+            )
         except Exception:
             logger.debug("XLA environment info detection failed", exc_info=True)
-            env_info['xla_available'] = False
+            env_info["xla_available"] = False
 
         return env_info
 
     @staticmethod
-    def profile_xla_compilation(model: nn.Module,
-                              sample_input: torch.Tensor) -> dict[str, Any]:
+    def profile_xla_compilation(
+        model: nn.Module, sample_input: torch.Tensor
+    ) -> dict[str, Any]:
         """Profile XLA compilation performance."""
 
         try:
@@ -439,19 +452,18 @@ class XLAUtilities:
             execution_time = (time.time() - start_time) / 10
 
             return {
-                'compilation_time': compilation_time,
-                'avg_execution_time': execution_time,
-                'output_shape': list(output.shape),
-                'device': str(device)
+                "compilation_time": compilation_time,
+                "avg_execution_time": execution_time,
+                "output_shape": list(output.shape),
+                "device": str(device),
             }
 
         except Exception:
             logger.debug("XLA compilation profiling failed", exc_info=True)
-            return {'error': 'PyTorch/XLA not available'}
+            return {"error": "PyTorch/XLA not available"}
 
     @staticmethod
-    def debug_xla_graph(model: nn.Module,
-                       sample_input: torch.Tensor) -> str:
+    def debug_xla_graph(model: nn.Module, sample_input: torch.Tensor) -> str:
         """Get XLA computation graph for debugging."""
 
         try:
@@ -482,28 +494,32 @@ class XLAUtilities:
         """Get optimized XLA flags for specific TPU versions."""
 
         base_flags = {
-            'XLA_FLAGS': '--xla_optimization_level=2 --xla_force_host_platform_device_count=1'
+            "XLA_FLAGS": "--xla_optimization_level=2 --xla_force_host_platform_device_count=1"
         }
 
         # Version-specific optimizations
         if tpu_version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
             # High-performance TPUs
-            base_flags['XLA_FLAGS'] += ' --xla_enable_async_collectives=true'
-            base_flags['XLA_FLAGS'] += ' --xla_tpu_enable_async_collective_fusion=true'
+            base_flags["XLA_FLAGS"] += " --xla_enable_async_collectives=true"
+            base_flags["XLA_FLAGS"] += " --xla_tpu_enable_async_collective_fusion=true"
 
         elif tpu_version == TPUVersion.V5E:
             # Cost-optimized TPUs
-            base_flags['XLA_FLAGS'] += ' --xla_optimization_level=1'
+            base_flags["XLA_FLAGS"] += " --xla_optimization_level=1"
 
         elif tpu_version == TPUVersion.V4:
             # Legacy TPUs
-            base_flags['XLA_FLAGS'] = '--xla_optimization_level=1 --xla_force_host_platform_device_count=1'
+            base_flags["XLA_FLAGS"] = (
+                "--xla_optimization_level=1 --xla_force_host_platform_device_count=1"
+            )
 
         return base_flags
 
 
 # Integration factory function
-def create_xla_integration(config: TPUConfig) -> tuple[XLADeviceManager, XLADistributedTraining, XLAOptimizations]:
+def create_xla_integration(
+    config: TPUConfig,
+) -> tuple[XLADeviceManager, XLADistributedTraining, XLAOptimizations]:
     """
     Create complete XLA integration setup.
 

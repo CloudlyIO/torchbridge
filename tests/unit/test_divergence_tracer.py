@@ -20,8 +20,10 @@ from torchbridge.testing.divergence import (
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 class _SimpleModel(nn.Module):
     """3-layer sequential model for testing."""
+
     def __init__(self, dim: int = 8) -> None:
         super().__init__()
         self.linear1 = nn.Linear(dim, dim)
@@ -34,6 +36,7 @@ class _SimpleModel(nn.Module):
 
 class _EmptyOutputModule(nn.Module):
     """Module that emits an empty tensor (shape [0, dim])."""
+
     def __init__(self, dim: int = 8) -> None:
         super().__init__()
         self.dim = dim
@@ -44,6 +47,7 @@ class _EmptyOutputModule(nn.Module):
 
 class _EmptyOutputModel(nn.Module):
     """Wraps _EmptyOutputModule in a simple container."""
+
     def __init__(self) -> None:
         super().__init__()
         self.empty_layer = _EmptyOutputModule(8)
@@ -55,6 +59,7 @@ class _EmptyOutputModel(nn.Module):
 
 
 # ── Basic context manager ─────────────────────────────────────────────────────
+
 
 class TestContextManager:
     def test_enter_registers_hooks(self):
@@ -81,6 +86,7 @@ class TestContextManager:
 
 
 # ── Empty tensor guard ────────────────────────────────────────────────────────
+
 
 class TestEmptyTensorGuard:
     def test_compare_with_skips_empty_tensor_no_crash(self):
@@ -119,6 +125,7 @@ class TestEmptyTensorGuard:
 
 
 # ── max_layers parameter ──────────────────────────────────────────────────────
+
 
 class TestMaxLayers:
     def test_max_layers_limits_captures(self):
@@ -166,6 +173,7 @@ class TestMaxLayers:
 
 
 # ── Basic compare_with correctness ───────────────────────────────────────────
+
 
 class TestCompareWith:
     def test_identical_outputs_zero_diff(self):

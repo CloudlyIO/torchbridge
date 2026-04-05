@@ -23,6 +23,7 @@ pytestmark = pytest.mark.benchmark
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _elapsed_ms(fn, iterations: int) -> float:
     """Return total elapsed milliseconds for `iterations` calls to `fn`."""
     t0 = time.perf_counter()
@@ -35,6 +36,7 @@ def _elapsed_ms(fn, iterations: int) -> float:
 # Matrix lookups — must each complete 1000 iterations in < 1 000 ms (< 1 ms each)
 # ---------------------------------------------------------------------------
 
+
 class TestMatrixLookupPerf:
     """Compatibility matrix lookups must be effectively instantaneous."""
 
@@ -45,7 +47,9 @@ class TestMatrixLookupPerf:
         )
 
         elapsed = _elapsed_ms(
-            lambda: QuantizationCompatibilityMatrix.get_optimal_format(HardwareBackend.CUDA),
+            lambda: QuantizationCompatibilityMatrix.get_optimal_format(
+                HardwareBackend.CUDA
+            ),
             iterations=1000,
         )
         assert elapsed < 1000, (
@@ -82,7 +86,9 @@ class TestMatrixLookupPerf:
         from torchbridge.core.config import HardwareBackend
 
         elapsed = _elapsed_ms(
-            lambda: AdapterCompatibilityMatrix.get_base_quant_format(HardwareBackend.CPU),
+            lambda: AdapterCompatibilityMatrix.get_base_quant_format(
+                HardwareBackend.CPU
+            ),
             iterations=1000,
         )
         assert elapsed < 1000, (
@@ -93,6 +99,7 @@ class TestMatrixLookupPerf:
 # ---------------------------------------------------------------------------
 # Config generation — DistributedConfig.auto() must stay under 10 ms each
 # ---------------------------------------------------------------------------
+
 
 class TestConfigGenerationPerf:
     """DistributedConfig.auto() and hardware detection must stay fast."""

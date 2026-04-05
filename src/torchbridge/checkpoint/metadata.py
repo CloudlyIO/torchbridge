@@ -268,9 +268,7 @@ _FP8_BACKENDS: set[HardwareBackend] = {
 }
 
 
-def _backend_supports_dtype(
-    backend: HardwareBackend, dtype: torch.dtype
-) -> bool:
+def _backend_supports_dtype(backend: HardwareBackend, dtype: torch.dtype) -> bool:
     """Check if a backend supports the given dtype."""
     if dtype in (torch.float8_e4m3fn, torch.float8_e5m2):
         return backend in _FP8_BACKENDS

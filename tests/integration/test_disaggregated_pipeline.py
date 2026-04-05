@@ -19,6 +19,7 @@ from types import SimpleNamespace
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _args(**kwargs):
     """Build a SimpleNamespace with advisor defaults, overriding with kwargs."""
     defaults = {
@@ -43,6 +44,7 @@ def _args(**kwargs):
 # Argument registration
 # ---------------------------------------------------------------------------
 
+
 class TestArgRegistration:
     def _make_parser(self):
         import argparse
@@ -56,40 +58,80 @@ class TestArgRegistration:
 
     def test_mode_arg_registered(self):
         parser = self._make_parser()
-        parsed = parser.parse_args(["advisor", "--model-params", "7e9", "--mode", "training"])
+        parsed = parser.parse_args(
+            ["advisor", "--model-params", "7e9", "--mode", "training"]
+        )
         assert parsed.mode == "training"
 
     def test_prefill_arg_registered(self):
         parser = self._make_parser()
         parsed = parser.parse_args(
-            ["advisor", "--model-params", "7e9", "--mode", "disaggregated",
-             "--prefill", "nvidia:hopper", "--decode", "amd:cdna3"]
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "disaggregated",
+                "--prefill",
+                "nvidia:hopper",
+                "--decode",
+                "amd:cdna3",
+            ]
         )
         assert parsed.prefill == "nvidia:hopper"
 
     def test_decode_arg_registered(self):
         parser = self._make_parser()
         parsed = parser.parse_args(
-            ["advisor", "--model-params", "7e9", "--mode", "disaggregated",
-             "--prefill", "nvidia:hopper", "--decode", "amd:cdna3"]
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "disaggregated",
+                "--prefill",
+                "nvidia:hopper",
+                "--decode",
+                "amd:cdna3",
+            ]
         )
         assert parsed.decode == "amd:cdna3"
 
     def test_prefill_memory_arg_registered(self):
         parser = self._make_parser()
         parsed = parser.parse_args(
-            ["advisor", "--model-params", "7e9", "--mode", "disaggregated",
-             "--prefill", "nvidia:hopper", "--decode", "amd:cdna3",
-             "--prefill-memory", "80"]
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "disaggregated",
+                "--prefill",
+                "nvidia:hopper",
+                "--decode",
+                "amd:cdna3",
+                "--prefill-memory",
+                "80",
+            ]
         )
         assert parsed.prefill_memory == 80.0
 
     def test_decode_memory_arg_registered(self):
         parser = self._make_parser()
         parsed = parser.parse_args(
-            ["advisor", "--model-params", "7e9", "--mode", "disaggregated",
-             "--prefill", "nvidia:hopper", "--decode", "amd:cdna3",
-             "--decode-memory", "192"]
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "disaggregated",
+                "--prefill",
+                "nvidia:hopper",
+                "--decode",
+                "amd:cdna3",
+                "--decode-memory",
+                "192",
+            ]
         )
         assert parsed.decode_memory == 192.0
 
@@ -102,6 +144,7 @@ class TestArgRegistration:
 # ---------------------------------------------------------------------------
 # Guards
 # ---------------------------------------------------------------------------
+
 
 class TestDisaggregatedGuards:
     def test_disaggregated_missing_prefill_returns_error(self):
@@ -129,6 +172,7 @@ class TestDisaggregatedGuards:
 # ---------------------------------------------------------------------------
 # Smoke runs
 # ---------------------------------------------------------------------------
+
 
 class TestSmokeRuns:
     def test_nvidia_amd_exits_zero(self, capsys):
@@ -172,6 +216,7 @@ class TestSmokeRuns:
 # ---------------------------------------------------------------------------
 # CI JSON
 # ---------------------------------------------------------------------------
+
 
 class TestCiJson:
     def _run_ci(self, **kwargs):
@@ -221,14 +266,21 @@ class TestCiJson:
         )
         parsed = json.loads(output)
         prefill = parsed["prefill"]
-        for field in ("role", "backend", "kv_dtype", "kv_cache_budget_gb",
-                      "max_batch_size", "max_seq_len"):
+        for field in (
+            "role",
+            "backend",
+            "kv_dtype",
+            "kv_cache_budget_gb",
+            "max_batch_size",
+            "max_seq_len",
+        ):
             assert field in prefill, f"Missing field: {field}"
 
 
 # ---------------------------------------------------------------------------
 # Memory override
 # ---------------------------------------------------------------------------
+
 
 class TestMemoryOverride:
     def test_prefill_memory_override_accepted(self):
@@ -242,6 +294,7 @@ class TestMemoryOverride:
             ci=True,
         )
         import io
+
         buf = io.StringIO()
         orig = sys.stdout
         sys.stdout = buf
@@ -266,6 +319,7 @@ class TestMemoryOverride:
             ci=True,
         )
         import io
+
         buf = io.StringIO()
         orig = sys.stdout
         sys.stdout = buf
@@ -283,6 +337,7 @@ class TestMemoryOverride:
 # ---------------------------------------------------------------------------
 # Training mode backward compat
 # ---------------------------------------------------------------------------
+
 
 class TestTrainingModeUnchanged:
     def test_training_mode_still_works(self, capsys):

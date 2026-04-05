@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QuantizationResult:
     """Result from a quantization operation."""
+
     success: bool
     model: nn.Module | None
     format_applied: QuantizationFormat
@@ -54,9 +55,7 @@ class QuantizationResult:
         if self.memory_before_mb <= 0:
             return 0.0
         return (
-            (self.memory_before_mb - self.memory_after_mb)
-            / self.memory_before_mb
-            * 100
+            (self.memory_before_mb - self.memory_after_mb) / self.memory_before_mb * 100
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -118,9 +117,7 @@ class QuantizationEngine:
             QuantizationResult with the quantized model and metadata.
         """
         if not isinstance(model, nn.Module):
-            raise TypeError(
-                f"model must be an nn.Module, got {type(model).__name__}"
-            )
+            raise TypeError(f"model must be an nn.Module, got {type(model).__name__}")
 
         # Resolve format
         is_auto = False
@@ -194,9 +191,7 @@ class QuantizationEngine:
 
         # Apply quantization
         try:
-            quantized = self._apply_format(
-                work_model, actual_format, calibration_data
-            )
+            quantized = self._apply_format(work_model, actual_format, calibration_data)
             result.success = True
             result.model = quantized
             result.memory_after_mb = _model_size_mb(quantized)
@@ -374,9 +369,7 @@ class QuantizationEngine:
         )
         return self._apply_int8_dynamic(model)
 
-    def _apply_fp8(
-        self, model: nn.Module, fmt: QuantizationFormat
-    ) -> nn.Module:
+    def _apply_fp8(self, model: nn.Module, fmt: QuantizationFormat) -> nn.Module:
         """FP8 quantization via torchao. Falls back to INT8 if unavailable."""
         if TorchAOBackend.is_available_on_backend(self._torchao_backend_str()):
             try:
@@ -396,4 +389,3 @@ class QuantizationEngine:
             stacklevel=2,
         )
         return self._apply_fp8(model, QuantizationFormat.FP8_E4M3)
-

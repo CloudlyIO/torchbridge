@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 # Result dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AdapterResult:
     """Summary of adapter injection.
@@ -67,6 +68,7 @@ class AdapterResult:
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
+
 
 class AdapterEngine:
     """Injects parameter-efficient adapter layers into an nn.Module.
@@ -100,9 +102,7 @@ class AdapterEngine:
             TypeError: If model is not an nn.Module.
         """
         if not isinstance(model, nn.Module):
-            raise TypeError(
-                f"model must be an nn.Module, got {type(model).__name__}"
-            )
+            raise TypeError(f"model must be an nn.Module, got {type(model).__name__}")
 
         method = self._config.method
         layers_modified = 0
@@ -132,9 +132,13 @@ class AdapterEngine:
                 _base_quant_format = getattr(new_layer, "_quant_format", None)
 
             # Detect if a QLoRA fallback occurred (fell back to LoRALinear)
-            if method in (AdapterMethod.QLORA, AdapterMethod.QDORA) and isinstance(
-                new_layer, _layers_module.LoRALinear
-            ) and not isinstance(new_layer, (_layers_module.QLoRALinear, _layers_module.QDoRALinear)):
+            if (
+                method in (AdapterMethod.QLORA, AdapterMethod.QDORA)
+                and isinstance(new_layer, _layers_module.LoRALinear)
+                and not isinstance(
+                    new_layer, (_layers_module.QLoRALinear, _layers_module.QDoRALinear)
+                )
+            ):
                 _method_applied = AdapterMethod.LORA
 
         # Count params on the modified model
@@ -161,7 +165,9 @@ class AdapterEngine:
                 return True
         return False
 
-    def _create_adapter_layer(self, base_linear: nn.Linear, method: AdapterMethod) -> nn.Module:
+    def _create_adapter_layer(
+        self, base_linear: nn.Linear, method: AdapterMethod
+    ) -> nn.Module:
         """Dispatch to the correct adapter layer constructor."""
         if method == AdapterMethod.QLORA:
             return self._create_qlora_layer(base_linear)

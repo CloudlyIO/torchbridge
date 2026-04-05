@@ -17,13 +17,13 @@ class TestCLIMain:
     def test_cli_version(self):
         """Test --version flag."""
         # Test with argument list - now returns exit code instead of raising
-        result = main(['--version'])
+        result = main(["--version"])
         assert result == 0
 
     def test_cli_help(self):
         """Test help output."""
         # Test help output - now returns exit code instead of raising
-        result = main(['--help'])
+        result = main(["--help"])
         assert result == 0
 
     def test_cli_no_command(self):
@@ -33,53 +33,53 @@ class TestCLIMain:
 
     def test_cli_invalid_command(self):
         """Test invalid command."""
-        result = main(['invalid-command'])
+        result = main(["invalid-command"])
         assert result == 1
 
-    @patch('torchbridge.cli.BenchmarkCommand.execute')
+    @patch("torchbridge.cli.BenchmarkCommand.execute")
     def test_cli_benchmark_command(self, mock_execute):
         """Test benchmark command routing."""
         mock_execute.return_value = 0
-        result = main(['benchmark', '--model', 'test.pt'])
+        result = main(["benchmark", "--model", "test.pt"])
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('torchbridge.cli.DoctorCommand.execute')
+    @patch("torchbridge.cli.DoctorCommand.execute")
     def test_cli_doctor_command(self, mock_execute):
         """Test doctor command routing."""
         mock_execute.return_value = 0
-        result = main(['doctor'])
+        result = main(["doctor"])
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('torchbridge.cli.ValidateCommand.execute')
+    @patch("torchbridge.cli.ValidateCommand.execute")
     def test_cli_validate_command(self, mock_execute):
         """Test validate command routing."""
         mock_execute.return_value = 0
-        result = main(['validate', '--level', 'quick'])
+        result = main(["validate", "--level", "quick"])
         assert result == 0
         mock_execute.assert_called_once()
 
-    @patch('torchbridge.cli.MigrateCommand.execute')
+    @patch("torchbridge.cli.MigrateCommand.execute")
     def test_cli_migrate_command(self, mock_execute):
         """Test migrate command routing."""
         mock_execute.return_value = 0
-        result = main(['migrate', '.'])
+        result = main(["migrate", "."])
         assert result == 0
         mock_execute.assert_called_once()
 
     def test_cli_keyboard_interrupt(self):
         """Test keyboard interrupt handling."""
-        with patch('torchbridge.cli.BenchmarkCommand.execute') as mock_execute:
+        with patch("torchbridge.cli.BenchmarkCommand.execute") as mock_execute:
             mock_execute.side_effect = KeyboardInterrupt()
-            result = main(['benchmark', '--model', 'test.pt'])
+            result = main(["benchmark", "--model", "test.pt"])
             assert result == 130
 
     def test_cli_exception_handling(self):
         """Test general exception handling."""
-        with patch('torchbridge.cli.BenchmarkCommand.execute') as mock_execute:
+        with patch("torchbridge.cli.BenchmarkCommand.execute") as mock_execute:
             mock_execute.side_effect = ValueError("Test error")
-            result = main(['benchmark', '--model', 'test.pt'])
+            result = main(["benchmark", "--model", "test.pt"])
             assert result == 1
 
 
@@ -90,11 +90,13 @@ class TestCLIIntegration:
         """Test that CLI is properly installed and executable."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'torchbridge.cli', '--version'],
-                capture_output=True, text=True, timeout=30
+                [sys.executable, "-m", "torchbridge.cli", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             assert result.returncode == 0
-            assert 'torchbridge' in result.stdout or 'torchbridge' in result.stderr
+            assert "torchbridge" in result.stdout or "torchbridge" in result.stderr
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pytest.skip("CLI not available in test environment")
 
@@ -102,12 +104,14 @@ class TestCLIIntegration:
         """Test doctor command integration."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'torchbridge.cli.doctor'],
-                capture_output=True, text=True, timeout=60
+                [sys.executable, "-m", "torchbridge.cli.doctor"],
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
             # Should complete without error (warnings are okay)
             assert result.returncode in [0, 1]  # 0 = success, 1 = warnings
-            assert 'Diagnostics' in result.stdout
+            assert "Diagnostics" in result.stdout
         except subprocess.TimeoutExpired:
             pytest.skip("Doctor command timed out")
 
@@ -116,9 +120,17 @@ class TestCLIIntegration:
         """Test quick benchmark integration."""
         try:
             result = subprocess.run(
-                [sys.executable, '-m', 'torchbridge.cli.benchmark',
-                 '--predefined', 'optimization', '--quick'],
-                capture_output=True, text=True, timeout=120
+                [
+                    sys.executable,
+                    "-m",
+                    "torchbridge.cli.benchmark",
+                    "--predefined",
+                    "optimization",
+                    "--quick",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
             # Should complete (may have warnings but shouldn't fail completely)
             assert result.returncode in [0, 1]
@@ -131,40 +143,46 @@ class TestCLIScriptEntryPoints:
 
     def test_benchmark_entry_point(self):
         """Test tb-benchmark entry point."""
-        with patch('torchbridge.cli.benchmark.BenchmarkCommand.execute') as mock_execute:
+        with patch(
+            "torchbridge.cli.benchmark.BenchmarkCommand.execute"
+        ) as mock_execute:
             mock_execute.return_value = 0
 
             from torchbridge.cli.benchmark import main as benchmark_main
-            with patch('sys.argv', ['tb-benchmark', '--model', 'test.pt']):
+
+            with patch("sys.argv", ["tb-benchmark", "--model", "test.pt"]):
                 result = benchmark_main()
                 assert result == 0
 
     def test_doctor_entry_point(self):
         """Test tb-doctor entry point."""
-        with patch('torchbridge.cli.doctor.DoctorCommand.execute') as mock_execute:
+        with patch("torchbridge.cli.doctor.DoctorCommand.execute") as mock_execute:
             mock_execute.return_value = 0
 
             from torchbridge.cli.doctor import main as doctor_main
-            with patch('sys.argv', ['tb-doctor']):
+
+            with patch("sys.argv", ["tb-doctor"]):
                 result = doctor_main()
                 assert result == 0
 
     def test_validate_entry_point(self):
         """Test tb-validate entry point."""
-        with patch('torchbridge.cli.validate.ValidateCommand.execute') as mock_execute:
+        with patch("torchbridge.cli.validate.ValidateCommand.execute") as mock_execute:
             mock_execute.return_value = 0
 
             from torchbridge.cli.validate import main as validate_main
-            with patch('sys.argv', ['tb-validate']):
+
+            with patch("sys.argv", ["tb-validate"]):
                 result = validate_main()
                 assert result == 0
 
     def test_migrate_entry_point(self):
         """Test tb-migrate entry point."""
-        with patch('torchbridge.cli.migrate.MigrateCommand.execute') as mock_execute:
+        with patch("torchbridge.cli.migrate.MigrateCommand.execute") as mock_execute:
             mock_execute.return_value = 0
 
             from torchbridge.cli.migrate import main as migrate_main
-            with patch('sys.argv', ['tb-migrate', '.']):
+
+            with patch("sys.argv", ["tb-migrate", "."]):
                 result = migrate_main()
                 assert result == 0

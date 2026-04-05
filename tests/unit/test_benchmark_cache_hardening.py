@@ -121,9 +121,13 @@ class TestBenchmarkCacheHardening:
         try:
             recovered = json.loads(open(cache._cache_path).read())
         except json.JSONDecodeError:
-            pytest.fail("Cache file was corrupted by a failed _save() — atomic write required")
+            pytest.fail(
+                "Cache file was corrupted by a failed _save() — atomic write required"
+            )
 
-        assert "entries" in recovered, "Cache file lost its 'entries' key after failed save"
+        assert "entries" in recovered, (
+            "Cache file lost its 'entries' key after failed save"
+        )
 
     def test_concurrent_run_benchmark_no_crash(self, tmp_path):
         """5 threads calling run_benchmark simultaneously must not raise."""

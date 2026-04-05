@@ -21,8 +21,14 @@ class TestQuantizationFormat:
     def test_all_formats_defined(self):
         """All expected format members should exist."""
         expected = [
-            "NONE", "INT8_DYNAMIC", "INT8_DYNAMIC_ACTIVATIONS", "INT4_WEIGHT_ONLY",
-            "FP8_E4M3", "FP8_E5M2", "NVFP4", "BF16",
+            "NONE",
+            "INT8_DYNAMIC",
+            "INT8_DYNAMIC_ACTIVATIONS",
+            "INT4_WEIGHT_ONLY",
+            "FP8_E4M3",
+            "FP8_E5M2",
+            "NVFP4",
+            "BF16",
         ]
         for name in expected:
             assert hasattr(QuantizationFormat, name), f"Missing format: {name}"
@@ -40,18 +46,27 @@ class TestQuantizationFormat:
     def test_from_string_aliases(self):
         """Common aliases should resolve correctly."""
         assert QuantizationFormat.from_string("int8") == QuantizationFormat.INT8_DYNAMIC
-        assert QuantizationFormat.from_string("int4") == QuantizationFormat.INT4_WEIGHT_ONLY
+        assert (
+            QuantizationFormat.from_string("int4")
+            == QuantizationFormat.INT4_WEIGHT_ONLY
+        )
         assert QuantizationFormat.from_string("fp8") == QuantizationFormat.FP8_E4M3
         assert QuantizationFormat.from_string("fp4") == QuantizationFormat.NVFP4
 
     def test_from_string_case_insensitive(self):
         """Parsing should be case-insensitive."""
-        assert QuantizationFormat.from_string("INT8_DYNAMIC") == QuantizationFormat.INT8_DYNAMIC
+        assert (
+            QuantizationFormat.from_string("INT8_DYNAMIC")
+            == QuantizationFormat.INT8_DYNAMIC
+        )
         assert QuantizationFormat.from_string("Fp8_E4M3") == QuantizationFormat.FP8_E4M3
 
     def test_from_string_with_hyphens(self):
         """Hyphens should be normalized to underscores."""
-        assert QuantizationFormat.from_string("int8-dynamic") == QuantizationFormat.INT8_DYNAMIC
+        assert (
+            QuantizationFormat.from_string("int8-dynamic")
+            == QuantizationFormat.INT8_DYNAMIC
+        )
 
     def test_from_string_unknown_raises(self):
         """Unknown format strings should raise ValueError."""
@@ -71,8 +86,11 @@ class TestFormatSpec:
     def test_format_spec_is_frozen(self):
         """FormatSpec should be immutable."""
         spec = FormatSpec(
-            bits=8, display_name="Test", perplexity_tolerance_pct=1.0,
-            memory_reduction_pct=50.0, requires_calibration=False,
+            bits=8,
+            display_name="Test",
+            perplexity_tolerance_pct=1.0,
+            memory_reduction_pct=50.0,
+            requires_calibration=False,
             requires_torchao=False,
         )
         with pytest.raises(AttributeError):

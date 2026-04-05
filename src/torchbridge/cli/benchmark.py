@@ -19,6 +19,7 @@ from torchbridge.backends.compile_compatibility import CompileCompatibility
 @dataclass
 class BenchmarkResult:
     """Results from a benchmark run."""
+
     name: str
     mean_time_ms: float
     std_time_ms: float
@@ -34,9 +35,9 @@ class BenchmarkCommand:
     def register(subparsers) -> None:
         """Register the benchmark command with argument parser."""
         parser = subparsers.add_parser(
-            'benchmark',
-            help='Benchmark PyTorch models and optimizations',
-            description='Run comprehensive performance benchmarks',
+            "benchmark",
+            help="Benchmark PyTorch models and optimizations",
+            description="Run comprehensive performance benchmarks",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Benchmark Types:
@@ -53,129 +54,120 @@ Examples:
   tb-benchmark --type claims --ci
   tb-benchmark --type claims --claim tensor_core_alignment
   tb-benchmark --predefined transformers --output results.json
-            """
+            """,
         )
 
         parser.add_argument(
-            '--model',
+            "--model",
             type=str,
-            help='Model to benchmark (file path or predefined name)'
+            help="Model to benchmark (file path or predefined name)",
         )
 
         parser.add_argument(
-            '--type',
-            choices=['model', 'compare', 'regression', 'stress', 'claims'],
-            default='model',
-            help='Benchmark type (default: model)'
+            "--type",
+            choices=["model", "compare", "regression", "stress", "claims"],
+            default="model",
+            help="Benchmark type (default: model)",
         )
 
         parser.add_argument(
-            '--claim',
+            "--claim",
             type=str,
-            help='Run a single claim benchmark by name (use with --type claims)'
+            help="Run a single claim benchmark by name (use with --type claims)",
         )
 
         parser.add_argument(
-            '--list-claims',
-            action='store_true',
-            dest='list_claims',
+            "--list-claims",
+            action="store_true",
+            dest="list_claims",
             help=(
-                'List all registered claim benchmarks with hardware requirements '
-                'and whether they would run on the current hardware, then exit. '
-                'Does not run any benchmarks. Works with --type claims or alone.'
+                "List all registered claim benchmarks with hardware requirements "
+                "and whether they would run on the current hardware, then exit. "
+                "Does not run any benchmarks. Works with --type claims or alone."
             ),
         )
 
         parser.add_argument(
-            '--claims-threshold',
+            "--claims-threshold",
             type=float,
             default=3.0,
-            help='Speedup threshold for claim benchmarks (default: 3.0%%)'
+            help="Speedup threshold for claim benchmarks (default: 3.0%%)",
         )
 
         parser.add_argument(
-            '--ci',
-            action='store_true',
-            help='Machine-readable JSON output (for CI pipelines)'
+            "--ci",
+            action="store_true",
+            help="Machine-readable JSON output (for CI pipelines)",
         )
 
         parser.add_argument(
-            '--levels',
+            "--levels",
             type=str,
-            default='basic,compile',
-            help='Optimization levels to compare (comma-separated)'
+            default="basic,compile",
+            help="Optimization levels to compare (comma-separated)",
         )
 
         parser.add_argument(
-            '--batch-sizes',
+            "--batch-sizes",
             type=str,
-            default='1,8,16',
-            help='Batch sizes for stress testing (comma-separated)'
+            default="1,8,16",
+            help="Batch sizes for stress testing (comma-separated)",
         )
 
         parser.add_argument(
-            '--input-shape',
-            type=str,
-            help='Input tensor shape (e.g., "1,3,224,224")'
+            "--input-shape", type=str, help='Input tensor shape (e.g., "1,3,224,224")'
         )
 
         parser.add_argument(
-            '--predefined',
-            choices=['transformers', 'vision', 'optimization'],
-            help='Run predefined benchmark suite'
+            "--predefined",
+            choices=["transformers", "vision", "optimization"],
+            help="Run predefined benchmark suite",
         )
 
         parser.add_argument(
-            '--quick',
-            action='store_true',
-            help='Quick benchmark (fewer runs for faster results)'
+            "--quick",
+            action="store_true",
+            help="Quick benchmark (fewer runs for faster results)",
         )
 
         parser.add_argument(
-            '--warmup',
-            type=int,
-            default=10,
-            help='Number of warmup runs (default: 10)'
+            "--warmup", type=int, default=10, help="Number of warmup runs (default: 10)"
         )
 
         parser.add_argument(
-            '--runs',
+            "--runs",
             type=int,
             default=100,
-            help='Number of benchmark runs (default: 100, 20 if --quick)'
+            help="Number of benchmark runs (default: 100, 20 if --quick)",
         )
 
         parser.add_argument(
-            '--output', '-o',
+            "--output", "-o", type=str, help="Output file for results (JSON format)"
+        )
+
+        parser.add_argument(
+            "--verbose", "-v", action="store_true", help="Enable verbose output"
+        )
+
+        parser.add_argument(
+            "--format",
+            choices=["json", "csv"],
+            default="json",
+            help="Output format (default: json)",
+        )
+
+        parser.add_argument(
+            "--compare-baseline",
             type=str,
-            help='Output file for results (JSON format)'
+            metavar="BASELINE_FILE",
+            help="Compare results against a baseline JSON file",
         )
 
         parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='Enable verbose output'
-        )
-
-        parser.add_argument(
-            '--format',
-            choices=['json', 'csv'],
-            default='json',
-            help='Output format (default: json)'
-        )
-
-        parser.add_argument(
-            '--compare-baseline',
-            type=str,
-            metavar='BASELINE_FILE',
-            help='Compare results against a baseline JSON file'
-        )
-
-        parser.add_argument(
-            '--regression-threshold',
+            "--regression-threshold",
             type=float,
             default=0.15,
-            help='Regression threshold as fraction (default: 0.15 = 15%%)'
+            help="Regression threshold as fraction (default: 0.15 = 15%%)",
         )
 
     @staticmethod
@@ -186,7 +178,7 @@ Examples:
 
         try:
             # --list-claims: print claim catalogue and exit (no benchmarks run)
-            if getattr(args, 'list_claims', None) is True:
+            if getattr(args, "list_claims", None) is True:
                 return BenchmarkCommand._list_claims()
 
             # Adjust runs for quick mode
@@ -199,15 +191,15 @@ Examples:
             # Execute benchmark based on type
             if args.predefined:
                 results = BenchmarkCommand._run_predefined_benchmarks(args, device)
-            elif args.type == 'model':
+            elif args.type == "model":
                 results = BenchmarkCommand._benchmark_single_model(args, device)
-            elif args.type == 'compare':
+            elif args.type == "compare":
                 results = BenchmarkCommand._compare_optimization_levels(args, device)
-            elif args.type == 'regression':
+            elif args.type == "regression":
                 results = BenchmarkCommand._regression_benchmark(args, device)
-            elif args.type == 'stress':
+            elif args.type == "stress":
                 results = BenchmarkCommand._stress_test(args, device)
-            elif args.type == 'claims':
+            elif args.type == "claims":
                 return BenchmarkCommand._run_claim_benchmarks(args, device)
             else:
                 raise ValueError(f"Unknown benchmark type: {args.type}")
@@ -217,16 +209,18 @@ Examples:
 
             # Save results if requested
             if args.output:
-                fmt = getattr(args, 'format', 'json')
-                if fmt == 'csv':
-                    BenchmarkCommand._save_results_csv(results, args.output, args.verbose)
+                fmt = getattr(args, "format", "json")
+                if fmt == "csv":
+                    BenchmarkCommand._save_results_csv(
+                        results, args.output, args.verbose
+                    )
                 else:
                     BenchmarkCommand._save_results(results, args.output, args.verbose)
 
             # Compare with baseline if requested
-            baseline_path = getattr(args, 'compare_baseline', None)
+            baseline_path = getattr(args, "compare_baseline", None)
             if baseline_path:
-                threshold = getattr(args, 'regression_threshold', 0.15)
+                threshold = getattr(args, "regression_threshold", 0.15)
                 has_regression = BenchmarkCommand._compare_with_baseline(
                     results, baseline_path, threshold, args.verbose
                 )
@@ -241,6 +235,7 @@ Examples:
             print(f" Benchmarking failed: {e}")
             if args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -248,16 +243,18 @@ Examples:
     def _detect_hardware(verbose: bool) -> torch.device:
         """Detect hardware capabilities."""
         if torch.cuda.is_available():
-            device = torch.device('cuda')
+            device = torch.device("cuda")
             if verbose:
                 print(f"  GPU: {torch.cuda.get_device_name()}")
-                print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-            device = torch.device('mps')
+                print(
+                    f"   Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB"
+                )
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            device = torch.device("mps")
             if verbose:
                 print("  Apple Silicon GPU")
         else:
-            device = torch.device('cpu')
+            device = torch.device("cpu")
             if verbose:
                 print("  CPU")
 
@@ -271,50 +268,67 @@ Examples:
 
         results = []
 
-        if args.predefined == 'optimization':
+        if args.predefined == "optimization":
             # Optimization-focused benchmarks
             test_cases = [
                 ("Linear_512", torch.nn.Linear(512, 512), (32, 512)),
                 ("Linear_1024", torch.nn.Linear(1024, 1024), (32, 1024)),
-                ("Sequential_MLP", torch.nn.Sequential(
-                    torch.nn.Linear(768, 3072),
-                    torch.nn.GELU(),
-                    torch.nn.Linear(3072, 768)
-                ), (32, 768)),
+                (
+                    "Sequential_MLP",
+                    torch.nn.Sequential(
+                        torch.nn.Linear(768, 3072),
+                        torch.nn.GELU(),
+                        torch.nn.Linear(3072, 768),
+                    ),
+                    (32, 768),
+                ),
             ]
 
             for name, model, input_shape in test_cases:
                 model = model.to(device).eval()
-                result = BenchmarkCommand._benchmark_model(model, name, input_shape, device, args)
+                result = BenchmarkCommand._benchmark_model(
+                    model, name, input_shape, device, args
+                )
                 results.append(result)
 
-        elif args.predefined == 'transformers':
+        elif args.predefined == "transformers":
             # Transformer-specific benchmarks
             shapes = [(1, 512, 768), (8, 512, 768), (16, 512, 768)]
             for batch_size, seq_len, hidden_size in shapes:
                 model = torch.nn.Sequential(
                     torch.nn.Linear(hidden_size, hidden_size * 4),
                     torch.nn.GELU(),
-                    torch.nn.Linear(hidden_size * 4, hidden_size)
+                    torch.nn.Linear(hidden_size * 4, hidden_size),
                 ).to(device)
 
                 result = BenchmarkCommand._benchmark_model(
-                    model, f"Transformer_B{batch_size}_S{seq_len}",
-                    (batch_size, seq_len, hidden_size), device, args
+                    model,
+                    f"Transformer_B{batch_size}_S{seq_len}",
+                    (batch_size, seq_len, hidden_size),
+                    device,
+                    args,
                 )
                 results.append(result)
 
-        elif args.predefined == 'vision':
+        elif args.predefined == "vision":
             # Vision model benchmarks
             try:
                 import torchvision.models as models
-                shapes: list[tuple[int, ...]] = [(1, 3, 224, 224), (8, 3, 224, 224), (16, 3, 224, 224)]
+
+                shapes: list[tuple[int, ...]] = [
+                    (1, 3, 224, 224),
+                    (8, 3, 224, 224),
+                    (16, 3, 224, 224),
+                ]
 
                 for batch_size, channels, height, width in shapes:
                     model = models.resnet18(pretrained=False).to(device).eval()
                     result = BenchmarkCommand._benchmark_model(
-                        model, f"ResNet18_B{batch_size}",
-                        (batch_size, channels, height, width), device, args
+                        model,
+                        f"ResNet18_B{batch_size}",
+                        (batch_size, channels, height, width),
+                        device,
+                        args,
                     )
                     results.append(result)
             except ImportError:
@@ -336,11 +350,15 @@ Examples:
         input_shape = BenchmarkCommand._parse_input_shape(args.input_shape, args.model)
 
         # Benchmark model
-        result = BenchmarkCommand._benchmark_model(model, args.model, input_shape, device, args)
+        result = BenchmarkCommand._benchmark_model(
+            model, args.model, input_shape, device, args
+        )
         return [result]
 
     @staticmethod
-    def _compare_optimization_levels(args, device: torch.device) -> list[BenchmarkResult]:
+    def _compare_optimization_levels(
+        args, device: torch.device
+    ) -> list[BenchmarkResult]:
         """Compare different optimization levels."""
         if not args.model:
             raise ValueError("Model path required for optimization comparison")
@@ -348,7 +366,7 @@ Examples:
         if args.verbose:
             print(f" Comparing optimization levels: {args.levels}")
 
-        levels = args.levels.split(',')
+        levels = args.levels.split(",")
         results = []
 
         # Load base model
@@ -357,7 +375,9 @@ Examples:
 
         for level in levels:
             level = level.strip()
-            optimized_model = BenchmarkCommand._apply_optimization(base_model, level, input_shape, device)
+            optimized_model = BenchmarkCommand._apply_optimization(
+                base_model, level, input_shape, device
+            )
 
             result = BenchmarkCommand._benchmark_model(
                 optimized_model, f"{args.model}_{level}", input_shape, device, args
@@ -393,7 +413,9 @@ Examples:
         results = []
         for name, model, input_shape in standard_benchmarks:
             model = model.to(device).eval()
-            result = BenchmarkCommand._benchmark_model(model, name, input_shape, device, args)
+            result = BenchmarkCommand._benchmark_model(
+                model, name, input_shape, device, args
+            )
             results.append(result)
 
         return results
@@ -408,7 +430,7 @@ Examples:
         if args.verbose:
             print(f" Stress testing with batch sizes: {args.batch_sizes}")
 
-        batch_sizes = [int(b.strip()) for b in args.batch_sizes.split(',')]
+        batch_sizes = [int(b.strip()) for b in args.batch_sizes.split(",")]
         results = []
 
         base_model = BenchmarkCommand._load_model(args.model, device)
@@ -419,7 +441,11 @@ Examples:
             stress_shape = (batch_size,) + base_shape[1:]
 
             result = BenchmarkCommand._benchmark_model(
-                base_model, f"{args.model}_batch_{batch_size}", stress_shape, device, args
+                base_model,
+                f"{args.model}_batch_{batch_size}",
+                stress_shape,
+                device,
+                args,
             )
             results.append(result)
 
@@ -434,14 +460,14 @@ Examples:
         )
 
         device_str = str(device)
-        ci_mode = getattr(args, 'ci', False)
+        ci_mode = getattr(args, "ci", False)
 
         if not ci_mode:
             print("\n Claim Benchmark Suite")
             print("-" * 60)
 
         # Filter to single claim if requested
-        claim_name = getattr(args, 'claim', None)
+        claim_name = getattr(args, "claim", None)
         if claim_name:
             all_benchmarks = get_all_claim_benchmarks()
             matched = [b for b in all_benchmarks if b.name == claim_name]
@@ -451,6 +477,7 @@ Examples:
                 print(f"  Available claims: {', '.join(names)}")
                 return 1
             from torchbridge.benchmarks.claim_benchmarks import BenchmarkSuite
+
             suite = BenchmarkSuite()
             for b in matched:
                 suite._benchmarks.append(b)
@@ -461,25 +488,32 @@ Examples:
 
         if ci_mode:
             import json
+
             print(json.dumps(report.to_dict(), indent=2))
         else:
             # Human-readable output
             print(f"  Device: {report.device}")
             print(f"  Timestamp: {report.timestamp}")
             print()
-            print(f"{'Claim':<30} {'Baseline(ms)':<14} {'Optimized(ms)':<15} "
-                  f"{'Speedup':<10} {'Status':<8}")
+            print(
+                f"{'Claim':<30} {'Baseline(ms)':<14} {'Optimized(ms)':<15} "
+                f"{'Speedup':<10} {'Status':<8}"
+            )
             print("-" * 80)
 
             for r in report.results:
                 if r.runs == 0:
-                    print(f"{r.claim_name:<30} {'--':<14} {'--':<15} "
-                          f"{'--':<10} {'SKIP':<8}")
+                    print(
+                        f"{r.claim_name:<30} {'--':<14} {'--':<15} "
+                        f"{'--':<10} {'SKIP':<8}"
+                    )
                 else:
                     status = "PASS" if r.passed else "FAIL"
-                    print(f"{r.claim_name:<30} {r.baseline_ms:<14.3f} "
-                          f"{r.optimized_ms:<15.3f} {r.speedup_pct:<+9.1f}% "
-                          f"{status:<8}")
+                    print(
+                        f"{r.claim_name:<30} {r.baseline_ms:<14.3f} "
+                        f"{r.optimized_ms:<15.3f} {r.speedup_pct:<+9.1f}% "
+                        f"{status:<8}"
+                    )
 
             print("-" * 80)
             print(f"  Summary: {report.summary()}")
@@ -491,9 +525,10 @@ Examples:
                     print(f"    - {name}")
 
         # Save if output requested
-        output_path = getattr(args, 'output', None)
+        output_path = getattr(args, "output", None)
         if output_path:
             import json
+
             with open(output_path, "w") as _f:
                 _f.write(json.dumps(report.to_dict(), indent=2))
             if not ci_mode:
@@ -550,8 +585,7 @@ Examples:
         print("-" * 100)
         gpu_only = [b for b in all_benchmarks if b.requires_backend == "cuda"]
         cpu_runnable = [
-            b for b in all_benchmarks
-            if not b.requires_backend and not b.skip_reason
+            b for b in all_benchmarks if not b.requires_backend and not b.skip_reason
         ]
         print(
             f"\n  {len(all_benchmarks)} claims total: "
@@ -569,20 +603,27 @@ Examples:
         elif model_name == "resnet50":
             try:
                 import torchvision.models as models
+
                 return models.resnet50(pretrained=False).to(device).eval()
             except ImportError:
                 # Fallback simple model
-                return torch.nn.Sequential(
-                    torch.nn.Conv2d(3, 64, 7, 2, 3),
-                    torch.nn.ReLU(),
-                    torch.nn.AdaptiveAvgPool2d((1, 1)),
-                    torch.nn.Flatten(),
-                    torch.nn.Linear(64, 1000)
-                ).to(device).eval()
+                return (
+                    torch.nn.Sequential(
+                        torch.nn.Conv2d(3, 64, 7, 2, 3),
+                        torch.nn.ReLU(),
+                        torch.nn.AdaptiveAvgPool2d((1, 1)),
+                        torch.nn.Flatten(),
+                        torch.nn.Linear(64, 1000),
+                    )
+                    .to(device)
+                    .eval()
+                )
         else:
             # Try to load from file
             if Path(model_name).exists():
-                return torch.load(model_name, map_location=device, weights_only=True).eval()
+                return torch.load(
+                    model_name, map_location=device, weights_only=True
+                ).eval()
             else:
                 raise ValueError(
                     f"Model '{model_name}' not found as a file or predefined name. "
@@ -593,55 +634,65 @@ Examples:
     def _parse_input_shape(input_shape_str: str | None, model_name: str) -> tuple:
         """Parse input shape string or infer from model name."""
         if input_shape_str:
-            shape = tuple(map(int, input_shape_str.split(',')))
+            shape = tuple(map(int, input_shape_str.split(",")))
             if any(d <= 0 for d in shape):
-                raise ValueError(f"All input shape dimensions must be positive, got {shape}")
+                raise ValueError(
+                    f"All input shape dimensions must be positive, got {shape}"
+                )
             return shape
 
         # Infer shape from model name
-        if 'resnet' in model_name.lower() or 'vision' in model_name.lower():
+        if "resnet" in model_name.lower() or "vision" in model_name.lower():
             return (1, 3, 224, 224)
-        elif 'transformer' in model_name.lower() or 'llm' in model_name.lower():
+        elif "transformer" in model_name.lower() or "llm" in model_name.lower():
             return (1, 512, 768)
-        elif model_name == 'linear_stress_test':
+        elif model_name == "linear_stress_test":
             return (16, 1024)  # Match the input size of Linear(1024, 1024)
         else:
             return (16, 512)  # Default for linear models
 
     @staticmethod
-    def _apply_optimization(model: torch.nn.Module, level: str, input_shape: tuple, device: torch.device) -> torch.nn.Module:
+    def _apply_optimization(
+        model: torch.nn.Module, level: str, input_shape: tuple, device: torch.device
+    ) -> torch.nn.Module:
         """Apply optimization level to model."""
         model_copy = model
 
-        if level == 'basic':
+        if level == "basic":
             return model_copy.eval()
-        elif level == 'jit':
+        elif level == "jit":
             sample_input = torch.randn(input_shape, device=device)
             return torch.jit.trace(model_copy, sample_input)
-        elif level == 'compile':
+        elif level == "compile":
             from torchbridge.core.config import HardwareBackend
+
             _DEVICE_TO_BACKEND = {
-                'cuda': HardwareBackend.CUDA,
-                'xla': HardwareBackend.TPU,
-                'cpu': HardwareBackend.CPU,
+                "cuda": HardwareBackend.CUDA,
+                "xla": HardwareBackend.TPU,
+                "cpu": HardwareBackend.CPU,
             }
             hw_backend = _DEVICE_TO_BACKEND.get(device.type, HardwareBackend.CPU)
             compile_mode = CompileCompatibility.get_compile_mode(hw_backend, None)
             return torch.compile(model_copy, mode=compile_mode)  # type: ignore[return-value]
-        elif level == 'triton':
-            return torch.compile(model_copy, mode='max-autotune')  # type: ignore[return-value]
+        elif level == "triton":
+            return torch.compile(model_copy, mode="max-autotune")  # type: ignore[return-value]
         else:
             return model_copy
 
     @staticmethod
-    def _benchmark_model(model: torch.nn.Module, name: str, input_shape: tuple,
-                        device: torch.device, args) -> BenchmarkResult:
+    def _benchmark_model(
+        model: torch.nn.Module,
+        name: str,
+        input_shape: tuple,
+        device: torch.device,
+        args,
+    ) -> BenchmarkResult:
         """Benchmark a single model."""
         model.eval()
         sample_input = torch.randn(input_shape, device=device)
 
         # Memory before
-        if device.type == 'cuda':
+        if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats()
             memory_before = torch.cuda.memory_allocated()
 
@@ -652,14 +703,14 @@ Examples:
             for _ in range(args.warmup):
                 _ = model(sample_input)
 
-            if device.type == 'cuda':
+            if device.type == "cuda":
                 torch.cuda.synchronize()
 
             # Benchmark
             for _ in range(args.runs):
                 start_time = time.time()
                 _ = model(sample_input)
-                if device.type == 'cuda':
+                if device.type == "cuda":
                     torch.cuda.synchronize()
                 end_time = time.time()
                 times.append((end_time - start_time) * 1000)  # Convert to ms
@@ -670,7 +721,7 @@ Examples:
         throughput = 1000 / mean_time if mean_time > 0 else 0
 
         # Memory usage
-        if device.type == 'cuda':
+        if device.type == "cuda":
             peak_memory = torch.cuda.max_memory_allocated() - memory_before
             memory_usage_mb = peak_memory / 1e6
         else:
@@ -681,7 +732,7 @@ Examples:
             mean_time_ms=mean_time,
             std_time_ms=std_time,
             throughput_ops_per_sec=throughput,
-            memory_usage_mb=memory_usage_mb
+            memory_usage_mb=memory_usage_mb,
         )
 
     @staticmethod
@@ -691,50 +742,62 @@ Examples:
         print("-" * 80)
 
         if verbose:
-            print(f"{'Name':<30} {'Time (ms)':<12} {'Std (ms)':<10} {'Throughput':<12} {'Memory (MB)':<12}")
+            print(
+                f"{'Name':<30} {'Time (ms)':<12} {'Std (ms)':<10} {'Throughput':<12} {'Memory (MB)':<12}"
+            )
             print("-" * 80)
             for result in results:
-                print(f"{result.name:<30} {result.mean_time_ms:<12.2f} {result.std_time_ms:<10.2f} "
-                      f"{result.throughput_ops_per_sec:<12.1f} {result.memory_usage_mb:<12.1f}")
+                print(
+                    f"{result.name:<30} {result.mean_time_ms:<12.2f} {result.std_time_ms:<10.2f} "
+                    f"{result.throughput_ops_per_sec:<12.1f} {result.memory_usage_mb:<12.1f}"
+                )
         else:
             print(f"{'Name':<30} {'Time (ms)':<12} {'Throughput (ops/s)':<20}")
             print("-" * 65)
             for result in results:
-                print(f"{result.name:<30} {result.mean_time_ms:<12.2f} {result.throughput_ops_per_sec:<20.1f}")
+                print(
+                    f"{result.name:<30} {result.mean_time_ms:<12.2f} {result.throughput_ops_per_sec:<20.1f}"
+                )
 
     @staticmethod
-    def _save_results(results: list[BenchmarkResult], output_path: str, verbose: bool) -> None:
+    def _save_results(
+        results: list[BenchmarkResult], output_path: str, verbose: bool
+    ) -> None:
         """Save results to JSON file."""
         if verbose:
             print(f" Saving results to: {output_path}")
 
         # Convert results to serializable format
         results_dict = {
-            'benchmark_results': [
+            "benchmark_results": [
                 {
-                    'name': r.name,
-                    'mean_time_ms': r.mean_time_ms,
-                    'std_time_ms': r.std_time_ms,
-                    'throughput_ops_per_sec': r.throughput_ops_per_sec,
-                    'memory_usage_mb': r.memory_usage_mb,
-                    'gpu_utilization_percent': r.gpu_utilization_percent
+                    "name": r.name,
+                    "mean_time_ms": r.mean_time_ms,
+                    "std_time_ms": r.std_time_ms,
+                    "throughput_ops_per_sec": r.throughput_ops_per_sec,
+                    "memory_usage_mb": r.memory_usage_mb,
+                    "gpu_utilization_percent": r.gpu_utilization_percent,
                 }
                 for r in results
             ],
-            'timestamp': time.time(),
-            'device': str(torch.cuda.get_device_name() if torch.cuda.is_available() else 'CPU')
+            "timestamp": time.time(),
+            "device": str(
+                torch.cuda.get_device_name() if torch.cuda.is_available() else "CPU"
+            ),
         }
 
         # Save to file
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(results_dict, f, indent=2)
 
         if verbose:
             print(f"   Results saved ({len(results)} benchmarks)")
 
     @staticmethod
-    def _save_results_csv(results: list[BenchmarkResult], output_path: str, verbose: bool) -> None:
+    def _save_results_csv(
+        results: list[BenchmarkResult], output_path: str, verbose: bool
+    ) -> None:
         """Save results to CSV file."""
         import csv
 
@@ -742,19 +805,29 @@ Examples:
             print(f" Saving CSV results to: {output_path}")
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w', newline='') as f:
+        with open(output_path, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow([
-                'name', 'mean_time_ms', 'std_time_ms',
-                'throughput_ops_per_sec', 'memory_usage_mb',
-                'gpu_utilization_percent',
-            ])
+            writer.writerow(
+                [
+                    "name",
+                    "mean_time_ms",
+                    "std_time_ms",
+                    "throughput_ops_per_sec",
+                    "memory_usage_mb",
+                    "gpu_utilization_percent",
+                ]
+            )
             for r in results:
-                writer.writerow([
-                    r.name, r.mean_time_ms, r.std_time_ms,
-                    r.throughput_ops_per_sec, r.memory_usage_mb,
-                    r.gpu_utilization_percent,
-                ])
+                writer.writerow(
+                    [
+                        r.name,
+                        r.mean_time_ms,
+                        r.std_time_ms,
+                        r.throughput_ops_per_sec,
+                        r.memory_usage_mb,
+                        r.gpu_utilization_percent,
+                    ]
+                )
 
         if verbose:
             print(f"   CSV results saved ({len(results)} benchmarks)")
@@ -777,20 +850,24 @@ Examples:
             baseline_data = json.load(f)
 
         baseline_map = {
-            b['name']: b['mean_time_ms']
-            for b in baseline_data.get('benchmark_results', [])
+            b["name"]: b["mean_time_ms"]
+            for b in baseline_data.get("benchmark_results", [])
         }
 
         has_regression = False
         print("\n Baseline Comparison:")
         print("-" * 80)
-        print(f"{'Name':<30} {'Baseline (ms)':<15} {'Current (ms)':<15} {'Change':<12} {'Status':<10}")
+        print(
+            f"{'Name':<30} {'Baseline (ms)':<15} {'Current (ms)':<15} {'Change':<12} {'Status':<10}"
+        )
         print("-" * 80)
 
         for result in results:
             baseline_time = baseline_map.get(result.name)
             if baseline_time is None:
-                print(f"{result.name:<30} {'N/A':<15} {result.mean_time_ms:<15.2f} {'new':<12} {'--':<10}")
+                print(
+                    f"{result.name:<30} {'N/A':<15} {result.mean_time_ms:<15.2f} {'new':<12} {'--':<10}"
+                )
                 continue
 
             change = (result.mean_time_ms - baseline_time) / baseline_time
@@ -804,7 +881,9 @@ Examples:
             else:
                 status = "OK"
 
-            print(f"{result.name:<30} {baseline_time:<15.2f} {result.mean_time_ms:<15.2f} {change_str:<12} {status:<10}")
+            print(
+                f"{result.name:<30} {baseline_time:<15.2f} {result.mean_time_ms:<15.2f} {change_str:<12} {status:<10}"
+            )
 
         return has_regression
 
@@ -812,114 +891,103 @@ Examples:
 def main():
     """Standalone entry point for tb-benchmark."""
     parser = argparse.ArgumentParser(
-        prog='tb-benchmark',
-        description='Run comprehensive performance benchmarks',
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        prog="tb-benchmark",
+        description="Run comprehensive performance benchmarks",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     # Add benchmark command arguments directly
     parser.add_argument(
-        '--model',
+        "--model", type=str, help="Model to benchmark (file path or predefined name)"
+    )
+    parser.add_argument(
+        "--type",
+        choices=["model", "compare", "regression", "stress", "claims"],
+        default="model",
+        help="Benchmark type (default: model)",
+    )
+    parser.add_argument(
+        "--claim",
         type=str,
-        help='Model to benchmark (file path or predefined name)'
+        help="Run a single claim benchmark by name (use with --type claims)",
     )
     parser.add_argument(
-        '--type',
-        choices=['model', 'compare', 'regression', 'stress', 'claims'],
-        default='model',
-        help='Benchmark type (default: model)'
-    )
-    parser.add_argument(
-        '--claim',
-        type=str,
-        help='Run a single claim benchmark by name (use with --type claims)'
-    )
-    parser.add_argument(
-        '--list-claims',
-        action='store_true',
-        dest='list_claims',
+        "--list-claims",
+        action="store_true",
+        dest="list_claims",
         help=(
-            'List all registered claim benchmarks with hardware requirements '
-            'and whether they would run on current hardware, then exit.'
+            "List all registered claim benchmarks with hardware requirements "
+            "and whether they would run on current hardware, then exit."
         ),
     )
     parser.add_argument(
-        '--claims-threshold',
+        "--claims-threshold",
         type=float,
         default=3.0,
-        help='Speedup threshold for claim benchmarks (default: 3.0%%)'
+        help="Speedup threshold for claim benchmarks (default: 3.0%%)",
     )
     parser.add_argument(
-        '--ci',
-        action='store_true',
-        help='Machine-readable JSON output (for CI pipelines)'
+        "--ci",
+        action="store_true",
+        help="Machine-readable JSON output (for CI pipelines)",
     )
     parser.add_argument(
-        '--levels',
+        "--levels",
         type=str,
-        default='basic,compile',
-        help='Optimization levels to compare (comma-separated)'
+        default="basic,compile",
+        help="Optimization levels to compare (comma-separated)",
     )
     parser.add_argument(
-        '--batch-sizes',
+        "--batch-sizes",
         type=str,
-        default='1,8,16',
-        help='Batch sizes for stress testing (comma-separated)'
+        default="1,8,16",
+        help="Batch sizes for stress testing (comma-separated)",
     )
     parser.add_argument(
-        '--input-shape',
-        type=str,
-        help='Input tensor shape (e.g., "1,3,224,224")'
+        "--input-shape", type=str, help='Input tensor shape (e.g., "1,3,224,224")'
     )
     parser.add_argument(
-        '--predefined',
-        choices=['transformers', 'vision', 'optimization'],
-        help='Run predefined benchmark suite'
+        "--predefined",
+        choices=["transformers", "vision", "optimization"],
+        help="Run predefined benchmark suite",
     )
     parser.add_argument(
-        '--quick',
-        action='store_true',
-        help='Quick benchmark (fewer runs for faster results)'
+        "--quick",
+        action="store_true",
+        help="Quick benchmark (fewer runs for faster results)",
     )
     parser.add_argument(
-        '--warmup',
-        type=int,
-        default=10,
-        help='Number of warmup runs (default: 10)'
+        "--warmup", type=int, default=10, help="Number of warmup runs (default: 10)"
     )
     parser.add_argument(
-        '--runs',
+        "--runs",
         type=int,
         default=100,
-        help='Number of benchmark runs (default: 100, 20 if --quick)'
+        help="Number of benchmark runs (default: 100, 20 if --quick)",
     )
     parser.add_argument(
-        '--output', '-o',
+        "--output", "-o", type=str, help="Output file for results (JSON format)"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    parser.add_argument(
+        "--format",
+        choices=["json", "csv"],
+        default="json",
+        help="Output format (default: json)",
+    )
+    parser.add_argument(
+        "--compare-baseline",
         type=str,
-        help='Output file for results (JSON format)'
+        metavar="BASELINE_FILE",
+        help="Compare results against a baseline JSON file",
     )
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
-    )
-    parser.add_argument(
-        '--format',
-        choices=['json', 'csv'],
-        default='json',
-        help='Output format (default: json)'
-    )
-    parser.add_argument(
-        '--compare-baseline',
-        type=str,
-        metavar='BASELINE_FILE',
-        help='Compare results against a baseline JSON file'
-    )
-    parser.add_argument(
-        '--regression-threshold',
+        "--regression-threshold",
         type=float,
         default=0.15,
-        help='Regression threshold as fraction (default: 0.15 = 15%%)'
+        help="Regression threshold as fraction (default: 0.15 = 15%%)",
     )
 
     args = parser.parse_args()
@@ -930,8 +998,9 @@ def main():
         return 130
     except Exception as e:
         from torchbridge.cli import _print_error
-        return _print_error(e, verbose=getattr(args, 'verbose', False))
+
+        return _print_error(e, verbose=getattr(args, "verbose", False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

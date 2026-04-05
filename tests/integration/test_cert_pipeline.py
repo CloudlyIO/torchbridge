@@ -21,6 +21,7 @@ from types import SimpleNamespace
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _args(**kwargs):
     defaults = {
         "model": None,
@@ -46,6 +47,7 @@ def _args(**kwargs):
 # ---------------------------------------------------------------------------
 # Argument registration
 # ---------------------------------------------------------------------------
+
 
 class TestArgRegistration:
     def _make_parser(self):
@@ -83,8 +85,16 @@ class TestArgRegistration:
         # (main() calls parser.parse_args() — we intercept with sys.argv)
         orig_argv = sys.argv
         try:
-            sys.argv = ["tb-validate", "--compare", "cpu", "cpu",
-                        "--cert", "/tmp/x.json", "--model", "__smoke__"]
+            sys.argv = [
+                "tb-validate",
+                "--compare",
+                "cpu",
+                "cpu",
+                "--cert",
+                "/tmp/x.json",
+                "--model",
+                "__smoke__",
+            ]
             # Just confirm no AttributeError on parsed.cert
             with mock.patch("sys.exit"):
                 try:
@@ -100,6 +110,7 @@ class TestArgRegistration:
 # ---------------------------------------------------------------------------
 # --cert without --compare is silently ignored
 # ---------------------------------------------------------------------------
+
 
 class TestCertWithoutCompare:
     def test_cert_without_compare_is_harmless(self, tmp_path):
@@ -120,6 +131,7 @@ class TestCertWithoutCompare:
 # Smoke: --compare cpu cpu with --cert
 # ---------------------------------------------------------------------------
 
+
 class TestCertSmoke:
     def _run_compare_with_cert(self, cert_path: str, ci: bool = False) -> int:
         from torchbridge.cli.validate import ValidateCommand
@@ -131,6 +143,7 @@ class TestCertSmoke:
         )
         # Capture stdout to prevent noise
         import io
+
         buf = io.StringIO()
         orig = sys.stdout
         sys.stdout = buf
@@ -174,9 +187,18 @@ class TestCertSmoke:
         cert_file = tmp_path / "cert.json"
         self._run_compare_with_cert(str(cert_file))
         parsed = json.loads(cert_file.read_text())
-        for field in ("model_id", "backend_a", "backend_b", "timestamp",
-                      "max_diff", "cosine_sim", "tolerance_atol",
-                      "status", "torchbridge_version", "fingerprint"):
+        for field in (
+            "model_id",
+            "backend_a",
+            "backend_b",
+            "timestamp",
+            "max_diff",
+            "cosine_sim",
+            "tolerance_atol",
+            "status",
+            "torchbridge_version",
+            "fingerprint",
+        ):
             assert field in parsed, f"Missing field: {field}"
 
     def test_cert_missing_parent_dir_created(self, tmp_path):
@@ -197,13 +219,16 @@ class TestCertSmoke:
 # Package-level imports
 # ---------------------------------------------------------------------------
 
+
 class TestPackageImports:
     def test_kv_handoff_importable_from_inference(self):
         from torchbridge.inference import KVHandoffNegotiator, KVHandoffSpec
+
         assert KVHandoffNegotiator is not None
         assert KVHandoffSpec is not None
 
     def test_compliance_cert_importable_from_testing(self):
         from torchbridge.testing import ComplianceCertificate, generate_certificate
+
         assert ComplianceCertificate is not None
         assert generate_certificate is not None

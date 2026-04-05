@@ -23,14 +23,17 @@ def get_xla_device() -> torch.device:
     try:
         # Try new API first (torch_xla 2.9+)
         import torch_xla
-        if hasattr(torch_xla, 'device'):
+
+        if hasattr(torch_xla, "device"):
             return torch_xla.device()
 
         # Fall back to old API
         import torch_xla.core.xla_model as xm
+
         return xm.xla_device()
     except ImportError:
-        return torch.device('cpu')
+        return torch.device("cpu")
+
 
 def get_world_size() -> int:
     """
@@ -42,26 +45,30 @@ def get_world_size() -> int:
     try:
         # Try new runtime API first (torch_xla 2.9+)
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(torch_xla.runtime, "world_size"):
             return torch_xla.runtime.world_size()
 
         # Try older runtime API
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'world_size'):
+
+            if hasattr(xr, "world_size"):
                 return xr.world_size()
         except ImportError:
             pass
 
         # Fall back to old xm API
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'xrt_world_size'):
+
+        if hasattr(xm, "xrt_world_size"):
             return xm.xrt_world_size()
 
         # Default to 1 if nothing works
         return 1
     except ImportError:
         return 1
+
 
 def get_ordinal() -> int:
     """
@@ -73,25 +80,31 @@ def get_ordinal() -> int:
     try:
         # Try new runtime API first (torch_xla 2.9+)
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'global_ordinal'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(
+            torch_xla.runtime, "global_ordinal"
+        ):
             return torch_xla.runtime.global_ordinal()
 
         # Try older runtime API
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'global_ordinal'):
+
+            if hasattr(xr, "global_ordinal"):
                 return xr.global_ordinal()
         except ImportError:
             pass
 
         # Fall back to old xm API
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'get_ordinal'):
+
+        if hasattr(xm, "get_ordinal"):
             return xm.get_ordinal()
 
         return 0
     except ImportError:
         return 0
+
 
 def sync() -> None:
     """
@@ -102,15 +115,18 @@ def sync() -> None:
     try:
         # Try new API first (torch_xla 2.9+)
         import torch_xla
-        if hasattr(torch_xla, 'sync'):
+
+        if hasattr(torch_xla, "sync"):
             torch_xla.sync()
             return
 
         # Fall back to old API
         import torch_xla.core.xla_model as xm
+
         xm.mark_step()
     except ImportError:
         pass
+
 
 def get_device_count() -> int:
     """
@@ -122,25 +138,29 @@ def get_device_count() -> int:
     try:
         # Try new runtime API first
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'device_count'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(torch_xla.runtime, "device_count"):
             return torch_xla.runtime.device_count()
 
         # Try older runtime API
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'device_count'):
+
+            if hasattr(xr, "device_count"):
                 return xr.device_count()
         except ImportError:
             pass
 
         # Fall back to old xm API
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'xla_device_count'):
+
+        if hasattr(xm, "xla_device_count"):
             return xm.xla_device_count()
 
         return 1
     except ImportError:
         return 0
+
 
 def rendezvous(tag: str) -> None:
     """
@@ -151,10 +171,12 @@ def rendezvous(tag: str) -> None:
     """
     try:
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'rendezvous'):
+
+        if hasattr(xm, "rendezvous"):
             xm.rendezvous(tag)
     except ImportError:
         pass
+
 
 def is_xla_available() -> bool:
     """
@@ -165,10 +187,12 @@ def is_xla_available() -> bool:
     """
     try:
         import torch_xla  # noqa: F401
+
         device = get_xla_device()
-        return device.type == 'xla'
+        return device.type == "xla"
     except ImportError:
         return False
+
 
 def is_tpu_device() -> bool:
     """
@@ -183,29 +207,31 @@ def is_tpu_device() -> bool:
 
         # Get device using compatibility layer
         device = get_xla_device()
-        if device.type != 'xla':
+        if device.type != "xla":
             return False
 
         # Check device hardware type
-        if hasattr(xm, 'xla_device_hw'):
+        if hasattr(xm, "xla_device_hw"):
             # Suppress deprecation warning for xla_device() by using device directly
             try:
                 # In torch_xla 2.9+, we can check the device type differently
                 hw_type = xm.xla_device_hw(device)
-                return hw_type == 'TPU'
+                return hw_type == "TPU"
             except Exception:
                 logger.debug("XLA device hardware type check failed", exc_info=True)
                 pass
 
         # Fallback: check environment variable
         import os
-        pjrt_device = os.environ.get('PJRT_DEVICE', '')
-        if pjrt_device.upper() == 'TPU':
+
+        pjrt_device = os.environ.get("PJRT_DEVICE", "")
+        if pjrt_device.upper() == "TPU":
             return True
 
         # Check if libtpu is available (indicates TPU environment)
         try:
             from torch_xla._internal import tpu  # noqa: F401
+
             return True
         except ImportError:
             pass
@@ -213,6 +239,7 @@ def is_tpu_device() -> bool:
         return False
     except ImportError:
         return False
+
 
 def get_device_hw_type() -> str:
     """
@@ -225,10 +252,10 @@ def get_device_hw_type() -> str:
         import torch_xla.core.xla_model as xm
 
         device = get_xla_device()
-        if device.type != 'xla':
-            return 'CPU'
+        if device.type != "xla":
+            return "CPU"
 
-        if hasattr(xm, 'xla_device_hw'):
+        if hasattr(xm, "xla_device_hw"):
             try:
                 return xm.xla_device_hw(device)
             except Exception:
@@ -237,22 +264,26 @@ def get_device_hw_type() -> str:
 
         # Fallback: check environment
         import os
-        pjrt_device = os.environ.get('PJRT_DEVICE', '')
+
+        pjrt_device = os.environ.get("PJRT_DEVICE", "")
         if pjrt_device:
             return pjrt_device.upper()
 
-        return 'UNKNOWN'
+        return "UNKNOWN"
     except ImportError:
-        return 'CPU'
+        return "CPU"
+
 
 # Version info
 def get_torch_xla_version() -> str:
     """Get torch_xla version string."""
     try:
         import torch_xla
-        return getattr(torch_xla, '__version__', 'unknown')
+
+        return getattr(torch_xla, "__version__", "unknown")
     except ImportError:
-        return 'not installed'
+        return "not installed"
+
 
 def get_torch_compile_backend() -> str | None:
     """
@@ -263,10 +294,11 @@ def get_torch_compile_backend() -> str | None:
     """
     try:
         import torch_xla
-        version = getattr(torch_xla, '__version__', '0.0.0')
+
+        version = getattr(torch_xla, "__version__", "0.0.0")
 
         # Parse version (format: "2.9.0" or "2.9.0+cpu")
-        version_parts = version.split('+')[0].split('.')
+        version_parts = version.split("+")[0].split(".")
         major = int(version_parts[0]) if len(version_parts) > 0 else 0
         minor = int(version_parts[1]) if len(version_parts) > 1 else 0
 
@@ -275,11 +307,12 @@ def get_torch_compile_backend() -> str | None:
             # Check if openxla backend is available
             try:
                 import torch._dynamo
+
                 backends = torch._dynamo.list_backends()
-                if 'openxla' in backends:
-                    return 'openxla'
-                elif 'openxla_eval' in backends:
-                    return 'openxla_eval'
+                if "openxla" in backends:
+                    return "openxla"
+                elif "openxla_eval" in backends:
+                    return "openxla_eval"
             except Exception:
                 logger.debug("OpenXLA backend availability check failed", exc_info=True)
                 pass
@@ -291,9 +324,10 @@ def get_torch_compile_backend() -> str | None:
         # torch_xla < 2.9 uses 'aot_torchxla_trace_once'
         try:
             import torch._dynamo
+
             backends = torch._dynamo.list_backends()
-            if 'aot_torchxla_trace_once' in backends:
-                return 'aot_torchxla_trace_once'
+            if "aot_torchxla_trace_once" in backends:
+                return "aot_torchxla_trace_once"
         except Exception:
             logger.debug("Legacy XLA compile backend check failed", exc_info=True)
             pass
@@ -302,6 +336,7 @@ def get_torch_compile_backend() -> str | None:
 
     except ImportError:
         return None
+
 
 def is_torch_xla_2_9_plus() -> bool:
     """
@@ -312,8 +347,9 @@ def is_torch_xla_2_9_plus() -> bool:
     """
     try:
         import torch_xla
-        version = getattr(torch_xla, '__version__', '0.0.0')
-        version_parts = version.split('+')[0].split('.')
+
+        version = getattr(torch_xla, "__version__", "0.0.0")
+        version_parts = version.split("+")[0].split(".")
         major = int(version_parts[0]) if len(version_parts) > 0 else 0
         minor = int(version_parts[1]) if len(version_parts) > 1 else 0
         return major > 2 or (major == 2 and minor >= 9)

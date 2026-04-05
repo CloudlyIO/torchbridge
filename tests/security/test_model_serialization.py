@@ -67,7 +67,9 @@ class TestQuantizeSafeLoading:
         )
         assert "--trust-source" in sub_parser.format_help()
 
-    def test_quantize_execute_rejects_unsafe_model_no_trust(self, unsafe_model_path, tmp_path):
+    def test_quantize_execute_rejects_unsafe_model_no_trust(
+        self, unsafe_model_path, tmp_path
+    ):
         """Full CLI execute returns error code when loading unsafe model without --trust-source."""
         from torchbridge.cli.quantize import QuantizeCommand
 
@@ -95,12 +97,11 @@ class TestNoUngatedWeightsOnlyFalseAllCLI:
         from torchbridge.cli.quantize import QuantizeCommand
 
         source = inspect.getsource(QuantizeCommand)
-        matches = re.findall(
-            r"torch\.load\([^)]*weights_only\s*=\s*False", source
-        )
+        matches = re.findall(r"torch\.load\([^)]*weights_only\s*=\s*False", source)
         assert len(matches) == 0, (
             f"QuantizeCommand has ungated weights_only=False: {matches}"
         )
+
 
 class TestSourceFileSafeLoading:
     """Core source modules must always use weights_only=True for torch.load."""
@@ -135,6 +136,4 @@ class TestSourceFileSafeLoading:
         source = inspect.getsource(tpu_backend)
         load_calls = re.findall(r"torch\.load\([^)]+\)", source)
         unsafe = [c for c in load_calls if "weights_only=False" in c]
-        assert len(unsafe) == 0, (
-            f"tpu_backend.py has unsafe torch.load calls: {unsafe}"
-        )
+        assert len(unsafe) == 0, f"tpu_backend.py has unsafe torch.load calls: {unsafe}"

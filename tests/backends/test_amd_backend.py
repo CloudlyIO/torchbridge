@@ -9,7 +9,6 @@ Note: Tests are designed to work without actual AMD hardware by using
 mocks and CPU fallbacks where appropriate.
 """
 
-
 import pytest
 import torch
 
@@ -275,8 +274,7 @@ class TestAMDOperatorFusion:
         from torchbridge.backends.amd.amd_adapter import AMDAdapter
 
         config = AMDConfig(
-            architecture=AMDArchitecture.CDNA3,
-            enable_operator_fusion=True
+            architecture=AMDArchitecture.CDNA3, enable_operator_fusion=True
         )
         optimizer = AMDAdapter(config)
 
@@ -318,8 +316,12 @@ class TestAMDBackendEnhanced:
         """Test backend initialization with all architectures."""
         from torchbridge.backends.amd.amd_backend import AMDBackend
 
-        for arch in [AMDArchitecture.CDNA2, AMDArchitecture.CDNA3,
-                     AMDArchitecture.RDNA2, AMDArchitecture.RDNA3]:
+        for arch in [
+            AMDArchitecture.CDNA2,
+            AMDArchitecture.CDNA3,
+            AMDArchitecture.RDNA2,
+            AMDArchitecture.RDNA3,
+        ]:
             config = AMDConfig(architecture=arch)
             backend = AMDBackend(config)
 
@@ -339,8 +341,8 @@ class TestAMDBackendEnhanced:
 
         assert isinstance(info, DeviceInfo)
         assert info.backend == "amd"
-        assert hasattr(info, 'device_type')
-        assert hasattr(info, 'is_available')
+        assert hasattr(info, "device_type")
+        assert hasattr(info, "is_available")
 
     def test_backend_optimize_for_inference(self):
         """Test inference optimization."""
@@ -418,8 +420,8 @@ class TestAMDIntegrationV049:
         assert optimized is not None
 
         summary = optimizer.get_optimization_summary()
-        assert summary['architecture'] == 'cdna3'
-        assert summary['matrix_cores_enabled'] is True
+        assert summary["architecture"] == "cdna3"
+        assert summary["matrix_cores_enabled"] is True
 
 
 class TestAMDTuning:
@@ -442,6 +444,7 @@ class TestAMDTuning:
     def test_configure_amd_tuning_cdna3_sets_tunableop(self):
         """CDNA3 must set PYTORCH_TUNABLEOP_ENABLED=1."""
         import os
+
         os.environ.pop("PYTORCH_TUNABLEOP_ENABLED", None)
         backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
         backend._configure_amd_tuning()
@@ -451,6 +454,7 @@ class TestAMDTuning:
     def test_configure_amd_tuning_cdna3_sets_hipblaslt(self):
         """CDNA3 must set HIPBLASLT_TUNING_ENABLED=1."""
         import os
+
         os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
         backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
         backend._configure_amd_tuning()
@@ -460,6 +464,7 @@ class TestAMDTuning:
     def test_configure_amd_tuning_cdna2_no_hipblaslt(self):
         """CDNA2 must NOT set HIPBLASLT_TUNING_ENABLED (not supported on MI200)."""
         import os
+
         os.environ.pop("HIPBLASLT_TUNING_ENABLED", None)
         backend = self._make_backend_with_arch(AMDArchitecture.CDNA2)
         backend._configure_amd_tuning()
@@ -471,6 +476,7 @@ class TestAMDTuning:
     def test_configure_amd_tuning_respects_existing_env(self):
         """_configure_amd_tuning() must not override user's existing env var."""
         import os
+
         os.environ["PYTORCH_TUNABLEOP_ENABLED"] = "0"
         backend = self._make_backend_with_arch(AMDArchitecture.CDNA3)
         backend._configure_amd_tuning()
@@ -487,7 +493,9 @@ class TestAMDTuning:
         from torchbridge.attention.dispatch.dispatcher import AttentionDispatcher
 
         if getattr(torch.version, "hip", None) is not None:
-            pytest.skip("Running on actual ROCm — CK check may legitimately return True")
+            pytest.skip(
+                "Running on actual ROCm — CK check may legitimately return True"
+            )
         # On CPU / CUDA test env, should be False regardless of flash_attn presence
         result = AttentionDispatcher._check_flash_attention_ck()
         assert result is False

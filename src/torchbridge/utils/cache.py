@@ -15,8 +15,8 @@ from typing import Any, Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
-K = TypeVar('K')
-V = TypeVar('V')
+K = TypeVar("K")
+V = TypeVar("V")
 
 
 class LRUCache(Generic[K, V]):
@@ -55,7 +55,9 @@ class LRUCache(Generic[K, V]):
         self._misses = 0
         self._evictions = 0
 
-        logger.debug("LRU Cache initialized: max_size=%d, stats=%s", max_size, enable_stats)
+        logger.debug(
+            "LRU Cache initialized: max_size=%d, stats=%s", max_size, enable_stats
+        )
 
     def get(self, key: K) -> V | None:
         """
@@ -165,7 +167,9 @@ class LRUCache(Generic[K, V]):
                 "misses": self._misses,
                 "evictions": self._evictions,
                 "hit_rate": hit_rate,
-                "utilization": len(self._cache) / self._max_size if self._max_size > 0 else 0.0
+                "utilization": len(self._cache) / self._max_size
+                if self._max_size > 0
+                else 0.0,
             }
 
     def get_stats(self) -> dict[str, Any]:
@@ -217,6 +221,7 @@ class TTLCache(Generic[K, V]):
             ttl_seconds: Time-to-live in seconds for cached items
         """
         import time
+
         self._cache: OrderedDict[K, tuple] = OrderedDict()  # (value, timestamp)
         self._max_size = max_size
         self._ttl = ttl_seconds
@@ -255,7 +260,8 @@ class TTLCache(Generic[K, V]):
         with self._lock:
             current_time = self._time_fn()
             expired_keys = [
-                k for k, (v, ts) in self._cache.items()
+                k
+                for k, (v, ts) in self._cache.items()
                 if current_time - ts >= self._ttl
             ]
             for key in expired_keys:
@@ -263,4 +269,4 @@ class TTLCache(Generic[K, V]):
             return len(expired_keys)
 
 
-__all__ = ['LRUCache', 'TTLCache']
+__all__ = ["LRUCache", "TTLCache"]

@@ -195,7 +195,6 @@ Examples:
         _print_recommendation(model_params, world_size, backend, recommendation)
         return 0
 
-
     @staticmethod
     def _run_disaggregated(args) -> int:
         """Execute the disaggregated fleet advisor."""
@@ -298,22 +297,32 @@ def _print_fleet_config(cfg) -> None:
     print("TorchBridge Disaggregated Fleet Config")
     print("=" * 55)
     print(f"Model     : {cfg.model_params / 1e9:.1f}B parameters")
-    print(f"Prefill   : {arch_label(cfg.prefill.backend, cfg.prefill.architecture):<16}"
-          f"  ({cfg.prefill.backend} / {cfg.prefill.architecture or 'unknown'})")
-    print(f"Decode    : {arch_label(cfg.decode.backend, cfg.decode.architecture):<16}"
-          f"  ({cfg.decode.backend} / {cfg.decode.architecture or 'unknown'})")
+    print(
+        f"Prefill   : {arch_label(cfg.prefill.backend, cfg.prefill.architecture):<16}"
+        f"  ({cfg.prefill.backend} / {cfg.prefill.architecture or 'unknown'})"
+    )
+    print(
+        f"Decode    : {arch_label(cfg.decode.backend, cfg.decode.architecture):<16}"
+        f"  ({cfg.decode.backend} / {cfg.decode.architecture or 'unknown'})"
+    )
     print()
-    print(f"{'Role':<8}  {'KV dtype':<10}  {'KV budget':<10}  "
-          f"{'Max batch':<10}  {'Max seq':<8}  Transfer fmt")
-    print(f"{'─'*8}  {'─'*10}  {'─'*10}  {'─'*10}  {'─'*8}  {'─'*12}")
+    print(
+        f"{'Role':<8}  {'KV dtype':<10}  {'KV budget':<10}  "
+        f"{'Max batch':<10}  {'Max seq':<8}  Transfer fmt"
+    )
+    print(f"{'─' * 8}  {'─' * 10}  {'─' * 10}  {'─' * 10}  {'─' * 8}  {'─' * 12}")
 
     p = cfg.prefill
-    print(f"{'prefill':<8}  {p.kv_dtype:<10}  {p.kv_cache_budget_gb:<8.1f} GB"
-          f"  {p.max_batch_size:<10}  {p.max_seq_len:<8}  → {cfg.kv_transfer_format}")
+    print(
+        f"{'prefill':<8}  {p.kv_dtype:<10}  {p.kv_cache_budget_gb:<8.1f} GB"
+        f"  {p.max_batch_size:<10}  {p.max_seq_len:<8}  → {cfg.kv_transfer_format}"
+    )
 
     d = cfg.decode
-    print(f"{'decode':<8}  {d.kv_dtype:<10}  {d.kv_cache_budget_gb:<8.1f} GB"
-          f"  {d.max_batch_size:<10}  {d.max_seq_len:<8}  ← {cfg.kv_transfer_format}")
+    print(
+        f"{'decode':<8}  {d.kv_dtype:<10}  {d.kv_cache_budget_gb:<8.1f} GB"
+        f"  {d.max_batch_size:<10}  {d.max_seq_len:<8}  ← {cfg.kv_transfer_format}"
+    )
 
     all_notes = p.notes + d.notes + cfg.notes
     if all_notes:
@@ -407,7 +416,9 @@ def _print_recommendation(
     print("Estimates")
     print("-" * 50)
     print(f"  Memory/rank:      {recommendation.estimated_memory_per_rank_gb:.2f} GB")
-    print(f"  Comm volume:      {recommendation.estimated_communication_volume_gb:.2f} GB/step")
+    print(
+        f"  Comm volume:      {recommendation.estimated_communication_volume_gb:.2f} GB/step"
+    )
     print()
 
     if recommendation.notes:
@@ -473,12 +484,18 @@ def _print_hetero_config(cfg) -> None:
     print(f"AMD        : {cfg.amd_count}× {amd_label}")
     print()
     print(f"{'Setting':<28}  {'NVIDIA':<14}  AMD")
-    print(f"{'─'*28}  {'─'*14}  {'─'*14}")
+    print(f"{'─' * 28}  {'─' * 14}  {'─' * 14}")
     print(f"{'Collective bridge':<28}  {cfg.collective_bridge:<14}")
     print(f"{'Partition strategy':<28}  {cfg.partition_strategy:<14}")
-    print(f"{'FSDP strategy':<28}  {cfg.nvidia_fsdp_strategy:<14}  {cfg.amd_fsdp_strategy}")
-    print(f"{'Mixed precision':<28}  {cfg.nvidia_mixed_precision:<14}  {cfg.amd_mixed_precision}")
-    print(f"{'Est. cross-vendor comm':<28}  {cfg.estimated_cross_vendor_comm_gb:.2f} GB/step")
+    print(
+        f"{'FSDP strategy':<28}  {cfg.nvidia_fsdp_strategy:<14}  {cfg.amd_fsdp_strategy}"
+    )
+    print(
+        f"{'Mixed precision':<28}  {cfg.nvidia_mixed_precision:<14}  {cfg.amd_mixed_precision}"
+    )
+    print(
+        f"{'Est. cross-vendor comm':<28}  {cfg.estimated_cross_vendor_comm_gb:.2f} GB/step"
+    )
     if cfg.notes:
         print()
         print("Notes:")
@@ -493,39 +510,83 @@ def main(args=None):
         prog="tb-advisor",
         description="Recommend distributed training parallelism configuration",
     )
-    parser.add_argument("--model-params", type=float, required=True,
-                        help="Total model parameters (e.g., 7e9 for 7B)")
-    parser.add_argument("--world-size", type=int, default=1,
-                        help="Total number of ranks/GPUs (default: 1)")
-    parser.add_argument("--gpus-per-node", type=int, default=None,
-                        help="GPUs per node (default: same as world-size)")
+    parser.add_argument(
+        "--model-params",
+        type=float,
+        required=True,
+        help="Total model parameters (e.g., 7e9 for 7B)",
+    )
+    parser.add_argument(
+        "--world-size",
+        type=int,
+        default=1,
+        help="Total number of ranks/GPUs (default: 1)",
+    )
+    parser.add_argument(
+        "--gpus-per-node",
+        type=int,
+        default=None,
+        help="GPUs per node (default: same as world-size)",
+    )
     parser.add_argument(
         "--backend",
         choices=["auto", "nvidia", "amd", "trainium", "tpu", "cpu"],
         default="auto",
         help="Target backend (default: auto-detect)",
     )
-    parser.add_argument("--ci", action="store_true",
-                        help="Output JSON for CI pipelines")
-    parser.add_argument("--toml", action="store_true",
-                        help="Output full TOML configuration")
-    parser.add_argument("--topology", action="store_true",
-                        help="Detect and display cluster topology")
-    parser.add_argument("--mode", choices=["training", "disaggregated", "heterogeneous"],
-                        default="training",
-                        help="Operating mode: training (default), disaggregated serving, or heterogeneous cluster")
-    parser.add_argument("--prefill", metavar="SPEC", default=None,
-                        help="Prefill hardware spec: BACKEND[:ARCH] (e.g. nvidia:hopper)")
-    parser.add_argument("--decode", metavar="SPEC", default=None,
-                        help="Decode hardware spec: BACKEND[:ARCH] (e.g. amd:cdna3)")
-    parser.add_argument("--prefill-memory", type=float, default=None, metavar="N",
-                        help="Prefill GPU memory in GB")
-    parser.add_argument("--decode-memory", type=float, default=None, metavar="N",
-                        help="Decode GPU memory in GB")
-    parser.add_argument("--nvidia", metavar="ARCH:COUNT", default=None,
-                        help="NVIDIA GPU spec for heterogeneous mode: ARCH:COUNT (e.g. hopper:4)")
-    parser.add_argument("--amd", metavar="ARCH:COUNT", default=None,
-                        help="AMD GPU spec for heterogeneous mode: ARCH:COUNT (e.g. cdna3:8)")
+    parser.add_argument(
+        "--ci", action="store_true", help="Output JSON for CI pipelines"
+    )
+    parser.add_argument(
+        "--toml", action="store_true", help="Output full TOML configuration"
+    )
+    parser.add_argument(
+        "--topology", action="store_true", help="Detect and display cluster topology"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["training", "disaggregated", "heterogeneous"],
+        default="training",
+        help="Operating mode: training (default), disaggregated serving, or heterogeneous cluster",
+    )
+    parser.add_argument(
+        "--prefill",
+        metavar="SPEC",
+        default=None,
+        help="Prefill hardware spec: BACKEND[:ARCH] (e.g. nvidia:hopper)",
+    )
+    parser.add_argument(
+        "--decode",
+        metavar="SPEC",
+        default=None,
+        help="Decode hardware spec: BACKEND[:ARCH] (e.g. amd:cdna3)",
+    )
+    parser.add_argument(
+        "--prefill-memory",
+        type=float,
+        default=None,
+        metavar="N",
+        help="Prefill GPU memory in GB",
+    )
+    parser.add_argument(
+        "--decode-memory",
+        type=float,
+        default=None,
+        metavar="N",
+        help="Decode GPU memory in GB",
+    )
+    parser.add_argument(
+        "--nvidia",
+        metavar="ARCH:COUNT",
+        default=None,
+        help="NVIDIA GPU spec for heterogeneous mode: ARCH:COUNT (e.g. hopper:4)",
+    )
+    parser.add_argument(
+        "--amd",
+        metavar="ARCH:COUNT",
+        default=None,
+        help="AMD GPU spec for heterogeneous mode: ARCH:COUNT (e.g. cdna3:8)",
+    )
 
     if args is None:
         args = sys.argv[1:]

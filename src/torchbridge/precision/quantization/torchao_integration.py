@@ -55,6 +55,7 @@ class TorchAOBackend:
             # torchao ROCm support: INT8 works; FP8 is experimental.
             # Check that the running PyTorch is a ROCm build.
             import torch
+
             return getattr(torch.version, "hip", None) is not None
         # CUDA is the primary supported backend; CPU supports INT8 dynamic
         return backend in ("cuda", "cpu")

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class TrainiumBackendError(BackendError):
     """Base exception for all Trainium backend errors."""
+
     pass
 
 
@@ -63,15 +64,17 @@ class TrainiumMemoryError(MemoryError, TrainiumBackendError):
 class TrainiumOutOfMemoryError(TrainiumMemoryError):
     """Raised when Trainium runs out of HBM during allocation."""
 
-    def __init__(self, required_bytes: int | None = None, available_bytes: int | None = None):
+    def __init__(
+        self, required_bytes: int | None = None, available_bytes: int | None = None
+    ):
         if required_bytes is not None and available_bytes is not None:
             message = f"Out of Trainium memory: required {required_bytes / 1e6:.1f}MB, available {available_bytes / 1e6:.1f}MB"
         else:
             message = "Out of Trainium memory"
-        super().__init__(message, {
-            "required_bytes": required_bytes,
-            "available_bytes": available_bytes
-        })
+        super().__init__(
+            message,
+            {"required_bytes": required_bytes, "available_bytes": available_bytes},
+        )
 
 
 class TrainiumMemoryPoolError(MemoryPoolError):
@@ -93,7 +96,9 @@ class TrainiumModelPreparationError(TrainiumBackendError):
     """Raised when model preparation for Trainium fails."""
 
     def __init__(self, model_name: str, error_message: str):
-        message = f"Trainium model preparation for '{model_name}' failed: {error_message}"
+        message = (
+            f"Trainium model preparation for '{model_name}' failed: {error_message}"
+        )
         super().__init__(message, {"model": model_name, "error": error_message})
 
 

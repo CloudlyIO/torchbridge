@@ -112,7 +112,7 @@ _TPU_METHODS: dict[TPUVersion | None, list[AdapterMethod]] = {
 _CPU_METHODS: list[AdapterMethod] = [
     AdapterMethod.LORA,
     AdapterMethod.DORA,
-    AdapterMethod.QLORA,   # INT8 base on CPU (enables CPU-side unit testing)
+    AdapterMethod.QLORA,  # INT8 base on CPU (enables CPU-side unit testing)
 ]
 
 # ── Base quantization format for QLoRA/QDoRA ──────────────────────────────────
@@ -123,7 +123,7 @@ _QLORA_BASE_FORMAT: dict[HardwareBackend, QuantizationFormat | None] = {
     HardwareBackend.AMD: QuantizationFormat.INT4_WEIGHT_ONLY,
     HardwareBackend.CPU: QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,  # for testing
     HardwareBackend.TRAINIUM: None,  # QLoRA not supported
-    HardwareBackend.TPU: None,       # QLoRA not supported
+    HardwareBackend.TPU: None,  # QLoRA not supported
 }
 
 # ── Top-level dispatch table ──────────────────────────────────────────────────
@@ -157,9 +157,7 @@ class AdapterCompatibilityMatrix:
         Returns:
             The optimal AdapterMethod for this hardware.
         """
-        chain = AdapterCompatibilityMatrix.get_fallback_chain(
-            backend, architecture
-        )
+        chain = AdapterCompatibilityMatrix.get_fallback_chain(backend, architecture)
         return chain[0]
 
     @staticmethod
@@ -231,7 +229,5 @@ class AdapterCompatibilityMatrix:
         Returns:
             True if the method is in the fallback chain for this hardware.
         """
-        chain = AdapterCompatibilityMatrix.get_fallback_chain(
-            backend, architecture
-        )
+        chain = AdapterCompatibilityMatrix.get_fallback_chain(backend, architecture)
         return method in chain

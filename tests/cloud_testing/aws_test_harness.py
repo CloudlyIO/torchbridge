@@ -28,36 +28,42 @@ logger = logging.getLogger(__name__)
 # Configuration Classes
 # ============================================================================
 
+
 class AWSInstanceType(Enum):
     """Supported AWS instance types for testing."""
+
     # NVIDIA Instances
-    P5_48XLARGE = "p5.48xlarge"      # 8x H100 80GB
-    P4D_24XLARGE = "p4d.24xlarge"    # 8x A100 40GB
+    P5_48XLARGE = "p5.48xlarge"  # 8x H100 80GB
+    P4D_24XLARGE = "p4d.24xlarge"  # 8x A100 40GB
     P4DE_24XLARGE = "p4de.24xlarge"  # 8x A100 80GB
-    G5_XLARGE = "g5.xlarge"          # 1x A10G 24GB (dev/test)
-    G5_12XLARGE = "g5.12xlarge"      # 4x A10G 24GB
-    G6_XLARGE = "g6.xlarge"          # 1x L4 24GB
-    G6_12XLARGE = "g6.12xlarge"      # 4x L4 24GB
+    G5_XLARGE = "g5.xlarge"  # 1x A10G 24GB (dev/test)
+    G5_12XLARGE = "g5.12xlarge"  # 4x A10G 24GB
+    G6_XLARGE = "g6.xlarge"  # 1x L4 24GB
+    G6_12XLARGE = "g6.12xlarge"  # 4x L4 24GB
 
     # AMD ROCm Instances (MI300X)
     # Available in us-east-1, us-west-2 (limited availability)
-    P5E_48XLARGE = "p5e.48xlarge"    # 8x MI300X 192GB HBM3 (preview)
-    G6E_XLARGE = "g6e.xlarge"        # 1x MI300X 192GB HBM3
-    G6E_12XLARGE = "g6e.12xlarge"    # 4x MI300X 192GB HBM3
+    P5E_48XLARGE = "p5e.48xlarge"  # 8x MI300X 192GB HBM3 (preview)
+    G6E_XLARGE = "g6e.xlarge"  # 1x MI300X 192GB HBM3
+    G6E_12XLARGE = "g6e.12xlarge"  # 4x MI300X 192GB HBM3
 
     # CPU Instances (fallback)
-    C6I_8XLARGE = "c6i.8xlarge"      # 32 vCPU, 64GB RAM
+    C6I_8XLARGE = "c6i.8xlarge"  # 32 vCPU, 64GB RAM
+
 
 class AWSRegion(Enum):
     """AWS regions with GPU availability."""
+
     US_EAST_1 = "us-east-1"
     US_WEST_2 = "us-west-2"
     EU_WEST_1 = "eu-west-1"
     AP_NORTHEAST_1 = "ap-northeast-1"
 
+
 @dataclass
 class AWSInstanceConfig:
     """Configuration for an AWS EC2 instance."""
+
     instance_type: AWSInstanceType
     region: AWSRegion = AWSRegion.US_WEST_2
     ami_id: str | None = None  # Auto-detect if None
@@ -92,9 +98,11 @@ class AWSInstanceConfig:
         }
         return ami_map.get(self.region, "ami-0123456789abcdef0")
 
+
 @dataclass
 class AWSTestResult:
     """Results from a test run on AWS."""
+
     instance_id: str
     instance_type: str
     region: str
@@ -131,9 +139,11 @@ class AWSTestResult:
             "error_message": self.error_message,
         }
 
+
 # ============================================================================
 # AWS Test Harness
 # ============================================================================
+
 
 class AWSTestHarness:
     """
@@ -187,6 +197,7 @@ class AWSTestHarness:
         """Check if boto3 is available."""
         try:
             import boto3  # noqa: F401
+
             return True
         except ImportError:
             logger.warning("boto3 not installed. AWS operations will be simulated.")
@@ -197,6 +208,7 @@ class AWSTestHarness:
         if not self._boto3_available:
             return None
         import boto3
+
         return boto3.client("ec2", region_name=self.config.region.value)
 
     def _get_cloudwatch_client(self):
@@ -204,6 +216,7 @@ class AWSTestHarness:
         if not self._boto3_available:
             return None
         import boto3
+
         return boto3.client("cloudwatch", region_name=self.config.region.value)
 
     def launch_instance(self) -> str:
@@ -213,7 +226,9 @@ class AWSTestHarness:
         Returns:
             Instance ID
         """
-        logger.info(f"Launching {self.config.instance_type.value} in {self.config.region.value}")
+        logger.info(
+            f"Launching {self.config.instance_type.value} in {self.config.region.value}"
+        )
 
         if not self._boto3_available:
             # Simulate for testing without AWS credentials
@@ -243,7 +258,9 @@ class AWSTestHarness:
             "TagSpecifications": [
                 {
                     "ResourceType": "instance",
-                    "Tags": [{"Key": k, "Value": v} for k, v in self.config.tags.items()],
+                    "Tags": [
+                        {"Key": k, "Value": v} for k, v in self.config.tags.items()
+                    ],
                 },
             ],
         }
@@ -255,7 +272,9 @@ class AWSTestHarness:
         if self.config.subnet_id:
             launch_params["SubnetId"] = self.config.subnet_id
         if self.config.iam_instance_profile:
-            launch_params["IamInstanceProfile"] = {"Name": self.config.iam_instance_profile}
+            launch_params["IamInstanceProfile"] = {
+                "Name": self.config.iam_instance_profile
+            }
 
         # Launch as spot or on-demand
         if self.config.spot_instance:
@@ -280,7 +299,9 @@ class AWSTestHarness:
 
         # Get public IP
         response = ec2.describe_instances(InstanceIds=[self.instance_id])
-        self.public_ip = response["Reservations"][0]["Instances"][0].get("PublicIpAddress")
+        self.public_ip = response["Reservations"][0]["Instances"][0].get(
+            "PublicIpAddress"
+        )
 
         logger.info(f"Instance {self.instance_id} running at {self.public_ip}")
         return self.instance_id
@@ -422,6 +443,7 @@ class AWSTestHarness:
         for line in output.split("\n"):
             if "passed" in line or "failed" in line or "skipped" in line:
                 import re
+
                 match = re.search(r"(\d+) passed", line)
                 if match:
                     passed = int(match.group(1))
@@ -501,9 +523,11 @@ class AWSTestHarness:
 
         return results
 
+
 # ============================================================================
 # Factory Function
 # ============================================================================
+
 
 def create_aws_harness(
     instance_type: str = "p4d.24xlarge",

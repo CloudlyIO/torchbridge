@@ -49,8 +49,12 @@ Examples:
         parser.add_argument(
             "--method",
             choices=[
-                "auto", "draft_model", "eagle", "layer_skip",
-                "medusa", "prompt_lookup",
+                "auto",
+                "draft_model",
+                "eagle",
+                "layer_skip",
+                "medusa",
+                "prompt_lookup",
             ],
             default=None,
             help="Check if a specific method is supported",
@@ -111,7 +115,9 @@ Examples:
 
         # Default: show optimal method and supported methods
         optimal = SpeculationCompatibilityMatrix.get_optimal_method(backend)
-        supported_methods = SpeculationCompatibilityMatrix.get_supported_methods(backend)
+        supported_methods = SpeculationCompatibilityMatrix.get_supported_methods(
+            backend
+        )
         spec = SPECULATIVE_METHOD_SPECS.get(optimal)
 
         if args.ci:
@@ -131,10 +137,7 @@ Examples:
             print(f"  Display name:      {spec.display_name}")
             print(f"  Draft model needed: {spec.requires_draft_model}")
             print(f"  Description:       {spec.description}")
-        print(
-            f"  Supported methods: "
-            f"{', '.join(m.value for m in supported_methods)}"
-        )
+        print(f"  Supported methods: {', '.join(m.value for m in supported_methods)}")
         print()
 
         return 0
@@ -200,12 +203,14 @@ Examples:
             )
             optimal = SpeculationCompatibilityMatrix.get_optimal_method(backend, arch)
             arch_name = arch.value if arch else "—"
-            rows.append({
-                "backend": backend.value,
-                "architecture": arch_name,
-                "optimal": optimal.value,
-                "supported": [m.value for m in supported],
-            })
+            rows.append(
+                {
+                    "backend": backend.value,
+                    "architecture": arch_name,
+                    "optimal": optimal.value,
+                    "supported": [m.value for m in supported],
+                }
+            )
 
         if ci_mode:
             print(json.dumps(rows, indent=2))
@@ -214,9 +219,7 @@ Examples:
         # Table output
         print("Speculative Decoding Compatibility Matrix")
         print("=" * 80)
-        print(
-            f"{'Backend':<10} {'Architecture':<20} {'Optimal':<14} {'Supported'}"
-        )
+        print(f"{'Backend':<10} {'Architecture':<20} {'Optimal':<14} {'Supported'}")
         print("-" * 80)
         for row in rows:
             supported_str = ", ".join(row["supported"])
@@ -244,8 +247,12 @@ def main() -> None:
     parser.add_argument(
         "--method",
         choices=[
-            "auto", "draft_model", "eagle", "layer_skip",
-            "medusa", "prompt_lookup",
+            "auto",
+            "draft_model",
+            "eagle",
+            "layer_skip",
+            "medusa",
+            "prompt_lookup",
         ],
         default=None,
     )

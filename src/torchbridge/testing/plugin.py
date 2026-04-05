@@ -68,6 +68,7 @@ def get_enabled_backends(config: object | None = None) -> list[str] | None:
     if config is None:
         try:
             import pytest
+
             config = pytest.config  # type: ignore[attr-defined]
         except Exception:
             return None

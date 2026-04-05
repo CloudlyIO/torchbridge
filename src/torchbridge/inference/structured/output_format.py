@@ -35,8 +35,7 @@ class OutputFormat(Enum):
             if member.value == normalized:
                 return member
         raise ValueError(
-            f"Unknown output format: '{value}'. "
-            f"Valid formats: {[m.value for m in cls]}"
+            f"Unknown output format: '{value}'. Valid formats: {[m.value for m in cls]}"
         )
 
 
@@ -71,4 +70,3 @@ OUTPUT_FORMAT_SPECS: dict[OutputFormat, OutputFormatSpec] = {
         description="Output matching a regular expression pattern",
     ),
 }
-

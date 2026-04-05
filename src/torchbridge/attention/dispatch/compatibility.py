@@ -145,7 +145,11 @@ class AttentionDispatchMatrix:
     @staticmethod
     def get_supported_kernels(
         backend: HardwareBackend,
-        architecture: NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None = None,
+        architecture: NVIDIAArchitecture
+        | AMDArchitecture
+        | TrainiumArchitecture
+        | TPUVersion
+        | None = None,
     ) -> list[AttentionKernelType]:
         """Return ordered list of supported kernels (best first)."""
         if backend == HardwareBackend.CUDA:
@@ -156,7 +160,9 @@ class AttentionDispatchMatrix:
                     "Update AttentionDispatchMatrix for this architecture.",
                     arch,
                 )
-            return list(_NVIDIA_KERNELS.get(arch, _NVIDIA_KERNELS[NVIDIAArchitecture.PASCAL]))
+            return list(
+                _NVIDIA_KERNELS.get(arch, _NVIDIA_KERNELS[NVIDIAArchitecture.PASCAL])
+            )
         elif backend == HardwareBackend.AMD:
             arch = architecture or AMDArchitecture.CDNA3
             if arch not in _AMD_KERNELS:
@@ -174,7 +180,11 @@ class AttentionDispatchMatrix:
                     "Update AttentionDispatchMatrix for this architecture.",
                     arch,
                 )
-            return list(_TRAINIUM_KERNELS.get(arch, _TRAINIUM_KERNELS[TrainiumArchitecture.TRN1]))
+            return list(
+                _TRAINIUM_KERNELS.get(
+                    arch, _TRAINIUM_KERNELS[TrainiumArchitecture.TRN1]
+                )
+            )
         elif backend == HardwareBackend.TPU:
             arch = architecture or TPUVersion.V5E
             if arch not in _TPU_KERNELS:
@@ -191,12 +201,15 @@ class AttentionDispatchMatrix:
     def get_fallback_chain(
         requested: AttentionKernelType,
         backend: HardwareBackend,
-        architecture: NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None = None,
+        architecture: NVIDIAArchitecture
+        | AMDArchitecture
+        | TrainiumArchitecture
+        | TPUVersion
+        | None = None,
     ) -> list[AttentionKernelType]:
         """Return fallback chain starting after *requested* kernel."""
         supported = AttentionDispatchMatrix.get_supported_kernels(backend, architecture)
         if requested in supported:
             idx = supported.index(requested)
-            return supported[idx + 1:]
+            return supported[idx + 1 :]
         return supported
-

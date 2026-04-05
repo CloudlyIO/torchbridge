@@ -26,6 +26,7 @@ from torchbridge.inference.kv_handoff import (
 # Dataclass fields and serialisation
 # ---------------------------------------------------------------------------
 
+
 class TestKVHandoffSpecFields:
     def test_fields_exist(self):
         spec = KVHandoffSpec(
@@ -63,8 +64,9 @@ class TestKVHandoffSpecFields:
             assert key in d, f"Missing key: {key}"
 
     def test_to_dict_roundtrips_through_json(self):
-        spec = KVHandoffSpec(dtype="float16", layout="separate",
-                             page_size_tokens=16, alignment_bytes=128)
+        spec = KVHandoffSpec(
+            dtype="float16", layout="separate", page_size_tokens=16, alignment_bytes=128
+        )
         parsed = json.loads(json.dumps(spec.to_dict()))
         assert parsed["page_size_tokens"] == 16
 
@@ -72,6 +74,7 @@ class TestKVHandoffSpecFields:
 # ---------------------------------------------------------------------------
 # Matrix lookups via _lookup_hw_spec
 # ---------------------------------------------------------------------------
+
 
 class TestMatrixLookups:
     def test_hopper_page_size_16(self):
@@ -124,6 +127,7 @@ class TestMatrixLookups:
 # ---------------------------------------------------------------------------
 # Negotiation rules
 # ---------------------------------------------------------------------------
+
 
 class TestNegotiation:
     def _negotiate(self, pb, db, pa=None, da=None, dtype="float16"):
@@ -203,8 +207,10 @@ class TestNegotiation:
 # Package-level import
 # ---------------------------------------------------------------------------
 
+
 class TestPackageExports:
     def test_importable_from_torchbridge_inference(self):
         from torchbridge.inference import KVHandoffNegotiator, KVHandoffSpec
+
         assert KVHandoffNegotiator is not None
         assert KVHandoffSpec is not None

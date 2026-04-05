@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # Base Exception
 # =============================================================================
 
+
 class TorchBridgeError(Exception):
     """
     Base exception for all TorchBridge errors.
@@ -37,7 +38,7 @@ class TorchBridgeError(Exception):
         details: dict[str, Any] | None = None,
         cause: Exception | None = None,
         *,
-        hint: str | None = None
+        hint: str | None = None,
     ):
         """
         Initialize TorchBridge error.
@@ -79,87 +80,84 @@ class TorchBridgeError(Exception):
             "message": self.message,
             "details": self.details,
             "cause": str(self.cause) if self.cause else None,
-            "hint": self.hint
+            "hint": self.hint,
         }
+
 
 # =============================================================================
 # Validation Errors
 # =============================================================================
 
+
 class ValidationError(TorchBridgeError):
     """Base exception for validation failures."""
+
     pass
+
 
 class ConfigValidationError(ValidationError):
     """Raised when configuration validation fails."""
 
-    def __init__(
-        self,
-        config_name: str,
-        parameter: str,
-        value: Any,
-        reason: str
-    ):
-        message = f"Invalid {config_name} configuration: '{parameter}' = {value!r} - {reason}"
-        super().__init__(message, {
-            "config": config_name,
-            "parameter": parameter,
-            "value": value,
-            "reason": reason
-        })
+    def __init__(self, config_name: str, parameter: str, value: Any, reason: str):
+        message = (
+            f"Invalid {config_name} configuration: '{parameter}' = {value!r} - {reason}"
+        )
+        super().__init__(
+            message,
+            {
+                "config": config_name,
+                "parameter": parameter,
+                "value": value,
+                "reason": reason,
+            },
+        )
+
 
 class InputValidationError(ValidationError):
     """Raised when input validation fails."""
 
-    def __init__(
-        self,
-        input_name: str,
-        expected: str,
-        actual: str,
-        reason: str = ""
-    ):
+    def __init__(self, input_name: str, expected: str, actual: str, reason: str = ""):
         message = f"Invalid input '{input_name}': expected {expected}, got {actual}"
         if reason:
             message = f"{message}. {reason}"
-        super().__init__(message, {
-            "input": input_name,
-            "expected": expected,
-            "actual": actual,
-            "reason": reason
-        })
+        super().__init__(
+            message,
+            {
+                "input": input_name,
+                "expected": expected,
+                "actual": actual,
+                "reason": reason,
+            },
+        )
+
 
 class ModelValidationError(ValidationError):
     """Raised when model validation fails."""
 
-    def __init__(
-        self,
-        model_name: str,
-        issues: list[str]
-    ):
+    def __init__(self, model_name: str, issues: list[str]):
         issues_str = "; ".join(issues)
         message = f"Model '{model_name}' validation failed: {issues_str}"
-        super().__init__(message, {
-            "model": model_name,
-            "issues": issues
-        })
+        super().__init__(message, {"model": model_name, "issues": issues})
+
 
 # =============================================================================
 # Hardware Errors
 # =============================================================================
 
+
 class HardwareError(TorchBridgeError):
     """Base exception for hardware-related errors."""
+
     pass
+
 
 class HardwareDetectionError(HardwareError):
     """Raised when hardware detection fails."""
 
     def __init__(self, hardware_type: str, reason: str):
         message = f"Failed to detect {hardware_type}: {reason}"
-        super().__init__(message, {
-            "hardware_type": hardware_type,
-            "reason": reason
-        })
+        super().__init__(message, {"hardware_type": hardware_type, "reason": reason})
+
 
 class HardwareNotFoundError(HardwareError):
     """Raised when required hardware is not available."""
@@ -168,10 +166,10 @@ class HardwareNotFoundError(HardwareError):
         message = f"Required hardware not found: {hardware_type}"
         if requirements:
             message = f"{message}. Requirements: {', '.join(requirements)}"
-        super().__init__(message, {
-            "hardware_type": hardware_type,
-            "requirements": requirements
-        })
+        super().__init__(
+            message, {"hardware_type": hardware_type, "requirements": requirements}
+        )
+
 
 class HardwareCapabilityError(HardwareError):
     """Raised when hardware lacks required capabilities."""
@@ -180,18 +178,23 @@ class HardwareCapabilityError(HardwareError):
         self,
         hardware_name: str,
         required_capability: str,
-        available_capabilities: list[str]
+        available_capabilities: list[str],
     ):
         message = f"Hardware '{hardware_name}' lacks capability: {required_capability}"
-        super().__init__(message, {
-            "hardware": hardware_name,
-            "required": required_capability,
-            "available": available_capabilities
-        })
+        super().__init__(
+            message,
+            {
+                "hardware": hardware_name,
+                "required": required_capability,
+                "available": available_capabilities,
+            },
+        )
+
 
 # =============================================================================
 # Optimization Errors
 # =============================================================================
+
 
 class OptimizationError(TorchBridgeError):
     """Base exception for optimization failures."""
@@ -206,130 +209,129 @@ class OptimizationError(TorchBridgeError):
         details: dict[str, Any] | None = None,
         cause: Exception | None = None,
         *,
-        hint: str | None = None
+        hint: str | None = None,
     ):
         super().__init__(
-            message, details, cause, hint=hint if hint is not None else self.default_hint
+            message,
+            details,
+            cause,
+            hint=hint if hint is not None else self.default_hint,
         )
+
 
 class CompilationError(OptimizationError):
     """Raised when model compilation fails."""
 
     def __init__(self, compiler: str, model_name: str, error_message: str):
         message = f"{compiler} compilation failed for '{model_name}': {error_message}"
-        super().__init__(message, {
-            "compiler": compiler,
-            "model": model_name,
-            "error": error_message
-        })
+        super().__init__(
+            message, {"compiler": compiler, "model": model_name, "error": error_message}
+        )
+
 
 class FusionError(OptimizationError):
     """Raised when operator fusion fails."""
 
     def __init__(self, pattern: str, reason: str):
         message = f"Fusion pattern '{pattern}' failed: {reason}"
-        super().__init__(message, {
-            "pattern": pattern,
-            "reason": reason
-        })
+        super().__init__(message, {"pattern": pattern, "reason": reason})
+
 
 class PrecisionError(OptimizationError):
     """Raised when precision conversion fails."""
 
-    def __init__(
-        self,
-        source_precision: str,
-        target_precision: str,
-        reason: str
-    ):
+    def __init__(self, source_precision: str, target_precision: str, reason: str):
         message = f"Precision conversion {source_precision} -> {target_precision} failed: {reason}"
-        super().__init__(message, {
-            "source": source_precision,
-            "target": target_precision,
-            "reason": reason
-        })
+        super().__init__(
+            message,
+            {"source": source_precision, "target": target_precision, "reason": reason},
+        )
+
 
 # =============================================================================
 # Deployment Errors
 # =============================================================================
 
+
 class DeploymentError(TorchBridgeError):
     """Base exception for deployment failures."""
+
     pass
+
 
 class ExportError(DeploymentError):
     """Raised when model export fails."""
 
     def __init__(self, format_name: str, model_name: str, reason: str):
         message = f"Export to {format_name} failed for '{model_name}': {reason}"
-        super().__init__(message, {
-            "format": format_name,
-            "model": model_name,
-            "reason": reason
-        })
+        super().__init__(
+            message, {"format": format_name, "model": model_name, "reason": reason}
+        )
+
 
 class ServingError(DeploymentError):
     """Raised when inference serving fails."""
 
     def __init__(self, server_type: str, operation: str, reason: str):
         message = f"{server_type} serving {operation} failed: {reason}"
-        super().__init__(message, {
-            "server": server_type,
-            "operation": operation,
-            "reason": reason
-        })
+        super().__init__(
+            message, {"server": server_type, "operation": operation, "reason": reason}
+        )
+
 
 class ContainerError(DeploymentError):
     """Raised when container operations fail."""
 
     def __init__(self, container_type: str, operation: str, reason: str):
         message = f"{container_type} container {operation} failed: {reason}"
-        super().__init__(message, {
-            "container": container_type,
-            "operation": operation,
-            "reason": reason
-        })
+        super().__init__(
+            message,
+            {"container": container_type, "operation": operation, "reason": reason},
+        )
+
 
 # =============================================================================
 # Monitoring Errors
 # =============================================================================
 
+
 class MonitoringError(TorchBridgeError):
     """Base exception for monitoring failures."""
+
     pass
+
 
 class MetricsError(MonitoringError):
     """Raised when metrics collection/export fails."""
 
     def __init__(self, metric_name: str, operation: str, reason: str):
         message = f"Metrics '{metric_name}' {operation} failed: {reason}"
-        super().__init__(message, {
-            "metric": metric_name,
-            "operation": operation,
-            "reason": reason
-        })
+        super().__init__(
+            message, {"metric": metric_name, "operation": operation, "reason": reason}
+        )
+
 
 class HealthCheckError(MonitoringError):
     """Raised when health check fails."""
 
     def __init__(self, component: str, status: str, reason: str):
         message = f"Health check failed for '{component}': {status} - {reason}"
-        super().__init__(message, {
-            "component": component,
-            "status": status,
-            "reason": reason
-        })
+        super().__init__(
+            message, {"component": component, "status": status, "reason": reason}
+        )
+
 
 # =============================================================================
 # Utility Functions
 # =============================================================================
+
 
 def raise_or_warn(
     message: str,
     exception_class: type = TorchBridgeError,
     strict_mode: bool = False,
     log: logging.Logger | None = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Raise exception in strict mode, otherwise log warning.
@@ -352,6 +354,7 @@ def raise_or_warn(
         log_instance = log or logger
         log_instance.warning(f"{exception_class.__name__}: {message}")
 
+
 def format_error_chain(exc: Exception, max_depth: int = 5) -> str:
     """
     Format an exception chain for logging.
@@ -367,44 +370,45 @@ def format_error_chain(exc: Exception, max_depth: int = 5) -> str:
     current = exc
     depth = 0
 
-    while hasattr(current, 'cause') and current.cause and depth < max_depth:
+    while hasattr(current, "cause") and current.cause and depth < max_depth:
         current = current.cause
         parts.append(f"  Caused by: {type(current).__name__}: {current}")
         depth += 1
 
-    if hasattr(exc, '__cause__') and exc.__cause__ and depth < max_depth:
+    if hasattr(exc, "__cause__") and exc.__cause__ and depth < max_depth:
         parts.append(f"  Python cause: {type(exc.__cause__).__name__}: {exc.__cause__}")
 
     return "\n".join(parts)
 
+
 __all__ = [
     # Base
-    'TorchBridgeError',
+    "TorchBridgeError",
     # Validation
-    'ValidationError',
-    'ConfigValidationError',
-    'InputValidationError',
-    'ModelValidationError',
+    "ValidationError",
+    "ConfigValidationError",
+    "InputValidationError",
+    "ModelValidationError",
     # Hardware
-    'HardwareError',
-    'HardwareDetectionError',
-    'HardwareNotFoundError',
-    'HardwareCapabilityError',
+    "HardwareError",
+    "HardwareDetectionError",
+    "HardwareNotFoundError",
+    "HardwareCapabilityError",
     # Optimization
-    'OptimizationError',
-    'CompilationError',
-    'FusionError',
-    'PrecisionError',
+    "OptimizationError",
+    "CompilationError",
+    "FusionError",
+    "PrecisionError",
     # Deployment
-    'DeploymentError',
-    'ExportError',
-    'ServingError',
-    'ContainerError',
+    "DeploymentError",
+    "ExportError",
+    "ServingError",
+    "ContainerError",
     # Monitoring
-    'MonitoringError',
-    'MetricsError',
-    'HealthCheckError',
+    "MonitoringError",
+    "MetricsError",
+    "HealthCheckError",
     # Utilities
-    'raise_or_warn',
-    'format_error_chain',
+    "raise_or_warn",
+    "format_error_chain",
 ]

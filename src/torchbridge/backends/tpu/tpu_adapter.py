@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TPUOptimizationResult:
     """Result of TPU optimization process."""
+
     optimized_model: nn.Module
     backend: TPUBackend
     compiler: XLACompiler
@@ -58,9 +59,12 @@ class TPUAdapter:
         # Optimization tracking
         self._optimization_history = []
 
-    def optimize(self, model: nn.Module,
-                sample_inputs: torch.Tensor | tuple | None = None,
-                optimization_level: str = "balanced") -> TPUOptimizationResult:
+    def optimize(
+        self,
+        model: nn.Module,
+        sample_inputs: torch.Tensor | tuple | None = None,
+        optimization_level: str = "balanced",
+    ) -> TPUOptimizationResult:
         """
         Optimize model for TPU execution.
 
@@ -73,6 +77,7 @@ class TPUAdapter:
             Optimization result with optimized model and metrics
         """
         import time
+
         start_time = time.time()
 
         logger.info("Starting TPU optimization: level=%s", optimization_level)
@@ -83,7 +88,9 @@ class TPUAdapter:
 
         # Step 2: Apply optimization-level specific changes
         logger.debug("Step 2: Applying %s optimizations", optimization_level)
-        optimized_model = self._apply_optimization_level(prepared_model, optimization_level)
+        optimized_model = self._apply_optimization_level(
+            prepared_model, optimization_level
+        )
 
         # Step 3: Compile with XLA
         logger.debug("Step 3: Compiling with XLA")
@@ -98,11 +105,11 @@ class TPUAdapter:
         # Gather metrics
         memory_usage = self.backend.get_memory_stats()
         performance_metrics = {
-            'optimization_time': optimization_time,
-            'compilation_stats': self.compiler.get_compilation_stats(),
-            'optimization_level': optimization_level,
-            'tpu_version': self.tpu_config.version.value,
-            'world_size': self.backend.world_size
+            "optimization_time": optimization_time,
+            "compilation_stats": self.compiler.get_compilation_stats(),
+            "optimization_level": optimization_level,
+            "tpu_version": self.tpu_config.version.value,
+            "world_size": self.backend.world_size,
         }
 
         # Create result
@@ -112,18 +119,24 @@ class TPUAdapter:
             compiler=self.compiler,
             optimization_time=optimization_time,
             memory_usage=memory_usage,
-            performance_metrics=performance_metrics
+            performance_metrics=performance_metrics,
         )
 
         # Track optimization
-        self._optimization_history.append({
-            'timestamp': time.time(),
-            'model_type': type(model).__name__,
-            'optimization_level': optimization_level,
-            'optimization_time': optimization_time
-        })
+        self._optimization_history.append(
+            {
+                "timestamp": time.time(),
+                "model_type": type(model).__name__,
+                "optimization_level": optimization_level,
+                "optimization_time": optimization_time,
+            }
+        )
 
-        logger.info("TPU optimization completed: time=%.2fs, level=%s", optimization_time, optimization_level)
+        logger.info(
+            "TPU optimization completed: time=%.2fs, level=%s",
+            optimization_time,
+            optimization_level,
+        )
         return result
 
     def _apply_optimization_level(self, model: nn.Module, level: str) -> nn.Module:
@@ -161,7 +174,7 @@ class TPUAdapter:
 
         # Add gradient checkpointing if enabled
         if self.tpu_config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
+            if hasattr(model, "gradient_checkpointing_enable"):
                 model.gradient_checkpointing_enable()
 
         return model
@@ -176,7 +189,9 @@ class TPUAdapter:
         if self.tpu_config.mixed_precision:
             # Convert more layers to bfloat16
             for module in model.modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Embedding)):
+                if isinstance(
+                    module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Embedding)
+                ):
                     module.to(dtype=torch.bfloat16)
 
         # Apply model-specific optimizations
@@ -189,10 +204,10 @@ class TPUAdapter:
 
         model_type = type(model).__name__.lower()
 
-        if 'llm' in model_type or 'transformer' in model_type:
+        if "llm" in model_type or "transformer" in model_type:
             # Transformer optimizations
             model = self._optimize_transformer_model(model)
-        elif 'resnet' in model_type or 'convnet' in model_type:
+        elif "resnet" in model_type or "convnet" in model_type:
             # CNN optimizations
             model = self._optimize_cnn_model(model)
 
@@ -230,13 +245,14 @@ class TPUAdapter:
                     warnings.warn(
                         f"Convolution channels ({module.in_channels}→{module.out_channels}) "
                         "not optimal for TPU. Consider using multiples of 8.",
-                    stacklevel=2,
+                        stacklevel=2,
                     )
 
         return model
 
-    def _validate_optimization(self, model: nn.Module,
-                             sample_inputs: torch.Tensor | tuple | None) -> None:
+    def _validate_optimization(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> None:
         """Validate that optimization was successful."""
 
         if sample_inputs is None:
@@ -282,11 +298,12 @@ class TPUAdapter:
                 error_msg,
                 TPUValidationError,
                 strict_mode=self.tpu_config.enable_strict_validation,
-                logger=logger
+                logger=logger,
             )
 
-    def optimize_for_inference(self, model: nn.Module,
-                             sample_inputs: torch.Tensor | tuple | None = None) -> TPUOptimizationResult:
+    def optimize_for_inference(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> TPUOptimizationResult:
         """
         Optimize model specifically for inference.
 
@@ -310,8 +327,9 @@ class TPUAdapter:
 
         return result
 
-    def optimize_for_training(self, model: nn.Module,
-                            sample_inputs: torch.Tensor | tuple | None = None) -> TPUOptimizationResult:
+    def optimize_for_training(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> TPUOptimizationResult:
         """
         Optimize model specifically for training.
 
@@ -337,23 +355,23 @@ class TPUAdapter:
         total_optimizations = len(self._optimization_history)
 
         if total_optimizations == 0:
-            return {'total_optimizations': 0}
+            return {"total_optimizations": 0}
 
-        total_time = sum(opt['optimization_time'] for opt in self._optimization_history)
+        total_time = sum(opt["optimization_time"] for opt in self._optimization_history)
         avg_time = total_time / total_optimizations
 
         model_types = {}
         for opt in self._optimization_history:
-            model_type = opt['model_type']
+            model_type = opt["model_type"]
             model_types[model_type] = model_types.get(model_type, 0) + 1
 
         return {
-            'total_optimizations': total_optimizations,
-            'total_optimization_time': total_time,
-            'average_optimization_time': avg_time,
-            'model_types': model_types,
-            'backend_stats': self.backend.get_memory_stats(),
-            'compiler_stats': self.compiler.get_compilation_stats()
+            "total_optimizations": total_optimizations,
+            "total_optimization_time": total_time,
+            "average_optimization_time": avg_time,
+            "model_types": model_types,
+            "backend_stats": self.backend.get_memory_stats(),
+            "compiler_stats": self.compiler.get_compilation_stats(),
         }
 
     def clear_cache(self) -> None:

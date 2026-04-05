@@ -28,12 +28,12 @@ from .nvidia_adapter import NVIDIAAdapter
 from .nvidia_backend import NVIDIABackend
 
 __all__ = [
-    'NVIDIABackend',
-    'NVIDIAAdapter',
-    'CUDADeviceManager',
-    'CUDAOptimizations',
-    'CUDAUtilities',
-    'create_cuda_integration'
+    "NVIDIABackend",
+    "NVIDIAAdapter",
+    "CUDADeviceManager",
+    "CUDAOptimizations",
+    "CUDAUtilities",
+    "create_cuda_integration",
 ]
 
 # Version compatibility
@@ -41,6 +41,7 @@ __nvidia_support__ = True
 
 try:
     import torch
+
     __cuda_available__ = torch.cuda.is_available()
     if __cuda_available__:
         __cuda_version__ = torch.version.cuda

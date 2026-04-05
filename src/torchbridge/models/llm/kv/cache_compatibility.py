@@ -151,9 +151,7 @@ class KVCacheCompatibilityMatrix:
         if isinstance(table, list):
             return list(table)
 
-        arch = KVCacheCompatibilityMatrix._resolve_architecture(
-            backend, architecture
-        )
+        arch = KVCacheCompatibilityMatrix._resolve_architecture(backend, architecture)
         return list(table.get(arch, _CPU_KV_DTYPES))
 
     @staticmethod

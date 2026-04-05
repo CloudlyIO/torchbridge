@@ -233,7 +233,9 @@ class KernelBenchmarkCache:
                 stored_fp = data.get("fingerprint", {})
                 current_fp = asdict(BenchmarkFingerprint.current())
                 if stored_fp != current_fp:
-                    logger.debug("Benchmark cache fingerprint mismatch — clearing cache")
+                    logger.debug(
+                        "Benchmark cache fingerprint mismatch — clearing cache"
+                    )
                     self._entries = OrderedDict()
                     return
                 self._fingerprint = BenchmarkFingerprint(**stored_fp)

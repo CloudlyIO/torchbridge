@@ -200,11 +200,7 @@ class TestCleanFile:
         """Test scanning a file with no CUDA references."""
         f = tmp_path / "plain.py"
         f.write_text(
-            "def add(a, b):\n"
-            "    return a + b\n"
-            "\n"
-            "result = add(1, 2)\n"
-            "print(result)\n"
+            "def add(a, b):\n    return a + b\n\nresult = add(1, 2)\nprint(result)\n"
         )
         suggestions = MigrateCommand._scan_file(str(f), verbose=False)
         assert len(suggestions) == 0
@@ -219,8 +215,12 @@ class TestOutputFormats:
         f.write_text("model = model.cuda()\n")
 
         args = argparse.Namespace(
-            path=str(f), output=None, format='json',
-            ci=False, verbose=False, exclude=[],
+            path=str(f),
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -236,8 +236,12 @@ class TestOutputFormats:
         f.write_text("model = model.cuda()\n")
 
         args = argparse.Namespace(
-            path=str(f), output=None, format='markdown',
-            ci=True, verbose=False, exclude=[],
+            path=str(f),
+            output=None,
+            format="markdown",
+            ci=True,
+            verbose=False,
+            exclude=[],
         )
         result = MigrateCommand.execute(args)
         assert result == 1
@@ -248,8 +252,12 @@ class TestOutputFormats:
         f.write_text("import torch\nmodel = torch.nn.Linear(10, 5)\n")
 
         args = argparse.Namespace(
-            path=str(f), output=None, format='markdown',
-            ci=False, verbose=False, exclude=[],
+            path=str(f),
+            output=None,
+            format="markdown",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         result = MigrateCommand.execute(args)
         assert result == 0
@@ -260,8 +268,12 @@ class TestOutputFormats:
         f.write_text("torch.cuda.synchronize()\n")
 
         args = argparse.Namespace(
-            path=str(f), output=None, format='json',
-            ci=False, verbose=False, exclude=[],
+            path=str(f),
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -280,8 +292,12 @@ class TestOutputFormats:
         out = tmp_path / "report.json"
 
         args = argparse.Namespace(
-            path=str(src), output=str(out), format='json',
-            ci=False, verbose=False, exclude=[],
+            path=str(src),
+            output=str(out),
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         MigrateCommand.execute(args)
         assert out.exists()
@@ -301,8 +317,12 @@ class TestDirectoryScanning:
         (sub / "c.py").write_text("torch.cuda.synchronize()\n")
 
         args = argparse.Namespace(
-            path=str(tmp_path), output=None, format='json',
-            ci=False, verbose=False, exclude=[],
+            path=str(tmp_path),
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -319,8 +339,12 @@ class TestDirectoryScanning:
         (venv / "lib.py").write_text("model.cuda()\n")
 
         args = argparse.Namespace(
-            path=str(tmp_path), output=None, format='json',
-            ci=False, verbose=False, exclude=["venv"],
+            path=str(tmp_path),
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=["venv"],
         )
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -331,8 +355,12 @@ class TestDirectoryScanning:
     def test_scan_nonexistent_path(self):
         """Test scanning a nonexistent path."""
         args = argparse.Namespace(
-            path="/nonexistent/path", output=None, format='json',
-            ci=False, verbose=False, exclude=[],
+            path="/nonexistent/path",
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         result = MigrateCommand.execute(args)
         assert result == 1
@@ -344,8 +372,12 @@ class TestDirectoryScanning:
         (tmp_path / "data.txt").write_text("model.cuda()\n")
 
         args = argparse.Namespace(
-            path=str(tmp_path), output=None, format='json',
-            ci=False, verbose=False, exclude=[],
+            path=str(tmp_path),
+            output=None,
+            format="json",
+            ci=False,
+            verbose=False,
+            exclude=[],
         )
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -363,8 +395,8 @@ class TestRegisterSubparser:
         subparsers = parser.add_subparsers()
         MigrateCommand.register(subparsers)
 
-        args = parser.parse_args(['migrate', '/some/path'])
-        assert args.path == '/some/path'
+        args = parser.parse_args(["migrate", "/some/path"])
+        assert args.path == "/some/path"
 
     def test_register_accepts_flags(self):
         """Test that the registered subparser accepts expected flags."""
@@ -372,13 +404,17 @@ class TestRegisterSubparser:
         subparsers = parser.add_subparsers()
         MigrateCommand.register(subparsers)
 
-        args = parser.parse_args([
-            'migrate', '/some/path',
-            '--format', 'json',
-            '--ci',
-            '--verbose',
-        ])
-        assert args.format == 'json'
+        args = parser.parse_args(
+            [
+                "migrate",
+                "/some/path",
+                "--format",
+                "json",
+                "--ci",
+                "--verbose",
+            ]
+        )
+        assert args.format == "json"
         assert args.ci is True
         assert args.verbose is True
 
@@ -391,7 +427,7 @@ class TestEntryPoint:
         f = tmp_path / "test.py"
         f.write_text("import torch\n")
 
-        with patch('sys.argv', ['tb-migrate', str(f)]):
+        with patch("sys.argv", ["tb-migrate", str(f)]):
             result = main()
             assert result == 0
 
@@ -400,14 +436,15 @@ class TestEntryPoint:
         f = tmp_path / "test.py"
         f.write_text("model = model.cuda()\n")
 
-        with patch('sys.argv', ['tb-migrate', str(f), '--ci']):
+        with patch("sys.argv", ["tb-migrate", str(f), "--ci"]):
             result = main()
             assert result == 1
 
     def test_main_no_args(self):
         """Test main() with no arguments exits non-zero."""
         import pytest
-        with patch('sys.argv', ['tb-migrate']):
+
+        with patch("sys.argv", ["tb-migrate"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code != 0

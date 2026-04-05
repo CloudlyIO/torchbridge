@@ -16,6 +16,7 @@ class TestCrossBackendDecorator:
     def test_import(self):
         """cross_backend is importable from torchbridge.testing."""
         from torchbridge.testing import cross_backend
+
         assert callable(cross_backend)
 
     def test_runs_on_cpu(self):

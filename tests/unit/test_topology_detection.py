@@ -16,7 +16,15 @@ class TestInterconnectType:
     """Tests for InterconnectType enum."""
 
     def test_all_types(self):
-        expected = {"nvlink", "pcie", "infiniband", "efa", "roce", "gce_network", "unknown"}
+        expected = {
+            "nvlink",
+            "pcie",
+            "infiniband",
+            "efa",
+            "roce",
+            "gce_network",
+            "unknown",
+        }
         actual = {t.value for t in InterconnectType}
         assert actual == expected
 
@@ -132,12 +140,16 @@ class TestTopologyDetector:
         # May be GCE_NETWORK or something else depending on env
         assert isinstance(result, InterconnectType)
 
-    @patch.dict(os.environ, {
-        "SLURM_JOB_ID": "12345",
-        "SLURM_NTASKS": "16",
-        "SLURM_NNODES": "2",
-        "SLURM_GPUS_ON_NODE": "8",
-    }, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "SLURM_JOB_ID": "12345",
+            "SLURM_NTASKS": "16",
+            "SLURM_NNODES": "2",
+            "SLURM_GPUS_ON_NODE": "8",
+        },
+        clear=False,
+    )
     def test_detect_slurm(self):
         mesh = TopologyDetector.detect_mesh_from_environment()
         assert mesh.world_size == 16
@@ -146,12 +158,16 @@ class TestTopologyDetector:
         assert mesh.mesh_shape == (2, 8)
         assert mesh.mesh_dim_names == ("inter", "intra")
 
-    @patch.dict(os.environ, {
-        "SLURM_JOB_ID": "12345",
-        "SLURM_NTASKS": "8",
-        "SLURM_NNODES": "1",
-        "SLURM_GPUS_ON_NODE": "8",
-    }, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "SLURM_JOB_ID": "12345",
+            "SLURM_NTASKS": "8",
+            "SLURM_NNODES": "1",
+            "SLURM_GPUS_ON_NODE": "8",
+        },
+        clear=False,
+    )
     def test_detect_slurm_single_node(self):
         mesh = TopologyDetector.detect_mesh_from_environment()
         assert mesh.world_size == 8
@@ -159,11 +175,15 @@ class TestTopologyDetector:
         assert mesh.mesh_shape == (8,)
         assert mesh.mesh_dim_names == ("intra",)
 
-    @patch.dict(os.environ, {
-        "KUBERNETES_SERVICE_HOST": "10.0.0.1",
-        "WORLD_SIZE": "8",
-        "LOCAL_WORLD_SIZE": "4",
-    }, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+            "WORLD_SIZE": "8",
+            "LOCAL_WORLD_SIZE": "4",
+        },
+        clear=False,
+    )
     def test_detect_kubernetes(self):
         # Remove SLURM vars to ensure K8s path is taken
         env = os.environ.copy()
@@ -176,10 +196,14 @@ class TestTopologyDetector:
             assert mesh.world_size == 8
             assert mesh.num_nodes == 2
 
-    @patch.dict(os.environ, {
-        "WORLD_SIZE": "4",
-        "LOCAL_WORLD_SIZE": "4",
-    }, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "WORLD_SIZE": "4",
+            "LOCAL_WORLD_SIZE": "4",
+        },
+        clear=False,
+    )
     def test_detect_torch_env(self):
         env = os.environ.copy()
         env.pop("SLURM_JOB_ID", None)

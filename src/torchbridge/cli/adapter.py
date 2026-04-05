@@ -81,9 +81,7 @@ Examples:
             """,
         )
 
-        sub = parser.add_subparsers(
-            dest="adapter_action", metavar="<action>"
-        )
+        sub = parser.add_subparsers(dest="adapter_action", metavar="<action>")
         _register_subcommands(sub)
 
     @staticmethod
@@ -158,8 +156,10 @@ def _show_recommend(args: Any) -> int:
     total_modules = n_modules * params_per_module
     print(f"Estimated adapter parameters ({hidden} hidden, {n_modules} modules):")
     print(f"  LoRA:  {total_modules:,} ({total_modules / 1e6:.1f}M)")
-    print(f"  DoRA:  {total_modules + n_modules * hidden:,} "
-          f"({(total_modules + n_modules * hidden) / 1e6:.1f}M)")
+    print(
+        f"  DoRA:  {total_modules + n_modules * hidden:,} "
+        f"({(total_modules + n_modules * hidden) / 1e6:.1f}M)"
+    )
     print()
     return 0
 
@@ -195,7 +195,7 @@ def _show_info(args: Any) -> int:
     print("=" * 60)
     print()
     print(f"  {'Backend':<12} {'Optimal':<10} {'Methods':<30} {'QLoRA'}")
-    print(f"  {'-'*12} {'-'*10} {'-'*30} {'-'*10}")
+    print(f"  {'-' * 12} {'-' * 10} {'-' * 30} {'-' * 10}")
 
     for b in backends:
         chain = AdapterCompatibilityMatrix.get_fallback_chain(b)

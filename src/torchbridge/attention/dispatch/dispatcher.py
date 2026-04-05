@@ -53,7 +53,11 @@ class AttentionDispatcher:
     def __init__(
         self,
         backend: HardwareBackend | None = None,
-        architecture: NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None = None,
+        architecture: NVIDIAArchitecture
+        | AMDArchitecture
+        | TrainiumArchitecture
+        | TPUVersion
+        | None = None,
         use_benchmark_cache: bool = True,
     ) -> None:
         self._hw = HardwareConfig()
@@ -112,13 +116,21 @@ class AttentionDispatcher:
             if latency is None and seq_length <= _MAX_BENCH_SEQ:
                 try:
                     entry = self._cache.run_benchmark(
-                        chosen, seq_length, num_heads, head_dim,
-                        warmup=1, iterations=5,
+                        chosen,
+                        seq_length,
+                        num_heads,
+                        head_dim,
+                        warmup=1,
+                        iterations=5,
                     )
                     latency = entry.latency_ms
                     logger.debug(
                         "Lazy benchmark: %s at %s×%s×%s → %.2f ms",
-                        chosen.value, seq_length, num_heads, head_dim, latency,
+                        chosen.value,
+                        seq_length,
+                        num_heads,
+                        head_dim,
+                        latency,
                     )
                 except Exception as _e:
                     logger.debug("Lazy benchmark failed (non-fatal): %s", _e)
@@ -186,7 +198,9 @@ class AttentionDispatcher:
 
     def _detect_architecture(
         self,
-    ) -> NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None:
+    ) -> (
+        NVIDIAArchitecture | AMDArchitecture | TrainiumArchitecture | TPUVersion | None
+    ):
         if self._backend == HardwareBackend.CUDA:
             return self._hw.nvidia.architecture
         elif self._backend == HardwareBackend.AMD:

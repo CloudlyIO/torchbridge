@@ -37,7 +37,9 @@ class TestDowngradeLogging:
                 "torch.quantization.quantize_dynamic",
                 side_effect=RuntimeError("quantize_dynamic unavailable"),
             ),
-            caplog.at_level(logging.WARNING, logger="torchbridge.precision.quantization.engine"),
+            caplog.at_level(
+                logging.WARNING, logger="torchbridge.precision.quantization.engine"
+            ),
         ):
             import torch.nn as nn
 
@@ -47,9 +49,11 @@ class TestDowngradeLogging:
             except Exception:
                 pass
 
-        assert any("WARNING" in r.levelname or r.levelno >= logging.WARNING for r in caplog.records), (
-            "Expected a WARNING log when torchao INT8 fails; got only: "
-            + str([r.levelname + ": " + r.message for r in caplog.records])
+        assert any(
+            "WARNING" in r.levelname or r.levelno >= logging.WARNING
+            for r in caplog.records
+        ), "Expected a WARNING log when torchao INT8 fails; got only: " + str(
+            [r.levelname + ": " + r.message for r in caplog.records]
         )
 
     def test_torchao_unsupported_backend_logs_info(self, caplog):
@@ -72,7 +76,9 @@ class TestDowngradeLogging:
                 "torch.quantization.quantize_dynamic",
                 side_effect=RuntimeError("quantize_dynamic unavailable"),
             ),
-            caplog.at_level(logging.INFO, logger="torchbridge.precision.quantization.engine"),
+            caplog.at_level(
+                logging.INFO, logger="torchbridge.precision.quantization.engine"
+            ),
         ):
             import torch.nn as nn
 
@@ -99,15 +105,22 @@ class TestDowngradeLogging:
 
         # Force supported list to [FLEX_ATTENTION, PYTORCH_SDPA] so fallback fires
         def patched_supported(backend, architecture=None):
-            return [AttentionKernelType.FLEX_ATTENTION, AttentionKernelType.PYTORCH_SDPA]
+            return [
+                AttentionKernelType.FLEX_ATTENTION,
+                AttentionKernelType.PYTORCH_SDPA,
+            ]
 
         def patched_check(kernel_type: AttentionKernelType) -> bool:
             return kernel_type == AttentionKernelType.PYTORCH_SDPA
 
         with (
-            patch.object(AttentionDispatchMatrix, "get_supported_kernels", patched_supported),
+            patch.object(
+                AttentionDispatchMatrix, "get_supported_kernels", patched_supported
+            ),
             patch.object(dispatcher, "_check_kernel_availability", patched_check),
-            caplog.at_level(logging.WARNING, logger="torchbridge.attention.dispatch.dispatcher"),
+            caplog.at_level(
+                logging.WARNING, logger="torchbridge.attention.dispatch.dispatcher"
+            ),
         ):
             result = dispatcher.select_kernel(seq_length=64, num_heads=2, head_dim=16)
 

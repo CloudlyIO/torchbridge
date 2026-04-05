@@ -11,6 +11,8 @@ from unittest.mock import patch
 import pytest
 import torch
 
+transformers = pytest.importorskip("transformers", reason="transformers not installed")
+
 
 class TestNetworkFailures:
     """Test graceful handling of network connectivity issues."""
@@ -25,9 +27,7 @@ class TestNetworkFailures:
             with pytest.raises(ConnectionError, match="Failed to establish"):
                 from transformers import AutoModel
 
-                AutoModel.from_pretrained(
-                    "sentence-transformers/all-MiniLM-L6-v2"
-                )
+                AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
 
     def test_model_download_timeout_error(self):
         """Model download should raise clear error on timeout."""
@@ -36,9 +36,7 @@ class TestNetworkFailures:
             with pytest.raises(TimeoutError, match="timed out"):
                 from transformers import AutoModel
 
-                AutoModel.from_pretrained(
-                    "sentence-transformers/all-MiniLM-L6-v2"
-                )
+                AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
 
     def test_tokenizer_download_connection_error(self):
         """Tokenizer download should raise clear error on ConnectionError."""
@@ -86,8 +84,7 @@ class TestNetworkFailures:
         # Simulate what happens when HF Hub is unreachable
         with patch("transformers.AutoModel.from_pretrained") as mock_load:
             mock_load.side_effect = OSError(
-                "We couldn't connect to 'https://huggingface.co' "
-                "to load this file"
+                "We couldn't connect to 'https://huggingface.co' to load this file"
             )
             with pytest.raises(OSError, match="couldn't connect") as exc_info:
                 from transformers import AutoModel
@@ -100,9 +97,7 @@ class TestNetworkFailures:
     def test_dns_resolution_failure(self):
         """DNS resolution failure should produce clear error."""
         with patch("transformers.AutoModel.from_pretrained") as mock_load:
-            mock_load.side_effect = OSError(
-                "[Errno -2] Name or service not known"
-            )
+            mock_load.side_effect = OSError("[Errno -2] Name or service not known")
             with pytest.raises(OSError, match="Name or service not known") as exc_info:
                 from transformers import AutoModel
 
@@ -114,10 +109,10 @@ class TestNetworkFailures:
     def test_ssl_error_handling(self):
         """SSL errors should produce clear error."""
         with patch("transformers.AutoModel.from_pretrained") as mock_load:
-            mock_load.side_effect = ssl.SSLError(
-                "SSL: CERTIFICATE_VERIFY_FAILED"
-            )
-            with pytest.raises(ssl.SSLError, match="CERTIFICATE_VERIFY_FAILED") as exc_info:
+            mock_load.side_effect = ssl.SSLError("SSL: CERTIFICATE_VERIFY_FAILED")
+            with pytest.raises(
+                ssl.SSLError, match="CERTIFICATE_VERIFY_FAILED"
+            ) as exc_info:
                 from transformers import AutoModel
 
                 AutoModel.from_pretrained("facebook/dinov2-small")

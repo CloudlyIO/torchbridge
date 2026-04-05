@@ -174,14 +174,8 @@ def _list_checkpoints(path: str, ci: bool = False) -> int:
     print(f"Checkpoints in {path}")
     print("=" * 60)
     for i, meta in enumerate(checkpoints, 1):
-        params = (
-            f"{meta.model_params / 1e9:.1f}B"
-            if meta.model_params
-            else "N/A"
-        )
-        print(
-            f"  {i}. {meta.checkpoint_id}"
-        )
+        params = f"{meta.model_params / 1e9:.1f}B" if meta.model_params else "N/A"
+        print(f"  {i}. {meta.checkpoint_id}")
         print(
             f"     {meta.timestamp} | {meta.backend} | "
             f"world={meta.world_size} | params={params}"

@@ -122,4 +122,3 @@ SPECULATIVE_METHOD_SPECS: dict[SpeculativeMethod, SpeculativeMethodSpec] = {
         is_generate_compatible=True,
     ),
 }
-

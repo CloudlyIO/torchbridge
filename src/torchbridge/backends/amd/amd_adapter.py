@@ -28,6 +28,7 @@ from .amd_exceptions import AMDOptimizationError
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class AMDOptimizationResult:
     """Results from applying AMD-specific optimizations."""
@@ -40,6 +41,7 @@ class AMDOptimizationResult:
     def __post_init__(self) -> None:
         if self.warnings is None:
             self.warnings = []
+
 
 class AMDAdapter:
     """
@@ -163,7 +165,9 @@ class AMDAdapter:
             torch.backends.cudnn.benchmark = True
             result.optimizations_applied.append("Enabled rocBLAS auto-tuning")
 
-        logger.debug("Conservative optimizations: %d applied", len(result.optimizations_applied))
+        logger.debug(
+            "Conservative optimizations: %d applied", len(result.optimizations_applied)
+        )
         return result
 
     def _apply_balanced_optimizations(
@@ -191,9 +195,7 @@ class AMDAdapter:
         if self.config.enable_operator_fusion:
             fused = self._fuse_linear_gelu(model)
             if fused:
-                result.optimizations_applied.append(
-                    f"Fused {fused} Linear+GELU blocks"
-                )
+                result.optimizations_applied.append(f"Fused {fused} Linear+GELU blocks")
 
         # 5. Mixed precision optimization
         if self.config.enable_mixed_precision:
@@ -202,7 +204,9 @@ class AMDAdapter:
                     f"Configured mixed precision ({self.config.default_precision})"
                 )
 
-        logger.debug("Balanced optimizations: %d applied", len(result.optimizations_applied))
+        logger.debug(
+            "Balanced optimizations: %d applied", len(result.optimizations_applied)
+        )
         return result
 
     def _apply_aggressive_optimizations(
@@ -235,19 +239,20 @@ class AMDAdapter:
             )
 
         # 8. Apply torch.compile with max-autotune for aggressive optimization
-        if hasattr(torch, 'compile'):
+        if hasattr(torch, "compile"):
             try:
                 model = torch.compile(  # type: ignore[assignment]
-                    model,
-                    mode='max-autotune',
-                    fullgraph=False,
-                    dynamic=True
+                    model, mode="max-autotune", fullgraph=False, dynamic=True
                 )
-                result.optimizations_applied.append("Applied torch.compile max-autotune")
+                result.optimizations_applied.append(
+                    "Applied torch.compile max-autotune"
+                )
             except Exception as e:
                 logger.debug("torch.compile max-autotune not applied: %s", e)
 
-        logger.debug("Aggressive optimizations: %d applied", len(result.optimizations_applied))
+        logger.debug(
+            "Aggressive optimizations: %d applied", len(result.optimizations_applied)
+        )
         return result
 
     def _fuse_conv_bn_relu(self, model: torch.nn.Module) -> int:
@@ -273,17 +278,28 @@ class AMDAdapter:
             modules = list(model.named_modules())
 
             for i, (name, module) in enumerate(modules):
-                if isinstance(module, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Conv3d)):
+                if isinstance(
+                    module, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Conv3d)
+                ):
                     # Check if next module is BatchNorm
                     if i + 1 < len(modules):
                         next_name, next_module = modules[i + 1]
-                        if isinstance(next_module, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d, torch.nn.BatchNorm3d)):
+                        if isinstance(
+                            next_module,
+                            (
+                                torch.nn.BatchNorm2d,
+                                torch.nn.BatchNorm1d,
+                                torch.nn.BatchNorm3d,
+                            ),
+                        ):
                             # Check if BatchNorm is in eval mode (required for fusion)
                             if not next_module.training:
                                 # Use PyTorch's fuse_conv_bn_eval for fusion
                                 try:
-                                    fused_conv = torch.nn.utils.fusion.fuse_conv_bn_eval(
-                                        module, next_module
+                                    fused_conv = (
+                                        torch.nn.utils.fusion.fuse_conv_bn_eval(
+                                            module, next_module
+                                        )
                                     )
                                     # Replace in model
                                     self._replace_module(model, name, fused_conv)
@@ -330,11 +346,13 @@ class AMDAdapter:
                             logger.debug("Identified Linear+GELU pattern: %s", name)
 
             # Apply torch.compile if patterns found and available
-            if fused_count > 0 and hasattr(torch, 'compile'):
+            if fused_count > 0 and hasattr(torch, "compile"):
                 try:
                     # Use reduce-overhead mode which is good for inference
                     # This enables kernel fusion including Linear+GELU
-                    model = torch.compile(model, mode='reduce-overhead', fullgraph=False)  # type: ignore[assignment]
+                    model = torch.compile(
+                        model, mode="reduce-overhead", fullgraph=False
+                    )  # type: ignore[assignment]
                     logger.debug("Applied torch.compile for Linear+GELU fusion")
                 except Exception as e:
                     logger.debug("torch.compile not applied: %s", e)
@@ -346,7 +364,9 @@ class AMDAdapter:
             logger.warning("Linear+GELU fusion analysis failed: %s", e)
             return 0
 
-    def _replace_module(self, model: torch.nn.Module, name: str, new_module: torch.nn.Module) -> None:
+    def _replace_module(
+        self, model: torch.nn.Module, name: str, new_module: torch.nn.Module
+    ) -> None:
         """
         Replace a module in the model by name.
 
@@ -355,7 +375,7 @@ class AMDAdapter:
             name: Full module name (e.g., 'layer1.conv1')
             new_module: New module to replace with
         """
-        parts = name.split('.')
+        parts = name.split(".")
         parent = model
 
         for part in parts[:-1]:
@@ -396,7 +416,10 @@ class AMDAdapter:
 
             elif precision == "fp8":
                 # FP8 (CDNA3/CDNA4)
-                if self.config.architecture not in [AMDArchitecture.CDNA3, AMDArchitecture.CDNA4]:
+                if self.config.architecture not in [
+                    AMDArchitecture.CDNA3,
+                    AMDArchitecture.CDNA4,
+                ]:
                     logger.warning("FP8 only supported on CDNA3+ (MI300/MI350)")
                     return False
                 logger.info("FP8 precision configured (experimental)")
@@ -450,5 +473,6 @@ class AMDAdapter:
             "mixed_precision": self.config.enable_mixed_precision,
             "operator_fusion": self.config.enable_operator_fusion,
         }
+
 
 __all__ = ["AMDAdapter", "AMDOptimizationResult"]

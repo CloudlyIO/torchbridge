@@ -31,6 +31,7 @@ from .cache_utils import LRUCache
 
 logger = logging.getLogger(__name__)
 
+
 class TPUBackend(BaseBackend):
     """
     Core TPU backend for PyTorch/XLA integration.
@@ -78,7 +79,8 @@ class TPUBackend(BaseBackend):
         """Check if XLA/TPU is available (implements BaseBackend abstract method)."""
         try:
             import torch_xla  # noqa: F401
-            return self._xla_device is not None and str(self._xla_device) != 'cpu'
+
+            return self._xla_device is not None and str(self._xla_device) != "cpu"
         except ImportError:
             return False
 
@@ -92,7 +94,7 @@ class TPUBackend(BaseBackend):
                     device_type="cpu",
                     device_id=0,
                     device_name="CPU (XLA fallback)",
-                    is_available=False
+                    is_available=False,
                 )
 
             return DeviceInfo(
@@ -104,11 +106,11 @@ class TPUBackend(BaseBackend):
                 total_memory_bytes=self._estimate_tpu_memory(),
                 is_available=True,
                 properties={
-                    'version': self.tpu_config.version.value,
-                    'topology': self.tpu_config.topology.value,
-                    'world_size': self._world_size,
-                    'rank': self._rank,
-                }
+                    "version": self.tpu_config.version.value,
+                    "topology": self.tpu_config.topology.value,
+                    "world_size": self._world_size,
+                    "rank": self._rank,
+                },
             )
         except Exception:
             logger.debug("TPU device info detection failed", exc_info=True)
@@ -117,7 +119,7 @@ class TPUBackend(BaseBackend):
                 device_type="cpu",
                 device_id=0,
                 device_name="CPU (XLA fallback)",
-                is_available=False
+                is_available=False,
             )
 
     def _estimate_tpu_memory(self) -> int:
@@ -151,14 +153,14 @@ class TPUBackend(BaseBackend):
                 self._world_size,
                 self._rank,
                 self.tpu_config.version.value,
-                self.tpu_config.topology.value
+                self.tpu_config.topology.value,
             )
 
         except ImportError:
             warnings.warn(
                 "PyTorch/XLA not available. TPU backend will use CPU fallback.",
                 RuntimeWarning,
-            stacklevel=2,
+                stacklevel=2,
             )
             self._xla_device = torch.device("cpu")
 
@@ -169,7 +171,7 @@ class TPUBackend(BaseBackend):
         # Set basic XLA flags
         base_flags = [
             f"--xla_optimization_level={self.tpu_config.xla_optimization_level}",
-            "--xla_force_host_platform_device_count=1"
+            "--xla_force_host_platform_device_count=1",
         ]
 
         # Add dynamic shapes support
@@ -179,11 +181,13 @@ class TPUBackend(BaseBackend):
         # Version-specific optimizations
         if self.tpu_config.version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
             # High-performance TPUs
-            base_flags.extend([
-                "--xla_enable_async_collectives=true",
-                "--xla_tpu_enable_async_collective_fusion=true",
-                "--xla_tpu_enable_async_collective_fusion_multiple_steps=true"
-            ])
+            base_flags.extend(
+                [
+                    "--xla_enable_async_collectives=true",
+                    "--xla_tpu_enable_async_collective_fusion=true",
+                    "--xla_tpu_enable_async_collective_fusion_multiple_steps=true",
+                ]
+            )
 
         # Combine with user-provided flags
         all_flags = base_flags
@@ -258,7 +262,9 @@ class TPUBackend(BaseBackend):
             logger.debug("TPU device count query failed", exc_info=True)
             return 0
 
-    def prepare_data(self, data: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | dict[str, torch.Tensor]:
+    def prepare_data(
+        self, data: torch.Tensor | dict[str, torch.Tensor]
+    ) -> torch.Tensor | dict[str, torch.Tensor]:
         """
         Prepare data for TPU execution.
 
@@ -268,21 +274,34 @@ class TPUBackend(BaseBackend):
         Returns:
             Data prepared for TPU (moved to device and dtype-converted if needed)
         """
-        target_dtype = torch.bfloat16 if self.tpu_config.precision == "bfloat16" and self.tpu_config.mixed_precision else None
+        target_dtype = (
+            torch.bfloat16
+            if self.tpu_config.precision == "bfloat16"
+            and self.tpu_config.mixed_precision
+            else None
+        )
 
         if isinstance(data, torch.Tensor):
             result = data.to(self.device)
             # Only convert float32 tensors to target dtype (not int tensors)
-            if target_dtype and result.is_floating_point() and result.dtype == torch.float32:
+            if (
+                target_dtype
+                and result.is_floating_point()
+                and result.dtype == torch.float32
+            ):
                 result = result.to(dtype=target_dtype)
             return result
-        elif hasattr(data, 'items'):  # Dict-like objects (including BatchEncoding)
+        elif hasattr(data, "items"):  # Dict-like objects (including BatchEncoding)
             result: dict[str, Any] = {}
             for key, value in data.items():
                 if isinstance(value, torch.Tensor):
                     moved = value.to(self.device)
                     # Only convert float32 tensors (not int tensors like input_ids)
-                    if target_dtype and moved.is_floating_point() and moved.dtype == torch.float32:
+                    if (
+                        target_dtype
+                        and moved.is_floating_point()
+                        and moved.dtype == torch.float32
+                    ):
                         moved = moved.to(dtype=target_dtype)
                     result[key] = moved
                 else:
@@ -296,7 +315,7 @@ class TPUBackend(BaseBackend):
         try:
             xla_compat.sync()
             if self.is_distributed:
-                xla_compat.rendezvous('sync')
+                xla_compat.rendezvous("sync")
         except Exception:
             logger.debug("TPU synchronization failed", exc_info=True)
             pass
@@ -304,16 +323,16 @@ class TPUBackend(BaseBackend):
     def get_memory_stats(self) -> dict[str, Any]:
         """Get TPU memory statistics."""
         stats = {
-            'device': str(self.device),
-            'world_size': self.world_size,
-            'rank': self.rank,
-            'memory_fraction': self.tpu_config.memory_fraction,
-            'model_cache_stats': self._model_cache.get_stats(),
-            'compilation_cache_stats': self._compilation_cache.get_stats()
+            "device": str(self.device),
+            "world_size": self.world_size,
+            "rank": self.rank,
+            "memory_fraction": self.tpu_config.memory_fraction,
+            "model_cache_stats": self._model_cache.get_stats(),
+            "compilation_cache_stats": self._compilation_cache.get_stats(),
         }
 
         try:
-            stats['xla_device_count'] = xla_compat.get_device_count()
+            stats["xla_device_count"] = xla_compat.get_device_count()
         except Exception:
             logger.debug("TPU XLA device count query failed", exc_info=True)
             pass
@@ -332,8 +351,13 @@ class TPUBackend(BaseBackend):
             logger.debug("TPU cache sync failed", exc_info=True)
             pass
 
-    def save_model(self, model: nn.Module, path: str | Path,
-                   save_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> None:
+    def save_model(
+        self,
+        model: nn.Module,
+        path: str | Path,
+        save_optimizer: bool = False,
+        optimizer: torch.optim.Optimizer | None = None,
+    ) -> None:
         """
         Save TPU model with proper state synchronization.
 
@@ -349,18 +373,23 @@ class TPUBackend(BaseBackend):
         # Only save from rank 0 in distributed setup
         if self.rank == 0:
             checkpoint = {
-                'model_state_dict': model.state_dict(),
-                'tpu_config': self.tpu_config.__dict__,
-                'world_size': self.world_size
+                "model_state_dict": model.state_dict(),
+                "tpu_config": self.tpu_config.__dict__,
+                "world_size": self.world_size,
             }
 
             if save_optimizer and optimizer is not None:
-                checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+                checkpoint["optimizer_state_dict"] = optimizer.state_dict()
 
             torch.save(checkpoint, path)
 
-    def load_model(self, model: nn.Module, path: str | Path,
-                   load_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> nn.Module:
+    def load_model(
+        self,
+        model: nn.Module,
+        path: str | Path,
+        load_optimizer: bool = False,
+        optimizer: torch.optim.Optimizer | None = None,
+    ) -> nn.Module:
         """
         Load TPU model with proper device placement.
 
@@ -376,12 +405,16 @@ class TPUBackend(BaseBackend):
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
 
         # Load model state
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint["model_state_dict"])
         model = model.to(self.device)
 
         # Load optimizer state if requested
-        if load_optimizer and optimizer is not None and 'optimizer_state_dict' in checkpoint:
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if (
+            load_optimizer
+            and optimizer is not None
+            and "optimizer_state_dict" in checkpoint
+        ):
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
         return model
 

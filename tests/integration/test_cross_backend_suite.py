@@ -102,6 +102,7 @@ class TestQualificationReport:
 
     def _make_results(self, backend_names: list[str], passed: list[bool]):
         from torchbridge.testing.suite import BackendResult
+
         return [
             BackendResult(
                 backend_name=name,
@@ -151,7 +152,14 @@ class TestQualificationReport:
         results = self._make_results(["cpu"], [True])
         report = QualificationReport.from_results("DictTest", results)
         d = report.to_dict()
-        for key in ("suite_name", "timestamp", "passed", "total", "all_passed", "results"):
+        for key in (
+            "suite_name",
+            "timestamp",
+            "passed",
+            "total",
+            "all_passed",
+            "results",
+        ):
             assert key in d
 
     def test_failed_backends(self):

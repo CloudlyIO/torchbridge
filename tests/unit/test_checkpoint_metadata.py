@@ -157,8 +157,12 @@ class TestBackendSupportsDtype:
         assert not _backend_supports_dtype(HardwareBackend.TPU, torch.float8_e5m2)
 
     def test_standard_dtypes_supported_everywhere(self):
-        for backend in [HardwareBackend.CUDA, HardwareBackend.AMD,
-                        HardwareBackend.CPU, HardwareBackend.TPU]:
+        for backend in [
+            HardwareBackend.CUDA,
+            HardwareBackend.AMD,
+            HardwareBackend.CPU,
+            HardwareBackend.TPU,
+        ]:
             assert _backend_supports_dtype(backend, torch.float32)
             assert _backend_supports_dtype(backend, torch.bfloat16)
             assert _backend_supports_dtype(backend, torch.int8)
@@ -172,10 +176,8 @@ class TestPortabilityNormalizer:
             "weight": torch.randn(4, 4),
             "bias": torch.randn(4),
         }
-        normalized, dtype_map, device_map = (
-            PortabilityNormalizer.normalize_state_dict(
-                state, HardwareBackend.CUDA
-            )
+        normalized, dtype_map, device_map = PortabilityNormalizer.normalize_state_dict(
+            state, HardwareBackend.CUDA
         )
         assert "weight" in dtype_map
         assert dtype_map["weight"] == "float32"
@@ -195,10 +197,8 @@ class TestPortabilityNormalizer:
             "lr": 0.001,
             "name": "test",
         }
-        normalized, dtype_map, device_map = (
-            PortabilityNormalizer.normalize_state_dict(
-                state, HardwareBackend.CPU
-            )
+        normalized, dtype_map, device_map = PortabilityNormalizer.normalize_state_dict(
+            state, HardwareBackend.CPU
         )
         assert normalized["step"] == 100
         assert normalized["lr"] == 0.001
@@ -260,10 +260,8 @@ class TestPortabilityNormalizer:
         original = torch.randn(8, 8)
         state = {"weight": original.clone()}
 
-        normalized, dtype_map, device_map = (
-            PortabilityNormalizer.normalize_state_dict(
-                state, HardwareBackend.CPU
-            )
+        normalized, dtype_map, device_map = PortabilityNormalizer.normalize_state_dict(
+            state, HardwareBackend.CPU
         )
 
         metadata = CheckpointMetadata(

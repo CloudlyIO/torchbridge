@@ -61,9 +61,9 @@ class TestQuantizeSafeLoading:
         """Verify --trust-source appears in quantize help."""
         sub_parser = argparse.ArgumentParser()
         QuantizeCommand.register(
-            type('SP', (), {'add_parser': lambda *a, **k: sub_parser})()
+            type("SP", (), {"add_parser": lambda *a, **k: sub_parser})()
         )
-        assert '--trust-source' in sub_parser.format_help()
+        assert "--trust-source" in sub_parser.format_help()
 
 
 class TestNoUngatedWeightsOnlyFalse:
@@ -77,7 +77,7 @@ class TestNoUngatedWeightsOnlyFalse:
         for cls in [QuantizeCommand]:
             source = inspect.getsource(cls)
             torch_load_calls = re.findall(
-                r'torch\.load\([^)]*weights_only\s*=\s*False', source
+                r"torch\.load\([^)]*weights_only\s*=\s*False", source
             )
             assert len(torch_load_calls) == 0, (
                 f"{cls.__name__} has torch.load with literal weights_only=False: "

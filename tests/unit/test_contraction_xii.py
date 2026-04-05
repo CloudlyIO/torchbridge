@@ -403,7 +403,9 @@ class TestTopLevelDeletions:
         )
 
     def test_broken_benchmark_suite_script_deleted(self):
-        path = os.path.join(self._repo_root, "scripts", "benchmarks", "benchmark_suite.py")
+        path = os.path.join(
+            self._repo_root, "scripts", "benchmarks", "benchmark_suite.py"
+        )
         assert not os.path.exists(path), (
             "scripts/benchmarks/benchmark_suite.py imports deleted LLMConfig, LLMOptimizer — delete"
         )
@@ -422,7 +424,9 @@ class TestTopLevelDeletions:
 
     def test_benchmark_tests_for_deleted_cli_performance_benchmark_deleted(self):
         """tests/benchmark/test_cli_benchmarks.py tested the deleted benchmarks module."""
-        path = os.path.join(self._repo_root, "tests", "benchmark", "test_cli_benchmarks.py")
+        path = os.path.join(
+            self._repo_root, "tests", "benchmark", "test_cli_benchmarks.py"
+        )
         assert not os.path.exists(path), (
             "tests/benchmark/test_cli_benchmarks.py imports deleted benchmarks.cli_performance_benchmark — delete"
         )

@@ -15,6 +15,7 @@ import torch.nn as nn
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_linear(in_f: int = 64, out_f: int = 32) -> nn.Linear:
     return nn.Linear(in_f, out_f, bias=False)
 
@@ -22,6 +23,7 @@ def _make_linear(in_f: int = 64, out_f: int = 32) -> nn.Linear:
 # ---------------------------------------------------------------------------
 # LoRALinear
 # ---------------------------------------------------------------------------
+
 
 class TestLoRALinear:
     """LoRALinear: standard low-rank adaptation around nn.Linear."""
@@ -76,6 +78,7 @@ class TestLoRALinear:
 # QLoRALinear
 # ---------------------------------------------------------------------------
 
+
 class TestQLoRALinear:
     """QLoRALinear: quantized base + LoRA adapters (requires torchao)."""
 
@@ -86,7 +89,10 @@ class TestQLoRALinear:
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         x = torch.randn(2, 64)
@@ -100,7 +106,10 @@ class TestQLoRALinear:
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         trainable = [n for n, p in layer.named_parameters() if p.requires_grad]
@@ -109,10 +118,13 @@ class TestQLoRALinear:
         )
         # base_linear params must be frozen
         base_trainable = [
-            n for n, p in layer.named_parameters()
+            n
+            for n, p in layer.named_parameters()
             if p.requires_grad and "lora_A" not in n and "lora_B" not in n
         ]
-        assert not base_trainable, f"base_linear params must be frozen: {base_trainable}"
+        assert not base_trainable, (
+            f"base_linear params must be frozen: {base_trainable}"
+        )
 
     def test_merge_raises_not_implemented(self):
         pytest.importorskip("torchao")
@@ -121,7 +133,10 @@ class TestQLoRALinear:
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         with pytest.raises(NotImplementedError):
@@ -137,7 +152,10 @@ class TestQLoRALinear:
         base_for_lora = _make_linear(64, 32)
 
         qlora = QLoRALinear(
-            base_for_qlora, rank=4, alpha=8.0, dropout=0.0,
+            base_for_qlora,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         lora = LoRALinear(base_for_lora, rank=4, alpha=8.0, dropout=0.0)
@@ -161,6 +179,7 @@ class TestQLoRALinear:
 
         # Temporarily pretend torchao is unavailable
         import torchbridge.adapters.layers as layers_mod
+
         with patch.object(layers_mod, "_TORCHAO_AVAILABLE", False):
             from torchbridge.adapters.layers import QLoRALinear
             from torchbridge.precision.quantization.formats import QuantizationFormat
@@ -168,7 +187,10 @@ class TestQLoRALinear:
             base = _make_linear(64, 32)
             with pytest.raises(RuntimeError, match="torchao"):
                 QLoRALinear(
-                    base, rank=4, alpha=8.0, dropout=0.0,
+                    base,
+                    rank=4,
+                    alpha=8.0,
+                    dropout=0.0,
                     quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
                 )
 
@@ -176,6 +198,7 @@ class TestQLoRALinear:
 # ---------------------------------------------------------------------------
 # QDoRALinear
 # ---------------------------------------------------------------------------
+
 
 class TestQDoRALinear:
     """QDoRALinear: quantized base + DoRA adapters (requires torchao)."""
@@ -187,7 +210,10 @@ class TestQDoRALinear:
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         x = torch.randn(2, 64)
@@ -201,12 +227,16 @@ class TestQDoRALinear:
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         trainable_names = [n for n, p in layer.named_parameters() if p.requires_grad]
-        assert any("lora_A" in n or "lora_B" in n or "magnitude" in n
-                   for n in trainable_names)
+        assert any(
+            "lora_A" in n or "lora_B" in n or "magnitude" in n for n in trainable_names
+        )
 
     def test_merge_raises_not_implemented(self):
         pytest.importorskip("torchao")
@@ -215,7 +245,10 @@ class TestQDoRALinear:
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
-            base, rank=4, alpha=8.0, dropout=0.0,
+            base,
+            rank=4,
+            alpha=8.0,
+            dropout=0.0,
             quant_format=QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
         )
         with pytest.raises(NotImplementedError):

@@ -41,6 +41,7 @@ def _args(**kwargs):
 # Argument registration
 # ---------------------------------------------------------------------------
 
+
 class TestArgRegistration:
     def _make_parser(self):
         import argparse
@@ -73,9 +74,13 @@ class TestArgRegistration:
         try:
             sys.argv = [
                 "tb-validate",
-                "--compare", "cpu", "cpu",
-                "--model-family", "encoder",
-                "--model", "__smoke__",
+                "--compare",
+                "cpu",
+                "cpu",
+                "--model-family",
+                "encoder",
+                "--model",
+                "__smoke__",
             ]
             with mock.patch("sys.exit"):
                 try:
@@ -89,6 +94,7 @@ class TestArgRegistration:
 # ---------------------------------------------------------------------------
 # --model-family without --compare is silently ignored
 # ---------------------------------------------------------------------------
+
 
 class TestModelFamilyWithoutCompare:
     def test_model_family_without_compare_is_harmless(self):
@@ -105,6 +111,7 @@ class TestModelFamilyWithoutCompare:
 # ---------------------------------------------------------------------------
 # --model-family affects tolerance used in --compare
 # ---------------------------------------------------------------------------
+
 
 class TestModelFamilyToleranceEffect:
     def _run_compare(self, model_family=None, dtype="float32") -> object:
@@ -134,6 +141,7 @@ class TestModelFamilyToleranceEffect:
 
     def test_none_family_gives_base_entry(self):
         from torchbridge.testing.tolerance_db import _TOLERANCE_TABLE, ToleranceDB
+
         db = ToleranceDB()
         tol = db.get("cpu", "float32", model_family=None)
         expected_atol = _TOLERANCE_TABLE[("cpu", "float32")].atol
@@ -141,6 +149,7 @@ class TestModelFamilyToleranceEffect:
 
     def test_vision_language_has_notes(self):
         from torchbridge.testing.tolerance_db import ToleranceDB
+
         db = ToleranceDB()
         tol = db.get("cuda", "float32", model_family="vision-language")
         assert len(tol.notes) > 0

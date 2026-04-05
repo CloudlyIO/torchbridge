@@ -84,7 +84,8 @@ class TrainiumBackend(BaseBackend):
         """Check if Neuron/Trainium is available (implements BaseBackend abstract method)."""
         try:
             import torch_neuronx  # noqa: F401
-            return self._xla_device is not None and str(self._xla_device) != 'cpu'
+
+            return self._xla_device is not None and str(self._xla_device) != "cpu"
         except ImportError:
             return False
 
@@ -98,7 +99,7 @@ class TrainiumBackend(BaseBackend):
                     device_type="cpu",
                     device_id=0,
                     device_name="CPU (Neuron fallback)",
-                    is_available=False
+                    is_available=False,
                 )
 
             arch = self.trainium_config.architecture
@@ -111,12 +112,12 @@ class TrainiumBackend(BaseBackend):
                 total_memory_bytes=self._estimate_trainium_memory(),
                 is_available=True,
                 properties={
-                    'architecture': arch.value,
-                    'world_size': self._world_size,
-                    'rank': self._rank,
-                    'neuron_sdk_version': neuron_utilities.get_neuron_sdk_version(),
-                    'instance_type': neuron_utilities.detect_instance_type(),
-                }
+                    "architecture": arch.value,
+                    "world_size": self._world_size,
+                    "rank": self._rank,
+                    "neuron_sdk_version": neuron_utilities.get_neuron_sdk_version(),
+                    "instance_type": neuron_utilities.detect_instance_type(),
+                },
             )
         except Exception:
             logger.debug("Trainium device info detection failed", exc_info=True)
@@ -125,16 +126,16 @@ class TrainiumBackend(BaseBackend):
                 device_type="cpu",
                 device_id=0,
                 device_name="CPU (Neuron fallback)",
-                is_available=False
+                is_available=False,
             )
 
     def _estimate_trainium_memory(self) -> int:
         """Estimate Trainium HBM based on architecture."""
         memory_map = {
-            TrainiumArchitecture.TRN1: 32 * (1024**3),    # 32GB HBM
-            TrainiumArchitecture.TRN2: 96 * (1024**3),    # 96GB HBM
-            TrainiumArchitecture.TRN3: 144 * (1024**3),   # 144GB HBM3e
-            TrainiumArchitecture.INF2: 32 * (1024**3),    # 32GB HBM
+            TrainiumArchitecture.TRN1: 32 * (1024**3),  # 32GB HBM
+            TrainiumArchitecture.TRN2: 96 * (1024**3),  # 96GB HBM
+            TrainiumArchitecture.TRN3: 144 * (1024**3),  # 144GB HBM3e
+            TrainiumArchitecture.INF2: 32 * (1024**3),  # 32GB HBM
         }
         return memory_map.get(self.trainium_config.architecture, 32 * (1024**3))
 
@@ -157,7 +158,7 @@ class TrainiumBackend(BaseBackend):
                 self._xla_device,
                 self._world_size,
                 self._rank,
-                self.trainium_config.architecture.value
+                self.trainium_config.architecture.value,
             )
 
         except ImportError:
@@ -173,21 +174,23 @@ class TrainiumBackend(BaseBackend):
         import os
 
         # Set PJRT_DEVICE if not already set
-        os.environ.setdefault('PJRT_DEVICE', 'NEURON')
+        os.environ.setdefault("PJRT_DEVICE", "NEURON")
 
         # Set Neuron compiler flags
         if self.trainium_config.neuron_cc_flags:
-            existing = os.environ.get('NEURON_CC_FLAGS', '')
+            existing = os.environ.get("NEURON_CC_FLAGS", "")
             if existing:
-                os.environ['NEURON_CC_FLAGS'] = f"{existing} {self.trainium_config.neuron_cc_flags}"
+                os.environ["NEURON_CC_FLAGS"] = (
+                    f"{existing} {self.trainium_config.neuron_cc_flags}"
+                )
             else:
-                os.environ['NEURON_CC_FLAGS'] = self.trainium_config.neuron_cc_flags
+                os.environ["NEURON_CC_FLAGS"] = self.trainium_config.neuron_cc_flags
 
         # Enable graph caching
         if self.trainium_config.enable_graph_caching:
             os.environ.setdefault(
-                'NEURON_COMPILE_CACHE_URL',
-                os.path.join(tempfile.gettempdir(), 'neuron_cache'),
+                "NEURON_COMPILE_CACHE_URL",
+                os.path.join(tempfile.gettempdir(), "neuron_cache"),
             )
 
     @property
@@ -255,7 +258,9 @@ class TrainiumBackend(BaseBackend):
             logger.debug("NeuronCore device count query failed", exc_info=True)
             return 0
 
-    def prepare_data(self, data: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | dict[str, torch.Tensor]:
+    def prepare_data(
+        self, data: torch.Tensor | dict[str, torch.Tensor]
+    ) -> torch.Tensor | dict[str, torch.Tensor]:
         """
         Prepare data for Trainium execution.
 
@@ -265,19 +270,32 @@ class TrainiumBackend(BaseBackend):
         Returns:
             Data prepared for Trainium (moved to device and dtype-converted if needed)
         """
-        target_dtype = torch.bfloat16 if self.trainium_config.precision == "bfloat16" and self.trainium_config.mixed_precision else None
+        target_dtype = (
+            torch.bfloat16
+            if self.trainium_config.precision == "bfloat16"
+            and self.trainium_config.mixed_precision
+            else None
+        )
 
         if isinstance(data, torch.Tensor):
             result = data.to(self.device)
-            if target_dtype and result.is_floating_point() and result.dtype == torch.float32:
+            if (
+                target_dtype
+                and result.is_floating_point()
+                and result.dtype == torch.float32
+            ):
                 result = result.to(dtype=target_dtype)
             return result
-        elif hasattr(data, 'items'):
+        elif hasattr(data, "items"):
             result: dict[str, Any] = {}
             for key, value in data.items():
                 if isinstance(value, torch.Tensor):
                     moved = value.to(self.device)
-                    if target_dtype and moved.is_floating_point() and moved.dtype == torch.float32:
+                    if (
+                        target_dtype
+                        and moved.is_floating_point()
+                        and moved.dtype == torch.float32
+                    ):
                         moved = moved.to(dtype=target_dtype)
                     result[key] = moved
                 else:
@@ -291,7 +309,7 @@ class TrainiumBackend(BaseBackend):
         try:
             neuron_utilities.sync()
             if self.is_distributed:
-                neuron_utilities.rendezvous('sync')
+                neuron_utilities.rendezvous("sync")
         except Exception:
             logger.debug("Trainium synchronization failed", exc_info=True)
             pass
@@ -299,16 +317,16 @@ class TrainiumBackend(BaseBackend):
     def get_memory_stats(self) -> dict[str, Any]:
         """Get Trainium memory statistics."""
         stats = {
-            'device': str(self.device),
-            'world_size': self.world_size,
-            'rank': self.rank,
-            'memory_fraction': self.trainium_config.memory_fraction,
-            'model_cache_stats': self._model_cache.get_stats(),
-            'compilation_cache_stats': self._compilation_cache.get_stats()
+            "device": str(self.device),
+            "world_size": self.world_size,
+            "rank": self.rank,
+            "memory_fraction": self.trainium_config.memory_fraction,
+            "model_cache_stats": self._model_cache.get_stats(),
+            "compilation_cache_stats": self._compilation_cache.get_stats(),
         }
 
         try:
-            stats['xla_device_count'] = neuron_utilities.get_device_count()
+            stats["xla_device_count"] = neuron_utilities.get_device_count()
         except Exception:
             logger.debug("Trainium XLA device count query failed", exc_info=True)
             pass
@@ -326,8 +344,13 @@ class TrainiumBackend(BaseBackend):
             logger.debug("Trainium cache sync failed", exc_info=True)
             pass
 
-    def save_model(self, model: nn.Module, path: str | Path,
-                   save_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> None:
+    def save_model(
+        self,
+        model: nn.Module,
+        path: str | Path,
+        save_optimizer: bool = False,
+        optimizer: torch.optim.Optimizer | None = None,
+    ) -> None:
         """
         Save Trainium model with proper state synchronization.
 
@@ -341,18 +364,23 @@ class TrainiumBackend(BaseBackend):
 
         if self.rank == 0:
             checkpoint = {
-                'model_state_dict': model.state_dict(),
-                'trainium_config': self.trainium_config.__dict__,
-                'world_size': self.world_size
+                "model_state_dict": model.state_dict(),
+                "trainium_config": self.trainium_config.__dict__,
+                "world_size": self.world_size,
             }
 
             if save_optimizer and optimizer is not None:
-                checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+                checkpoint["optimizer_state_dict"] = optimizer.state_dict()
 
             torch.save(checkpoint, path)
 
-    def load_model(self, model: nn.Module, path: str | Path,
-                   load_optimizer: bool = False, optimizer: torch.optim.Optimizer | None = None) -> nn.Module:
+    def load_model(
+        self,
+        model: nn.Module,
+        path: str | Path,
+        load_optimizer: bool = False,
+        optimizer: torch.optim.Optimizer | None = None,
+    ) -> nn.Module:
         """
         Load Trainium model with proper device placement.
 
@@ -367,11 +395,15 @@ class TrainiumBackend(BaseBackend):
         """
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
 
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint["model_state_dict"])
         model = model.to(self.device)
 
-        if load_optimizer and optimizer is not None and 'optimizer_state_dict' in checkpoint:
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if (
+            load_optimizer
+            and optimizer is not None
+            and "optimizer_state_dict" in checkpoint
+        ):
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
         return model
 

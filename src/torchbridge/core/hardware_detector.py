@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class HardwareType(Enum):
     """Available hardware types."""
+
     NVIDIA_GPU = "nvidia_gpu"
     AMD_GPU = "amd_gpu"
     TRAINIUM = "trainium"
@@ -27,6 +28,7 @@ class HardwareType(Enum):
 
 class OptimizationCapability(Enum):
     """Optimization capabilities available on detected hardware."""
+
     FP8_TRAINING = "fp8_training"
     FLASH_ATTENTION_3 = "flash_attention_3"
     XLA_COMPILATION = "xla_compilation"
@@ -77,19 +79,15 @@ class HardwareProfile:
 
     def is_high_end_tpu(self) -> bool:
         """Check if high-end TPU (v5p, v6e, v7)."""
-        return self.tpu_version in [
-            TPUVersion.V5P,
-            TPUVersion.V6E,
-            TPUVersion.V7
-        ]
+        return self.tpu_version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]
 
     def supports_advanced_optimization(self) -> bool:
         """Check if hardware supports advanced optimizations."""
         return (
-            self.has_capability(OptimizationCapability.FP8_TRAINING) or
-            self.has_capability(OptimizationCapability.XLA_COMPILATION) or
-            self.is_nvidia_h100_or_better() or
-            self.is_high_end_tpu()
+            self.has_capability(OptimizationCapability.FP8_TRAINING)
+            or self.has_capability(OptimizationCapability.XLA_COMPILATION)
+            or self.is_nvidia_h100_or_better()
+            or self.is_high_end_tpu()
         )
 
 
@@ -122,11 +120,11 @@ class HardwareDetector:
         # Check AMD first since ROCm exposes CUDA API
         # Check Trainium before TPU since both use XLA
         profile = (
-            self._detect_amd_gpu() or
-            self._detect_nvidia_gpu() or
-            self._detect_trainium() or
-            self._detect_tpu() or
-            self._detect_cpu()
+            self._detect_amd_gpu()
+            or self._detect_nvidia_gpu()
+            or self._detect_trainium()
+            or self._detect_tpu()
+            or self._detect_cpu()
         )
 
         self._cached_profile = profile
@@ -138,7 +136,7 @@ class HardwareDetector:
             return None
 
         # Check if running on ROCm (HIP backend)
-        is_rocm = hasattr(torch.version, 'hip') and torch.version.hip is not None
+        is_rocm = hasattr(torch.version, "hip") and torch.version.hip is not None
 
         if not is_rocm:
             return None
@@ -159,7 +157,10 @@ class HardwareDetector:
 
             # CDNA3+ (MI300X/MI325X/MI350X) support FP8
             device_name_upper = props.name.upper()
-            if any(name in device_name_upper for name in ["MI300", "MI325", "MI350", "MI355"]):
+            if any(
+                name in device_name_upper
+                for name in ["MI300", "MI325", "MI350", "MI355"]
+            ):
                 capabilities.append(OptimizationCapability.FP8_TRAINING)
 
             return HardwareProfile(
@@ -212,7 +213,9 @@ class HardwareDetector:
                 compute_capability=(props.major, props.minor),
                 capabilities=capabilities,
                 total_memory_gb=props.total_memory / 1024**3,
-                cuda_version=torch.version.cuda if hasattr(torch.version, 'cuda') else None
+                cuda_version=torch.version.cuda
+                if hasattr(torch.version, "cuda")
+                else None,
             )
 
         except Exception:
@@ -251,14 +254,15 @@ class HardwareDetector:
 
             # Check for Neuron environment indicators first
             is_neuron = (
-                os.environ.get('NEURON_RT_NUM_CORES') is not None or
-                os.environ.get('PJRT_DEVICE') == 'NEURON'
+                os.environ.get("NEURON_RT_NUM_CORES") is not None
+                or os.environ.get("PJRT_DEVICE") == "NEURON"
             )
 
             if not is_neuron:
                 # Try importing torch_neuronx as a secondary check
                 try:
                     import torch_neuronx  # noqa: F401
+
                     is_neuron = True
                 except ImportError:
                     return None
@@ -267,16 +271,16 @@ class HardwareDetector:
                 return None
 
             # Detect chip generation from environment
-            instance_type = os.environ.get('INSTANCE_TYPE', '')
+            instance_type = os.environ.get("INSTANCE_TYPE", "")
             device_name = "AWS Trainium"
-            if 'trn2' in instance_type.lower():
+            if "trn2" in instance_type.lower():
                 device_name = "AWS Trainium2"
-            elif 'trn3' in instance_type.lower():
+            elif "trn3" in instance_type.lower():
                 device_name = "AWS Trainium3"
 
             # Get core count
             core_count = 1
-            neuron_cores = os.environ.get('NEURON_RT_NUM_CORES')
+            neuron_cores = os.environ.get("NEURON_RT_NUM_CORES")
             if neuron_cores:
                 try:
                     core_count = int(neuron_cores)
@@ -293,7 +297,7 @@ class HardwareDetector:
                 device_name=device_name,
                 device_count=core_count,
                 capabilities=capabilities,
-                xla_available=True
+                xla_available=True,
             )
 
         except Exception:
@@ -308,14 +312,17 @@ class HardwareDetector:
 
             # TPU is available - get device count (compatible with torch_xla 2.9+)
             device_count = 1
-            if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'device_count'):
+            if hasattr(torch_xla, "runtime") and hasattr(
+                torch_xla.runtime, "device_count"
+            ):
                 device_count = torch_xla.runtime.device_count()
-            elif hasattr(xm, 'xla_device_count'):
+            elif hasattr(xm, "xla_device_count"):
                 device_count = xm.xla_device_count()
 
             # Detect TPU version from environment
             import os
-            tpu_type = os.environ.get('TPU_TYPE', 'auto')
+
+            tpu_type = os.environ.get("TPU_TYPE", "auto")
             tpu_version = self._parse_tpu_version(tpu_type)
 
             # TPU capabilities
@@ -334,7 +341,7 @@ class HardwareDetector:
                 device_count=device_count,
                 tpu_version=tpu_version,
                 capabilities=capabilities,
-                xla_available=True
+                xla_available=True,
             )
 
         except ImportError:
@@ -344,15 +351,15 @@ class HardwareDetector:
         """Parse TPU version from type string."""
         tpu_type_lower = tpu_type.lower()
 
-        if 'v7' in tpu_type_lower:
+        if "v7" in tpu_type_lower:
             return TPUVersion.V7
-        elif 'v6e' in tpu_type_lower:
+        elif "v6e" in tpu_type_lower:
             return TPUVersion.V6E
-        elif 'v5p' in tpu_type_lower:
+        elif "v5p" in tpu_type_lower:
             return TPUVersion.V5P
-        elif 'v5e' in tpu_type_lower:
+        elif "v5e" in tpu_type_lower:
             return TPUVersion.V5E
-        elif 'v4' in tpu_type_lower:
+        elif "v4" in tpu_type_lower:
             return TPUVersion.V4
         else:
             return TPUVersion.AUTO
@@ -380,19 +387,18 @@ class HardwareDetector:
             profile = self.detect()
 
         if profile.hardware_type == HardwareType.NVIDIA_GPU:
-            return 'nvidia'
+            return "nvidia"
         elif profile.hardware_type == HardwareType.AMD_GPU:
-            return 'amd'
+            return "amd"
         elif profile.hardware_type == HardwareType.TRAINIUM:
-            return 'trainium'
+            return "trainium"
         elif profile.hardware_type == HardwareType.TPU:
-            return 'tpu'
+            return "tpu"
         else:
-            return 'cpu'
+            return "cpu"
 
     def get_recommended_optimization_level(
-        self,
-        profile: HardwareProfile | None = None
+        self, profile: HardwareProfile | None = None
     ) -> str:
         """
         Get recommended optimization level based on hardware.
@@ -408,14 +414,14 @@ class HardwareDetector:
 
         # Aggressive for high-end hardware
         if profile.is_nvidia_h100_or_better() or profile.is_high_end_tpu():
-            return 'aggressive'
+            return "aggressive"
 
         # Balanced for modern GPUs/TPUs
         if profile.supports_advanced_optimization():
-            return 'balanced'
+            return "balanced"
 
         # Conservative for older hardware or CPU
-        return 'conservative'
+        return "conservative"
 
 
 # Global detector instance

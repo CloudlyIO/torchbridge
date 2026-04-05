@@ -42,8 +42,11 @@ def _get_available_backends() -> list[Any]:
             logger.debug("Skipping backend %s: %s", bt, e)
 
     # Sort: put CPU last so failures on real hardware are surfaced first
-    cpu_backends = [b for b in available if getattr(b, "backend_type", None)
-                    and b.backend_type.value == "cpu"]
+    cpu_backends = [
+        b
+        for b in available
+        if getattr(b, "backend_type", None) and b.backend_type.value == "cpu"
+    ]
     non_cpu = [b for b in available if b not in cpu_backends]
     return non_cpu + cpu_backends
 
@@ -72,6 +75,7 @@ def cross_backend(
             out = model(torch.randn(2, 8).to(backend.device))
             assert out.shape == (2, 4)
     """
+
     def decorator(test_fn: Callable) -> Callable:
         @functools.wraps(test_fn)
         def wrapper(*args: Any, **kwargs: Any) -> dict[str, Any]:

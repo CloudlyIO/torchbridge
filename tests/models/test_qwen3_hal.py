@@ -44,9 +44,7 @@ class TestQwen3HAL:
         model, tokenizer = model_and_tokenizer
         inputs = tokenizer("The capital of France is", return_tensors="pt")
         with torch.no_grad():
-            generated = model.generate(
-                **inputs, max_new_tokens=10, do_sample=False
-            )
+            generated = model.generate(**inputs, max_new_tokens=10, do_sample=False)
         assert generated.shape[1] > inputs["input_ids"].shape[1]
         text = tokenizer.decode(generated[0], skip_special_tokens=True)
         assert len(text) > 0

@@ -256,7 +256,7 @@ class TestCheckpointRotation:
             ckpt_dir.mkdir()
             meta = CheckpointMetadata(
                 checkpoint_id=str(ckpt_dir),
-                timestamp=f"2026-02-{17+i:02d}T12:00:00+00:00",
+                timestamp=f"2026-02-{17 + i:02d}T12:00:00+00:00",
                 torchbridge_version="0.5.28",
                 pytorch_version="2.7.0",
                 backend="cpu",

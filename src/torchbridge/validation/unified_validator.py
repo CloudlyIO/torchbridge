@@ -17,6 +17,7 @@ from typing import Any
 
 try:
     import psutil
+
     _psutil_available = True
 except ImportError:
     _psutil_available = False
@@ -29,6 +30,7 @@ from ..core.config import TorchBridgeConfig, ValidationConfig
 
 class ValidationLevel(Enum):
     """Validation strictness levels."""
+
     MINIMAL = "minimal"
     STANDARD = "standard"
     STRICT = "strict"
@@ -37,6 +39,7 @@ class ValidationLevel(Enum):
 
 class ValidationResult(Enum):
     """Validation result status."""
+
     PASSED = "passed"
     WARNING = "warning"
     FAILED = "failed"
@@ -46,6 +49,7 @@ class ValidationResult(Enum):
 @dataclass
 class ValidationReport:
     """Individual validation test result."""
+
     name: str
     status: ValidationResult
     message: str
@@ -56,6 +60,7 @@ class ValidationReport:
 @dataclass
 class ValidationSummary:
     """Complete validation summary."""
+
     total_tests: int
     passed: int
     warnings: int
@@ -94,10 +99,12 @@ class UnifiedValidator:
         self.config = config or ValidationConfig()
         self.reports: list[ValidationReport] = []
 
-    def validate_model(self,
-                      model: nn.Module,
-                      input_shape: tuple[int, ...],
-                      level: ValidationLevel = ValidationLevel.STANDARD) -> ValidationSummary:
+    def validate_model(
+        self,
+        model: nn.Module,
+        input_shape: tuple[int, ...],
+        level: ValidationLevel = ValidationLevel.STANDARD,
+    ) -> ValidationSummary:
         """Comprehensive model validation."""
         self.reports.clear()
         start_time = time.time()
@@ -132,7 +139,9 @@ class UnifiedValidator:
 
         return self._generate_summary(time.time() - start_time)
 
-    def validate_tpu_compatibility(self, config: TorchBridgeConfig) -> ValidationSummary:
+    def validate_tpu_compatibility(
+        self, config: TorchBridgeConfig
+    ) -> ValidationSummary:
         """Validate TPU-specific configuration and compatibility."""
         self.reports.clear()
         start_time = time.time()
@@ -156,10 +165,9 @@ class UnifiedValidator:
 
         return self._generate_summary(time.time() - start_time)
 
-    def validate_tpu_model_optimization(self,
-                                      model: nn.Module,
-                                      tpu_config,
-                                      sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
+    def validate_tpu_model_optimization(
+        self, model: nn.Module, tpu_config, sample_inputs: torch.Tensor | None = None
+    ) -> ValidationSummary:
         """Validate TPU model optimization."""
         self.reports.clear()
         start_time = time.time()
@@ -182,7 +190,9 @@ class UnifiedValidator:
 
         return self._generate_summary(time.time() - start_time)
 
-    def validate_hardware_compatibility(self, device: torch.device) -> ValidationSummary:
+    def validate_hardware_compatibility(
+        self, device: torch.device
+    ) -> ValidationSummary:
         """Validate hardware compatibility and capabilities."""
         self.reports.clear()
         start_time = time.time()
@@ -204,7 +214,9 @@ class UnifiedValidator:
             # Check if model has parameters
             param_count = sum(p.numel() for p in model.parameters())
             if param_count == 0:
-                self._add_warning("Model has no parameters", {"param_count": param_count})
+                self._add_warning(
+                    "Model has no parameters", {"param_count": param_count}
+                )
             else:
                 self._add_success("Model structure valid", {"param_count": param_count})
 
@@ -232,7 +244,7 @@ class UnifiedValidator:
             metadata = {
                 "total_params": total_params,
                 "trainable_params": trainable_params,
-                "frozen_params": total_params - trainable_params
+                "frozen_params": total_params - trainable_params,
             }
 
             if total_params > 0:
@@ -243,11 +255,15 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Parameter validation failed: {e}")
 
-    def _validate_forward_pass(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
+    def _validate_forward_pass(
+        self, model: nn.Module, input_shape: tuple[int, ...]
+    ) -> None:
         """Validate model forward pass."""
         try:
             model.eval()
-            dummy_input = torch.randn(input_shape, device=next(model.parameters()).device)
+            dummy_input = torch.randn(
+                input_shape, device=next(model.parameters()).device
+            )
 
             with torch.no_grad():
                 output = model(dummy_input)
@@ -258,20 +274,31 @@ class UnifiedValidator:
                 has_inf = torch.isinf(output).any()
 
                 if has_nan or has_inf:
-                    self._add_failure(f"Forward pass produces NaN/Inf: nan={has_nan}, inf={has_inf}")
+                    self._add_failure(
+                        f"Forward pass produces NaN/Inf: nan={has_nan}, inf={has_inf}"
+                    )
                 else:
-                    self._add_success("Forward pass validation passed", {"output_shape": output_shape})
+                    self._add_success(
+                        "Forward pass validation passed", {"output_shape": output_shape}
+                    )
             else:
-                self._add_warning("Forward pass returns non-tensor output", {"output_type": type(output)})
+                self._add_warning(
+                    "Forward pass returns non-tensor output",
+                    {"output_type": type(output)},
+                )
 
         except Exception as e:
             self._add_failure(f"Forward pass validation failed: {e}")
 
-    def _validate_gradient_flow(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
+    def _validate_gradient_flow(
+        self, model: nn.Module, input_shape: tuple[int, ...]
+    ) -> None:
         """Validate gradient flow through model."""
         try:
             model.train()
-            dummy_input = torch.randn(input_shape, device=next(model.parameters()).device, requires_grad=True)
+            dummy_input = torch.randn(
+                input_shape, device=next(model.parameters()).device, requires_grad=True
+            )
 
             output = model(dummy_input)
             if isinstance(output, torch.Tensor):
@@ -286,20 +313,22 @@ class UnifiedValidator:
                         grad_norm += param.grad.data.norm(2).item() ** 2
                         param_count += 1
 
-                grad_norm = grad_norm ** 0.5
+                grad_norm = grad_norm**0.5
 
                 if grad_norm > 0:
-                    self._add_success("Gradient flow validation passed", {
-                        "grad_norm": grad_norm,
-                        "params_with_grad": param_count
-                    })
+                    self._add_success(
+                        "Gradient flow validation passed",
+                        {"grad_norm": grad_norm, "params_with_grad": param_count},
+                    )
                 else:
                     self._add_failure("No gradients detected")
 
         except Exception as e:
             self._add_failure(f"Gradient flow validation failed: {e}")
 
-    def _validate_memory_usage(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
+    def _validate_memory_usage(
+        self, model: nn.Module, input_shape: tuple[int, ...]
+    ) -> None:
         """Validate memory usage patterns."""
         try:
             if torch.cuda.is_available():
@@ -308,28 +337,38 @@ class UnifiedValidator:
             initial_memory = self._get_memory_usage()
 
             # Forward pass
-            dummy_input = torch.randn(input_shape, device=next(model.parameters()).device)
+            dummy_input = torch.randn(
+                input_shape, device=next(model.parameters()).device
+            )
             model(dummy_input)
 
             peak_memory = self._get_memory_usage()
             memory_usage = peak_memory - initial_memory
 
-            threshold = self.config.memory_threshold_gb * 1024 * 1024 * 1024  # Convert GB to bytes
+            threshold = (
+                self.config.memory_threshold_gb * 1024 * 1024 * 1024
+            )  # Convert GB to bytes
 
             if memory_usage > threshold:
-                self._add_warning("High memory usage detected", {
-                    "memory_usage_mb": memory_usage / (1024 * 1024),
-                    "threshold_gb": self.config.memory_threshold_gb
-                })
+                self._add_warning(
+                    "High memory usage detected",
+                    {
+                        "memory_usage_mb": memory_usage / (1024 * 1024),
+                        "threshold_gb": self.config.memory_threshold_gb,
+                    },
+                )
             else:
-                self._add_success("Memory usage within limits", {
-                    "memory_usage_mb": memory_usage / (1024 * 1024)
-                })
+                self._add_success(
+                    "Memory usage within limits",
+                    {"memory_usage_mb": memory_usage / (1024 * 1024)},
+                )
 
         except Exception as e:
             self._add_failure(f"Memory validation failed: {e}")
 
-    def _validate_numerical_stability(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
+    def _validate_numerical_stability(
+        self, model: nn.Module, input_shape: tuple[int, ...]
+    ) -> None:
         """Validate numerical stability."""
         try:
             model.eval()
@@ -338,8 +377,8 @@ class UnifiedValidator:
             # Test with different input ranges
             test_inputs = [
                 torch.randn(input_shape, device=device) * 0.1,  # Small values
-                torch.randn(input_shape, device=device),        # Normal values
-                torch.randn(input_shape, device=device) * 10,   # Large values
+                torch.randn(input_shape, device=device),  # Normal values
+                torch.randn(input_shape, device=device) * 10,  # Large values
             ]
 
             stable = True
@@ -359,7 +398,9 @@ class UnifiedValidator:
         except Exception as e:
             self._add_failure(f"Numerical stability validation failed: {e}")
 
-    def _validate_performance_characteristics(self, model: nn.Module, input_shape: tuple[int, ...]) -> None:
+    def _validate_performance_characteristics(
+        self, model: nn.Module, input_shape: tuple[int, ...]
+    ) -> None:
         """Validate performance characteristics."""
         try:
             model.eval()
@@ -384,11 +425,14 @@ class UnifiedValidator:
             avg_time = sum(times) / len(times)
             std_time = (sum((t - avg_time) ** 2 for t in times) / len(times)) ** 0.5
 
-            self._add_success("Performance characteristics validated", {
-                "avg_time_ms": avg_time * 1000,
-                "std_time_ms": std_time * 1000,
-                "throughput_fps": 1.0 / avg_time
-            })
+            self._add_success(
+                "Performance characteristics validated",
+                {
+                    "avg_time_ms": avg_time * 1000,
+                    "std_time_ms": std_time * 1000,
+                    "throughput_fps": 1.0 / avg_time,
+                },
+            )
 
         except Exception as e:
             self._add_failure(f"Performance validation failed: {e}")
@@ -397,7 +441,7 @@ class UnifiedValidator:
     def _validate_precision_config(self, config) -> None:
         """Validate precision configuration."""
         try:
-            if hasattr(config, 'memory_budget'):
+            if hasattr(config, "memory_budget"):
                 if not (0.0 <= config.memory_budget <= 1.0):
                     self._add_failure("Memory budget must be between 0 and 1")
                 else:
@@ -410,7 +454,7 @@ class UnifiedValidator:
     def _validate_memory_config(self, config) -> None:
         """Validate memory configuration."""
         try:
-            if hasattr(config, 'memory_fraction'):
+            if hasattr(config, "memory_fraction"):
                 if not (0.0 <= config.memory_fraction <= 1.0):
                     self._add_failure("Memory fraction must be between 0 and 1")
                 else:
@@ -439,12 +483,15 @@ class UnifiedValidator:
         try:
             if torch.cuda.is_available():
                 props = torch.cuda.get_device_properties(device.index or 0)
-                self._add_success("CUDA capabilities validated", {
-                    "name": props.name,
-                    "major": props.major,
-                    "minor": props.minor,
-                    "total_memory_gb": props.total_memory / (1024**3)
-                })
+                self._add_success(
+                    "CUDA capabilities validated",
+                    {
+                        "name": props.name,
+                        "major": props.major,
+                        "minor": props.minor,
+                        "total_memory_gb": props.total_memory / (1024**3),
+                    },
+                )
         except Exception as e:
             self._add_failure(f"CUDA validation failed: {e}")
 
@@ -466,7 +513,9 @@ class UnifiedValidator:
         """Validate memory availability."""
         try:
             if device.type == "cuda" and torch.cuda.is_available():
-                memory_free = torch.cuda.get_device_properties(device.index or 0).total_memory
+                memory_free = torch.cuda.get_device_properties(
+                    device.index or 0
+                ).total_memory
                 memory_gb = memory_free / (1024**3)
 
                 if memory_gb < 1.0:
@@ -479,7 +528,9 @@ class UnifiedValidator:
                     memory_gb = psutil.virtual_memory().total / (1024**3)
                     self._add_success(f"System memory: {memory_gb:.1f}GB")
                 else:
-                    self._add_warning("System memory check unavailable (psutil not installed)")
+                    self._add_warning(
+                        "System memory check unavailable (psutil not installed)"
+                    )
         except Exception as e:
             self._add_failure(f"Memory availability validation failed: {e}")
 
@@ -510,33 +561,39 @@ class UnifiedValidator:
 
     def _add_success(self, message: str, metadata: dict | None = None) -> None:
         """Add successful validation result."""
-        self.reports.append(ValidationReport(
-            name=f"test_{len(self.reports)}",
-            status=ValidationResult.PASSED,
-            message=message,
-            execution_time=0.0,
-            metadata=metadata or {}
-        ))
+        self.reports.append(
+            ValidationReport(
+                name=f"test_{len(self.reports)}",
+                status=ValidationResult.PASSED,
+                message=message,
+                execution_time=0.0,
+                metadata=metadata or {},
+            )
+        )
 
     def _add_warning(self, message: str, metadata: dict | None = None) -> None:
         """Add warning validation result."""
-        self.reports.append(ValidationReport(
-            name=f"test_{len(self.reports)}",
-            status=ValidationResult.WARNING,
-            message=message,
-            execution_time=0.0,
-            metadata=metadata or {}
-        ))
+        self.reports.append(
+            ValidationReport(
+                name=f"test_{len(self.reports)}",
+                status=ValidationResult.WARNING,
+                message=message,
+                execution_time=0.0,
+                metadata=metadata or {},
+            )
+        )
 
     def _add_failure(self, message: str, metadata: dict | None = None) -> None:
         """Add failed validation result."""
-        self.reports.append(ValidationReport(
-            name=f"test_{len(self.reports)}",
-            status=ValidationResult.FAILED,
-            message=message,
-            execution_time=0.0,
-            metadata=metadata or {}
-        ))
+        self.reports.append(
+            ValidationReport(
+                name=f"test_{len(self.reports)}",
+                status=ValidationResult.FAILED,
+                message=message,
+                execution_time=0.0,
+                metadata=metadata or {},
+            )
+        )
 
     def _generate_summary(self, execution_time: float) -> ValidationSummary:
         """Generate validation summary from reports."""
@@ -552,7 +609,7 @@ class UnifiedValidator:
             failed=failed,
             skipped=skipped,
             execution_time=execution_time,
-            reports=self.reports.copy()
+            reports=self.reports.copy(),
         )
 
     # TPU-specific validation methods
@@ -576,14 +633,20 @@ class UnifiedValidator:
 
             # Check compilation mode
             if tpu_config.compilation_mode not in TPUCompilationMode:
-                self._add_failure(f"Invalid TPU compilation mode: {tpu_config.compilation_mode}")
+                self._add_failure(
+                    f"Invalid TPU compilation mode: {tpu_config.compilation_mode}"
+                )
             else:
-                self._add_success(f"TPU compilation mode valid: {tpu_config.compilation_mode.value}")
+                self._add_success(
+                    f"TPU compilation mode valid: {tpu_config.compilation_mode.value}"
+                )
 
             # Check precision setting
-            valid_precisions = ['bfloat16', 'float16', 'float32']
+            valid_precisions = ["bfloat16", "float16", "float32"]
             if tpu_config.precision not in valid_precisions:
-                self._add_warning(f"TPU precision '{tpu_config.precision}' may not be optimal. Consider: {valid_precisions}")
+                self._add_warning(
+                    f"TPU precision '{tpu_config.precision}' may not be optimal. Consider: {valid_precisions}"
+                )
             else:
                 self._add_success(f"TPU precision valid: {tpu_config.precision}")
 
@@ -602,7 +665,7 @@ class UnifiedValidator:
             # Check XLA device (compatible with torch_xla 2.9+)
             try:
                 # Use new API if available
-                if hasattr(torch_xla, 'device'):
+                if hasattr(torch_xla, "device"):
                     device = torch_xla.device()
                 else:
                     device = xm.xla_device()
@@ -613,9 +676,11 @@ class UnifiedValidator:
             # Check XLA world size (compatible with torch_xla 2.9+)
             try:
                 # Use new runtime API if available
-                if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+                if hasattr(torch_xla, "runtime") and hasattr(
+                    torch_xla.runtime, "world_size"
+                ):
                     world_size = torch_xla.runtime.world_size()
-                elif hasattr(xm, 'xrt_world_size'):
+                elif hasattr(xm, "xrt_world_size"):
                     world_size = xm.xrt_world_size()
                 else:
                     world_size = 1
@@ -623,41 +688,59 @@ class UnifiedValidator:
                 self._add_success(f"XLA world size: {world_size}")
 
                 if world_size > 1 and tpu_config.topology == "single":
-                    self._add_warning("Multi-device XLA detected but TPU topology set to 'single'")
+                    self._add_warning(
+                        "Multi-device XLA detected but TPU topology set to 'single'"
+                    )
 
             except Exception as e:
                 self._add_warning(f"XLA world size check failed: {str(e)}")
 
         except ImportError:
-            self._add_warning("PyTorch/XLA not available - TPU functionality will be limited")
+            self._add_warning(
+                "PyTorch/XLA not available - TPU functionality will be limited"
+            )
 
     def _validate_tpu_memory_config(self, tpu_config) -> None:
         """Validate TPU memory configuration."""
         # Memory fraction validation
         if not 0.1 <= tpu_config.memory_fraction <= 1.0:
-            self._add_failure(f"TPU memory fraction {tpu_config.memory_fraction} must be between 0.1 and 1.0")
+            self._add_failure(
+                f"TPU memory fraction {tpu_config.memory_fraction} must be between 0.1 and 1.0"
+            )
         else:
-            self._add_success(f"TPU memory fraction valid: {tpu_config.memory_fraction}")
+            self._add_success(
+                f"TPU memory fraction valid: {tpu_config.memory_fraction}"
+            )
 
         # Gradient checkpointing validation
         if tpu_config.gradient_checkpointing:
             self._add_success("TPU gradient checkpointing enabled")
         else:
-            self._add_warning("TPU gradient checkpointing disabled - may increase memory usage")
+            self._add_warning(
+                "TPU gradient checkpointing disabled - may increase memory usage"
+            )
 
     def _validate_tpu_compilation_config(self, tpu_config) -> None:
         """Validate TPU compilation settings."""
         # XLA optimization level
         if not 0 <= tpu_config.xla_optimization_level <= 3:
-            self._add_failure(f"XLA optimization level {tpu_config.xla_optimization_level} must be 0-3")
+            self._add_failure(
+                f"XLA optimization level {tpu_config.xla_optimization_level} must be 0-3"
+            )
         else:
-            self._add_success(f"XLA optimization level valid: {tpu_config.xla_optimization_level}")
+            self._add_success(
+                f"XLA optimization level valid: {tpu_config.xla_optimization_level}"
+            )
 
         # Dynamic shapes validation
         if tpu_config.enable_xla_dynamic_shapes:
-            self._add_success("XLA dynamic shapes enabled - supports variable input sizes")
+            self._add_success(
+                "XLA dynamic shapes enabled - supports variable input sizes"
+            )
         else:
-            self._add_warning("XLA dynamic shapes disabled - input sizes must be static")
+            self._add_warning(
+                "XLA dynamic shapes disabled - input sizes must be static"
+            )
 
     def _validate_tpu_version_compatibility(self, tpu_config) -> None:
         """Validate TPU version-specific features."""
@@ -666,14 +749,20 @@ class UnifiedValidator:
         # High-performance features for newer TPUs
         if tpu_config.version in [TPUVersion.V5P, TPUVersion.V6E, TPUVersion.V7]:
             if tpu_config.xla_optimization_level < 2:
-                self._add_warning("Consider using higher XLA optimization level for high-performance TPUs")
+                self._add_warning(
+                    "Consider using higher XLA optimization level for high-performance TPUs"
+                )
             if tpu_config.memory_fraction < 0.9:
-                self._add_warning("High-performance TPUs can typically use higher memory fractions")
+                self._add_warning(
+                    "High-performance TPUs can typically use higher memory fractions"
+                )
 
         # Cost-optimized TPU settings
         elif tpu_config.version == TPUVersion.V5E:
             if tpu_config.xla_optimization_level > 1:
-                self._add_warning("V5E TPUs may benefit from lower optimization levels for stability")
+                self._add_warning(
+                    "V5E TPUs may benefit from lower optimization levels for stability"
+                )
 
     def _validate_tpu_model_structure(self, model: nn.Module, tpu_config) -> None:
         """Validate model structure for TPU optimization."""
@@ -683,18 +772,26 @@ class UnifiedValidator:
                 in_features, out_features = module.in_features, module.out_features
 
                 if in_features % 8 != 0:
-                    self._add_warning(f"Linear layer {name} input features ({in_features}) not divisible by 8")
+                    self._add_warning(
+                        f"Linear layer {name} input features ({in_features}) not divisible by 8"
+                    )
                 if out_features % 8 != 0:
-                    self._add_warning(f"Linear layer {name} output features ({out_features}) not divisible by 8")
+                    self._add_warning(
+                        f"Linear layer {name} output features ({out_features}) not divisible by 8"
+                    )
 
             elif isinstance(module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
                 in_channels = module.in_channels
                 out_channels = module.out_channels
 
                 if in_channels % 8 != 0:
-                    self._add_warning(f"Conv layer {name} input channels ({in_channels}) not divisible by 8")
+                    self._add_warning(
+                        f"Conv layer {name} input channels ({in_channels}) not divisible by 8"
+                    )
                 if out_channels % 8 != 0:
-                    self._add_warning(f"Conv layer {name} output channels ({out_channels}) not divisible by 8")
+                    self._add_warning(
+                        f"Conv layer {name} output channels ({out_channels}) not divisible by 8"
+                    )
 
         self._add_success("TPU model structure validation completed")
 
@@ -705,30 +802,41 @@ class UnifiedValidator:
         for module in model.modules():
             if isinstance(module, (nn.ReLU, nn.GELU, nn.SiLU)):
                 activation_type = type(module).__name__
-                activation_counts[activation_type] = activation_counts.get(activation_type, 0) + 1
+                activation_counts[activation_type] = (
+                    activation_counts.get(activation_type, 0) + 1
+                )
 
         if activation_counts:
             self._add_success(f"TPU-optimized activations found: {activation_counts}")
 
         # Check for batch normalization
-        bn_count = sum(1 for m in model.modules()
-                      if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)))
+        bn_count = sum(
+            1
+            for m in model.modules()
+            if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d))
+        )
         if bn_count > 0:
             self._add_success(f"Batch normalization layers: {bn_count}")
 
-    def _validate_tpu_tensor_shapes(self, model: nn.Module, sample_inputs: torch.Tensor, tpu_config) -> None:
+    def _validate_tpu_tensor_shapes(
+        self, model: nn.Module, sample_inputs: torch.Tensor, tpu_config
+    ) -> None:
         """Validate tensor shapes for TPU efficiency."""
         # Check input shape alignment
         if len(sample_inputs.shape) >= 2:
             for dim in sample_inputs.shape:
                 if dim % 8 != 0:
-                    self._add_warning(f"Input dimension {dim} not divisible by 8 - may be suboptimal for TPU")
+                    self._add_warning(
+                        f"Input dimension {dim} not divisible by 8 - may be suboptimal for TPU"
+                    )
 
         # Test forward pass shape propagation
         try:
             with torch.no_grad():
                 output = model(sample_inputs)
-                self._add_success(f"Forward pass successful: {sample_inputs.shape} → {output.shape}")
+                self._add_success(
+                    f"Forward pass successful: {sample_inputs.shape} → {output.shape}"
+                )
         except Exception as e:
             self._add_failure(f"Forward pass failed: {str(e)}")
 
@@ -740,44 +848,58 @@ class UnifiedValidator:
 
         # TPU memory capacity estimates
         memory_estimates = {
-            "v4": 32 * 1024,    # 32GB
-            "v5e": 16 * 1024,   # 16GB
-            "v5p": 95 * 1024,   # 95GB
-            "v6e": 32 * 1024,   # 32GB estimated
-            "v7": 128 * 1024    # 128GB estimated
+            "v4": 32 * 1024,  # 32GB
+            "v5e": 16 * 1024,  # 16GB
+            "v5p": 95 * 1024,  # 95GB
+            "v6e": 32 * 1024,  # 32GB estimated
+            "v7": 128 * 1024,  # 128GB estimated
         }
 
         tpu_memory_mb = memory_estimates.get(tpu_config.version.value, 32 * 1024)
-        memory_utilization = param_size_mb / (tpu_memory_mb * tpu_config.memory_fraction)
+        memory_utilization = param_size_mb / (
+            tpu_memory_mb * tpu_config.memory_fraction
+        )
 
         if memory_utilization > 0.8:
             self._add_warning(f"High memory utilization: {memory_utilization:.2%}")
         elif memory_utilization > 0.5:
-            self._add_success(f"Reasonable memory utilization: {memory_utilization:.2%}")
+            self._add_success(
+                f"Reasonable memory utilization: {memory_utilization:.2%}"
+            )
         else:
             self._add_success(f"Low memory utilization: {memory_utilization:.2%}")
 
-    def _validate_tpu_performance_characteristics(self, model: nn.Module, tpu_config) -> None:
+    def _validate_tpu_performance_characteristics(
+        self, model: nn.Module, tpu_config
+    ) -> None:
         """Validate TPU performance characteristics."""
         # Check for performance-impacting patterns
-        sequential_count = sum(1 for m in model.modules() if isinstance(m, nn.Sequential))
+        sequential_count = sum(
+            1 for m in model.modules() if isinstance(m, nn.Sequential)
+        )
         if sequential_count > 10:
-            self._add_warning(f"High number of Sequential modules ({sequential_count}) may impact TPU performance")
+            self._add_warning(
+                f"High number of Sequential modules ({sequential_count}) may impact TPU performance"
+            )
 
         # Check for attention patterns
         attention_patterns = 0
         for name, module in model.named_modules():
-            if 'attention' in name.lower() or hasattr(module, 'attention'):
+            if "attention" in name.lower() or hasattr(module, "attention"):
                 attention_patterns += 1
 
         if attention_patterns > 0:
-            self._add_success(f"Attention patterns detected: {attention_patterns} (good for TPU)")
+            self._add_success(
+                f"Attention patterns detected: {attention_patterns} (good for TPU)"
+            )
 
         self._add_success("TPU performance characteristics validation completed")
 
     # NVIDIA-specific validation methods
 
-    def validate_nvidia_compatibility(self, config: TorchBridgeConfig) -> ValidationSummary:
+    def validate_nvidia_compatibility(
+        self, config: TorchBridgeConfig
+    ) -> ValidationSummary:
         """Validate NVIDIA-specific configuration and compatibility."""
         self.reports.clear()
         start_time = time.time()
@@ -801,10 +923,9 @@ class UnifiedValidator:
 
         return self._generate_summary(time.time() - start_time)
 
-    def validate_nvidia_model_optimization(self,
-                                          model: nn.Module,
-                                          nvidia_config,
-                                          sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
+    def validate_nvidia_model_optimization(
+        self, model: nn.Module, nvidia_config, sample_inputs: torch.Tensor | None = None
+    ) -> ValidationSummary:
         """Validate NVIDIA model optimization."""
         self.reports.clear()
         start_time = time.time()
@@ -835,7 +956,9 @@ class UnifiedValidator:
             if nvidia_config.architecture == NVIDIAArchitecture.AUTO:
                 self._add_success("NVIDIA architecture will be auto-detected")
             else:
-                self._add_success(f"NVIDIA architecture: {nvidia_config.architecture.value}")
+                self._add_success(
+                    f"NVIDIA architecture: {nvidia_config.architecture.value}"
+                )
 
             # Check FP8 settings
             if nvidia_config.fp8_enabled:
@@ -850,11 +973,17 @@ class UnifiedValidator:
 
             # Check Tensor Core version
             if nvidia_config.tensor_core_version >= 4:
-                self._add_success(f"Tensor Core version {nvidia_config.tensor_core_version} (latest generation)")
+                self._add_success(
+                    f"Tensor Core version {nvidia_config.tensor_core_version} (latest generation)"
+                )
             elif nvidia_config.tensor_core_version >= 3:
-                self._add_success(f"Tensor Core version {nvidia_config.tensor_core_version}")
+                self._add_success(
+                    f"Tensor Core version {nvidia_config.tensor_core_version}"
+                )
             else:
-                self._add_warning(f"Older Tensor Core version {nvidia_config.tensor_core_version}")
+                self._add_warning(
+                    f"Older Tensor Core version {nvidia_config.tensor_core_version}"
+                )
 
         except Exception as e:
             self._add_failure(f"NVIDIA configuration validation failed: {e}")
@@ -890,7 +1019,9 @@ class UnifiedValidator:
             if 0.0 < nvidia_config.memory_fraction <= 1.0:
                 self._add_success(f"Memory fraction: {nvidia_config.memory_fraction}")
             else:
-                self._add_warning(f"Invalid memory fraction: {nvidia_config.memory_fraction}")
+                self._add_warning(
+                    f"Invalid memory fraction: {nvidia_config.memory_fraction}"
+                )
 
         except Exception as e:
             self._add_failure(f"NVIDIA memory config validation failed: {e}")
@@ -912,7 +1043,9 @@ class UnifiedValidator:
                     if nvidia_config.fp8_recipe == "DelayedScaling":
                         self._add_success("Using DelayedScaling FP8 recipe")
                     else:
-                        self._add_warning(f"Unknown FP8 recipe: {nvidia_config.fp8_recipe}")
+                        self._add_warning(
+                            f"Unknown FP8 recipe: {nvidia_config.fp8_recipe}"
+                        )
                 else:
                     self._add_warning("FP8 not supported on current architecture")
 
@@ -953,7 +1086,9 @@ class UnifiedValidator:
         if has_conv:
             self._add_success("Model contains Conv layers (good for CUDA)")
 
-    def _validate_nvidia_layer_optimization(self, model: nn.Module, nvidia_config) -> None:
+    def _validate_nvidia_layer_optimization(
+        self, model: nn.Module, nvidia_config
+    ) -> None:
         """Validate NVIDIA layer optimization."""
 
         optimal_div = 16 if nvidia_config.tensor_core_version >= 4 else 8
@@ -970,39 +1105,61 @@ class UnifiedValidator:
 
         self._add_success("NVIDIA layer optimization validation completed")
 
-    def _validate_tensor_core_optimization(self, model: nn.Module, nvidia_config) -> None:
+    def _validate_tensor_core_optimization(
+        self, model: nn.Module, nvidia_config
+    ) -> None:
         """Validate Tensor Core optimization."""
         linear_count = sum(1 for m in model.modules() if isinstance(m, nn.Linear))
 
         if linear_count > 0:
-            self._add_success(f"Model has {linear_count} Linear layers for Tensor Core acceleration")
+            self._add_success(
+                f"Model has {linear_count} Linear layers for Tensor Core acceleration"
+            )
 
         # Check for mixed precision
         if nvidia_config.mixed_precision_enabled:
             self._add_success("Mixed precision enabled for Tensor Core utilization")
 
-    def _validate_nvidia_memory_efficiency(self, model: nn.Module, nvidia_config) -> None:
+    def _validate_nvidia_memory_efficiency(
+        self, model: nn.Module, nvidia_config
+    ) -> None:
         """Validate NVIDIA memory efficiency."""
-        param_memory = sum(p.numel() * p.element_size() for p in model.parameters()) / 1024**2  # MB
+        param_memory = (
+            sum(p.numel() * p.element_size() for p in model.parameters()) / 1024**2
+        )  # MB
 
         if param_memory < 100:
-            self._add_success(f"Small model ({param_memory:.1f}MB) - efficient memory usage")
+            self._add_success(
+                f"Small model ({param_memory:.1f}MB) - efficient memory usage"
+            )
         elif param_memory < 1000:
-            self._add_success(f"Medium model ({param_memory:.1f}MB) - manageable memory usage")
+            self._add_success(
+                f"Medium model ({param_memory:.1f}MB) - manageable memory usage"
+            )
         else:
-            self._add_warning(f"Large model ({param_memory:.1f}MB) - consider gradient checkpointing")
+            self._add_warning(
+                f"Large model ({param_memory:.1f}MB) - consider gradient checkpointing"
+            )
 
-    def _validate_nvidia_performance_characteristics(self, model: nn.Module, nvidia_config) -> None:
+    def _validate_nvidia_performance_characteristics(
+        self, model: nn.Module, nvidia_config
+    ) -> None:
         """Validate NVIDIA performance characteristics."""
         # Check for performance-friendly patterns
-        sequential_count = sum(1 for m in model.modules() if isinstance(m, nn.Sequential))
+        sequential_count = sum(
+            1 for m in model.modules() if isinstance(m, nn.Sequential)
+        )
         if sequential_count > 0:
             self._add_success(f"Sequential modules: {sequential_count}")
 
         # Check for attention patterns
-        attention_count = sum(1 for name, _ in model.named_modules() if 'attention' in name.lower())
+        attention_count = sum(
+            1 for name, _ in model.named_modules() if "attention" in name.lower()
+        )
         if attention_count > 0:
-            self._add_success(f"Attention modules: {attention_count} (good for FlashAttention)")
+            self._add_success(
+                f"Attention modules: {attention_count} (good for FlashAttention)"
+            )
 
         self._add_success("NVIDIA performance characteristics validation completed")
 
@@ -1011,7 +1168,9 @@ class UnifiedValidator:
 default_validator = UnifiedValidator()
 
 
-def validate_model(model: nn.Module, input_shape: tuple[int, ...], **kwargs) -> ValidationSummary:
+def validate_model(
+    model: nn.Module, input_shape: tuple[int, ...], **kwargs
+) -> ValidationSummary:
     """Convenience function for model validation."""
     return default_validator.validate_model(model, input_shape, **kwargs)
 
@@ -1031,9 +1190,13 @@ def validate_tpu_configuration(config: TorchBridgeConfig) -> ValidationSummary:
     return default_validator.validate_tpu_compatibility(config)
 
 
-def validate_tpu_model(model: nn.Module, tpu_config, sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
+def validate_tpu_model(
+    model: nn.Module, tpu_config, sample_inputs: torch.Tensor | None = None
+) -> ValidationSummary:
     """Convenience function for TPU model optimization validation."""
-    return default_validator.validate_tpu_model_optimization(model, tpu_config, sample_inputs)
+    return default_validator.validate_tpu_model_optimization(
+        model, tpu_config, sample_inputs
+    )
 
 
 def validate_nvidia_configuration(config: TorchBridgeConfig) -> ValidationSummary:
@@ -1041,6 +1204,10 @@ def validate_nvidia_configuration(config: TorchBridgeConfig) -> ValidationSummar
     return default_validator.validate_nvidia_compatibility(config)
 
 
-def validate_nvidia_model(model: nn.Module, nvidia_config, sample_inputs: torch.Tensor | None = None) -> ValidationSummary:
+def validate_nvidia_model(
+    model: nn.Module, nvidia_config, sample_inputs: torch.Tensor | None = None
+) -> ValidationSummary:
     """Convenience function for NVIDIA model optimization validation."""
-    return default_validator.validate_nvidia_model_optimization(model, nvidia_config, sample_inputs)
+    return default_validator.validate_nvidia_model_optimization(
+        model, nvidia_config, sample_inputs
+    )

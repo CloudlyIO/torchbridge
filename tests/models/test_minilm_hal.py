@@ -47,7 +47,9 @@ class TestMiniLMHAL:
             "Models run on NVIDIA, AMD, Trainium, and TPU.",
             "Cross-backend validation is important.",
         ]
-        inputs = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")
+        inputs = tokenizer(
+            sentences, padding=True, truncation=True, return_tensors="pt"
+        )
         with torch.no_grad():
             outputs = model(**inputs)
         # CLS token embeddings
@@ -66,7 +68,9 @@ class TestMiniLMHAL:
             emb = outputs.last_hidden_state[:, 0]
             sim = torch.nn.functional.cosine_similarity(emb[0:1], emb[1:2]).item()
             if expected_higher:
-                assert sim > 0.5, f"Similar sentences should have high similarity, got {sim}"
+                assert sim > 0.5, (
+                    f"Similar sentences should have high similarity, got {sim}"
+                )
 
     @requires_gpu
     def test_cross_backend_consistency(self, model_and_tokenizer):

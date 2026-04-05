@@ -16,9 +16,11 @@ from torchbridge.cli.advisor import AdvisorCommand
 
 # ── CLI flag registration ──────────────────────────────────────────────────
 
+
 class TestHeterogeneousCLIFlags:
     def _get_parser(self):
         import argparse
+
         parser = argparse.ArgumentParser()
         subparsers = parser.add_subparsers()
         AdvisorCommand.register(subparsers)
@@ -26,32 +28,53 @@ class TestHeterogeneousCLIFlags:
 
     def test_heterogeneous_mode_accepted(self):
         parser = self._get_parser()
-        args = parser.parse_args([
-            "advisor", "--model-params", "7e9",
-            "--mode", "heterogeneous",
-            "--nvidia", "hopper:4",
-            "--amd", "cdna3:8",
-        ])
+        args = parser.parse_args(
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "heterogeneous",
+                "--nvidia",
+                "hopper:4",
+                "--amd",
+                "cdna3:8",
+            ]
+        )
         assert args.mode == "heterogeneous"
 
     def test_nvidia_flag_registered(self):
         parser = self._get_parser()
-        args = parser.parse_args([
-            "advisor", "--model-params", "7e9",
-            "--mode", "heterogeneous",
-            "--nvidia", "hopper:4",
-            "--amd", "cdna3:8",
-        ])
+        args = parser.parse_args(
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "heterogeneous",
+                "--nvidia",
+                "hopper:4",
+                "--amd",
+                "cdna3:8",
+            ]
+        )
         assert args.nvidia == "hopper:4"
 
     def test_amd_flag_registered(self):
         parser = self._get_parser()
-        args = parser.parse_args([
-            "advisor", "--model-params", "7e9",
-            "--mode", "heterogeneous",
-            "--nvidia", "hopper:4",
-            "--amd", "cdna3:8",
-        ])
+        args = parser.parse_args(
+            [
+                "advisor",
+                "--model-params",
+                "7e9",
+                "--mode",
+                "heterogeneous",
+                "--nvidia",
+                "hopper:4",
+                "--amd",
+                "cdna3:8",
+            ]
+        )
         assert args.amd == "cdna3:8"
 
     def test_nvidia_flag_default_is_none(self):
@@ -68,6 +91,7 @@ class TestHeterogeneousCLIFlags:
         import inspect
 
         from torchbridge.cli import advisor as advisor_mod
+
         src = inspect.getsource(advisor_mod)
         assert "--nvidia" in src
         assert "--amd" in src
@@ -75,6 +99,7 @@ class TestHeterogeneousCLIFlags:
 
 
 # ── _run_heterogeneous() execution ─────────────────────────────────────────
+
 
 class TestHeterogeneousAdvisorExecution:
     def _make_args(self, nvidia="hopper:4", amd="cdna3:8", model_params=7e9, ci=False):
@@ -138,11 +163,15 @@ class TestHeterogeneousAdvisorExecution:
 
 # ── v0.5.70: training-mode advisor rationale integration ─────────────────────
 
+
 class TestAdvisorRationaleInOutput:
     """End-to-end: human output must contain rationale notes for all TP/PP decisions."""
 
-    def _run_training(self, model_params: float, world_size: int = 4, capsys=None) -> str:
+    def _run_training(
+        self, model_params: float, world_size: int = 4, capsys=None
+    ) -> str:
         from torchbridge.cli.advisor import AdvisorCommand
+
         args = types.SimpleNamespace(
             mode="training",
             model_params=model_params,
@@ -161,6 +190,7 @@ class TestAdvisorRationaleInOutput:
     def test_human_output_contains_tp_rationale(self, capsys):
         """Training mode human output must include TP= rationale note."""
         from torchbridge.cli.advisor import AdvisorCommand
+
         args = types.SimpleNamespace(
             mode="training",
             model_params=7e9,
@@ -178,6 +208,7 @@ class TestAdvisorRationaleInOutput:
     def test_human_output_contains_pp_rationale(self, capsys):
         """Training mode human output must include PP= rationale note."""
         from torchbridge.cli.advisor import AdvisorCommand
+
         args = types.SimpleNamespace(
             mode="training",
             model_params=7e9,
@@ -195,6 +226,7 @@ class TestAdvisorRationaleInOutput:
     def test_small_model_rationale_explains_no_parallelism(self, capsys):
         """For a 1B model on 2 GPUs, output must explain TP=1 and PP=1."""
         from torchbridge.cli.advisor import AdvisorCommand
+
         args = types.SimpleNamespace(
             mode="training",
             model_params=1e9,
@@ -213,6 +245,7 @@ class TestAdvisorRationaleInOutput:
     def test_large_model_rationale_explains_tp_applied(self, capsys):
         """For a 70B model on 16 GPUs, output must explain why TP>1 is used."""
         from torchbridge.cli.advisor import AdvisorCommand
+
         args = types.SimpleNamespace(
             mode="training",
             model_params=70e9,

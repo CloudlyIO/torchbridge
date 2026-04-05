@@ -25,24 +25,30 @@ from torchbridge.models.llm.kv.quantized_cache import (
 class TestCompatibilityMatrixAcrossBackends:
     """End-to-end: compatibility matrix returns valid dtypes for every backend."""
 
-    @pytest.mark.parametrize("backend,arch", [
-        (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER),
-        (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE),
-        (HardwareBackend.AMD, AMDArchitecture.CDNA3),
-        (HardwareBackend.AMD, AMDArchitecture.CDNA2),
-        (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2),
-        (HardwareBackend.TPU, TPUVersion.V5E),
-        (HardwareBackend.CPU, None),
-    ])
+    @pytest.mark.parametrize(
+        "backend,arch",
+        [
+            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER),
+            (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA3),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA2),
+            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2),
+            (HardwareBackend.TPU, TPUVersion.V5E),
+            (HardwareBackend.CPU, None),
+        ],
+    )
     def test_get_supported_dtypes_non_empty(self, backend, arch):
         dtypes = KVCacheCompatibilityMatrix.get_supported_dtypes(backend, arch)
         assert len(dtypes) > 0, f"No dtypes for {backend.value}/{arch}"
 
-    @pytest.mark.parametrize("backend,arch", [
-        (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER),
-        (HardwareBackend.AMD, AMDArchitecture.CDNA3),
-        (HardwareBackend.CPU, None),
-    ])
+    @pytest.mark.parametrize(
+        "backend,arch",
+        [
+            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA3),
+            (HardwareBackend.CPU, None),
+        ],
+    )
     def test_optimal_dtype_has_spec(self, backend, arch):
         """Optimal dtype from the matrix must have a KV_DTYPE_SPECS entry."""
         optimal = KVCacheCompatibilityMatrix.get_optimal_dtype(backend, arch)
@@ -67,11 +73,16 @@ class TestCompatibilityMatrixAcrossBackends:
 class TestQuantizedKVCacheResolutionPipeline:
     """Integration: backend string → HardwareBackend → matrix → resolved dtype."""
 
-    @pytest.mark.parametrize("backend_name,expected_dtype", [
-        ("cpu", KVCacheDtype.PASSTHROUGH),
-        ("unknown_hw", KVCacheDtype.PASSTHROUGH),
-    ])
-    def test_cpu_and_fallback_resolve_to_passthrough(self, backend_name, expected_dtype):
+    @pytest.mark.parametrize(
+        "backend_name,expected_dtype",
+        [
+            ("cpu", KVCacheDtype.PASSTHROUGH),
+            ("unknown_hw", KVCacheDtype.PASSTHROUGH),
+        ],
+    )
+    def test_cpu_and_fallback_resolve_to_passthrough(
+        self, backend_name, expected_dtype
+    ):
         config = QuantizedCacheConfig()
         cache = QuantizedKVCache(config, backend_name=backend_name)
         assert cache.kv_dtype == expected_dtype
@@ -95,9 +106,13 @@ class TestMemoryFactorOrdering:
     """Verify memory factor ordering matches quantization depth."""
 
     def test_fp8_lower_than_fp16(self):
-        assert KV_DTYPE_SPECS[KVCacheDtype.FP8_E4M3].memory_factor < \
-               KV_DTYPE_SPECS[KVCacheDtype.FP16].memory_factor
+        assert (
+            KV_DTYPE_SPECS[KVCacheDtype.FP8_E4M3].memory_factor
+            < KV_DTYPE_SPECS[KVCacheDtype.FP16].memory_factor
+        )
 
     def test_nvfp4_lower_than_fp8(self):
-        assert KV_DTYPE_SPECS[KVCacheDtype.NVFP4].memory_factor < \
-               KV_DTYPE_SPECS[KVCacheDtype.FP8_E4M3].memory_factor
+        assert (
+            KV_DTYPE_SPECS[KVCacheDtype.NVFP4].memory_factor
+            < KV_DTYPE_SPECS[KVCacheDtype.FP8_E4M3].memory_factor
+        )
