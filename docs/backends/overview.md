@@ -145,9 +145,10 @@ backend.empty_cache()
 
 Each backend has unique capabilities and configuration options:
 
-- [NVIDIA](nvidia.md) -- CUDA, Tensor Cores, FP8, FlashAttention
+- [NVIDIA](nvidia.md) -- CUDA, Tensor Cores, FP8, attention dispatch
 - [AMD](amd.md) -- ROCm, HIP, Matrix Cores
 - [TPU](tpu.md) -- XLA, TPU pods, BF16 optimization
+- [Trainium](trainium.md) -- NeuronX, Trn1/Trn2/Trn3, graph compilation
 
 ## Migration Between Backends
 

@@ -11,7 +11,7 @@
 # Version: see pyproject.toml
 
 # Use NVIDIA CUDA base image with Python
-FROM nvidia/cuda:12.1-cudnn8-runtime-ubuntu22.04 AS base
+FROM nvidia/cuda:12.6.0-cudnn-runtime-ubuntu22.04 AS base
 
 ARG TORCHBRIDGE_VERSION="0.0.0"
 
@@ -41,7 +41,7 @@ WORKDIR /app
 # Install Python dependencies
 COPY requirements.txt ./
 RUN pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126 && \
     pip install -r requirements.txt
 
 # Copy application code

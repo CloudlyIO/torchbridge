@@ -102,7 +102,7 @@ torchserve --start --model-store model_store --models my_model.mar
 ### Production Image
 
 ```dockerfile
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-runtime
 
 WORKDIR /app
 COPY requirements.txt .
