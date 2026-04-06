@@ -35,11 +35,11 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class AWSConfig:
-    """AWS configuration with your specific setup."""
-    region: str = "us-east-1"
-    key_name: str = os.environ.get("AWS_KEY_NAME", "shahmod-gpu-key-east1")
-    ami_id: str = "ami-069562671a65789b9"  # Deep Learning PyTorch 2.9
-    vpc_id: str = "vpc-0f15c7f58720f216f"
+    """AWS configuration — set via environment variables or edit defaults."""
+    region: str = os.environ.get("AWS_REGION", "us-east-1")
+    key_name: str = os.environ.get("AWS_KEY_NAME", "torchbridge-key")
+    ami_id: str = os.environ.get("AWS_AMI_ID", "")  # Deep Learning Base AMI (Ubuntu 22.04)
+    vpc_id: str = os.environ.get("AWS_VPC_ID", "")
 
     # Instance types to test
     instance_types: dict[str, dict] = None

@@ -1,8 +1,9 @@
 TorchBridge Documentation
 =========================
 
-**TorchBridge** is a Hardware Abstraction Layer (HAL) for PyTorch.
-Write once, run on NVIDIA, AMD, TPU, Trainium, and CPU without code changes.
+**TorchBridge** validates that your model produces correct outputs across PyTorch backends
+and recommends optimal hardware configurations.
+Validate once. Trust everywhere.
 
 .. code-block:: bash
 

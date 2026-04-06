@@ -252,30 +252,36 @@ class TestCheckpointHealthTrigger:
 
     def test_utilization_drop_trigger(self):
         trigger = CheckpointHealthTrigger(utilization_drop_threshold=0.5)
-        should, reason = trigger.should_checkpoint({
-            "utilization": 0.2,
-            "avg_utilization": 0.9,
-        })
+        should, reason = trigger.should_checkpoint(
+            {
+                "utilization": 0.2,
+                "avg_utilization": 0.9,
+            }
+        )
         assert should is True
         assert "dropped" in reason.lower()
 
     def test_utilization_normal_no_trigger(self):
         trigger = CheckpointHealthTrigger(utilization_drop_threshold=0.5)
-        should, _ = trigger.should_checkpoint({
-            "utilization": 0.85,
-            "avg_utilization": 0.9,
-        })
+        should, _ = trigger.should_checkpoint(
+            {
+                "utilization": 0.85,
+                "avg_utilization": 0.9,
+            }
+        )
         assert should is False
 
     def test_healthy_device_no_trigger(self):
         trigger = CheckpointHealthTrigger()
-        should, reason = trigger.should_checkpoint({
-            "temperature_c": 65.0,
-            "health_trend": "stable",
-            "memory_errors": 0,
-            "utilization": 0.85,
-            "avg_utilization": 0.9,
-        })
+        should, reason = trigger.should_checkpoint(
+            {
+                "temperature_c": 65.0,
+                "health_trend": "stable",
+                "memory_errors": 0,
+                "utilization": 0.85,
+                "avg_utilization": 0.9,
+            }
+        )
         assert should is False
         assert reason == ""
 
@@ -287,9 +293,9 @@ class TestCheckpointHealthTrigger:
                 self.value = val
 
         trigger = CheckpointHealthTrigger()
-        should, reason = trigger.should_checkpoint({
-            "health_trend": FakeTrend("critical")
-        })
+        should, reason = trigger.should_checkpoint(
+            {"health_trend": FakeTrend("critical")}
+        )
         assert should is True
 
 
@@ -318,8 +324,18 @@ class TestClusterHealthEvaluation:
     def test_device_id_in_reason(self):
         trigger = CheckpointHealthTrigger()
         devices = [
-            {"device_id": "gpu:0", "temperature_c": 65.0, "health_trend": "stable", "memory_errors": 0},
-            {"device_id": "gpu:1", "temperature_c": 95.0, "health_trend": "stable", "memory_errors": 0},
+            {
+                "device_id": "gpu:0",
+                "temperature_c": 65.0,
+                "health_trend": "stable",
+                "memory_errors": 0,
+            },
+            {
+                "device_id": "gpu:1",
+                "temperature_c": 95.0,
+                "health_trend": "stable",
+                "memory_errors": 0,
+            },
         ]
         should, reason = trigger.evaluate_cluster_health(devices)
         assert should is True

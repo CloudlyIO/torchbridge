@@ -27,6 +27,7 @@ from torchbridge.core.errors import TorchBridgeError
 
 logger = logging.getLogger(__name__)
 
+
 class BackendError(TorchBridgeError):
     """
     Base exception for all backend errors.
@@ -43,7 +44,7 @@ class BackendError(TorchBridgeError):
         message: str,
         details: dict[str, Any] | None = None,
         *,
-        hint: str | None = None
+        hint: str | None = None,
     ):
         """
         Initialize backend error.
@@ -70,9 +71,11 @@ class BackendError(TorchBridgeError):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r}, details={self.details!r})"
 
+
 # =============================================================================
 # Device Availability Errors
 # =============================================================================
+
 
 class DeviceNotAvailableError(BackendError):
     """Raised when device or runtime is not available."""
@@ -84,35 +87,38 @@ class DeviceNotAvailableError(BackendError):
         if reason:
             message = f"{message}: {reason}"
         super().__init__(
-            message, {"backend": backend, "reason": reason},
-            hint=hint if hint is not None else self.default_hint
+            message,
+            {"backend": backend, "reason": reason},
+            hint=hint if hint is not None else self.default_hint,
         )
+
 
 class DeviceError(BackendError):
     """Raised when device operations fail."""
 
     def __init__(self, device_id: int, operation: str, error_message: str):
         message = f"Device {device_id} {operation} failed: {error_message}"
-        super().__init__(message, {
-            "device_id": device_id,
-            "operation": operation,
-            "error": error_message
-        })
+        super().__init__(
+            message,
+            {"device_id": device_id, "operation": operation, "error": error_message},
+        )
+
 
 # =============================================================================
 # Memory Errors
 # =============================================================================
 
+
 class MemoryError(BackendError):
     """Base exception for memory-related errors."""
+
     pass
+
 
 class OutOfMemoryError(MemoryError):
     """Raised when device runs out of memory."""
 
-    default_hint: str = (
-        "Try reducing batch_size or use gradient checkpointing"
-    )
+    default_hint: str = "Try reducing batch_size or use gradient checkpointing"
 
     def __init__(
         self,
@@ -120,23 +126,25 @@ class OutOfMemoryError(MemoryError):
         available_bytes: int | None = None,
         device: str = "unknown",
         *,
-        hint: str | None = None
+        hint: str | None = None,
     ):
         if required_bytes is not None and available_bytes is not None:
-            required_mb = required_bytes / (1024 ** 2)
-            available_mb = available_bytes / (1024 ** 2)
+            required_mb = required_bytes / (1024**2)
+            available_mb = available_bytes / (1024**2)
             message = f"Out of memory on {device}: required {required_mb:.1f}MB, available {available_mb:.1f}MB"
         else:
             message = f"Out of memory on {device}"
 
         super().__init__(
-            message, {
+            message,
+            {
                 "required_bytes": required_bytes,
                 "available_bytes": available_bytes,
-                "device": device
+                "device": device,
             },
-            hint=hint if hint is not None else self.default_hint
+            hint=hint if hint is not None else self.default_hint,
         )
+
 
 class MemoryAllocationError(MemoryError):
     """Raised when memory allocation fails."""
@@ -145,20 +153,22 @@ class MemoryAllocationError(MemoryError):
         message = f"Memory allocation failed during {operation}: {error_message}"
         super().__init__(message, {"operation": operation, "error": error_message})
 
+
 class MemoryPoolError(MemoryError):
     """Raised when memory pool operations fail."""
 
     def __init__(self, pool_id: str, operation: str, error_message: str):
         message = f"Memory pool '{pool_id}' {operation} failed: {error_message}"
-        super().__init__(message, {
-            "pool_id": pool_id,
-            "operation": operation,
-            "error": error_message
-        })
+        super().__init__(
+            message,
+            {"pool_id": pool_id, "operation": operation, "error": error_message},
+        )
+
 
 # =============================================================================
 # Compilation Errors
 # =============================================================================
+
 
 class CompilationError(BackendError):
     """Base exception for compilation failures."""
@@ -167,22 +177,27 @@ class CompilationError(BackendError):
         message = f"{compiler} compilation failed: {error_message}"
         super().__init__(message, {"compiler": compiler, "error": error_message})
 
+
 class KernelCompilationError(CompilationError):
     """Raised when kernel compilation fails."""
 
     def __init__(self, kernel_name: str, compiler: str, error_message: str):
         self.kernel_name = kernel_name
-        message = f"{compiler} compilation failed for kernel '{kernel_name}': {error_message}"
+        message = (
+            f"{compiler} compilation failed for kernel '{kernel_name}': {error_message}"
+        )
         # Call BackendError.__init__ directly to avoid double formatting
-        BackendError.__init__(self, message, {
-            "kernel": kernel_name,
-            "compiler": compiler,
-            "error": error_message
-        })
+        BackendError.__init__(
+            self,
+            message,
+            {"kernel": kernel_name, "compiler": compiler, "error": error_message},
+        )
+
 
 # =============================================================================
 # Optimization Errors
 # =============================================================================
+
 
 class OptimizationError(BackendError):
     """Raised when optimization operations fail."""
@@ -196,9 +211,11 @@ class OptimizationError(BackendError):
     ):
         message = f"Optimization ({optimization_type}) failed: {error_message}"
         super().__init__(
-            message, {"type": optimization_type, "error": error_message},
-            hint=hint if hint is not None else self.default_hint
+            message,
+            {"type": optimization_type, "error": error_message},
+            hint=hint if hint is not None else self.default_hint,
         )
+
 
 class ModelOptimizationError(OptimizationError):
     """Raised when model optimization fails."""
@@ -206,74 +223,82 @@ class ModelOptimizationError(OptimizationError):
     def __init__(self, model_name: str, optimization_type: str, error_message: str):
         self.model_name = model_name
         message = f"Model '{model_name}' optimization ({optimization_type}) failed: {error_message}"
-        BackendError.__init__(self, message, {
-            "model": model_name,
-            "type": optimization_type,
-            "error": error_message
-        })
+        BackendError.__init__(
+            self,
+            message,
+            {"model": model_name, "type": optimization_type, "error": error_message},
+        )
+
 
 # =============================================================================
 # Configuration Errors
 # =============================================================================
 
+
 class ConfigurationError(BackendError):
     """Raised when configuration validation fails."""
 
-    default_hint: str = (
-        "Check your TorchBridge config with torchbridge.get_config()"
-    )
+    default_hint: str = "Check your TorchBridge config with torchbridge.get_config()"
 
     def __init__(
         self, parameter: str, value: Any, reason: str, *, hint: str | None = None
     ):
         message = f"Invalid configuration for '{parameter}': {value} - {reason}"
         super().__init__(
-            message, {"parameter": parameter, "value": value, "reason": reason},
-            hint=hint if hint is not None else self.default_hint
+            message,
+            {"parameter": parameter, "value": value, "reason": reason},
+            hint=hint if hint is not None else self.default_hint,
         )
+
 
 class InvalidArchitectureError(ConfigurationError):
     """Raised when an unsupported architecture is specified."""
 
     def __init__(self, architecture: str, supported: list):
         message = f"Invalid architecture '{architecture}'. Supported: {supported}"
-        BackendError.__init__(self, message, {
-            "architecture": architecture,
-            "supported": supported
-        })
+        BackendError.__init__(
+            self, message, {"architecture": architecture, "supported": supported}
+        )
+
 
 # =============================================================================
 # Kernel Errors
 # =============================================================================
+
 
 class KernelError(BackendError):
     """Raised when kernel execution fails."""
 
     def __init__(self, kernel_name: str, error_code: int | None, error_message: str):
         if error_code is not None:
-            message = f"Kernel '{kernel_name}' failed with code {error_code}: {error_message}"
+            message = (
+                f"Kernel '{kernel_name}' failed with code {error_code}: {error_message}"
+            )
         else:
             message = f"Kernel '{kernel_name}' failed: {error_message}"
-        super().__init__(message, {
-            "kernel": kernel_name,
-            "error_code": error_code,
-            "error": error_message
-        })
+        super().__init__(
+            message,
+            {"kernel": kernel_name, "error_code": error_code, "error": error_message},
+        )
+
 
 class KernelLaunchError(KernelError):
     """Raised when kernel launch fails."""
+
     pass
+
 
 # =============================================================================
 # Utility Functions
 # =============================================================================
+
 
 def raise_or_warn(
     message: str,
     exception_class: type = BackendError,
     strict_mode: bool = False,
     log: logging.Logger | None = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Raise exception in strict mode, otherwise log warning.
@@ -296,29 +321,30 @@ def raise_or_warn(
         log_instance = log or logger
         log_instance.warning(f"{exception_class.__name__}: {message}")
 
+
 __all__ = [
     # Base
-    'BackendError',
+    "BackendError",
     # Device
-    'DeviceNotAvailableError',
-    'DeviceError',
+    "DeviceNotAvailableError",
+    "DeviceError",
     # Memory
-    'MemoryError',
-    'OutOfMemoryError',
-    'MemoryAllocationError',
-    'MemoryPoolError',
+    "MemoryError",
+    "OutOfMemoryError",
+    "MemoryAllocationError",
+    "MemoryPoolError",
     # Compilation
-    'CompilationError',
-    'KernelCompilationError',
+    "CompilationError",
+    "KernelCompilationError",
     # Optimization
-    'OptimizationError',
-    'ModelOptimizationError',
+    "OptimizationError",
+    "ModelOptimizationError",
     # Configuration
-    'ConfigurationError',
-    'InvalidArchitectureError',
+    "ConfigurationError",
+    "InvalidArchitectureError",
     # Kernel
-    'KernelError',
-    'KernelLaunchError',
+    "KernelError",
+    "KernelLaunchError",
     # Utility
-    'raise_or_warn',
+    "raise_or_warn",
 ]

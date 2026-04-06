@@ -1,4 +1,5 @@
 """CLI output validation tests — check meaningful output, not just exit codes."""
+
 import subprocess
 import sys
 

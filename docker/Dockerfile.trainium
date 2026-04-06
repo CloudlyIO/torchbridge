@@ -1,11 +1,12 @@
 # TorchBridge AWS Trainium Container
-# Optimized for training and inference on AWS Trainium (Trn1/Trn2/Trn3) instances
+# Provides a NeuronX environment for running TorchBridge CLI tools on AWS Trainium.
 #
 # Build:
 #   docker build -f docker/Dockerfile.trainium -t torchbridge:trainium .
 #
 # Run (on Trainium instance):
-#   docker run --device=/dev/neuron0 -p 8000:8000 torchbridge:trainium
+#   docker run --device=/dev/neuron0 torchbridge:trainium tb-validate --model ./model.pt
+#   docker run --device=/dev/neuron0 -it torchbridge:trainium /bin/bash
 #
 # Version: see pyproject.toml
 
@@ -33,9 +34,6 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install optional serving dependencies
-RUN pip install "fastapi>=0.100.0,<1.0" "uvicorn>=0.23.0,<1.0" "prometheus-client>=0.17.0,<1.0" "psutil>=5.9.0,<7.0"
-
 # Copy application code
 COPY src/ ./src/
 COPY pyproject.toml ./
@@ -51,21 +49,14 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-# Expose ports
-# 8000: FastAPI inference server
-# 9090: Prometheus metrics
-EXPOSE 8000 9090
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/live || exit 1
+    CMD tb-doctor || exit 1
 
-# Default command: Run FastAPI server
-CMD ["python", "-m", "uvicorn", "torchbridge.deployment.serving.fastapi_server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["tb-doctor"]
 
 # Labels
 LABEL org.opencontainers.image.title="TorchBridge Trainium" \
-      org.opencontainers.image.description="Training and inference container with AWS Trainium support" \
+      org.opencontainers.image.description="TorchBridge CLI and validation tools with AWS Trainium NeuronX support" \
       org.opencontainers.image.version="${TORCHBRIDGE_VERSION}" \
       org.opencontainers.image.vendor="TorchBridge" \
       org.opencontainers.image.source="https://github.com/CloudlyIO/torchbridge"

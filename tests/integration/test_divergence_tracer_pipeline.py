@@ -19,8 +19,10 @@ from torchbridge.testing.divergence import DivergenceTracer
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 class _DeepModel(nn.Module):
     """10-layer sequential linear model for testing max_layers cap."""
+
     def __init__(self, layers: int = 10, dim: int = 16) -> None:
         super().__init__()
         self.layers = nn.ModuleList([nn.Linear(dim, dim) for _ in range(layers)])
@@ -33,6 +35,7 @@ class _DeepModel(nn.Module):
 
 class _EmptyTensorLayer(nn.Module):
     """Module that emits a shape-[0, dim] tensor."""
+
     def __init__(self, dim: int = 16) -> None:
         super().__init__()
         self.dim = dim
@@ -43,6 +46,7 @@ class _EmptyTensorLayer(nn.Module):
 
 class _MixedModel(nn.Module):
     """Has both normal layers and a layer that emits empty tensors."""
+
     def __init__(self) -> None:
         super().__init__()
         self.linear1 = nn.Linear(16, 16)
@@ -56,6 +60,7 @@ class _MixedModel(nn.Module):
 
 
 # ── max_layers in pipeline ─────────────────────────────────────────────────────
+
 
 class TestMaxLayersInPipeline:
     def test_max_layers_caps_captures_on_deep_model(self):
@@ -108,6 +113,7 @@ class TestMaxLayersInPipeline:
 
 
 # ── Empty tensor in pipeline ───────────────────────────────────────────────────
+
 
 class TestEmptyTensorInPipeline:
     def test_pipeline_with_empty_tensor_layer_no_crash(self):
@@ -168,6 +174,7 @@ class TestEmptyTensorInPipeline:
 
 # ── Integration with tb-validate --per-layer ──────────────────────────────────
 
+
 class TestDivergenceTracerWithValidatePipeline:
     """End-to-end: per_layer=True feeds DivergenceTracer output into _run_compare result."""
 
@@ -191,6 +198,7 @@ class TestDivergenceTracerWithValidatePipeline:
         import json
 
         from torchbridge.cli.validate import ValidateCommand
+
         args = self._make_args()
         ValidateCommand._run_compare(args)
         out = capsys.readouterr().out
@@ -201,6 +209,7 @@ class TestDivergenceTracerWithValidatePipeline:
         import json
 
         from torchbridge.cli.validate import ValidateCommand
+
         args = self._make_args()
         ValidateCommand._run_compare(args)
         out = capsys.readouterr().out
@@ -216,6 +225,7 @@ class TestDivergenceTracerWithValidatePipeline:
         import json
 
         from torchbridge.cli.validate import ValidateCommand
+
         args = self._make_args()
         ValidateCommand._run_compare(args)
         out = capsys.readouterr().out

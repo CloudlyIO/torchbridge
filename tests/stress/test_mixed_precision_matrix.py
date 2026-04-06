@@ -67,9 +67,7 @@ class TestMixedPrecisionMatrix:
         model.float()
 
     @pytest.mark.gpu
-    @pytest.mark.parametrize(
-        "dtype", [torch.float32, torch.float16, torch.bfloat16]
-    )
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float16, torch.bfloat16])
     def test_gpu_precision_matrix(self, minilm_model_and_tokenizer, dtype):
         """GPU inference at each precision produces valid output."""
         model, tokenizer = minilm_model_and_tokenizer

@@ -19,23 +19,26 @@ from torchbridge.core.config import (
 class TestNVIDIAConfig:
     """Test NVIDIA configuration functionality."""
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_nvidia_config_creation(self, mock_cuda):
         """Test basic NVIDIA config creation."""
         config = NVIDIAConfig()
         assert config.enabled is True
         # Architecture gets auto-detected in __post_init__, so check the detected value
-        assert config.architecture in [NVIDIAArchitecture.AUTO, NVIDIAArchitecture.PASCAL]
+        assert config.architecture in [
+            NVIDIAArchitecture.AUTO,
+            NVIDIAArchitecture.PASCAL,
+        ]
         assert config.flash_attention_version == "3"
 
     def test_nvidia_architecture_detection_no_cuda(self):
         """Test architecture detection when CUDA is not available."""
-        with patch('torch.cuda.is_available', return_value=False):
+        with patch("torch.cuda.is_available", return_value=False):
             config = NVIDIAConfig()
             assert config.architecture == NVIDIAArchitecture.PASCAL
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_nvidia_architecture_detection_h100(self, mock_props, mock_cuda):
         """Test H100 architecture detection."""
         mock_device_props = MagicMock()
@@ -49,8 +52,8 @@ class TestNVIDIAConfig:
         assert config.fp8_enabled is True
         assert config.tensor_core_version == 4
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_nvidia_architecture_detection_a100(self, mock_props, mock_cuda):
         """Test A100 architecture detection."""
         mock_device_props = MagicMock()
@@ -64,8 +67,8 @@ class TestNVIDIAConfig:
         assert config.fp8_enabled is False  # A100 doesn't support FP8
         assert config.tensor_core_version == 3
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_nvidia_config_fp8_settings(self, mock_props, mock_cuda):
         """Test FP8 configuration settings."""
         # Mock H100 device to enable FP8
@@ -82,9 +85,7 @@ class TestNVIDIAConfig:
     def test_nvidia_config_memory_settings(self):
         """Test memory configuration settings."""
         config = NVIDIAConfig(
-            memory_pool_enabled=True,
-            memory_fraction=0.90,
-            kernel_fusion_enabled=True
+            memory_pool_enabled=True, memory_fraction=0.90, kernel_fusion_enabled=True
         )
         assert config.memory_pool_enabled is True
         assert config.memory_fraction == 0.90
@@ -97,11 +98,11 @@ class TestTorchBridgeConfigNVIDIA:
     def test_torchbridge_config_nvidia_integration(self):
         """Test NVIDIA config integration in main config."""
         config = TorchBridgeConfig()
-        assert hasattr(config.hardware, 'nvidia')
+        assert hasattr(config.hardware, "nvidia")
         assert isinstance(config.hardware.nvidia, NVIDIAConfig)
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_hardware_config_cuda_auto_enable(self, mock_props, mock_cuda):
         """Test NVIDIA auto-enable when CUDA is available."""
         # Mock device properties to avoid CUDA calls
@@ -113,27 +114,27 @@ class TestTorchBridgeConfigNVIDIA:
         assert config.hardware.backend == HardwareBackend.CUDA
         assert config.hardware.nvidia.enabled is True
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_hardware_config_cpu_fallback(self, mock_cuda):
         """Test CPU fallback when CUDA is not available."""
         config = TorchBridgeConfig()
         # Should still create NVIDIA config but adapt for CPU
-        assert hasattr(config.hardware, 'nvidia')
+        assert hasattr(config.hardware, "nvidia")
         assert config.device.type == "cpu"
 
     def test_config_modes_nvidia_settings(self):
         """Test different config modes preserve NVIDIA settings."""
         # Inference mode
         inference_config = TorchBridgeConfig.for_inference()
-        assert hasattr(inference_config.hardware, 'nvidia')
+        assert hasattr(inference_config.hardware, "nvidia")
 
         # Training mode
         training_config = TorchBridgeConfig.for_training()
-        assert hasattr(training_config.hardware, 'nvidia')
+        assert hasattr(training_config.hardware, "nvidia")
 
         # Development mode
         dev_config = TorchBridgeConfig.for_development()
-        assert hasattr(dev_config.hardware, 'nvidia')
+        assert hasattr(dev_config.hardware, "nvidia")
 
     def test_config_update_nvidia_settings(self):
         """Test updating NVIDIA settings through config update."""
@@ -151,9 +152,9 @@ class TestTorchBridgeConfigNVIDIA:
         config = TorchBridgeConfig()
         config_dict = config.to_dict()
 
-        assert 'hardware' in config_dict
-        assert 'nvidia' in config_dict['hardware']
-        assert 'fp8_enabled' in config_dict['hardware']['nvidia']
+        assert "hardware" in config_dict
+        assert "nvidia" in config_dict["hardware"]
+        assert "fp8_enabled" in config_dict["hardware"]["nvidia"]
 
 
 if __name__ == "__main__":

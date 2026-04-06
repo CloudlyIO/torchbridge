@@ -52,26 +52,34 @@ class CUDADeviceManager:
 
         device_count = torch.cuda.device_count()
         self._devices = [torch.device(f"cuda:{i}") for i in range(device_count)]
-        self._current_device = self._devices[0] if self._devices else torch.device("cpu")
+        self._current_device = (
+            self._devices[0] if self._devices else torch.device("cpu")
+        )
 
         # Collect device properties
         for i, _device in enumerate(self._devices):
             props = torch.cuda.get_device_properties(i)
             self._device_properties[i] = {
-                'name': props.name,
-                'compute_capability': (props.major, props.minor),
-                'total_memory_gb': props.total_memory / 1024**3,
-                'multi_processor_count': props.multi_processor_count,
+                "name": props.name,
+                "compute_capability": (props.major, props.minor),
+                "total_memory_gb": props.total_memory / 1024**3,
+                "multi_processor_count": props.multi_processor_count,
                 # These attributes may not exist in all PyTorch versions
-                'max_threads_per_block': getattr(props, 'max_threads_per_block', 1024),
-                'max_shared_memory_per_block': getattr(props, 'max_shared_memory_per_block', 49152),
+                "max_threads_per_block": getattr(props, "max_threads_per_block", 1024),
+                "max_shared_memory_per_block": getattr(
+                    props, "max_shared_memory_per_block", 49152
+                ),
             }
 
         logger.info("CUDA Device Manager initialized: num_devices=%d", device_count)
         for i, props in self._device_properties.items():  # type: ignore[assignment]
-            logger.debug("  Device %d: %s (CC %s, %.1f GB)",
-                        i, props['name'], props['compute_capability'],
-                        props['total_memory_gb'])
+            logger.debug(
+                "  Device %d: %s (CC %s, %.1f GB)",
+                i,
+                props["name"],
+                props["compute_capability"],
+                props["total_memory_gb"],
+            )
 
     @property
     def device(self) -> torch.device | None:
@@ -159,7 +167,7 @@ class CUDAOptimizations:
                     warnings.warn(
                         f"Layer {name} dimensions ({in_f}x{out_f}) not optimal for "
                         f"Tensor Cores. Consider padding to multiples of {optimal_div}.",
-                    stacklevel=2,
+                        stacklevel=2,
                     )
 
         return model
@@ -170,7 +178,7 @@ class CUDAOptimizations:
             if isinstance(module, (nn.Conv2d, nn.Conv3d)):
                 # Use channels_last for better memory access patterns
                 try:
-                    if hasattr(module, 'to_memory_format'):
+                    if hasattr(module, "to_memory_format"):
                         module.to(memory_format=torch.channels_last)
                 except (RuntimeError, TypeError) as e:
                     logger.debug("Could not convert to channels_last: %s", e)
@@ -180,10 +188,12 @@ class CUDAOptimizations:
     def get_cuda_optimization_config(self) -> dict[str, Any]:
         """Get recommended CUDA optimization configuration."""
         config = {
-            'cudnn_benchmark': self.nvidia_config.cudnn_benchmark,
-            'tf32_enabled': self.nvidia_config.tensor_core_version >= 3,
-            'allow_fp16_reduction': True,
-            'optimal_dimension_divisor': 16 if self.nvidia_config.tensor_core_version >= 4 else 8,
+            "cudnn_benchmark": self.nvidia_config.cudnn_benchmark,
+            "tf32_enabled": self.nvidia_config.tensor_core_version >= 3,
+            "allow_fp16_reduction": True,
+            "optimal_dimension_divisor": 16
+            if self.nvidia_config.tensor_core_version >= 4
+            else 8,
         }
 
         if self.nvidia_config.architecture in [
@@ -191,14 +201,19 @@ class CUDAOptimizations:
             NVIDIAArchitecture.BLACKWELL_DC,
             NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]:
-            config.update({
-                'fp8_enabled': True,
-                'flash_attention_3': True,
-                'tensor_core_version': 5 if self.nvidia_config.architecture in [
-                    NVIDIAArchitecture.BLACKWELL_DC,
-                    NVIDIAArchitecture.BLACKWELL_CONSUMER,
-                ] else 4,
-            })
+            config.update(
+                {
+                    "fp8_enabled": True,
+                    "flash_attention_3": True,
+                    "tensor_core_version": 5
+                    if self.nvidia_config.architecture
+                    in [
+                        NVIDIAArchitecture.BLACKWELL_DC,
+                        NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                    ]
+                    else 4,
+                }
+            )
 
         return config
 
@@ -215,26 +230,34 @@ class CUDAUtilities:
     def get_cuda_env_info() -> dict[str, Any]:
         """Get CUDA environment information."""
         env_info: dict[str, Any] = {
-            'cuda_available': torch.cuda.is_available(),
+            "cuda_available": torch.cuda.is_available(),
         }
 
         if torch.cuda.is_available():
-            env_info.update({
-                'cuda_version': torch.version.cuda,
-                'cudnn_version': torch.backends.cudnn.version() if torch.backends.cudnn.is_available() else None,
-                'device_count': torch.cuda.device_count(),
-                'current_device': torch.cuda.current_device(),
-                'device_name': torch.cuda.get_device_name(0),
-            })
+            env_info.update(
+                {
+                    "cuda_version": torch.version.cuda,
+                    "cudnn_version": torch.backends.cudnn.version()
+                    if torch.backends.cudnn.is_available()
+                    else None,
+                    "device_count": torch.cuda.device_count(),
+                    "current_device": torch.cuda.current_device(),
+                    "device_name": torch.cuda.get_device_name(0),
+                }
+            )
 
             # Get compute capability
             props = torch.cuda.get_device_properties(0)
-            env_info['compute_capability'] = (props.major, props.minor)
+            env_info["compute_capability"] = (props.major, props.minor)
 
             # Environment variables
-            env_info['env_vars'] = {
-                'CUDA_VISIBLE_DEVICES': os.environ.get('CUDA_VISIBLE_DEVICES', 'not set'),
-                'CUDA_LAUNCH_BLOCKING': os.environ.get('CUDA_LAUNCH_BLOCKING', 'not set'),
+            env_info["env_vars"] = {
+                "CUDA_VISIBLE_DEVICES": os.environ.get(
+                    "CUDA_VISIBLE_DEVICES", "not set"
+                ),
+                "CUDA_LAUNCH_BLOCKING": os.environ.get(
+                    "CUDA_LAUNCH_BLOCKING", "not set"
+                ),
             }
 
         return env_info
@@ -245,7 +268,7 @@ class CUDAUtilities:
         *args,
         num_warmup: int = 5,
         num_iterations: int = 100,
-        **kwargs
+        **kwargs,
     ) -> dict[str, Any]:
         """
         Profile CUDA kernel performance.
@@ -261,8 +284,7 @@ class CUDAUtilities:
             Profiling results
         """
         if not torch.cuda.is_available():
-            return {'error': 'CUDA not available'}
-
+            return {"error": "CUDA not available"}
 
         # Warmup
         for _ in range(num_warmup):
@@ -286,53 +308,61 @@ class CUDAUtilities:
         avg_time_ms = elapsed_time_ms / num_iterations
 
         return {
-            'total_time_ms': elapsed_time_ms,
-            'avg_time_ms': avg_time_ms,
-            'iterations': num_iterations,
-            'throughput_ops_per_sec': 1000.0 / avg_time_ms if avg_time_ms > 0 else 0
+            "total_time_ms": elapsed_time_ms,
+            "avg_time_ms": avg_time_ms,
+            "iterations": num_iterations,
+            "throughput_ops_per_sec": 1000.0 / avg_time_ms if avg_time_ms > 0 else 0,
         }
 
     @staticmethod
     def get_gpu_utilization() -> dict[str, Any]:
         """Get current GPU utilization."""
         if not torch.cuda.is_available():
-            return {'error': 'CUDA not available'}
+            return {"error": "CUDA not available"}
 
         try:
             # Try to use nvidia-smi
             result = subprocess.run(
-                ['nvidia-smi', '--query-gpu=utilization.gpu,utilization.memory,memory.used,memory.total',
-                 '--format=csv,noheader,nounits'],
+                [
+                    "nvidia-smi",
+                    "--query-gpu=utilization.gpu,utilization.memory,memory.used,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
-                values = result.stdout.strip().split(', ')
+                values = result.stdout.strip().split(", ")
                 return {
-                    'gpu_utilization_percent': float(values[0]),
-                    'memory_utilization_percent': float(values[1]),
-                    'memory_used_mb': float(values[2]),
-                    'memory_total_mb': float(values[3]),
+                    "gpu_utilization_percent": float(values[0]),
+                    "memory_utilization_percent": float(values[1]),
+                    "memory_used_mb": float(values[2]),
+                    "memory_total_mb": float(values[3]),
                 }
 
-        except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError) as e:
+        except (
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+            subprocess.SubprocessError,
+            ValueError,
+        ) as e:
             # nvidia-smi not available or failed, fall back to PyTorch metrics
             logger.debug("nvidia-smi failed, using PyTorch metrics: %s", e)
 
         # Fallback to PyTorch metrics
         return {
-            'memory_allocated_gb': torch.cuda.memory_allocated() / 1024**3,
-            'memory_reserved_gb': torch.cuda.memory_reserved() / 1024**3,
-            'max_memory_allocated_gb': torch.cuda.max_memory_allocated() / 1024**3,
+            "memory_allocated_gb": torch.cuda.memory_allocated() / 1024**3,
+            "memory_reserved_gb": torch.cuda.memory_reserved() / 1024**3,
+            "max_memory_allocated_gb": torch.cuda.max_memory_allocated() / 1024**3,
         }
 
     @staticmethod
     def optimize_cuda_flags(architecture: NVIDIAArchitecture) -> dict[str, str]:
         """Get optimized CUDA flags for specific architecture."""
         flags = {
-            'CUDA_LAUNCH_BLOCKING': '0',  # Async kernel launches
+            "CUDA_LAUNCH_BLOCKING": "0",  # Async kernel launches
         }
 
         if architecture in [
@@ -341,22 +371,26 @@ class CUDAUtilities:
             NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]:
             # H100/Blackwell optimizations
-            flags.update({
-                'CUDA_DEVICE_MAX_CONNECTIONS': '32',  # More concurrent streams
-            })
+            flags.update(
+                {
+                    "CUDA_DEVICE_MAX_CONNECTIONS": "32",  # More concurrent streams
+                }
+            )
 
         elif architecture == NVIDIAArchitecture.AMPERE:
             # A100 optimizations
-            flags.update({
-                'CUDA_DEVICE_MAX_CONNECTIONS': '16',
-            })
+            flags.update(
+                {
+                    "CUDA_DEVICE_MAX_CONNECTIONS": "16",
+                }
+            )
 
         return flags
 
 
 # Integration factory function
 def create_cuda_integration(
-    config: TorchBridgeConfig | None = None
+    config: TorchBridgeConfig | None = None,
 ) -> tuple[CUDADeviceManager, CUDAOptimizations]:
     """
     Create complete CUDA integration setup.

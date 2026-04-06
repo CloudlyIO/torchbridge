@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TrainiumOptimizationResult:
     """Result of Trainium optimization process."""
+
     optimized_model: nn.Module
     backend: TrainiumBackend
     compiler: NeuronCompiler
@@ -58,9 +59,12 @@ class TrainiumAdapter:
         # Optimization tracking
         self._optimization_history = []
 
-    def optimize(self, model: nn.Module,
-                 sample_inputs: torch.Tensor | tuple | None = None,
-                 optimization_level: str = "balanced") -> TrainiumOptimizationResult:
+    def optimize(
+        self,
+        model: nn.Module,
+        sample_inputs: torch.Tensor | tuple | None = None,
+        optimization_level: str = "balanced",
+    ) -> TrainiumOptimizationResult:
         """
         Optimize model for Trainium execution.
 
@@ -73,6 +77,7 @@ class TrainiumAdapter:
             Optimization result with optimized model and metrics
         """
         import time
+
         start_time = time.time()
 
         logger.info("Starting Trainium optimization: level=%s", optimization_level)
@@ -81,7 +86,9 @@ class TrainiumAdapter:
         prepared_model = self.backend.prepare_model(model)
 
         # Step 2: Apply optimization-level specific changes
-        optimized_model = self._apply_optimization_level(prepared_model, optimization_level)
+        optimized_model = self._apply_optimization_level(
+            prepared_model, optimization_level
+        )
 
         # Step 3: Compile with Neuron
         compiled_model = self.compiler.compile_model(optimized_model, sample_inputs)
@@ -94,11 +101,11 @@ class TrainiumAdapter:
         # Gather metrics
         memory_usage = self.backend.get_memory_stats()
         performance_metrics = {
-            'optimization_time': optimization_time,
-            'compilation_stats': self.compiler.get_compilation_stats(),
-            'optimization_level': optimization_level,
-            'architecture': self.trainium_config.architecture.value,
-            'world_size': self.backend.world_size
+            "optimization_time": optimization_time,
+            "compilation_stats": self.compiler.get_compilation_stats(),
+            "optimization_level": optimization_level,
+            "architecture": self.trainium_config.architecture.value,
+            "world_size": self.backend.world_size,
         }
 
         result = TrainiumOptimizationResult(
@@ -107,17 +114,23 @@ class TrainiumAdapter:
             compiler=self.compiler,
             optimization_time=optimization_time,
             memory_usage=memory_usage,
-            performance_metrics=performance_metrics
+            performance_metrics=performance_metrics,
         )
 
-        self._optimization_history.append({
-            'timestamp': time.time(),
-            'model_type': type(model).__name__,
-            'optimization_level': optimization_level,
-            'optimization_time': optimization_time
-        })
+        self._optimization_history.append(
+            {
+                "timestamp": time.time(),
+                "model_type": type(model).__name__,
+                "optimization_level": optimization_level,
+                "optimization_time": optimization_time,
+            }
+        )
 
-        logger.info("Trainium optimization completed: time=%.2fs, level=%s", optimization_time, optimization_level)
+        logger.info(
+            "Trainium optimization completed: time=%.2fs, level=%s",
+            optimization_time,
+            optimization_level,
+        )
         return result
 
     def _apply_optimization_level(self, model: nn.Module, level: str) -> nn.Module:
@@ -135,7 +148,10 @@ class TrainiumAdapter:
         """Apply conservative optimizations (safety first)."""
         model = model.to(self.backend.device)
 
-        if self.trainium_config.mixed_precision and self.trainium_config.precision == "bfloat16":
+        if (
+            self.trainium_config.mixed_precision
+            and self.trainium_config.precision == "bfloat16"
+        ):
             for module in model.modules():
                 if isinstance(module, nn.Linear):
                     module.to(dtype=torch.bfloat16)
@@ -147,7 +163,7 @@ class TrainiumAdapter:
         model = self._apply_conservative_optimizations(model)
 
         if self.trainium_config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
+            if hasattr(model, "gradient_checkpointing_enable"):
                 model.gradient_checkpointing_enable()
 
         model = self._optimize_attention_layers(model)
@@ -160,7 +176,9 @@ class TrainiumAdapter:
 
         if self.trainium_config.mixed_precision:
             for module in model.modules():
-                if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Embedding)):
+                if isinstance(
+                    module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Embedding)
+                ):
                     module.to(dtype=torch.bfloat16)
 
         return model
@@ -168,9 +186,12 @@ class TrainiumAdapter:
     def _optimize_attention_layers(self, model: nn.Module) -> nn.Module:
         """Optimize attention layers for Trainium NeuronCores."""
         for module in model.modules():
-            if hasattr(module, 'attention') or 'attention' in module.__class__.__name__.lower():
-                if hasattr(module, 'num_heads'):
-                    head_dim = getattr(module, 'head_dim', None)
+            if (
+                hasattr(module, "attention")
+                or "attention" in module.__class__.__name__.lower()
+            ):
+                if hasattr(module, "num_heads"):
+                    head_dim = getattr(module, "head_dim", None)
                     if head_dim and head_dim % 8 != 0:
                         warnings.warn(
                             f"Attention head dimension {head_dim} not optimal for Trainium. "
@@ -179,8 +200,9 @@ class TrainiumAdapter:
                         )
         return model
 
-    def _validate_optimization(self, model: nn.Module,
-                               sample_inputs: torch.Tensor | tuple | None) -> None:
+    def _validate_optimization(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> None:
         """Validate that optimization was successful."""
         if sample_inputs is None:
             logger.warning("No sample inputs provided, skipping validation")
@@ -219,11 +241,12 @@ class TrainiumAdapter:
                 error_msg,
                 TrainiumValidationError,
                 strict_mode=self.trainium_config.enable_strict_validation,
-                logger=logger
+                logger=logger,
             )
 
-    def optimize_for_inference(self, model: nn.Module,
-                               sample_inputs: torch.Tensor | tuple | None = None) -> TrainiumOptimizationResult:
+    def optimize_for_inference(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> TrainiumOptimizationResult:
         """
         Optimize model specifically for inference.
 
@@ -241,8 +264,9 @@ class TrainiumAdapter:
         )
         return result
 
-    def optimize_for_training(self, model: nn.Module,
-                              sample_inputs: torch.Tensor | tuple | None = None) -> TrainiumOptimizationResult:
+    def optimize_for_training(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> TrainiumOptimizationResult:
         """
         Optimize model specifically for training.
 
@@ -264,23 +288,23 @@ class TrainiumAdapter:
         total_optimizations = len(self._optimization_history)
 
         if total_optimizations == 0:
-            return {'total_optimizations': 0}
+            return {"total_optimizations": 0}
 
-        total_time = sum(opt['optimization_time'] for opt in self._optimization_history)
+        total_time = sum(opt["optimization_time"] for opt in self._optimization_history)
         avg_time = total_time / total_optimizations
 
         model_types: dict[str, int] = {}
         for opt in self._optimization_history:
-            model_type = opt['model_type']
+            model_type = opt["model_type"]
             model_types[model_type] = model_types.get(model_type, 0) + 1
 
         return {
-            'total_optimizations': total_optimizations,
-            'total_optimization_time': total_time,
-            'average_optimization_time': avg_time,
-            'model_types': model_types,
-            'backend_stats': self.backend.get_memory_stats(),
-            'compiler_stats': self.compiler.get_compilation_stats()
+            "total_optimizations": total_optimizations,
+            "total_optimization_time": total_time,
+            "average_optimization_time": avg_time,
+            "model_types": model_types,
+            "backend_stats": self.backend.get_memory_stats(),
+            "compiler_stats": self.compiler.get_compilation_stats(),
         }
 
     def clear_cache(self) -> None:

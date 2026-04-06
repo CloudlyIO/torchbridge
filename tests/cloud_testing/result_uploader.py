@@ -21,14 +21,17 @@ logger = logging.getLogger(__name__)
 # Base Uploader
 # ============================================================================
 
+
 @dataclass
 class UploadResult:
     """Result of an upload operation."""
+
     success: bool
     path: str
     url: str | None = None
     error_message: str | None = None
     bytes_uploaded: int = 0
+
 
 class ResultUploader(ABC):
     """Abstract base class for result uploaders."""
@@ -67,9 +70,11 @@ class ResultUploader(ABC):
         """Download JSON data."""
         pass
 
+
 # ============================================================================
 # S3 Uploader
 # ============================================================================
+
 
 class S3Uploader(ResultUploader):
     """
@@ -106,6 +111,7 @@ class S3Uploader(ResultUploader):
         """Check if boto3 is available."""
         try:
             import boto3  # noqa: F401
+
             return True
         except ImportError:
             logger.warning("boto3 not installed. S3 uploads will be simulated.")
@@ -116,6 +122,7 @@ class S3Uploader(ResultUploader):
         if not self._boto3_available:
             return None
         import boto3
+
         return boto3.client("s3", region_name=self.region)
 
     def _get_full_path(self, path: str) -> str:
@@ -266,9 +273,11 @@ class S3Uploader(ResultUploader):
             logger.error(f"Failed to download from S3: {e}")
             return None
 
+
 # ============================================================================
 # GCS Uploader
 # ============================================================================
+
 
 class GCSUploader(ResultUploader):
     """
@@ -302,9 +311,12 @@ class GCSUploader(ResultUploader):
         """Check if google-cloud-storage is available."""
         try:
             from google.cloud import storage  # noqa: F401
+
             return True
         except ImportError:
-            logger.warning("google-cloud-storage not installed. GCS uploads will be simulated.")
+            logger.warning(
+                "google-cloud-storage not installed. GCS uploads will be simulated."
+            )
             return False
 
     def _get_gcs_client(self):
@@ -312,6 +324,7 @@ class GCSUploader(ResultUploader):
         if not self._gcs_available:
             return None
         from google.cloud import storage
+
         return storage.Client()
 
     def _get_full_path(self, path: str) -> str:
@@ -453,9 +466,11 @@ class GCSUploader(ResultUploader):
             logger.error(f"Failed to download from GCS: {e}")
             return None
 
+
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def upload_results(
     results: dict[str, Any],

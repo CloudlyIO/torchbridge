@@ -1,6 +1,5 @@
 """Tests for FSDP configuration and manager."""
 
-
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,
@@ -158,6 +157,7 @@ class TestFSDPManager:
 
     def test_float8_all_gather_hopper(self):
         from unittest.mock import MagicMock, patch
+
         mock_dist = MagicMock()
         mock_dist.get_nccl_version.return_value = (2, 21, 0)
         with patch("torch.distributed", mock_dist):
@@ -170,6 +170,7 @@ class TestFSDPManager:
 
     def test_float8_all_gather_blackwell(self):
         from unittest.mock import MagicMock, patch
+
         mock_dist = MagicMock()
         mock_dist.get_nccl_version.return_value = (2, 21, 0)
         with patch("torch.distributed", mock_dist):
@@ -195,6 +196,7 @@ class TestFSDPManager:
 
     def test_get_info(self):
         from unittest.mock import MagicMock, patch
+
         mock_dist = MagicMock()
         mock_dist.get_nccl_version.return_value = (2, 21, 0)
         with patch("torch.distributed", mock_dist):

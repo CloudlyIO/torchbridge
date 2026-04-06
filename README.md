@@ -5,7 +5,7 @@ TorchBridge **validates that your model produces correct outputs across PyTorch 
 1. **"Does my model produce correct outputs across backends?"** — Run it on CUDA and ROCm and get max_diff, cosine_sim, per-layer divergence, pass/fail against empirical tolerances.
 2. **"What's the optimal configuration for my model on this hardware?"** — Compatibility matrices that translate `(backend, architecture) → format/kernel/method` with fallback chains.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE) [![Tests](https://img.shields.io/badge/tests-1%2C900%2B%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-8%20validated%2C%206%20GPU-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![MI300X](https://img.shields.io/badge/MI300X-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![TPU v5e](https://img.shields.io/badge/TPU%20v5e-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE) [![Tests](https://img.shields.io/badge/tests-2%2C091%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-6%2F8%20validated-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## Quick Start
 
@@ -84,7 +84,7 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 ## What TorchBridge Is NOT
 
 - **Not a quantization library** — dispatches format selection to torchao; TorchBridge adds the compatibility matrix
-- **Not a serving runtime** — the inference server is a validation demo, not a production serving replacement for vLLM or TGI
+- **Not a serving runtime** — use vLLM, TGI, or similar for production inference serving; TorchBridge validates correctness and advises configuration, it does not serve requests
 - **Not a training framework** — adapter math (LoRA/QLoRA) is correct and kept; use PEFT for full training workflows
 - **Not a PyTorch wrapper** — if a method body is `return torch.something(...)` with no selection logic, it doesn't belong here
 
@@ -102,22 +102,23 @@ See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
 
 ## Cloud Hardware Validation
 
-Cross-backend numerical consistency validated on 8 platforms (6 real GPU/accelerator, 2 CPU-fallback†) using Qwen3-0.6B:
+Cross-backend numerical consistency validated on 6/8 platforms using Qwen3-0.6B (v0.5.80, re-validated 2026-03-30):
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
 |----------|----------|----------|------------|---------|--------|
-| AWS | NVIDIA A10G (24GB) | 1.96e-05 | 1.000001 | 41.8 ms | PASS |
-| GCP | NVIDIA T4 (16GB) | 2.67e-05 | 1.000001 | 50.8 ms | PASS |
-| RunPod | NVIDIA H100 NVL (100GB) | 2.29e-05 | 1.000001 | 18.8 ms | PASS |
-| AMD DevCloud | AMD MI300X (192GB) | 4.82e-05 | 1.000001 | 30.0 ms | PASS |
-| GCP | TPU v5e | 1.08e-01 | 0.999980 | 47.5 ms | PASS |
-| Local | Apple Silicon (MPS) | 4.58e-05 | 1.000002 | 27.8 ms | PASS |
-| AWS Trainium† | Trn1.2xlarge (NeuronX) | 0.00e+00 | 1.000001 | 103.3 ms (CPU) | PASS |
-| AWS Inferentia2† | inf2.xlarge (NeuronX) | 0.00e+00 | 1.000001 | 321.7 ms (CPU) | PASS |
+| AWS | NVIDIA A10G (24GB) | 2.10e-05 | 1.000001 | 40.0 ms | PASS |
+| GCP | NVIDIA T4 (16GB) | 2.67e-05 | 1.000001 | 50.7 ms | PASS |
+| RunPod | NVIDIA H100 NVL (100GB) | 1.67e-05 | 1.000001 | 16.2 ms | PASS |
+| Local | Apple Silicon (MPS) | 0.00e+00 | 1.000000 | 118.9 ms | PASS |
+| AWS Trainium† | Trn1.2xlarge (NeuronX) | 0.00e+00 | 1.000000 | 115.8 ms (CPU) | PASS |
+| AWS Inferentia2† | inf2.xlarge (NeuronX) | 0.00e+00 | 1.000000 | 321.8 ms (CPU) | PASS |
+| AMD DevCloud | AMD MI300X (192GB) | — | — | — | SKIPPED‡ |
+| GCP | TPU v5e | — | — | — | SKIPPED‡ |
 
-† **CPU fallback:** NeuronX SDK compilation requires quota-enabled Trn1/Inf2 instances not available in the validation environment. These rows confirm correct CPU-path behavior. Real NeuronX accelerator validation is pending quota approval.
+† **CPU fallback:** NeuronX SDK compilation requires quota-enabled Trn1/Inf2 instances. These rows confirm correct CPU-path behavior; accelerator validation pending.
+‡ **Capacity unavailable:** AMD MI300X out of capacity at validation time; TPU v5e exhausted globally across 18 zones.
 
-All GPU/accelerator backends produce semantically identical outputs (cosine similarity > 0.999).
+All tested GPU backends produce semantically identical outputs (cosine similarity > 0.999).
 
 See [full validation report](./docs/reference/cloud-validation.md) for detailed benchmarks and results.
 
@@ -138,17 +139,17 @@ src/torchbridge/
 ├── checkpoint/        # DCP wrapper with cross-backend metadata
 ├── testing/           # DivergenceTracer, ToleranceDB, MultiStepTracer, @cross_backend
 ├── validation/        # UnifiedValidator — model structure, hardware, numerical stability
-├── cli/               # Command-line tools (13 entry points)
+├── cli/               # Command-line tools (11 CLI commands)
 ├── models/            # LLM KV cache advisor
 └── utils/             # Utilities
 ```
 
 ## Quality
 
-- **2,223 tests passing** (hardware-gated skips on non-GPU environments)
+- **2,091 tests passing** (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on 8 platforms (6 GPU-validated: A10G, T4, H100 NVL, MI300X, TPU v5e, MPS; 2 CPU-fallback†: Trainium, Inferentia2)
+- **Cloud validated** on 6/8 platforms: A10G, T4, H100 NVL, MPS (GPU); Trainium, Inferentia2 (CPU-fallback†)
 
 ```bash
 python3 -m pytest tests/ -q
@@ -174,6 +175,10 @@ ruff check src/ tests/
 ## Community
 
 The empirical tolerance database (`testing/tolerance_db.py`) is only as strong as the hardware it has been measured on. Contributions that add or correct tolerance entries for hardware you have access to — AMD MI350X, Trainium2, TPU v7 Ironwood, new PyTorch versions — directly expand the validation coverage for everyone. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add entries and the source-label conventions (`"measured"`, `"derived"`, `"fallback"`).
+
+## Versioning
+
+v0.5.80 is the first public release. The v0.5.x series represents an extended private development and validation phase: building the backend abstraction layer, validating numerical consistency on real GPU hardware across 6 platforms, and reaching a quality bar suitable for open source. The version number reflects the maturity of the implementation, not the release count.
 
 ## License
 

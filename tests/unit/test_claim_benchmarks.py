@@ -7,6 +7,7 @@ and the _time_fn timing utility.
 
 import json
 import tempfile
+from unittest.mock import patch
 
 from torchbridge.benchmarks.claim_benchmarks import (
     BenchmarkReport,
@@ -80,9 +81,15 @@ class TestClaimResult:
     def test_default_notes_empty(self):
         """Notes should default to empty list."""
         result = ClaimResult(
-            claim_name="t", baseline_ms=1.0, optimized_ms=1.0,
-            speedup_pct=0.0, passed=False, threshold_pct=3.0,
-            runs=1, std_baseline_ms=0.0, std_optimized_ms=0.0,
+            claim_name="t",
+            baseline_ms=1.0,
+            optimized_ms=1.0,
+            speedup_pct=0.0,
+            passed=False,
+            threshold_pct=3.0,
+            runs=1,
+            std_baseline_ms=0.0,
+            std_optimized_ms=0.0,
             device="cpu",
         )
         assert result.notes == []
@@ -173,6 +180,8 @@ class TestClaimBenchmark:
 
     def test_negative_threshold_for_overhead(self):
         """Negative threshold should allow small overhead."""
+        # Inject controlled timing: baseline=1.0ms, optimized=1.03ms → speedup=-3%
+        # -3% > -5% threshold, so must pass.  Avoids flakiness from near-zero timing noise.
         bench = ClaimBenchmark(
             name="overhead_test",
             baseline_fn=lambda: None,
@@ -181,8 +190,10 @@ class TestClaimBenchmark:
             runs=3,
             threshold_pct=-5.0,
         )
-        result = bench.run()
-        # Both are near-zero, speedup ≈ 0%, which is > -5%
+        with patch("torchbridge.benchmarks.claim_benchmarks._time_fn") as mock_time:
+            mock_time.side_effect = [(1.0, 0.01), (1.03, 0.01)]
+            result = bench.run()
+        # speedup = (1.0 - 1.03) / 1.0 * 100 = -3%, which is > -5%
         assert result.passed is True
 
     def test_notes_preserved(self):
@@ -262,12 +273,14 @@ class TestClaimBenchmark:
     def test_skip_reason_not_in_claims_to_delete(self):
         """skip_reason benchmarks should not appear in claims_to_delete."""
         suite = BenchmarkSuite()
-        suite._benchmarks.append(ClaimBenchmark(
-            name="skipped_claim",
-            baseline_fn=lambda: None,
-            optimized_fn=lambda: None,
-            skip_reason="not available here",
-        ))
+        suite._benchmarks.append(
+            ClaimBenchmark(
+                name="skipped_claim",
+                baseline_fn=lambda: None,
+                optimized_fn=lambda: None,
+                skip_reason="not available here",
+            )
+        )
         report = suite.run_all()
         assert "skipped_claim" not in report.claims_to_delete()
 
@@ -287,8 +300,12 @@ class TestBenchmarkSuite:
     def test_register_and_list(self):
         """Should store registered benchmarks."""
         suite = BenchmarkSuite()
-        b1 = ClaimBenchmark(name="a", baseline_fn=lambda: None, optimized_fn=lambda: None)
-        b2 = ClaimBenchmark(name="b", baseline_fn=lambda: None, optimized_fn=lambda: None)
+        b1 = ClaimBenchmark(
+            name="a", baseline_fn=lambda: None, optimized_fn=lambda: None
+        )
+        b2 = ClaimBenchmark(
+            name="b", baseline_fn=lambda: None, optimized_fn=lambda: None
+        )
         suite._benchmarks.append(b1)
         suite._benchmarks.append(b2)
         assert len(suite._benchmarks) == 2
@@ -296,10 +313,15 @@ class TestBenchmarkSuite:
     def test_run_all_returns_report(self):
         """run_all should return a BenchmarkReport."""
         suite = BenchmarkSuite()
-        suite._benchmarks.append(ClaimBenchmark(
-            name="fast", baseline_fn=lambda: None, optimized_fn=lambda: None,
-            warmup=1, runs=2,
-        ))
+        suite._benchmarks.append(
+            ClaimBenchmark(
+                name="fast",
+                baseline_fn=lambda: None,
+                optimized_fn=lambda: None,
+                warmup=1,
+                runs=2,
+            )
+        )
         report = suite.run_all()
         assert isinstance(report, BenchmarkReport)
         assert len(report.results) == 1
@@ -307,10 +329,16 @@ class TestBenchmarkSuite:
     def test_skip_requires_backend(self):
         """Benchmarks requiring a different backend should be skipped."""
         suite = BenchmarkSuite()
-        suite._benchmarks.append(ClaimBenchmark(
-            name="gpu_only", baseline_fn=lambda: None, optimized_fn=lambda: None,
-            warmup=1, runs=2, requires_backend="rocm",
-        ))
+        suite._benchmarks.append(
+            ClaimBenchmark(
+                name="gpu_only",
+                baseline_fn=lambda: None,
+                optimized_fn=lambda: None,
+                warmup=1,
+                runs=2,
+                requires_backend="rocm",
+            )
+        )
         report = suite.run_all(device="cpu")
         assert report.results[0].runs == 0
         assert "SKIPPED" in report.results[0].notes[0]
@@ -318,10 +346,16 @@ class TestBenchmarkSuite:
     def test_matching_backend_runs(self):
         """Benchmarks matching the device backend should run."""
         suite = BenchmarkSuite()
-        suite._benchmarks.append(ClaimBenchmark(
-            name="cpu_ok", baseline_fn=lambda: None, optimized_fn=lambda: None,
-            warmup=1, runs=2, requires_backend="cpu",
-        ))
+        suite._benchmarks.append(
+            ClaimBenchmark(
+                name="cpu_ok",
+                baseline_fn=lambda: None,
+                optimized_fn=lambda: None,
+                warmup=1,
+                runs=2,
+                requires_backend="cpu",
+            )
+        )
         report = suite.run_all(device="cpu")
         assert report.results[0].runs == 2
 
@@ -333,19 +367,40 @@ class TestBenchmarkReport:
         """Create a sample report with mixed results."""
         results = [
             ClaimResult(
-                claim_name="passing", baseline_ms=10.0, optimized_ms=8.0,
-                speedup_pct=20.0, passed=True, threshold_pct=3.0, runs=50,
-                std_baseline_ms=0.5, std_optimized_ms=0.3, device="cpu",
+                claim_name="passing",
+                baseline_ms=10.0,
+                optimized_ms=8.0,
+                speedup_pct=20.0,
+                passed=True,
+                threshold_pct=3.0,
+                runs=50,
+                std_baseline_ms=0.5,
+                std_optimized_ms=0.3,
+                device="cpu",
             ),
             ClaimResult(
-                claim_name="failing", baseline_ms=10.0, optimized_ms=10.5,
-                speedup_pct=-5.0, passed=False, threshold_pct=3.0, runs=50,
-                std_baseline_ms=0.5, std_optimized_ms=0.3, device="cpu",
+                claim_name="failing",
+                baseline_ms=10.0,
+                optimized_ms=10.5,
+                speedup_pct=-5.0,
+                passed=False,
+                threshold_pct=3.0,
+                runs=50,
+                std_baseline_ms=0.5,
+                std_optimized_ms=0.3,
+                device="cpu",
             ),
             ClaimResult(
-                claim_name="skipped", baseline_ms=0.0, optimized_ms=0.0,
-                speedup_pct=0.0, passed=False, threshold_pct=3.0, runs=0,
-                std_baseline_ms=0.0, std_optimized_ms=0.0, device="cpu",
+                claim_name="skipped",
+                baseline_ms=0.0,
+                optimized_ms=0.0,
+                speedup_pct=0.0,
+                passed=False,
+                threshold_pct=3.0,
+                runs=0,
+                std_baseline_ms=0.0,
+                std_optimized_ms=0.0,
+                device="cpu",
                 notes=["SKIPPED: requires rocm, running on cpu"],
             ),
         ]

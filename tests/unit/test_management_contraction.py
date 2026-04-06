@@ -20,10 +20,12 @@ from torchbridge.core.management import UnifiedManager, get_manager
 # Deleted classes must not be importable
 # ---------------------------------------------------------------------------
 
+
 class TestDeletedClasses:
     def test_hardware_manager_not_in_management_init(self):
         """HardwareManager must be removed from management __init__ exports."""
         import torchbridge.core.management as mgmt
+
         assert not hasattr(mgmt, "HardwareManager"), (
             "HardwareManager is a stub — it was deleted in v0.5.76"
         )
@@ -31,6 +33,7 @@ class TestDeletedClasses:
     def test_optimization_manager_not_in_management_init(self):
         """OptimizationManager must be removed from management __init__ exports."""
         import torchbridge.core.management as mgmt
+
         assert not hasattr(mgmt, "OptimizationManager"), (
             "OptimizationManager is a stub — it was deleted in v0.5.76"
         )
@@ -49,6 +52,7 @@ class TestDeletedClasses:
 # ---------------------------------------------------------------------------
 # UnifiedManager no longer carries stub sub-managers
 # ---------------------------------------------------------------------------
+
 
 class TestUnifiedManagerAttributes:
     def test_no_hardware_manager_attribute(self):
@@ -79,6 +83,7 @@ class TestUnifiedManagerAttributes:
 # ---------------------------------------------------------------------------
 # UnifiedManager.optimize() delegates to auto_optimize for nn.Module
 # ---------------------------------------------------------------------------
+
 
 class TestOptimizeDelegation:
     @pytest.fixture
@@ -111,6 +116,7 @@ class TestOptimizeDelegation:
 # UnifiedManager.get_status() returns simplified status
 # ---------------------------------------------------------------------------
 
+
 class TestGetStatus:
     def test_get_status_has_infrastructure_key(self):
         """get_status() must include 'infrastructure' key."""
@@ -134,6 +140,7 @@ class TestGetStatus:
 # ---------------------------------------------------------------------------
 # Preserved public API (regression — must still work)
 # ---------------------------------------------------------------------------
+
 
 class TestPreservedPublicAPI:
     @pytest.fixture
@@ -163,15 +170,18 @@ class TestPreservedPublicAPI:
 
     def test_infrastructure_manager_still_exportable(self):
         from torchbridge.core.management import InfrastructureManager
+
         assert InfrastructureManager is not None
 
     def test_base_manager_still_exportable(self):
         from torchbridge.core.management import BaseManager
+
         assert BaseManager is not None
 
     def test_manager_type_has_no_hardware_value(self):
         """ManagerType.HARDWARE must be removed — HardwareManager is deleted."""
         from torchbridge.core.management import ManagerType
+
         assert not hasattr(ManagerType, "HARDWARE"), (
             "ManagerType.HARDWARE is an orphaned value — HardwareManager was deleted in v0.5.76"
         )
@@ -179,6 +189,7 @@ class TestPreservedPublicAPI:
     def test_manager_type_has_no_optimization_value(self):
         """ManagerType.OPTIMIZATION must be removed — OptimizationManager is deleted."""
         from torchbridge.core.management import ManagerType
+
         assert not hasattr(ManagerType, "OPTIMIZATION"), (
             "ManagerType.OPTIMIZATION is an orphaned value — OptimizationManager was deleted in v0.5.76"
         )
@@ -186,4 +197,5 @@ class TestPreservedPublicAPI:
     def test_manager_type_infrastructure_still_valid(self):
         """ManagerType.INFRASTRUCTURE must remain — InfrastructureManager uses it."""
         from torchbridge.core.management import ManagerType
+
         assert ManagerType.INFRASTRUCTURE.value == "infrastructure"

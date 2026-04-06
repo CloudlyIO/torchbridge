@@ -78,10 +78,10 @@ class ToleranceEntry:
 # ---------------------------------------------------------------------------
 
 MODEL_FAMILIES: tuple[str, ...] = (
-    "decoder-small",    # < 2B params  — Qwen3-0.6B, Llama-3.2-1B, SmolLM-2
-    "decoder-medium",   # 2B–20B params — Llama-3.1-8B, Qwen3-7B, Mistral-7B
-    "decoder-large",    # > 20B params  — Llama-3.1-70B, Qwen3-72B
-    "encoder",          # Encoder-only  — BERT, RoBERTa, DeBERTa
+    "decoder-small",  # < 2B params  — Qwen3-0.6B, Llama-3.2-1B, SmolLM-2
+    "decoder-medium",  # 2B–20B params — Llama-3.1-8B, Qwen3-7B, Mistral-7B
+    "decoder-large",  # > 20B params  — Llama-3.1-70B, Qwen3-72B
+    "encoder",  # Encoder-only  — BERT, RoBERTa, DeBERTa
     "vision-language",  # Cross-modal   — CLIP, LLaVA, InternVL
 )
 
@@ -130,8 +130,10 @@ _DEFAULT_TOLERANCE = TolerancePair(atol=1e-3, rtol=1e-4)
 # XLA does not expose a float16 dtype — those entries are intentionally absent.
 # The lookup falls back to (backend, dtype) → _TOLERANCE_TABLE in that case.
 
+
 def _m(atol: float, rtol: float, notes: str = "") -> ToleranceEntry:
     return ToleranceEntry(atol=atol, rtol=rtol, source="measured", notes=notes)
+
 
 def _d(atol: float, rtol: float, notes: str = "") -> ToleranceEntry:
     return ToleranceEntry(atol=atol, rtol=rtol, source="derived", notes=notes)
@@ -144,107 +146,102 @@ _ENC_NOTE = "derived: decoder-small atol × 0.5 (bidirectional; no KV cache)"
 _VL_NOTE = "derived: decoder-small atol × 3 (patch embedding variance)"
 
 _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
-
     # ── decoder-small ─────────────────────────────────────────────────────
-    ("decoder-small", "cuda",     "float32"):  _m(1e-4,  1e-5,  _CLOUD_NOTE),
-    ("decoder-small", "cuda",     "float16"):  _m(1e-3,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "cuda",     "bfloat16"): _m(1e-2,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "rocm",     "float32"):  _m(1e-3,  1e-4,  _CLOUD_NOTE),
-    ("decoder-small", "rocm",     "float16"):  _m(2e-3,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "rocm",     "bfloat16"): _m(2e-2,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "mps",      "float32"):  _m(1e-4,  1e-5,  _CLOUD_NOTE),
-    ("decoder-small", "mps",      "float16"):  _m(1e-3,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "mps",      "bfloat16"): _m(1e-2,  1e-3,  _CLOUD_NOTE),
-    ("decoder-small", "xla",      "float32"):  _m(0.5,   1e-2,  _CLOUD_NOTE),
-    ("decoder-small", "xla",      "bfloat16"): _m(0.5,   1e-2,  _CLOUD_NOTE),
-    ("decoder-small", "cpu",      "float32"):  _m(1e-6,  1e-6,  _CLOUD_NOTE),
-    ("decoder-small", "cpu",      "float16"):  _m(1e-4,  1e-4,  _CLOUD_NOTE),
-    ("decoder-small", "cpu",      "bfloat16"): _m(1e-3,  1e-4,  _CLOUD_NOTE),
-
+    ("decoder-small", "cuda", "float32"): _m(1e-4, 1e-5, _CLOUD_NOTE),
+    ("decoder-small", "cuda", "float16"): _m(1e-3, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "cuda", "bfloat16"): _m(1e-2, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "rocm", "float32"): _m(1e-3, 1e-4, _CLOUD_NOTE),
+    ("decoder-small", "rocm", "float16"): _m(2e-3, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "rocm", "bfloat16"): _m(2e-2, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "mps", "float32"): _m(1e-4, 1e-5, _CLOUD_NOTE),
+    ("decoder-small", "mps", "float16"): _m(1e-3, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "mps", "bfloat16"): _m(1e-2, 1e-3, _CLOUD_NOTE),
+    ("decoder-small", "xla", "float32"): _m(0.5, 1e-2, _CLOUD_NOTE),
+    ("decoder-small", "xla", "bfloat16"): _m(0.5, 1e-2, _CLOUD_NOTE),
+    ("decoder-small", "cpu", "float32"): _m(1e-6, 1e-6, _CLOUD_NOTE),
+    ("decoder-small", "cpu", "float16"): _m(1e-4, 1e-4, _CLOUD_NOTE),
+    ("decoder-small", "cpu", "bfloat16"): _m(1e-3, 1e-4, _CLOUD_NOTE),
     # ── decoder-medium ────────────────────────────────────────────────────
-    ("decoder-medium", "cuda",     "float32"):  _d(2e-4,  1e-5,  _DM_NOTE),
-    ("decoder-medium", "cuda",     "float16"):  _d(2e-3,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "cuda",     "bfloat16"): _d(2e-2,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "rocm",     "float32"):  _d(2e-3,  1e-4,  _DM_NOTE),
-    ("decoder-medium", "rocm",     "float16"):  _d(4e-3,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "rocm",     "bfloat16"): _d(4e-2,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "mps",      "float32"):  _d(2e-4,  1e-5,  _DM_NOTE),
-    ("decoder-medium", "mps",      "float16"):  _d(2e-3,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "mps",      "bfloat16"): _d(2e-2,  1e-3,  _DM_NOTE),
-    ("decoder-medium", "xla",      "float32"):  _d(1.0,   1e-2,  _DM_NOTE),
-    ("decoder-medium", "xla",      "bfloat16"): _d(1.0,   1e-2,  _DM_NOTE),
-    ("decoder-medium", "cpu",      "float32"):  _d(2e-6,  1e-6,  _DM_NOTE),
-    ("decoder-medium", "cpu",      "float16"):  _d(2e-4,  1e-4,  _DM_NOTE),
-    ("decoder-medium", "cpu",      "bfloat16"): _d(2e-3,  1e-4,  _DM_NOTE),
-
+    ("decoder-medium", "cuda", "float32"): _d(2e-4, 1e-5, _DM_NOTE),
+    ("decoder-medium", "cuda", "float16"): _d(2e-3, 1e-3, _DM_NOTE),
+    ("decoder-medium", "cuda", "bfloat16"): _d(2e-2, 1e-3, _DM_NOTE),
+    ("decoder-medium", "rocm", "float32"): _d(2e-3, 1e-4, _DM_NOTE),
+    ("decoder-medium", "rocm", "float16"): _d(4e-3, 1e-3, _DM_NOTE),
+    ("decoder-medium", "rocm", "bfloat16"): _d(4e-2, 1e-3, _DM_NOTE),
+    ("decoder-medium", "mps", "float32"): _d(2e-4, 1e-5, _DM_NOTE),
+    ("decoder-medium", "mps", "float16"): _d(2e-3, 1e-3, _DM_NOTE),
+    ("decoder-medium", "mps", "bfloat16"): _d(2e-2, 1e-3, _DM_NOTE),
+    ("decoder-medium", "xla", "float32"): _d(1.0, 1e-2, _DM_NOTE),
+    ("decoder-medium", "xla", "bfloat16"): _d(1.0, 1e-2, _DM_NOTE),
+    ("decoder-medium", "cpu", "float32"): _d(2e-6, 1e-6, _DM_NOTE),
+    ("decoder-medium", "cpu", "float16"): _d(2e-4, 1e-4, _DM_NOTE),
+    ("decoder-medium", "cpu", "bfloat16"): _d(2e-3, 1e-4, _DM_NOTE),
     # ── decoder-large ─────────────────────────────────────────────────────
-    ("decoder-large", "cuda",     "float32"):  _d(4e-4,  1e-5,  _DL_NOTE),
-    ("decoder-large", "cuda",     "float16"):  _d(4e-3,  1e-3,  _DL_NOTE),
-    ("decoder-large", "cuda",     "bfloat16"): _d(4e-2,  1e-3,  _DL_NOTE),
-    ("decoder-large", "rocm",     "float32"):  _d(4e-3,  1e-4,  _DL_NOTE),
-    ("decoder-large", "rocm",     "float16"):  _d(8e-3,  1e-3,  _DL_NOTE),
-    ("decoder-large", "rocm",     "bfloat16"): _d(8e-2,  1e-3,  _DL_NOTE),
-    ("decoder-large", "mps",      "float32"):  _d(4e-4,  1e-5,  _DL_NOTE),
-    ("decoder-large", "mps",      "float16"):  _d(4e-3,  1e-3,  _DL_NOTE),
-    ("decoder-large", "mps",      "bfloat16"): _d(4e-2,  1e-3,  _DL_NOTE),
-    ("decoder-large", "xla",      "float32"):  _d(2.0,   1e-2,  _DL_NOTE),
-    ("decoder-large", "xla",      "bfloat16"): _d(2.0,   1e-2,  _DL_NOTE),
-    ("decoder-large", "cpu",      "float32"):  _d(4e-6,  1e-6,  _DL_NOTE),
-    ("decoder-large", "cpu",      "float16"):  _d(4e-4,  1e-4,  _DL_NOTE),
-    ("decoder-large", "cpu",      "bfloat16"): _d(4e-3,  1e-4,  _DL_NOTE),
-
+    ("decoder-large", "cuda", "float32"): _d(4e-4, 1e-5, _DL_NOTE),
+    ("decoder-large", "cuda", "float16"): _d(4e-3, 1e-3, _DL_NOTE),
+    ("decoder-large", "cuda", "bfloat16"): _d(4e-2, 1e-3, _DL_NOTE),
+    ("decoder-large", "rocm", "float32"): _d(4e-3, 1e-4, _DL_NOTE),
+    ("decoder-large", "rocm", "float16"): _d(8e-3, 1e-3, _DL_NOTE),
+    ("decoder-large", "rocm", "bfloat16"): _d(8e-2, 1e-3, _DL_NOTE),
+    ("decoder-large", "mps", "float32"): _d(4e-4, 1e-5, _DL_NOTE),
+    ("decoder-large", "mps", "float16"): _d(4e-3, 1e-3, _DL_NOTE),
+    ("decoder-large", "mps", "bfloat16"): _d(4e-2, 1e-3, _DL_NOTE),
+    ("decoder-large", "xla", "float32"): _d(2.0, 1e-2, _DL_NOTE),
+    ("decoder-large", "xla", "bfloat16"): _d(2.0, 1e-2, _DL_NOTE),
+    ("decoder-large", "cpu", "float32"): _d(4e-6, 1e-6, _DL_NOTE),
+    ("decoder-large", "cpu", "float16"): _d(4e-4, 1e-4, _DL_NOTE),
+    ("decoder-large", "cpu", "bfloat16"): _d(4e-3, 1e-4, _DL_NOTE),
     # ── encoder ───────────────────────────────────────────────────────────
-    ("encoder", "cuda",     "float32"):  _d(5e-5,  1e-5,  _ENC_NOTE),
-    ("encoder", "cuda",     "float16"):  _d(5e-4,  1e-3,  _ENC_NOTE),
-    ("encoder", "cuda",     "bfloat16"): _d(5e-3,  1e-3,  _ENC_NOTE),
-    ("encoder", "rocm",     "float32"):  _d(5e-4,  1e-4,  _ENC_NOTE),
-    ("encoder", "rocm",     "float16"):  _d(1e-3,  1e-3,  _ENC_NOTE),
-    ("encoder", "rocm",     "bfloat16"): _d(1e-2,  1e-3,  _ENC_NOTE),
-    ("encoder", "mps",      "float32"):  _d(5e-5,  1e-5,  _ENC_NOTE),
-    ("encoder", "mps",      "float16"):  _d(5e-4,  1e-3,  _ENC_NOTE),
-    ("encoder", "mps",      "bfloat16"): _d(5e-3,  1e-3,  _ENC_NOTE),
-    ("encoder", "xla",      "float32"):  _d(0.25,  1e-2,  _ENC_NOTE),
-    ("encoder", "xla",      "bfloat16"): _d(0.25,  1e-2,  _ENC_NOTE),
-    ("encoder", "cpu",      "float32"):  _d(5e-7,  1e-6,  _ENC_NOTE),
-    ("encoder", "cpu",      "float16"):  _d(5e-5,  1e-4,  _ENC_NOTE),
-    ("encoder", "cpu",      "bfloat16"): _d(5e-4,  1e-4,  _ENC_NOTE),
-
+    ("encoder", "cuda", "float32"): _d(5e-5, 1e-5, _ENC_NOTE),
+    ("encoder", "cuda", "float16"): _d(5e-4, 1e-3, _ENC_NOTE),
+    ("encoder", "cuda", "bfloat16"): _d(5e-3, 1e-3, _ENC_NOTE),
+    ("encoder", "rocm", "float32"): _d(5e-4, 1e-4, _ENC_NOTE),
+    ("encoder", "rocm", "float16"): _d(1e-3, 1e-3, _ENC_NOTE),
+    ("encoder", "rocm", "bfloat16"): _d(1e-2, 1e-3, _ENC_NOTE),
+    ("encoder", "mps", "float32"): _d(5e-5, 1e-5, _ENC_NOTE),
+    ("encoder", "mps", "float16"): _d(5e-4, 1e-3, _ENC_NOTE),
+    ("encoder", "mps", "bfloat16"): _d(5e-3, 1e-3, _ENC_NOTE),
+    ("encoder", "xla", "float32"): _d(0.25, 1e-2, _ENC_NOTE),
+    ("encoder", "xla", "bfloat16"): _d(0.25, 1e-2, _ENC_NOTE),
+    ("encoder", "cpu", "float32"): _d(5e-7, 1e-6, _ENC_NOTE),
+    ("encoder", "cpu", "float16"): _d(5e-5, 1e-4, _ENC_NOTE),
+    ("encoder", "cpu", "bfloat16"): _d(5e-4, 1e-4, _ENC_NOTE),
     # ── vision-language ───────────────────────────────────────────────────
-    ("vision-language", "cuda",     "float32"):  _d(3e-4,  1e-5,  _VL_NOTE),
-    ("vision-language", "cuda",     "float16"):  _d(3e-3,  1e-3,  _VL_NOTE),
-    ("vision-language", "cuda",     "bfloat16"): _d(3e-2,  1e-3,  _VL_NOTE),
-    ("vision-language", "rocm",     "float32"):  _d(3e-3,  1e-4,  _VL_NOTE),
-    ("vision-language", "rocm",     "float16"):  _d(6e-3,  1e-3,  _VL_NOTE),
-    ("vision-language", "rocm",     "bfloat16"): _d(6e-2,  1e-3,  _VL_NOTE),
-    ("vision-language", "mps",      "float32"):  _d(3e-4,  1e-5,  _VL_NOTE),
-    ("vision-language", "mps",      "float16"):  _d(3e-3,  1e-3,  _VL_NOTE),
-    ("vision-language", "mps",      "bfloat16"): _d(3e-2,  1e-3,  _VL_NOTE),
-    ("vision-language", "xla",      "float32"):  _d(1.5,   1e-2,  _VL_NOTE),
-    ("vision-language", "xla",      "bfloat16"): _d(1.5,   1e-2,  _VL_NOTE),
-    ("vision-language", "cpu",      "float32"):  _d(3e-6,  1e-6,  _VL_NOTE),
-    ("vision-language", "cpu",      "float16"):  _d(3e-4,  1e-4,  _VL_NOTE),
-    ("vision-language", "cpu",      "bfloat16"): _d(3e-3,  1e-4,  _VL_NOTE),
-
+    ("vision-language", "cuda", "float32"): _d(3e-4, 1e-5, _VL_NOTE),
+    ("vision-language", "cuda", "float16"): _d(3e-3, 1e-3, _VL_NOTE),
+    ("vision-language", "cuda", "bfloat16"): _d(3e-2, 1e-3, _VL_NOTE),
+    ("vision-language", "rocm", "float32"): _d(3e-3, 1e-4, _VL_NOTE),
+    ("vision-language", "rocm", "float16"): _d(6e-3, 1e-3, _VL_NOTE),
+    ("vision-language", "rocm", "bfloat16"): _d(6e-2, 1e-3, _VL_NOTE),
+    ("vision-language", "mps", "float32"): _d(3e-4, 1e-5, _VL_NOTE),
+    ("vision-language", "mps", "float16"): _d(3e-3, 1e-3, _VL_NOTE),
+    ("vision-language", "mps", "bfloat16"): _d(3e-2, 1e-3, _VL_NOTE),
+    ("vision-language", "xla", "float32"): _d(1.5, 1e-2, _VL_NOTE),
+    ("vision-language", "xla", "bfloat16"): _d(1.5, 1e-2, _VL_NOTE),
+    ("vision-language", "cpu", "float32"): _d(3e-6, 1e-6, _VL_NOTE),
+    ("vision-language", "cpu", "float16"): _d(3e-4, 1e-4, _VL_NOTE),
+    ("vision-language", "cpu", "bfloat16"): _d(3e-3, 1e-4, _VL_NOTE),
     # ── trainium ──────────────────────────────────────────────────────────
     # Trainium (AWS Neuron) supports float32 and bfloat16.
     # Measured base: atol=1e-4 (float32), 1e-2 (bfloat16).
     # Family scaling follows same methodology as other backends.
-    ("decoder-small",   "trainium", "float32"):  _m(1e-4,  1e-5,  _CLOUD_NOTE),
-    ("decoder-small",   "trainium", "bfloat16"): _m(1e-2,  1e-3,  _CLOUD_NOTE),
-    ("decoder-medium",  "trainium", "float32"):  _d(2e-4,  1e-5,  _DM_NOTE),
-    ("decoder-medium",  "trainium", "bfloat16"): _d(2e-2,  1e-3,  _DM_NOTE),
-    ("decoder-large",   "trainium", "float32"):  _d(4e-4,  1e-5,  _DL_NOTE),
-    ("decoder-large",   "trainium", "bfloat16"): _d(4e-2,  1e-3,  _DL_NOTE),
-    ("encoder",         "trainium", "float32"):  _d(5e-5,  1e-5,  _ENC_NOTE),
-    ("encoder",         "trainium", "bfloat16"): _d(5e-3,  1e-3,  _ENC_NOTE),
-    ("vision-language", "trainium", "float32"):  _d(3e-4,  1e-5,  _VL_NOTE),
-    ("vision-language", "trainium", "bfloat16"): _d(3e-2,  1e-3,  _VL_NOTE),
+    ("decoder-small", "trainium", "float32"): _m(1e-4, 1e-5, _CLOUD_NOTE),
+    ("decoder-small", "trainium", "bfloat16"): _m(1e-2, 1e-3, _CLOUD_NOTE),
+    ("decoder-medium", "trainium", "float32"): _d(2e-4, 1e-5, _DM_NOTE),
+    ("decoder-medium", "trainium", "bfloat16"): _d(2e-2, 1e-3, _DM_NOTE),
+    ("decoder-large", "trainium", "float32"): _d(4e-4, 1e-5, _DL_NOTE),
+    ("decoder-large", "trainium", "bfloat16"): _d(4e-2, 1e-3, _DL_NOTE),
+    ("encoder", "trainium", "float32"): _d(5e-5, 1e-5, _ENC_NOTE),
+    ("encoder", "trainium", "bfloat16"): _d(5e-3, 1e-3, _ENC_NOTE),
+    ("vision-language", "trainium", "float32"): _d(3e-4, 1e-5, _VL_NOTE),
+    ("vision-language", "trainium", "bfloat16"): _d(3e-2, 1e-3, _VL_NOTE),
 }
 
 
 # ---------------------------------------------------------------------------
 # ToleranceDB
 # ---------------------------------------------------------------------------
+
 
 class ToleranceDB:
     """Look up empirical tolerances by backend, dtype, and optional model family.
@@ -321,9 +318,13 @@ class ToleranceDB:
                 "ToleranceDB: no entry for backend '%s' (dtype='%s') — "
                 "returning safe-default fallback (atol=%.0e). "
                 "Call ToleranceDB.register() to add measured tolerances for this backend.",
-                b, d, base.atol,
+                b,
+                d,
+                base.atol,
             )
-        return ToleranceEntry(atol=base.atol, rtol=base.rtol, source=source, notes=notes)
+        return ToleranceEntry(
+            atol=base.atol, rtol=base.rtol, source=source, notes=notes
+        )
 
     def register(self, backend: str, dtype: str, atol: float, rtol: float) -> None:
         """Register a custom tolerance for ``(backend, dtype)``.
@@ -365,7 +366,11 @@ class ToleranceDB:
         if rtol < 0:
             raise ValueError(f"rtol must be >= 0, got {rtol}")
         self._family_table[
-            (model_family.strip().lower(), backend.strip().lower(), dtype.strip().lower())
+            (
+                model_family.strip().lower(),
+                backend.strip().lower(),
+                dtype.strip().lower(),
+            )
         ] = ToleranceEntry(atol=atol, rtol=rtol, source=source, notes=notes)
 
     def all_backends(self) -> list[str]:

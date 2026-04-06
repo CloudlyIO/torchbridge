@@ -78,26 +78,65 @@ from .hardware_detector import (
 
 __all__ = [
     # Hardware detection and auto-optimization
-    'HardwareDetector', 'HardwareProfile', 'HardwareType', 'OptimizationCapability',
-    'detect_hardware', 'get_optimal_backend', 'get_hardware_detector',
-
+    "HardwareDetector",
+    "HardwareProfile",
+    "HardwareType",
+    "OptimizationCapability",
+    "detect_hardware",
+    "get_optimal_backend",
+    "get_hardware_detector",
     # Configuration system
-    'TorchBridgeConfig', 'PrecisionConfig', 'MemoryConfig', 'AttentionConfig',
-    'HardwareConfig', 'NVIDIAConfig', 'TPUConfig', 'AMDConfig',
-    'DistributedConfig', 'ValidationConfig', 'KernelConfig',
-    'PrecisionFormat', 'OptimizationLevel', 'HardwareBackend',
-    'NVIDIAArchitecture', 'TPUVersion', 'TPUTopology', 'TPUCompilationMode', 'AMDArchitecture', 'TrainiumArchitecture',
-    'TrainiumConfig',
-    'AttentionPatterns', 'FP8AttentionConfig', 'DynamicSparseConfig', 'RingAttentionConfig',
-    'get_config', 'set_config', 'configure',
-
+    "TorchBridgeConfig",
+    "PrecisionConfig",
+    "MemoryConfig",
+    "AttentionConfig",
+    "HardwareConfig",
+    "NVIDIAConfig",
+    "TPUConfig",
+    "AMDConfig",
+    "DistributedConfig",
+    "ValidationConfig",
+    "KernelConfig",
+    "PrecisionFormat",
+    "OptimizationLevel",
+    "HardwareBackend",
+    "NVIDIAArchitecture",
+    "TPUVersion",
+    "TPUTopology",
+    "TPUCompilationMode",
+    "AMDArchitecture",
+    "TrainiumArchitecture",
+    "TrainiumConfig",
+    "AttentionPatterns",
+    "FP8AttentionConfig",
+    "DynamicSparseConfig",
+    "RingAttentionConfig",
+    "get_config",
+    "set_config",
+    "configure",
     # Error handling framework
-    'TorchBridgeError', 'ValidationError', 'ConfigValidationError', 'InputValidationError',
-    'ModelValidationError', 'HardwareError', 'HardwareDetectionError', 'HardwareNotFoundError',
-    'HardwareCapabilityError', 'OptimizationError', 'CompilationError', 'FusionError',
-    'PrecisionError', 'DeploymentError', 'ExportError', 'ServingError', 'ContainerError',
-    'MonitoringError', 'MetricsError', 'HealthCheckError', 'raise_or_warn', 'format_error_chain',
-
+    "TorchBridgeError",
+    "ValidationError",
+    "ConfigValidationError",
+    "InputValidationError",
+    "ModelValidationError",
+    "HardwareError",
+    "HardwareDetectionError",
+    "HardwareNotFoundError",
+    "HardwareCapabilityError",
+    "OptimizationError",
+    "CompilationError",
+    "FusionError",
+    "PrecisionError",
+    "DeploymentError",
+    "ExportError",
+    "ServingError",
+    "ContainerError",
+    "MonitoringError",
+    "MetricsError",
+    "HealthCheckError",
+    "raise_or_warn",
+    "format_error_chain",
 ]
 
 # Add dynamically available components
@@ -108,13 +147,17 @@ logger = logging.getLogger(__name__)
 
 current_module = sys.modules[__name__]
 for attr_name in dir(current_module):
-    if not attr_name.startswith('_') and attr_name not in __all__:
+    if not attr_name.startswith("_") and attr_name not in __all__:
         try:
             attr = getattr(current_module, attr_name)
-            if hasattr(attr, '__module__') and 'torchbridge.core' in str(getattr(attr, '__module__', '')):
+            if hasattr(attr, "__module__") and "torchbridge.core" in str(
+                getattr(attr, "__module__", "")
+            ):
                 __all__.append(attr_name)
         except Exception:
-            logger.debug("Failed to inspect attribute '%s' for __all__", attr_name, exc_info=True)
+            logger.debug(
+                "Failed to inspect attribute '%s' for __all__", attr_name, exc_info=True
+            )
             pass
 
 # Backward compatibility
@@ -126,7 +169,7 @@ def _deprecation_warning(old_path: str, new_path: str):
         f"Importing from '{old_path}' is deprecated. "
         f"Please use 'from torchbridge.core import ...' instead of '{new_path}'.",
         DeprecationWarning,
-        stacklevel=3
+        stacklevel=3,
     )
 
 
@@ -142,17 +185,20 @@ def _deprecation_warning(old_path: str, new_path: str):
 # Migration guide: Use 'from torchbridge.core import ...' instead.
 # =============================================================================
 
+
 class _LegacyImportHelper:
     def __getattr__(self, name):
-        if name in ['compiler_integration', 'compiler_optimized', 'components']:
-            _deprecation_warning(f'torchbridge.{name}', 'torchbridge.core')
+        if name in ["compiler_integration", "compiler_optimized", "components"]:
+            _deprecation_warning(f"torchbridge.{name}", "torchbridge.core")
             return self
         # Import from current module instead of recursion
         import torchbridge.core as core_module
+
         if hasattr(core_module, name):
             return getattr(core_module, name)
         raise AttributeError(f"module has no attribute '{name}'")
 
-sys.modules['torchbridge.compiler_integration'] = _LegacyImportHelper()  # type: ignore[assignment]
-sys.modules['torchbridge.compiler_optimized'] = _LegacyImportHelper()  # type: ignore[assignment]
-sys.modules['torchbridge.components'] = _LegacyImportHelper()  # type: ignore[assignment]
+
+sys.modules["torchbridge.compiler_integration"] = _LegacyImportHelper()  # type: ignore[assignment]
+sys.modules["torchbridge.compiler_optimized"] = _LegacyImportHelper()  # type: ignore[assignment]
+sys.modules["torchbridge.components"] = _LegacyImportHelper()  # type: ignore[assignment]

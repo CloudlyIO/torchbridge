@@ -104,9 +104,7 @@ class TestQuantization:
 
     def test_explicit_format_enum(self, engine, small_model):
         """Passing QuantizationFormat enum should work."""
-        result = engine.quantize(
-            small_model, format=QuantizationFormat.INT8_DYNAMIC
-        )
+        result = engine.quantize(small_model, format=QuantizationFormat.INT8_DYNAMIC)
         assert result.success
         assert result.format_applied == QuantizationFormat.INT8_DYNAMIC
 
@@ -134,9 +132,7 @@ class TestQuantization:
 
     def test_in_place_modifies_model(self, engine, small_model):
         """in_place=True should quantize the model directly."""
-        result = engine.quantize(
-            small_model, format="int8_dynamic", in_place=True
-        )
+        result = engine.quantize(small_model, format="int8_dynamic", in_place=True)
         assert result.success
 
     def test_none_format_returns_unmodified(self, engine, small_model):

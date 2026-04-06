@@ -1,8 +1,8 @@
 """
 TPU Backend Module for TorchBridge
 
-This module provides TPU-specific backend implementations and HAL-aware support
-for PyTorch models using PyTorch/XLA integration.
+This module provides TPU-specific backend implementations for cross-backend
+validation and configuration intelligence using PyTorch/XLA integration.
 
 Key Components:
 - TPU Device Management
@@ -37,14 +37,14 @@ from .xla_integration import (
 )
 
 __all__ = [
-    'TPUBackend',
-    'TPUAdapter',
-    'XLACompiler',
-    'XLADeviceManager',
-    'XLADistributedTraining',
-    'XLAOptimizations',
-    'XLAUtilities',
-    'create_xla_integration'
+    "TPUBackend",
+    "TPUAdapter",
+    "XLACompiler",
+    "XLADeviceManager",
+    "XLADistributedTraining",
+    "XLAOptimizations",
+    "XLAUtilities",
+    "create_xla_integration",
 ]
 
 # Version compatibility
@@ -52,6 +52,7 @@ __tpu_support__ = True
 
 try:
     import torch_xla
+
     __xla_available__ = True
     __torch_xla_version__ = torch_xla.__version__
 except ImportError:

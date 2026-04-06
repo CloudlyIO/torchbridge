@@ -94,9 +94,9 @@ class TestAdapterEngine:
 
         # 3 linear layers, 2 match target_modules
         model = nn.Sequential(
-            nn.Linear(32, 16),   # "0"
-            nn.Linear(16, 8),    # "1"
-            nn.Linear(8, 4),     # "2" — not targeted
+            nn.Linear(32, 16),  # "0"
+            nn.Linear(16, 8),  # "1"
+            nn.Linear(8, 4),  # "2" — not targeted
         )
         config = AdapterConfig(
             method=AdapterMethod.LORA,

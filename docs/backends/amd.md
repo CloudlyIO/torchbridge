@@ -91,13 +91,13 @@ backend.empty_cache()
 
 ## Requirements
 
-- ROCm 5.6+ (6.0+ recommended)
+- ROCm 6.2+ (6.2 stable, 7.0+ also supported)
 - PyTorch with ROCm support
 - Linux (ROCm is Linux-only)
 
 ```bash
 # Install PyTorch with ROCm
-pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
 
 # Verify
 python3 -c "import torch; print(f'ROCm available: {torch.cuda.is_available()}')"

@@ -26,9 +26,11 @@ logger = logging.getLogger(__name__)
 # Data Classes
 # ============================================================================
 
+
 @dataclass
 class BenchmarkRecord:
     """A single benchmark result record."""
+
     # Identification
     id: int | None = None
     run_id: str = ""  # Unique run identifier
@@ -36,10 +38,10 @@ class BenchmarkRecord:
 
     # Platform info
     cloud_provider: str = ""  # "aws" or "gcp"
-    instance_type: str = ""   # e.g., "p4d.24xlarge", "a2-highgpu-1g"
-    region: str = ""          # e.g., "us-west-2", "us-central1-a"
-    hardware_type: str = ""   # "nvidia", "amd", "trainium", "tpu"
-    gpu_model: str = ""       # e.g., "H100", "A100", "MI300", "TPU v5e"
+    instance_type: str = ""  # e.g., "p4d.24xlarge", "a2-highgpu-1g"
+    region: str = ""  # e.g., "us-west-2", "us-central1-a"
+    hardware_type: str = ""  # "nvidia", "amd", "trainium", "tpu"
+    gpu_model: str = ""  # e.g., "H100", "A100", "MI300", "TPU v5e"
 
     # Benchmark info
     benchmark_name: str = ""
@@ -115,9 +117,11 @@ class BenchmarkRecord:
             metadata=data.get("metadata", {}),
         )
 
+
 @dataclass
 class ComparisonResult:
     """Result of comparing benchmarks across platforms."""
+
     benchmark_name: str
     platform_a: str
     platform_b: str
@@ -137,9 +141,11 @@ class ComparisonResult:
             f"  Cost ratio: {self.cost_ratio:.2f}x"
         )
 
+
 # ============================================================================
 # Benchmark Database
 # ============================================================================
+
 
 class BenchmarkDatabase:
     """
@@ -228,33 +234,38 @@ class BenchmarkDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO benchmarks (
                 run_id, timestamp, cloud_provider, instance_type, region,
                 hardware_type, gpu_model, benchmark_name, benchmark_suite,
                 latency_ms, throughput, memory_mb, tests_passed, tests_failed,
                 tests_skipped, duration_seconds, cost_usd, metadata
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            record.run_id,
-            record.timestamp.isoformat() if record.timestamp else datetime.now().isoformat(),
-            record.cloud_provider,
-            record.instance_type,
-            record.region,
-            record.hardware_type,
-            record.gpu_model,
-            record.benchmark_name,
-            record.benchmark_suite,
-            record.latency_ms,
-            record.throughput,
-            record.memory_mb,
-            record.tests_passed,
-            record.tests_failed,
-            record.tests_skipped,
-            record.duration_seconds,
-            record.cost_usd,
-            json.dumps(record.metadata),
-        ))
+        """,
+            (
+                record.run_id,
+                record.timestamp.isoformat()
+                if record.timestamp
+                else datetime.now().isoformat(),
+                record.cloud_provider,
+                record.instance_type,
+                record.region,
+                record.hardware_type,
+                record.gpu_model,
+                record.benchmark_name,
+                record.benchmark_suite,
+                record.latency_ms,
+                record.throughput,
+                record.memory_mb,
+                record.tests_passed,
+                record.tests_failed,
+                record.tests_skipped,
+                record.duration_seconds,
+                record.cost_usd,
+                json.dumps(record.metadata),
+            ),
+        )
 
         record_id = cursor.lastrowid
         conn.commit()
@@ -332,27 +343,29 @@ class BenchmarkDatabase:
         # Convert rows to records
         records = []
         for row in rows:
-            records.append(BenchmarkRecord(
-                id=row[0],
-                run_id=row[1],
-                timestamp=datetime.fromisoformat(row[2]) if row[2] else None,
-                cloud_provider=row[3],
-                instance_type=row[4],
-                region=row[5],
-                hardware_type=row[6],
-                gpu_model=row[7],
-                benchmark_name=row[8],
-                benchmark_suite=row[9],
-                latency_ms=row[10] or 0.0,
-                throughput=row[11] or 0.0,
-                memory_mb=row[12] or 0.0,
-                tests_passed=row[13] or 0,
-                tests_failed=row[14] or 0,
-                tests_skipped=row[15] or 0,
-                duration_seconds=row[16] or 0.0,
-                cost_usd=row[17] or 0.0,
-                metadata=json.loads(row[18]) if row[18] else {},
-            ))
+            records.append(
+                BenchmarkRecord(
+                    id=row[0],
+                    run_id=row[1],
+                    timestamp=datetime.fromisoformat(row[2]) if row[2] else None,
+                    cloud_provider=row[3],
+                    instance_type=row[4],
+                    region=row[5],
+                    hardware_type=row[6],
+                    gpu_model=row[7],
+                    benchmark_name=row[8],
+                    benchmark_suite=row[9],
+                    latency_ms=row[10] or 0.0,
+                    throughput=row[11] or 0.0,
+                    memory_mb=row[12] or 0.0,
+                    tests_passed=row[13] or 0,
+                    tests_failed=row[14] or 0,
+                    tests_skipped=row[15] or 0,
+                    duration_seconds=row[16] or 0.0,
+                    cost_usd=row[17] or 0.0,
+                    metadata=json.loads(row[18]) if row[18] else {},
+                )
+            )
 
         return records
 
@@ -415,9 +428,11 @@ class BenchmarkDatabase:
             "count": row[4] or 0,
         }
 
+
 # ============================================================================
 # Comparison Functions
 # ============================================================================
+
 
 def compare_platforms(
     db: BenchmarkDatabase,
@@ -468,12 +483,15 @@ def compare_platforms(
         platform_a=platform_a,
         platform_b=platform_b,
         latency_ratio=avg_latency_b / avg_latency_a if avg_latency_a > 0 else 0.0,
-        throughput_ratio=avg_throughput_b / avg_throughput_a if avg_throughput_a > 0 else 0.0,
+        throughput_ratio=avg_throughput_b / avg_throughput_a
+        if avg_throughput_a > 0
+        else 0.0,
         memory_ratio=avg_memory_b / avg_memory_a if avg_memory_a > 0 else 0.0,
         cost_ratio=avg_cost_b / avg_cost_a if avg_cost_a > 0 else 0.0,
         records_a=len(records_a),
         records_b=len(records_b),
     )
+
 
 def query_benchmarks(
     db_path: str = "benchmarks.db",

@@ -100,10 +100,8 @@ class TestPortabilityPipeline:
         original = torch.randn(32, 32)
         state = {"model.weight": original.clone()}
 
-        normalized, dtype_map, device_map = (
-            PortabilityNormalizer.normalize_state_dict(
-                state, HardwareBackend.CUDA
-            )
+        normalized, dtype_map, device_map = PortabilityNormalizer.normalize_state_dict(
+            state, HardwareBackend.CUDA
         )
 
         metadata = CheckpointMetadata(
@@ -134,10 +132,8 @@ class TestPortabilityPipeline:
                 "lr": 0.001,
             }
         }
-        normalized, dtype_map, device_map = (
-            PortabilityNormalizer.normalize_state_dict(
-                state, HardwareBackend.CUDA
-            )
+        normalized, dtype_map, device_map = PortabilityNormalizer.normalize_state_dict(
+            state, HardwareBackend.CUDA
         )
 
         assert "optimizer.state.momentum" in dtype_map
@@ -148,14 +144,17 @@ class TestPortabilityPipeline:
 class TestFrequencyAdvisorIntegration:
     """Integration tests for frequency advisor across cluster sizes."""
 
-    @pytest.mark.parametrize("world_size,expected_risk", [
-        (1, "low"),
-        (4, "low"),
-        (16, "medium"),
-        (64, "medium"),
-        (128, "medium"),
-        (512, "high"),
-    ])
+    @pytest.mark.parametrize(
+        "world_size,expected_risk",
+        [
+            (1, "low"),
+            (4, "low"),
+            (16, "medium"),
+            (64, "medium"),
+            (128, "medium"),
+            (512, "high"),
+        ],
+    )
     def test_risk_level_by_cluster_size(self, world_size, expected_risk):
         advisor = CheckpointFrequencyAdvisor()
         rec = advisor.recommend(world_size=world_size)
@@ -190,11 +189,13 @@ class TestHealthTriggerIntegration:
         advisor = CheckpointFrequencyAdvisor()
 
         # Simulate degradation
-        should, reason = trigger.should_checkpoint({
-            "temperature_c": 91.0,
-            "health_trend": "degrading",
-            "memory_errors": 0,
-        })
+        should, reason = trigger.should_checkpoint(
+            {
+                "temperature_c": 91.0,
+                "health_trend": "degrading",
+                "memory_errors": 0,
+            }
+        )
         assert should is True
 
         # After trigger, advisor recommends future frequency
@@ -266,11 +267,16 @@ class TestPackageImports:
         )
 
         all_exports = [
-            CheckpointConfig, CheckpointFrequencyAdvisor,
-            CheckpointHealthTrigger, CheckpointManager,
-            CheckpointMetadata, FrequencyRecommendation,
-            PortabilityNormalizer, SerializationFormat,
-            StorageBackendFactory, StorageBackendType,
+            CheckpointConfig,
+            CheckpointFrequencyAdvisor,
+            CheckpointHealthTrigger,
+            CheckpointManager,
+            CheckpointMetadata,
+            FrequencyRecommendation,
+            PortabilityNormalizer,
+            SerializationFormat,
+            StorageBackendFactory,
+            StorageBackendType,
         ]
         assert all(cls is not None for cls in all_exports)
         assert StorageBackendType.LOCAL.value == "local"

@@ -13,6 +13,7 @@ from enum import Enum
 
 class QuantizationFormat(Enum):
     """Internal quantization formats for dispatch."""
+
     NONE = "none"
     INT8_DYNAMIC = "int8_dynamic"
     INT8_DYNAMIC_ACTIVATIONS = "int8_dynamic_activations"
@@ -47,6 +48,7 @@ class QuantizationFormat(Enum):
 @dataclass(frozen=True)
 class FormatSpec:
     """Metadata for a quantization format."""
+
     bits: int
     display_name: str
     perplexity_tolerance_pct: float

@@ -106,7 +106,7 @@ class TestValidateCommand:
 
     def test_run_cloud_checks_no_script(self):
         """Test cloud checks when script is missing."""
-        with patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.exists", return_value=False):
             results = ValidateCommand._run_cloud_checks(verbose=False)
         assert len(results) >= 1
         assert results[0].status == "warning"
@@ -115,10 +115,10 @@ class TestValidateCommand:
     def test_execute_quick_level(self):
         """Test executing quick validation."""
         args = MagicMock()
-        args.level = 'quick'
+        args.level = "quick"
         args.model = None
         args.output = None
-        args.format = 'text'
+        args.format = "text"
         args.ci = False
         args.verbose = False
 
@@ -128,10 +128,10 @@ class TestValidateCommand:
     def test_execute_standard_level(self):
         """Test executing standard validation."""
         args = MagicMock()
-        args.level = 'standard'
+        args.level = "standard"
         args.model = None
         args.output = None
-        args.format = 'text'
+        args.format = "text"
         args.ci = False
         args.verbose = False
 
@@ -141,10 +141,10 @@ class TestValidateCommand:
     def test_execute_full_level(self):
         """Test executing full validation."""
         args = MagicMock()
-        args.level = 'full'
+        args.level = "full"
         args.model = None
         args.output = None
-        args.format = 'text'
+        args.format = "text"
         args.ci = False
         args.verbose = False
 
@@ -154,10 +154,10 @@ class TestValidateCommand:
     def test_execute_ci_mode(self, capsys):
         """Test execute in CI mode outputs JSON."""
         args = MagicMock()
-        args.level = 'quick'
+        args.level = "quick"
         args.model = None
         args.output = None
-        args.format = 'json'
+        args.format = "json"
         args.ci = True
         args.verbose = False
 
@@ -166,17 +166,17 @@ class TestValidateCommand:
 
         captured = capsys.readouterr()
         data = json.loads(captured.out)
-        assert 'results' in data
-        assert 'summary' in data
-        assert data['level'] == 'quick'
+        assert "results" in data
+        assert "summary" in data
+        assert data["level"] == "quick"
 
     def test_ci_mode_suppresses_print(self, capsys):
         """Test CI mode suppresses normal output."""
         args = MagicMock()
-        args.level = 'quick'
+        args.level = "quick"
         args.model = None
         args.output = None
-        args.format = 'json'
+        args.format = "json"
         args.ci = True
         args.verbose = False
 
@@ -226,15 +226,15 @@ class TestValidateCommand:
             duration_ms=50.0,
         )
 
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             try:
-                ValidateCommand._save_report(report, f.name, 'json', verbose=False)
+                ValidateCommand._save_report(report, f.name, "json", verbose=False)
                 assert os.path.exists(f.name)
 
                 with open(f.name) as jf:
                     data = json.load(jf)
-                assert data['level'] == 'quick'
-                assert len(data['results']) == 1
+                assert data["level"] == "quick"
+                assert len(data["results"]) == 1
             finally:
                 if os.path.exists(f.name):
                     os.unlink(f.name)
@@ -251,29 +251,29 @@ class TestValidateCommand:
             duration_ms=100.0,
         )
 
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             try:
-                ValidateCommand._save_report(report, f.name, 'text', verbose=False)
+                ValidateCommand._save_report(report, f.name, "text", verbose=False)
                 assert os.path.exists(f.name)
 
                 with open(f.name) as tf:
                     content = tf.read()
-                assert 'PASS' in content
-                assert 'FAIL' in content
-                assert 'detail' in content
+                assert "PASS" in content
+                assert "FAIL" in content
+                assert "detail" in content
             finally:
                 if os.path.exists(f.name):
                     os.unlink(f.name)
 
     def test_execute_with_output(self):
         """Test execute with output file."""
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             try:
                 args = MagicMock()
-                args.level = 'quick'
+                args.level = "quick"
                 args.model = None
                 args.output = f.name
-                args.format = 'json'
+                args.format = "json"
                 args.ci = False
                 args.verbose = False
 
@@ -304,15 +304,15 @@ class TestValidateCommand:
     def test_execute_error_handling(self, capsys):
         """Test error handling in execute."""
         args = MagicMock()
-        args.level = 'quick'
+        args.level = "quick"
         args.model = None
         args.output = None
-        args.format = 'text'
+        args.format = "text"
         args.ci = False
         args.verbose = False
 
         with patch.object(
-            ValidateCommand, '_run_quick_checks', side_effect=Exception("Test error")
+            ValidateCommand, "_run_quick_checks", side_effect=Exception("Test error")
         ):
             result = ValidateCommand.execute(args)
             assert result == 1
@@ -320,19 +320,19 @@ class TestValidateCommand:
     def test_execute_ci_error_handling(self, capsys):
         """Test CI mode error handling returns JSON."""
         args = MagicMock()
-        args.level = 'quick'
+        args.level = "quick"
         args.model = None
         args.output = None
-        args.format = 'json'
+        args.format = "json"
         args.ci = True
         args.verbose = False
 
         with patch.object(
-            ValidateCommand, '_run_quick_checks', side_effect=Exception("Test error")
+            ValidateCommand, "_run_quick_checks", side_effect=Exception("Test error")
         ):
             result = ValidateCommand.execute(args)
             assert result == 1
 
         captured = capsys.readouterr()
         data = json.loads(captured.out)
-        assert 'error' in data
+        assert "error" in data

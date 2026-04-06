@@ -24,7 +24,8 @@ from .base_exceptions import BackendError
 logger = logging.getLogger(__name__)
 
 # Type variable for config types
-ConfigT = TypeVar('ConfigT')
+ConfigT = TypeVar("ConfigT")
+
 
 @dataclass
 class DeviceInfo:
@@ -33,6 +34,7 @@ class DeviceInfo:
 
     All backends return this structure from get_device_info().
     """
+
     backend: str  # "nvidia", "amd", "trainium", "tpu", "cpu"
     device_type: str  # Device string (e.g., "cuda:0", "xla:0")
     device_id: int
@@ -46,26 +48,27 @@ class DeviceInfo:
     @property
     def total_memory_gb(self) -> float:
         """Total memory in GB."""
-        return self.total_memory_bytes / (1024 ** 3)
+        return self.total_memory_bytes / (1024**3)
 
     @property
     def total_memory_mb(self) -> float:
         """Total memory in MB."""
-        return self.total_memory_bytes / (1024 ** 2)
+        return self.total_memory_bytes / (1024**2)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'backend': self.backend,
-            'device_type': self.device_type,
-            'device_id': self.device_id,
-            'device_name': self.device_name,
-            'compute_capability': self.compute_capability,
-            'total_memory_gb': self.total_memory_gb,
-            'driver_version': self.driver_version,
-            'is_available': self.is_available,
-            'properties': self.properties
+            "backend": self.backend,
+            "device_type": self.device_type,
+            "device_id": self.device_id,
+            "device_name": self.device_name,
+            "compute_capability": self.compute_capability,
+            "total_memory_gb": self.total_memory_gb,
+            "driver_version": self.driver_version,
+            "is_available": self.is_available,
+            "properties": self.properties,
         }
+
 
 @dataclass
 class OptimizationResult:
@@ -74,6 +77,7 @@ class OptimizationResult:
 
     All backends return this structure from optimize() methods.
     """
+
     success: bool
     model: nn.Module
     level: OptimizationLevel
@@ -90,13 +94,14 @@ class OptimizationResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'success': self.success,
-            'level': self.level.value,
-            'optimizations_applied': self.optimizations_applied,
-            'warnings': self.warnings,
-            'errors': self.errors,
-            'metrics': self.metrics
+            "success": self.success,
+            "level": self.level.value,
+            "optimizations_applied": self.optimizations_applied,
+            "warnings": self.warnings,
+            "errors": self.errors,
+            "metrics": self.metrics,
         }
+
 
 class BaseBackend(ABC):
     """
@@ -145,14 +150,14 @@ class BaseBackend(ABC):
                 f"{self.__class__.__name__} initialization failed: {e}. "
                 "Falling back to CPU."
             )
-            self._device = torch.device('cpu')
+            self._device = torch.device("cpu")
             self._initialized = False
 
         logger.debug(
             "%s initialized: device=%s, available=%s",
             self.__class__.__name__,
             self._device,
-            self._initialized
+            self._initialized,
         )
 
     # =========================================================================
@@ -254,7 +259,7 @@ class BaseBackend(ABC):
     def device(self) -> torch.device:
         """Get the primary device for this backend."""
         if self._device is None:
-            return torch.device('cpu')
+            return torch.device("cpu")
         return self._device
 
     @property
@@ -346,18 +351,18 @@ class BaseBackend(ABC):
         """
         if self._memory_manager:
             stats = self._memory_manager.get_memory_stats()
-            if hasattr(stats, 'to_dict'):
+            if hasattr(stats, "to_dict"):
                 return stats.to_dict()
             return stats
 
         # Default CPU-based stats
         return {
-            'allocated_mb': 0,
-            'reserved_mb': 0,
-            'total_mb': 0,
-            'free_mb': 0,
-            'device': str(self.device),
-            'backend': self.BACKEND_NAME
+            "allocated_mb": 0,
+            "reserved_mb": 0,
+            "total_mb": 0,
+            "free_mb": 0,
+            "device": str(self.device),
+            "backend": self.BACKEND_NAME,
         }
 
     def get_memory_summary(self) -> str:
@@ -373,18 +378,20 @@ class BaseBackend(ABC):
             f"Device: {self.device}",
         ]
 
-        if 'allocated_mb' in stats:
+        if "allocated_mb" in stats:
             lines.append(f"Allocated: {stats.get('allocated_mb', 0):.2f} MB")
-        if 'reserved_mb' in stats:
+        if "reserved_mb" in stats:
             lines.append(f"Reserved: {stats.get('reserved_mb', 0):.2f} MB")
-        if 'total_mb' in stats:
+        if "total_mb" in stats:
             lines.append(f"Total: {stats.get('total_mb', 0):.2f} MB")
-        if 'free_mb' in stats:
+        if "free_mb" in stats:
             lines.append(f"Free: {stats.get('free_mb', 0):.2f} MB")
 
         return "\n".join(lines)
 
-    def to_device(self, tensor_or_model: torch.Tensor | nn.Module) -> torch.Tensor | nn.Module:
+    def to_device(
+        self, tensor_or_model: torch.Tensor | nn.Module
+    ) -> torch.Tensor | nn.Module:
         """
         Move tensor or model to this backend's device.
 
@@ -401,7 +408,7 @@ class BaseBackend(ABC):
         shape: tuple[int, ...],
         dtype: torch.dtype = torch.float32,
         requires_grad: bool = False,
-        pool_id: str | None = None
+        pool_id: str | None = None,
     ) -> torch.Tensor:
         """
         Allocate a tensor on this backend's device.
@@ -417,17 +424,11 @@ class BaseBackend(ABC):
         """
         if self._memory_manager:
             return self._memory_manager.allocate_tensor(
-                shape=shape,
-                dtype=dtype,
-                requires_grad=requires_grad,
-                pool_id=pool_id
+                shape=shape, dtype=dtype, requires_grad=requires_grad, pool_id=pool_id
             )
 
         return torch.zeros(
-            shape,
-            dtype=dtype,
-            device=self.device,
-            requires_grad=requires_grad
+            shape, dtype=dtype, device=self.device, requires_grad=requires_grad
         )
 
     def cleanup(self) -> None:
@@ -462,6 +463,7 @@ class BaseBackend(ABC):
         self.cleanup()
         return False
 
+
 class CPUBackend(BaseBackend):
     """
     CPU backend implementation.
@@ -473,7 +475,7 @@ class CPUBackend(BaseBackend):
 
     def _setup_environment(self) -> None:
         """Set up CPU environment."""
-        self._device = torch.device('cpu')
+        self._device = torch.device("cpu")
 
     def _check_availability(self) -> bool:
         """CPU is always available."""
@@ -493,14 +495,14 @@ class CPUBackend(BaseBackend):
             driver_version=None,
             is_available=True,
             properties={
-                'platform': platform.platform(),
-                'python_version': platform.python_version()
-            }
+                "platform": platform.platform(),
+                "python_version": platform.python_version(),
+            },
         )
 
     def prepare_model(self, model: nn.Module) -> nn.Module:
         """Prepare model for CPU — device placement only."""
-        return model.to('cpu')
+        return model.to("cpu")
 
     def optimize_for_inference(
         self,
@@ -511,9 +513,9 @@ class CPUBackend(BaseBackend):
         model = self.prepare_model(model).eval()
         for param in model.parameters():
             param.requires_grad = False
-        if sample_input is not None and hasattr(torch, 'compile'):
+        if sample_input is not None and hasattr(torch, "compile"):
             try:
-                model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
+                model = torch.compile(model, mode="reduce-overhead")  # type: ignore[assignment]
             except Exception as e:
                 logger.warning("torch.compile failed: %s", e)
         return model
@@ -529,10 +531,11 @@ class CPUBackend(BaseBackend):
             return model, optimizer
         return model
 
+
 __all__ = [
-    'BaseBackend',
-    'CPUBackend',
-    'OptimizationLevel',
-    'DeviceInfo',
-    'OptimizationResult',
+    "BaseBackend",
+    "CPUBackend",
+    "OptimizationLevel",
+    "DeviceInfo",
+    "OptimizationResult",
 ]

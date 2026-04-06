@@ -48,10 +48,10 @@ class FrequencyRecommendation:
 # ── MTBF estimates by cluster size ──────────────────────────────────────────
 
 _MTBF_HOURS: dict[str, float] = {
-    "small": 168.0,     # 1-8 GPUs: ~1 week
-    "medium": 48.0,     # 9-64 GPUs: ~2 days
-    "large": 12.0,      # 65-256 GPUs: ~12 hours
-    "xlarge": 4.0,      # 257+ GPUs: ~4 hours
+    "small": 168.0,  # 1-8 GPUs: ~1 week
+    "medium": 48.0,  # 9-64 GPUs: ~2 days
+    "large": 12.0,  # 65-256 GPUs: ~12 hours
+    "xlarge": 4.0,  # 257+ GPUs: ~4 hours
 }
 
 
@@ -178,8 +178,7 @@ class CheckpointHealthTrigger:
     ):
         if health_threshold_temp_c <= 0:
             raise ValueError(
-                f"health_threshold_temp_c must be > 0, "
-                f"got {health_threshold_temp_c}"
+                f"health_threshold_temp_c must be > 0, got {health_threshold_temp_c}"
             )
         if not 0.0 < utilization_drop_threshold <= 1.0:
             raise ValueError(
@@ -191,9 +190,7 @@ class CheckpointHealthTrigger:
         self._trigger_on_degrading = trigger_on_degrading
         self._utilization_drop_threshold = utilization_drop_threshold
 
-    def should_checkpoint(
-        self, device_health: dict[str, Any]
-    ) -> tuple[bool, str]:
+    def should_checkpoint(self, device_health: dict[str, Any]) -> tuple[bool, str]:
         """Check if an immediate checkpoint should be triggered.
 
         Args:
@@ -208,8 +205,7 @@ class CheckpointHealthTrigger:
         temp = device_health.get("temperature_c", 0.0)
         if temp >= self._temp_threshold:
             return True, (
-                f"Temperature {temp:.0f}C exceeds threshold "
-                f"{self._temp_threshold:.0f}C"
+                f"Temperature {temp:.0f}C exceeds threshold {self._temp_threshold:.0f}C"
             )
 
         # Health trend check
@@ -218,7 +214,11 @@ class CheckpointHealthTrigger:
             trend_lower = trend.lower()
         else:
             # Handle enum values (HealthTrend.DEGRADING → "degrading")
-            trend_lower = str(trend.value).lower() if hasattr(trend, "value") else str(trend).lower()
+            trend_lower = (
+                str(trend.value).lower()
+                if hasattr(trend, "value")
+                else str(trend).lower()
+            )
 
         if trend_lower == "critical":
             return True, "Health trend is CRITICAL"

@@ -26,6 +26,7 @@ from torchbridge.inference.disaggregated import (
 # Dataclass field coverage
 # ---------------------------------------------------------------------------
 
+
 class TestRoleConfigFields:
     def test_role_config_fields_exist(self):
         cfg = DisaggregatedRoleConfig(
@@ -49,9 +50,13 @@ class TestRoleConfigFields:
 
     def test_fleet_config_fields_exist(self):
         role = DisaggregatedRoleConfig(
-            role="decode", backend="rocm", architecture="cdna3",
-            kv_dtype="int8", kv_cache_budget_gb=64.0,
-            max_batch_size=128, max_seq_len=2048,
+            role="decode",
+            backend="rocm",
+            architecture="cdna3",
+            kv_dtype="int8",
+            kv_cache_budget_gb=64.0,
+            max_batch_size=128,
+            max_seq_len=2048,
         )
         fleet = DisaggregatedFleetConfig(
             model_params=7_000_000_000,
@@ -93,6 +98,7 @@ class TestRoleConfigFields:
 # ---------------------------------------------------------------------------
 # KV dtype matrix
 # ---------------------------------------------------------------------------
+
 
 class TestKvDtypeMatrix:
     def test_prefill_nvidia_hopper_uses_bfloat16(self):
@@ -149,6 +155,7 @@ class TestKvDtypeMatrix:
 # Transfer format matrix
 # ---------------------------------------------------------------------------
 
+
 class TestTransferFormatMatrix:
     def test_nvidia_to_nvidia_transfer_bfloat16(self):
         fmt = _TRANSFER_FORMAT_MATRIX[("cuda", "cuda")]
@@ -188,6 +195,7 @@ class TestTransferFormatMatrix:
 # ---------------------------------------------------------------------------
 # Memory and batch heuristics
 # ---------------------------------------------------------------------------
+
 
 class TestMemoryAndBatchHeuristics:
     def _recommend(self, **kwargs):
@@ -254,6 +262,7 @@ class TestMemoryAndBatchHeuristics:
 # Notes
 # ---------------------------------------------------------------------------
 
+
 class TestNotes:
     def test_notes_nonempty(self):
         cfg = DisaggregatedFleetAdvisor.recommend(
@@ -298,6 +307,7 @@ class TestNotes:
 # Package-level exports and edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestPackageExports:
     def test_importable_from_torchbridge_inference(self):
         from torchbridge.inference import (
@@ -305,6 +315,7 @@ class TestPackageExports:
             DisaggregatedFleetConfig,
             DisaggregatedRoleConfig,
         )
+
         assert DisaggregatedFleetAdvisor is not None
         assert DisaggregatedFleetConfig is not None
         assert DisaggregatedRoleConfig is not None

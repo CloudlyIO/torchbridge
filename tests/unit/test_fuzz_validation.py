@@ -55,7 +55,12 @@ class TestPrecisionConfigFuzz:
     )
     @settings(max_examples=50)
     def test_valid_precision_config(
-        self, entropy_threshold, memory_budget, quality_target, fp8_interval, calibration_samples
+        self,
+        entropy_threshold,
+        memory_budget,
+        quality_target,
+        fp8_interval,
+        calibration_samples,
     ):
         cfg = PrecisionConfig(
             entropy_threshold=entropy_threshold,
@@ -107,7 +112,11 @@ class TestMemoryConfigFuzz:
     )
     @settings(max_examples=50)
     def test_valid_memory_config(
-        self, memory_fraction, fragmentation_threshold, max_memory_gb, sequence_length_threshold
+        self,
+        memory_fraction,
+        fragmentation_threshold,
+        max_memory_gb,
+        sequence_length_threshold,
     ):
         cfg = MemoryConfig(
             memory_fraction=memory_fraction,
@@ -172,7 +181,9 @@ class TestDynamicSparseConfigFuzz:
         min_max=st.tuples(unit_float, unit_float).map(lambda t: tuple(sorted(t))),
     )
     @settings(max_examples=50)
-    def test_valid_dynamic_sparse_config(self, sparsity_threshold, efficiency_target, min_max):
+    def test_valid_dynamic_sparse_config(
+        self, sparsity_threshold, efficiency_target, min_max
+    ):
         min_s, max_s = min_max
         cfg = DynamicSparseConfig(
             sparsity_threshold=sparsity_threshold,
@@ -265,7 +276,9 @@ class TestErrorSerializationFuzz:
         message=st.text(min_size=1, max_size=100),
         details=st.dictionaries(
             keys=st.text(min_size=1, max_size=20).filter(str.isidentifier),
-            values=st.one_of(st.integers(), st.text(max_size=50), st.floats(allow_nan=False)),
+            values=st.one_of(
+                st.integers(), st.text(max_size=50), st.floats(allow_nan=False)
+            ),
             max_size=5,
         ),
     )

@@ -108,9 +108,7 @@ class ParallelismRecommendation:
             "tensor_parallel_degree": self.tensor_parallel_degree,
             "pipeline_parallel_stages": self.pipeline_parallel_stages,
             "fsdp_strategy": self.fsdp_strategy,
-            "estimated_memory_per_rank_gb": round(
-                self.estimated_memory_per_rank_gb, 2
-            ),
+            "estimated_memory_per_rank_gb": round(self.estimated_memory_per_rank_gb, 2),
             "estimated_communication_volume_gb": round(
                 self.estimated_communication_volume_gb, 2
             ),
@@ -133,6 +131,7 @@ class DistributedConfig:
     def fsdp2(self) -> FSDPConfig:
         """Backward-compatible alias for :attr:`fsdp`."""
         return self.fsdp
+
     pipeline: PipelineConfig = field(default_factory=PipelineConfig)
     collective: CollectiveConfig = field(default_factory=CollectiveConfig)
     mesh: MeshConfig | None = None
@@ -263,21 +262,21 @@ class DistributedConfig:
         lines.append("[fsdp]")
         fsdp = self.fsdp.to_dict()
         for key, value in fsdp.items():
-            lines.append(f'{key} = {_toml_value(value)}')
+            lines.append(f"{key} = {_toml_value(value)}")
         lines.append("")
 
         # Pipeline
         lines.append("[pipeline]")
         pipe = self.pipeline.to_dict()
         for key, value in pipe.items():
-            lines.append(f'{key} = {_toml_value(value)}')
+            lines.append(f"{key} = {_toml_value(value)}")
         lines.append("")
 
         # Collective
         lines.append("[collective]")
         coll = self.collective.to_dict()
         for key, value in coll.items():
-            lines.append(f'{key} = {_toml_value(value)}')
+            lines.append(f"{key} = {_toml_value(value)}")
         lines.append("")
 
         # Mesh
@@ -285,10 +284,11 @@ class DistributedConfig:
             lines.append("[mesh]")
             mesh = self.mesh.to_dict()
             for key, value in mesh.items():
-                lines.append(f'{key} = {_toml_value(value)}')
+                lines.append(f"{key} = {_toml_value(value)}")
             lines.append("")
 
         return "\n".join(lines)
+
 
 def _toml_value(value: Any) -> str:
     """Format a Python value as TOML."""
@@ -343,7 +343,7 @@ def _recommend_parallelism(
         )
     else:
         notes.append(
-            f"TP=1: model ({model_params/1e9:.1f}B params) fits on a single rank — "
+            f"TP=1: model ({model_params / 1e9:.1f}B params) fits on a single rank — "
             f"no tensor parallelism needed; FSDP sharding handles memory distribution"
         )
 
@@ -363,16 +363,14 @@ def _recommend_parallelism(
         )
     else:
         notes.append(
-            f"PP=1: model ({model_params/1e9:.1f}B params) does not require pipeline "
+            f"PP=1: model ({model_params / 1e9:.1f}B params) does not require pipeline "
             f"parallelism — all layers fit within the TP+FSDP configuration"
         )
 
     # FSDP strategy
     if num_nodes > 1:
         fsdp_strategy = "hybrid_shard"
-        notes.append(
-            "Hybrid sharding: full shard within node, replicate across nodes"
-        )
+        notes.append("Hybrid sharding: full shard within node, replicate across nodes")
     else:
         fsdp_strategy = "full_shard"
         notes.append("Full sharding within single node")
@@ -384,9 +382,7 @@ def _recommend_parallelism(
 
     # Communication volume estimate (simplified)
     # All-gather + reduce-scatter per FSDP step ≈ 2 × model_params × bytes
-    comm_per_step_gb = (
-        2 * model_params * _BYTES_PER_PARAM_MIXED / (1024**3)
-    )
+    comm_per_step_gb = 2 * model_params * _BYTES_PER_PARAM_MIXED / (1024**3)
     # TP adds all-reduce per layer
     if tp_degree > 1:
         comm_per_step_gb *= 1.5

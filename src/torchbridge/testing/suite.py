@@ -42,7 +42,9 @@ class BackendTolerance:
     """Minimum cosine similarity for flattened output vectors."""
 
     @classmethod
-    def for_backend(cls, backend_name: str, dtype_name: str = "float32") -> BackendTolerance:
+    def for_backend(
+        cls, backend_name: str, dtype_name: str = "float32"
+    ) -> BackendTolerance:
         """Look up empirical tolerances from the built-in tolerance DB."""
         from torchbridge.testing.tolerance_db import ToleranceDB
 
@@ -145,11 +147,13 @@ class CrossBackendTestSuite:
                 device = backend.device
                 backend_name = bt.value
             except Exception as e:
-                results.append(BackendResult(
-                    backend_name=str(bt),
-                    passed=False,
-                    error=f"Backend init failed: {e}",
-                ))
+                results.append(
+                    BackendResult(
+                        backend_name=str(bt),
+                        passed=False,
+                        error=f"Backend init failed: {e}",
+                    )
+                )
                 continue
 
             try:
@@ -168,31 +172,34 @@ class CrossBackendTestSuite:
                 out_flat = self._flatten_output(output).cpu()
 
                 max_diff = float(torch.abs(cpu_flat - out_flat).max())
-                cos_sim = float(F.cosine_similarity(
-                    cpu_flat.flatten().unsqueeze(0),
-                    out_flat.flatten().unsqueeze(0),
-                ))
-
-                tol = BackendTolerance.for_backend(backend_name)
-                passed = (
-                    max_diff <= tol.atol
-                    and cos_sim >= tol.cosine_threshold
+                cos_sim = float(
+                    F.cosine_similarity(
+                        cpu_flat.flatten().unsqueeze(0),
+                        out_flat.flatten().unsqueeze(0),
+                    )
                 )
 
-                results.append(BackendResult(
-                    backend_name=backend_name,
-                    passed=passed,
-                    max_diff=max_diff,
-                    cosine_sim=cos_sim,
-                    latency_ms=latency_ms,
-                ))
+                tol = BackendTolerance.for_backend(backend_name)
+                passed = max_diff <= tol.atol and cos_sim >= tol.cosine_threshold
+
+                results.append(
+                    BackendResult(
+                        backend_name=backend_name,
+                        passed=passed,
+                        max_diff=max_diff,
+                        cosine_sim=cos_sim,
+                        latency_ms=latency_ms,
+                    )
+                )
 
             except Exception as e:
-                results.append(BackendResult(
-                    backend_name=backend_name,
-                    passed=False,
-                    error=str(e),
-                ))
+                results.append(
+                    BackendResult(
+                        backend_name=backend_name,
+                        passed=False,
+                        error=str(e),
+                    )
+                )
                 logger.warning("Suite failed on %s: %s", backend_name, e)
 
         return results

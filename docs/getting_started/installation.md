@@ -13,7 +13,7 @@ GPU backends are optional. TorchBridge always falls back to CPU.
 ## Development Install
 
 ```bash
-git clone https://github.com/CloudlyIO/torchbridge.git  # update URL when repo goes public
+git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
 pip install -r requirements.txt
 

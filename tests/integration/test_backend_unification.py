@@ -12,7 +12,6 @@ All backends (NVIDIA, AMD, Trainium, TPU) should inherit from the base classes
 and provide a consistent API.
 """
 
-
 import pytest
 import torch
 import torch.nn as nn
@@ -42,6 +41,7 @@ from torchbridge.backends import (
 # Test Models
 # =============================================================================
 
+
 class SimpleModel(nn.Module):
     """Simple model for testing."""
 
@@ -70,6 +70,7 @@ class ConvModel(nn.Module):
 # =============================================================================
 # OptimizationLevel Tests
 # =============================================================================
+
 
 class TestOptimizationLevel:
     """Tests for OptimizationLevel enum."""
@@ -117,6 +118,7 @@ class TestOptimizationLevel:
 # DeviceInfo Tests
 # =============================================================================
 
+
 class TestDeviceInfo:
     """Tests for DeviceInfo dataclass."""
 
@@ -128,7 +130,7 @@ class TestDeviceInfo:
             device_id=0,
             device_name="Test CPU",
             total_memory_bytes=16 * 1024**3,
-            is_available=True
+            is_available=True,
         )
 
         assert info.backend == "test"
@@ -144,7 +146,7 @@ class TestDeviceInfo:
             device_type="cpu",
             device_id=0,
             device_name="Test",
-            total_memory_bytes=16 * 1024**3
+            total_memory_bytes=16 * 1024**3,
         )
 
         assert info.total_memory_gb == 16.0
@@ -159,19 +161,20 @@ class TestDeviceInfo:
             device_name="Test GPU",
             compute_capability="8.0",
             total_memory_bytes=24 * 1024**3,
-            is_available=True
+            is_available=True,
         )
 
         d = info.to_dict()
-        assert d['backend'] == "test"
-        assert d['device_type'] == "cuda:0"
-        assert d['compute_capability'] == "8.0"
-        assert d['total_memory_gb'] == 24.0
+        assert d["backend"] == "test"
+        assert d["device_type"] == "cuda:0"
+        assert d["compute_capability"] == "8.0"
+        assert d["total_memory_gb"] == 24.0
 
 
 # =============================================================================
 # OptimizationResult Tests
 # =============================================================================
+
 
 class TestOptimizationResult:
     """Tests for OptimizationResult dataclass."""
@@ -183,7 +186,7 @@ class TestOptimizationResult:
             success=True,
             model=model,
             level=OptimizationLevel.O2,
-            optimizations_applied=['opt1', 'opt2']
+            optimizations_applied=["opt1", "opt2"],
         )
 
         assert result.success is True
@@ -197,7 +200,7 @@ class TestOptimizationResult:
         result = OptimizationResult(
             success=True,
             model=model,
-            level="O2"  # String should be converted
+            level="O2",  # String should be converted
         )
 
         assert result.level == OptimizationLevel.O2
@@ -209,20 +212,21 @@ class TestOptimizationResult:
             success=True,
             model=model,
             level=OptimizationLevel.O3,
-            optimizations_applied=['opt1'],
-            warnings=['warning1'],
-            metrics={'time': 1.5}
+            optimizations_applied=["opt1"],
+            warnings=["warning1"],
+            metrics={"time": 1.5},
         )
 
         d = result.to_dict()
-        assert d['success'] is True
-        assert d['level'] == "O3"
-        assert 'opt1' in d['optimizations_applied']
+        assert d["success"] is True
+        assert d["level"] == "O3"
+        assert "opt1" in d["optimizations_applied"]
 
 
 # =============================================================================
 # CPUBackend Tests
 # =============================================================================
+
 
 class TestCPUBackend:
     """Tests for CPUBackend (concrete BaseBackend implementation)."""
@@ -310,6 +314,7 @@ class TestCPUBackend:
 # CPUAdapter Tests
 # =============================================================================
 
+
 class TestCPUAdapter:
     """Tests for CPUAdapter."""
 
@@ -336,7 +341,12 @@ class TestCPUAdapter:
         optimizer = CPUAdapter()
         model = SimpleModel()
 
-        for level in [OptimizationLevel.O0, OptimizationLevel.O1, OptimizationLevel.O2, OptimizationLevel.O3]:
+        for level in [
+            OptimizationLevel.O0,
+            OptimizationLevel.O1,
+            OptimizationLevel.O2,
+            OptimizationLevel.O3,
+        ]:
             _, result = optimizer.optimize(model, level=level)
             assert result.success is True
             assert result.level == level
@@ -354,6 +364,7 @@ class TestCPUAdapter:
 # =============================================================================
 # BackendFactory Tests
 # =============================================================================
+
 
 class TestBackendFactory:
     """Tests for BackendFactory."""
@@ -407,16 +418,16 @@ class TestBackendFactory:
         info = BackendFactory.get_backend_info(BackendType.CPU)
 
         assert isinstance(info, dict)
-        assert info['type'] == 'cpu'
-        assert info['available'] is True
+        assert info["type"] == "cpu"
+        assert info["available"] is True
 
     def test_factory_get_all_backend_info(self):
         """Test BackendFactory.get_all_backend_info()."""
         all_info = BackendFactory.get_all_backend_info()
 
         assert isinstance(all_info, dict)
-        assert 'cpu' in all_info
-        assert 'nvidia' in all_info
+        assert "cpu" in all_info
+        assert "nvidia" in all_info
 
     def test_get_backend_function(self):
         """Test get_backend() convenience function."""
@@ -441,12 +452,13 @@ class TestBackendFactory:
         available = list_available_backends()
 
         assert isinstance(available, list)
-        assert 'cpu' in available
+        assert "cpu" in available
 
 
 # =============================================================================
 # Backend Inheritance Tests
 # =============================================================================
+
 
 class TestBackendInheritance:
     """Test that all backends properly inherit from BaseBackend."""
@@ -480,6 +492,7 @@ class TestBackendInheritance:
 # Unified Interface Tests
 # =============================================================================
 
+
 class TestUnifiedInterface:
     """Test that all backends have a consistent interface."""
 
@@ -500,13 +513,13 @@ class TestUnifiedInterface:
     def test_all_have_device_property(self, backends):
         """Test all backends have device property."""
         for backend in backends:
-            assert hasattr(backend, 'device')
+            assert hasattr(backend, "device")
             assert isinstance(backend.device, torch.device)
 
     def test_all_have_is_available(self, backends):
         """Test all backends have is_available property."""
         for backend in backends:
-            assert hasattr(backend, 'is_available')
+            assert hasattr(backend, "is_available")
             assert isinstance(backend.is_available, bool)
 
     def test_all_have_prepare_model(self, backends):
@@ -514,14 +527,14 @@ class TestUnifiedInterface:
         model = SimpleModel()
 
         for backend in backends:
-            assert hasattr(backend, 'prepare_model')
+            assert hasattr(backend, "prepare_model")
             prepared = backend.prepare_model(model)
             assert prepared is not None
 
     def test_all_have_get_device_info(self, backends):
         """Test all backends have get_device_info method."""
         for backend in backends:
-            assert hasattr(backend, 'get_device_info')
+            assert hasattr(backend, "get_device_info")
             info = backend.get_device_info()
             assert isinstance(info, DeviceInfo)
 
@@ -530,7 +543,7 @@ class TestUnifiedInterface:
         SimpleModel()
 
         for backend in backends:
-            assert hasattr(backend, 'optimize_for_inference')
+            assert hasattr(backend, "optimize_for_inference")
             # Just verify the method exists and is callable
 
     def test_all_have_optimize_for_training(self, backends):
@@ -538,20 +551,20 @@ class TestUnifiedInterface:
         SimpleModel()
 
         for backend in backends:
-            assert hasattr(backend, 'optimize_for_training')
+            assert hasattr(backend, "optimize_for_training")
             # Just verify the method exists and is callable
 
     def test_all_have_synchronize(self, backends):
         """Test all backends have synchronize method."""
         for backend in backends:
-            assert hasattr(backend, 'synchronize')
+            assert hasattr(backend, "synchronize")
             # Should not raise
             backend.synchronize()
 
     def test_all_have_empty_cache(self, backends):
         """Test all backends have empty_cache method."""
         for backend in backends:
-            assert hasattr(backend, 'empty_cache')
+            assert hasattr(backend, "empty_cache")
             # Should not raise
             backend.empty_cache()
 
@@ -560,27 +573,28 @@ class TestUnifiedInterface:
 # Optimization Strategy Tests
 # =============================================================================
 
+
 class TestOptimizationStrategy:
     """Tests for OptimizationStrategy dataclass."""
 
     def test_strategy_creation(self):
         """Test creating an OptimizationStrategy."""
         strategy = OptimizationStrategy(
-            name='test_opt',
-            description='Test optimization',
+            name="test_opt",
+            description="Test optimization",
             applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3],
-            speedup_estimate=1.5
+            speedup_estimate=1.5,
         )
 
-        assert strategy.name == 'test_opt'
+        assert strategy.name == "test_opt"
         assert OptimizationLevel.O2 in strategy.applicable_levels
 
     def test_strategy_is_applicable(self):
         """Test OptimizationStrategy.is_applicable()."""
         strategy = OptimizationStrategy(
-            name='test',
-            description='Test',
-            applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3]
+            name="test",
+            description="Test",
+            applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3],
         )
 
         assert strategy.is_applicable(OptimizationLevel.O2) is True
@@ -593,38 +607,36 @@ class TestOptimizationStrategy:
 # OperationKernelConfig Tests
 # =============================================================================
 
+
 class TestOperationKernelConfig:
     """Tests for OperationKernelConfig dataclass."""
 
     def test_kernel_config_creation(self):
         """Test creating a OperationKernelConfig."""
         config = OperationKernelConfig(
-            algorithm='auto',
-            tile_sizes=(32, 32, 32),
-            num_warps=4
+            algorithm="auto", tile_sizes=(32, 32, 32), num_warps=4
         )
 
-        assert config.algorithm == 'auto'
+        assert config.algorithm == "auto"
         assert config.tile_sizes == (32, 32, 32)
         assert config.num_warps == 4
 
     def test_kernel_config_to_dict(self):
         """Test OperationKernelConfig.to_dict()."""
         config = OperationKernelConfig(
-            algorithm='custom',
-            tile_sizes=(64, 64),
-            use_tensor_cores=True
+            algorithm="custom", tile_sizes=(64, 64), use_tensor_cores=True
         )
 
         d = config.to_dict()
-        assert d['algorithm'] == 'custom'
-        assert d['tile_sizes'] == (64, 64)
-        assert d['use_tensor_cores'] is True
+        assert d["algorithm"] == "custom"
+        assert d["tile_sizes"] == (64, 64)
+        assert d["use_tensor_cores"] is True
 
 
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestIntegration:
     """Integration tests for the unified backend system."""

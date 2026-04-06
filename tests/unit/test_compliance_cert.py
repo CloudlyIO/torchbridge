@@ -28,6 +28,7 @@ from torchbridge.testing.compliance_cert import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cert(**kwargs):
     defaults = {
         "model_id": "Qwen/Qwen3-0.6B",
@@ -45,6 +46,7 @@ def _cert(**kwargs):
 # ---------------------------------------------------------------------------
 # Field presence
 # ---------------------------------------------------------------------------
+
 
 class TestCertificateFields:
     def test_cert_has_model_id(self):
@@ -91,6 +93,7 @@ class TestCertificateFields:
 # Status derivation
 # ---------------------------------------------------------------------------
 
+
 class TestStatusDerivation:
     def test_status_passed_for_true(self):
         c = _cert(passed=True)
@@ -104,6 +107,7 @@ class TestStatusDerivation:
 # ---------------------------------------------------------------------------
 # Timestamp format
 # ---------------------------------------------------------------------------
+
 
 class TestTimestamp:
     def test_timestamp_is_iso8601(self):
@@ -120,6 +124,7 @@ class TestTimestamp:
 # ---------------------------------------------------------------------------
 # Fingerprint correctness
 # ---------------------------------------------------------------------------
+
 
 class TestFingerprint:
     def test_fingerprint_is_64_char_hex(self):
@@ -152,8 +157,14 @@ class TestFingerprint:
         assert fp1 != fp2
 
     def test_cert_fingerprint_matches_compute(self):
-        c = _cert(model_id="test-model", backend_a="cuda", backend_b="rocm",
-                  max_diff=2.1e-6, tolerance_atol=1e-3, passed=True)
+        c = _cert(
+            model_id="test-model",
+            backend_a="cuda",
+            backend_b="rocm",
+            max_diff=2.1e-6,
+            tolerance_atol=1e-3,
+            passed=True,
+        )
         expected = _compute_fingerprint(
             "test-model", "cuda", "rocm", 2.1e-6, 1e-3, "PASSED"
         )
@@ -163,6 +174,7 @@ class TestFingerprint:
 # ---------------------------------------------------------------------------
 # Serialisation
 # ---------------------------------------------------------------------------
+
 
 class TestSerialisation:
     def test_to_dict_is_json_serialisable(self):
@@ -179,9 +191,18 @@ class TestSerialisation:
     def test_to_dict_has_all_required_fields(self):
         c = _cert()
         d = c.to_dict()
-        for field in ("model_id", "backend_a", "backend_b", "timestamp",
-                      "max_diff", "cosine_sim", "tolerance_atol",
-                      "status", "torchbridge_version", "fingerprint"):
+        for field in (
+            "model_id",
+            "backend_a",
+            "backend_b",
+            "timestamp",
+            "max_diff",
+            "cosine_sim",
+            "tolerance_atol",
+            "status",
+            "torchbridge_version",
+            "fingerprint",
+        ):
             assert field in d, f"Missing field: {field}"
 
     def test_to_json_fingerprint_survives_roundtrip(self):
@@ -193,6 +214,7 @@ class TestSerialisation:
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_max_diff_zero_is_valid(self):
@@ -253,8 +275,10 @@ class TestInputValidation:
 # Package-level import
 # ---------------------------------------------------------------------------
 
+
 class TestPackageExports:
     def test_importable_from_torchbridge_testing(self):
         from torchbridge.testing import ComplianceCertificate, generate_certificate
+
         assert ComplianceCertificate is not None
         assert generate_certificate is not None

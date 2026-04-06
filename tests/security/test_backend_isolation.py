@@ -73,8 +73,12 @@ class TestAttentionDispatcherIsolation:
         from torchbridge.attention.dispatch.dispatcher import AttentionDispatcher
 
         dispatcher = AttentionDispatcher(use_benchmark_cache=False)
-        result_short = dispatcher.select_kernel(seq_length=128, num_heads=8, head_dim=64)
-        result_long = dispatcher.select_kernel(seq_length=8192, num_heads=8, head_dim=64)
+        result_short = dispatcher.select_kernel(
+            seq_length=128, num_heads=8, head_dim=64
+        )
+        result_long = dispatcher.select_kernel(
+            seq_length=8192, num_heads=8, head_dim=64
+        )
 
         # Both must be non-None — content may or may not differ depending on hardware
         assert result_short is not None

@@ -87,18 +87,18 @@ Complete hardware support table for TorchBridge backends.
 
 ## Validated Configurations
 
-These configurations have been tested and validated with Qwen3-0.6B cross-backend consistency:
+Cross-backend numerical consistency validated with Qwen3-0.6B. See [Cloud Validation](cloud-validation.md) for current status per release.
 
-| Configuration | Platform | Max Diff | Cosine Sim | Latency |
-|--------------|----------|----------|------------|---------|
-| NVIDIA H100 NVL (Hopper) | RunPod | 2.29e-05 | 1.000001 | 18.8 ms |
-| Apple Silicon (MPS) | Local Mac | 4.58e-05 | 1.000002 | 27.8 ms |
-| AMD MI300X (CDNA3) | AMD Developer Cloud | 4.82e-05 | 1.000001 | 30.0 ms |
-| NVIDIA A10G (Ampere) | AWS g5.xlarge | 1.96e-05 | 1.000001 | 41.8 ms |
-| TPU v5e | GCP TPU VM | 1.08e-01 | 0.999980 | 47.5 ms |
-| NVIDIA T4 (Turing) | GCP n1 + T4 | 2.67e-05 | 1.000001 | 50.8 ms |
-| CPU (x86) | Local | Full test suite | — | — |
-| CPU (ARM/Apple Silicon) | Local | Full test suite | — | — |
+| Configuration | Platform | Max Diff | Cosine Sim | Latency | Last Validated |
+|--------------|----------|----------|------------|---------|----------------|
+| NVIDIA H100 NVL (Hopper) | RunPod | 1.67e-05 | 1.000001 | 16.2 ms | v0.5.80 |
+| Apple Silicon (MPS) | Local Mac | 0.00e+00 | 1.000000 | 118.9 ms | v0.5.80 |
+| NVIDIA A10G (Ampere) | AWS g5.xlarge | 2.10e-05 | 1.000001 | 40.0 ms | v0.5.80 |
+| NVIDIA T4 (Turing) | GCP n1 + T4 | 2.67e-05 | 1.000001 | 50.7 ms | v0.5.80 |
+| AMD MI300X (CDNA3) | AMD Developer Cloud | 4.82e-05 | 1.000001 | 30.0 ms | v0.5.45 |
+| TPU v5e | GCP TPU VM | 1.08e-01 | 0.999980 | 47.5 ms | v0.5.45 |
+| CPU (x86) | Local | Full test suite | — | — | ongoing |
+| CPU (ARM/Apple Silicon) | Local | Full test suite | — | — | ongoing |
 
 ## See Also
 

@@ -47,7 +47,9 @@ class TestAMDBackendStress:
             assert backend.device is not None
         except Exception as e:
             # Import errors for ROCm are acceptable
-            assert "ROCm" in str(e) or "HIP" in str(e) or "not available" in str(e).lower()
+            assert (
+                "ROCm" in str(e) or "HIP" in str(e) or "not available" in str(e).lower()
+            )
 
     def test_amd_optimizer_all_levels(self):
         """AMDAdapter should accept all optimization levels without error."""

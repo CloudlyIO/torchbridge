@@ -25,10 +25,12 @@ import torch
 # Skip Conditions
 # =============================================================================
 
+
 def _check_transformers():
     """Check if transformers is available."""
     try:
         import transformers  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -38,6 +40,7 @@ def _check_torchvision():
     """Check if torchvision is available."""
     try:
         import torchvision  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -50,28 +53,25 @@ def _check_cuda():
 
 # Skip decorators for conditional tests
 requires_transformers = pytest.mark.skipif(
-    not _check_transformers(),
-    reason="Requires HuggingFace transformers library"
+    not _check_transformers(), reason="Requires HuggingFace transformers library"
 )
 
 requires_torchvision = pytest.mark.skipif(
-    not _check_torchvision(),
-    reason="Requires torchvision library"
+    not _check_torchvision(), reason="Requires torchvision library"
 )
 
-requires_cuda = pytest.mark.skipif(
-    not _check_cuda(),
-    reason="Requires CUDA GPU"
-)
+requires_cuda = pytest.mark.skipif(not _check_cuda(), reason="Requires CUDA GPU")
 
 
 # =============================================================================
 # Benchmark Utilities
 # =============================================================================
 
+
 @dataclass
 class BenchmarkResult:
     """Result of a benchmark run."""
+
     mean_time_ms: float
     std_time_ms: float
     min_time_ms: float
@@ -97,7 +97,7 @@ def benchmark_function(
     warmup_runs: int = 3,
     benchmark_runs: int = 10,
     sync_cuda: bool = True,
-    **kwargs
+    **kwargs,
 ) -> BenchmarkResult:
     """
     Benchmark a function with warmup and multiple runs.
@@ -142,14 +142,11 @@ def benchmark_function(
         min_time_ms=min(times),
         max_time_ms=max(times),
         num_runs=benchmark_runs,
-        warmup_runs=warmup_runs
+        warmup_runs=warmup_runs,
     )
 
 
-def calculate_speedup(
-    baseline: BenchmarkResult,
-    optimized: BenchmarkResult
-) -> float:
+def calculate_speedup(baseline: BenchmarkResult, optimized: BenchmarkResult) -> float:
     """
     Calculate speedup ratio.
 
@@ -166,6 +163,7 @@ def calculate_speedup(
 # =============================================================================
 # Device Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def e2e_device():
@@ -189,12 +187,14 @@ def cuda_device():
 # Model Loading Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="session")
 def _qwen3_session():
     """Internal: Load Qwen3-0.6B model and tokenizer (session-scoped)."""
     if not _check_transformers():
         pytest.skip("transformers not available")
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
     model_name = "Qwen/Qwen3-0.6B"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -220,6 +220,7 @@ def _deepseek_session():
     if not _check_transformers():
         pytest.skip("transformers not available")
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
     model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -246,6 +247,7 @@ def _dinov2_session():
     if not _check_transformers():
         pytest.skip("transformers not available")
     from transformers import AutoModel
+
     model_name = "facebook/dinov2-small"
     try:
         model = AutoModel.from_pretrained(model_name)
@@ -269,6 +271,7 @@ def _minilm_session():
     if not _check_transformers():
         pytest.skip("transformers not available")
     from transformers import AutoModel
+
     model_name = "sentence-transformers/all-MiniLM-L6-v2"
     try:
         model = AutoModel.from_pretrained(model_name)
@@ -289,6 +292,7 @@ def minilm_model(_minilm_session):
 # =============================================================================
 # Sample Input Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_text_inputs():
@@ -329,6 +333,7 @@ def sample_pil_images():
 # Tolerance Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def output_tolerance():
     """
@@ -339,7 +344,7 @@ def output_tolerance():
     is expected and acceptable for inference quality.
     """
     return {
-        "atol": 0.3,   # Absolute tolerance — accounts for BF16 mixed precision logit diffs
+        "atol": 0.3,  # Absolute tolerance — accounts for BF16 mixed precision logit diffs
         "rtol": 0.05,  # Relative tolerance — 5% relative difference allowed
     }
 
@@ -366,11 +371,12 @@ def fp32_tolerance():
 # Speedup Assertion Helpers
 # =============================================================================
 
+
 def assert_speedup(
     baseline: BenchmarkResult,
     optimized: BenchmarkResult,
     min_speedup: float = 1.0,
-    message: str = ""
+    message: str = "",
 ) -> float:
     """
     Assert that optimized version achieves minimum speedup.
@@ -405,7 +411,7 @@ def assert_output_close(
     optimized_output: torch.Tensor,
     atol: float = 1e-3,
     rtol: float = 1e-3,
-    message: str = ""
+    message: str = "",
 ) -> None:
     """
     Assert that optimized output is close to baseline.

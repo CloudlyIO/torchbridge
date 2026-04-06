@@ -57,7 +57,9 @@ class TestBenchmarkClaimsCLI:
 
     def test_single_claim_by_name(self):
         """--claim <name> should run only that claim."""
-        args = self._make_args(claim="quantization_int8_dynamic", quick=True, runs=3, warmup=1)
+        args = self._make_args(
+            claim="quantization_int8_dynamic", quick=True, runs=3, warmup=1
+        )
         result = BenchmarkCommand.execute(args)
         assert result in (0, 1)
 

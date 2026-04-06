@@ -27,8 +27,10 @@ class TestMI325XDetection:
         mock_device.name = "AMD Instinct MI325X"
         mock_hip.get_device_properties.return_value = mock_device
 
-        with patch.dict('sys.modules', {}), \
-             patch.object(torch, 'hip', mock_hip, create=True):
+        with (
+            patch.dict("sys.modules", {}),
+            patch.object(torch, "hip", mock_hip, create=True),
+        ):
             config = AMDConfig()
             assert config.architecture == AMDArchitecture.CDNA3
 
@@ -49,14 +51,19 @@ class TestMI325XDetection:
         backend = AMDBackend(config)
 
         # Both map to CDNA3
-        assert backend._detect_architecture("AMD Instinct MI325X") == AMDArchitecture.CDNA3
-        assert backend._detect_architecture("AMD Instinct MI300X") == AMDArchitecture.CDNA3
+        assert (
+            backend._detect_architecture("AMD Instinct MI325X") == AMDArchitecture.CDNA3
+        )
+        assert (
+            backend._detect_architecture("AMD Instinct MI300X") == AMDArchitecture.CDNA3
+        )
 
     def test_mi325x_matrix_cores_enabled(self):
         """MI325X (CDNA3) should have Matrix Cores enabled."""
         config = AMDConfig(architecture=AMDArchitecture.CDNA3)
         assert config.enable_matrix_cores is True
         assert config.matrix_core_precision == "bf16"
+
 
 class TestCDNA4Detection:
     """Test CDNA 4 (MI350X/MI355X) detection — gfx950, 288GB HBM3e."""
@@ -69,7 +76,7 @@ class TestCDNA4Detection:
         mock_device.name = "AMD Instinct MI350X"
         mock_hip.get_device_properties.return_value = mock_device
 
-        with patch.object(torch, 'hip', mock_hip, create=True):
+        with patch.object(torch, "hip", mock_hip, create=True):
             config = AMDConfig()
             assert config.architecture == AMDArchitecture.CDNA4
 
@@ -81,7 +88,7 @@ class TestCDNA4Detection:
         mock_device.name = "AMD Instinct MI355X"
         mock_hip.get_device_properties.return_value = mock_device
 
-        with patch.object(torch, 'hip', mock_hip, create=True):
+        with patch.object(torch, "hip", mock_hip, create=True):
             config = AMDConfig()
             assert config.architecture == AMDArchitecture.CDNA4
 
@@ -109,6 +116,7 @@ class TestCDNA4Detection:
         assert config.enable_matrix_cores is True
         assert config.matrix_core_precision == "bf16"
         assert config.allow_bf16 is True
+
 
 class TestCDNA4EnumValues:
     """Test CDNA4 enum values and consistency."""
@@ -169,10 +177,14 @@ class TestDetectionOrderMatters:
         backend = AMDBackend(config)
 
         # MI350X should be CDNA4, not CDNA3
-        assert backend._detect_architecture("AMD Instinct MI350X") == AMDArchitecture.CDNA4
+        assert (
+            backend._detect_architecture("AMD Instinct MI350X") == AMDArchitecture.CDNA4
+        )
 
         # MI300X should still be CDNA3
-        assert backend._detect_architecture("AMD Instinct MI300X") == AMDArchitecture.CDNA3
+        assert (
+            backend._detect_architecture("AMD Instinct MI300X") == AMDArchitecture.CDNA3
+        )
 
     def test_mi355x_not_confused_with_mi300(self):
         """MI355X should NOT match MI300 patterns."""
@@ -181,4 +193,6 @@ class TestDetectionOrderMatters:
         config = AMDConfig(architecture=AMDArchitecture.CDNA4)
         backend = AMDBackend(config)
 
-        assert backend._detect_architecture("AMD Instinct MI355X") == AMDArchitecture.CDNA4
+        assert (
+            backend._detect_architecture("AMD Instinct MI355X") == AMDArchitecture.CDNA4
+        )

@@ -19,6 +19,7 @@ def _neuron_available() -> bool:
     """Check if AWS Neuron SDK is available."""
     try:
         import torch_neuronx  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -45,7 +46,11 @@ class TestTrainiumBackendStress:
             assert backend.device is not None
         except Exception as e:
             # Import/init errors for Neuron are acceptable
-            assert "neuron" in str(e).lower() or "xla" in str(e).lower() or "not available" in str(e).lower()
+            assert (
+                "neuron" in str(e).lower()
+                or "xla" in str(e).lower()
+                or "not available" in str(e).lower()
+            )
 
     def test_trainium_adapter_creation(self):
         """TrainiumAdapter should instantiate without Neuron SDK."""
@@ -56,7 +61,11 @@ class TestTrainiumBackendStress:
             assert isinstance(optimizer, TrainiumAdapter)
         except Exception as e:
             # May fail if Neuron SDK is required for init
-            assert "neuron" in str(e).lower() or "xla" in str(e).lower() or "not available" in str(e).lower()
+            assert (
+                "neuron" in str(e).lower()
+                or "xla" in str(e).lower()
+                or "not available" in str(e).lower()
+            )
 
     def test_trainium_architecture_enum_coverage(self):
         """All TrainiumArchitecture enum members should be valid."""

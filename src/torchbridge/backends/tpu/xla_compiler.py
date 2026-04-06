@@ -55,7 +55,7 @@ class XLACompiler:
                 "XLA Compiler initialized: mode=%s, optimization_level=%d, dynamic_shapes=%s",
                 self.config.compilation_mode.value,
                 self.config.xla_optimization_level,
-                self.config.enable_xla_dynamic_shapes
+                self.config.enable_xla_dynamic_shapes,
             )
 
         except ImportError:
@@ -63,12 +63,15 @@ class XLACompiler:
             warnings.warn(
                 "PyTorch/XLA not available. Compiler will use CPU fallback.",
                 RuntimeWarning,
-            stacklevel=2,
+                stacklevel=2,
             )
 
-    def compile_model(self, model: nn.Module,
-                     sample_inputs: torch.Tensor | tuple | None = None,
-                     use_cache: bool = True) -> nn.Module:
+    def compile_model(
+        self,
+        model: nn.Module,
+        sample_inputs: torch.Tensor | tuple | None = None,
+        use_cache: bool = True,
+    ) -> nn.Module:
         """
         Compile model for TPU execution.
 
@@ -102,31 +105,41 @@ class XLACompiler:
         elif self.config.compilation_mode == TPUCompilationMode.PJIT:
             compiled_model = self._compile_pjit(model, sample_inputs)
         else:
-            raise ValueError(f"Unsupported compilation mode: {self.config.compilation_mode}")
+            raise ValueError(
+                f"Unsupported compilation mode: {self.config.compilation_mode}"
+            )
 
         compilation_time = time.time() - start_time
 
         # Cache the result
         if use_cache:
             self._compilation_cache.set(cache_key, compiled_model)
-            self._compilation_stats.set(cache_key, {
-                'compilation_time': compilation_time,
-                'timestamp': time.time(),
-                'model_size': self._estimate_model_size(model)
-            })
+            self._compilation_stats.set(
+                cache_key,
+                {
+                    "compilation_time": compilation_time,
+                    "timestamp": time.time(),
+                    "model_size": self._estimate_model_size(model),
+                },
+            )
 
-        logger.info("Model compiled: time=%.2fs, mode=%s", compilation_time, self.config.compilation_mode.value)
+        logger.info(
+            "Model compiled: time=%.2fs, mode=%s",
+            compilation_time,
+            self.config.compilation_mode.value,
+        )
         return compiled_model
 
-    def _compile_torch_xla(self, model: nn.Module,
-                          sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
+    def _compile_torch_xla(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> nn.Module:
         """Compile using PyTorch/XLA torch.compile."""
         try:
             # Sync for XLA compilation using compatibility layer
             xla_compat.sync()
 
             # Use torch.compile with XLA backend if available
-            if hasattr(torch, 'compile'):
+            if hasattr(torch, "compile"):
                 # Get the appropriate backend for the installed torch_xla version
                 backend = xla_compat.get_torch_compile_backend()
 
@@ -135,14 +148,13 @@ class XLACompiler:
                     compiled_model: nn.Module = torch.compile(  # type: ignore[assignment]
                         model,
                         backend=backend,
-                        dynamic=self.config.enable_xla_dynamic_shapes
+                        dynamic=self.config.enable_xla_dynamic_shapes,
                     )
                 else:
                     # For torch_xla 2.9+ without explicit backend, use default compilation
                     # torch.compile works directly with XLA tensors
                     compiled_model = torch.compile(  # type: ignore[assignment]
-                        model,
-                        dynamic=self.config.enable_xla_dynamic_shapes
+                        model, dynamic=self.config.enable_xla_dynamic_shapes
                     )
                 return compiled_model
             else:
@@ -151,11 +163,17 @@ class XLACompiler:
 
         except Exception as e:
             error_msg = f"PyTorch/XLA compilation failed: {e}"
-            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
+            raise_or_warn(
+                error_msg,
+                XLACompilationError,
+                strict_mode=self.config.enable_strict_validation,
+                logger=logger,
+            )
             return model
 
-    def _compile_xla_direct(self, model: nn.Module,
-                           sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
+    def _compile_xla_direct(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> nn.Module:
         """Compile using direct XLA compilation."""
         try:
             # Force XLA compilation with sample inputs
@@ -165,8 +183,10 @@ class XLACompiler:
                 if isinstance(sample_inputs, torch.Tensor):
                     sample_inputs = sample_inputs.to(xla_device)
                 elif isinstance(sample_inputs, (list, tuple)):
-                    sample_inputs = tuple(inp.to(xla_device) if isinstance(inp, torch.Tensor)
-                                        else inp for inp in sample_inputs)
+                    sample_inputs = tuple(
+                        inp.to(xla_device) if isinstance(inp, torch.Tensor) else inp
+                        for inp in sample_inputs
+                    )
 
                 # Run forward pass to trigger compilation
                 model.to(xla_device)
@@ -179,28 +199,44 @@ class XLACompiler:
 
         except Exception as e:
             error_msg = f"Direct XLA compilation failed: {e}"
-            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
+            raise_or_warn(
+                error_msg,
+                XLACompilationError,
+                strict_mode=self.config.enable_strict_validation,
+                logger=logger,
+            )
             return model
 
-    def _compile_pjit(self, model: nn.Module,
-                     sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
+    def _compile_pjit(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> nn.Module:
         """Compile using JAX pjit (experimental)."""
         if not self.config.enable_jax_integration:
-            warnings.warn("JAX integration disabled, falling back to torch_xla", stacklevel=2)
+            warnings.warn(
+                "JAX integration disabled, falling back to torch_xla", stacklevel=2
+            )
             return self._compile_torch_xla(model, sample_inputs)
 
         try:
             # This is experimental - would require JAX integration
-            warnings.warn("pjit compilation not yet implemented, using torch_xla", stacklevel=2)
+            warnings.warn(
+                "pjit compilation not yet implemented, using torch_xla", stacklevel=2
+            )
             return self._compile_torch_xla(model, sample_inputs)
 
         except Exception as e:
             error_msg = f"pjit compilation failed: {e}"
-            raise_or_warn(error_msg, XLACompilationError, strict_mode=self.config.enable_strict_validation, logger=logger)
+            raise_or_warn(
+                error_msg,
+                XLACompilationError,
+                strict_mode=self.config.enable_strict_validation,
+                logger=logger,
+            )
             return model
 
-    def _generate_cache_key(self, model: nn.Module,
-                           sample_inputs: torch.Tensor | tuple | None) -> str:
+    def _generate_cache_key(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> str:
         """Generate cache key for model compilation."""
         # Create hash based on model structure and config
         model_str = str(model)
@@ -212,8 +248,12 @@ class XLACompiler:
             if isinstance(sample_inputs, torch.Tensor):
                 input_info = str(sample_inputs.shape)
             elif isinstance(sample_inputs, (list, tuple)):
-                input_info = str([inp.shape if isinstance(inp, torch.Tensor) else str(inp)
-                                for inp in sample_inputs])
+                input_info = str(
+                    [
+                        inp.shape if isinstance(inp, torch.Tensor) else str(inp)
+                        for inp in sample_inputs
+                    ]
+                )
 
         # Create hash
         combined = f"{model_str}_{config_str}_{input_info}"
@@ -227,8 +267,9 @@ class XLACompiler:
         # Assume 4 bytes per parameter (float32)
         return total_params * 4
 
-    def optimize_for_inference(self, model: nn.Module,
-                             sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
+    def optimize_for_inference(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> nn.Module:
         """
         Optimize model specifically for inference.
 
@@ -255,8 +296,9 @@ class XLACompiler:
 
         return optimized_model
 
-    def optimize_for_training(self, model: nn.Module,
-                            sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
+    def optimize_for_training(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> nn.Module:
         """
         Optimize model specifically for training.
 
@@ -272,7 +314,7 @@ class XLACompiler:
 
         # Enable gradient checkpointing if configured
         if self.config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
+            if hasattr(model, "gradient_checkpointing_enable"):
                 model.gradient_checkpointing_enable()
 
         # Compile for training
@@ -285,10 +327,10 @@ class XLACompiler:
         cache_stats = self._compilation_cache.get_stats()
 
         return {
-            'compilation_cache': cache_stats,
-            'xla_available': self._xla_available,
-            'compilation_mode': self.config.compilation_mode.value,
-            'cache_max_size': self.config.cache_max_size
+            "compilation_cache": cache_stats,
+            "xla_available": self._xla_available,
+            "compilation_mode": self.config.compilation_mode.value,
+            "cache_max_size": self.config.cache_max_size,
         }
 
     def clear_cache(self) -> None:
@@ -303,9 +345,9 @@ class XLACompiler:
             logger.debug("XLA compilation cache sync failed", exc_info=True)
             pass
 
-    def benchmark_compilation(self, model: nn.Module,
-                            sample_inputs: torch.Tensor | tuple,
-                            num_runs: int = 3) -> dict[str, float]:
+    def benchmark_compilation(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple, num_runs: int = 3
+    ) -> dict[str, float]:
         """
         Benchmark compilation performance.
 
@@ -329,11 +371,11 @@ class XLACompiler:
             compilation_times.append(compilation_time)
 
         return {
-            'min_time': min(compilation_times),
-            'max_time': max(compilation_times),
-            'avg_time': sum(compilation_times) / len(compilation_times),
-            'total_time': sum(compilation_times),
-            'runs': num_runs
+            "min_time": min(compilation_times),
+            "max_time": max(compilation_times),
+            "avg_time": sum(compilation_times) / len(compilation_times),
+            "total_time": sum(compilation_times),
+            "runs": num_runs,
         }
 
     def __repr__(self) -> str:

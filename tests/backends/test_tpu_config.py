@@ -29,7 +29,10 @@ class TestTPUConfig:
         assert config.enabled is True
         # After __post_init__, auto detection happens
         assert config.version in [TPUVersion.AUTO, TPUVersion.V5E]  # Falls back to V5E
-        assert config.topology in [TPUTopology.AUTO, TPUTopology.SINGLE]  # Falls back to SINGLE
+        assert config.topology in [
+            TPUTopology.AUTO,
+            TPUTopology.SINGLE,
+        ]  # Falls back to SINGLE
         assert config.compilation_mode == TPUCompilationMode.TORCH_XLA
         assert config.precision == "bfloat16"
         assert config.mixed_precision is True
@@ -44,7 +47,7 @@ class TestTPUConfig:
             version=TPUVersion.V5P,
             topology=TPUTopology.POD,
             compilation_mode=TPUCompilationMode.XLA,
-            precision="float32"
+            precision="float32",
         )
         assert config.version == TPUVersion.V5P
         assert config.topology == TPUTopology.POD
@@ -60,24 +63,24 @@ class TestTPUConfig:
         config = TPUConfig(
             version=TPUVersion.V5E,
             topology=TPUTopology.SINGLE,
-            compilation_mode=TPUCompilationMode.PJIT
+            compilation_mode=TPUCompilationMode.PJIT,
         )
 
         config_dict = config.__dict__
-        assert config_dict['version'] == TPUVersion.V5E
-        assert config_dict['topology'] == TPUTopology.SINGLE
-        assert config_dict['compilation_mode'] == TPUCompilationMode.PJIT
+        assert config_dict["version"] == TPUVersion.V5E
+        assert config_dict["topology"] == TPUTopology.SINGLE
+        assert config_dict["compilation_mode"] == TPUCompilationMode.PJIT
 
-    @patch('torchbridge.core.config.torch_xla', create=True)
-    @patch('os.environ.get')
+    @patch("torchbridge.core.config.torch_xla", create=True)
+    @patch("os.environ.get")
     def test_detect_tpu_version_v4(self, mock_env_get, mock_xla):
         """Test TPU v4 detection."""
         # Mock TPU v4 detection
         mock_device = Mock()
-        mock_device.device_type = 'TPU'
+        mock_device.device_type = "TPU"
         mock_xla.core.xla_model.xla_device.return_value = mock_device
-        mock_xla.core.xla_model.xla_device_hw.return_value = 'TPU'
-        mock_env_get.return_value = 'v4-8'  # Mock TPU_TYPE environment variable
+        mock_xla.core.xla_model.xla_device_hw.return_value = "TPU"
+        mock_env_get.return_value = "v4-8"  # Mock TPU_TYPE environment variable
 
         config = TPUConfig()
         detected = config._detect_tpu_version()
@@ -85,27 +88,27 @@ class TestTPUConfig:
         # Should detect as v4 or fall back to v5e
         assert detected in [TPUVersion.V4, TPUVersion.V5E]
 
-    @patch('torchbridge.core.config.torch_xla', create=True)
-    @patch('os.environ.get')
+    @patch("torchbridge.core.config.torch_xla", create=True)
+    @patch("os.environ.get")
     def test_detect_tpu_version_v5p(self, mock_env_get, mock_xla):
         """Test TPU v5p detection."""
         # Mock TPU v5p detection
         mock_device = Mock()
-        mock_device.device_type = 'TPU'
+        mock_device.device_type = "TPU"
         mock_xla.core.xla_model.xla_device.return_value = mock_device
-        mock_xla.core.xla_model.xla_device_hw.return_value = 'TPU'
-        mock_env_get.return_value = 'v5p-8'  # Mock TPU_TYPE environment variable
+        mock_xla.core.xla_model.xla_device_hw.return_value = "TPU"
+        mock_env_get.return_value = "v5p-8"  # Mock TPU_TYPE environment variable
 
         config = TPUConfig()
         detected = config._detect_tpu_version()
 
         assert detected in [TPUVersion.V5P, TPUVersion.V5E]
 
-    @patch('torchbridge.core.config.torch_xla', create=True)
+    @patch("torchbridge.core.config.torch_xla", create=True)
     def test_detect_tpu_topology_single(self, mock_xla):
         """Test single TPU topology detection."""
         # Mock single TPU topology
-        mock_xla.core.xla_model.xla_device_hw.return_value = 'TPU'
+        mock_xla.core.xla_model.xla_device_hw.return_value = "TPU"
         mock_xla.core.xla_model.xrt_world_size.return_value = 1
 
         config = TPUConfig()
@@ -113,11 +116,11 @@ class TestTPUConfig:
 
         assert detected in [TPUTopology.SINGLE, TPUTopology.AUTO]
 
-    @patch('torchbridge.core.config.torch_xla', create=True)
+    @patch("torchbridge.core.config.torch_xla", create=True)
     def test_detect_tpu_topology_pod(self, mock_xla):
         """Test TPU pod topology detection."""
         # Mock TPU pod topology (256 devices = pod)
-        mock_xla.core.xla_model.xla_device_hw.return_value = 'TPU'
+        mock_xla.core.xla_model.xla_device_hw.return_value = "TPU"
         mock_xla.core.xla_model.xrt_world_size.return_value = 256
 
         config = TPUConfig()
@@ -150,7 +153,7 @@ class TestTorchBridgeConfigTPU:
         config = TorchBridgeConfig()
 
         # Check TPU config is present
-        assert hasattr(config.hardware, 'tpu')
+        assert hasattr(config.hardware, "tpu")
         assert isinstance(config.hardware.tpu, TPUConfig)
         # TPU is disabled by default when running on CPU
         assert config.hardware.tpu.enabled in [True, False]
@@ -161,58 +164,58 @@ class TestTorchBridgeConfigTPU:
         config_dict = config.to_dict()
 
         # Check TPU section exists
-        assert 'hardware' in config_dict
-        assert 'tpu' in config_dict['hardware']
+        assert "hardware" in config_dict
+        assert "tpu" in config_dict["hardware"]
 
-        tpu_config = config_dict['hardware']['tpu']
-        assert 'version' in tpu_config
-        assert 'topology' in tpu_config
-        assert 'compilation_mode' in tpu_config
+        tpu_config = config_dict["hardware"]["tpu"]
+        assert "version" in tpu_config
+        assert "topology" in tpu_config
+        assert "compilation_mode" in tpu_config
 
-    @patch('torchbridge.core.config.torch_xla', create=True)
+    @patch("torchbridge.core.config.torch_xla", create=True)
     def test_device_detection_tpu_available(self, mock_xla):
         """Test device detection when TPU is available."""
         # Mock TPU availability
         mock_device = Mock()
-        mock_device.type = 'xla'
+        mock_device.type = "xla"
         mock_xla.core.xla_model.xla_device.return_value = mock_device
-        mock_xla.core.xla_model.xla_device_hw.return_value = 'TPU'
+        mock_xla.core.xla_model.xla_device_hw.return_value = "TPU"
 
         # Mock CUDA not available
-        with patch('torch.cuda.is_available', return_value=False):
+        with patch("torch.cuda.is_available", return_value=False):
             device = TorchBridgeConfig._detect_device()
             # Should detect TPU or fallback gracefully
             assert device is not None
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_device_detection_no_tpu(self, mock_cuda):
         """Test device detection when TPU is not available."""
         # Should fall back to CPU
         device = TorchBridgeConfig._detect_device()
-        assert device.type == 'cpu'
+        assert device.type == "cpu"
 
     def test_tpu_config_modes(self):
         """Test different configuration modes with TPU."""
         configs = {
-            'default': TorchBridgeConfig(),
-            'inference': TorchBridgeConfig.for_inference(),
-            'training': TorchBridgeConfig.for_training(),
-            'development': TorchBridgeConfig.for_development()
+            "default": TorchBridgeConfig(),
+            "inference": TorchBridgeConfig.for_inference(),
+            "training": TorchBridgeConfig.for_training(),
+            "development": TorchBridgeConfig.for_development(),
         }
 
         for mode, config in configs.items():
-            assert hasattr(config.hardware, 'tpu')
+            assert hasattr(config.hardware, "tpu")
             tpu_config = config.hardware.tpu
             assert isinstance(tpu_config, TPUConfig)
 
             # Check mode-specific settings
-            if mode == 'inference':
+            if mode == "inference":
                 # Inference mode might disable certain features
-                assert tpu_config.precision in ['bfloat16', 'float16', 'float32']
-            elif mode == 'training':
+                assert tpu_config.precision in ["bfloat16", "float16", "float32"]
+            elif mode == "training":
                 # Training mode should enable mixed precision
                 assert tpu_config.mixed_precision is True
-            elif mode == 'development':
+            elif mode == "development":
                 # Development mode should have debugging features
                 assert tpu_config.xla_optimization_level >= 0
 
@@ -222,7 +225,7 @@ class TestTorchBridgeConfigTPU:
         assert HardwareBackend.TPU.value == "tpu"
 
         # Test all expected backends are present
-        expected_backends = {'cuda', 'cpu', 'tpu', 'amd', 'trainium', 'custom'}
+        expected_backends = {"cuda", "cpu", "tpu", "amd", "trainium", "custom"}
         actual_backends = {backend.value for backend in HardwareBackend}
         assert expected_backends.issubset(actual_backends)
 
@@ -232,19 +235,19 @@ class TestTPUEnums:
 
     def test_tpu_version_enum(self):
         """Test TPUVersion enum values."""
-        expected_versions = {'auto', 'v4', 'v5e', 'v5p', 'v6e', 'v7'}
+        expected_versions = {"auto", "v4", "v5e", "v5p", "v6e", "v7"}
         actual_versions = {version.value for version in TPUVersion}
         assert expected_versions == actual_versions
 
     def test_tpu_topology_enum(self):
         """Test TPUTopology enum values."""
-        expected_topologies = {'auto', 'single', 'pod', 'superpod'}
+        expected_topologies = {"auto", "single", "pod", "superpod"}
         actual_topologies = {topology.value for topology in TPUTopology}
         assert expected_topologies == actual_topologies
 
     def test_tpu_compilation_mode_enum(self):
         """Test TPUCompilationMode enum values."""
-        expected_modes = {'xla', 'pjit', 'torch_xla'}
+        expected_modes = {"xla", "pjit", "torch_xla"}
         actual_modes = {mode.value for mode in TPUCompilationMode}
         assert expected_modes == actual_modes
 
@@ -259,7 +262,7 @@ class TestTPUConfigValidation:
             TPUConfig(version=TPUVersion.V5P, topology=TPUTopology.POD),
             TPUConfig(compilation_mode=TPUCompilationMode.XLA),
             TPUConfig(precision="float32", memory_fraction=0.75),
-            TPUConfig(xla_optimization_level=1, enable_xla_dynamic_shapes=False)
+            TPUConfig(xla_optimization_level=1, enable_xla_dynamic_shapes=False),
         ]
 
         for config in valid_configs:
@@ -286,12 +289,12 @@ class TestTPUConfigValidation:
 
     def test_tpu_config_precision_values(self):
         """Test TPU config precision values."""
-        valid_precisions = ['bfloat16', 'float16', 'float32']
+        valid_precisions = ["bfloat16", "float16", "float32"]
 
         for precision in valid_precisions:
             config = TPUConfig(precision=precision)
             assert config.precision == precision
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

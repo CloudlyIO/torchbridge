@@ -24,10 +24,13 @@ from ..config import TorchBridgeConfig
 
 class ManagerType(Enum):
     """Types of management domains."""
+
     INFRASTRUCTURE = "infrastructure"
+
 
 class ManagerState(Enum):
     """Manager lifecycle states."""
+
     INITIALIZING = "initializing"
     READY = "ready"
     ACTIVE = "active"
@@ -35,9 +38,11 @@ class ManagerState(Enum):
     ERROR = "error"
     SHUTDOWN = "shutdown"
 
+
 @dataclass
 class ManagerContext:
     """Management context for coordination."""
+
     manager_id: str
     manager_type: ManagerType
     state: ManagerState
@@ -47,6 +52,7 @@ class ManagerContext:
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
 
+
 class BaseManager(ABC):
     """
     Unified base class for all managers.
@@ -55,14 +61,16 @@ class BaseManager(ABC):
     Provides lifecycle management, thread-safety, and status reporting.
     """
 
-    def __init__(self, config: TorchBridgeConfig, context: ManagerContext | None = None):
+    def __init__(
+        self, config: TorchBridgeConfig, context: ManagerContext | None = None
+    ):
         self.config = config
         self.context = context or ManagerContext(
             manager_id=self._generate_id(),
             manager_type=self._get_manager_type(),
             state=ManagerState.INITIALIZING,
             device=config.device,
-            config=config
+            config=config,
         )
 
         self._lock = threading.RLock()
@@ -98,7 +106,7 @@ class BaseManager(ABC):
             "state": self.context.state.value,
             "device": str(self.context.device),
             "active_operations": len(self._active_operations),
-            "uptime": time.time() - self.context.created_at
+            "uptime": time.time() - self.context.created_at,
         }
 
     def suspend(self) -> None:

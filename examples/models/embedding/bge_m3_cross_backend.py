@@ -7,7 +7,7 @@ across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 BGE-M3 is a leading multilingual embedding model for RAG pipelines.
 Batch throughput varies significantly per backend, making it an ideal
-HAL validation target.
+cross-backend validation target.
 
 Models covered:
 - BAAI/bge-m3 (568M, 1024-dim, 8192 max tokens)

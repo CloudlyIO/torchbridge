@@ -29,8 +29,8 @@ from torchbridge.core.hardware_detector import (
 class TestBlackwellDCDetection:
     """Test Blackwell Data Center (B100/B200/GB200) detection — sm_100, cc 10.0."""
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_b100_by_name(self, mock_props, mock_cuda):
         """Test B100 detection via device name."""
         mock_device_props = MagicMock()
@@ -42,8 +42,8 @@ class TestBlackwellDCDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_DC
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_b200_by_name(self, mock_props, mock_cuda):
         """Test B200 detection via device name."""
         mock_device_props = MagicMock()
@@ -55,8 +55,8 @@ class TestBlackwellDCDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_DC
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_gb200_by_name(self, mock_props, mock_cuda):
         """Test GB200 (dual-die) detection via device name."""
         mock_device_props = MagicMock()
@@ -68,8 +68,8 @@ class TestBlackwellDCDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_DC
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_blackwell_dc_by_compute_capability(self, mock_props, mock_cuda):
         """Test Blackwell DC detection via compute capability 10.0 fallback."""
         mock_device_props = MagicMock()
@@ -81,8 +81,8 @@ class TestBlackwellDCDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_DC
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_blackwell_dc_fp8_enabled(self, mock_props, mock_cuda):
         """Test that FP8 is enabled on Blackwell DC."""
         mock_device_props = MagicMock()
@@ -94,8 +94,8 @@ class TestBlackwellDCDetection:
         config = NVIDIAConfig()
         assert config.fp8_enabled is True
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_blackwell_dc_tensor_core_v5(self, mock_props, mock_cuda):
         """Test that Blackwell DC gets Tensor Core v5."""
         mock_device_props = MagicMock()
@@ -111,8 +111,8 @@ class TestBlackwellDCDetection:
 class TestBlackwellConsumerDetection:
     """Test Blackwell Consumer (RTX 5090/5080) detection — sm_120, cc 12.0."""
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_rtx5090_by_name(self, mock_props, mock_cuda):
         """Test RTX 5090 detection via device name."""
         mock_device_props = MagicMock()
@@ -124,8 +124,8 @@ class TestBlackwellConsumerDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_CONSUMER
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_rtx5080_by_name(self, mock_props, mock_cuda):
         """Test RTX 5080 detection via device name."""
         mock_device_props = MagicMock()
@@ -137,8 +137,8 @@ class TestBlackwellConsumerDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_CONSUMER
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_detect_consumer_by_compute_capability(self, mock_props, mock_cuda):
         """Test Blackwell Consumer detection via compute capability 12.0 fallback."""
         mock_device_props = MagicMock()
@@ -150,8 +150,8 @@ class TestBlackwellConsumerDetection:
         config = NVIDIAConfig()
         assert config.architecture == NVIDIAArchitecture.BLACKWELL_CONSUMER
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_consumer_fp8_enabled(self, mock_props, mock_cuda):
         """Test that FP8 is enabled on Blackwell Consumer."""
         mock_device_props = MagicMock()
@@ -163,8 +163,8 @@ class TestBlackwellConsumerDetection:
         config = NVIDIAConfig()
         assert config.fp8_enabled is True
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.get_device_properties")
     def test_consumer_tensor_core_v5(self, mock_props, mock_cuda):
         """Test that Blackwell Consumer gets Tensor Core v5."""
         mock_device_props = MagicMock()
@@ -180,10 +180,13 @@ class TestBlackwellConsumerDetection:
 class TestHardwareDetectorBlackwell:
     """Test HardwareDetector for Blackwell compute capabilities."""
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
-    @patch('torchbridge.core.hardware_detector.HardwareDetector._detect_amd_gpu', return_value=None)
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
+    @patch(
+        "torchbridge.core.hardware_detector.HardwareDetector._detect_amd_gpu",
+        return_value=None,
+    )
     def test_detector_blackwell_dc(self, mock_amd, mock_props, mock_count, mock_cuda):
         """Test HardwareDetector identifies Blackwell DC (cc 10.0)."""
         mock_device_props = MagicMock()
@@ -203,11 +206,16 @@ class TestHardwareDetectorBlackwell:
         assert OptimizationCapability.FP8_TRAINING in profile.capabilities
         assert OptimizationCapability.FLASH_ATTENTION_3 in profile.capabilities
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
-    @patch('torchbridge.core.hardware_detector.HardwareDetector._detect_amd_gpu', return_value=None)
-    def test_detector_blackwell_consumer(self, mock_amd, mock_props, mock_count, mock_cuda):
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
+    @patch(
+        "torchbridge.core.hardware_detector.HardwareDetector._detect_amd_gpu",
+        return_value=None,
+    )
+    def test_detector_blackwell_consumer(
+        self, mock_amd, mock_props, mock_count, mock_cuda
+    ):
         """Test HardwareDetector identifies Blackwell Consumer (cc 12.0)."""
         mock_device_props = MagicMock()
         mock_device_props.name = "NVIDIA GeForce RTX 5090"
@@ -282,7 +290,7 @@ class TestBlackwellEnumValues:
 
     def test_no_legacy_blackwell_enum(self):
         """Old BLACKWELL enum should no longer exist."""
-        assert not hasattr(NVIDIAArchitecture, 'BLACKWELL')
+        assert not hasattr(NVIDIAArchitecture, "BLACKWELL")
 
 
 @pytest.mark.blackwell
@@ -292,4 +300,3 @@ class TestBlackwellPrecisionSupport:
     def test_fp4_enum_exists(self):
         """FP4 precision format should exist in enum."""
         assert PrecisionFormat.FP4.value == "fp4"
-

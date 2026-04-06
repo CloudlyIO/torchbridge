@@ -60,7 +60,9 @@ class TestYamlFormatMissingPyyaml:
         output_file = tmp_path / "report.yaml"
 
         with patch.dict(sys.modules, {"yaml": None}):
-            ValidateCommand._save_report(report, str(output_file), "yaml", verbose=False)
+            ValidateCommand._save_report(
+                report, str(output_file), "yaml", verbose=False
+            )
 
         if output_file.exists():
             content = output_file.read_text()

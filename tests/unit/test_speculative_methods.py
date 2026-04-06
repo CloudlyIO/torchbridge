@@ -18,7 +18,14 @@ class TestSpeculativeMethod:
 
     def test_all_methods_exist(self):
         """All expected methods are defined."""
-        expected = {"none", "draft_model", "eagle", "layer_skip", "medusa", "prompt_lookup"}
+        expected = {
+            "none",
+            "draft_model",
+            "eagle",
+            "layer_skip",
+            "medusa",
+            "prompt_lookup",
+        }
         actual = {m.value for m in SpeculativeMethod}
         assert actual == expected
 
@@ -29,20 +36,30 @@ class TestSpeculativeMethod:
 
     def test_from_string_case_insensitive(self):
         """from_string is case-insensitive."""
-        assert SpeculativeMethod.from_string("DRAFT_MODEL") == SpeculativeMethod.DRAFT_MODEL
+        assert (
+            SpeculativeMethod.from_string("DRAFT_MODEL")
+            == SpeculativeMethod.DRAFT_MODEL
+        )
         assert SpeculativeMethod.from_string("Eagle") == SpeculativeMethod.EAGLE
 
     def test_from_string_aliases(self):
         """from_string resolves aliases."""
         assert SpeculativeMethod.from_string("draft") == SpeculativeMethod.DRAFT_MODEL
         assert SpeculativeMethod.from_string("skip") == SpeculativeMethod.LAYER_SKIP
-        assert SpeculativeMethod.from_string("lookup") == SpeculativeMethod.PROMPT_LOOKUP
+        assert (
+            SpeculativeMethod.from_string("lookup") == SpeculativeMethod.PROMPT_LOOKUP
+        )
         assert SpeculativeMethod.from_string("auto") == SpeculativeMethod.NONE
 
     def test_from_string_with_hyphens(self):
         """from_string handles hyphens."""
-        assert SpeculativeMethod.from_string("draft-model") == SpeculativeMethod.DRAFT_MODEL
-        assert SpeculativeMethod.from_string("layer-skip") == SpeculativeMethod.LAYER_SKIP
+        assert (
+            SpeculativeMethod.from_string("draft-model")
+            == SpeculativeMethod.DRAFT_MODEL
+        )
+        assert (
+            SpeculativeMethod.from_string("layer-skip") == SpeculativeMethod.LAYER_SKIP
+        )
 
     def test_from_string_invalid(self):
         """from_string raises ValueError for invalid input."""

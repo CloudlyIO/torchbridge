@@ -175,7 +175,8 @@ class QuantizationCompatibilityMatrix:
                 "Unknown architecture %r for backend %r — "
                 "returning CPU-default quantization formats. "
                 "Update QuantizationCompatibilityMatrix for this architecture.",
-                arch, backend.value if hasattr(backend, "value") else backend,
+                arch,
+                backend.value if hasattr(backend, "value") else backend,
             )
         return list(table.get(arch, _CPU_FORMATS))
 

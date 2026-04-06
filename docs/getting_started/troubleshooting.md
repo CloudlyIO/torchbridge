@@ -120,7 +120,7 @@ export ROCM_HOME=/opt/rocm
 export PATH=$ROCM_HOME/bin:$PATH
 
 # Install PyTorch with ROCm
-pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
 ```
 
 ### Matrix Cores Not Used
@@ -206,7 +206,7 @@ for report in results.reports:
 ### System Diagnostics
 
 ```bash
-torchbridge doctor --full-report
+tb-doctor --full-report
 ```
 
 ---
@@ -223,7 +223,7 @@ torchbridge doctor --full-report
 
 ## Getting Help
 
-1. Run `torchbridge doctor` for automated diagnostics
+1. Run `tb-doctor` for automated diagnostics
 2. Check the [backend-specific docs](../backends/overview.md)
 3. Report issues on GitHub with system info:
    ```python

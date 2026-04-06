@@ -114,7 +114,9 @@ class FSDPConfig:
         return {
             "sharding_strategy": self.sharding_strategy.value,
             "cpu_offload": self.cpu_offload,
-            "mixed_precision": self.mixed_precision.value if self.mixed_precision else "auto",
+            "mixed_precision": self.mixed_precision.value
+            if self.mixed_precision
+            else "auto",
             "backward_prefetch": self.backward_prefetch,
             "forward_prefetch": self.forward_prefetch,
             "float8_all_gather": self.float8_all_gather,
@@ -198,7 +200,8 @@ class FSDPManager:
         # NCCL >= 2.20 required for float8 all-gather
         try:
             import torch.distributed as dist
-            if hasattr(dist, 'get_nccl_version'):
+
+            if hasattr(dist, "get_nccl_version"):
                 nccl_version = dist.get_nccl_version()
                 return nccl_version >= (2, 20, 0)
         except Exception:
@@ -304,9 +307,7 @@ class FSDPManager:
         """Return diagnostic info about the FSDP configuration."""
         return {
             "backend": self._backend.value,
-            "architecture": (
-                self._architecture.value if self._architecture else None
-            ),
+            "architecture": (self._architecture.value if self._architecture else None),
             "multi_node": self._multi_node,
             "resolved_config": self._resolved.to_dict(),
             "float8_all_gather_supported": self._supports_float8_all_gather(),

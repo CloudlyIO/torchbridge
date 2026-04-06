@@ -65,16 +65,16 @@ class InfrastructureManager(BaseManager):
     def _validate_target(self, target: Any, **kwargs) -> None:
         """Validate target for infrastructure requirements."""
         validation_result = {
-            'target_type': type(target).__name__,
-            'valid': True,
-            'warnings': []
+            "target_type": type(target).__name__,
+            "valid": True,
+            "warnings": [],
         }
 
         # Check for common issues
-        if hasattr(target, 'parameters'):
+        if hasattr(target, "parameters"):
             param_count = sum(p.numel() for p in target.parameters())
             if param_count == 0:
-                validation_result['warnings'].append('Model has no parameters')
+                validation_result["warnings"].append("Model has no parameters")
 
         self.validation_results.append(validation_result)
 
@@ -87,7 +87,7 @@ class InfrastructureManager(BaseManager):
             warnings.warn(
                 f"{target_type} is deprecated: {deprecation_info.get('message', 'No details')}",
                 DeprecationWarning,
-            stacklevel=2,
+                stacklevel=2,
             )
 
     def register_deprecation(
@@ -95,13 +95,13 @@ class InfrastructureManager(BaseManager):
         component_name: str,
         message: str,
         removal_version: str | None = None,
-        replacement: str | None = None
+        replacement: str | None = None,
     ) -> None:
         """Register a deprecation for a component."""
         self.deprecation_tracking[component_name] = {
-            'message': message,
-            'removal_version': removal_version,
-            'replacement': replacement
+            "message": message,
+            "removal_version": removal_version,
+            "replacement": replacement,
         }
 
     def get_deprecations(self) -> dict[str, dict[str, Any]]:

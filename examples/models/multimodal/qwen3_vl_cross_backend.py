@@ -6,8 +6,8 @@ Demonstrates how to use TorchBridge to run Alibaba's Qwen3-VL
 vision-language model across CUDA, ROCm, Trainium, TPU, and CPU backends.
 
 Qwen3-VL is the latest generation VLM with dual-component architecture
-(vision encoder + language model) that benefits from HAL-level
-backend optimization for both components, including visual grounding,
+(vision encoder + language model) that benefits from cross-backend
+optimization for both components, including visual grounding,
 document understanding, and video comprehension.
 
 Models covered:
@@ -98,7 +98,7 @@ def estimate_memory(model_name: str, quantization: str = "none") -> dict[str, fl
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,
@@ -133,7 +133,7 @@ def run_optimized_inference(
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,
@@ -221,7 +221,7 @@ def run_benchmark(
         quant_map = {
             "none": QuantizationMode.NONE,
             "int8": QuantizationMode.INT8,
-            "int4": QuantizationMode.BNBT4,
+            "int4": QuantizationMode.INT4,
         }
         config = LLMConfig(
             model_name=model_name,

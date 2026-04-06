@@ -123,7 +123,9 @@ Examples:
 
         try:
             # Load model
-            model = QuantizeCommand._load_model(model_path, verbose, trust_source=trust_source)
+            model = QuantizeCommand._load_model(
+                model_path, verbose, trust_source=trust_source
+            )
             if model is None:
                 if ci_mode:
                     print(json.dumps({"error": f"Failed to load model: {model_path}"}))
@@ -184,7 +186,9 @@ Examples:
             return 1
 
     @staticmethod
-    def _load_model(model_path: str, verbose: bool, *, trust_source: bool = False) -> nn.Module | None:
+    def _load_model(
+        model_path: str, verbose: bool, *, trust_source: bool = False
+    ) -> nn.Module | None:
         """Load a PyTorch model from file or create a test model."""
         from pathlib import Path
 
@@ -255,7 +259,9 @@ Examples:
         try:
             # Create a small test input
             first_param = next(original.parameters())
-            in_features = first_param.shape[-1] if first_param.dim() > 1 else first_param.shape[0]
+            in_features = (
+                first_param.shape[-1] if first_param.dim() > 1 else first_param.shape[0]
+            )
             test_input = torch.randn(1, in_features)
 
             original.eval()
@@ -347,7 +353,9 @@ def main():
         required=True,
         help="Path to model or HuggingFace name",
     )
-    parser.add_argument("--format", type=str, default="auto", help="Quantization format")
+    parser.add_argument(
+        "--format", type=str, default="auto", help="Quantization format"
+    )
     parser.add_argument(
         "--backend",
         choices=["auto", "nvidia", "amd", "trainium", "tpu", "cpu"],

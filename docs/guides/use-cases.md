@@ -79,7 +79,7 @@ across backends.
 
 **Command:**
 ```bash
-tb-validate --model model.pt --reference-device cpu --target-device cuda
+tb-validate --compare cpu cuda --model model.pt
 ```
 
 **Expected output:**

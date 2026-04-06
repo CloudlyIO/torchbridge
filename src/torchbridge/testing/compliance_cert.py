@@ -134,7 +134,9 @@ def generate_certificate(
     if not math.isfinite(cosine_sim):
         raise ValueError(f"cosine_sim must be a finite float, got {cosine_sim!r}")
     if not math.isfinite(tolerance_atol):
-        raise ValueError(f"tolerance_atol must be a finite float, got {tolerance_atol!r}")
+        raise ValueError(
+            f"tolerance_atol must be a finite float, got {tolerance_atol!r}"
+        )
 
     status = "PASSED" if passed else "FAILED"
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()

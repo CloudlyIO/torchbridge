@@ -6,7 +6,6 @@ Comprehensive tests for TPU backend, optimizer, compiler, memory manager,
 XLA integration, and validation components.
 """
 
-
 import pytest
 import torch
 import torch.nn as nn
@@ -51,15 +50,11 @@ class TestTPUBackend:
         config = TorchBridgeConfig()
         backend = TPUBackend(config)
 
-        model = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 16)
-        )
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 16))
 
         prepared_model = backend.prepare_model(model)
         assert prepared_model is not None
-        assert hasattr(prepared_model, 'forward')
+        assert hasattr(prepared_model, "forward")
 
     def test_tpu_backend_data_preparation(self):
         """Test data preparation for TPU."""
@@ -72,7 +67,7 @@ class TestTPUBackend:
         assert prepared_tensor.device == backend.device
 
         # Test dict preparation
-        data_dict = {'input': torch.randn(8, 64), 'target': torch.randn(8, 10)}
+        data_dict = {"input": torch.randn(8, 64), "target": torch.randn(8, 10)}
         prepared_dict = backend.prepare_data(data_dict)
         assert isinstance(prepared_dict, dict)
         assert all(t.device == backend.device for t in prepared_dict.values())
@@ -84,9 +79,9 @@ class TestTPUBackend:
 
         stats = backend.get_memory_stats()
         assert isinstance(stats, dict)
-        assert 'device' in stats
-        assert 'world_size' in stats
-        assert 'rank' in stats
+        assert "device" in stats
+        assert "world_size" in stats
+        assert "rank" in stats
 
     def test_tpu_backend_synchronization(self):
         """Test TPU synchronization."""
@@ -126,7 +121,9 @@ class TestTPUAdapter:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        result = optimizer.optimize(model, sample_input, optimization_level="conservative")
+        result = optimizer.optimize(
+            model, sample_input, optimization_level="conservative"
+        )
 
         assert result is not None
         assert result.optimized_model is not None
@@ -155,7 +152,9 @@ class TestTPUAdapter:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        result = optimizer.optimize(model, sample_input, optimization_level="aggressive")
+        result = optimizer.optimize(
+            model, sample_input, optimization_level="aggressive"
+        )
 
         assert result is not None
         assert result.optimized_model is not None
@@ -195,7 +194,7 @@ class TestTPUAdapter:
 
         stats = optimizer.get_optimization_stats()
         assert isinstance(stats, dict)
-        assert 'total_optimizations' in stats
+        assert "total_optimizations" in stats
 
     def test_invalid_optimization_level(self):
         """Test invalid optimization level handling."""
@@ -261,10 +260,10 @@ class TestXLACompiler:
 
         stats = compiler.get_compilation_stats()
         assert isinstance(stats, dict)
-        assert 'compilation_cache' in stats  # Changed to cache stats
-        assert 'xla_available' in stats
-        assert 'compilation_mode' in stats
-        assert 'cache_max_size' in stats
+        assert "compilation_cache" in stats  # Changed to cache stats
+        assert "xla_available" in stats
+        assert "compilation_mode" in stats
+        assert "cache_max_size" in stats
 
     def test_xla_compiler_benchmark(self):
         """Test compilation benchmarking."""
@@ -274,10 +273,12 @@ class TestXLACompiler:
         model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
-        benchmark_results = compiler.benchmark_compilation(model, sample_input, num_runs=2)
+        benchmark_results = compiler.benchmark_compilation(
+            model, sample_input, num_runs=2
+        )
         assert isinstance(benchmark_results, dict)
-        assert 'min_time' in benchmark_results
-        assert 'avg_time' in benchmark_results
+        assert "min_time" in benchmark_results
+        assert "avg_time" in benchmark_results
 
 
 class TestXLAIntegration:
@@ -316,7 +317,7 @@ class TestXLAIntegration:
         """Test XLA utilities."""
         env_info = XLAUtilities.get_xla_env_info()
         assert isinstance(env_info, dict)
-        assert 'xla_available' in env_info
+        assert "xla_available" in env_info
 
     def test_create_xla_integration(self):
         """Test XLA integration factory."""
@@ -343,11 +344,7 @@ class TestTPUValidation:
     def test_tpu_model_validation(self):
         """Test TPU model validation."""
         config = TorchBridgeConfig()
-        model = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 10)
-        )
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
         sample_input = torch.randn(8, 64)
 
         results = validate_tpu_model(model, config.hardware.tpu, sample_input)
@@ -363,7 +360,7 @@ class TestTPUValidation:
         model = nn.Sequential(
             nn.Linear(63, 31),  # Not divisible by 8
             nn.ReLU(),
-            nn.Linear(31, 7)    # Not divisible by 8
+            nn.Linear(31, 7),  # Not divisible by 8
         )
         sample_input = torch.randn(7, 63)  # Not divisible by 8
 
@@ -379,19 +376,19 @@ class TestTPUConfigurationModes:
     def test_inference_mode_tpu(self):
         """Test TPU configuration in inference mode."""
         config = TorchBridgeConfig.for_inference()
-        assert hasattr(config.hardware, 'tpu')
+        assert hasattr(config.hardware, "tpu")
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_training_mode_tpu(self):
         """Test TPU configuration in training mode."""
         config = TorchBridgeConfig.for_training()
-        assert hasattr(config.hardware, 'tpu')
+        assert hasattr(config.hardware, "tpu")
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_development_mode_tpu(self):
         """Test TPU configuration in development mode."""
         config = TorchBridgeConfig.for_development()
-        assert hasattr(config.hardware, 'tpu')
+        assert hasattr(config.hardware, "tpu")
         assert config.hardware.tpu.enabled in [True, False]
 
     def test_tpu_config_serialization_modes(self):
@@ -399,13 +396,13 @@ class TestTPUConfigurationModes:
         configs = [
             TorchBridgeConfig.for_inference(),
             TorchBridgeConfig.for_training(),
-            TorchBridgeConfig.for_development()
+            TorchBridgeConfig.for_development(),
         ]
 
         for config in configs:
             config_dict = config.to_dict()
-            assert 'hardware' in config_dict
-            assert 'tpu' in config_dict['hardware']
+            assert "hardware" in config_dict
+            assert "tpu" in config_dict["hardware"]
 
 
 class TestTPUErrorHandling:
@@ -422,7 +419,11 @@ class TestTPUErrorHandling:
         config = TorchBridgeConfig()
         results = validate_tpu_configuration(config)
         # Should pass with valid memory fraction
-        assert results.failed == 0 or any('memory fraction' in r.message for r in results.reports if r.status.value == 'failed')
+        assert results.failed == 0 or any(
+            "memory fraction" in r.message
+            for r in results.reports
+            if r.status.value == "failed"
+        )
 
     def test_missing_sample_inputs(self):
         """Test model validation without sample inputs."""
@@ -439,7 +440,7 @@ class TestTPUErrorHandling:
         backend = TPUBackend(config)
 
         # Should work with CPU fallback
-        assert backend.device.type == 'cpu'
+        assert backend.device.type == "cpu"
 
 
 class TestTPUErrorPaths:
@@ -459,8 +460,8 @@ class TestTPUErrorPaths:
 
         # Cache should only hold 3 models (LRU eviction)
         cache_stats = backend._model_cache.get_stats()
-        assert cache_stats['size'] <= 3
-        assert cache_stats['evictions'] >= 2
+        assert cache_stats["size"] <= 3
+        assert cache_stats["evictions"] >= 2
 
     def test_compilation_cache_limits(self):
         """Test XLA compiler cache size limits."""
@@ -469,13 +470,13 @@ class TestTPUErrorPaths:
         compiler = XLACompiler(config.hardware.tpu)
 
         # Compile multiple models
-        models = [nn.Linear(i*10, 10) for i in range(1, 4)]
+        models = [nn.Linear(i * 10, 10) for i in range(1, 4)]
         for model in models:
             _ = compiler.compile_model(model, use_cache=True)
 
         # Cache should respect max size
         cache_stats = compiler._compilation_cache.get_stats()
-        assert cache_stats['size'] <= 2
+        assert cache_stats["size"] <= 2
 
     def test_strict_validation_mode(self):
         """Test strict validation mode raises exceptions."""
@@ -529,10 +530,10 @@ class TestTPUErrorPaths:
 
         # Check stats
         stats = cache.get_stats()
-        assert stats['hits'] == 2
-        assert stats['misses'] == 1
-        assert stats['size'] == 3
-        assert stats['hit_rate'] == 2/3
+        assert stats["hits"] == 2
+        assert stats["misses"] == 1
+        assert stats["size"] == 3
+        assert stats["hit_rate"] == 2 / 3
 
     def test_cache_eviction_behavior(self):
         """Test LRU cache eviction behavior."""
@@ -552,10 +553,10 @@ class TestTPUErrorPaths:
         cache.set("d", 4)
 
         stats = cache.get_stats()
-        assert stats['evictions'] == 1
+        assert stats["evictions"] == 1
         assert cache.get("b") is None  # Evicted
-        assert cache.get("a") == 1      # Kept (recently used)
-        assert cache.get("d") == 4      # New item
+        assert cache.get("a") == 1  # Kept (recently used)
+        assert cache.get("d") == 4  # New item
 
     def test_optimizer_with_invalid_level(self):
         """Test optimizer handles invalid optimization level."""
@@ -587,7 +588,7 @@ class TestTPUErrorPaths:
         handler = logging.StreamHandler(log_stream)
         handler.setLevel(logging.INFO)
 
-        logger = logging.getLogger('torchbridge.backends.tpu')
+        logger = logging.getLogger("torchbridge.backends.tpu")
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
 
@@ -628,5 +629,5 @@ class TestTPUErrorPaths:
         assert len(backend._model_cache) == 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

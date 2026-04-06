@@ -54,6 +54,7 @@ class TestSelectKernelMocked:
             use_benchmark_cache=False,
         )
         with patch.object(dispatcher, "_check_kernel_availability", return_value=False):
+
             def selective_check(kt):
                 if kt == AttentionKernelType.PYTORCH_SDPA:
                     return True
@@ -142,14 +143,19 @@ class TestRuntimeAvailabilityChecks:
         dispatcher = AttentionDispatcher(
             backend=HardwareBackend.CPU, use_benchmark_cache=False
         )
-        assert dispatcher._check_kernel_availability(AttentionKernelType.PYTORCH_SDPA) is True
+        assert (
+            dispatcher._check_kernel_availability(AttentionKernelType.PYTORCH_SDPA)
+            is True
+        )
 
     def test_flex_attention_check_runs(self):
         dispatcher = AttentionDispatcher(
             backend=HardwareBackend.CPU, use_benchmark_cache=False
         )
         # Should return bool without raising
-        result = dispatcher._check_kernel_availability(AttentionKernelType.FLEX_ATTENTION)
+        result = dispatcher._check_kernel_availability(
+            AttentionKernelType.FLEX_ATTENTION
+        )
         assert isinstance(result, bool)
 
 

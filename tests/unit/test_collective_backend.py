@@ -1,6 +1,5 @@
 """Tests for collective backend abstraction."""
 
-
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,
@@ -72,44 +71,68 @@ class TestCollectiveBackendMatrix:
         assert result == CollectiveBackendType.GLOO
 
     def test_symmetric_memory_hopper(self):
-        assert CollectiveBackendMatrix.supports_symmetric_memory(
-            HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
-        ) is True
+        assert (
+            CollectiveBackendMatrix.supports_symmetric_memory(
+                HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            )
+            is True
+        )
 
     def test_symmetric_memory_blackwell(self):
-        assert CollectiveBackendMatrix.supports_symmetric_memory(
-            HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC
-        ) is True
+        assert (
+            CollectiveBackendMatrix.supports_symmetric_memory(
+                HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC
+            )
+            is True
+        )
 
     def test_no_symmetric_memory_ampere(self):
-        assert CollectiveBackendMatrix.supports_symmetric_memory(
-            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
-        ) is False
+        assert (
+            CollectiveBackendMatrix.supports_symmetric_memory(
+                HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+            )
+            is False
+        )
 
     def test_no_symmetric_memory_amd(self):
-        assert CollectiveBackendMatrix.supports_symmetric_memory(
-            HardwareBackend.AMD, AMDArchitecture.CDNA3
-        ) is False
+        assert (
+            CollectiveBackendMatrix.supports_symmetric_memory(
+                HardwareBackend.AMD, AMDArchitecture.CDNA3
+            )
+            is False
+        )
 
     def test_fp8_reduce_hopper(self):
-        assert CollectiveBackendMatrix.supports_fp8_reduce(
-            HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
-        ) is True
+        assert (
+            CollectiveBackendMatrix.supports_fp8_reduce(
+                HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            )
+            is True
+        )
 
     def test_fp8_reduce_ada(self):
-        assert CollectiveBackendMatrix.supports_fp8_reduce(
-            HardwareBackend.CUDA, NVIDIAArchitecture.ADA
-        ) is True
+        assert (
+            CollectiveBackendMatrix.supports_fp8_reduce(
+                HardwareBackend.CUDA, NVIDIAArchitecture.ADA
+            )
+            is True
+        )
 
     def test_no_fp8_reduce_ampere(self):
-        assert CollectiveBackendMatrix.supports_fp8_reduce(
-            HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
-        ) is False
+        assert (
+            CollectiveBackendMatrix.supports_fp8_reduce(
+                HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
+            )
+            is False
+        )
 
     def test_no_fp8_reduce_amd(self):
-        assert CollectiveBackendMatrix.supports_fp8_reduce(
-            HardwareBackend.AMD, AMDArchitecture.CDNA3
-        ) is False
+        assert (
+            CollectiveBackendMatrix.supports_fp8_reduce(
+                HardwareBackend.AMD, AMDArchitecture.CDNA3
+            )
+            is False
+        )
 
     def test_torch_backend_string_cuda(self):
         result = CollectiveBackendMatrix.get_torch_backend_string(HardwareBackend.CUDA)

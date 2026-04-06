@@ -107,7 +107,7 @@ body:
     attributes:
       label: Component
       options:
-        - Attention
+        - Attention (kernel dispatch / compatibility matrix)
         - Linear/MatMul
         - Memory Management
         - Data Loading
