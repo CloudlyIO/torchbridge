@@ -17,18 +17,18 @@ from torchbridge.precision.quantization.formats import QuantizationFormat
 class AdapterMethod(Enum):
     """Adapter training method."""
 
-    LORA = "lora"       # Standard low-rank adaptation
-    QLORA = "qlora"     # 4-bit quantized base + LoRA adapters
-    DORA = "dora"       # Weight-decomposed LoRA (magnitude + direction)
-    QDORA = "qdora"     # 4-bit quantized base + DoRA adapters
+    LORA = "lora"  # Standard low-rank adaptation
+    QLORA = "qlora"  # 4-bit quantized base + LoRA adapters
+    DORA = "dora"  # Weight-decomposed LoRA (magnitude + direction)
+    QDORA = "qdora"  # 4-bit quantized base + DoRA adapters
 
 
 class InitMethod(Enum):
     """Weight initialization method for adapter layers."""
 
-    KAIMING = "kaiming"     # Kaiming uniform (default)
-    GAUSSIAN = "gaussian"   # Normal distribution with std = 1/sqrt(rank)
-    ZEROS = "zeros"         # Both A and B initialized to zeros
+    KAIMING = "kaiming"  # Kaiming uniform (default)
+    GAUSSIAN = "gaussian"  # Normal distribution with std = 1/sqrt(rank)
+    ZEROS = "zeros"  # Both A and B initialized to zeros
 
 
 @dataclass
@@ -55,9 +55,7 @@ class AdapterConfig:
     rank: int = 16
     alpha: float = 32.0
     dropout: float = 0.0
-    target_modules: list[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj"]
-    )
+    target_modules: list[str] = field(default_factory=lambda: ["q_proj", "v_proj"])
     quantize_base: bool = False
     base_quant_format: QuantizationFormat | None = None
     auto_detect_targets: bool = True
@@ -77,15 +75,11 @@ class AdapterConfig:
         if self.alpha <= 0:
             raise ValueError(f"alpha must be > 0, got {self.alpha}")
         if not 0.0 <= self.dropout < 1.0:
-            raise ValueError(
-                f"dropout must be in [0, 1), got {self.dropout}"
-            )
+            raise ValueError(f"dropout must be in [0, 1), got {self.dropout}")
         if not self.target_modules:
             raise ValueError("target_modules must not be empty")
         if any(not t for t in self.target_modules):
-            raise ValueError(
-                "target_modules must not contain empty strings"
-            )
+            raise ValueError("target_modules must not contain empty strings")
 
         # Auto-set quantize_base for QLoRA/QDoRA
         if self.method in (AdapterMethod.QLORA, AdapterMethod.QDORA):
@@ -101,9 +95,7 @@ class AdapterConfig:
             "target_modules": self.target_modules,
             "quantize_base": self.quantize_base,
             "base_quant_format": (
-                self.base_quant_format.value
-                if self.base_quant_format
-                else None
+                self.base_quant_format.value if self.base_quant_format else None
             ),
             "auto_detect_targets": self.auto_detect_targets,
             "init_method": self.init_method.value,

@@ -44,8 +44,17 @@ class TestDeadOptionsRemoved:
         """Core options --model, --format, --backend, --validate, --ci must still work."""
         parser = _build_parser()
         args = parser.parse_args(
-            ["quantize", "--model", "m.pt", "--format", "int8_dynamic",
-             "--backend", "cpu", "--validate", "--ci"]
+            [
+                "quantize",
+                "--model",
+                "m.pt",
+                "--format",
+                "int8_dynamic",
+                "--backend",
+                "cpu",
+                "--validate",
+                "--ci",
+            ]
         )
         assert args.model == "m.pt"
         assert args.format == "int8_dynamic"

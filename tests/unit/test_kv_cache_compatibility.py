@@ -31,7 +31,11 @@ class TestOptimalDtype:
         "backend, arch, expected",
         [
             (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC, KVCacheDtype.NVFP4),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_CONSUMER, KVCacheDtype.FP8_E4M3),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                KVCacheDtype.FP8_E4M3,
+            ),
             (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, KVCacheDtype.FP8_E4M3),
             (HardwareBackend.CUDA, NVIDIAArchitecture.ADA, KVCacheDtype.FP8_E4M3),
             (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, KVCacheDtype.BF16),
@@ -291,7 +295,5 @@ class TestMatrixCoverage:
 
     def test_custom_backend_falls_back_to_cpu(self):
         """CUSTOM backend should fall back to CPU dtypes."""
-        dtypes = KVCacheCompatibilityMatrix.get_supported_dtypes(
-            HardwareBackend.CUSTOM
-        )
+        dtypes = KVCacheCompatibilityMatrix.get_supported_dtypes(HardwareBackend.CUSTOM)
         assert KVCacheDtype.PASSTHROUGH in dtypes

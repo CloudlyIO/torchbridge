@@ -8,8 +8,8 @@
 #   bash scripts/validation/tpu_v5e_validation.sh
 #
 # Prerequisites:
-#   - gcloud CLI authenticated with project shahmod-kernel-pytorch
-#   - TPU v5 Lite PodSlice quota in us-central1 (already approved)
+#   - gcloud CLI authenticated with your GCP project
+#   - TPU v5 Lite PodSlice quota in us-central1
 #
 # Cost: ~$1.20/chip/hr, validation takes ~15 min = ~$2.40 total
 #
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-PROJECT="shahmod-kernel-pytorch"
+PROJECT="${GCP_PROJECT:-your-gcp-project}"
 ZONE="us-central1-a"
 TPU_NAME="tb-tpu-val-$(date +%s)"
 REPORT_DIR="reports/cloud_validation/$(date +%Y-%m-%d)"

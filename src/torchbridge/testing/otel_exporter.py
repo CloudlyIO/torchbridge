@@ -51,23 +51,23 @@ OTEL_AVAILABLE: bool = _OTEL_AVAILABLE
 #: Maps validation result dict keys → (OTEL attribute name, Python type).
 #: All attribute names are namespaced under ``torchbridge.*``.
 _SPAN_ATTRIBUTE_SCHEMA: dict[str, tuple[str, type]] = {
-    "backend1":       ("torchbridge.backend.primary",   str),
-    "backend2":       ("torchbridge.backend.secondary", str),
-    "model":          ("torchbridge.model",             str),
-    "dtype":          ("torchbridge.dtype",             str),
-    "max_diff":       ("torchbridge.max_diff",          float),
-    "cosine_sim":     ("torchbridge.cosine_sim",        float),
-    "tolerance_atol": ("torchbridge.tolerance.atol",    float),
-    "tolerance_rtol": ("torchbridge.tolerance.rtol",    float),
-    "passed":         ("torchbridge.passed",            bool),
-    "duration_ms":    ("torchbridge.duration_ms",       float),
+    "backend1": ("torchbridge.backend.primary", str),
+    "backend2": ("torchbridge.backend.secondary", str),
+    "model": ("torchbridge.model", str),
+    "dtype": ("torchbridge.dtype", str),
+    "max_diff": ("torchbridge.max_diff", float),
+    "cosine_sim": ("torchbridge.cosine_sim", float),
+    "tolerance_atol": ("torchbridge.tolerance.atol", float),
+    "tolerance_rtol": ("torchbridge.tolerance.rtol", float),
+    "passed": ("torchbridge.passed", bool),
+    "duration_ms": ("torchbridge.duration_ms", float),
 }
 
 #: Maps per-layer divergence row keys → (OTEL attribute name, Python type).
 _LAYER_SPAN_SCHEMA: dict[str, tuple[str, type]] = {
-    "layer":             ("torchbridge.layer.name",     str),
-    "max_diff":          ("torchbridge.layer.max_diff", float),
-    "cosine_sim":        ("torchbridge.layer.cosine_sim", float),
+    "layer": ("torchbridge.layer.name", str),
+    "max_diff": ("torchbridge.layer.max_diff", float),
+    "cosine_sim": ("torchbridge.layer.cosine_sim", float),
     "exceeds_threshold": ("torchbridge.layer.exceeded", bool),
 }
 
@@ -75,6 +75,7 @@ _LAYER_SPAN_SCHEMA: dict[str, tuple[str, type]] = {
 # ---------------------------------------------------------------------------
 # Exporter
 # ---------------------------------------------------------------------------
+
 
 class ValidationSpanExporter:
     """
@@ -109,6 +110,7 @@ class ValidationSpanExporter:
                 resolved,
             )
 
+        raw_exporter: OTLPSpanExporter | ConsoleSpanExporter
         if resolved:
             raw_exporter = OTLPSpanExporter(endpoint=resolved)
         else:
@@ -139,7 +141,8 @@ class ValidationSpanExporter:
                     except (TypeError, ValueError) as e:
                         logger.debug(
                             "Skipped span attribute %s — coercion failed: %s",
-                            attr_name, e,
+                            attr_name,
+                            e,
                         )
 
             for row in result.get("per_layer", []):
@@ -153,7 +156,8 @@ class ValidationSpanExporter:
                             except (TypeError, ValueError) as e:
                                 logger.debug(
                                     "Skipped span attribute %s — coercion failed: %s",
-                                    attr_name, e,
+                                    attr_name,
+                                    e,
                                 )
 
     def shutdown(self) -> None:

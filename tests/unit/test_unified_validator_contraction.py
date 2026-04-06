@@ -16,58 +16,67 @@ class TestDeletedMethods:
     # Public methods
     def test_validate_custom_kernels_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "validate_custom_kernels")
 
     def test_validate_precision_allocation_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "validate_precision_allocation")
 
     # Stub private methods from validate_configuration()
     def test_stub_validate_attention_config_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_attention_config")
 
     def test_stub_validate_hardware_config_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_hardware_config")
 
     def test_stub_validate_distributed_config_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_distributed_config")
 
     # Stub private methods from validate_precision_allocation()
     def test_stub_validate_precision_formats_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_precision_formats")
 
     def test_stub_validate_entropy_thresholds_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_entropy_thresholds")
 
     def test_stub_validate_memory_budget_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_memory_budget")
 
     # Private helpers from validate_custom_kernels()
     def test_validate_cuda_available_private_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_cuda_available")
 
     def test_validate_fused_activation_kernels_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_fused_activation_kernels")
 
     def test_validate_fp8_kernels_does_not_exist(self):
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         assert not hasattr(UnifiedValidator, "_validate_fp8_kernels")
 
 
 class TestDeadImportsAbsent:
     """Verify no dead imports to deleted modules remain in source."""
 
-    _src = pathlib.Path(
-        "src/torchbridge/validation/unified_validator.py"
-    ).read_text()
+    _src = pathlib.Path("src/torchbridge/validation/unified_validator.py").read_text()
 
     def test_no_kernel_registry_import(self):
         """core.kernel_registry was deleted in v0.5.55."""
@@ -114,6 +123,7 @@ class TestKeptAPIStillWorks:
             validate_hardware,
             validate_model,
         )
+
         assert callable(validate_configuration)
         assert callable(validate_hardware)
         assert callable(validate_model)
@@ -121,4 +131,5 @@ class TestKeptAPIStillWorks:
     def test_convenience_validate_custom_kernels_does_not_exist(self):
         """Module-level convenience function must also be gone."""
         import torchbridge.validation.unified_validator as m
+
         assert not hasattr(m, "validate_custom_kernels")

@@ -9,6 +9,7 @@ import logging
 import os
 import sys
 import warnings
+
 # Suppress noisy warnings before any imports that trigger them
 # These are informational, not errors - we report hardware status via 'doctor' command
 warnings.filterwarnings("ignore", message=".*Redirects are currently not supported.*")
@@ -52,6 +53,7 @@ def _print_error(exc: Exception, verbose: bool = False) -> int:
 
     if verbose:
         import traceback
+
         traceback.print_exc()
 
     return 1
@@ -65,8 +67,8 @@ def main(args: list[str] | None = None) -> str | int | None:
         int: Exit code (0 for success, non-zero for error)
     """
     parser = argparse.ArgumentParser(
-        prog='torchbridge',
-        description='TorchBridge: Production-grade PyTorch hardware abstraction CLI',
+        prog="torchbridge",
+        description="TorchBridge: Cross-backend validation and configuration intelligence for PyTorch",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -77,20 +79,16 @@ Examples:
 
 For command-specific help:
   torchbridge <command> --help
-        """
+        """,
     )
 
     parser.add_argument(
-        '--version',
-        action='version',
-        version=f'%(prog)s {_tb_version}'
+        "--version", action="version", version=f"%(prog)s {_tb_version}"
     )
 
     # Add subcommands
     subparsers = parser.add_subparsers(
-        dest='command',
-        help='Available commands',
-        metavar='<command>'
+        dest="command", help="Available commands", metavar="<command>"
     )
 
     # Register commands
@@ -121,16 +119,16 @@ For command-specific help:
         return 1
 
     commands = {
-        'adapter': AdapterCommand,
-        'benchmark': BenchmarkCommand,
-        'doctor': DoctorCommand,
-        'validate': ValidateCommand,
-        'quantize': QuantizeCommand,
-        'migrate': MigrateCommand,
-        'cache': CacheCommand,
-        'speculate': SpeculateCommand,
-        'advisor': AdvisorCommand,
-        'checkpoint': CheckpointCommand,
+        "adapter": AdapterCommand,
+        "benchmark": BenchmarkCommand,
+        "doctor": DoctorCommand,
+        "validate": ValidateCommand,
+        "quantize": QuantizeCommand,
+        "migrate": MigrateCommand,
+        "cache": CacheCommand,
+        "speculate": SpeculateCommand,
+        "advisor": AdvisorCommand,
+        "checkpoint": CheckpointCommand,
     }
 
     cmd_class = commands.get(parsed_args.command)
@@ -144,8 +142,8 @@ For command-specific help:
         print("\nOperation cancelled by user")
         return 130
     except Exception as e:
-        return _print_error(e, verbose=getattr(parsed_args, 'verbose', False))
+        return _print_error(e, verbose=getattr(parsed_args, "verbose", False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

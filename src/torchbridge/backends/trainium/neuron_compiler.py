@@ -54,7 +54,7 @@ class NeuronCompiler:
             logger.info(
                 "Neuron Compiler initialized: graph_caching=%s, timeout=%ds",
                 self.config.enable_graph_caching,
-                self.config.compilation_timeout_seconds
+                self.config.compilation_timeout_seconds,
             )
 
         except ImportError:
@@ -65,9 +65,12 @@ class NeuronCompiler:
                 stacklevel=2,
             )
 
-    def compile_model(self, model: nn.Module,
-                      sample_inputs: torch.Tensor | tuple | None = None,
-                      use_cache: bool = True) -> nn.Module:
+    def compile_model(
+        self,
+        model: nn.Module,
+        sample_inputs: torch.Tensor | tuple | None = None,
+        use_cache: bool = True,
+    ) -> nn.Module:
         """
         Compile model for Trainium execution.
 
@@ -83,7 +86,9 @@ class NeuronCompiler:
             Compiled model
         """
         if not self._neuron_available:
-            warnings.warn("Neuron SDK not available, returning original model", stacklevel=2)
+            warnings.warn(
+                "Neuron SDK not available, returning original model", stacklevel=2
+            )
             return model
 
         # Generate cache key
@@ -103,17 +108,21 @@ class NeuronCompiler:
         if use_cache:
             cache_key = self._generate_cache_key(model, sample_inputs)
             self._compilation_cache.set(cache_key, compiled_model)
-            self._compilation_stats.set(cache_key, {
-                'compilation_time': compilation_time,
-                'timestamp': time.time(),
-                'model_size': self._estimate_model_size(model)
-            })
+            self._compilation_stats.set(
+                cache_key,
+                {
+                    "compilation_time": compilation_time,
+                    "timestamp": time.time(),
+                    "model_size": self._estimate_model_size(model),
+                },
+            )
 
         logger.info("Model compiled with Neuron: time=%.2fs", compilation_time)
         return compiled_model
 
-    def _compile_neuron(self, model: nn.Module,
-                        sample_inputs: torch.Tensor | tuple | None) -> nn.Module:
+    def _compile_neuron(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> nn.Module:
         """Compile model using Neuron SDK."""
         try:
             # Sync XLA state
@@ -123,7 +132,7 @@ class NeuronCompiler:
             self._apply_compiler_flags()
 
             # Use torch.compile with XLA backend (same mechanism as TPU)
-            if hasattr(torch, 'compile'):
+            if hasattr(torch, "compile"):
                 compiled_model: nn.Module = torch.compile(model)  # type: ignore[assignment]
                 return compiled_model
 
@@ -135,7 +144,7 @@ class NeuronCompiler:
                 error_msg,
                 NeuronCompilationError,
                 strict_mode=self.config.enable_strict_validation,
-                logger=logger
+                logger=logger,
             )
             return model
 
@@ -144,18 +153,21 @@ class NeuronCompiler:
         import os
 
         if self.config.neuron_cc_flags:
-            existing = os.environ.get('NEURON_CC_FLAGS', '')
+            existing = os.environ.get("NEURON_CC_FLAGS", "")
             if existing:
-                os.environ['NEURON_CC_FLAGS'] = f"{existing} {self.config.neuron_cc_flags}"
+                os.environ["NEURON_CC_FLAGS"] = (
+                    f"{existing} {self.config.neuron_cc_flags}"
+                )
             else:
-                os.environ['NEURON_CC_FLAGS'] = self.config.neuron_cc_flags
+                os.environ["NEURON_CC_FLAGS"] = self.config.neuron_cc_flags
 
         # Enable graph caching
         if self.config.enable_graph_caching:
-            os.environ.setdefault('NEURON_COMPILE_CACHE_URL', '/tmp/neuron_cache')
+            os.environ.setdefault("NEURON_COMPILE_CACHE_URL", "/tmp/neuron_cache")
 
-    def optimize_for_inference(self, model: nn.Module,
-                               sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
+    def optimize_for_inference(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> nn.Module:
         """
         Optimize model specifically for inference on Trainium.
 
@@ -178,8 +190,9 @@ class NeuronCompiler:
 
         return optimized_model
 
-    def optimize_for_training(self, model: nn.Module,
-                              sample_inputs: torch.Tensor | tuple | None = None) -> nn.Module:
+    def optimize_for_training(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
+    ) -> nn.Module:
         """
         Optimize model specifically for training on Trainium.
 
@@ -193,14 +206,15 @@ class NeuronCompiler:
         model.train()
 
         if self.config.gradient_checkpointing:
-            if hasattr(model, 'gradient_checkpointing_enable'):
+            if hasattr(model, "gradient_checkpointing_enable"):
                 model.gradient_checkpointing_enable()
 
         optimized_model = self.compile_model(model, sample_inputs, use_cache=True)
         return optimized_model
 
-    def _generate_cache_key(self, model: nn.Module,
-                            sample_inputs: torch.Tensor | tuple | None) -> str:
+    def _generate_cache_key(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+    ) -> str:
         """Generate cache key for model compilation."""
         model_str = str(model)
         config_str = str(self.config.__dict__)
@@ -210,8 +224,12 @@ class NeuronCompiler:
             if isinstance(sample_inputs, torch.Tensor):
                 input_info = str(sample_inputs.shape)
             elif isinstance(sample_inputs, (list, tuple)):
-                input_info = str([inp.shape if isinstance(inp, torch.Tensor) else str(inp)
-                                  for inp in sample_inputs])
+                input_info = str(
+                    [
+                        inp.shape if isinstance(inp, torch.Tensor) else str(inp)
+                        for inp in sample_inputs
+                    ]
+                )
 
         combined = f"{model_str}_{config_str}_{input_info}"
         return hashlib.md5(combined.encode()).hexdigest()
@@ -224,10 +242,10 @@ class NeuronCompiler:
     def get_compilation_stats(self) -> dict[str, Any]:
         """Get compilation statistics."""
         return {
-            'compilation_cache': self._compilation_cache.get_stats(),
-            'neuron_available': self._neuron_available,
-            'graph_caching_enabled': self.config.enable_graph_caching,
-            'cache_max_size': self.config.cache_max_size
+            "compilation_cache": self._compilation_cache.get_stats(),
+            "neuron_available": self._neuron_available,
+            "graph_caching_enabled": self.config.enable_graph_caching,
+            "cache_max_size": self.config.cache_max_size,
         }
 
     def clear_cache(self) -> None:
@@ -241,9 +259,9 @@ class NeuronCompiler:
             logger.debug("Neuron compilation cache sync failed", exc_info=True)
             pass
 
-    def benchmark_compilation(self, model: nn.Module,
-                              sample_inputs: torch.Tensor | tuple,
-                              num_runs: int = 3) -> dict[str, float]:
+    def benchmark_compilation(
+        self, model: nn.Module, sample_inputs: torch.Tensor | tuple, num_runs: int = 3
+    ) -> dict[str, float]:
         """
         Benchmark compilation performance.
 
@@ -266,11 +284,11 @@ class NeuronCompiler:
             compilation_times.append(compilation_time)
 
         return {
-            'min_time': min(compilation_times),
-            'max_time': max(compilation_times),
-            'avg_time': sum(compilation_times) / len(compilation_times),
-            'total_time': sum(compilation_times),
-            'runs': num_runs
+            "min_time": min(compilation_times),
+            "max_time": max(compilation_times),
+            "avg_time": sum(compilation_times) / len(compilation_times),
+            "total_time": sum(compilation_times),
+            "runs": num_runs,
         }
 
     def __repr__(self) -> str:

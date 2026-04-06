@@ -13,6 +13,7 @@ import torch
 
 class KVCacheDtype(Enum):
     """KV-cache storage data types."""
+
     FP16 = "fp16"
     BF16 = "bf16"
     FP8_E4M3 = "fp8_e4m3"
@@ -37,14 +38,14 @@ class KVCacheDtype(Enum):
             if member.value == normalized:
                 return member
         raise ValueError(
-            f"Unknown KV-cache dtype: '{value}'. "
-            f"Valid dtypes: {[m.value for m in cls]}"
+            f"Unknown KV-cache dtype: '{value}'. Valid dtypes: {[m.value for m in cls]}"
         )
 
 
 @dataclass(frozen=True)
 class KVDtypeSpec:
     """Metadata for a KV-cache data type."""
+
     bits: int
     display_name: str
     memory_factor: float

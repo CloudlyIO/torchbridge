@@ -21,7 +21,7 @@ nvcc --version
 
 **Conda:**
 ```bash
-conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install pytorch torchvision pytorch-cuda=12.6 -c pytorch -c nvidia
 ```
 
 **Environment variables:**
@@ -34,7 +34,7 @@ export CUDA_HOME=/usr/local/cuda
 ### PyTorch with CUDA
 
 ```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 ```
 
 ### Verify
@@ -65,7 +65,7 @@ python3 -c "import triton; print(f'Triton: {triton.__version__}')"
 wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
     sudo gpg --dearmor -o /etc/apt/keyrings/rocm.gpg
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] \
-    https://repo.radeon.com/rocm/apt/6.0 jammy main" | \
+    https://repo.radeon.com/rocm/apt/6.2 jammy main" | \
     sudo tee /etc/apt/sources.list.d/rocm.list
 sudo apt update && sudo apt install rocm
 ```
@@ -80,7 +80,7 @@ export LD_LIBRARY_PATH=$ROCM_HOME/lib:$LD_LIBRARY_PATH
 ### PyTorch with ROCm
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
 ```
 
 ### Verify

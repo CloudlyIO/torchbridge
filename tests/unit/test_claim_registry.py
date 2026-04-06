@@ -5,7 +5,6 @@ Tests that each registered claim benchmark builds and runs without error,
 and that the registry functions work correctly.
 """
 
-
 from torchbridge.benchmarks.claim_benchmarks import (
     BenchmarkSuite,
     ClaimBenchmark,
@@ -25,11 +24,13 @@ class TestPublicAPIExports:
     def test_build_claim_suite_importable_from_package(self):
         """build_claim_suite should be importable from torchbridge.benchmarks."""
         from torchbridge.benchmarks import build_claim_suite as _bcs
+
         assert callable(_bcs)
 
     def test_get_all_claim_benchmarks_importable_from_package(self):
         """get_all_claim_benchmarks should be importable from torchbridge.benchmarks."""
         from torchbridge.benchmarks import get_all_claim_benchmarks as _gacb
+
         assert callable(_gacb)
 
 
@@ -93,6 +94,7 @@ class TestAttentionDispatchBenchmark:
     def test_tensors_not_created_inside_timed_functions(self):
         """baseline and optimized functions must not create tensors internally."""
         import inspect
+
         bench = build_attention_dispatch_benchmark()
         assert "torch.randn" not in inspect.getsource(bench._baseline_fn)
         assert "torch.randn" not in inspect.getsource(bench._optimized_fn)

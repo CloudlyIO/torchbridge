@@ -49,8 +49,7 @@ def memory_tracker():
             final = self.snapshots[-1]["bytes"]
             leak_mb = (final - initial) / 1024**2
             assert leak_mb < tolerance_mb, (
-                f"Memory leak detected: {leak_mb:.1f} MB "
-                f"(tolerance: {tolerance_mb} MB)"
+                f"Memory leak detected: {leak_mb:.1f} MB (tolerance: {tolerance_mb} MB)"
             )
 
     return MemoryTracker()

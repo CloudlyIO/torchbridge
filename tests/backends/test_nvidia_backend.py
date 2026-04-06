@@ -26,19 +26,20 @@ from torchbridge.core.config import (
 # NVIDIA Backend Tests (10 tests)
 # ============================================================================
 
+
 class TestNVIDIABackend:
     """Test NVIDIA backend functionality."""
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_backend_creation_no_cuda(self, mock_cuda):
         """Test backend creation when CUDA is not available."""
         backend = NVIDIABackend()
         assert backend.device.type == "cpu"
         assert not backend.is_cuda_available
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=2)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=2)
+    @patch("torch.cuda.get_device_properties")
     def test_backend_creation_with_cuda(self, mock_props, mock_count, mock_cuda):
         """Test backend creation with CUDA available."""
         mock_device_props = MagicMock()
@@ -51,7 +52,7 @@ class TestNVIDIABackend:
         assert backend.is_cuda_available
         assert len(backend.devices) == 2
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_prepare_model_no_cuda(self, mock_cuda):
         """Test model preparation without CUDA."""
         backend = NVIDIABackend()
@@ -59,9 +60,9 @@ class TestNVIDIABackend:
         prepared = backend.prepare_model(model)
         assert prepared is not None
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
     def test_h100_detection(self, mock_props, mock_count, mock_cuda):
         """Test H100 GPU detection."""
         mock_device_props = MagicMock()
@@ -75,9 +76,9 @@ class TestNVIDIABackend:
         backend = NVIDIABackend(config)
         assert backend.is_h100
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
     def test_fp8_support_detection(self, mock_props, mock_count, mock_cuda):
         """Test FP8 support detection."""
         mock_device_props = MagicMock()
@@ -91,9 +92,9 @@ class TestNVIDIABackend:
         backend = NVIDIABackend(config)
         assert backend.supports_fp8
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
     def test_get_device_info(self, mock_props, mock_count, mock_cuda):
         """Test device information retrieval."""
         mock_device_props = MagicMock()
@@ -104,16 +105,18 @@ class TestNVIDIABackend:
 
         backend = NVIDIABackend()
         info = backend.get_device_info_dict()
-        assert info['backend'] == 'nvidia'
-        assert info['cuda_available']
+        assert info["backend"] == "nvidia"
+        assert info["cuda_available"]
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=1)
-    @patch('torch.cuda.get_device_properties')
-    @patch('torch.cuda.memory_allocated', return_value=1024**3)
-    @patch('torch.cuda.memory_reserved', return_value=2*1024**3)
-    @patch('torch.cuda.max_memory_allocated', return_value=1.5*1024**3)
-    def test_get_memory_stats(self, mock_max, mock_reserved, mock_allocated, mock_props, mock_count, mock_cuda):
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=1)
+    @patch("torch.cuda.get_device_properties")
+    @patch("torch.cuda.memory_allocated", return_value=1024**3)
+    @patch("torch.cuda.memory_reserved", return_value=2 * 1024**3)
+    @patch("torch.cuda.max_memory_allocated", return_value=1.5 * 1024**3)
+    def test_get_memory_stats(
+        self, mock_max, mock_reserved, mock_allocated, mock_props, mock_count, mock_cuda
+    ):
         """Test memory statistics retrieval."""
         mock_device_props = MagicMock()
         mock_device_props.name = "NVIDIA A100"
@@ -123,12 +126,13 @@ class TestNVIDIABackend:
 
         backend = NVIDIABackend()
         stats = backend.get_memory_stats()
-        assert 'allocated' in stats
-        assert 'reserved' in stats
+        assert "allocated" in stats
+        assert "reserved" in stats
 
     def test_optimize_for_tensor_cores(self):
         """_optimize_for_tensor_cores replaces child Linear layers with _TensorCoreAlignedLinear."""
         from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
+
         backend = NVIDIABackend()
         # Must be a container — bare nn.Linear has no named_children() to iterate
         model = nn.Sequential(nn.Linear(10, 10))
@@ -143,6 +147,7 @@ class TestNVIDIABackend:
     def test_tensor_core_aligned_linear_cpu_preserves_device(self):
         """Regression v0.5.45: _TensorCoreAlignedLinear must keep buffers on CPU when source is CPU."""
         from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
+
         linear = nn.Linear(127, 63)
         aligned = _TensorCoreAlignedLinear(linear, optimal_multiple=16)
         assert aligned._padded_weight.device.type == "cpu"
@@ -153,6 +158,7 @@ class TestNVIDIABackend:
     def test_tensor_core_aligned_linear_cuda_preserves_device(self):
         """Regression v0.5.45: _TensorCoreAlignedLinear must keep buffers on CUDA when source is CUDA."""
         from torchbridge.backends.nvidia.nvidia_backend import _TensorCoreAlignedLinear
+
         linear = nn.Linear(1023, 511).cuda()
         aligned = _TensorCoreAlignedLinear(linear, optimal_multiple=16)
         assert aligned._padded_weight.device.type == "cuda"
@@ -181,6 +187,7 @@ class TestNVIDIABackend:
     def test_configure_cuda_allocator_sets_env_for_hopper(self):
         """_configure_cuda_allocator() with sm_90 sets expandable_segments."""
         import os
+
         backend = NVIDIABackend()
         os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
         backend._compute_capability = (9, 0)
@@ -194,6 +201,7 @@ class TestNVIDIABackend:
     def test_configure_cuda_allocator_sets_env_for_ampere(self):
         """_configure_cuda_allocator() with sm_80 sets max_split_size_mb."""
         import os
+
         backend = NVIDIABackend()
         os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
         backend._compute_capability = (8, 0)
@@ -207,6 +215,7 @@ class TestNVIDIABackend:
     def test_configure_cuda_allocator_respects_existing_env(self):
         """_configure_cuda_allocator() must not override user's PYTORCH_CUDA_ALLOC_CONF."""
         import os
+
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "user_custom_value"
         backend = NVIDIABackend()
         backend._compute_capability = (9, 0)
@@ -220,6 +229,7 @@ class TestNVIDIABackend:
 # ============================================================================
 # NVIDIA Optimizer Tests (10 tests)
 # ============================================================================
+
 
 class TestNVIDIAAdapter:
     """Test NVIDIA adapter functionality."""
@@ -273,8 +283,8 @@ class TestNVIDIAAdapter:
         optimizer = NVIDIAAdapter()
         model = nn.Linear(16, 16)
         recommendations = optimizer.get_optimization_recommendations(model)
-        assert 'architecture' in recommendations
-        assert 'suggested_level' in recommendations
+        assert "architecture" in recommendations
+        assert "suggested_level" in recommendations
 
     def test_optimization_with_sample_inputs(self):
         """Test optimization with sample inputs."""
@@ -310,19 +320,20 @@ class TestNVIDIAAdapter:
 # CUDA Utilities Tests (5 tests)
 # ============================================================================
 
+
 class TestCUDAUtilities:
     """Test CUDA utilities functionality."""
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_cuda_device_manager_no_cuda(self, mock_cuda):
         """Test CUDA device manager without CUDA."""
         manager = CUDADeviceManager()
         assert manager.device.type == "cpu"
         assert manager.device_count == 0
 
-    @patch('torch.cuda.is_available', return_value=True)
-    @patch('torch.cuda.device_count', return_value=2)
-    @patch('torch.cuda.get_device_properties')
+    @patch("torch.cuda.is_available", return_value=True)
+    @patch("torch.cuda.device_count", return_value=2)
+    @patch("torch.cuda.get_device_properties")
     def test_cuda_device_manager_with_cuda(self, mock_props, mock_count, mock_cuda):
         """Test CUDA device manager with CUDA."""
         mock_device_props = MagicMock()
@@ -348,8 +359,9 @@ class TestCUDAUtilities:
     def test_get_cuda_env_info(self):
         """Test CUDA environment info."""
         from torchbridge.backends.nvidia.cuda_utilities import CUDAUtilities
+
         info = CUDAUtilities.get_cuda_env_info()
-        assert 'cuda_available' in info
+        assert "cuda_available" in info
 
     def test_create_cuda_integration(self):
         """Test CUDA integration factory."""
@@ -362,17 +374,14 @@ class TestCUDAUtilities:
 # Integration Tests (3 tests)
 # ============================================================================
 
+
 class TestNVIDIAIntegration:
     """Test NVIDIA backend integration."""
 
     def test_full_optimization_pipeline(self):
         """Test full optimization pipeline."""
         optimizer = NVIDIAAdapter()
-        model = nn.Sequential(
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64)
-        )
+        model = nn.Sequential(nn.Linear(64, 128), nn.ReLU(), nn.Linear(128, 64))
         result = optimizer.optimize_legacy(model, optimization_level="balanced")
         assert result.optimized_model is not None
 
@@ -386,7 +395,7 @@ class TestNVIDIAIntegration:
             model,
             sample_inputs=sample_input,
             optimization_level="aggressive",
-            for_inference=True
+            for_inference=True,
         )
         assert result.optimized_model is not None
         assert "eval_mode" in result.optimizations_applied
@@ -396,10 +405,11 @@ class TestNVIDIAIntegration:
 # Error Path Tests (15+ tests)
 # ============================================================================
 
+
 class TestNVIDIAErrorPaths:
     """Test error handling and failure scenarios in NVIDIA backend."""
 
-    @patch('torch.cuda.is_available', return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
     def test_cuda_not_available_graceful_fallback(self, mock_cuda):
         """Test graceful fallback when CUDA is not available."""
         backend = NVIDIABackend()
@@ -418,6 +428,7 @@ class TestNVIDIAErrorPaths:
         # Test with None model - should handle gracefully
         # Backend may issue warning but should not crash
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = backend.prepare_model(None)
@@ -431,9 +442,12 @@ class TestNVIDIAErrorPaths:
 
         # Optimizer should handle invalid level gracefully (fallback to default)
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = optimizer.optimize_legacy(model, optimization_level="invalid_level")
+            result = optimizer.optimize_legacy(
+                model, optimization_level="invalid_level"
+            )
             # Should issue warning about invalid level and fall back to default
             assert result is not None
             # May issue warning about invalid optimization level
@@ -454,5 +468,5 @@ class TestNVIDIAErrorPaths:
     def test_fp8_not_available(self):
         """Test that FP8Compiler has been removed."""
         from torchbridge.backends import nvidia as nvidia_pkg
-        assert not hasattr(nvidia_pkg, 'FP8Compiler')
 
+        assert not hasattr(nvidia_pkg, "FP8Compiler")

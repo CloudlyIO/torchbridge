@@ -51,14 +51,13 @@ body:
       label: Component
       description: Which component would this feature affect?
       options:
-        - Attention (FlashAttention, MultiHead)
-        - Precision (FP16, BF16, FP8)
+        - Attention (kernel dispatch / compatibility matrix)
+        - Precision (FP16, BF16, FP8, quantization)
         - Memory (Checkpointing, Optimizer States)
         - Hardware Backend (NVIDIA, AMD, Trainium, TPU)
         - Distributed Training
         - Model Export
-        - Deployment/Serving
-        - MoE (Mixture of Experts)
+        - Adapters (LoRA, QLoRA, DoRA)
         - CLI Tools
         - Configuration
         - Documentation

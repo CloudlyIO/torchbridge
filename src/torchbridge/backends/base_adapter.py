@@ -21,6 +21,7 @@ from .base_backend import OptimizationLevel, OptimizationResult
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class OperationKernelConfig:
     """
@@ -28,6 +29,7 @@ class OperationKernelConfig:
 
     Used by kernel adapters to tune operations for specific hardware.
     """
+
     algorithm: str = "auto"
     tile_sizes: tuple[int, ...] = (32, 32, 32)
     num_warps: int = 4
@@ -39,20 +41,22 @@ class OperationKernelConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'algorithm': self.algorithm,
-            'tile_sizes': self.tile_sizes,
-            'num_warps': self.num_warps,
-            'num_stages': self.num_stages,
-            'use_tensor_cores': self.use_tensor_cores,
-            'memory_format': self.memory_format,
-            **self.extra_params
+            "algorithm": self.algorithm,
+            "tile_sizes": self.tile_sizes,
+            "num_warps": self.num_warps,
+            "num_stages": self.num_stages,
+            "use_tensor_cores": self.use_tensor_cores,
+            "memory_format": self.memory_format,
+            **self.extra_params,
         }
+
 
 @dataclass
 class OptimizationStrategy:
     """
     Describes an optimization strategy with its applicability and effects.
     """
+
     name: str
     description: str
     applicable_levels: list[OptimizationLevel]
@@ -64,6 +68,7 @@ class OptimizationStrategy:
     def is_applicable(self, level: OptimizationLevel) -> bool:
         """Check if this strategy is applicable for the given level."""
         return level in self.applicable_levels
+
 
 class BaseAdapter(ABC):
     """
@@ -97,7 +102,7 @@ class BaseAdapter(ABC):
             device: Target device for optimization
         """
         self.config = config
-        self.device = device or torch.device('cpu')
+        self.device = device or torch.device("cpu")
 
         # Optimization history tracking
         self._optimization_history: list[dict[str, Any]] = []
@@ -105,11 +110,7 @@ class BaseAdapter(ABC):
         # Cache for optimization results
         self._cache: dict[str, OptimizationResult] = {}
 
-        logger.debug(
-            "%s initialized: device=%s",
-            self.__class__.__name__,
-            self.device
-        )
+        logger.debug("%s initialized: device=%s", self.__class__.__name__, self.device)
 
     # =========================================================================
     # Abstract methods - must be implemented by subclasses
@@ -121,7 +122,7 @@ class BaseAdapter(ABC):
         model: nn.Module,
         level: OptimizationLevel,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
+        dtype: torch.dtype | None = None,
     ) -> tuple[nn.Module, OptimizationResult]:
         """
         Apply optimizations for the given level.
@@ -158,7 +159,7 @@ class BaseAdapter(ABC):
         sample_input: torch.Tensor | None = None,
         dtype: torch.dtype | None = None,
         for_inference: bool = False,
-        for_training: bool = False
+        for_training: bool = False,
     ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model for the given level.
@@ -182,9 +183,7 @@ class BaseAdapter(ABC):
         elif isinstance(level, str):
             level = OptimizationLevel.from_string(level)
 
-        logger.info(
-            f"Optimizing model with {self.ADAPTER_NAME} at level {level.value}"
-        )
+        logger.info(f"Optimizing model with {self.ADAPTER_NAME} at level {level.value}")
 
         try:
             # Apply base optimizations
@@ -200,10 +199,7 @@ class BaseAdapter(ABC):
         except Exception as e:
             logger.error(f"Optimization failed: {e}")
             return model, OptimizationResult(
-                success=False,
-                model=model,
-                level=level,
-                errors=[str(e)]
+                success=False, model=model, level=level, errors=[str(e)]
             )
 
     def optimize_for_inference(
@@ -211,7 +207,7 @@ class BaseAdapter(ABC):
         model: nn.Module,
         sample_input: torch.Tensor | None = None,
         level: str | OptimizationLevel | None = None,
-        dtype: torch.dtype | None = None
+        dtype: torch.dtype | None = None,
     ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model specifically for inference.
@@ -230,14 +226,14 @@ class BaseAdapter(ABC):
             level=level if level is not None else OptimizationLevel.O2,
             sample_input=sample_input,
             dtype=dtype,
-            for_inference=True
+            for_inference=True,
         )
 
     def optimize_for_training(
         self,
         model: nn.Module,
         level: str | OptimizationLevel | None = None,
-        dtype: torch.dtype | None = None
+        dtype: torch.dtype | None = None,
     ) -> tuple[nn.Module, OptimizationResult]:
         """
         Optimize a model specifically for training.
@@ -254,13 +250,11 @@ class BaseAdapter(ABC):
             model=model,
             level=level if level is not None else OptimizationLevel.O1,
             dtype=dtype,
-            for_training=True
+            for_training=True,
         )
 
     def get_optimization_recommendations(
-        self,
-        model: nn.Module,
-        target_use: str = "inference"
+        self, model: nn.Module, target_use: str = "inference"
     ) -> list[dict[str, Any]]:
         """
         Get optimization recommendations for a model.
@@ -279,55 +273,64 @@ class BaseAdapter(ABC):
         param_bytes = sum(p.element_size() * p.numel() for p in model.parameters())
 
         if param_count > 1_000_000_000:  # > 1B params
-            recommendations.append({
-                'type': 'model_size',
-                'priority': 'high',
-                'message': 'Large model detected. Consider gradient checkpointing.',
-                'param_count': param_count,
-                'param_bytes': param_bytes
-            })
+            recommendations.append(
+                {
+                    "type": "model_size",
+                    "priority": "high",
+                    "message": "Large model detected. Consider gradient checkpointing.",
+                    "param_count": param_count,
+                    "param_bytes": param_bytes,
+                }
+            )
 
         # Check for suboptimal layers
         for name, module in model.named_modules():
             # Check Linear layers
             if isinstance(module, nn.Linear):
                 if module.in_features % 8 != 0 or module.out_features % 8 != 0:
-                    recommendations.append({
-                        'type': 'dimension_alignment',
-                        'priority': 'medium',
-                        'layer': name,
-                        'message': 'Linear layer dimensions not aligned for tensor cores',
-                        'current': f'{module.in_features}x{module.out_features}',
-                        'suggestion': 'Pad to multiples of 8'
-                    })
+                    recommendations.append(
+                        {
+                            "type": "dimension_alignment",
+                            "priority": "medium",
+                            "layer": name,
+                            "message": "Linear layer dimensions not aligned for tensor cores",
+                            "current": f"{module.in_features}x{module.out_features}",
+                            "suggestion": "Pad to multiples of 8",
+                        }
+                    )
 
             # Check for BatchNorm after Conv (can be fused)
             if isinstance(module, nn.BatchNorm2d):
-                recommendations.append({
-                    'type': 'layer_fusion',
-                    'priority': 'low',
-                    'layer': name,
-                    'message': 'BatchNorm can potentially be fused with preceding Conv2d'
-                })
+                recommendations.append(
+                    {
+                        "type": "layer_fusion",
+                        "priority": "low",
+                        "layer": name,
+                        "message": "BatchNorm can potentially be fused with preceding Conv2d",
+                    }
+                )
 
         # Add device-specific recommendations
         strategies = self.get_available_strategies()
         for strategy in strategies:
             if strategy.speedup_estimate > 1.1:  # >10% speedup
-                recommendations.append({
-                    'type': 'optimization_strategy',
-                    'priority': 'medium',
-                    'name': strategy.name,
-                    'description': strategy.description,
-                    'speedup_estimate': f'{strategy.speedup_estimate:.1f}x',
-                    'applicable_levels': [l.value for l in strategy.applicable_levels]  # noqa: E741
-                })
+                recommendations.append(
+                    {
+                        "type": "optimization_strategy",
+                        "priority": "medium",
+                        "name": strategy.name,
+                        "description": strategy.description,
+                        "speedup_estimate": f"{strategy.speedup_estimate:.1f}x",
+                        "applicable_levels": [
+                            lv.value for lv in strategy.applicable_levels
+                        ],
+                    }
+                )
 
         return recommendations
 
     def get_strategies_for_level(
-        self,
-        level: OptimizationLevel
+        self, level: OptimizationLevel
     ) -> list[OptimizationStrategy]:
         """
         Get strategies applicable for a specific level.
@@ -341,22 +344,22 @@ class BaseAdapter(ABC):
         return [s for s in self.get_available_strategies() if s.is_applicable(level)]
 
     def _record_optimization(
-        self,
-        model: nn.Module,
-        result: OptimizationResult
+        self, model: nn.Module, result: OptimizationResult
     ) -> None:
         """Record optimization in history."""
         import time
 
-        self._optimization_history.append({
-            'timestamp': time.time(),
-            'model_class': model.__class__.__name__,
-            'level': result.level.value,
-            'success': result.success,
-            'optimizations': result.optimizations_applied,
-            'warnings': len(result.warnings),
-            'errors': len(result.errors)
-        })
+        self._optimization_history.append(
+            {
+                "timestamp": time.time(),
+                "model_class": model.__class__.__name__,
+                "level": result.level.value,
+                "success": result.success,
+                "optimizations": result.optimizations_applied,
+                "warnings": len(result.warnings),
+                "errors": len(result.errors),
+            }
+        )
 
     def get_optimization_history(self) -> list[dict[str, Any]]:
         """Get optimization history."""
@@ -375,6 +378,7 @@ class BaseAdapter(ABC):
             f"optimizations_performed={len(self._optimization_history)})"
         )
 
+
 class BaseKernelAdapter(ABC):
     """
     Abstract base class for kernel-level adapters.
@@ -392,16 +396,12 @@ class BaseKernelAdapter(ABC):
         Args:
             device: Target device for optimization
         """
-        self.device = device or torch.device('cpu')
+        self.device = device or torch.device("cpu")
         self._config_cache: dict[str, OperationKernelConfig] = {}
 
     @abstractmethod
     def get_optimal_gemm_config(
-        self,
-        m: int,
-        n: int,
-        k: int,
-        dtype: torch.dtype = torch.float32
+        self, m: int, n: int, k: int, dtype: torch.dtype = torch.float32
     ) -> OperationKernelConfig:
         """
         Get optimal configuration for GEMM operation.
@@ -421,7 +421,7 @@ class BaseKernelAdapter(ABC):
         in_channels: int,
         out_channels: int,
         kernel_size: tuple[int, ...],
-        dtype: torch.dtype = torch.float32
+        dtype: torch.dtype = torch.float32,
     ) -> OperationKernelConfig:
         """
         Get optimal configuration for convolution.
@@ -443,7 +443,7 @@ class BaseKernelAdapter(ABC):
         seq_len: int,
         head_dim: int,
         num_heads: int,
-        dtype: torch.dtype = torch.float32
+        dtype: torch.dtype = torch.float32,
     ) -> OperationKernelConfig:
         """
         Get optimal configuration for attention operation.
@@ -471,6 +471,7 @@ class BaseKernelAdapter(ABC):
         """Clear configuration cache."""
         self._config_cache.clear()
 
+
 class CPUAdapter(BaseAdapter):
     """
     CPU adapter implementation.
@@ -485,7 +486,7 @@ class CPUAdapter(BaseAdapter):
         model: nn.Module,
         level: OptimizationLevel,
         sample_input: torch.Tensor | None = None,
-        dtype: torch.dtype | None = None
+        dtype: torch.dtype | None = None,
     ) -> tuple[nn.Module, OptimizationResult]:
         """Apply CPU optimizations."""
         optimizations = []
@@ -494,82 +495,76 @@ class CPUAdapter(BaseAdapter):
         # O0: No optimizations
         if level == OptimizationLevel.O0:
             return model, OptimizationResult(
-                success=True,
-                model=model,
-                level=level,
-                optimizations_applied=['none']
+                success=True, model=model, level=level, optimizations_applied=["none"]
             )
 
         # O1+: Basic optimizations
         if level.value >= OptimizationLevel.O1.value:
             # Set number of threads
-            if hasattr(torch, 'set_num_threads'):
+            if hasattr(torch, "set_num_threads"):
                 import os
+
                 num_threads = os.cpu_count() or 4
                 torch.set_num_threads(num_threads)
-                optimizations.append(f'set_num_threads({num_threads})')
+                optimizations.append(f"set_num_threads({num_threads})")
 
         # O2+: Torch compile if available
         if level.value >= OptimizationLevel.O2.value:
-            if hasattr(torch, 'compile'):
+            if hasattr(torch, "compile"):
                 try:
-                    model = torch.compile(model, mode='reduce-overhead')  # type: ignore[assignment]
-                    optimizations.append('torch_compile')
+                    model = torch.compile(model, mode="reduce-overhead")  # type: ignore[assignment]
+                    optimizations.append("torch_compile")
                 except Exception as e:
-                    warnings.append(f'torch.compile failed: {e}')
+                    warnings.append(f"torch.compile failed: {e}")
 
         # O3: More aggressive optimizations
         if level == OptimizationLevel.O3:
             # Enable MKL optimizations if available
             if torch.backends.mkl.is_available():
-                optimizations.append('mkl_enabled')
+                optimizations.append("mkl_enabled")
 
         return model, OptimizationResult(
             success=True,
             model=model,
             level=level,
             optimizations_applied=optimizations,
-            warnings=warnings
+            warnings=warnings,
         )
 
     def get_available_strategies(self) -> list[OptimizationStrategy]:
         """Get CPU optimization strategies."""
         return [
             OptimizationStrategy(
-                name='threading',
-                description='Optimize CPU thread count',
+                name="threading",
+                description="Optimize CPU thread count",
                 applicable_levels=[
                     OptimizationLevel.O1,
                     OptimizationLevel.O2,
-                    OptimizationLevel.O3
+                    OptimizationLevel.O3,
                 ],
-                speedup_estimate=1.2
+                speedup_estimate=1.2,
             ),
             OptimizationStrategy(
-                name='torch_compile',
-                description='Use torch.compile for JIT optimization',
-                applicable_levels=[
-                    OptimizationLevel.O2,
-                    OptimizationLevel.O3
-                ],
+                name="torch_compile",
+                description="Use torch.compile for JIT optimization",
+                applicable_levels=[OptimizationLevel.O2, OptimizationLevel.O3],
                 speedup_estimate=1.5,
-                requires=['torch>=2.0']
+                requires=["torch>=2.0"],
             ),
             OptimizationStrategy(
-                name='mkl',
-                description='MKL math library optimizations',
-                applicable_levels=[
-                    OptimizationLevel.O3
-                ],
+                name="mkl",
+                description="MKL math library optimizations",
+                applicable_levels=[OptimizationLevel.O3],
                 speedup_estimate=1.3,
-                requires=['mkl']
-            )
+                requires=["mkl"],
+            ),
         ]
 
+
 __all__ = [
-    'BaseAdapter',
-    'BaseKernelAdapter',
-    'CPUAdapter',
-    'OperationKernelConfig',
-    'OptimizationStrategy',
+    "BaseAdapter",
+    "BaseKernelAdapter",
+    "CPUAdapter",
+    "OperationKernelConfig",
+    "OptimizationStrategy",
 ]

@@ -172,7 +172,7 @@ Some features require extras. Install everything at once:
 pip install torchbridge-ml[all]
 ```
 
-Or install only what you need: `torchbridge-ml[serving]`, `torchbridge-ml[export]`.
+Or install only what you need: `torchbridge-ml[quantization]`, `torchbridge-ml[tracing]`.
 
 ### Forgetting `model.to(device)` after optimization
 

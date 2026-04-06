@@ -34,9 +34,7 @@ class TestCIValidationInfra:
         )
 
     def test_validation_script_exists(self):
-        assert os.path.isfile(_SCRIPT), (
-            f"Validation script not found at {_SCRIPT}"
-        )
+        assert os.path.isfile(_SCRIPT), f"Validation script not found at {_SCRIPT}"
 
     def test_validation_script_is_executable(self):
         mode = os.stat(_SCRIPT).st_mode
@@ -83,7 +81,14 @@ class TestCIValidationInfra:
 
         try:
             result = subprocess.run(
-                [sys.executable, _SCRIPT, "--backend", "cpu", "--output-json", out_path],
+                [
+                    sys.executable,
+                    _SCRIPT,
+                    "--backend",
+                    "cpu",
+                    "--output-json",
+                    out_path,
+                ],
                 capture_output=True,
                 text=True,
                 timeout=60,

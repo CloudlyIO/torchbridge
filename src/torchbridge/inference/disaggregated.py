@@ -25,30 +25,29 @@ from typing import Any
 # ---------------------------------------------------------------------------
 _KV_DTYPE_MATRIX: dict[tuple[str, str, str | None], str] = {
     # --- prefill ---
-    ("prefill", "cuda", "hopper"):    "bfloat16",   # Hopper native BF16 tensor cores
-    ("prefill", "cuda", "blackwell"): "bfloat16",   # Blackwell: BF16 + FP8 supported
-    ("prefill", "cuda", "ampere"):    "float16",    # Ampere: FP16 preferred
-    ("prefill", "cuda", "ada"):       "float16",    # Ada (RTX 4090-class)
-    ("prefill", "cuda", None):        "float16",    # Unknown NVIDIA → conservative
-    ("prefill", "rocm", "cdna4"):     "bfloat16",   # CDNA4 (MI350X): native BF16
-    ("prefill", "rocm", "cdna3"):     "bfloat16",   # CDNA3 (MI300X): native BF16
-    ("prefill", "rocm", "cdna2"):     "float16",    # CDNA2 (MI250X): FP16
-    ("prefill", "rocm", None):        "float16",
-    ("prefill", "tpu", None):         "bfloat16",   # TPU: BF16 native
-    ("prefill", "cpu", None):         "float32",    # CPU: no HBM pressure
-
+    ("prefill", "cuda", "hopper"): "bfloat16",  # Hopper native BF16 tensor cores
+    ("prefill", "cuda", "blackwell"): "bfloat16",  # Blackwell: BF16 + FP8 supported
+    ("prefill", "cuda", "ampere"): "float16",  # Ampere: FP16 preferred
+    ("prefill", "cuda", "ada"): "float16",  # Ada (RTX 4090-class)
+    ("prefill", "cuda", None): "float16",  # Unknown NVIDIA → conservative
+    ("prefill", "rocm", "cdna4"): "bfloat16",  # CDNA4 (MI350X): native BF16
+    ("prefill", "rocm", "cdna3"): "bfloat16",  # CDNA3 (MI300X): native BF16
+    ("prefill", "rocm", "cdna2"): "float16",  # CDNA2 (MI250X): FP16
+    ("prefill", "rocm", None): "float16",
+    ("prefill", "tpu", None): "bfloat16",  # TPU: BF16 native
+    ("prefill", "cpu", None): "float32",  # CPU: no HBM pressure
     # --- decode ---
-    ("decode", "cuda", "hopper"):     "int8",       # Memory-bound: int8 halves KV size
-    ("decode", "cuda", "blackwell"):  "int8",
-    ("decode", "cuda", "ampere"):     "int8",
-    ("decode", "cuda", "ada"):        "int8",
-    ("decode", "cuda", None):         "int8",
-    ("decode", "rocm", "cdna4"):      "int8",
-    ("decode", "rocm", "cdna3"):      "int8",
-    ("decode", "rocm", "cdna2"):      "float16",    # CDNA2: int8 KV less stable
-    ("decode", "rocm", None):         "float16",
-    ("decode", "tpu", None):          "bfloat16",   # XLA doesn't support int8 KV natively
-    ("decode", "cpu", None):          "float32",
+    ("decode", "cuda", "hopper"): "int8",  # Memory-bound: int8 halves KV size
+    ("decode", "cuda", "blackwell"): "int8",
+    ("decode", "cuda", "ampere"): "int8",
+    ("decode", "cuda", "ada"): "int8",
+    ("decode", "cuda", None): "int8",
+    ("decode", "rocm", "cdna4"): "int8",
+    ("decode", "rocm", "cdna3"): "int8",
+    ("decode", "rocm", "cdna2"): "float16",  # CDNA2: int8 KV less stable
+    ("decode", "rocm", None): "float16",
+    ("decode", "tpu", None): "bfloat16",  # XLA doesn't support int8 KV natively
+    ("decode", "cpu", None): "float32",
 }
 
 # ---------------------------------------------------------------------------
@@ -58,20 +57,20 @@ _KV_DTYPE_MATRIX: dict[tuple[str, str, str | None], str] = {
 # float16 is the safe cross-vendor common format; same-vendor uses bfloat16.
 # ---------------------------------------------------------------------------
 _TRANSFER_FORMAT_MATRIX: dict[tuple[str, str], str] = {
-    ("cuda", "cuda"): "bfloat16",   # Same vendor: highest-quality common format
-    ("cuda", "rocm"): "float16",    # Cross-vendor: float16 is universal
+    ("cuda", "cuda"): "bfloat16",  # Same vendor: highest-quality common format
+    ("cuda", "rocm"): "float16",  # Cross-vendor: float16 is universal
     ("rocm", "cuda"): "float16",
     ("rocm", "rocm"): "bfloat16",
-    ("cuda", "cpu"):  "float32",    # CPU can always accept float32
-    ("rocm", "cpu"):  "float32",
-    ("cpu", "cuda"):  "float32",
-    ("cpu", "rocm"):  "float32",
-    ("cpu", "cpu"):   "float32",
-    ("tpu", "cuda"):  "float16",
-    ("tpu", "rocm"):  "float16",
-    ("cuda", "tpu"):  "float16",
-    ("rocm", "tpu"):  "float16",
-    ("tpu", "tpu"):   "bfloat16",
+    ("cuda", "cpu"): "float32",  # CPU can always accept float32
+    ("rocm", "cpu"): "float32",
+    ("cpu", "cuda"): "float32",
+    ("cpu", "rocm"): "float32",
+    ("cpu", "cpu"): "float32",
+    ("tpu", "cuda"): "float16",
+    ("tpu", "rocm"): "float16",
+    ("cuda", "tpu"): "float16",
+    ("rocm", "tpu"): "float16",
+    ("tpu", "tpu"): "bfloat16",
 }
 
 # ---------------------------------------------------------------------------
@@ -82,43 +81,44 @@ _TRANSFER_FORMAT_MATRIX: dict[tuple[str, str], str] = {
 # Decode:  KV cache dominates; model weights are static; maximize cache budget
 # ---------------------------------------------------------------------------
 _MEMORY_SPLIT_MATRIX: dict[str, tuple[float, float]] = {
-    "prefill": (0.20, 0.80),   # 20% KV cache, 80% model + activations
-    "decode":  (0.80, 0.20),   # 80% KV cache, 20% model weights
+    "prefill": (0.20, 0.80),  # 20% KV cache, 80% model + activations
+    "decode": (0.80, 0.20),  # 80% KV cache, 20% model weights
 }
 
 # Batch size and sequence length heuristics per role
 _BATCH_HEURISTICS: dict[str, dict[str, int]] = {
-    "prefill": {"base_batch": 8,   "max_seq_len": 32768},
-    "decode":  {"base_batch": 128, "max_seq_len": 2048},
+    "prefill": {"base_batch": 8, "max_seq_len": 32768},
+    "decode": {"base_batch": 128, "max_seq_len": 2048},
 }
 
 # Default GPU memory by backend/role when caller doesn't specify
 _DEFAULT_MEMORY_GB: dict[str, float] = {
-    "cuda": 80.0,   # H100/A100 80GB
-    "rocm": 80.0,   # MI300X nominally 192GB, use conservative 80 as floor
-    "tpu":  16.0,
-    "cpu":  0.0,    # No HBM; budget computation skipped
+    "cuda": 80.0,  # H100/A100 80GB
+    "rocm": 80.0,  # MI300X nominally 192GB, use conservative 80 as floor
+    "tpu": 16.0,
+    "cpu": 0.0,  # No HBM; budget computation skipped
 }
 
 # Human-readable architecture labels for output
 _ARCH_LABELS: dict[tuple[str, str | None], str] = {
-    ("cuda", "hopper"):    "NVIDIA Hopper",
+    ("cuda", "hopper"): "NVIDIA Hopper",
     ("cuda", "blackwell"): "NVIDIA Blackwell",
-    ("cuda", "ampere"):    "NVIDIA Ampere",
-    ("cuda", "ada"):       "NVIDIA Ada",
-    ("cuda", None):        "NVIDIA (unknown arch)",
-    ("rocm", "cdna4"):     "AMD CDNA4",
-    ("rocm", "cdna3"):     "AMD CDNA3",
-    ("rocm", "cdna2"):     "AMD CDNA2",
-    ("rocm", None):        "AMD (unknown arch)",
-    ("tpu", None):         "Google TPU",
-    ("cpu", None):         "CPU",
+    ("cuda", "ampere"): "NVIDIA Ampere",
+    ("cuda", "ada"): "NVIDIA Ada",
+    ("cuda", None): "NVIDIA (unknown arch)",
+    ("rocm", "cdna4"): "AMD CDNA4",
+    ("rocm", "cdna3"): "AMD CDNA3",
+    ("rocm", "cdna2"): "AMD CDNA2",
+    ("rocm", None): "AMD (unknown arch)",
+    ("tpu", None): "Google TPU",
+    ("cpu", None): "CPU",
 }
 
 
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DisaggregatedRoleConfig:
@@ -189,10 +189,10 @@ class DisaggregatedFleetConfig:
         }
 
 
-
 # ---------------------------------------------------------------------------
 # Advisor
 # ---------------------------------------------------------------------------
+
 
 class DisaggregatedFleetAdvisor:
     """Matrix-first config advisor for prefill-decode disaggregated serving.
@@ -279,6 +279,7 @@ class DisaggregatedFleetAdvisor:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _lookup_kv_dtype(role: str, backend: str, arch: str | None) -> tuple[str, str]:
     """Return (kv_dtype, note) for the given role/backend/arch combination."""
     key = (role, backend, arch)
@@ -296,7 +297,10 @@ def _lookup_kv_dtype(role: str, backend: str, arch: str | None) -> tuple[str, st
         return dtype, note
 
     # Last resort
-    return "float16", f"{role} KV dtype float16: backend {backend!r} not in matrix, using safe default"
+    return (
+        "float16",
+        f"{role} KV dtype float16: backend {backend!r} not in matrix, using safe default",
+    )
 
 
 def _dtype_note(role: str, dtype: str, arch_label: str) -> str:

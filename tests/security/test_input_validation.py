@@ -70,10 +70,14 @@ class TestAttentionDispatcherInputs:
 
         dispatcher = AttentionDispatcher()
         t0 = time.perf_counter()
-        result = dispatcher.select_kernel(seq_length=1_000_000, num_heads=8, head_dim=64)
+        result = dispatcher.select_kernel(
+            seq_length=1_000_000, num_heads=8, head_dim=64
+        )
         elapsed = time.perf_counter() - t0
         assert result is not None
-        assert elapsed < 5.0, f"select_kernel should return quickly, took {elapsed:.1f}s"
+        assert elapsed < 5.0, (
+            f"select_kernel should return quickly, took {elapsed:.1f}s"
+        )
 
     def test_zero_num_heads_does_not_crash(self):
         """select_kernel() with num_heads=0 must not crash ungracefully."""

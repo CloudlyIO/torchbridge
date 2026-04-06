@@ -484,6 +484,7 @@ class TestTPUDetectionTimeout:
     def test_tpu_check_completes_quickly_on_cpu_machine(self):
         """TPU availability check must finish in <5s even when torch_xla is installed."""
         import time
+
         start = time.perf_counter()
         # On CI/CPU machines this should return immediately (torch_xla not installed
         # or TPU not present); the timeout guard prevents hanging.
@@ -500,6 +501,7 @@ class TestTPUDetectionTimeout:
         has_xla = False
         try:
             import torch_xla.core.xla_model as xm  # noqa: F401
+
             has_xla = True
         except ImportError:
             pass

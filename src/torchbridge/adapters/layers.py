@@ -39,6 +39,7 @@ try:
         int8_dynamic_activation_int8_weight,
         quantize_,
     )
+
     _TORCHAO_AVAILABLE = True
 except ImportError:
     _TORCHAO_AVAILABLE = False
@@ -58,6 +59,7 @@ def _get_quant_callable(quant_format: QuantizationFormat):  # type: ignore[name-
 # ---------------------------------------------------------------------------
 # LoRALinear
 # ---------------------------------------------------------------------------
+
 
 class LoRALinear(nn.Module):
     """Low-rank adaptation wrapper around nn.Linear.
@@ -134,6 +136,7 @@ class LoRALinear(nn.Module):
 # DoRALinear
 # ---------------------------------------------------------------------------
 
+
 class DoRALinear(nn.Module):
     """Weight-decomposed LoRA (DoRA) around nn.Linear.
 
@@ -207,6 +210,7 @@ class DoRALinear(nn.Module):
 # QLoRALinear
 # ---------------------------------------------------------------------------
 
+
 class QLoRALinear(nn.Module):
     """QLoRA: INT4/INT8 quantized base weight + LoRA adapters.
 
@@ -223,7 +227,7 @@ class QLoRALinear(nn.Module):
         alpha: float,
         dropout: float = 0.0,
         init_method: InitMethod = InitMethod.KAIMING,
-        quant_format: QuantizationFormat = None,  # type: ignore[name-defined]
+        quant_format: QuantizationFormat | None = None,
     ) -> None:
         super().__init__()
 
@@ -234,6 +238,7 @@ class QLoRALinear(nn.Module):
             )
 
         from torchbridge.precision.quantization.formats import QuantizationFormat
+
         if quant_format is None:
             quant_format = QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS
 
@@ -289,6 +294,7 @@ class QLoRALinear(nn.Module):
 # QDoRALinear
 # ---------------------------------------------------------------------------
 
+
 class QDoRALinear(nn.Module):
     """QDoRA: INT4/INT8 quantized base weight + DoRA adapters.
 
@@ -305,7 +311,7 @@ class QDoRALinear(nn.Module):
         alpha: float,
         dropout: float = 0.0,
         init_method: InitMethod = InitMethod.KAIMING,
-        quant_format: QuantizationFormat = None,  # type: ignore[name-defined]
+        quant_format: QuantizationFormat | None = None,
     ) -> None:
         super().__init__()
 
@@ -316,6 +322,7 @@ class QDoRALinear(nn.Module):
             )
 
         from torchbridge.precision.quantization.formats import QuantizationFormat
+
         if quant_format is None:
             quant_format = QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS
 

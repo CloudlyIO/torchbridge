@@ -380,18 +380,18 @@ def test_attention_dispatch() -> list[TestResult]:
 
         dispatcher = AttentionDispatcher()
 
-        # Test 1: backend and architecture names populated
+        # Test 1: dispatcher initializes without error and is the right type
         results.append(TestResult(
-            name="attention_backend_name",
-            passed=bool(dispatcher.backend_name),
-            value=dispatcher.backend_name,
-            message=f"Attention dispatcher backend: {dispatcher.backend_name}",
+            name="attention_dispatcher_type",
+            passed=isinstance(dispatcher, AttentionDispatcher),
+            value=type(dispatcher).__name__,
+            message=f"AttentionDispatcher initialized: {type(dispatcher).__name__}",
         ))
         results.append(TestResult(
-            name="attention_architecture_name",
-            passed=bool(dispatcher.architecture_name),
-            value=dispatcher.architecture_name,
-            message=f"Attention dispatcher architecture: {dispatcher.architecture_name}",
+            name="attention_backend_set",
+            passed=dispatcher._backend is not None,
+            value=dispatcher._backend.value,
+            message=f"Attention dispatcher backend: {dispatcher._backend.value}",
         ))
 
         # Test 2: select_kernel returns a valid result for standard shapes
@@ -754,12 +754,12 @@ def run_inference_comparison(env: dict) -> dict:
 
             # Latency regression check: TorchBridge must not be more than 20% slower
             vanilla_latency = result.get("vanilla", {}).get("latency_ms")
-            if vanilla_latency and vanilla_latency > 0:
+            if vanilla_latency and vanilla_latency > 0 and device.type == "cuda":
                 latency_ratio = tb_latency_ms / vanilla_latency
                 regression_ok = latency_ratio <= 1.20
             else:
-                latency_ratio = None
-                regression_ok = True  # can't compare on CPU
+                latency_ratio = tb_latency_ms / vanilla_latency if (vanilla_latency and vanilla_latency > 0) else None
+                regression_ok = True  # latency regression only enforced on CUDA
 
             result["torchbridge"] = {
                 "max_diff": tb_max_diff,

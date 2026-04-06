@@ -44,9 +44,7 @@ class TestDeepSeekR1HAL:
         model, tokenizer = model_and_tokenizer
         inputs = tokenizer("What is 15 * 7?", return_tensors="pt")
         with torch.no_grad():
-            generated = model.generate(
-                **inputs, max_new_tokens=20, do_sample=False
-            )
+            generated = model.generate(**inputs, max_new_tokens=20, do_sample=False)
         assert generated.shape[1] > inputs["input_ids"].shape[1]
 
     @requires_gpu

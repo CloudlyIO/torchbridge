@@ -10,4 +10,4 @@ The LRUCache class is available from torchbridge.utils.cache.
 # Re-export from shared cache module for backward compatibility
 from torchbridge.utils.cache import LRUCache
 
-__all__ = ['LRUCache']
+__all__ = ["LRUCache"]

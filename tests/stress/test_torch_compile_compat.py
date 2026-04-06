@@ -32,9 +32,7 @@ class TestTorchCompileCompat:
         inputs = tokenizer("Compile test", return_tensors="pt")
         with torch.no_grad():
             eager_out = model(**inputs).last_hidden_state
-            compiled_out = _try_compiled_forward(
-                compiled, **inputs
-            ).last_hidden_state
+            compiled_out = _try_compiled_forward(compiled, **inputs).last_hidden_state
 
         max_diff = torch.abs(eager_out - compiled_out).max().item()
         assert max_diff < 1e-4, f"Compiled vs eager diverged: {max_diff}"
@@ -46,9 +44,7 @@ class TestTorchCompileCompat:
         image = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
             eager_out = dinov2_model_for_stress(image).last_hidden_state
-            compiled_out = _try_compiled_forward(
-                compiled, image
-            ).last_hidden_state
+            compiled_out = _try_compiled_forward(compiled, image).last_hidden_state
 
         max_diff = torch.abs(eager_out - compiled_out).max().item()
         assert max_diff < 1e-4, f"Compiled vs eager diverged: {max_diff}"
@@ -66,9 +62,7 @@ class TestTorchCompileCompat:
         max_diff = torch.abs(eager_out - compiled_out).max().item()
         assert max_diff < 1e-4, f"Compiled LLM vs eager diverged: {max_diff}"
 
-    @pytest.mark.parametrize(
-        "mode", ["default", "reduce-overhead", "max-autotune"]
-    )
+    @pytest.mark.parametrize("mode", ["default", "reduce-overhead", "max-autotune"])
     def test_compile_modes(self, minilm_model_and_tokenizer, mode):
         """All torch.compile modes produce valid output."""
         model, tokenizer = minilm_model_and_tokenizer

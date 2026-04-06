@@ -82,8 +82,8 @@ _COLLECTIVE_BRIDGE_DEFAULT: str = "ucc"
 #: "vendor_isolated" — shard within each vendor group; use cross-vendor only
 #:   for gradient synchronisation. Minimises expensive cross-vendor bandwidth.
 _PARTITION_THRESHOLDS: list[tuple[float, str]] = [
-    (2.0, "memory_balanced"),   # AMD ≥ 2× NVIDIA total memory
-    (0.0, "vendor_isolated"),   # balanced or NVIDIA-heavy
+    (2.0, "memory_balanced"),  # AMD ≥ 2× NVIDIA total memory
+    (0.0, "vendor_isolated"),  # balanced or NVIDIA-heavy
 ]
 
 # ---------------------------------------------------------------------------
@@ -110,6 +110,7 @@ _AMD_MEMORY_GB: dict[AMDArchitecture | None, float] = {
 # ---------------------------------------------------------------------------
 # Output dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class HeterogeneousClusterConfig:
@@ -159,6 +160,7 @@ class HeterogeneousClusterConfig:
 # ---------------------------------------------------------------------------
 # Advisor
 # ---------------------------------------------------------------------------
+
 
 class HeterogeneousClusterAdvisor:
     """
@@ -249,10 +251,10 @@ class HeterogeneousClusterAdvisor:
         model_bytes = model_params * bytes_per_param
         if partition_strategy == "memory_balanced":
             # all-gather + reduce-scatter cross-vendor
-            cross_comm_gb = 4 * model_bytes / (1024 ** 3)
+            cross_comm_gb = 4 * model_bytes / (1024**3)
         else:
             # one reduce-scatter across vendor boundary per step
-            cross_comm_gb = 2 * model_bytes / (1024 ** 3)
+            cross_comm_gb = 2 * model_bytes / (1024**3)
 
         notes.append(
             f"Estimated cross-vendor comm: {cross_comm_gb:.2f} GB/step "
@@ -280,9 +282,11 @@ class HeterogeneousClusterAdvisor:
 # Private helpers
 # ---------------------------------------------------------------------------
 
+
 def _lookup_mixed_precision(backend: HardwareBackend, arch) -> str:
     """Return mixed precision string for the given backend+arch from FSDPManager."""
     from torchbridge.distributed.fsdp import FSDPManager
+
     try:
         mgr = FSDPManager(backend=backend, architecture=arch)
         return mgr.mixed_precision.value

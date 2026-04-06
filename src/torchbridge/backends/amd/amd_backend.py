@@ -46,6 +46,7 @@ from .amd_exceptions import (
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class AMDDeviceInfoLegacy:
     """Information about an AMD GPU device."""
@@ -57,6 +58,7 @@ class AMDDeviceInfoLegacy:
     total_memory_gb: float
     matrix_cores_available: bool
     rocm_version: str
+
 
 class AMDBackend(BaseBackend):
     """
@@ -117,7 +119,9 @@ class AMDBackend(BaseBackend):
         # Validate device ID
         if self._amd_config.device_id < 0:
             raise AMDConfigurationError(
-                "device_id", self._amd_config.device_id, "Device ID must be non-negative"
+                "device_id",
+                self._amd_config.device_id,
+                "Device ID must be non-negative",
             )
 
         # Validate memory settings
@@ -190,7 +194,11 @@ class AMDBackend(BaseBackend):
         arch = self._current_amd_device.architecture
 
         # TunableOp: available on CDNA2 and newer
-        if arch in (AMDArchitecture.CDNA2, AMDArchitecture.CDNA3, AMDArchitecture.CDNA4):
+        if arch in (
+            AMDArchitecture.CDNA2,
+            AMDArchitecture.CDNA3,
+            AMDArchitecture.CDNA4,
+        ):
             os.environ.setdefault("PYTORCH_TUNABLEOP_ENABLED", "1")
             logger.info("TunableOp enabled for %s", arch.value)
 
@@ -212,7 +220,7 @@ class AMDBackend(BaseBackend):
                 device_type="cpu",
                 device_id=0,
                 device_name="CPU (ROCm fallback)",
-                is_available=False
+                is_available=False,
             )
 
         amd_info = self._amd_devices[device_id]
@@ -226,9 +234,9 @@ class AMDBackend(BaseBackend):
             driver_version=amd_info.rocm_version,
             is_available=True,
             properties={
-                'architecture': amd_info.architecture.value,
-                'matrix_cores_available': amd_info.matrix_cores_available,
-            }
+                "architecture": amd_info.architecture.value,
+                "matrix_cores_available": amd_info.matrix_cores_available,
+            },
         )
 
     def _check_rocm_available(self) -> bool:
@@ -419,7 +427,7 @@ class AMDBackend(BaseBackend):
         model = self.prepare_model(model).eval()
         for param in model.parameters():
             param.requires_grad = False
-        if sample_input is not None and hasattr(torch, 'compile'):
+        if sample_input is not None and hasattr(torch, "compile"):
             try:
                 arch = (
                     self._current_amd_device.architecture
@@ -507,6 +515,7 @@ class AMDBackend(BaseBackend):
                 f"memory={self._current_amd_device.total_memory_gb:.2f}GB)"
             )
         return "AMDBackend(no device)"
+
 
 # Alias for backward compatibility
 AMDDeviceInfo = AMDDeviceInfoLegacy

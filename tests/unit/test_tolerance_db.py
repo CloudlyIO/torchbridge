@@ -26,6 +26,7 @@ from torchbridge.testing.tolerance_db import (
 # ToleranceEntry
 # ---------------------------------------------------------------------------
 
+
 class TestToleranceEntry:
     def test_valid_measured_source(self):
         e = ToleranceEntry(atol=1e-4, rtol=1e-5, source="measured")
@@ -60,6 +61,7 @@ class TestToleranceEntry:
 # ---------------------------------------------------------------------------
 # Backward compatibility
 # ---------------------------------------------------------------------------
+
 
 class TestBackwardCompatibility:
     def test_get_without_family_returns_entry(self):
@@ -100,6 +102,7 @@ class TestBackwardCompatibility:
 
     def test_tolerancepair_importable_from_package(self):
         from torchbridge.testing import TolerancePair as TP
+
         assert TP is TolerancePair
 
     def test_whitespace_backend_normalised(self):
@@ -136,13 +139,16 @@ class TestBackwardCompatibility:
 
     def test_register_family_new_family_appears_in_families(self):
         db = ToleranceDB()
-        db.register_family("custom-model", "cuda", "float32", 1e-5, 1e-6, source="measured")
+        db.register_family(
+            "custom-model", "cuda", "float32", 1e-5, 1e-6, source="measured"
+        )
         assert "custom-model" in db.families()
 
 
 # ---------------------------------------------------------------------------
 # Fallback chain
 # ---------------------------------------------------------------------------
+
 
 class TestFallbackChain:
     def test_family_hit_returns_family_entry(self):
@@ -185,6 +191,7 @@ class TestFallbackChain:
 # Measured entries (Qwen3-0.6B cloud validation data)
 # ---------------------------------------------------------------------------
 
+
 class TestMeasuredEntries:
     def test_decoder_small_cuda_float32_is_measured(self):
         db = ToleranceDB()
@@ -216,6 +223,7 @@ class TestMeasuredEntries:
 # ---------------------------------------------------------------------------
 # Derived entries — larger models are looser
 # ---------------------------------------------------------------------------
+
 
 class TestDerivedEntries:
     def test_decoder_large_looser_than_small_cuda(self):
@@ -293,6 +301,7 @@ class TestDerivedEntries:
 # Table completeness
 # ---------------------------------------------------------------------------
 
+
 class TestTableCompleteness:
     # XLA and Trainium support float32 and bfloat16 only (no float16)
     _LIMITED_DTYPES = {"float32", "bfloat16"}
@@ -300,7 +309,9 @@ class TestTableCompleteness:
     _BACKENDS = {"cuda", "rocm", "mps", "xla", "cpu", "trainium"}
 
     def _expected_dtypes(self, backend: str) -> set[str]:
-        return self._LIMITED_DTYPES if backend in {"xla", "trainium"} else self._ALL_DTYPES
+        return (
+            self._LIMITED_DTYPES if backend in {"xla", "trainium"} else self._ALL_DTYPES
+        )
 
     def test_all_families_present(self):
         db = ToleranceDB()
@@ -339,6 +350,7 @@ class TestTableCompleteness:
 # ---------------------------------------------------------------------------
 # API surface
 # ---------------------------------------------------------------------------
+
 
 class TestAPI:
     def test_families_returns_all_five(self):
@@ -384,8 +396,13 @@ class TestAPI:
     def test_register_family_overrides_family_entry(self):
         db = ToleranceDB()
         db.register_family(
-            "decoder-small", "cuda", "float32", atol=9.9e-9, rtol=9.9e-9,
-            source="measured", notes="custom"
+            "decoder-small",
+            "cuda",
+            "float32",
+            atol=9.9e-9,
+            rtol=9.9e-9,
+            source="measured",
+            notes="custom",
         )
         tol = db.get("cuda", "float32", model_family="decoder-small")
         assert tol.atol == 9.9e-9
@@ -406,6 +423,7 @@ class TestAPI:
 
 
 # ── v0.5.69: bounds validation and fallback warning ───────────────────────────
+
 
 class TestRegisterBoundsValidation:
     def test_register_negative_atol_raises(self):
@@ -433,11 +451,15 @@ class TestRegisterBoundsValidation:
     def test_register_family_negative_rtol_raises(self):
         db = ToleranceDB()
         with pytest.raises(ValueError, match="rtol must be >= 0"):
-            db.register_family("decoder-small", "cuda", "float32", atol=1e-4, rtol=-1e-6)
+            db.register_family(
+                "decoder-small", "cuda", "float32", atol=1e-4, rtol=-1e-6
+            )
 
     def test_register_family_zero_values_ok(self):
         db = ToleranceDB()
-        db.register_family("decoder-small", "cpu", "float64", atol=0.0, rtol=0.0, source="measured")
+        db.register_family(
+            "decoder-small", "cpu", "float64", atol=0.0, rtol=0.0, source="measured"
+        )
         tol = db.get("cpu", "float64", model_family="decoder-small")
         assert tol.atol == 0.0
 
@@ -445,16 +467,22 @@ class TestRegisterBoundsValidation:
 class TestFallbackWarning:
     def test_unknown_backend_logs_warning(self, caplog):
         import logging
+
         db = ToleranceDB()
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.tolerance_db"):
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.tolerance_db"
+        ):
             tol = db.get("gaudi_v3", "float32")
         assert tol.source == "fallback"
         assert any("gaudi_v3" in msg for msg in caplog.messages)
 
     def test_known_backend_no_fallback_warning(self, caplog):
         import logging
+
         db = ToleranceDB()
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.tolerance_db"):
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.tolerance_db"
+        ):
             tol = db.get("cuda", "float32")
         assert tol.source in ("measured", "derived")
         assert not any("fallback" in msg.lower() for msg in caplog.messages)

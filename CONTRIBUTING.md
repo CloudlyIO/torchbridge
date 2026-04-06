@@ -17,7 +17,7 @@ Optional (for GPU backend development):
 
 ```bash
 # Clone and install
-git clone https://github.com/CloudlyIO/torchbridge.git  # update URL when repo goes public
+git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
 pip install -r requirements.txt
 
@@ -33,42 +33,6 @@ PYTHONPATH=src python3 -m pytest tests/ -q
 ```bash
 pip install -e .[dev,all]
 ```
-
-## Building CUDA Extensions
-
-If you're working on NVIDIA-specific backend code that includes custom CUDA kernels:
-
-```bash
-# Verify CUDA
-python3 -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, version: {torch.version.cuda}')"
-nvcc --version
-
-# Install build dependencies
-pip install pybind11 ninja
-
-# Build extensions
-python setup.py build_ext --inplace
-
-# Or editable install
-pip install -e .
-```
-
-### Build troubleshooting
-
-**nvcc not found:**
-```bash
-export PATH=/usr/local/cuda/bin:$PATH
-export CUDA_HOME=/usr/local/cuda
-```
-
-**Compilation errors:**
-```bash
-python setup.py clean --all
-rm -rf build/ dist/ *.egg-info
-python setup.py build_ext --inplace -v
-```
-
-**GCC version:** Requires GCC 9+ or Clang 10+ with C++17 support.
 
 ## Project Architecture
 
@@ -86,7 +50,7 @@ src/torchbridge/
 ├── benchmarks/        # 5 claim benchmarks with real measured results
 ├── testing/           # DivergenceTracer, ToleranceDB, MultiStepTracer, @cross_backend, OTel exporter
 ├── validation/        # UnifiedValidator — model structure, hardware, numerical stability
-├── cli/               # 13 CLI entry points
+├── cli/               # 11 CLI entry points (torchbridge + 10 tb-* commands)
 └── utils/             # Utilities
 ```
 

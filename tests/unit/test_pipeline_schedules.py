@@ -1,6 +1,5 @@
 """Tests for pipeline schedule selection."""
 
-
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,
@@ -21,7 +20,13 @@ class TestPipelineScheduleType:
     """Tests for PipelineScheduleType enum."""
 
     def test_all_types(self):
-        expected = {"gpipe", "interleaved_1f1b", "zero_bubble", "zbv_zero_bubble", "looped_bfs"}
+        expected = {
+            "gpipe",
+            "interleaved_1f1b",
+            "zero_bubble",
+            "zbv_zero_bubble",
+            "looped_bfs",
+        }
         actual = {t.value for t in PipelineScheduleType}
         assert actual == expected
 
@@ -127,9 +132,7 @@ class TestPipelineScheduleFactory:
         assert PipelineScheduleType.INTERLEAVED_1F1B in schedules
 
     def test_cpu_limited_schedules(self):
-        schedules = PipelineScheduleFactory.get_supported_schedules(
-            HardwareBackend.CPU
-        )
+        schedules = PipelineScheduleFactory.get_supported_schedules(HardwareBackend.CPU)
         assert PipelineScheduleType.INTERLEAVED_1F1B in schedules
         assert PipelineScheduleType.ZERO_BUBBLE not in schedules
 
@@ -164,18 +167,33 @@ class TestPipelineScheduleFactory:
         assert spec.schedule == PipelineScheduleType.GPIPE
 
     def test_torch_schedule_class_names(self):
-        assert PipelineScheduleFactory.get_torch_schedule_class_name(
-            PipelineScheduleType.GPIPE
-        ) == "ScheduleGPipe"
-        assert PipelineScheduleFactory.get_torch_schedule_class_name(
-            PipelineScheduleType.INTERLEAVED_1F1B
-        ) == "ScheduleInterleaved1F1B"
-        assert PipelineScheduleFactory.get_torch_schedule_class_name(
-            PipelineScheduleType.ZERO_BUBBLE
-        ) == "ScheduleInterleavedZeroBubble"
-        assert PipelineScheduleFactory.get_torch_schedule_class_name(
-            PipelineScheduleType.ZBV_ZERO_BUBBLE
-        ) == "ScheduleZBVZeroBubble"
-        assert PipelineScheduleFactory.get_torch_schedule_class_name(
-            PipelineScheduleType.LOOPED_BFS
-        ) == "ScheduleLoopedBFS"
+        assert (
+            PipelineScheduleFactory.get_torch_schedule_class_name(
+                PipelineScheduleType.GPIPE
+            )
+            == "ScheduleGPipe"
+        )
+        assert (
+            PipelineScheduleFactory.get_torch_schedule_class_name(
+                PipelineScheduleType.INTERLEAVED_1F1B
+            )
+            == "ScheduleInterleaved1F1B"
+        )
+        assert (
+            PipelineScheduleFactory.get_torch_schedule_class_name(
+                PipelineScheduleType.ZERO_BUBBLE
+            )
+            == "ScheduleInterleavedZeroBubble"
+        )
+        assert (
+            PipelineScheduleFactory.get_torch_schedule_class_name(
+                PipelineScheduleType.ZBV_ZERO_BUBBLE
+            )
+            == "ScheduleZBVZeroBubble"
+        )
+        assert (
+            PipelineScheduleFactory.get_torch_schedule_class_name(
+                PipelineScheduleType.LOOPED_BFS
+            )
+            == "ScheduleLoopedBFS"
+        )

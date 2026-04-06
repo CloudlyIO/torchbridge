@@ -71,8 +71,11 @@ class TestKVDtypeSpec:
     def test_spec_is_frozen(self):
         """KVDtypeSpec should be immutable."""
         spec = KVDtypeSpec(
-            bits=16, display_name="Test", memory_factor=1.0,
-            torch_dtype=torch.float16, requires_hardware_support=False,
+            bits=16,
+            display_name="Test",
+            memory_factor=1.0,
+            torch_dtype=torch.float16,
+            requires_hardware_support=False,
         )
         with pytest.raises(AttributeError):
             spec.bits = 4  # type: ignore[misc]
@@ -95,9 +98,9 @@ class TestKVDtypeSpec:
     def test_spec_memory_factor_range(self):
         """Memory factor should be in (0, 1.0]."""
         for dtype, spec in KV_DTYPE_SPECS.items():
-            assert 0.0 < spec.memory_factor <= 1.0 or dtype == KVCacheDtype.PASSTHROUGH, (
-                f"{dtype.value} memory_factor out of range: {spec.memory_factor}"
-            )
+            assert (
+                0.0 < spec.memory_factor <= 1.0 or dtype == KVCacheDtype.PASSTHROUGH
+            ), f"{dtype.value} memory_factor out of range: {spec.memory_factor}"
 
     def test_fp8_has_half_memory(self):
         """FP8 E4M3 should have 0.5x memory factor."""

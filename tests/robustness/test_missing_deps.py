@@ -97,6 +97,7 @@ class TestMissingOptionalDeps:
         # Should not raise even without optional deps
         try:
             import torchbridge
+
             result = torchbridge.optimize_model(model)
             assert result is not None
         except Exception:
@@ -106,14 +107,17 @@ class TestMissingOptionalDeps:
     def test_config_without_optional_deps(self):
         """Configuration system works without optional deps."""
         import torchbridge
+
         config = torchbridge.get_config()
-        assert hasattr(config, 'device')
+        assert hasattr(config, "device")
 
     def test_validator_without_optional_deps(self):
         """UnifiedValidator can be instantiated without optional deps."""
         from torchbridge.validation.unified_validator import UnifiedValidator
+
         validator = UnifiedValidator()
         assert isinstance(validator, UnifiedValidator)
+
 
 class TestDoctorOptionalDeps:
     """Test that torchbridge doctor reports missing optional deps as warnings."""
@@ -121,6 +125,7 @@ class TestDoctorOptionalDeps:
     def test_doctor_reports_missing_triton_as_warning(self):
         """Doctor should report missing triton as warning, not error."""
         from torchbridge.cli.doctor import DoctorCommand
+
         results = DoctorCommand._check_advanced_features(verbose=False)
         # Find Triton result
         triton_results = [r for r in results if "Triton" in r.name]
@@ -134,6 +139,7 @@ class TestDoctorOptionalDeps:
     def test_doctor_reports_missing_flash_attn_as_warning(self):
         """Doctor should report missing flash_attn as warning, not error."""
         from torchbridge.cli.doctor import DoctorCommand
+
         results = DoctorCommand._check_advanced_features(verbose=False)
         flash_results = [r for r in results if "Flash" in r.name]
         # Flash Attention may not appear if no CUDA GPU
@@ -145,8 +151,13 @@ class TestDoctorOptionalDeps:
     def test_doctor_basic_always_passes_core(self):
         """Doctor basic checks should pass for core deps (Python, PyTorch, TorchBridge)."""
         from torchbridge.cli.doctor import DoctorCommand
+
         results = DoctorCommand._check_basic_requirements(verbose=False)
         # Python, PyTorch, TorchBridge should all pass
-        core_checks = [r for r in results if r.name in ("Python Version", "PyTorch Version", "TorchBridge Version")]
+        core_checks = [
+            r
+            for r in results
+            if r.name in ("Python Version", "PyTorch Version", "TorchBridge Version")
+        ]
         for r in core_checks:
             assert r.status == "pass", f"{r.name} failed: {r.message}"

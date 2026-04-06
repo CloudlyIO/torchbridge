@@ -175,9 +175,7 @@ class CheckpointManager:
             List of CheckpointMetadata, sorted by timestamp (newest first).
         """
         if self._config.storage_backend != StorageBackendType.LOCAL:
-            logger.warning(
-                "list_checkpoints only supports LOCAL storage backend"
-            )
+            logger.warning("list_checkpoints only supports LOCAL storage backend")
             return []
 
         base = Path(self._config.storage_path)
@@ -206,9 +204,7 @@ class CheckpointManager:
         """Return diagnostic info about the checkpoint configuration."""
         return {
             "backend": self._backend.value,
-            "architecture": (
-                self._architecture.value if self._architecture else None
-            ),
+            "architecture": (self._architecture.value if self._architecture else None),
             "config": self._config.to_dict(),
             "save_count": self._save_count,
             "storage_info": StorageBackendFactory.get_writer_info(self._config),
@@ -216,9 +212,7 @@ class CheckpointManager:
 
     # ── Internal helpers ─────────────────────────────────────────────────────
 
-    def _dcp_save(
-        self, state_dict: dict[str, Any], checkpoint_id: str
-    ) -> None:
+    def _dcp_save(self, state_dict: dict[str, Any], checkpoint_id: str) -> None:
         """Save via PyTorch DCP (async or sync)."""
         try:
             import torch.distributed.checkpoint as dcp
@@ -243,9 +237,7 @@ class CheckpointManager:
                 logger.debug("Async save staged for %s", checkpoint_id)
             except (AttributeError, TypeError):
                 # async_save not available in this PyTorch version
-                logger.debug(
-                    "async_save unavailable, falling back to sync save"
-                )
+                logger.debug("async_save unavailable, falling back to sync save")
                 dcp.save(
                     state_dict,
                     checkpoint_id=checkpoint_id,
@@ -260,9 +252,7 @@ class CheckpointManager:
                 planner=planner,
             )
 
-    def _dcp_load(
-        self, state_dict: dict[str, Any], checkpoint_id: str
-    ) -> None:
+    def _dcp_load(self, state_dict: dict[str, Any], checkpoint_id: str) -> None:
         """Load via PyTorch DCP."""
         try:
             import torch.distributed.checkpoint as dcp
@@ -270,18 +260,14 @@ class CheckpointManager:
             self._fallback_load(state_dict, checkpoint_id)
             return
 
-        reader = StorageBackendFactory.create_reader(
-            self._config, checkpoint_id
-        )
+        reader = StorageBackendFactory.create_reader(self._config, checkpoint_id)
         dcp.load(
             state_dict,
             checkpoint_id=checkpoint_id,
             storage_reader=reader,
         )
 
-    def _fallback_save(
-        self, state_dict: dict[str, Any], checkpoint_id: str
-    ) -> None:
+    def _fallback_save(self, state_dict: dict[str, Any], checkpoint_id: str) -> None:
         """Fallback save using torch.save for single-rank environments."""
         path = Path(checkpoint_id)
         path.mkdir(parents=True, exist_ok=True)
@@ -289,9 +275,7 @@ class CheckpointManager:
         torch.save(state_dict, save_path)
         logger.info("Saved checkpoint via torch.save to %s", save_path)
 
-    def _fallback_load(
-        self, state_dict: dict[str, Any], checkpoint_id: str
-    ) -> None:
+    def _fallback_load(self, state_dict: dict[str, Any], checkpoint_id: str) -> None:
         """Fallback load using torch.load for single-rank environments."""
         save_path = Path(checkpoint_id) / "checkpoint.pt"
         loaded = torch.load(save_path, weights_only=True)
@@ -311,9 +295,7 @@ class CheckpointManager:
             if self._config.plan_caching:
                 # Plan caching support varies by PyTorch version
                 try:
-                    self._planner = DefaultSavePlanner(
-                        enable_plan_caching=True
-                    )
+                    self._planner = DefaultSavePlanner(enable_plan_caching=True)
                     logger.debug("DCP plan caching enabled")
                 except TypeError:
                     self._planner = DefaultSavePlanner()
@@ -343,9 +325,7 @@ class CheckpointManager:
             torchbridge_version=__version__,
             pytorch_version=torch.__version__,
             backend=self._backend.value,
-            architecture=(
-                self._architecture.value if self._architecture else None
-            ),
+            architecture=(self._architecture.value if self._architecture else None),
             world_size=int(os.environ.get("WORLD_SIZE", "1")),
             local_world_size=int(os.environ.get("LOCAL_WORLD_SIZE", "1")),
             model_params=model_params,

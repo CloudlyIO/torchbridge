@@ -18,6 +18,7 @@ from pathlib import Path
 @dataclass
 class MigrationSuggestion:
     """A single migration suggestion."""
+
     file: str
     line: int
     pattern_name: str
@@ -29,6 +30,7 @@ class MigrationSuggestion:
 @dataclass
 class MigrationReport:
     """Full migration report."""
+
     path: str
     suggestions: list[MigrationSuggestion] = field(default_factory=list)
     files_scanned: int = 0
@@ -99,10 +101,10 @@ class MigrateCommand:
     def register(subparsers) -> None:
         """Register the migrate command with argument parser."""
         parser = subparsers.add_parser(
-            'migrate',
-            help='Scan for CUDA-specific patterns and suggest TorchBridge replacements',
-            description='Scans Python files for CUDA-specific code patterns and suggests '
-                        'TorchBridge hardware-agnostic replacements.',
+            "migrate",
+            help="Scan for CUDA-specific patterns and suggest TorchBridge replacements",
+            description="Scans Python files for CUDA-specific code patterns and suggests "
+            "TorchBridge hardware-agnostic replacements.",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Detected Patterns:
@@ -120,56 +122,53 @@ Examples:
   tb-migrate src/ --ci                   # CI mode (exit 1 if suggestions)
   tb-migrate . --format json -o report   # Save JSON report
   tb-migrate . --exclude "tests/*"       # Exclude test files
-            """
+            """,
         )
 
         parser.add_argument(
-            'path',
-            type=str,
-            help='File or directory to scan for CUDA patterns'
+            "path", type=str, help="File or directory to scan for CUDA patterns"
         )
 
         parser.add_argument(
-            '--output', '-o',
-            type=str,
-            help='Save migration report to file'
+            "--output", "-o", type=str, help="Save migration report to file"
         )
 
         parser.add_argument(
-            '--format',
-            choices=['json', 'markdown'],
-            default='markdown',
-            help='Output format (default: markdown)'
+            "--format",
+            choices=["json", "markdown"],
+            default="markdown",
+            help="Output format (default: markdown)",
         )
 
         parser.add_argument(
-            '--ci',
-            action='store_true',
-            help='CI mode: exit 1 if migration suggestions found'
+            "--ci",
+            action="store_true",
+            help="CI mode: exit 1 if migration suggestions found",
         )
 
         parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='Show context lines around matches'
+            "--verbose",
+            "-v",
+            action="store_true",
+            help="Show context lines around matches",
         )
 
         parser.add_argument(
-            '--exclude',
-            nargs='*',
+            "--exclude",
+            nargs="*",
             default=[],
-            help='Additional glob patterns to exclude (e.g. "tests/*" "legacy/*.py")'
+            help='Additional glob patterns to exclude (e.g. "tests/*" "legacy/*.py")',
         )
 
     @staticmethod
     def execute(args) -> int:
         """Execute the migrate command."""
-        target_path = getattr(args, 'path', '.')
-        ci_mode = getattr(args, 'ci', False)
-        verbose = getattr(args, 'verbose', False)
-        output_path = getattr(args, 'output', None)
-        fmt = getattr(args, 'format', 'markdown')
-        exclude_patterns = getattr(args, 'exclude', []) or []
+        target_path = getattr(args, "path", ".")
+        ci_mode = getattr(args, "ci", False)
+        verbose = getattr(args, "verbose", False)
+        output_path = getattr(args, "output", None)
+        fmt = getattr(args, "format", "markdown")
+        exclude_patterns = getattr(args, "exclude", []) or []
 
         target = Path(target_path)
         if not target.exists():
@@ -209,7 +208,7 @@ Examples:
             return 0
 
         # Display results to terminal
-        if fmt == 'json':
+        if fmt == "json":
             print(MigrateCommand._format_json(report))
         else:
             MigrateCommand._display_report(report, verbose)
@@ -222,19 +221,16 @@ Examples:
         py_files = []
 
         if target.is_file():
-            if target.suffix == '.py':
+            if target.suffix == ".py":
                 py_files.append(str(target.resolve()))
             return py_files
 
         for dirpath, dirnames, filenames in os.walk(str(target)):
             # Remove default skip directories from traversal in-place
-            dirnames[:] = [
-                d for d in dirnames
-                if d not in DEFAULT_SKIP_DIRS
-            ]
+            dirnames[:] = [d for d in dirnames if d not in DEFAULT_SKIP_DIRS]
 
             for filename in filenames:
-                if not filename.endswith('.py'):
+                if not filename.endswith(".py"):
                     continue
 
                 filepath = os.path.join(dirpath, filename)
@@ -260,7 +256,7 @@ Examples:
         suggestions = []
 
         try:
-            with open(filepath, encoding='utf-8', errors='replace') as f:
+            with open(filepath, encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
         except OSError:
             return suggestions
@@ -270,7 +266,7 @@ Examples:
             stripped = line.lstrip()
 
             # Skip comment lines
-            if stripped.startswith('#'):
+            if stripped.startswith("#"):
                 continue
 
             for pattern_name, pattern_regex, suggestion_text in MIGRATION_PATTERNS:
@@ -287,18 +283,20 @@ Examples:
                     end = min(len(lines), line_idx + 3)
                     for ctx_idx in range(start, end):
                         prefix = ">>" if ctx_idx == line_idx else "  "
-                        ctx_line = lines[ctx_idx].rstrip('\n')
+                        ctx_line = lines[ctx_idx].rstrip("\n")
                         context_lines.append(f"  {prefix} {ctx_idx + 1}: {ctx_line}")
                     context = "\n".join(context_lines)
 
-                suggestions.append(MigrationSuggestion(
-                    file=filepath,
-                    line=line_num,
-                    pattern_name=pattern_name,
-                    matched_text=matched_text,
-                    suggestion=suggestion_text,
-                    context=context,
-                ))
+                suggestions.append(
+                    MigrationSuggestion(
+                        file=filepath,
+                        line=line_num,
+                        pattern_name=pattern_name,
+                        matched_text=matched_text,
+                        suggestion=suggestion_text,
+                        context=context,
+                    )
+                )
 
         return suggestions
 
@@ -315,7 +313,9 @@ Examples:
         parts.append("")
 
         if report.total_suggestions == 0:
-            parts.append("No CUDA-specific patterns found. Code is already hardware-agnostic.")
+            parts.append(
+                "No CUDA-specific patterns found. Code is already hardware-agnostic."
+            )
             return "\n".join(parts)
 
         # Group suggestions by file
@@ -374,12 +374,12 @@ Examples:
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-        if fmt == 'json':
+        if fmt == "json":
             content = MigrateCommand._format_json(report)
         else:
             content = MigrateCommand._format_markdown(report, verbose)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
             f.write("\n")
 
@@ -432,47 +432,41 @@ Examples:
 def main():
     """Standalone entry point for tb-migrate."""
     parser = argparse.ArgumentParser(
-        prog='tb-migrate',
-        description='Scan for CUDA-specific patterns and suggest TorchBridge replacements',
+        prog="tb-migrate",
+        description="Scan for CUDA-specific patterns and suggest TorchBridge replacements",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        'path',
-        type=str,
-        help='File or directory to scan for CUDA patterns'
+        "path", type=str, help="File or directory to scan for CUDA patterns"
     )
 
     parser.add_argument(
-        '--output', '-o',
-        type=str,
-        help='Save migration report to file'
+        "--output", "-o", type=str, help="Save migration report to file"
     )
 
     parser.add_argument(
-        '--format',
-        choices=['json', 'markdown'],
-        default='markdown',
-        help='Output format (default: markdown)'
+        "--format",
+        choices=["json", "markdown"],
+        default="markdown",
+        help="Output format (default: markdown)",
     )
 
     parser.add_argument(
-        '--ci',
-        action='store_true',
-        help='CI mode: exit 1 if migration suggestions found'
+        "--ci",
+        action="store_true",
+        help="CI mode: exit 1 if migration suggestions found",
     )
 
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Show context lines around matches'
+        "--verbose", "-v", action="store_true", help="Show context lines around matches"
     )
 
     parser.add_argument(
-        '--exclude',
-        nargs='*',
+        "--exclude",
+        nargs="*",
         default=[],
-        help='Additional glob patterns to exclude (e.g. "tests/*" "legacy/*.py")'
+        help='Additional glob patterns to exclude (e.g. "tests/*" "legacy/*.py")',
     )
 
     args = parser.parse_args()
@@ -483,8 +477,9 @@ def main():
         return 130
     except Exception as e:
         from torchbridge.cli import _print_error
-        return _print_error(e, verbose=getattr(args, 'verbose', False))
+
+        return _print_error(e, verbose=getattr(args, "verbose", False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

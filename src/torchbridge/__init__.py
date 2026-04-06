@@ -33,7 +33,9 @@ except PackageNotFoundError:
         from pathlib import Path
 
         _pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
-        _match = re.search(r'^version\s*=\s*"([^"]+)"', _pyproject.read_text(), re.MULTILINE)
+        _match = re.search(
+            r'^version\s*=\s*"([^"]+)"', _pyproject.read_text(), re.MULTILINE
+        )
         __version__ = _match.group(1) if _match else "0.0.0"
     except Exception:
         __version__ = "0.0.0"
@@ -62,18 +64,24 @@ from .validation.unified_validator import UnifiedValidator
 __all__ = [
     # Version
     "__version__",
-
     # Configuration
-    "TorchBridgeConfig", "PrecisionConfig", "MemoryConfig", "AttentionConfig",
-    "HardwareConfig", "DistributedConfig", "ValidationConfig",
-    "get_config", "set_config", "configure",
-
+    "TorchBridgeConfig",
+    "PrecisionConfig",
+    "MemoryConfig",
+    "AttentionConfig",
+    "HardwareConfig",
+    "DistributedConfig",
+    "ValidationConfig",
+    "get_config",
+    "set_config",
+    "configure",
     # Management System
-    "UnifiedManager", "get_manager",
-
+    "UnifiedManager",
+    "get_manager",
     # Validation
     "UnifiedValidator",
 ]
+
 
 # Convenience functions for quick setup
 def optimize_model(model: torch.nn.Module, **kwargs: Any) -> Any:

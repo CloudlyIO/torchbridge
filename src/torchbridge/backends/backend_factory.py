@@ -24,10 +24,12 @@ from .base_backend import BaseBackend, CPUBackend
 
 logger = logging.getLogger(__name__)
 
+
 class BackendType(Enum):
     """
     Supported backend types.
     """
+
     AUTO = "auto"
     NVIDIA = "nvidia"
     AMD = "amd"
@@ -44,14 +46,15 @@ class BackendType(Enum):
                 return member
         # Handle aliases
         aliases = {
-            'cuda': cls.NVIDIA,
-            'rocm': cls.AMD,
-            'hip': cls.AMD,
-            'xla': cls.TPU,
-            'neuron': cls.TRAINIUM,
-            'trn': cls.TRAINIUM,
+            "cuda": cls.NVIDIA,
+            "rocm": cls.AMD,
+            "hip": cls.AMD,
+            "xla": cls.TPU,
+            "neuron": cls.TRAINIUM,
+            "trn": cls.TRAINIUM,
         }
         return aliases.get(name_lower, cls.CPU)
+
 
 class BackendFactory:
     """
@@ -96,7 +99,7 @@ class BackendFactory:
         backend_class: type[BaseBackend],
         optimizer_class: type[BaseAdapter] | None = None,
         availability_check: Callable[[], bool] | None = None,
-        priority: int | None = None
+        priority: int | None = None,
     ) -> None:
         """
         Register a backend with the factory.
@@ -126,7 +129,7 @@ class BackendFactory:
         cls,
         backend_type: BackendType | str = BackendType.AUTO,
         config: Any = None,
-        **kwargs
+        **kwargs,
     ) -> BaseBackend:
         """
         Create a backend instance.
@@ -167,7 +170,7 @@ class BackendFactory:
         backend_type: BackendType | str = BackendType.AUTO,
         config: Any = None,
         device: torch.device | None = None,
-        **kwargs
+        **kwargs,
     ) -> BaseAdapter:
         """
         Create an optimizer for the specified backend.
@@ -214,9 +217,7 @@ class BackendFactory:
 
         # Sort by priority and return the highest priority available backend
         sorted_backends = sorted(
-            available,
-            key=lambda b: cls._priority.get(b, 0),
-            reverse=True
+            available, key=lambda b: cls._priority.get(b, 0), reverse=True
         )
 
         selected = sorted_backends[0]
@@ -233,6 +234,7 @@ class BackendFactory:
         if backend_type == BackendType.NVIDIA:
             try:
                 from .nvidia import NVIDIABackend
+
                 cls._backends[BackendType.NVIDIA] = NVIDIABackend
                 return NVIDIABackend
             except ImportError:
@@ -241,6 +243,7 @@ class BackendFactory:
         elif backend_type == BackendType.AMD:
             try:
                 from .amd import AMDBackend
+
                 cls._backends[BackendType.AMD] = AMDBackend
                 return AMDBackend
             except ImportError:
@@ -249,6 +252,7 @@ class BackendFactory:
         elif backend_type == BackendType.TRAINIUM:
             try:
                 from .trainium import TrainiumBackend
+
                 cls._backends[BackendType.TRAINIUM] = TrainiumBackend
                 return TrainiumBackend
             except ImportError:
@@ -257,6 +261,7 @@ class BackendFactory:
         elif backend_type == BackendType.TPU:
             try:
                 from .tpu import TPUBackend
+
                 cls._backends[BackendType.TPU] = TPUBackend
                 return TPUBackend
             except ImportError:
@@ -318,10 +323,10 @@ class BackendFactory:
             # ROCm uses the CUDA API via HIP
             if torch.cuda.is_available():
                 # Check if it's actually ROCm, not CUDA
-                if hasattr(torch.version, 'hip') and torch.version.hip is not None:
+                if hasattr(torch.version, "hip") and torch.version.hip is not None:
                     return True
                 # Alternative check
-                if 'rocm' in str(torch.__config__.show()).lower():
+                if "rocm" in str(torch.__config__.show()).lower():
                     return True
             return False
         except Exception:
@@ -340,11 +345,11 @@ class BackendFactory:
             import torch_neuronx  # noqa: F401
 
             # Trainium uses XLA but is not a TPU
-            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
-            if pjrt == 'NEURON':
+            pjrt = os.environ.get("PJRT_DEVICE", "").upper()
+            if pjrt == "NEURON":
                 return True
             # Also check if neuron runtime cores are visible
-            if os.environ.get('NEURON_RT_VISIBLE_CORES'):
+            if os.environ.get("NEURON_RT_VISIBLE_CORES"):
                 return True
             return False
         except ImportError:
@@ -382,7 +387,9 @@ class BackendFactory:
                 _signal.signal(_signal.SIGALRM, old_handler)
                 return True
             except TimeoutError:
-                logger.debug("TPU device enumeration timed out after 5s — no TPU detected")
+                logger.debug(
+                    "TPU device enumeration timed out after 5s — no TPU detected"
+                )
                 _signal.signal(_signal.SIGALRM, old_handler)
                 return False
             except Exception:
@@ -407,7 +414,9 @@ class BackendFactory:
             t.start()
             t.join(timeout=5.0)
             if t.is_alive():
-                logger.debug("TPU device enumeration timed out after 5s — no TPU detected")
+                logger.debug(
+                    "TPU device enumeration timed out after 5s — no TPU detected"
+                )
             return _result[0]
 
     @classmethod
@@ -422,30 +431,31 @@ class BackendFactory:
             Dictionary with backend information
         """
         info: dict[str, Any] = {
-            'type': backend_type.value,
-            'available': False,
-            'priority': cls._priority.get(backend_type, 0),
-            'registered': backend_type in cls._backends,
+            "type": backend_type.value,
+            "available": False,
+            "priority": cls._priority.get(backend_type, 0),
+            "registered": backend_type in cls._backends,
         }
 
         # Check availability
         if backend_type == BackendType.NVIDIA:
-            info['available'] = cls._check_nvidia_available()
-            if info['available']:
-                info['cuda_version'] = torch.version.cuda
-                info['device_count'] = torch.cuda.device_count()
+            info["available"] = cls._check_nvidia_available()
+            if info["available"]:
+                info["cuda_version"] = torch.version.cuda
+                info["device_count"] = torch.cuda.device_count()
         elif backend_type == BackendType.AMD:
-            info['available'] = cls._check_amd_available()
-            if info['available']:
-                info['hip_version'] = getattr(torch.version, 'hip', None)
+            info["available"] = cls._check_amd_available()
+            if info["available"]:
+                info["hip_version"] = getattr(torch.version, "hip", None)
         elif backend_type == BackendType.TRAINIUM:
-            info['available'] = cls._check_trainium_available()
+            info["available"] = cls._check_trainium_available()
         elif backend_type == BackendType.TPU:
-            info['available'] = cls._check_tpu_available()
+            info["available"] = cls._check_tpu_available()
         elif backend_type == BackendType.CPU:
-            info['available'] = True
+            info["available"] = True
             import platform
-            info['platform'] = platform.processor()
+
+            info["platform"] = platform.processor()
 
         return info
 
@@ -477,15 +487,17 @@ class BackendFactory:
                 continue
 
             info = cls.get_backend_info(bt)
-            status = "AVAILABLE" if info['available'] else "NOT AVAILABLE"
-            priority = f"[Priority: {info['priority']}]" if info['available'] else ""
+            status = "AVAILABLE" if info["available"] else "NOT AVAILABLE"
+            priority = f"[Priority: {info['priority']}]" if info["available"] else ""
 
             print(f"\n{bt.value.upper():10} {status:15} {priority}")
 
-            if info['available']:
-                if 'cuda_version' in info:
-                    print(f"           CUDA: {info['cuda_version']}, Devices: {info['device_count']}")
-                if 'hip_version' in info:
+            if info["available"]:
+                if "cuda_version" in info:
+                    print(
+                        f"           CUDA: {info['cuda_version']}, Devices: {info['device_count']}"
+                    )
+                if "hip_version" in info:
                     print(f"           HIP: {info['hip_version']}")
                 if bt == BackendType.TRAINIUM:
                     print("           Neuron SDK detected")
@@ -497,10 +509,9 @@ class BackendFactory:
             print("Auto-selected: CPU (no accelerators available)")
         print("=" * 60)
 
+
 def get_backend(
-    backend_type: BackendType | str = BackendType.AUTO,
-    config: Any = None,
-    **kwargs
+    backend_type: BackendType | str = BackendType.AUTO, config: Any = None, **kwargs
 ) -> BaseBackend:
     """
     Convenience function to get a backend instance.
@@ -515,11 +526,12 @@ def get_backend(
     """
     return BackendFactory.create(backend_type, config, **kwargs)
 
+
 def get_optimizer(
     backend_type: BackendType | str = BackendType.AUTO,
     config: Any = None,
     device: torch.device | None = None,
-    **kwargs
+    **kwargs,
 ) -> BaseAdapter:
     """
     Convenience function to get an optimizer instance.
@@ -535,6 +547,7 @@ def get_optimizer(
     """
     return BackendFactory.create_optimizer(backend_type, config, device, **kwargs)
 
+
 def detect_best_backend() -> BackendType:
     """
     Detect the best available backend.
@@ -543,6 +556,7 @@ def detect_best_backend() -> BackendType:
         BackendType for the best available backend
     """
     return BackendFactory._auto_select()
+
 
 def list_available_backends() -> list[str]:
     """
@@ -553,11 +567,12 @@ def list_available_backends() -> list[str]:
     """
     return [bt.value for bt in BackendFactory.get_available_backends()]
 
+
 __all__ = [
-    'BackendFactory',
-    'BackendType',
-    'get_backend',
-    'get_optimizer',
-    'detect_best_backend',
-    'list_available_backends',
+    "BackendFactory",
+    "BackendType",
+    "get_backend",
+    "get_optimizer",
+    "detect_best_backend",
+    "list_available_backends",
 ]

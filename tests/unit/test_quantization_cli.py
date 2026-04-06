@@ -56,24 +56,19 @@ class TestQuantizeCommandRegistration:
 
     def test_validate_flag(self, parser):
         """--validate should set the flag."""
-        args = parser.parse_args(
-            ["quantize", "--model", "test.pt", "--validate"]
-        )
+        args = parser.parse_args(["quantize", "--model", "test.pt", "--validate"])
         assert args.validate is True
 
     def test_ci_flag(self, parser):
         """--ci should set CI mode."""
-        args = parser.parse_args(
-            ["quantize", "--model", "test.pt", "--ci"]
-        )
+        args = parser.parse_args(["quantize", "--model", "test.pt", "--ci"])
         assert args.ci is True
 
     def test_output_path(self, parser):
         """--output should be parsed."""
-        args = parser.parse_args(
-            ["quantize", "--model", "test.pt", "-o", "output.pt"]
-        )
+        args = parser.parse_args(["quantize", "--model", "test.pt", "-o", "output.pt"])
         assert args.output == "output.pt"
+
 
 class TestQuantizeCommandExecution:
     """Tests for QuantizeCommand.execute."""

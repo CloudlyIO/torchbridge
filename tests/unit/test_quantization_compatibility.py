@@ -30,22 +30,78 @@ class TestOptimalFormat:
     @pytest.mark.parametrize(
         "backend, arch, expected",
         [
-            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_DC, QuantizationFormat.NVFP4),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.BLACKWELL_CONSUMER, QuantizationFormat.FP8_E4M3),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER, QuantizationFormat.FP8_E4M3),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.ADA, QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.TURING, QuantizationFormat.INT8_DYNAMIC),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.VOLTA, QuantizationFormat.INT8_DYNAMIC),
-            (HardwareBackend.CUDA, NVIDIAArchitecture.PASCAL, QuantizationFormat.INT8_DYNAMIC),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.BLACKWELL_DC,
+                QuantizationFormat.NVFP4,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                QuantizationFormat.FP8_E4M3,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.HOPPER,
+                QuantizationFormat.FP8_E4M3,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.AMPERE,
+                QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.ADA,
+                QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.TURING,
+                QuantizationFormat.INT8_DYNAMIC,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.VOLTA,
+                QuantizationFormat.INT8_DYNAMIC,
+            ),
+            (
+                HardwareBackend.CUDA,
+                NVIDIAArchitecture.PASCAL,
+                QuantizationFormat.INT8_DYNAMIC,
+            ),
             (HardwareBackend.AMD, AMDArchitecture.CDNA4, QuantizationFormat.FP8_E4M3),
             (HardwareBackend.AMD, AMDArchitecture.CDNA3, QuantizationFormat.FP8_E4M3),
-            (HardwareBackend.AMD, AMDArchitecture.CDNA2, QuantizationFormat.INT8_DYNAMIC),
-            (HardwareBackend.AMD, AMDArchitecture.RDNA3, QuantizationFormat.INT8_DYNAMIC),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, QuantizationFormat.FP8_E4M3),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN3, QuantizationFormat.FP8_E4M3),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN1, QuantizationFormat.BF16),
-            (HardwareBackend.TRAINIUM, TrainiumArchitecture.INF2, QuantizationFormat.BF16),
+            (
+                HardwareBackend.AMD,
+                AMDArchitecture.CDNA2,
+                QuantizationFormat.INT8_DYNAMIC,
+            ),
+            (
+                HardwareBackend.AMD,
+                AMDArchitecture.RDNA3,
+                QuantizationFormat.INT8_DYNAMIC,
+            ),
+            (
+                HardwareBackend.TRAINIUM,
+                TrainiumArchitecture.TRN2,
+                QuantizationFormat.FP8_E4M3,
+            ),
+            (
+                HardwareBackend.TRAINIUM,
+                TrainiumArchitecture.TRN3,
+                QuantizationFormat.FP8_E4M3,
+            ),
+            (
+                HardwareBackend.TRAINIUM,
+                TrainiumArchitecture.TRN1,
+                QuantizationFormat.BF16,
+            ),
+            (
+                HardwareBackend.TRAINIUM,
+                TrainiumArchitecture.INF2,
+                QuantizationFormat.BF16,
+            ),
             (HardwareBackend.TPU, TPUVersion.V7, QuantizationFormat.FP8_E4M3),
             (HardwareBackend.TPU, TPUVersion.V5E, QuantizationFormat.FP8_E4M3),
             (HardwareBackend.TPU, TPUVersion.V4, QuantizationFormat.BF16),
@@ -92,9 +148,7 @@ class TestSupportedFormats:
             supported = QuantizationCompatibilityMatrix.get_supported_formats(
                 backend, arch
             )
-            optimal = QuantizationCompatibilityMatrix.get_optimal_format(
-                backend, arch
-            )
+            optimal = QuantizationCompatibilityMatrix.get_optimal_format(backend, arch)
             assert supported[0] == optimal
 
     def test_blackwell_dc_has_nvfp4(self):

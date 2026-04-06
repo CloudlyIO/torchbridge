@@ -105,6 +105,7 @@ Examples:
 
         if backend_str == "auto":
             import torch
+
             if torch.cuda.is_available():
                 if hasattr(torch.version, "hip") and torch.version.hip:
                     return HardwareBackend.AMD
@@ -153,17 +154,17 @@ Examples:
         ]
 
         for backend, arch in combos:
-            supported = KVCacheCompatibilityMatrix.get_supported_dtypes(
-                backend, arch
-            )
+            supported = KVCacheCompatibilityMatrix.get_supported_dtypes(backend, arch)
             optimal = KVCacheCompatibilityMatrix.get_optimal_dtype(backend, arch)
             arch_name = arch.value if arch else "—"
-            rows.append({
-                "backend": backend.value,
-                "architecture": arch_name,
-                "optimal": optimal.value,
-                "supported": [d.value for d in supported],
-            })
+            rows.append(
+                {
+                    "backend": backend.value,
+                    "architecture": arch_name,
+                    "optimal": optimal.value,
+                    "supported": [d.value for d in supported],
+                }
+            )
 
         if ci_mode:
             print(json.dumps(rows, indent=2))

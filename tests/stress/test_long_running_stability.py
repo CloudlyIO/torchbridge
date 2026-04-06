@@ -48,16 +48,12 @@ class TestLongRunningStability:
         inputs = tokenizer("The capital of France is", return_tensors="pt")
 
         with torch.no_grad():
-            baseline = model.generate(
-                **inputs, max_new_tokens=10, do_sample=False
-            )
+            baseline = model.generate(**inputs, max_new_tokens=10, do_sample=False)
         baseline_text = tokenizer.decode(baseline[0], skip_special_tokens=True)
 
         for i in range(100):
             with torch.no_grad():
-                output = model.generate(
-                    **inputs, max_new_tokens=10, do_sample=False
-                )
+                output = model.generate(**inputs, max_new_tokens=10, do_sample=False)
             if (i + 1) % 25 == 0:
                 text = tokenizer.decode(output[0], skip_special_tokens=True)
                 assert text == baseline_text, (
@@ -65,7 +61,9 @@ class TestLongRunningStability:
                     f"got '{text}' vs baseline '{baseline_text}'"
                 )
 
-    def test_1000_iterations_no_memory_leak(self, minilm_model_and_tokenizer, memory_tracker):
+    def test_1000_iterations_no_memory_leak(
+        self, minilm_model_and_tokenizer, memory_tracker
+    ):
         """1000 iterations don't accumulate memory."""
         model, tokenizer = minilm_model_and_tokenizer
         inputs = tokenizer("Leak test", return_tensors="pt")

@@ -6,7 +6,6 @@ through optimization, export, and inference. They ensure all components
 work together correctly.
 """
 
-
 import pytest
 import torch
 import torch.nn as nn
@@ -159,7 +158,7 @@ class TestPrecisionModes:
 
     def test_bf16_inference(self, model, sample_input):
         """Test BF16 inference."""
-        if not torch.cuda.is_available() and not hasattr(torch, 'bfloat16'):
+        if not torch.cuda.is_available() and not hasattr(torch, "bfloat16"):
             pytest.skip("BF16 not supported on this platform")
 
         model.eval()
@@ -176,7 +175,7 @@ class TestPrecisionModes:
         model.eval()
 
         with torch.no_grad():
-            with torch.autocast(device_type='cpu', dtype=torch.bfloat16):
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = model(sample_input)
 
         # Output may be bf16 or fp32 depending on ops
@@ -193,12 +192,12 @@ class TestTorchBridgeIntegration:
         # Get config
         config = torchbridge.get_config()
         assert config is not None
-        assert hasattr(config, 'device')
+        assert hasattr(config, "device")
 
         # Configure
-        torchbridge.configure(device='cpu')
+        torchbridge.configure(device="cpu")
         config = torchbridge.get_config()
-        assert config.device == 'cpu'
+        assert config.device == "cpu"
 
     def test_manager_creation(self):
         """Test unified manager creation."""
@@ -214,16 +213,19 @@ class TestCLIIntegration:
     def test_benchmark_command_import(self):
         """Test benchmark command can be imported."""
         from torchbridge.cli.benchmark import BenchmarkCommand
+
         assert BenchmarkCommand is not None
 
     def test_doctor_command_import(self):
         """Test doctor command can be imported."""
         from torchbridge.cli.doctor import DoctorCommand
+
         assert DoctorCommand is not None
 
     def test_main_cli_import(self):
         """Test main CLI can be imported."""
         from torchbridge.cli import main
+
         assert callable(main)
 
 
@@ -237,20 +239,24 @@ class TestBackendIntegration:
     def test_nvidia_backend_import(self):
         """Test NVIDIA backend can be imported."""
         from torchbridge.backends.nvidia import NVIDIAAdapter, NVIDIABackend
+
         assert NVIDIABackend is not None
         assert NVIDIAAdapter is not None
 
     def test_amd_backend_import(self):
         """Test AMD backend can be imported."""
         from torchbridge.backends.amd import AMDAdapter, AMDBackend
+
         assert AMDBackend is not None
         assert AMDAdapter is not None
 
     def test_tpu_backend_import(self):
         """Test TPU backend can be imported."""
         from torchbridge.backends.tpu import TPUAdapter, TPUBackend
+
         assert TPUBackend is not None
         assert TPUAdapter is not None
+
 
 class TestValidationFramework:
     """Test validation framework."""
@@ -258,6 +264,7 @@ class TestValidationFramework:
     def test_unified_validator_import(self):
         """Test unified validator can be imported."""
         from torchbridge.validation import UnifiedValidator
+
         assert UnifiedValidator is not None
 
     def test_validator_basic_usage(self):

@@ -92,6 +92,17 @@ def _get_thresholds(backend: str, atol: float | None, cosine_threshold: float | 
 def main() -> int:
     args = _parse_args()
 
+    # CPU early-exit: skip transformers import (not needed for SKIPPED result)
+    if args.backend == "cpu":
+        result: dict = {
+            "backend": "cpu",
+            "status": "SKIPPED",
+            "reason": "cpu backend — no GPU comparison",
+        }
+        _write_result(args.output_json, result)
+        print("\nCPU-only validation: no GPU comparison possible.")
+        return 0
+
     try:
         import torch
         import torch.nn.functional as F
@@ -146,13 +157,6 @@ def main() -> int:
         "atol_threshold": atol,
         "cosine_threshold": cosine_threshold,
     }
-
-    if args.backend == "cpu":
-        print("\nCPU-only validation: no GPU comparison possible.")
-        result["status"] = "SKIPPED"
-        result["reason"] = "cpu backend — no GPU comparison"
-        _write_result(args.output_json, result)
-        return 0
 
     # Move model to target device
     model_gpu = model.to(device)

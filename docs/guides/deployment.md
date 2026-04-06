@@ -42,6 +42,8 @@ save_file(model.state_dict(), "model.safetensors")
 
 ## Inference Server
 
+> **Note:** TorchBridge does not provide a serving runtime. The patterns below show how to build a serving layer around a model that TorchBridge has validated. For production serving, use vLLM, TGI, or TorchServe directly.
+
 ### FastAPI
 
 ```python
@@ -100,7 +102,7 @@ torchserve --start --model-store model_store --models my_model.mar
 ### Production Image
 
 ```dockerfile
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-runtime
 
 WORKDIR /app
 COPY requirements.txt .

@@ -65,7 +65,7 @@ class UnifiedManager:
         model: nn.Module,
         sample_inputs: torch.Tensor | None = None,
         optimization_level: str | None = None,
-        for_inference: bool = False
+        for_inference: bool = False,
     ) -> nn.Module:
         """
         Automatically optimize model based on detected hardware.
@@ -91,20 +91,32 @@ class UnifiedManager:
             self._hardware_profile = self.hardware_detector.detect()
 
         if optimization_level is None:
-            optimization_level = self.hardware_detector.get_recommended_optimization_level(
-                self._hardware_profile
+            optimization_level = (
+                self.hardware_detector.get_recommended_optimization_level(
+                    self._hardware_profile
+                )
             )
 
-        backend_name = self.hardware_detector.get_optimal_backend(self._hardware_profile)
+        backend_name = self.hardware_detector.get_optimal_backend(
+            self._hardware_profile
+        )
 
         if backend_name == "nvidia":
-            result = self._optimize_with_nvidia(model, sample_inputs, optimization_level, for_inference)
+            result = self._optimize_with_nvidia(
+                model, sample_inputs, optimization_level, for_inference
+            )
         elif backend_name == "tpu":
-            result = self._optimize_with_tpu(model, sample_inputs, optimization_level, for_inference)
+            result = self._optimize_with_tpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
         elif backend_name == "amd":
-            result = self._optimize_with_amd(model, sample_inputs, optimization_level, for_inference)
+            result = self._optimize_with_amd(
+                model, sample_inputs, optimization_level, for_inference
+            )
         else:
-            result = self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+            result = self._optimize_with_cpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
 
         # Normalize result — backends return different types
         if isinstance(result, tuple):
@@ -131,13 +143,19 @@ class UnifiedManager:
                 self._nvidia_adapter = NVIDIAAdapter(self.config)
 
             if for_inference:
-                return self._nvidia_adapter.optimize_for_inference(model, sample_input=sample_inputs)
+                return self._nvidia_adapter.optimize_for_inference(
+                    model, sample_input=sample_inputs
+                )
             else:
                 return self._nvidia_adapter.optimize_for_training(model)
 
         except ImportError as e:
-            warnings.warn(f"NVIDIA backend not available: {e}. Using CPU fallback.", stacklevel=2)
-            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+            warnings.warn(
+                f"NVIDIA backend not available: {e}. Using CPU fallback.", stacklevel=2
+            )
+            return self._optimize_with_cpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
 
     def _optimize_with_tpu(
         self,
@@ -153,13 +171,21 @@ class UnifiedManager:
                 self._tpu_adapter = TPUAdapter(self.config)
 
             if for_inference:
-                return self._tpu_adapter.optimize_for_inference(model, sample_inputs=sample_inputs)
+                return self._tpu_adapter.optimize_for_inference(
+                    model, sample_inputs=sample_inputs
+                )
             else:
-                return self._tpu_adapter.optimize_for_training(model, sample_inputs=sample_inputs)
+                return self._tpu_adapter.optimize_for_training(
+                    model, sample_inputs=sample_inputs
+                )
 
         except ImportError as e:
-            warnings.warn(f"TPU backend not available: {e}. Using CPU fallback.", stacklevel=2)
-            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+            warnings.warn(
+                f"TPU backend not available: {e}. Using CPU fallback.", stacklevel=2
+            )
+            return self._optimize_with_cpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
 
     def _optimize_with_amd(
         self,
@@ -181,8 +207,12 @@ class UnifiedManager:
             return result
 
         except ImportError as e:
-            warnings.warn(f"AMD backend not available: {e}. Using CPU fallback.", stacklevel=2)
-            return self._optimize_with_cpu(model, sample_inputs, optimization_level, for_inference)
+            warnings.warn(
+                f"AMD backend not available: {e}. Using CPU fallback.", stacklevel=2
+            )
+            return self._optimize_with_cpu(
+                model, sample_inputs, optimization_level, for_inference
+            )
 
     def _optimize_with_cpu(
         self,
@@ -201,7 +231,9 @@ class UnifiedManager:
             self._hardware_profile = self.hardware_detector.detect(force_redetect)
         return self._hardware_profile
 
-    def get_optimization_recommendations(self, model: nn.Module | None = None) -> dict[str, Any]:
+    def get_optimization_recommendations(
+        self, model: nn.Module | None = None
+    ) -> dict[str, Any]:
         """Get optimization recommendations based on detected hardware."""
         profile = self.get_hardware_profile()
 
@@ -209,29 +241,37 @@ class UnifiedManager:
             "hardware_type": profile.hardware_type.value,
             "device_name": profile.device_name,
             "backend": self.hardware_detector.get_optimal_backend(profile),
-            "optimization_level": self.hardware_detector.get_recommended_optimization_level(profile),
+            "optimization_level": self.hardware_detector.get_recommended_optimization_level(
+                profile
+            ),
             "capabilities": [cap.value for cap in profile.capabilities],
             "optimizations": [],
         }
 
         if profile.is_nvidia_h100_or_better():
-            recommendations["optimizations"].append({
-                "type": "fp8_training",
-                "benefit": "2x training speedup",
-                "requirement": "H100 or Blackwell GPU",
-            })
-            recommendations["optimizations"].append({
-                "type": "flash_attention_3",
-                "benefit": "3x memory reduction",
-                "requirement": "H100 or Blackwell GPU",
-            })
+            recommendations["optimizations"].append(
+                {
+                    "type": "fp8_training",
+                    "benefit": "2x training speedup",
+                    "requirement": "H100 or Blackwell GPU",
+                }
+            )
+            recommendations["optimizations"].append(
+                {
+                    "type": "flash_attention_3",
+                    "benefit": "3x memory reduction",
+                    "requirement": "H100 or Blackwell GPU",
+                }
+            )
 
         if profile.is_high_end_tpu():
-            recommendations["optimizations"].append({
-                "type": "xla_compilation",
-                "benefit": "Optimized TPU execution",
-                "requirement": f"TPU {profile.tpu_version.value}",
-            })
+            recommendations["optimizations"].append(
+                {
+                    "type": "xla_compilation",
+                    "benefit": "Optimized TPU execution",
+                    "requirement": f"TPU {profile.tpu_version.value}",
+                }
+            )
 
         return recommendations
 

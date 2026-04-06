@@ -25,13 +25,15 @@ def get_xla_device() -> torch.device:
     """
     try:
         import torch_xla
-        if hasattr(torch_xla, 'device'):
+
+        if hasattr(torch_xla, "device"):
             return torch_xla.device()
 
         import torch_xla.core.xla_model as xm
+
         return xm.xla_device()
     except ImportError:
-        return torch.device('cpu')
+        return torch.device("cpu")
 
 
 def get_world_size() -> int:
@@ -43,18 +45,21 @@ def get_world_size() -> int:
     """
     try:
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(torch_xla.runtime, "world_size"):
             return torch_xla.runtime.world_size()
 
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'world_size'):
+
+            if hasattr(xr, "world_size"):
                 return xr.world_size()
         except ImportError:
             pass
 
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'xrt_world_size'):
+
+        if hasattr(xm, "xrt_world_size"):
             return xm.xrt_world_size()
 
         return 1
@@ -71,18 +76,23 @@ def get_ordinal() -> int:
     """
     try:
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'global_ordinal'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(
+            torch_xla.runtime, "global_ordinal"
+        ):
             return torch_xla.runtime.global_ordinal()
 
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'global_ordinal'):
+
+            if hasattr(xr, "global_ordinal"):
                 return xr.global_ordinal()
         except ImportError:
             pass
 
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'get_ordinal'):
+
+        if hasattr(xm, "get_ordinal"):
             return xm.get_ordinal()
 
         return 0
@@ -98,11 +108,13 @@ def sync() -> None:
     """
     try:
         import torch_xla
-        if hasattr(torch_xla, 'sync'):
+
+        if hasattr(torch_xla, "sync"):
             torch_xla.sync()
             return
 
         import torch_xla.core.xla_model as xm
+
         xm.mark_step()
     except ImportError:
         pass
@@ -117,18 +129,21 @@ def get_device_count() -> int:
     """
     try:
         import torch_xla
-        if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'device_count'):
+
+        if hasattr(torch_xla, "runtime") and hasattr(torch_xla.runtime, "device_count"):
             return torch_xla.runtime.device_count()
 
         try:
             from torch_xla import runtime as xr
-            if hasattr(xr, 'device_count'):
+
+            if hasattr(xr, "device_count"):
                 return xr.device_count()
         except ImportError:
             pass
 
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'xla_device_count'):
+
+        if hasattr(xm, "xla_device_count"):
             return xm.xla_device_count()
 
         return 1
@@ -145,7 +160,8 @@ def rendezvous(tag: str) -> None:
     """
     try:
         import torch_xla.core.xla_model as xm
-        if hasattr(xm, 'rendezvous'):
+
+        if hasattr(xm, "rendezvous"):
             xm.rendezvous(tag)
     except ImportError:
         pass
@@ -160,10 +176,11 @@ def is_neuron_available() -> bool:
     """
     try:
         import torch_neuronx  # noqa: F401
-        pjrt = os.environ.get('PJRT_DEVICE', '').upper()
-        if pjrt == 'NEURON':
+
+        pjrt = os.environ.get("PJRT_DEVICE", "").upper()
+        if pjrt == "NEURON":
             return True
-        if os.environ.get('NEURON_RT_VISIBLE_CORES'):
+        if os.environ.get("NEURON_RT_VISIBLE_CORES"):
             return True
         return False
     except ImportError:
@@ -179,18 +196,20 @@ def get_neuron_sdk_version() -> str:
     """
     try:
         import torch_neuronx
-        return getattr(torch_neuronx, '__version__', 'unknown')
+
+        return getattr(torch_neuronx, "__version__", "unknown")
     except ImportError:
-        return 'not installed'
+        return "not installed"
 
 
 def get_torch_xla_version() -> str:
     """Get torch_xla version string."""
     try:
         import torch_xla
-        return getattr(torch_xla, '__version__', 'unknown')
+
+        return getattr(torch_xla, "__version__", "unknown")
     except ImportError:
-        return 'not installed'
+        return "not installed"
 
 
 def detect_instance_type() -> str:
@@ -201,44 +220,45 @@ def detect_instance_type() -> str:
         Instance type string (e.g., 'trn1.2xlarge') or 'unknown'
     """
     # Check for explicit env var
-    instance_type = os.environ.get('NEURON_INSTANCE_TYPE', '')
+    instance_type = os.environ.get("NEURON_INSTANCE_TYPE", "")
     if instance_type:
         return instance_type
 
     # Try EC2 metadata via IMDSv2 (only works on actual EC2 instances)
     try:
         import urllib.request
+
         # Step 1: Get IMDSv2 token via PUT request
         token_req = urllib.request.Request(
-            'http://169.254.169.254/latest/api/token',
-            headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'},
-            method='PUT',
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+            method="PUT",
         )
         with urllib.request.urlopen(token_req, timeout=1) as token_resp:
-            token = token_resp.read().decode('utf-8')
+            token = token_resp.read().decode("utf-8")
 
         # Step 2: Use token to fetch metadata
         metadata_req = urllib.request.Request(
-            'http://169.254.169.254/latest/meta-data/instance-type',
-            headers={'X-aws-ec2-metadata-token': token},
+            "http://169.254.169.254/latest/meta-data/instance-type",
+            headers={"X-aws-ec2-metadata-token": token},
         )
         with urllib.request.urlopen(metadata_req, timeout=1) as resp:
-            return resp.read().decode('utf-8')
+            return resp.read().decode("utf-8")
     except Exception:
         logger.debug("EC2 instance type detection failed", exc_info=True)
         pass
 
-    return 'unknown'
+    return "unknown"
 
 
 def get_neuron_env_info() -> dict[str, str]:
     """Get Neuron-related environment information."""
     return {
-        'NEURON_RT_VISIBLE_CORES': os.environ.get('NEURON_RT_VISIBLE_CORES', ''),
-        'NEURON_CC_FLAGS': os.environ.get('NEURON_CC_FLAGS', ''),
-        'NEURON_INSTANCE_TYPE': os.environ.get('NEURON_INSTANCE_TYPE', ''),
-        'PJRT_DEVICE': os.environ.get('PJRT_DEVICE', ''),
-        'neuron_sdk_version': get_neuron_sdk_version(),
-        'torch_xla_version': get_torch_xla_version(),
-        'neuron_available': str(is_neuron_available()),
+        "NEURON_RT_VISIBLE_CORES": os.environ.get("NEURON_RT_VISIBLE_CORES", ""),
+        "NEURON_CC_FLAGS": os.environ.get("NEURON_CC_FLAGS", ""),
+        "NEURON_INSTANCE_TYPE": os.environ.get("NEURON_INSTANCE_TYPE", ""),
+        "PJRT_DEVICE": os.environ.get("PJRT_DEVICE", ""),
+        "neuron_sdk_version": get_neuron_sdk_version(),
+        "torch_xla_version": get_torch_xla_version(),
+        "neuron_available": str(is_neuron_available()),
     }

@@ -16,6 +16,7 @@ import torch.nn.functional as F
 def _check_transformers():
     try:
         import transformers  # noqa: F401
+
         return True
     except ImportError:
         return False

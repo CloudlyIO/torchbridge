@@ -149,7 +149,10 @@ class PipelineScheduleFactory:
     ) -> list[PipelineScheduleType]:
         """Return supported schedules for the given hardware, best first."""
         if backend == HardwareBackend.CUDA:
-            if isinstance(architecture, NVIDIAArchitecture) and architecture in _ASYNC_P2P_ARCHS:
+            if (
+                isinstance(architecture, NVIDIAArchitecture)
+                and architecture in _ASYNC_P2P_ARCHS
+            ):
                 return list(_CUDA_HIGH_END)
             return list(_CUDA_STANDARD)
         if backend == HardwareBackend.AMD:

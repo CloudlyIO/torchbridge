@@ -19,6 +19,7 @@ import torch.nn as nn
 # Device Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def device():
     """Return the best available device (CUDA > MPS > CPU)."""
@@ -51,26 +52,19 @@ def mps_available():
 # Model Fixtures - Simple Models
 # ============================================================================
 
+
 @pytest.fixture
 def simple_linear_model():
     """Simple linear model for basic testing."""
     return nn.Sequential(
-        nn.Linear(128, 64),
-        nn.ReLU(),
-        nn.Linear(64, 32),
-        nn.ReLU(),
-        nn.Linear(32, 10)
+        nn.Linear(128, 64), nn.ReLU(), nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10)
     )
 
 
 @pytest.fixture
 def small_mlp():
     """Small MLP for quick tests."""
-    return nn.Sequential(
-        nn.Linear(64, 32),
-        nn.ReLU(),
-        nn.Linear(32, 16)
-    )
+    return nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 16))
 
 
 @pytest.fixture
@@ -83,13 +77,14 @@ def medium_mlp():
         nn.Linear(128, 64),
         nn.ReLU(),
         nn.Dropout(0.1),
-        nn.Linear(64, 32)
+        nn.Linear(64, 32),
     )
 
 
 # ============================================================================
 # Model Fixtures - Transformer Models
 # ============================================================================
+
 
 class SimpleTransformerBlock(nn.Module):
     """Simple transformer block for testing attention-based models."""
@@ -99,9 +94,7 @@ class SimpleTransformerBlock(nn.Module):
         self.attention = nn.MultiheadAttention(d_model, num_heads, batch_first=True)
         self.norm1 = nn.LayerNorm(d_model)
         self.ffn = nn.Sequential(
-            nn.Linear(d_model, d_ff),
-            nn.GELU(),
-            nn.Linear(d_ff, d_model)
+            nn.Linear(d_model, d_ff), nn.GELU(), nn.Linear(d_ff, d_model)
         )
         self.norm2 = nn.LayerNorm(d_model)
 
@@ -134,6 +127,7 @@ def large_transformer_block():
 # Model Fixtures - Vision Models
 # ============================================================================
 
+
 class SimpleCNN(nn.Module):
     """Simple CNN for vision testing."""
 
@@ -150,7 +144,7 @@ class SimpleCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d((4, 4)),
             nn.Flatten(),
-            nn.Linear(64 * 4 * 4, num_classes)
+            nn.Linear(64 * 4 * 4, num_classes),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -168,6 +162,7 @@ def simple_cnn():
 # ============================================================================
 # Sample Data Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def linear_input():
@@ -210,10 +205,12 @@ def sample_data():
 # Configuration Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def kernel_config():
     """Default TorchBridgeConfig for testing."""
     from torchbridge.core.config import TorchBridgeConfig
+
     return TorchBridgeConfig()
 
 
@@ -221,6 +218,7 @@ def kernel_config():
 def production_config():
     """Production-optimized TorchBridgeConfig."""
     from torchbridge.core.config import TorchBridgeConfig
+
     return TorchBridgeConfig.for_production()
 
 
@@ -228,6 +226,7 @@ def production_config():
 def development_config():
     """Development-friendly TorchBridgeConfig."""
     from torchbridge.core.config import TorchBridgeConfig
+
     return TorchBridgeConfig.for_development()
 
 
@@ -235,10 +234,12 @@ def development_config():
 # Backend Configuration Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def nvidia_config():
     """Default NVIDIA configuration."""
     from torchbridge.core.config import NVIDIAConfig
+
     return NVIDIAConfig()
 
 
@@ -246,6 +247,7 @@ def nvidia_config():
 def tpu_config():
     """Default TPU configuration."""
     from torchbridge.core.config import TPUConfig
+
     return TPUConfig()
 
 
@@ -253,12 +255,14 @@ def tpu_config():
 def amd_config():
     """Default AMD configuration."""
     from torchbridge.core.config import AMDConfig
+
     return AMDConfig()
 
 
 # ============================================================================
 # Mock Fixtures for Hardware Simulation
 # ============================================================================
+
 
 @pytest.fixture
 def mock_cuda_available():
@@ -313,13 +317,11 @@ def mock_multi_gpu():
 # Training Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def training_batch():
     """Sample training batch with inputs and labels."""
-    return {
-        "inputs": torch.randn(32, 128),
-        "labels": torch.randint(0, 10, (32,))
-    }
+    return {"inputs": torch.randn(32, 128), "labels": torch.randint(0, 10, (32,))}
 
 
 @pytest.fixture
@@ -327,7 +329,7 @@ def transformer_training_batch():
     """Sample transformer training batch."""
     return {
         "inputs": torch.randn(8, 64, 256),
-        "labels": torch.randint(0, 1000, (8, 64))  # Token-level labels
+        "labels": torch.randint(0, 1000, (8, 64)),  # Token-level labels
     }
 
 
@@ -336,13 +338,14 @@ def vision_training_batch():
     """Sample vision training batch."""
     return {
         "inputs": torch.randn(16, 3, 224, 224),
-        "labels": torch.randint(0, 1000, (16,))  # ImageNet-like labels
+        "labels": torch.randint(0, 1000, (16,)),  # ImageNet-like labels
     }
 
 
 # ============================================================================
 # Utility Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def tolerance():
@@ -365,6 +368,7 @@ def temp_dir(tmp_path):
 # ============================================================================
 # Benchmark Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def benchmark_config():

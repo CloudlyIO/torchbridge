@@ -352,3 +352,10 @@ test_results_local/
 
 # Presentations
 *.pptx
+
+# Tool caches (not gitignored by default)
+.benchmarks/
+.deepeval/
+
+# Claude Code workspace data
+.claude/

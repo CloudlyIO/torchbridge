@@ -53,12 +53,16 @@ class _TensorCoreAlignedLinear(nn.Module):
         padded_out = _ceil_to_multiple(orig_out, optimal_multiple)
 
         weight_device = original.weight.device
-        padded_w = torch.zeros(padded_out, padded_in, dtype=original.weight.dtype, device=weight_device)
+        padded_w = torch.zeros(
+            padded_out, padded_in, dtype=original.weight.dtype, device=weight_device
+        )
         padded_w[:orig_out, :orig_in].copy_(original.weight.data)
         self.register_buffer("_padded_weight", padded_w)
 
         if original.bias is not None:
-            padded_b = torch.zeros(padded_out, dtype=original.bias.dtype, device=original.bias.device)
+            padded_b = torch.zeros(
+                padded_out, dtype=original.bias.dtype, device=original.bias.device
+            )
             padded_b[:orig_out].copy_(original.bias.data)
             self.register_buffer("_padded_bias", padded_b)
         else:
@@ -147,14 +151,23 @@ class NVIDIABackend(BaseBackend):
                 torch.backends.cuda.matmul.allow_tf32 = True
                 torch.backends.cudnn.allow_tf32 = True
 
-            logger.info("NVIDIA Backend initialized: device=%s, compute_capability=%s, "
-                       "num_devices=%d, architecture=%s, fp8_enabled=%s",
-                       self._device_name, self._compute_capability, len(self._devices),
-                       self.nvidia_config.architecture.value, self.nvidia_config.fp8_enabled)
+            logger.info(
+                "NVIDIA Backend initialized: device=%s, compute_capability=%s, "
+                "num_devices=%d, architecture=%s, fp8_enabled=%s",
+                self._device_name,
+                self._compute_capability,
+                len(self._devices),
+                self.nvidia_config.architecture.value,
+                self.nvidia_config.fp8_enabled,
+            )
 
     def _check_availability(self) -> bool:
         """Check if CUDA is available (implements BaseBackend abstract method)."""
-        return torch.cuda.is_available() and self._device is not None and self._device.type == "cuda"
+        return (
+            torch.cuda.is_available()
+            and self._device is not None
+            and self._device.type == "cuda"
+        )
 
     def _get_device_info(self, device_id: int = 0) -> DeviceInfo:
         """Get information about a specific CUDA device (implements BaseBackend abstract method)."""
@@ -164,7 +177,7 @@ class NVIDIABackend(BaseBackend):
                 device_type="cpu",
                 device_id=0,
                 device_name="CPU (CUDA not available)",
-                is_available=False
+                is_available=False,
             )
 
         props = torch.cuda.get_device_properties(device_id)
@@ -178,13 +191,13 @@ class NVIDIABackend(BaseBackend):
             driver_version=torch.version.cuda,
             is_available=True,
             properties={
-                'multi_processor_count': props.multi_processor_count,
-                'major': props.major,
-                'minor': props.minor,
-                'architecture': self.nvidia_config.architecture.value,
-                'fp8_supported': self.supports_fp8,
-                'tensor_core_version': self.nvidia_config.tensor_core_version,
-            }
+                "multi_processor_count": props.multi_processor_count,
+                "major": props.major,
+                "minor": props.minor,
+                "architecture": self.nvidia_config.architecture.value,
+                "fp8_supported": self.supports_fp8,
+                "tensor_core_version": self.nvidia_config.tensor_core_version,
+            },
         )
 
     @property
@@ -231,7 +244,7 @@ class NVIDIABackend(BaseBackend):
         return self.nvidia_config.architecture in [
             NVIDIAArchitecture.HOPPER,
             NVIDIAArchitecture.BLACKWELL_DC,
-            NVIDIAArchitecture.BLACKWELL_CONSUMER
+            NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]
 
     def prepare_model(self, model: nn.Module) -> nn.Module:
@@ -258,7 +271,7 @@ class NVIDIABackend(BaseBackend):
         # NVIDIA-specific layout optimizations (legitimate — benchmarked)
         model = self._optimize_for_tensor_cores(model)
         model = self._optimize_memory_layout(model)
-        if sample_input is not None and hasattr(torch, 'compile'):
+        if sample_input is not None and hasattr(torch, "compile"):
             try:
                 mode = CompileCompatibility.get_compile_mode(
                     HardwareBackend.CUDA, self.nvidia_config.architecture
@@ -288,15 +301,16 @@ class NVIDIABackend(BaseBackend):
         value the user has already set in their environment.
         """
         import os
+
         if not self._compute_capability:
             return
         major, _ = self._compute_capability
-        if major >= 9:        # Hopper and newer (H100, H200, B100, B200)
+        if major >= 9:  # Hopper and newer (H100, H200, B100, B200)
             os.environ.setdefault(
                 "PYTORCH_CUDA_ALLOC_CONF",
                 "expandable_segments:True,max_split_size_mb:512",
             )
-        elif major >= 8:      # Ampere (A10G, A100, RTX 3090, RTX 3080)
+        elif major >= 8:  # Ampere (A10G, A100, RTX 3090, RTX 3080)
             os.environ.setdefault(
                 "PYTORCH_CUDA_ALLOC_CONF",
                 "max_split_size_mb:512",
@@ -324,9 +338,7 @@ class NVIDIABackend(BaseBackend):
             return model
 
         optimal_divisor = (
-            16
-            if self._compute_capability and self._compute_capability[0] >= 8
-            else 8
+            16 if self._compute_capability and self._compute_capability[0] >= 8 else 8
         )
 
         replaced = 0
@@ -343,14 +355,19 @@ class NVIDIABackend(BaseBackend):
                 full_name = f"{parent_name}.{child_name}" if parent_name else child_name
                 logger.debug(
                     "Aligned %s: (%dx%d) → (%dx%d) for Tensor Cores",
-                    full_name, in_f, out_f, aligned.padded_in, aligned.padded_out,
+                    full_name,
+                    in_f,
+                    out_f,
+                    aligned.padded_in,
+                    aligned.padded_out,
                 )
 
         if replaced:
             logger.info(
                 "Tensor Core alignment: replaced %d Linear layer(s) "
                 "(optimal_divisor=%d).",
-                replaced, optimal_divisor,
+                replaced,
+                optimal_divisor,
             )
 
         return model
@@ -381,7 +398,7 @@ class NVIDIABackend(BaseBackend):
 
     def _enable_gradient_checkpointing(self, model: nn.Module) -> nn.Module:
         """Enable gradient checkpointing for memory efficiency."""
-        if hasattr(model, 'gradient_checkpointing_enable'):
+        if hasattr(model, "gradient_checkpointing_enable"):
             model.gradient_checkpointing_enable()
         return model
 
@@ -398,43 +415,44 @@ class NVIDIABackend(BaseBackend):
     def get_memory_stats(self) -> dict[str, Any]:
         """Get CUDA memory statistics."""
         if not self.is_cuda_available:
-            return {
-                'allocated': 0,
-                'reserved': 0,
-                'max_allocated': 0,
-                'device': 'cpu'
-            }
+            return {"allocated": 0, "reserved": 0, "max_allocated": 0, "device": "cpu"}
 
         return {
-            'allocated': torch.cuda.memory_allocated() / 1024**3,  # GB
-            'reserved': torch.cuda.memory_reserved() / 1024**3,  # GB
-            'max_allocated': torch.cuda.max_memory_allocated() / 1024**3,  # GB
-            'device': str(self.device),
-            'device_name': self._device_name,
-            'compute_capability': self._compute_capability
+            "allocated": torch.cuda.memory_allocated() / 1024**3,  # GB
+            "reserved": torch.cuda.memory_reserved() / 1024**3,  # GB
+            "max_allocated": torch.cuda.max_memory_allocated() / 1024**3,  # GB
+            "device": str(self.device),
+            "device_name": self._device_name,
+            "compute_capability": self._compute_capability,
         }
 
     def get_device_info_dict(self) -> dict[str, Any]:
         """Get comprehensive device information (legacy format)."""
         info = {
-            'backend': 'nvidia',
-            'cuda_available': self.is_cuda_available,
-            'device': str(self.device),
-            'device_count': len(self._devices),
+            "backend": "nvidia",
+            "cuda_available": self.is_cuda_available,
+            "device": str(self.device),
+            "device_count": len(self._devices),
         }
 
         if self.is_cuda_available:
-            info.update({
-                'device_name': self._device_name,
-                'compute_capability': self._compute_capability,
-                'architecture': self.nvidia_config.architecture.value,
-                'fp8_supported': self.supports_fp8,
-                'fp8_enabled': self.nvidia_config.fp8_enabled,
-                'tensor_core_version': self.nvidia_config.tensor_core_version,
-                'flash_attention_enabled': self.nvidia_config.flash_attention_enabled,
-                'cuda_version': torch.version.cuda if hasattr(torch.version, 'cuda') else None,
-                'cudnn_version': torch.backends.cudnn.version() if torch.backends.cudnn.is_available() else None,
-            })
+            info.update(
+                {
+                    "device_name": self._device_name,
+                    "compute_capability": self._compute_capability,
+                    "architecture": self.nvidia_config.architecture.value,
+                    "fp8_supported": self.supports_fp8,
+                    "fp8_enabled": self.nvidia_config.fp8_enabled,
+                    "tensor_core_version": self.nvidia_config.tensor_core_version,
+                    "flash_attention_enabled": self.nvidia_config.flash_attention_enabled,
+                    "cuda_version": torch.version.cuda
+                    if hasattr(torch.version, "cuda")
+                    else None,
+                    "cudnn_version": torch.backends.cudnn.version()
+                    if torch.backends.cudnn.is_available()
+                    else None,
+                }
+            )
 
         return info
 
@@ -445,10 +463,11 @@ class NVIDIABackend(BaseBackend):
             if self.is_cuda_available:
                 torch.cuda.set_device(device_id)
         else:
-            warnings.warn(f"Device {device_id} not available, using default device", stacklevel=2)
+            warnings.warn(
+                f"Device {device_id} not available, using default device", stacklevel=2
+            )
 
     def reset_peak_memory_stats(self) -> None:
         """Reset peak memory statistics."""
         if self.is_cuda_available:
             torch.cuda.reset_peak_memory_stats()
-

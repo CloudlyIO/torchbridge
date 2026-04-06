@@ -28,44 +28,52 @@ logger = logging.getLogger(__name__)
 # Configuration Classes
 # ============================================================================
 
+
 class GCPMachineType(Enum):
     """Supported GCP machine types for testing."""
+
     # NVIDIA A3 (H100)
-    A3_HIGHGPU_8G = "a3-highgpu-8g"    # 8x H100 80GB
+    A3_HIGHGPU_8G = "a3-highgpu-8g"  # 8x H100 80GB
 
     # NVIDIA A2 (A100)
-    A2_HIGHGPU_1G = "a2-highgpu-1g"    # 1x A100 40GB
-    A2_HIGHGPU_2G = "a2-highgpu-2g"    # 2x A100 40GB
-    A2_HIGHGPU_4G = "a2-highgpu-4g"    # 4x A100 40GB
-    A2_HIGHGPU_8G = "a2-highgpu-8g"    # 8x A100 40GB
+    A2_HIGHGPU_1G = "a2-highgpu-1g"  # 1x A100 40GB
+    A2_HIGHGPU_2G = "a2-highgpu-2g"  # 2x A100 40GB
+    A2_HIGHGPU_4G = "a2-highgpu-4g"  # 4x A100 40GB
+    A2_HIGHGPU_8G = "a2-highgpu-8g"  # 8x A100 40GB
     A2_ULTRAGPU_1G = "a2-ultragpu-1g"  # 1x A100 80GB
     A2_ULTRAGPU_8G = "a2-ultragpu-8g"  # 8x A100 80GB
 
     # L4 (Ada Lovelace)
-    G2_STANDARD_4 = "g2-standard-4"     # 1x L4 24GB
-    G2_STANDARD_24 = "g2-standard-24"   # 2x L4 24GB
+    G2_STANDARD_4 = "g2-standard-4"  # 1x L4 24GB
+    G2_STANDARD_24 = "g2-standard-24"  # 2x L4 24GB
 
     # CPU (fallback)
-    N2_STANDARD_32 = "n2-standard-32"   # 32 vCPU, 128GB RAM
+    N2_STANDARD_32 = "n2-standard-32"  # 32 vCPU, 128GB RAM
+
 
 class TPUType(Enum):
     """Supported TPU types."""
-    V5E_1 = "v5litepod-1"      # 1 chip
-    V5E_4 = "v5litepod-4"      # 4 chips
-    V5E_8 = "v5litepod-8"      # 8 chips
-    V5E_16 = "v5litepod-16"    # 16 chips
-    V5P_8 = "v5p-8"            # 8 chips (v5p)
-    V6E_1 = "v6e-1"            # 1 chip (when available)
+
+    V5E_1 = "v5litepod-1"  # 1 chip
+    V5E_4 = "v5litepod-4"  # 4 chips
+    V5E_8 = "v5litepod-8"  # 8 chips
+    V5E_16 = "v5litepod-16"  # 16 chips
+    V5P_8 = "v5p-8"  # 8 chips (v5p)
+    V6E_1 = "v6e-1"  # 1 chip (when available)
+
 
 class GCPRegion(Enum):
     """GCP regions with GPU/TPU availability."""
+
     US_CENTRAL1 = "us-central1"
     US_WEST1 = "us-west1"
     US_EAST1 = "us-east1"
     EUROPE_WEST4 = "europe-west4"
 
+
 class GCPZone(Enum):
     """GCP zones (region + zone letter)."""
+
     US_CENTRAL1_A = "us-central1-a"
     US_CENTRAL1_B = "us-central1-b"
     US_CENTRAL1_C = "us-central1-c"
@@ -74,9 +82,11 @@ class GCPZone(Enum):
     US_EAST1_B = "us-east1-b"
     US_EAST1_C = "us-east1-c"
 
+
 @dataclass
 class GCPInstanceConfig:
     """Configuration for a GCP Compute Engine instance."""
+
     machine_type: GCPMachineType
     zone: GCPZone = GCPZone.US_CENTRAL1_A
     project_id: str | None = None  # Auto-detect if None
@@ -99,9 +109,11 @@ class GCPInstanceConfig:
         }
         self.labels = {**default_labels, **self.labels}
 
+
 @dataclass
 class TPUConfig:
     """Configuration for a GCP TPU."""
+
     tpu_type: TPUType
     zone: GCPZone = GCPZone.US_CENTRAL1_A
     project_id: str | None = None
@@ -119,9 +131,11 @@ class TPUConfig:
         }
         self.labels = {**default_labels, **self.labels}
 
+
 @dataclass
 class GCPTestResult:
     """Results from a test run on GCP."""
+
     resource_id: str  # Instance name or TPU name
     resource_type: str  # "compute" or "tpu"
     machine_type: str
@@ -160,9 +174,11 @@ class GCPTestResult:
             "error_message": self.error_message,
         }
 
+
 # ============================================================================
 # GCP Test Harness
 # ============================================================================
+
 
 class GCPTestHarness:
     """
@@ -229,9 +245,12 @@ class GCPTestHarness:
         """Check if google-cloud libraries are available."""
         try:
             from google.cloud import compute_v1  # noqa: F401
+
             return True
         except ImportError:
-            logger.warning("google-cloud-compute not installed. GCP operations will be simulated.")
+            logger.warning(
+                "google-cloud-compute not installed. GCP operations will be simulated."
+            )
             return False
 
     def launch_instance(self) -> str:
@@ -242,7 +261,9 @@ class GCPTestHarness:
             Instance name
         """
         self.instance_name = f"tb-test-{int(time.time())}"
-        logger.info(f"Launching {self.config.machine_type.value} as {self.instance_name}")
+        logger.info(
+            f"Launching {self.config.machine_type.value} as {self.instance_name}"
+        )
 
         if not self._google_cloud_available:
             # Simulate for testing without GCP credentials
@@ -388,6 +409,7 @@ class GCPTestHarness:
         for line in output.split("\n"):
             if "passed" in line or "failed" in line or "skipped" in line:
                 import re
+
                 match = re.search(r"(\d+) passed", line)
                 if match:
                     passed = int(match.group(1))
@@ -415,9 +437,11 @@ class GCPTestHarness:
             "cpu_utilization_avg": 0.0,
         }
 
+
 # ============================================================================
 # TPU Test Harness
 # ============================================================================
+
 
 class TPUTestHarness:
     """
@@ -450,9 +474,12 @@ class TPUTestHarness:
         """Check if TPU API is available."""
         try:
             from google.cloud import tpu_v2  # noqa: F401
+
             return True
         except ImportError:
-            logger.warning("google-cloud-tpu not installed. TPU operations will be simulated.")
+            logger.warning(
+                "google-cloud-tpu not installed. TPU operations will be simulated."
+            )
             return False
 
     def create_tpu(self) -> str:
@@ -545,9 +572,11 @@ class TPUTestHarness:
             if self.tpu_name and self.config.preemptible:
                 self.delete_tpu()
 
+
 # ============================================================================
 # Factory Functions
 # ============================================================================
+
 
 def create_gcp_harness(
     machine_type: str = "a2-highgpu-1g",

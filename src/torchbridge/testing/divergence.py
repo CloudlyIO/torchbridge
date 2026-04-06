@@ -55,6 +55,7 @@ class LayerDivergence:
 @dataclass
 class _LayerCapture:
     """Internal: captures activations for one named module."""
+
     name: str
     outputs: list[torch.Tensor] = field(default_factory=list)
 
@@ -96,7 +97,9 @@ class DivergenceTracer:
             capture = _LayerCapture(name=name)
             self._captures[name] = capture
 
-            def _hook(mod: nn.Module, inp: Any, out: Any, cap: _LayerCapture = capture) -> None:
+            def _hook(
+                mod: nn.Module, inp: Any, out: Any, cap: _LayerCapture = capture
+            ) -> None:
                 if isinstance(out, torch.Tensor):
                     cap.outputs.append(out.detach().cpu().float())
 
@@ -149,19 +152,23 @@ class DivergenceTracer:
                 diff = torch.abs(test_out - ref_out)
                 max_diff = float(diff.max())
                 mean_diff = float(diff.mean())
-                cos_sim = float(F.cosine_similarity(
-                    test_out.flatten().unsqueeze(0),
-                    ref_out.flatten().unsqueeze(0),
-                ))
-                results.append(LayerDivergence(
-                    layer_name=name,
-                    max_diff=max_diff,
-                    mean_diff=mean_diff,
-                    cosine_sim=cos_sim,
-                    output_shape=tuple(test_out.shape),
-                    backend=str(self._device),
-                    dtype=str(test_out.dtype).replace("torch.", ""),
-                ))
+                cos_sim = float(
+                    F.cosine_similarity(
+                        test_out.flatten().unsqueeze(0),
+                        ref_out.flatten().unsqueeze(0),
+                    )
+                )
+                results.append(
+                    LayerDivergence(
+                        layer_name=name,
+                        max_diff=max_diff,
+                        mean_diff=mean_diff,
+                        cosine_sim=cos_sim,
+                        output_shape=tuple(test_out.shape),
+                        backend=str(self._device),
+                        dtype=str(test_out.dtype).replace("torch.", ""),
+                    )
+                )
             except Exception as e:
                 logger.debug("Could not compare layer %s: %s", name, e)
 
@@ -194,12 +201,14 @@ class DivergenceTracer:
             diff = torch.abs(a - b)
             max_diff = float(diff.max())
             if max_diff > atol:
-                results.append(LayerDivergence(
-                    layer_name=name,
-                    max_diff=max_diff,
-                    mean_diff=float(diff.mean()),
-                    cosine_sim=0.0,
-                    output_shape=tuple(a.shape),
-                ))
+                results.append(
+                    LayerDivergence(
+                        layer_name=name,
+                        max_diff=max_diff,
+                        mean_diff=float(diff.mean()),
+                        cosine_sim=0.0,
+                        output_shape=tuple(a.shape),
+                    )
+                )
         results.sort(key=lambda r: r.max_diff, reverse=True)
         return results

@@ -29,9 +29,7 @@ class TestBenchmarkCacheIntegration:
     def test_cache_persistence(self, tmp_path):
         """Cache survives re-instantiation."""
         cache1 = KernelBenchmarkCache(cache_dir=str(tmp_path))
-        cache1.run_benchmark(
-            AttentionKernelType.PYTORCH_SDPA, 64, 4, 16
-        )
+        cache1.run_benchmark(AttentionKernelType.PYTORCH_SDPA, 64, 4, 16)
 
         cache2 = KernelBenchmarkCache(cache_dir=str(tmp_path))
         _key = f"{AttentionKernelType.PYTORCH_SDPA.value}_64_4_16"

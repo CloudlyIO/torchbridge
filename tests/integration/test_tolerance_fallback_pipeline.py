@@ -39,11 +39,11 @@ def _make_args(**kwargs) -> argparse.Namespace:
 
 # ── Fallback annotation in human output ─────────────────────────────────────
 
+
 class TestFallbackAnnotationInHumanOutput:
     def _fallback_entry(self) -> ToleranceEntry:
         return ToleranceEntry(
-            atol=1e-3, rtol=1e-3, source="fallback",
-            notes="test: unknown backend"
+            atol=1e-3, rtol=1e-3, source="fallback", notes="test: unknown backend"
         )
 
     def test_fallback_annotation_appears_in_human_output(self, capsys):
@@ -79,8 +79,11 @@ class TestFallbackAnnotationInHumanOutput:
     def test_fallback_warning_logged(self, caplog):
         """Unknown backend must log a WARNING via tolerance_db logger."""
         import logging
+
         db = ToleranceDB()
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.tolerance_db"):
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.tolerance_db"
+        ):
             tol = db.get("unknown_custom_accel", "float32")
         assert tol.source == "fallback"
         assert any("unknown_custom_accel" in msg for msg in caplog.messages)
@@ -88,12 +91,15 @@ class TestFallbackAnnotationInHumanOutput:
 
 # ── Custom tolerance flows through CLI ───────────────────────────────────────
 
+
 class TestCustomTolerancePipeline:
     def test_custom_tight_tolerance_causes_fail(self, capsys):
         """Registering atol=1e-15 must cause CPU-vs-CPU to FAIL (tiny numerical noise)."""
         # CPU vs CPU on non-trivial model can have floating point differences
         # With atol=0.0 strictly, any difference fails. Use 1e-15 for robustness.
-        tight_entry = ToleranceEntry(atol=0.0, rtol=0.0, source="measured", notes="strict")
+        tight_entry = ToleranceEntry(
+            atol=0.0, rtol=0.0, source="measured", notes="strict"
+        )
         with patch(
             "torchbridge.testing.tolerance_db.ToleranceDB.get",
             return_value=tight_entry,
@@ -116,8 +122,13 @@ class TestCustomTolerancePipeline:
         """register_family() value must be retrievable via get() with model_family arg."""
         db = ToleranceDB()
         db.register_family(
-            "decoder-small", "custom_hw", "float16",
-            atol=2e-3, rtol=5e-4, source="measured", notes="integration-test"
+            "decoder-small",
+            "custom_hw",
+            "float16",
+            atol=2e-3,
+            rtol=5e-4,
+            source="measured",
+            notes="integration-test",
         )
         tol = db.get("custom_hw", "float16", model_family="decoder-small")
         assert tol.atol == 2e-3
@@ -127,6 +138,7 @@ class TestCustomTolerancePipeline:
 
 # ── Bounds validation does not corrupt table state ────────────────────────────
 
+
 class TestToleranceBoundsInPipeline:
     def test_negative_atol_does_not_corrupt_table(self):
         """After a failed register() call, the table must remain consistent."""
@@ -134,6 +146,7 @@ class TestToleranceBoundsInPipeline:
         original_tol = db.get("cuda", "float32")
 
         import pytest
+
         with pytest.raises(ValueError):
             db.register("cuda", "float32", atol=-0.5, rtol=0.0)
 
@@ -148,10 +161,15 @@ class TestToleranceBoundsInPipeline:
         original_tol = db.get("cuda", "float32", model_family="decoder-small")
 
         import pytest
+
         with pytest.raises(ValueError):
             db.register_family(
-                "decoder-small", "cuda", "float32",
-                atol=1e-4, rtol=-1e-6, source="measured"
+                "decoder-small",
+                "cuda",
+                "float32",
+                atol=1e-4,
+                rtol=-1e-6,
+                source="measured",
             )
 
         after_tol = db.get("cuda", "float32", model_family="decoder-small")

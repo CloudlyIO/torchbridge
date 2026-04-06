@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class PrecisionFormat(Enum):
     """Supported precision formats."""
+
     FP32 = "fp32"
     FP16 = "fp16"
     BF16 = "bf16"
@@ -36,6 +37,7 @@ class OptimizationLevel(Enum):
     O2: Balanced optimizations (performance + stability)
     O3: Aggressive optimizations (maximum performance)
     """
+
     O0 = "O0"
     O1 = "O1"
     O2 = "O2"
@@ -58,8 +60,6 @@ class OptimizationLevel(Enum):
         Returns:
             OptimizationLevel enum value
         """
-        import logging
-        _logger = logging.getLogger(__name__)
         level_upper = level.upper()
 
         if level_upper in ("O0", "DEBUG"):
@@ -71,12 +71,15 @@ class OptimizationLevel(Enum):
         elif level_upper in ("O3", "AGGRESSIVE"):
             return cls.O3
         else:
-            _logger.warning(f"Unknown optimization level '{level}', defaulting to O2 (balanced)")
+            logger.warning(
+                f"Unknown optimization level '{level}', defaulting to O2 (balanced)"
+            )
             return cls.O2
 
 
 class HardwareBackend(Enum):
     """Supported hardware backends."""
+
     CUDA = "cuda"
     CPU = "cpu"
     TPU = "tpu"
@@ -87,78 +90,86 @@ class HardwareBackend(Enum):
 
 class NVIDIAArchitecture(Enum):
     """NVIDIA GPU architectures."""
+
     AUTO = "auto"
-    PASCAL = "pascal"     # GTX 1000 series
-    VOLTA = "volta"       # V100
-    TURING = "turing"     # RTX 2000 series
-    AMPERE = "ampere"     # RTX 3000/A100
-    ADA = "ada"           # RTX 4000 series
-    HOPPER = "hopper"     # H100/H200
-    BLACKWELL_DC = "blackwell_dc"           # B100/B200/GB200 (sm_100, cc 10.0)
-    BLACKWELL_CONSUMER = "blackwell_consumer"   # RTX 5090/5080 (sm_120, cc 12.0)
+    PASCAL = "pascal"  # GTX 1000 series
+    VOLTA = "volta"  # V100
+    TURING = "turing"  # RTX 2000 series
+    AMPERE = "ampere"  # RTX 3000/A100
+    ADA = "ada"  # RTX 4000 series
+    HOPPER = "hopper"  # H100/H200
+    BLACKWELL_DC = "blackwell_dc"  # B100/B200/GB200 (sm_100, cc 10.0)
+    BLACKWELL_CONSUMER = "blackwell_consumer"  # RTX 5090/5080 (sm_120, cc 12.0)
 
 
 class TPUVersion(Enum):
     """TPU hardware versions."""
+
     AUTO = "auto"
-    V4 = "v4"            # TPU v4
-    V5E = "v5e"          # TPU v5e (cost-optimized)
-    V5P = "v5p"          # TPU v5p (performance-optimized)
-    V6E = "v6e"          # TPU v6e (next-gen cost-optimized)
-    V7 = "v7"            # TPU v7 (future)
+    V4 = "v4"  # TPU v4
+    V5E = "v5e"  # TPU v5e (cost-optimized)
+    V5P = "v5p"  # TPU v5p (performance-optimized)
+    V6E = "v6e"  # TPU v6e (next-gen cost-optimized)
+    V7 = "v7"  # TPU v7 (future)
 
 
 class TPUTopology(Enum):
     """TPU deployment topologies."""
+
     AUTO = "auto"
-    SINGLE = "single"    # Single TPU chip
-    POD = "pod"          # TPU Pod (multiple chips)
+    SINGLE = "single"  # Single TPU chip
+    POD = "pod"  # TPU Pod (multiple chips)
     SUPERPOD = "superpod"  # TPU Superpod (massive scale)
 
 
 class TPUCompilationMode(Enum):
     """TPU compilation modes."""
-    XLA = "xla"          # Standard XLA compilation
-    PJIT = "pjit"        # JAX pjit compilation
+
+    XLA = "xla"  # Standard XLA compilation
+    PJIT = "pjit"  # JAX pjit compilation
     TORCH_XLA = "torch_xla"  # PyTorch/XLA compilation
 
 
 class AMDArchitecture(Enum):
     """AMD GPU architectures."""
+
     AUTO = "auto"
-    CDNA = "cdna"        # MI50, MI60 (1st gen)
-    CDNA2 = "cdna2"      # MI200 series (MI210, MI250, MI250X)
-    CDNA3 = "cdna3"      # MI300 series (MI300A, MI300X, MI325X)
-    CDNA4 = "cdna4"      # MI350X, MI355X (gfx950)
-    RDNA2 = "rdna2"      # Consumer GPUs (RX 6000 series)
-    RDNA3 = "rdna3"      # Consumer GPUs (RX 7000 series)
+    CDNA = "cdna"  # MI50, MI60 (1st gen)
+    CDNA2 = "cdna2"  # MI200 series (MI210, MI250, MI250X)
+    CDNA3 = "cdna3"  # MI300 series (MI300A, MI300X, MI325X)
+    CDNA4 = "cdna4"  # MI350X, MI355X (gfx950)
+    RDNA2 = "rdna2"  # Consumer GPUs (RX 6000 series)
+    RDNA3 = "rdna3"  # Consumer GPUs (RX 7000 series)
 
 
 class TrainiumArchitecture(Enum):
     """AWS Trainium chip generations."""
+
     AUTO = "auto"
-    TRN1 = "trn1"        # Trainium1, NeuronCore v1, 32GB HBM
-    TRN2 = "trn2"        # Trainium2, NeuronCore v3, 96GB HBM
-    TRN3 = "trn3"        # Trainium3, NeuronCore v4, 144GB HBM3e
-    INF2 = "inf2"        # Inferentia2 (inference-optimized)
+    TRN1 = "trn1"  # Trainium1, NeuronCore v1, 32GB HBM
+    TRN2 = "trn2"  # Trainium2, NeuronCore v3, 96GB HBM
+    TRN3 = "trn3"  # Trainium3, NeuronCore v4, 144GB HBM3e
+    INF2 = "inf2"  # Inferentia2 (inference-optimized)
 
 
 class AttentionPatterns(Enum):
     """Supported attention patterns - from attention module."""
-    FULL = "full"                           # Standard full attention
-    CAUSAL = "causal"                       # Causal/autoregressive attention
-    SLIDING_WINDOW = "sliding_window"       # Local sliding window
-    SPARSE = "sparse"                       # Sparse attention patterns
-    RING = "ring"                           # Ring attention for long sequences
-    LOCAL = "local"                         # Local attention (fixed window)
-    GLOBAL = "global"                       # Global + local attention
-    DIFFERENTIAL = "differential"           # Differential attention
-    DYNAMIC_SPARSE = "dynamic_sparse"       # Dynamic sparse attention
+
+    FULL = "full"  # Standard full attention
+    CAUSAL = "causal"  # Causal/autoregressive attention
+    SLIDING_WINDOW = "sliding_window"  # Local sliding window
+    SPARSE = "sparse"  # Sparse attention patterns
+    RING = "ring"  # Ring attention for long sequences
+    LOCAL = "local"  # Local attention (fixed window)
+    GLOBAL = "global"  # Global + local attention
+    DIFFERENTIAL = "differential"  # Differential attention
+    DYNAMIC_SPARSE = "dynamic_sparse"  # Dynamic sparse attention
 
 
 @dataclass
 class FP8AttentionConfig:
     """Enhanced FP8 configuration for attention mechanisms."""
+
     use_fp8: bool = False
     fp8_format: str = "e4m3"  # "e4m3" or "e5m2"
     async_compute: bool = True
@@ -174,6 +185,7 @@ class FP8AttentionConfig:
 @dataclass
 class DynamicSparseConfig:
     """Configuration for dynamic sparse attention."""
+
     sparsity_threshold: float = 0.1
     adaptive_threshold: bool = True
     content_aware: bool = True
@@ -184,20 +196,27 @@ class DynamicSparseConfig:
 
     def __post_init__(self):
         if not 0.0 <= self.sparsity_threshold <= 1.0:
-            raise ValueError(f"sparsity_threshold must be in [0, 1], got {self.sparsity_threshold}")
+            raise ValueError(
+                f"sparsity_threshold must be in [0, 1], got {self.sparsity_threshold}"
+            )
         if not 0.0 <= self.efficiency_target <= 1.0:
-            raise ValueError(f"efficiency_target must be in [0, 1], got {self.efficiency_target}")
+            raise ValueError(
+                f"efficiency_target must be in [0, 1], got {self.efficiency_target}"
+            )
         if not 0.0 <= self.min_sparsity <= 1.0:
             raise ValueError(f"min_sparsity must be in [0, 1], got {self.min_sparsity}")
         if not 0.0 <= self.max_sparsity <= 1.0:
             raise ValueError(f"max_sparsity must be in [0, 1], got {self.max_sparsity}")
         if self.min_sparsity > self.max_sparsity:
-            raise ValueError(f"min_sparsity ({self.min_sparsity}) must be <= max_sparsity ({self.max_sparsity})")
+            raise ValueError(
+                f"min_sparsity ({self.min_sparsity}) must be <= max_sparsity ({self.max_sparsity})"
+            )
 
 
 @dataclass
 class RingAttentionConfig:
     """Configuration for ring attention."""
+
     segment_size: int = 2048
     communication_backend: str = "nccl"  # "nccl", "gloo", "mpi"
     overlap_communication: bool = True
@@ -208,6 +227,7 @@ class RingAttentionConfig:
 @dataclass
 class PrecisionConfig:
     """Unified precision configuration."""
+
     default_format: PrecisionFormat = PrecisionFormat.FP32
     adaptive_allocation: bool = True
     entropy_threshold: float = 0.5
@@ -225,20 +245,29 @@ class PrecisionConfig:
 
     def __post_init__(self):
         if not 0.0 <= self.entropy_threshold <= 1.0:
-            raise ValueError(f"entropy_threshold must be in [0, 1], got {self.entropy_threshold}")
+            raise ValueError(
+                f"entropy_threshold must be in [0, 1], got {self.entropy_threshold}"
+            )
         if not 0.0 <= self.memory_budget <= 1.0:
-            raise ValueError(f"memory_budget must be in [0, 1], got {self.memory_budget}")
+            raise ValueError(
+                f"memory_budget must be in [0, 1], got {self.memory_budget}"
+            )
         if not 0.0 <= self.quality_target <= 1.0:
-            raise ValueError(f"quality_target must be in [0, 1], got {self.quality_target}")
+            raise ValueError(
+                f"quality_target must be in [0, 1], got {self.quality_target}"
+            )
         if self.fp8_interval < 1:
             raise ValueError(f"fp8_interval must be >= 1, got {self.fp8_interval}")
         if self.calibration_samples < 1:
-            raise ValueError(f"calibration_samples must be >= 1, got {self.calibration_samples}")
+            raise ValueError(
+                f"calibration_samples must be >= 1, got {self.calibration_samples}"
+            )
 
 
 @dataclass
 class MemoryConfig:
     """Unified memory optimization configuration."""
+
     deep_optimizer_states: bool = True
     gradient_checkpointing: bool = False
     memory_pool_enabled: bool = True
@@ -255,18 +284,27 @@ class MemoryConfig:
 
     def __post_init__(self):
         if not 0.0 <= self.memory_fraction <= 1.0:
-            raise ValueError(f"memory_fraction must be in [0, 1], got {self.memory_fraction}")
+            raise ValueError(
+                f"memory_fraction must be in [0, 1], got {self.memory_fraction}"
+            )
         if not 0.0 <= self.fragmentation_threshold <= 1.0:
-            raise ValueError(f"fragmentation_threshold must be in [0, 1], got {self.fragmentation_threshold}")
+            raise ValueError(
+                f"fragmentation_threshold must be in [0, 1], got {self.fragmentation_threshold}"
+            )
         if self.max_memory_gb is not None and self.max_memory_gb <= 0:
-            raise ValueError(f"max_memory_gb must be positive, got {self.max_memory_gb}")
+            raise ValueError(
+                f"max_memory_gb must be positive, got {self.max_memory_gb}"
+            )
         if self.sequence_length_threshold < 1:
-            raise ValueError(f"sequence_length_threshold must be >= 1, got {self.sequence_length_threshold}")
+            raise ValueError(
+                f"sequence_length_threshold must be >= 1, got {self.sequence_length_threshold}"
+            )
 
 
 @dataclass
 class AttentionConfig:
     """Unified attention mechanism configuration."""
+
     mechanism: str = "flash_attention"
     sparse_enabled: bool = False
     sparsity_ratio: float = 0.5
@@ -284,16 +322,23 @@ class AttentionConfig:
 
     def __post_init__(self):
         if not 0.0 <= self.sparsity_ratio <= 1.0:
-            raise ValueError(f"sparsity_ratio must be in [0, 1], got {self.sparsity_ratio}")
+            raise ValueError(
+                f"sparsity_ratio must be in [0, 1], got {self.sparsity_ratio}"
+            )
         if self.max_sequence_length < 1:
-            raise ValueError(f"max_sequence_length must be >= 1, got {self.max_sequence_length}")
+            raise ValueError(
+                f"max_sequence_length must be >= 1, got {self.max_sequence_length}"
+            )
         if self.context_parallel_size < 1:
-            raise ValueError(f"context_parallel_size must be >= 1, got {self.context_parallel_size}")
+            raise ValueError(
+                f"context_parallel_size must be >= 1, got {self.context_parallel_size}"
+            )
 
 
 @dataclass
 class NVIDIAConfig:
     """NVIDIA-specific hardware configuration."""
+
     enabled: bool = True
     architecture: NVIDIAArchitecture = NVIDIAArchitecture.AUTO
 
@@ -329,10 +374,15 @@ class NVIDIAConfig:
             NVIDIAArchitecture.BLACKWELL_CONSUMER,
         ]:
             self.fp8_enabled = True
-            self.tensor_core_version = 5 if self.architecture in [
-                NVIDIAArchitecture.BLACKWELL_DC,
-                NVIDIAArchitecture.BLACKWELL_CONSUMER,
-            ] else 4
+            self.tensor_core_version = (
+                5
+                if self.architecture
+                in [
+                    NVIDIAArchitecture.BLACKWELL_DC,
+                    NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                ]
+                else 4
+            )
         elif self.architecture == NVIDIAArchitecture.AMPERE:
             self.fp8_enabled = False  # A100 doesn't support FP8
             self.tensor_core_version = 3
@@ -391,7 +441,11 @@ class NVIDIAConfig:
             elif device_props.major >= 8:
                 return NVIDIAArchitecture.AMPERE
             elif device_props.major >= 7:
-                return NVIDIAArchitecture.TURING if device_props.minor >= 5 else NVIDIAArchitecture.VOLTA
+                return (
+                    NVIDIAArchitecture.TURING
+                    if device_props.minor >= 5
+                    else NVIDIAArchitecture.VOLTA
+                )
             else:
                 return NVIDIAArchitecture.PASCAL
 
@@ -403,6 +457,7 @@ class NVIDIAConfig:
 @dataclass
 class TPUConfig:
     """TPU-specific hardware configuration."""
+
     enabled: bool = True
     version: TPUVersion = TPUVersion.AUTO
     topology: TPUTopology = TPUTopology.AUTO
@@ -432,12 +487,20 @@ class TPUConfig:
     compilation_timeout_seconds: int = 300  # XLA compilation timeout
 
     # Memory management settings
-    allocation_history_retention_seconds: int = 3600  # Keep allocation history for 1 hour
-    v6e_memory_gb: float | None = None  # Override TPU v6e memory capacity (default: 32.0)
-    v7_memory_gb: float | None = None  # Override TPU v7 memory capacity (default: 128.0)
+    allocation_history_retention_seconds: int = (
+        3600  # Keep allocation history for 1 hour
+    )
+    v6e_memory_gb: float | None = (
+        None  # Override TPU v6e memory capacity (default: 32.0)
+    )
+    v7_memory_gb: float | None = (
+        None  # Override TPU v7 memory capacity (default: 128.0)
+    )
 
     # Validation settings
-    enable_strict_validation: bool = False  # Raise errors instead of warnings for validation failures
+    enable_strict_validation: bool = (
+        False  # Raise errors instead of warnings for validation failures
+    )
 
     # Monitoring settings
     monitoring_interval_seconds: float = 1.0  # Memory monitoring interval
@@ -468,15 +531,16 @@ class TPUConfig:
             if self._is_tpu_environment():
                 # Try to detect TPU version from environment
                 import os
-                tpu_type = os.environ.get('TPU_TYPE', '')
 
-                if 'v5p' in tpu_type.lower():
+                tpu_type = os.environ.get("TPU_TYPE", "")
+
+                if "v5p" in tpu_type.lower():
                     return TPUVersion.V5P
-                elif 'v5e' in tpu_type.lower() or 'v5lite' in tpu_type.lower():
+                elif "v5e" in tpu_type.lower() or "v5lite" in tpu_type.lower():
                     return TPUVersion.V5E
-                elif 'v6e' in tpu_type.lower():
+                elif "v6e" in tpu_type.lower():
                     return TPUVersion.V6E
-                elif 'v4' in tpu_type.lower():
+                elif "v4" in tpu_type.lower():
                     return TPUVersion.V4
                 else:
                     # Default to v5e for unknown types
@@ -521,21 +585,22 @@ class TPUConfig:
             import torch_xla.core.xla_model as xm
 
             # Get device using new API if available
-            if hasattr(torch_xla, 'device'):
+            if hasattr(torch_xla, "device"):
                 device = torch_xla.device()
             else:
                 device = xm.xla_device()
 
-            if device.type != 'xla':
+            if device.type != "xla":
                 return False
 
             # Check device hardware type
-            if hasattr(xm, 'xla_device_hw'):
-                return xm.xla_device_hw(device) == 'TPU'
+            if hasattr(xm, "xla_device_hw"):
+                return xm.xla_device_hw(device) == "TPU"
 
             # Fallback: check environment variable
             import os
-            return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
+
+            return os.environ.get("PJRT_DEVICE", "").upper() == "TPU"
         except Exception:
             logger.debug("TPU environment check failed", exc_info=True)
             return False
@@ -545,20 +610,25 @@ class TPUConfig:
         try:
             # Try new runtime API first (torch_xla 2.9+)
             import torch_xla
-            if hasattr(torch_xla, 'runtime') and hasattr(torch_xla.runtime, 'world_size'):
+
+            if hasattr(torch_xla, "runtime") and hasattr(
+                torch_xla.runtime, "world_size"
+            ):
                 return torch_xla.runtime.world_size()
 
             # Try older runtime API
             try:
                 from torch_xla import runtime as xr
-                if hasattr(xr, 'world_size'):
+
+                if hasattr(xr, "world_size"):
                     return xr.world_size()
             except ImportError:
                 pass
 
             # Fall back to old xm API
             import torch_xla.core.xla_model as xm
-            if hasattr(xm, 'xrt_world_size'):
+
+            if hasattr(xm, "xrt_world_size"):
                 return xm.xrt_world_size()
 
             return 1
@@ -569,13 +639,14 @@ class TPUConfig:
 @dataclass
 class AMDConfig:
     """AMD ROCm-specific hardware configuration."""
+
     enabled: bool = True
     architecture: AMDArchitecture = AMDArchitecture.AUTO
     device_id: int = 0
 
     # ROCm settings
     rocm_version: str = "auto"  # ROCm version (e.g., "5.7", "6.0")
-    hip_version: str = "auto"   # HIP version
+    hip_version: str = "auto"  # HIP version
 
     # Matrix Core settings (AMD's equivalent of Tensor Cores)
     enable_matrix_cores: bool = True
@@ -657,7 +728,8 @@ class AMDConfig:
         try:
             # Try to detect ROCm availability
             import torch
-            if hasattr(torch, 'hip') and torch.hip.is_available():
+
+            if hasattr(torch, "hip") and torch.hip.is_available():
                 device_props = torch.hip.get_device_properties(0)
                 device_name = device_props.name.upper()
 
@@ -697,6 +769,7 @@ class AMDConfig:
 @dataclass
 class TrainiumConfig:
     """AWS Trainium-specific configuration."""
+
     enabled: bool = True
     architecture: TrainiumArchitecture = TrainiumArchitecture.AUTO
     device_id: int = 0
@@ -707,11 +780,11 @@ class TrainiumConfig:
     enable_graph_caching: bool = True
 
     # Precision
-    precision: str = "bfloat16"    # bf16 is Trainium's native precision
+    precision: str = "bfloat16"  # bf16 is Trainium's native precision
     mixed_precision: bool = True
-    enable_cfp8: bool = False      # Configurable FP8 (Trn1+)
-    enable_mxfp8: bool = False     # Microscaling FP8 (Trn2+)
-    enable_mxfp4: bool = False     # Microscaling FP4 (Trn3 only)
+    enable_cfp8: bool = False  # Configurable FP8 (Trn1+)
+    enable_mxfp8: bool = False  # Microscaling FP8 (Trn2+)
+    enable_mxfp4: bool = False  # Microscaling FP4 (Trn3 only)
 
     # Memory
     memory_fraction: float = 0.90
@@ -746,7 +819,10 @@ class TrainiumConfig:
         elif self.architecture == TrainiumArchitecture.TRN2:
             # Trn2 supports MXFP8 but not MXFP4
             self.enable_mxfp4 = False
-        elif self.architecture in (TrainiumArchitecture.TRN1, TrainiumArchitecture.INF2):
+        elif self.architecture in (
+            TrainiumArchitecture.TRN1,
+            TrainiumArchitecture.INF2,
+        ):
             # Trn1/Inf2 support cFP8 only
             self.enable_mxfp8 = False
             self.enable_mxfp4 = False
@@ -779,6 +855,7 @@ class TrainiumConfig:
 @dataclass
 class HardwareConfig:
     """Unified hardware optimization configuration."""
+
     backend: HardwareBackend = HardwareBackend.CUDA
     device_id: int | None = None
     multi_gpu: bool = False
@@ -836,8 +913,10 @@ class HardwareConfig:
         if self.backend == HardwareBackend.TRAINIUM:
             self.trainium.enabled = True
             # Disable incompatible settings for Trainium
-            self.tensor_cores_enabled = False  # Trainium uses NeuronCores, not Tensor Cores
-            self.triton_enabled = False        # Triton is CUDA-specific
+            self.tensor_cores_enabled = (
+                False  # Trainium uses NeuronCores, not Tensor Cores
+            )
+            self.triton_enabled = False  # Triton is CUDA-specific
         else:
             self.trainium.enabled = False
 
@@ -846,7 +925,7 @@ class HardwareConfig:
             self.tpu.enabled = True
             # Disable incompatible settings for TPU
             self.tensor_cores_enabled = False  # TPU doesn't use Tensor Cores
-            self.triton_enabled = False        # Triton is CUDA-specific
+            self.triton_enabled = False  # Triton is CUDA-specific
         else:
             self.tpu.enabled = False
 
@@ -854,7 +933,8 @@ class HardwareConfig:
         """Check if AMD ROCm is available."""
         try:
             import torch
-            if hasattr(torch, 'hip') and torch.hip.is_available():
+
+            if hasattr(torch, "hip") and torch.hip.is_available():
                 return True
         except Exception:
             logger.debug("AMD ROCm detection failed", exc_info=True)
@@ -865,11 +945,12 @@ class HardwareConfig:
         """Check if running on AWS Trainium/Inferentia2."""
         try:
             import torch_neuronx  # noqa: F401
+
             # Trainium uses XLA under the hood but is not a TPU
-            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
-            if pjrt == 'NEURON':
+            pjrt = os.environ.get("PJRT_DEVICE", "").upper()
+            if pjrt == "NEURON":
                 return True
-            if os.environ.get('NEURON_RT_VISIBLE_CORES'):
+            if os.environ.get("NEURON_RT_VISIBLE_CORES"):
                 return True
             return False
         except ImportError:
@@ -882,21 +963,22 @@ class HardwareConfig:
             import torch_xla.core.xla_model as xm
 
             # Get device using new API if available
-            if hasattr(torch_xla, 'device'):
+            if hasattr(torch_xla, "device"):
                 device = torch_xla.device()
             else:
                 device = xm.xla_device()
 
-            if device.type != 'xla':
+            if device.type != "xla":
                 return False
 
             # Check device hardware type
-            if hasattr(xm, 'xla_device_hw'):
-                return xm.xla_device_hw(device) == 'TPU'
+            if hasattr(xm, "xla_device_hw"):
+                return xm.xla_device_hw(device) == "TPU"
 
             # Fallback: check environment variable
             import os
-            return os.environ.get('PJRT_DEVICE', '').upper() == 'TPU'
+
+            return os.environ.get("PJRT_DEVICE", "").upper() == "TPU"
         except Exception:
             logger.debug("TPU environment detection failed", exc_info=True)
             return False
@@ -905,6 +987,7 @@ class HardwareConfig:
 @dataclass
 class QuantizationConfig:
     """Backend-aware quantization configuration."""
+
     enabled: bool = False
     strategy: str = "auto"  # "auto" or explicit format name
     format: str = "auto"  # QuantizationFormat value or "auto"
@@ -927,6 +1010,7 @@ class QuantizationConfig:
 @dataclass
 class DistributedConfig:
     """Unified distributed training configuration."""
+
     enabled: bool = False
     backend: str = "nccl"
     world_size: int = 1
@@ -945,6 +1029,7 @@ class DistributedConfig:
 @dataclass
 class ValidationConfig:
     """Unified validation and testing configuration."""
+
     enabled: bool = True
     strict_mode: bool = False
     performance_tracking: bool = True
@@ -960,15 +1045,25 @@ class ValidationConfig:
 
     def __post_init__(self):
         if not 0.0 <= self.accuracy_threshold <= 1.0:
-            raise ValueError(f"accuracy_threshold must be in [0, 1], got {self.accuracy_threshold}")
+            raise ValueError(
+                f"accuracy_threshold must be in [0, 1], got {self.accuracy_threshold}"
+            )
         if not 0.0 <= self.performance_threshold <= 1.0:
-            raise ValueError(f"performance_threshold must be in [0, 1], got {self.performance_threshold}")
+            raise ValueError(
+                f"performance_threshold must be in [0, 1], got {self.performance_threshold}"
+            )
         if self.memory_threshold_gb <= 0:
-            raise ValueError(f"memory_threshold_gb must be positive, got {self.memory_threshold_gb}")
+            raise ValueError(
+                f"memory_threshold_gb must be positive, got {self.memory_threshold_gb}"
+            )
         if self.benchmark_iterations < 1:
-            raise ValueError(f"benchmark_iterations must be >= 1, got {self.benchmark_iterations}")
+            raise ValueError(
+                f"benchmark_iterations must be >= 1, got {self.benchmark_iterations}"
+            )
         if self.warmup_iterations < 0:
-            raise ValueError(f"warmup_iterations must be >= 0, got {self.warmup_iterations}")
+            raise ValueError(
+                f"warmup_iterations must be >= 0, got {self.warmup_iterations}"
+            )
 
 
 @dataclass
@@ -991,7 +1086,7 @@ class KernelConfig:
     # FlashAttention settings
     flash_attention_enabled: bool = True
     flash_attention_version: str = "auto"  # "2", "3", or "auto"
-    flash_attention_split_k: bool = True   # Enable Split-K for long sequences
+    flash_attention_split_k: bool = True  # Enable Split-K for long sequences
     flash_attention_causal_default: bool = False
 
     # Fused Linear + Activation settings
@@ -1064,7 +1159,10 @@ class KernelConfig:
 
         except Exception:
             # If anything fails, use safe defaults
-            logger.debug("Kernel config auto-detection failed, using safe defaults", exc_info=True)
+            logger.debug(
+                "Kernel config auto-detection failed, using safe defaults",
+                exc_info=True,
+            )
             self.flash_attention_version = "2"
             self.fp8_layernorm = False
             self.fp8_attention = False
@@ -1094,7 +1192,9 @@ class TorchBridgeConfig:
     quantization: QuantizationConfig = field(default_factory=QuantizationConfig)
 
     # Global settings
-    device: torch.device = field(default_factory=lambda: TorchBridgeConfig._detect_device())
+    device: torch.device = field(
+        default_factory=lambda: TorchBridgeConfig._detect_device()
+    )
     seed: int = 42
     debug: bool = False
     profile: bool = False
@@ -1113,12 +1213,15 @@ class TorchBridgeConfig:
         # Try Trainium (before TPU — both use XLA)
         try:
             import torch_neuronx  # noqa: F401
-            pjrt = os.environ.get('PJRT_DEVICE', '').upper()
-            if pjrt == 'NEURON' or os.environ.get('NEURON_RT_VISIBLE_CORES'):
+
+            pjrt = os.environ.get("PJRT_DEVICE", "").upper()
+            if pjrt == "NEURON" or os.environ.get("NEURON_RT_VISIBLE_CORES"):
                 import torch_xla
-                if hasattr(torch_xla, 'device'):
+
+                if hasattr(torch_xla, "device"):
                     return torch_xla.device()
                 import torch_xla.core.xla_model as xm
+
                 return xm.xla_device()
         except ImportError:
             pass
@@ -1132,15 +1235,15 @@ class TorchBridgeConfig:
             import torch_xla.core.xla_model as xm
 
             # Get device using new API if available
-            if hasattr(torch_xla, 'device'):
+            if hasattr(torch_xla, "device"):
                 device = torch_xla.device()
             else:
                 device = xm.xla_device()
 
-            if device.type == 'xla':
+            if device.type == "xla":
                 # Check if it's actually a TPU
-                if hasattr(xm, 'xla_device_hw'):
-                    if xm.xla_device_hw(device) == 'TPU':
+                if hasattr(xm, "xla_device_hw"):
+                    if xm.xla_device_hw(device) == "TPU":
                         return device
                 else:
                     # Assume it's a TPU if we got an XLA device
@@ -1159,9 +1262,11 @@ class TorchBridgeConfig:
         # Sync hardware backend with detected device
         if self.device.type == "cuda":
             self.hardware.backend = HardwareBackend.CUDA
-        elif str(self.device).startswith('xla'):
+        elif str(self.device).startswith("xla"):
             # Distinguish Trainium from TPU — both use XLA
-            if os.environ.get('PJRT_DEVICE', '').upper() == 'NEURON' or os.environ.get('NEURON_RT_VISIBLE_CORES'):
+            if os.environ.get("PJRT_DEVICE", "").upper() == "NEURON" or os.environ.get(
+                "NEURON_RT_VISIBLE_CORES"
+            ):
                 self.hardware.backend = HardwareBackend.TRAINIUM
             else:
                 self.hardware.backend = HardwareBackend.TPU
@@ -1172,21 +1277,23 @@ class TorchBridgeConfig:
         if self.device.type == "cpu":
             self.hardware.tensor_cores_enabled = False
             self.precision.fp8_enabled = False
-        elif str(self.device).startswith('xla'):  # TPU or Trainium
+        elif str(self.device).startswith("xla"):  # TPU or Trainium
             self.hardware.tensor_cores_enabled = False  # Neither uses Tensor Cores
-            self.precision.fp8_enabled = False          # Both use bfloat16 primarily
-            self.hardware.triton_enabled = False        # Triton is CUDA-specific
+            self.precision.fp8_enabled = False  # Both use bfloat16 primarily
+            self.hardware.triton_enabled = False  # Triton is CUDA-specific
 
         # Validate memory settings
         if self.memory.max_memory_gb is None:
             if self.device.type == "cuda":
-                self.memory.max_memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-            elif str(self.device).startswith('xla'):  # TPU
+                self.memory.max_memory_gb = torch.cuda.get_device_properties(
+                    0
+                ).total_memory / (1024**3)
+            elif str(self.device).startswith("xla"):  # TPU
                 # TPU memory varies by type, use reasonable default
                 self.memory.max_memory_gb = 32.0  # Default for v5e
 
     @classmethod
-    def for_inference(cls) -> 'TorchBridgeConfig':
+    def for_inference(cls) -> "TorchBridgeConfig":
         """Create optimized configuration for inference."""
         config = cls()
         config.memory.gradient_checkpointing = False
@@ -1196,7 +1303,7 @@ class TorchBridgeConfig:
         return config
 
     @classmethod
-    def for_training(cls) -> 'TorchBridgeConfig':
+    def for_training(cls) -> "TorchBridgeConfig":
         """Create optimized configuration for training."""
         config = cls()
         config.memory.gradient_checkpointing = True
@@ -1206,7 +1313,7 @@ class TorchBridgeConfig:
         return config
 
     @classmethod
-    def for_development(cls) -> 'TorchBridgeConfig':
+    def for_development(cls) -> "TorchBridgeConfig":
         """Create configuration for development with debugging enabled."""
         config = cls()
         config.debug = True
@@ -1217,6 +1324,7 @@ class TorchBridgeConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
+
         def _convert_value(value, visited=None):
             if visited is None:
                 visited = set()
@@ -1225,14 +1333,16 @@ class TorchBridgeConfig:
             if id(value) in visited:
                 return f"<circular reference to {type(value).__name__}>"
 
-            if hasattr(value, '__dict__'):
+            if hasattr(value, "__dict__"):
                 visited.add(id(value))
                 # Handle nested dataclass objects
                 nested_dict = {}
                 for nested_key, nested_value in value.__dict__.items():
-                    nested_dict[nested_key] = _convert_value(nested_value, visited.copy())
+                    nested_dict[nested_key] = _convert_value(
+                        nested_value, visited.copy()
+                    )
                 return nested_dict
-            elif hasattr(value, 'value'):  # Handle Enum objects
+            elif hasattr(value, "value"):  # Handle Enum objects
                 return value.value
             elif isinstance(value, torch.device):
                 return str(value)

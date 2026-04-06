@@ -21,6 +21,7 @@ from torchbridge.testing.trace_validator import (
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 class _IdentityModel(nn.Module):
     """Returns input unchanged — zero divergence between any two instances."""
 
@@ -52,6 +53,7 @@ def _make_tracer(model: nn.Module, *, dtype: str = "float32") -> MultiStepTracer
 
 
 # ── TraceStepResult / TraceValidationResult dataclass tests ──────────────────
+
 
 class TestTraceResultDataclasses:
     def test_step_result_fields_exist(self):
@@ -88,7 +90,10 @@ class TestTraceResultDataclasses:
 
     def test_to_dict_contains_all_required_keys(self):
         vr = TraceValidationResult(
-            backend_a="cuda", backend_b="rocm", steps=3, dtype="float16",
+            backend_a="cuda",
+            backend_b="rocm",
+            steps=3,
+            dtype="float16",
             autoregressive=True,
         )
         d = vr.to_dict()
@@ -105,22 +110,35 @@ class TestTraceResultDataclasses:
 
     def test_to_dict_step_results_have_all_keys(self):
         sr = TraceStepResult(
-            step=1, max_diff=1e-6, cosine_sim=0.9999,
-            within_tolerance=True, cumulative_amplification=1.0,
+            step=1,
+            max_diff=1e-6,
+            cosine_sim=0.9999,
+            within_tolerance=True,
+            cumulative_amplification=1.0,
         )
         vr = TraceValidationResult(
-            backend_a="cpu", backend_b="cpu", steps=1, dtype="float32",
+            backend_a="cpu",
+            backend_b="cpu",
+            steps=1,
+            dtype="float32",
             autoregressive=False,
         )
         vr.step_results.append(sr)
         d = vr.to_dict()
         assert len(d["step_results"]) == 1
         row = d["step_results"][0]
-        for key in ("step", "max_diff", "cosine_sim", "within_tolerance", "cumulative_amplification"):
+        for key in (
+            "step",
+            "max_diff",
+            "cosine_sim",
+            "within_tolerance",
+            "cumulative_amplification",
+        ):
             assert key in row
 
 
 # ── Validation: steps boundary ────────────────────────────────────────────────
+
 
 class TestStepsValidation:
     def test_steps_zero_raises(self):
@@ -149,6 +167,7 @@ class TestStepsValidation:
 
 
 # ── CPU vs CPU — identical outputs ───────────────────────────────────────────
+
 
 class TestCpuCpuIdentical:
     def test_zero_divergence_all_steps(self):
@@ -189,6 +208,7 @@ class TestCpuCpuIdentical:
 
 # ── Amplification logic ───────────────────────────────────────────────────────
 
+
 class TestAmplification:
     def test_amplification_starts_at_one(self):
         """Step 1 cumulative_amplification must always be 1.0."""
@@ -222,6 +242,7 @@ class TestAmplification:
 
 
 # ── Pass/fail and first_divergence_step ──────────────────────────────────────
+
 
 class TestPassFail:
     def test_final_passed_true_if_all_steps_pass(self):
@@ -263,6 +284,7 @@ class TestPassFail:
         If inference fails on step 1 and the loop breaks with empty step_results,
         the caller must see final_passed=False, not a silent pass.
         """
+
         # Use a model that raises on forward to force break on step 1
         class _CrashModel(nn.Module):
             def forward(self, x):
@@ -309,6 +331,7 @@ class TestPassFail:
 
 # ── Non-autoregressive: same input each step ──────────────────────────────────
 
+
 class TestNonAutoregressive:
     def test_non_ar_step_count(self):
         tracer = _make_tracer(_IdentityModel())
@@ -340,6 +363,7 @@ class TestNonAutoregressive:
 
 # ── Autoregressive mode ───────────────────────────────────────────────────────
 
+
 class TestAutoregressive:
     def test_ar_mode_flag_in_result(self):
         tracer = _make_tracer(_IdentityModel())
@@ -362,9 +386,12 @@ class TestAutoregressive:
 
         class _FakeLM(nn.Module):
             """Returns logits of shape (batch, seq, vocab)."""
+
             def forward(self, input_ids):
                 batch, seq = input_ids.shape
-                return type("Out", (), {"logits": torch.zeros(batch, seq, vocab_size)})()
+                return type(
+                    "Out", (), {"logits": torch.zeros(batch, seq, vocab_size)}
+                )()
 
         cpu = torch.device("cpu")
         tracer = MultiStepTracer(
@@ -383,6 +410,7 @@ class TestAutoregressive:
 
 
 # ── Model copy isolation ──────────────────────────────────────────────────────
+
 
 class TestNaNGuard:
     def test_zero_output_cosine_sim_is_not_nan(self):
@@ -419,6 +447,7 @@ class TestModelCopyIsolation:
 
 # ── _extract_tensor helper ────────────────────────────────────────────────────
 
+
 class TestExtractTensor:
     def test_tensor_passthrough(self):
         t = torch.randn(2, 4)
@@ -437,6 +466,7 @@ class TestExtractTensor:
 
     def test_lm_mode_uses_last_position(self):
         """is_lm=True should extract logits[:, -1, :] from output.logits."""
+
         class _FakeOutput:
             logits = torch.randn(1, 5, 32)  # (batch, seq, vocab)
 
@@ -445,6 +475,7 @@ class TestExtractTensor:
 
     def test_lm_mode_1d_logits(self):
         """is_lm=True with 1-D logits tensor should return it unchanged."""
+
         class _FakeOutput:
             logits = torch.randn(32)
 
@@ -457,6 +488,7 @@ class TestExtractTensor:
 
 
 # ── _greedy_token helper ──────────────────────────────────────────────────────
+
 
 class TestGreedyToken:
     def test_returns_none_for_2d_logits_does_not_crash(self):
@@ -484,11 +516,13 @@ class TestGreedyToken:
     def test_returns_none_for_no_logits(self):
         class _NoLogits:
             pass
+
         assert _greedy_token(_NoLogits()) is None
 
     def test_returns_none_for_non_tensor_logits(self):
         class _BadLogits:
             logits = "not_a_tensor"
+
         assert _greedy_token(_BadLogits()) is None
 
     def test_returns_argmax_of_last_position(self):
@@ -496,8 +530,10 @@ class TestGreedyToken:
         vocab_size = 16
         logits = torch.zeros(1, 3, vocab_size)
         logits[0, -1, 5] = 10.0  # token 5 wins at last position
+
         class _FakeOutput:
             pass
+
         obj = _FakeOutput()
         obj.logits = logits
         token = _greedy_token(obj)
@@ -509,8 +545,10 @@ class TestGreedyToken:
         vocab_size = 8
         batch_size = 3
         logits = torch.randn(batch_size, 2, vocab_size)
+
         class _FakeOutput:
             pass
+
         obj = _FakeOutput()
         obj.logits = logits
         token = _greedy_token(obj)

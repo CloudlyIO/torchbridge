@@ -19,10 +19,11 @@ from torchbridge.cli.validate import ValidateCommand
 
 # ── Parser registration (no opentelemetry needed) ─────────────────────────
 
+
 class TestOtelCLIFlags:
     def _get_parser(self):
-
         from torchbridge.cli.validate import ValidateCommand
+
         parser = argparse.ArgumentParser()
         subparsers = parser.add_subparsers()
         ValidateCommand.register(subparsers)
@@ -41,10 +42,16 @@ class TestOtelCLIFlags:
 
     def test_otel_endpoint_flag_registered(self):
         parser = self._get_parser()
-        args = parser.parse_args([
-            "validate", "--compare", "cuda", "cpu",
-            "--otel-endpoint", "http://my-endpoint:4318",
-        ])
+        args = parser.parse_args(
+            [
+                "validate",
+                "--compare",
+                "cuda",
+                "cpu",
+                "--otel-endpoint",
+                "http://my-endpoint:4318",
+            ]
+        )
         assert args.otel_endpoint == "http://my-endpoint:4318"
 
     def test_otel_endpoint_default_is_none(self):
@@ -62,6 +69,7 @@ class TestOtelCLIFlags:
         import inspect
 
         from torchbridge.cli import validate as validate_mod
+
         src = inspect.getsource(validate_mod)
         assert "--otel" in src
         assert "--otel-endpoint" in src
@@ -69,7 +77,9 @@ class TestOtelCLIFlags:
 
 # ── Export wiring (require opentelemetry.sdk) ──────────────────────────────
 
-otel_sdk = pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+otel_sdk = pytest.importorskip(
+    "opentelemetry.sdk", reason="opentelemetry-sdk not installed"
+)
 
 
 class TestOtelExportWiring:
@@ -102,7 +112,10 @@ class TestOtelExportWiring:
         mock_exporter = MagicMock()
         mock_exporter_cls = MagicMock(return_value=mock_exporter)
 
-        with patch("torchbridge.testing.otel_exporter.ValidationSpanExporter", mock_exporter_cls):
+        with patch(
+            "torchbridge.testing.otel_exporter.ValidationSpanExporter",
+            mock_exporter_cls,
+        ):
             args = self._make_args(otel=True)
             ValidateCommand._run_compare(args)
 
@@ -116,7 +129,10 @@ class TestOtelExportWiring:
         mock_exporter = MagicMock()
         mock_exporter_cls = MagicMock(return_value=mock_exporter)
 
-        with patch("torchbridge.testing.otel_exporter.ValidationSpanExporter", mock_exporter_cls):
+        with patch(
+            "torchbridge.testing.otel_exporter.ValidationSpanExporter",
+            mock_exporter_cls,
+        ):
             args = self._make_args(otel=False)
             ValidateCommand._run_compare(args)
 
@@ -130,7 +146,10 @@ class TestOtelExportWiring:
         mock_exporter.export.side_effect = RuntimeError("OTEL backend unavailable")
         mock_exporter_cls = MagicMock(return_value=mock_exporter)
 
-        with patch("torchbridge.testing.otel_exporter.ValidationSpanExporter", mock_exporter_cls):
+        with patch(
+            "torchbridge.testing.otel_exporter.ValidationSpanExporter",
+            mock_exporter_cls,
+        ):
             args = self._make_args(otel=True)
             rc = ValidateCommand._run_compare(args)
 
@@ -150,7 +169,10 @@ class TestOtelExportWiring:
             captured["endpoint"] = endpoint
             return mock_exporter
 
-        with patch("torchbridge.testing.otel_exporter.ValidationSpanExporter", side_effect=capture_cls):
+        with patch(
+            "torchbridge.testing.otel_exporter.ValidationSpanExporter",
+            side_effect=capture_cls,
+        ):
             args = self._make_args(otel=True, otel_endpoint="http://custom:4318")
             ValidateCommand._run_compare(args)
 
@@ -158,6 +180,7 @@ class TestOtelExportWiring:
 
 
 # ── v0.5.70: URL scheme validation integration ────────────────────────────────
+
 
 class TestOtelEndpointSchemeValidationPipeline:
     """End-to-end: invalid URL scheme logs warning but pipeline still completes."""
@@ -185,9 +208,13 @@ class TestOtelEndpointSchemeValidationPipeline:
         import logging
 
         # Only run when opentelemetry is available
-        pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+        pytest.importorskip(
+            "opentelemetry.sdk", reason="opentelemetry-sdk not installed"
+        )
 
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.otel_exporter"
+        ):
             ValidateCommand._run_compare(
                 self._make_args(otel_endpoint="ftp://invalid.example.com")
             )
@@ -197,11 +224,17 @@ class TestOtelEndpointSchemeValidationPipeline:
         """https:// endpoint must not log a URL-scheme warning."""
         import logging
 
-        pytest.importorskip("opentelemetry.sdk", reason="opentelemetry-sdk not installed")
+        pytest.importorskip(
+            "opentelemetry.sdk", reason="opentelemetry-sdk not installed"
+        )
 
-        with caplog.at_level(logging.WARNING, logger="torchbridge.testing.otel_exporter"):
+        with caplog.at_level(
+            logging.WARNING, logger="torchbridge.testing.otel_exporter"
+        ):
             ValidateCommand._run_compare(
-                self._make_args(otel_endpoint="https://cloud.langfuse.com/api/public/otel")
+                self._make_args(
+                    otel_endpoint="https://cloud.langfuse.com/api/public/otel"
+                )
             )
         url_warnings = [m for m in caplog.messages if "does not look like" in m]
         assert len(url_warnings) == 0

@@ -34,7 +34,9 @@ class TestAttentionKernelType:
         assert AttentionKernelType.PYTORCH_SDPA.value == "pytorch_sdpa"
 
     def test_lookup_by_value(self):
-        assert AttentionKernelType("flex_attention") is AttentionKernelType.FLEX_ATTENTION
+        assert (
+            AttentionKernelType("flex_attention") is AttentionKernelType.FLEX_ATTENTION
+        )
 
     def test_invalid_value_raises(self):
         with pytest.raises(ValueError):

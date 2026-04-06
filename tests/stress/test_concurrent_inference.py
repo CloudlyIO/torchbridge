@@ -5,7 +5,9 @@ import torch
 @pytest.mark.stress
 @pytest.mark.real_model
 class TestConcurrentInference:
-    def test_two_models_same_device_cpu(self, minilm_model_and_tokenizer, dinov2_model_for_stress):
+    def test_two_models_same_device_cpu(
+        self, minilm_model_and_tokenizer, dinov2_model_for_stress
+    ):
         """Two different models coexist and produce correct output on CPU."""
         text_model, tokenizer = minilm_model_and_tokenizer
         vision_model = dinov2_model_for_stress
@@ -20,7 +22,9 @@ class TestConcurrentInference:
         assert text_out.last_hidden_state.shape[-1] == 384  # MiniLM dim
         assert vision_out.last_hidden_state.shape[-1] == 384  # DINOv2-small dim
 
-    def test_interleaved_inference(self, minilm_model_and_tokenizer, dinov2_model_for_stress):
+    def test_interleaved_inference(
+        self, minilm_model_and_tokenizer, dinov2_model_for_stress
+    ):
         """Interleaved forward passes don't corrupt state."""
         text_model, tokenizer = minilm_model_and_tokenizer
         vision_model = dinov2_model_for_stress
@@ -34,9 +38,7 @@ class TestConcurrentInference:
                 text_out = text_model(**text_inputs).last_hidden_state
                 results_text.append(text_out.clone())
 
-                vision_out = vision_model(
-                    torch.randn(1, 3, 224, 224)
-                ).last_hidden_state
+                vision_out = vision_model(torch.randn(1, 3, 224, 224)).last_hidden_state
                 results_vision.append(vision_out.clone())
 
         # Same input should give same output (determinism check)
@@ -46,7 +48,9 @@ class TestConcurrentInference:
         assert torch.allclose(results_text[0], check, atol=1e-6)
 
     @pytest.mark.gpu
-    def test_two_models_same_gpu(self, minilm_model_and_tokenizer, dinov2_model_for_stress):
+    def test_two_models_same_gpu(
+        self, minilm_model_and_tokenizer, dinov2_model_for_stress
+    ):
         """Two models on same GPU, both produce valid output."""
         device = torch.device("cuda")
         text_model, tokenizer = minilm_model_and_tokenizer

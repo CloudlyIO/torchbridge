@@ -48,9 +48,7 @@ class TestQwen25VLHAL:
         model, tokenizer = model_and_tokenizer
         inputs = tokenizer("What is in this picture?", return_tensors="pt")
         with torch.no_grad():
-            generated = model.generate(
-                **inputs, max_new_tokens=10, do_sample=False
-            )
+            generated = model.generate(**inputs, max_new_tokens=10, do_sample=False)
         assert generated.shape[1] > inputs["input_ids"].shape[1]
 
     @requires_gpu

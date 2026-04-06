@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QuantizedCacheConfig:
     """Configuration for quantized KV-cache."""
+
     kv_cache_dtype: KVCacheDtype | None = None  # None = auto-select from matrix
 
 
@@ -76,4 +77,6 @@ class QuantizedKVCache:
                 self._backend_name,
             )
 
-        return KVCacheCompatibilityMatrix.get_optimal_dtype(hw_backend, self._architecture)
+        return KVCacheCompatibilityMatrix.get_optimal_dtype(
+            hw_backend, self._architecture
+        )

@@ -1,6 +1,5 @@
 """Tests for unified distributed config and parallelism recommendation."""
 
-
 from torchbridge.core.config import (
     AMDArchitecture,
     HardwareBackend,

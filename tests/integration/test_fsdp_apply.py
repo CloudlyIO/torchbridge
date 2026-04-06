@@ -34,7 +34,9 @@ class TestFSDPApply:
 
         # In test environment, distributed is never initialized
         if not torch.distributed.is_initialized():
-            with pytest.raises(RuntimeError, match="torch.distributed is not initialized"):
+            with pytest.raises(
+                RuntimeError, match="torch.distributed is not initialized"
+            ):
                 manager.apply(model)
 
     def test_apply_raises_import_error_without_dist(self, monkeypatch):
@@ -45,9 +47,7 @@ class TestFSDPApply:
         model = nn.Linear(32, 32)
 
         # Force dist.is_initialized to return False
-        monkeypatch.setattr(
-            "torch.distributed.is_initialized", lambda: False
-        )
+        monkeypatch.setattr("torch.distributed.is_initialized", lambda: False)
         with pytest.raises(RuntimeError, match="torch.distributed is not initialized"):
             manager.apply(model)
 

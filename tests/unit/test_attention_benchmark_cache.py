@@ -31,9 +31,7 @@ class TestBenchmarkCacheLazyWarm:
             # Inject a fresh cache pointing to the temp dir
             dispatcher._cache = cache
 
-            result = dispatcher.select_kernel(
-                seq_length=128, num_heads=4, head_dim=64
-            )
+            result = dispatcher.select_kernel(seq_length=128, num_heads=4, head_dim=64)
             assert result.benchmark_latency_ms is not None, (
                 "benchmark_latency_ms should be populated by lazy warm after B4 fix"
             )
@@ -54,9 +52,9 @@ class TestBenchmarkCacheLazyWarm:
             # Both should have the same latency (read from cache the second time)
             assert result1.benchmark_latency_ms is not None
             assert result2.benchmark_latency_ms is not None
-            assert abs(result1.benchmark_latency_ms - result2.benchmark_latency_ms) < 1e-6, (
-                "Second call should return identical cached latency"
-            )
+            assert (
+                abs(result1.benchmark_latency_ms - result2.benchmark_latency_ms) < 1e-6
+            ), "Second call should return identical cached latency"
 
     def test_cache_disabled_gives_none_latency(self):
         """When use_benchmark_cache=False, benchmark_latency_ms must be None."""
@@ -105,6 +103,7 @@ class TestKernelRoutingCorrectness:
         """Benchmarking FlashAttention kernels without flash-attn raises RuntimeError."""
         try:
             import flash_attn  # noqa: F401
+
             pytest.skip("flash-attn is installed — cannot test missing-package path")
         except ImportError:
             pass

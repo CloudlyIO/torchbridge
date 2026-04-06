@@ -30,7 +30,10 @@ class TestOptimalKernel:
         ],
     )
     def test_nvidia_optimal(self, arch, expected):
-        assert AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.CUDA, arch)[0] == expected
+        assert (
+            AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.CUDA, arch)[0]
+            == expected
+        )
 
     @pytest.mark.parametrize(
         "arch, expected",
@@ -43,7 +46,10 @@ class TestOptimalKernel:
         ],
     )
     def test_amd_optimal(self, arch, expected):
-        assert AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.AMD, arch)[0] == expected
+        assert (
+            AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.AMD, arch)[0]
+            == expected
+        )
 
     @pytest.mark.parametrize(
         "arch, expected",
@@ -55,7 +61,12 @@ class TestOptimalKernel:
         ],
     )
     def test_trainium_optimal(self, arch, expected):
-        assert AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.TRAINIUM, arch)[0] == expected
+        assert (
+            AttentionDispatchMatrix.get_supported_kernels(
+                HardwareBackend.TRAINIUM, arch
+            )[0]
+            == expected
+        )
 
     @pytest.mark.parametrize(
         "version, expected",
@@ -68,10 +79,18 @@ class TestOptimalKernel:
         ],
     )
     def test_tpu_optimal(self, version, expected):
-        assert AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.TPU, version)[0] == expected
+        assert (
+            AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.TPU, version)[
+                0
+            ]
+            == expected
+        )
 
     def test_cpu_optimal(self):
-        assert AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.CPU)[0] == AttentionKernelType.PYTORCH_SDPA
+        assert (
+            AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.CPU)[0]
+            == AttentionKernelType.PYTORCH_SDPA
+        )
 
 
 class TestFallbackChain:
@@ -79,7 +98,9 @@ class TestFallbackChain:
 
     def test_hopper_fallback_from_flex(self):
         chain = AttentionDispatchMatrix.get_fallback_chain(
-            AttentionKernelType.FLEX_ATTENTION, HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            AttentionKernelType.FLEX_ATTENTION,
+            HardwareBackend.CUDA,
+            NVIDIAArchitecture.HOPPER,
         )
         assert chain == [
             AttentionKernelType.FLASH_ATTENTION_3,
@@ -89,7 +110,9 @@ class TestFallbackChain:
 
     def test_unsupported_kernel_returns_full_chain(self):
         chain = AttentionDispatchMatrix.get_fallback_chain(
-            AttentionKernelType.NEURONX_SDPA, HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            AttentionKernelType.NEURONX_SDPA,
+            HardwareBackend.CUDA,
+            NVIDIAArchitecture.HOPPER,
         )
         # NEURONX_SDPA not in NVIDIA chain, so returns all supported kernels
         assert AttentionKernelType.FLEX_ATTENTION in chain
@@ -102,7 +125,9 @@ class TestFallbackChain:
 
     def test_amd_cdna3_fallback_from_ck(self):
         chain = AttentionDispatchMatrix.get_fallback_chain(
-            AttentionKernelType.FLASH_ATTENTION_CK, HardwareBackend.AMD, AMDArchitecture.CDNA3
+            AttentionKernelType.FLASH_ATTENTION_CK,
+            HardwareBackend.AMD,
+            AMDArchitecture.CDNA3,
         )
         assert chain == [
             AttentionKernelType.PYTORCH_SDPA,
@@ -113,28 +138,41 @@ class TestKernelSupport:
     """Verify kernel support via get_supported_kernels."""
 
     def test_flex_on_hopper(self):
-        assert AttentionKernelType.FLEX_ATTENTION in AttentionDispatchMatrix.get_supported_kernels(
-            HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+        assert (
+            AttentionKernelType.FLEX_ATTENTION
+            in AttentionDispatchMatrix.get_supported_kernels(
+                HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            )
         )
 
     def test_flex_not_on_cpu(self):
-        assert AttentionKernelType.FLEX_ATTENTION not in AttentionDispatchMatrix.get_supported_kernels(
-            HardwareBackend.CPU
+        assert (
+            AttentionKernelType.FLEX_ATTENTION
+            not in AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.CPU)
         )
 
     def test_neuronx_on_trn2(self):
-        assert AttentionKernelType.NEURONX_SDPA in AttentionDispatchMatrix.get_supported_kernels(
-            HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2
+        assert (
+            AttentionKernelType.NEURONX_SDPA
+            in AttentionDispatchMatrix.get_supported_kernels(
+                HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2
+            )
         )
 
     def test_neuronx_not_on_nvidia(self):
-        assert AttentionKernelType.NEURONX_SDPA not in AttentionDispatchMatrix.get_supported_kernels(
-            HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+        assert (
+            AttentionKernelType.NEURONX_SDPA
+            not in AttentionDispatchMatrix.get_supported_kernels(
+                HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
+            )
         )
 
     def test_pallas_on_tpu_v5e(self):
-        assert AttentionKernelType.PALLAS_ATTENTION in AttentionDispatchMatrix.get_supported_kernels(
-            HardwareBackend.TPU, TPUVersion.V5E
+        assert (
+            AttentionKernelType.PALLAS_ATTENTION
+            in AttentionDispatchMatrix.get_supported_kernels(
+                HardwareBackend.TPU, TPUVersion.V5E
+            )
         )
 
 

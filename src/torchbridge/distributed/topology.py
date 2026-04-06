@@ -167,7 +167,10 @@ class TopologyDetector:
     def detect_interconnect_inter() -> InterconnectType:
         """Detect inter-node interconnect from environment."""
         # AWS EFA
-        if os.environ.get("FI_EFA_USE_DEVICE_RDMA") or os.environ.get("FI_PROVIDER") == "efa":
+        if (
+            os.environ.get("FI_EFA_USE_DEVICE_RDMA")
+            or os.environ.get("FI_PROVIDER") == "efa"
+        ):
             return InterconnectType.EFA
 
         # InfiniBand (common on HPC, NVIDIA DGX)
@@ -175,7 +178,9 @@ class TopologyDetector:
             return InterconnectType.INFINIBAND
 
         # GCP
-        if os.environ.get("GCE_METADATA_HOST") or os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        if os.environ.get("GCE_METADATA_HOST") or os.environ.get(
+            "GOOGLE_CLOUD_PROJECT"
+        ):
             return InterconnectType.GCE_NETWORK
 
         # AMD ROCe
@@ -232,7 +237,9 @@ class TopologyDetector:
         """Build MeshConfig from WORLD_SIZE/LOCAL_WORLD_SIZE env vars."""
         world_size = int(os.environ.get("WORLD_SIZE", "1"))
         local_world_size = int(os.environ.get("LOCAL_WORLD_SIZE", "1"))
-        num_nodes = max(1, world_size // local_world_size) if local_world_size > 0 else 1
+        num_nodes = (
+            max(1, world_size // local_world_size) if local_world_size > 0 else 1
+        )
         interconnect_inter = TopologyDetector.detect_interconnect_inter()
 
         mesh_shape: tuple[int, ...]

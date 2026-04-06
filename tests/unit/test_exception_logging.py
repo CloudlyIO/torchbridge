@@ -42,7 +42,9 @@ class TestExceptionLogging:
                 result = cfg._detect_architecture()
 
         assert result == AMDArchitecture.CDNA2, "must return default on error"
-        debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+        debug_messages = [
+            r.message for r in caplog.records if r.levelno == logging.DEBUG
+        ]
         assert any(
             "amd" in m.lower() or "detection" in m.lower() or "arch" in m.lower()
             for m in debug_messages
@@ -72,7 +74,9 @@ class TestExceptionLogging:
                 result = manager._supports_float8_all_gather()
 
         assert result is False, "must return False when NCCL check raises"
-        debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+        debug_messages = [
+            r.message for r in caplog.records if r.levelno == logging.DEBUG
+        ]
         assert any(
             "nccl" in m.lower() or "float8" in m.lower() or "failed" in m.lower()
             for m in debug_messages
@@ -93,7 +97,9 @@ class TestExceptionLogging:
             # Must not raise — exception is caught and logged
             plugin_module.pytest_configure(mock_config)
 
-        debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+        debug_messages = [
+            r.message for r in caplog.records if r.levelno == logging.DEBUG
+        ]
         assert any(
             "config" in m.lower() or "backend" in m.lower() or "failed" in m.lower()
             for m in debug_messages
@@ -111,8 +117,12 @@ class TestExceptionLogging:
         exporter = ValidationSpanExporter.__new__(ValidationSpanExporter)
         mock_span = MagicMock()
         mock_tracer = MagicMock()
-        mock_tracer.start_as_current_span.return_value.__enter__ = lambda s, *a: mock_span
-        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(return_value=False)
+        mock_tracer.start_as_current_span.return_value.__enter__ = (
+            lambda s, *a: mock_span
+        )
+        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
+            return_value=False
+        )
         exporter._tracer = mock_tracer
 
         # "max_diff" expects float; "not-a-number" causes float("not-a-number") → ValueError
@@ -121,9 +131,13 @@ class TestExceptionLogging:
         with caplog.at_level(logging.DEBUG, logger="torchbridge.testing.otel_exporter"):
             exporter.export(result)  # must not raise
 
-        debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+        debug_messages = [
+            r.message for r in caplog.records if r.levelno == logging.DEBUG
+        ]
         assert any(
-            "skipped" in m.lower() or "coercion" in m.lower() or "attribute" in m.lower()
+            "skipped" in m.lower()
+            or "coercion" in m.lower()
+            or "attribute" in m.lower()
             for m in debug_messages
         ), f"Expected span attribute coercion debug log, got: {debug_messages}"
 
@@ -134,8 +148,12 @@ class TestExceptionLogging:
         exporter = ValidationSpanExporter.__new__(ValidationSpanExporter)
         mock_span = MagicMock()
         mock_tracer = MagicMock()
-        mock_tracer.start_as_current_span.return_value.__enter__ = lambda s, *a: mock_span
-        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(return_value=False)
+        mock_tracer.start_as_current_span.return_value.__enter__ = (
+            lambda s, *a: mock_span
+        )
+        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
+            return_value=False
+        )
         exporter._tracer = mock_tracer
 
         # "max_diff" in per-layer row expects float; bad value triggers coercion error
@@ -146,8 +164,14 @@ class TestExceptionLogging:
         with caplog.at_level(logging.DEBUG, logger="torchbridge.testing.otel_exporter"):
             exporter.export(result)  # must not raise
 
-        debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+        debug_messages = [
+            r.message for r in caplog.records if r.levelno == logging.DEBUG
+        ]
         assert any(
-            "skipped" in m.lower() or "coercion" in m.lower() or "attribute" in m.lower()
+            "skipped" in m.lower()
+            or "coercion" in m.lower()
+            or "attribute" in m.lower()
             for m in debug_messages
-        ), f"Expected per-layer span attribute coercion debug log, got: {debug_messages}"
+        ), (
+            f"Expected per-layer span attribute coercion debug log, got: {debug_messages}"
+        )
