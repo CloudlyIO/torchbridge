@@ -24,27 +24,22 @@ from torchbridge.adapters import AdapterCompatibilityMatrix, AdapterMethod
 from torchbridge.core.config import HardwareBackend, NVIDIAArchitecture
 
 # Get optimal method for hardware
-optimal = AdapterCompatibilityMatrix.get_optimal_method(
+optimal = AdapterCompatibilityMatrix.get_optimal(
     HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
 )
 # → AdapterMethod.QLORA
 
-# Get all supported methods
-supported = AdapterCompatibilityMatrix.get_supported_methods(
+# Get fallback chain (ordered list of methods, best first)
+chain = AdapterCompatibilityMatrix.get_fallback_chain(
     HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
 )
 # → [QLORA, QDORA, DORA, LORA]
 
 # Check if a specific method is supported
-AdapterCompatibilityMatrix.is_method_supported(
-    AdapterMethod.QLORA, HardwareBackend.CPU
+AdapterCompatibilityMatrix.supports_method(
+    HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE, AdapterMethod.QLORA
 )
-# → False
-
-# Get fallback chain (what to use if method unavailable)
-chain = AdapterCompatibilityMatrix.get_fallback_chain(
-    AdapterMethod.QLORA, HardwareBackend.CUDA, NVIDIAArchitecture.AMPERE
-)
+# → True
 ```
 
 ## Configuration

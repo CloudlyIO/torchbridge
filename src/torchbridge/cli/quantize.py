@@ -195,9 +195,13 @@ Examples:
         path = Path(model_path)
         if path.exists():
             try:
-                model = torch.load(
-                    model_path, map_location="cpu", weights_only=not trust_source
-                )
+                # Try TorchScript first to avoid UserWarning for .pt archives.
+                try:
+                    model = torch.jit.load(model_path, map_location="cpu")
+                except Exception:
+                    model = torch.load(
+                        model_path, map_location="cpu", weights_only=not trust_source
+                    )
                 if hasattr(model, "eval"):
                     model.eval()
                 if verbose:

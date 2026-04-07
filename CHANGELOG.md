@@ -8,6 +8,35 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.81] - 2026-04-07 - Docs correctness pass + CLI bugfixes
+
+### Summary
+
+End-to-end usage walkthroughs (first impression → day-1 → day-2) surfaced 14 doc inaccuracies and 4 CLI bugs. All fixed in this pass.
+
+### Fixed (CLI)
+
+- `tb-validate`, `tb-quantize`, `tb-benchmark`: `torch.load()` on TorchScript `.pt` archives emitted a `UserWarning`; now tries `torch.jit.load()` first and falls back to `torch.load()` for non-TorchScript files
+- `tb-validate --per-layer` with TorchScript models silently produced no output; now shows an informative skip message
+- `tb-validate --per-layer` with unpicklable model classes gave a confusing "Cannot open model file" error; now catches `AttributeError` and explains the TorchScript workaround
+- `tb-validate --per-layer` internal: `DivergenceTracer.compare_with()` was called with `(model, tensor)` but the API requires two `DivergenceTracer` instances; fixed to run two tracers and compare
+
+### Fixed (docs)
+
+- `adapter-training.md`: `get_optimal_method` → `get_optimal`, `get_supported_methods` → `get_fallback_chain`, `is_method_supported(method, backend)` → `supports_method(backend, arch, method)`
+- `distributed-training.md`: `--model-params 70B` is not valid float syntax; corrected to `70e9`
+- `checkpointing.md`: `loaded_state = {}` (empty dict) silently returns no data after DCP load; state dict must be pre-populated with the correct keys before calling `load()`
+- `performance-tuning.md`: `TorchBridgeConfig(precision='bf16')` crashes; `precision` expects `PrecisionConfig(default_format=PrecisionFormat.BF16)`
+- `attention.md`: `AttentionDispatchMatrix.is_kernel_supported()` does not exist; replaced with `get_supported_kernels()` + `in` check
+- `speculative-decoding.md`: compatibility table showed `EAGLE` as Hopper/Blackwell optimal (actual: `DRAFT_MODEL`); `OutputFormatSpec(format=..., schema=...)` constructor does not exist — `OutputFormatSpec` is an internal spec descriptor, replaced with `OutputFormat` enum usage
+- `installation.md`, `CONTRIBUTING.md`: referenced deleted `requirements.txt`; corrected to `pip install -e .[dev,all]`
+- `backends/overview.md`: `DeviceInfo` field names wrong (`info.name` → `info.device_name`, `info.memory_total_gb` → `info.total_memory_gb`); removed nonexistent `info.supported_dtypes`
+- `quickstart.md`: `tb-validate --reference` flag does not exist; corrected to `--compare`
+
+### Added
+
+- `docs/guides/testing.md`: new guide covering `DivergenceTracer`, `@cross_backend`, and `ToleranceDB` Python APIs (previously undocumented)
+
 ## [0.5.80] - 2026-03-19 - Five-Gap Close: QLoRA + CI + Exception Logging + Perf Tests
 
 ### **Summary**

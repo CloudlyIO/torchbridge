@@ -167,6 +167,7 @@ ruff check src/ tests/
 | [Backend Selection](./docs/guides/backend-selection.md) | Choosing the right backend |
 | [Hardware Setup](./docs/guides/hardware-setup.md) | Driver and toolkit installation |
 | [Distributed Training](./docs/guides/distributed-training.md) | Multi-GPU and multi-node |
+| [Testing Guide](./docs/guides/testing.md) | DivergenceTracer, @cross_backend, ToleranceDB |
 | [Deployment](./docs/guides/deployment.md) | Serving and containerization |
 | [CLI Reference](./docs/guides/cli.md) | Command-line tools |
 | [Hardware Matrix](./docs/reference/hardware-matrix.md) | Full hardware support table |

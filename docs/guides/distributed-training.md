@@ -78,7 +78,7 @@ Best for: models with very wide layers (large hidden dimensions). Use PyTorch's 
 
 ```bash
 # TorchBridge advisor shows optimal parallelism strategy for your hardware
-torchbridge advisor --model-params 70B --world-size 8
+torchbridge advisor --model-params 70e9 --world-size 8
 ```
 
 ## Pipeline Parallelism
@@ -86,7 +86,7 @@ torchbridge advisor --model-params 70B --world-size 8
 Best for: very deep models (many layers). Use PyTorch's native `torch.distributed.pipelining` API directly.
 
 ```bash
-torchbridge advisor --model-params 70B --world-size 16
+torchbridge advisor --model-params 70e9 --world-size 16
 ```
 
 ## Memory Estimation

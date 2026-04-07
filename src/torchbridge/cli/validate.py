@@ -27,10 +27,23 @@ def _load_model_file(path: str) -> nn.Module:
     State-dict files (``torch.save(model.state_dict(), path)``) are not
     supported — they require knowing the architecture to reconstruct.
     """
-    # weights_only=False required for pickled nn.Module objects.
-    # The user explicitly passes their own trusted file via --model.
+    # Try TorchScript first (torch.jit.load), then fall back to pickled nn.Module.
+    # Using torch.jit.load directly avoids a UserWarning when the file is a
+    # TorchScript archive (zip file), which torch.load would otherwise emit.
+    try:
+        return torch.jit.load(path, map_location="cpu")
+    except Exception:
+        pass
     try:
         loaded = torch.load(path, map_location="cpu", weights_only=False)
+    except AttributeError as e:
+        raise RuntimeError(
+            f"Cannot load model: {e}\n"
+            "This usually means the model class is not importable from this context.\n"
+            "Save as TorchScript instead:\n"
+            "  traced = torch.jit.trace(model, sample_input)\n"
+            "  traced.save('model.pt')"
+        ) from e
     except Exception as e:
         raise RuntimeError(f"Cannot open model file: {e}") from e
     if isinstance(loaded, nn.Module):
@@ -489,31 +502,46 @@ Examples:
 
         # Per-layer divergence
         layer_rows: list[dict] = []
+        per_layer_skip_reason: str | None = None
         if per_layer and not smoke_model:
-            try:
-                from torchbridge.testing.divergence import DivergenceTracer
+            # TorchScript models don't support hook-based per-layer tracing.
+            if isinstance(model, torch.jit.ScriptModule):
+                per_layer_skip_reason = (
+                    "TorchScript models do not support per-layer tracing. "
+                    "Save with torch.save(model, path) instead of torch.jit.trace/script."
+                )
+            else:
+                try:
+                    from torchbridge.testing.divergence import DivergenceTracer
 
-                model_cpu = model.to("cpu")
-                x_cpu = x.to("cpu")
-                tracer = DivergenceTracer(model_cpu, device=torch.device("cpu"))
-                with tracer:
-                    with torch.no_grad():
-                        model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(x_cpu)
-                # compare_with the second device
-                model_dev2 = model.to(dev2)
-                x_dev2 = x.to(dev2)
-                divergences = tracer.compare_with(model_dev2, x_dev2)
-                for d in divergences:
-                    layer_rows.append(
-                        {
-                            "layer": d.layer_name,
-                            "max_diff": d.max_diff,
-                            "cosine_sim": d.cosine_sim,
-                            "exceeds_threshold": d.exceeds_threshold,
-                        }
-                    )
-            except Exception as e:
-                logger.debug("Per-layer divergence failed: %s", e)
+                    model_cpu = model.to("cpu")
+                    x_cpu = x.to("cpu")
+                    ref_tracer = DivergenceTracer(model_cpu, device=torch.device("cpu"))
+                    with ref_tracer:
+                        with torch.no_grad():
+                            model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(x_cpu)
+                    # Run a second tracer on dev2 and compare
+                    model_dev2 = model.to(dev2)
+                    x_dev2 = x.to(dev2)
+                    test_tracer = DivergenceTracer(model_dev2, device=dev2)
+                    with test_tracer:
+                        with torch.no_grad():
+                            model_dev2(input_ids=x_dev2) if is_hf_model else model_dev2(x_dev2)
+                    divergences = test_tracer.compare_with(ref_tracer)
+                    for d in divergences:
+                        layer_rows.append(
+                            {
+                                "layer": d.layer_name,
+                                "max_diff": d.max_diff,
+                                "cosine_sim": d.cosine_sim,
+                                "exceeds_threshold": d.exceeds_threshold,
+                            }
+                        )
+                    if not layer_rows:
+                        per_layer_skip_reason = "No named sub-modules found in model."
+                except Exception as e:
+                    per_layer_skip_reason = f"Per-layer tracing failed: {e}"
+                    logger.debug("Per-layer divergence failed: %s", e)
 
         # Build result dict
         result = {
@@ -566,6 +594,9 @@ Examples:
                         f"    {row['layer']}: max_diff={row['max_diff']:.2e}  "
                         f"cos={row['cosine_sim']:.4f}{flag}"
                     )
+            elif per_layer and per_layer_skip_reason:
+                print()
+                print(f"  Per-layer: skipped — {per_layer_skip_reason}")
 
         if output_path:
             try:

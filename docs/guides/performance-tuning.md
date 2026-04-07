@@ -27,11 +27,10 @@ config = TorchBridgeConfig(optimization_level=OptimizationLevel.O2)
 Mixed precision (FP16/BF16) can 2-4x throughput on modern GPUs:
 
 ```python
-from torchbridge.core.config import TorchBridgeConfig
+from torchbridge.core.config import TorchBridgeConfig, PrecisionConfig, PrecisionFormat
 
 config = TorchBridgeConfig(
-    precision="bf16",  # BF16 preferred on Ampere+ (A10G, A100, H100)
-    # precision="fp16",  # FP16 on older GPUs (T4, V100)
+    precision=PrecisionConfig(default_format=PrecisionFormat.BF16),  # BF16 preferred on Ampere+
 )
 ```
 
