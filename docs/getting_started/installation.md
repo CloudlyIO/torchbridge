@@ -15,7 +15,7 @@ GPU backends are optional. TorchBridge always falls back to CPU.
 ```bash
 git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
-pip install -r requirements.txt
+pip install -e .[dev,all]
 
 # Verify
 PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
@@ -94,7 +94,7 @@ python3 -c "import torch; print(f'MPS available: {torch.backends.mps.is_availabl
 conda create -n torchbridge python=3.12
 conda activate torchbridge
 conda install pytorch torchvision pytorch-cuda=12.6 -c pytorch -c nvidia
-pip install -r requirements.txt
+pip install torchbridge-ml
 ```
 
 Conda is a good option for managing Python versions and CUDA toolkit dependencies together. Use `pytorch-cuda=12.6` for the recommended CUDA version.

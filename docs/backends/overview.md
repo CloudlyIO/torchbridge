@@ -92,12 +92,16 @@ Backends return consistent data structures:
 ```python
 @dataclass
 class DeviceInfo:
-    name: str              # e.g., "NVIDIA H100"
-    backend: str           # "cuda", "rocm", "tpu", "cpu"
-    memory_total_gb: float
-    memory_available_gb: float
-    compute_capability: str
-    supported_dtypes: list[str]
+    backend: str               # "nvidia", "amd", "trainium", "tpu", "cpu"
+    device_type: str           # Device string (e.g., "cuda:0", "xla:0")
+    device_id: int
+    device_name: str           # e.g., "NVIDIA H100 80GB"
+    compute_capability: str | None
+    total_memory_bytes: int
+    total_memory_gb: float     # property: total_memory_bytes / 1024³
+    driver_version: str | None
+    is_available: bool
+    properties: dict
 ```
 
 ## Cross-Backend Usage
@@ -125,9 +129,9 @@ for batch in dataloader:
 backend = BackendFactory.create("cuda")
 info = backend.get_device_info()
 
-print(f"Device: {info.name}")
-print(f"Memory: {info.memory_total_gb:.1f} GB")
-print(f"Supported dtypes: {info.supported_dtypes}")
+print(f"Device: {info.device_name}")
+print(f"Memory: {info.total_memory_gb:.1f} GB")
+print(f"Compute capability: {info.compute_capability}")
 ```
 
 ### Memory Management

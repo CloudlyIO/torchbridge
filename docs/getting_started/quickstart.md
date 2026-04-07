@@ -153,7 +153,7 @@ Mixing devices (e.g., model on CUDA, inputs on CPU) raises `RuntimeError`.
 Optimized models may produce slightly different numerical outputs due to mixed precision, kernel fusion, or operator reordering. This is expected. Use `tb-validate` to confirm outputs are within tolerance:
 
 ```bash
-tb-validate --model optimized_model.pt --reference original_model.pt
+tb-validate --compare cuda cpu --model optimized_model.pt
 ```
 
 ### Batch size too small for GPU utilization
