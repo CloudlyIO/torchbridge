@@ -35,14 +35,14 @@ tb-validate --compare cuda rocm --model ./model.pt --ci
 ### Hardware Configuration Advisor
 
 ```bash
-# What's the optimal config for this hardware?
-tb-advisor
+# What's the optimal config for a 7B model on this hardware?
+tb-advisor --model-params 7e9
 
 # Disaggregated prefill/decode fleet config
-tb-advisor --mode disaggregated --prefill-backend nvidia --decode-backend amd
+tb-advisor --mode disaggregated --model-params 7e9 --prefill nvidia:hopper --decode amd:cdna3
 
 # Heterogeneous cluster training config (NVIDIA + AMD mixed)
-tb-advisor --mode heterogeneous --nvidia hopper:8 --amd cdna3:4
+tb-advisor --mode heterogeneous --model-params 7e9 --nvidia hopper:8 --amd cdna3:4
 
 # Doctor — diagnose your hardware setup
 tb-doctor

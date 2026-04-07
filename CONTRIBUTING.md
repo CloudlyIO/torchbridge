@@ -10,7 +10,7 @@ Guide for developers contributing to cross-backend validation and configuration 
 
 Optional (for GPU backend development):
 - CUDA 12.0+ and NVCC (NVIDIA)
-- ROCm 5.6+ (AMD)
+- ROCm 6.2+ (AMD)
 - PyTorch/XLA (TPU)
 
 ## Development Setup
@@ -19,7 +19,7 @@ Optional (for GPU backend development):
 # Clone and install
 git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
-pip install -r requirements.txt
+pip install -e .[dev,all]
 
 # Validate
 PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
