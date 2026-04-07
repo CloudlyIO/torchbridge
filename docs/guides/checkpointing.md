@@ -22,8 +22,9 @@ manager = CheckpointManager(config=config, backend=HardwareBackend.CUDA)
 model_state = model.state_dict()
 ckpt_id = manager.save(model_state, model_params=int(7e9))
 
-# Load checkpoint
-loaded_state = {}
+# Load checkpoint — state dict must be pre-populated with the correct keys/shapes
+# (DCP semantics: tensors are loaded in-place, not created from scratch)
+loaded_state = model.state_dict()
 metadata = manager.load(loaded_state, ckpt_id)
 model.load_state_dict(loaded_state)
 ```

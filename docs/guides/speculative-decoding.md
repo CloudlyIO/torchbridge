@@ -16,11 +16,11 @@ TorchBridge provides backend-aware speculative decoding method selection via a c
 
 | Backend | Architecture | Optimal | All Supported |
 |---------|-------------|---------|---------------|
-| NVIDIA | Blackwell/Hopper | EAGLE | eagle, draft_model, layer_skip, medusa, prompt_lookup |
-| NVIDIA | Ampere/Ada | Draft Model | draft_model, layer_skip, medusa, prompt_lookup |
-| AMD | CDNA3/CDNA4 | Draft Model | draft_model, layer_skip, prompt_lookup |
-| Trainium | TRN2/TRN3 | Layer Skip | layer_skip, prompt_lookup |
-| TPU | v6e/v7 | Layer Skip | layer_skip, prompt_lookup |
+| NVIDIA | Blackwell/Hopper | Draft Model | draft_model, prompt_lookup |
+| NVIDIA | Ampere/Ada | Draft Model | draft_model, prompt_lookup |
+| AMD | CDNA3/CDNA4 | Draft Model | draft_model, prompt_lookup |
+| Trainium | TRN2/TRN3 | Prompt Lookup | prompt_lookup |
+| TPU | v5e/v7 | Prompt Lookup | prompt_lookup |
 | CPU | — | Prompt Lookup | prompt_lookup |
 
 ## Query the Compatibility Matrix
@@ -33,7 +33,7 @@ from torchbridge.core.config import HardwareBackend, NVIDIAArchitecture, AMDArch
 optimal = SpeculationCompatibilityMatrix.get_optimal_method(
     HardwareBackend.CUDA, NVIDIAArchitecture.HOPPER
 )
-# → SpeculativeMethod.EAGLE
+# → SpeculativeMethod.DRAFT_MODEL
 
 # Get all supported methods
 supported = SpeculationCompatibilityMatrix.get_supported_methods(
@@ -59,25 +59,22 @@ chain = SpeculationCompatibilityMatrix.get_fallback_chain(
 
 ## Structured Output Formats
 
-TorchBridge defines output format specifications for downstream integration:
+TorchBridge defines an `OutputFormat` enum for consistent cross-framework configuration.
+Pass the selected format to your grammar engine (xgrammar, outlines, etc.):
 
 ```python
-from torchbridge.inference import OutputFormat, OutputFormatSpec
+from torchbridge.inference import OutputFormat
 
-# JSON schema-constrained output
-spec = OutputFormatSpec(
-    format=OutputFormat.JSON_SCHEMA,
-    schema={"type": "object", "required": ["name", "age"]},
-)
-
-# Regex-constrained output
-spec = OutputFormatSpec(
-    format=OutputFormat.REGEX,
-    pattern=r"\d{4}-\d{2}-\d{2}",  # Date format
-)
+# Select format
+fmt = OutputFormat.JSON_SCHEMA   # JSON schema-constrained output
+fmt = OutputFormat.REGEX          # Regex-constrained output
+fmt = OutputFormat.JSON           # Unconstrained JSON
+fmt = OutputFormat.TEXT           # Plain text (default)
 ```
 
-> **Note:** Use `xgrammar` or `outlines` for the actual logits-processor implementation. TorchBridge provides the format enum and spec dataclass for consistent cross-framework configuration.
+> **Note:** TorchBridge provides the `OutputFormat` enum for naming consistency. Use
+> `xgrammar` or `outlines` for the actual logits-processor and grammar engine
+> implementation — TorchBridge does not provide a generation loop.
 
 ## CLI
 

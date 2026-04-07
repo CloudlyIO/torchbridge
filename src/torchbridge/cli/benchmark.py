@@ -621,9 +621,13 @@ Examples:
         else:
             # Try to load from file
             if Path(model_name).exists():
-                return torch.load(
-                    model_name, map_location=device, weights_only=True
-                ).eval()
+                # Try TorchScript first to avoid UserWarning for .pt archives.
+                try:
+                    return torch.jit.load(model_name, map_location=device).eval()
+                except Exception:
+                    return torch.load(
+                        model_name, map_location=device, weights_only=True
+                    ).eval()
             else:
                 raise ValueError(
                     f"Model '{model_name}' not found as a file or predefined name. "

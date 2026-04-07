@@ -61,9 +61,10 @@ print([k.value for k in kernels])
 
 # Is FlexAttention supported on AMD CDNA3?
 from torchbridge.core.config import AMDArchitecture
-supported = AttentionDispatchMatrix.is_kernel_supported(
-    AttentionKernelType.FLEX_ATTENTION, HardwareBackend.AMD, AMDArchitecture.CDNA3
+cdna3_kernels = AttentionDispatchMatrix.get_supported_kernels(
+    HardwareBackend.AMD, AMDArchitecture.CDNA3
 )
+supported = AttentionKernelType.FLEX_ATTENTION in cdna3_kernels
 print(f"FlexAttention on CDNA3: {supported}")  # False
 ```
 
