@@ -440,6 +440,8 @@ Examples:
             return 1
 
         model.eval()
+        if smoke_model and dtype != torch.float32:
+            model = model.to(dtype=dtype)
 
         # Build input tensor
         if is_hf_model:
@@ -741,6 +743,9 @@ Examples:
             else:
                 print(f"Error: {msg}")
             return 1
+
+        if smoke_model and dtype != torch.float32:
+            model = model.to(dtype=dtype)
 
         # Build initial input
         if is_lm:
