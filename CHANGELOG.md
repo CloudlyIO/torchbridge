@@ -8,6 +8,24 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.83] - 2026-04-07 - Fix smoke model dtype mismatch in --compare
+
+### Summary
+
+Contributor walkthrough (take 2) found that `tb-validate --compare <b1> <b2> --dtype float16`
+(or `bfloat16`) crashes with "mat1 and mat2 must have the same dtype" when no `--model` is
+given. The smoke model (`nn.Sequential(Linear, ReLU, Linear)`) defaults to float32 but the
+input tensor is created in the requested dtype. Fixed by casting the smoke model to the
+requested dtype before inference. Both `--compare` and `--trace` paths fixed.
+
+### Fixed
+
+- `src/torchbridge/cli/validate.py`: smoke model not cast to requested dtype when `--dtype float16` or `bfloat16` is used; added `model.to(dtype=dtype)` after smoke model creation in both `_run_compare` and `_run_trace` paths
+
+### Added
+
+- `tests/unit/test_validate_compare.py`: 2 regression tests — `test_dtype_float16_smoke_model` and `test_dtype_bfloat16_smoke_model`
+
 ## [0.5.82] - 2026-04-07 - Contributor onboarding fixes
 
 ### Summary

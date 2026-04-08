@@ -133,6 +133,24 @@ class TestCpuCpuComparison:
         out = json.loads(capsys.readouterr().out)
         assert out["dtype"] == "float32"
 
+    def test_dtype_float16_smoke_model(self, capsys):
+        """--dtype float16 must not crash with the smoke model (dtype mismatch regression)."""
+        args = _make_args(compare=["cpu", "cpu"], dtype="float16", ci=True)
+        result = ValidateCommand._run_compare(args)
+        assert result == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["dtype"] == "float16"
+        assert out["passed"] is True
+
+    def test_dtype_bfloat16_smoke_model(self, capsys):
+        """--dtype bfloat16 must not crash with the smoke model."""
+        args = _make_args(compare=["cpu", "cpu"], dtype="bfloat16", ci=True)
+        result = ValidateCommand._run_compare(args)
+        assert result == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["dtype"] == "bfloat16"
+        assert out["passed"] is True
+
     def test_smoke_model_label(self, capsys):
         """Without --model, output must note a smoke model was used."""
         args = _make_args(compare=["cpu", "cpu"], ci=True)
