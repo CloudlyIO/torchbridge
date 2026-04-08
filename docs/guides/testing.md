@@ -142,10 +142,19 @@ back (see [CONTRIBUTING.md](../../CONTRIBUTING.md)):
 
 ```python
 from torchbridge.testing import ToleranceDB
-from torchbridge.testing.tolerance_db import ToleranceEntry
 
 db = ToleranceDB()
-db.register("mi350x", "float16", ToleranceEntry(atol=1e-3, rtol=1e-3, source="measured"))
+
+# Register a base (backend, dtype) entry:
+db.register("mi350x", "float16", atol=1e-3, rtol=1e-3)
+
+# Register a family-specific entry (supports source + notes metadata):
+db.register_family(
+    "decoder-small", "mi350x", "float16",
+    atol=1e-3, rtol=1e-3,
+    source="measured",
+    notes="measured on MI350X; Qwen3-0.6B; 2026-04-07",
+)
 ```
 
 ## Writing validation tests
