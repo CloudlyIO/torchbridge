@@ -81,7 +81,7 @@ The `target_modules` parameter specifies which `nn.Linear` layers receive adapte
 
 ```bash
 # Recommend adapter method for hardware
-torchbridge adapter recommend --backend cuda
+torchbridge adapter recommend --backend nvidia
 torchbridge adapter recommend --backend amd --rank 8
 
 # JSON output for CI pipelines

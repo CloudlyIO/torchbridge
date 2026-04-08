@@ -75,11 +75,11 @@ print(f"Validation: {results.passed}/{results.total_tests} tests passed")
 | **Multi-step agentic trace** | `tb-validate --trace --steps 50 --autoregressive` — tracks how max_diff amplifies across N autoregressive steps; reports first-divergence-step and amplification factor |
 | **Compliance certificates** | `tb-validate --cert` — SHA256-signed pass/fail certificate for KV handoff physical spec (page size, alignment, layout) |
 | **Observability integration** | `tb-validate --otel` — emits validation spans (max_diff, cosine_sim, per-layer child spans) to any OTLP endpoint (Langfuse, W&B Weave, Honeycomb) |
-| **Compatibility matrices** | 12 empirically-sourced matrices: `(backend, architecture) → optimal quant format / attention kernel / adapter method / FSDP strategy` |
+| **Compatibility matrices** | 13 empirically-sourced matrices: `(backend, architecture) → optimal quant format / attention kernel / adapter method / FSDP strategy / torch.compile mode` |
 | **Config advisory** | `tb-advisor` — FSDP, quantization, KV cache, speculative decoding, disaggregated fleet (`--mode disaggregated`), heterogeneous clusters (`--mode heterogeneous`) |
 | **Backend detection** | Hardware identification, capability queries, priority chain across NVIDIA/AMD/Trainium/TPU/CPU |
 | **Tolerance DB** | 80 empirical entries, 3-level fallback, `--model-family` flag — tolerances sourced from real Qwen3-0.6B runs across 6 GPU platforms |
-| **CLI diagnostics** | `tb-doctor`, `tb-validate`, `tb-advisor`, `tb-quantize`, `tb-migrate`, `tb-benchmark` |
+| **CLI diagnostics** | `tb-doctor`, `tb-validate`, `tb-advisor`, `tb-speculate`, `tb-cache`, `tb-adapter`, `tb-quantize`, `tb-migrate`, `tb-benchmark`, `tb-checkpoint` |
 
 ## What TorchBridge Is NOT
 

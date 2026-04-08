@@ -103,18 +103,22 @@ Conda is a good option for managing Python versions and CUDA toolkit dependencie
 
 ```bash
 # Core import
-PYTHONPATH=src python3 -c "
+python3 -c "
 from torchbridge import TorchBridgeConfig, UnifiedManager
 from torchbridge.backends import detect_best_backend
 print(f'Backend: {detect_best_backend()}')
 print('TorchBridge ready')
 "
 
-# Run tests
-PYTHONPATH=src python3 -m pytest tests/ -q
-
 # System diagnostics
 torchbridge doctor
+```
+
+For development installs (cloned repo), run the test suite to verify everything works:
+
+```bash
+# From the repo root (dev install only)
+python3 -m pytest tests/ -q
 ```
 
 After installation, run the system diagnostics command to verify your environment:
