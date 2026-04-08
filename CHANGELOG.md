@@ -8,6 +8,27 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.82] - 2026-04-07 - Contributor onboarding fixes
+
+### Summary
+
+Contributor walkthrough surfaced 3 issues in onboarding docs. Fixed CONTRIBUTING.md to use
+a virtual environment (avoiding broken `python3` without torch), replaced non-existent
+`tests/test_backends.py` examples with real test paths, added a "Tolerance Data" contribution
+guide section (the README pointed to CONTRIBUTING.md but no such section existed), and fixed
+a broken `ToleranceDB.register()` call in `docs/guides/testing.md` (was passing a
+`ToleranceEntry` object; actual signature takes `atol` and `rtol` directly).
+
+### Fixed
+
+- `CONTRIBUTING.md`: setup now guides contributor through venv creation; `python3` → `python` (venv-relative); `PYTHONPATH=src` dropped for editable install workflow
+- `CONTRIBUTING.md`: broken test path `tests/test_backends.py` → `tests/backends/test_nvidia_backend.py`; broken test ID `TestNVIDIA::test_device_info` → `TestNVIDIABackend::test_get_device_info`
+- `docs/guides/testing.md`: `db.register("mi350x", "float16", ToleranceEntry(...))` → `db.register("mi350x", "float16", atol=..., rtol=...)`; added `register_family()` example with `source` + `notes` metadata
+
+### Added
+
+- `CONTRIBUTING.md`: "Tolerance Data" contribution area — step-by-step instructions for adding measured hardware entries to `_FAMILY_TOLERANCE_TABLE` using `_m()`/`_d()` helpers, with source-label conventions
+
 ## [0.5.81] - 2026-04-07 - Docs correctness pass + CLI bugfixes
 
 ### Summary
