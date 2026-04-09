@@ -8,6 +8,27 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.86] - 2026-04-08 - fix: tb-doctor --ci exits 2 on Apple Silicon
+
+### Summary
+
+`tb-doctor --ci` exited with code 2 (warnings-only) on any Apple Silicon Mac
+because the CUDA check always emitted a "warning" when CUDA was absent —
+even on machines with MPS GPU acceleration. This broke CI pipelines on macOS
+runners (GitHub Actions `macos-latest`, Apple Silicon dev machines).
+
+### Fixed
+
+- `src/torchbridge/cli/doctor.py`: when CUDA is absent but MPS is available,
+  the CUDA hardware diagnostic is now `pass` ("Apple Silicon MPS provides GPU
+  acceleration") instead of `warning` ("CPU-only mode"). The warning is only
+  emitted on true CPU-only systems with no GPU acceleration at all.
+- `tests/cli/test_doctor.py`: updated existing no-CUDA test to mock MPS=False;
+  added `test_check_hardware_no_cuda_with_mps`, `test_ci_exits_zero_on_apple_silicon`,
+  `test_ci_exits_nonzero_on_cpu_only` regression tests (44 passing, +3 new).
+
+---
+
 ## [0.5.85] - 2026-04-08 - Docs correctness pass II — five doc bugs fixed
 
 ### Summary
