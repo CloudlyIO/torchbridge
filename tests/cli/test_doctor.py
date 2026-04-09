@@ -112,14 +112,31 @@ class TestDoctorCommand:
         assert cuda_result is not None
         assert cuda_result.status == "pass"
 
+    @patch("torch.backends.mps.is_available", return_value=False)
     @patch("torch.cuda.is_available", return_value=False)
-    def test_check_hardware_no_cuda(self, mock_available):
-        """Test hardware check without CUDA."""
+    def test_check_hardware_no_cuda_no_mps(self, mock_cuda, mock_mps):
+        """Test hardware check without CUDA and without MPS (pure CPU) → warning."""
         results = DoctorCommand._check_hardware(verbose=False)
 
         cuda_result = next((r for r in results if r.name == "CUDA GPU"), None)
         assert cuda_result is not None
         assert cuda_result.status == "warning"
+
+    @patch("torch.backends.mps.is_available", return_value=True)
+    @patch("torch.cuda.is_available", return_value=False)
+    def test_check_hardware_no_cuda_with_mps(self, mock_cuda, mock_mps):
+        """Test hardware check without CUDA but with MPS → pass, not warning.
+
+        Apple Silicon machines have GPU acceleration via MPS. Reporting no-CUDA
+        as a warning caused tb-doctor --ci to exit 2 (warning) on healthy Macs,
+        breaking CI pipelines that ran on Apple Silicon runners.
+        """
+        results = DoctorCommand._check_hardware(verbose=False)
+
+        cuda_result = next((r for r in results if r.name == "CUDA GPU"), None)
+        assert cuda_result is not None
+        assert cuda_result.status == "pass"
+        assert cuda_result.recommendation is None
 
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
@@ -414,6 +431,56 @@ class TestDoctorCommand:
         ):
             result = DoctorCommand.execute(args)
             assert result == 1
+
+
+class TestDoctorCIAppleSilicon:
+    """Regression tests for CI exit code on Apple Silicon (MPS) machines."""
+
+    @patch("torch.backends.mps.is_available", return_value=True)
+    @patch("torch.cuda.is_available", return_value=False)
+    def test_ci_exits_zero_on_apple_silicon(self, mock_cuda, mock_mps, capsys):
+        """tb-doctor --ci must exit 0 on Apple Silicon (MPS available, no CUDA).
+
+        Before the fix, the no-CUDA diagnostic was always a warning, causing
+        exit code 2 even on healthy Apple Silicon machines. This broke CI
+        pipelines that run on macOS runners (e.g. GitHub Actions macos-latest).
+        """
+        args = MagicMock()
+        args.category = None
+        args.full_report = False
+        args.fix = False
+        args.output = None
+        args.verbose = False
+        args.ci = True
+
+        # Patch torch.backends to have mps attribute
+        with patch("torch.backends.mps", create=True):
+            exit_code = DoctorCommand.execute(args)
+
+        # Must be 0 (all pass) — not 2 (warnings)
+        assert exit_code == 0, (
+            "tb-doctor --ci should exit 0 on Apple Silicon — no-CUDA is not a "
+            "problem when MPS provides GPU acceleration"
+        )
+
+    @patch("torch.backends.mps.is_available", return_value=False)
+    @patch("torch.cuda.is_available", return_value=False)
+    def test_ci_exits_nonzero_on_cpu_only(self, mock_cuda, mock_mps, capsys):
+        """tb-doctor --ci exits 2 on a true CPU-only system (no CUDA, no MPS)."""
+        args = MagicMock()
+        args.category = "hardware"
+        args.full_report = False
+        args.fix = False
+        args.output = None
+        args.verbose = False
+        args.ci = True
+
+        exit_code = DoctorCommand.execute(args)
+
+        # Should be 2 (warnings) — CUDA absent with no GPU fallback is noteworthy
+        assert exit_code == 2, (
+            "tb-doctor --ci should exit 2 on a CPU-only system (no GPU at all)"
+        )
 
 
 class TestDoctorCIMode:

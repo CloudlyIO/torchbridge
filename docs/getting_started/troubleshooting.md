@@ -195,11 +195,12 @@ logging.getLogger("torchbridge.backends").setLevel(logging.DEBUG)
 
 ```python
 from torchbridge.validation import UnifiedValidator
+from torchbridge.validation.unified_validator import ValidationResult
 
 validator = UnifiedValidator(config)
 results = validator.validate_model(model, input_shape=(32, 512))
 for report in results.reports:
-    if report.status == "warning":
+    if report.status == ValidationResult.WARNING:
         print(f"Warning: {report.message}")
 ```
 
