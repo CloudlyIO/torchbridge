@@ -8,6 +8,20 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.85] - 2026-04-08 - Docs correctness pass II — five doc bugs fixed
+
+### Summary
+
+End-to-end walk-through of all four developer stages (first impression, Day 1, Day 2, contributor) uncovered five documentation bugs. All fixed; no source changes.
+
+### Fixed
+
+- `README.md`: compatibility matrix count updated 12 → 13 (compile_compatibility.py was added in v0.5.74 as the 13th matrix); CLI diagnostics table expanded to list all 10 `tb-*` commands instead of only 6
+- `docs/guides/backend-selection.md`: `detect_best_backend()` return type comment corrected — returns `BackendType` enum (values `nvidia`, `amd`, `trainium`, `tpu`, `cpu`), not the strings `"cuda"`, `"rocm"`, `"neuron"`
+- `docs/guides/adapter-training.md`: CLI example `--backend cuda` corrected to `--backend nvidia` (valid backend names for `torchbridge adapter recommend` are `nvidia`, `amd`, `trainium`, `tpu`, `cpu`)
+- `docs/getting_started/troubleshooting.md`: `ValidationResult` comparison fixed — `report.status == "warning"` silently never matched; corrected to `report.status == ValidationResult.WARNING` with proper import
+- `docs/getting_started/installation.md`: "Verify Installation" snippet cleaned up — removed `PYTHONPATH=src` prefix that only applies to dev installs, not `pip install torchbridge-ml` users; moved test-suite command into a clearly-labelled dev-only block
+
 ## [0.5.84] - 2026-04-08 - Fix flaky Qwen3 compile test
 
 ### Summary

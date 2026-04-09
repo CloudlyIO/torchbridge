@@ -9,7 +9,7 @@ TorchBridge auto-detects available hardware and selects the optimal backend:
 ```python
 from torchbridge.backends import BackendFactory, detect_best_backend
 
-backend_name = detect_best_backend()  # "cuda", "rocm", "neuron", "tpu", or "cpu"
+backend_name = detect_best_backend()  # BackendType.NVIDIA, .AMD, .TRAINIUM, .TPU, or .CPU
 backend = BackendFactory.create(backend_name)
 ```
 
