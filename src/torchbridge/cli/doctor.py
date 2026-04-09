@@ -357,14 +357,25 @@ Examples:
                     )
                 )
         else:
-            results.append(
-                DiagnosticResult(
-                    "CUDA GPU",
-                    "warning",
-                    "No CUDA GPU detected ( CPU-only mode)",
-                    recommendation="Install CUDA-compatible PyTorch for GPU acceleration",
+            mps_available = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+            if mps_available:
+                # MPS provides GPU acceleration — no CUDA is expected and not a problem
+                results.append(
+                    DiagnosticResult(
+                        "CUDA GPU",
+                        "pass",
+                        "No CUDA GPU ( Apple Silicon MPS provides GPU acceleration)",
+                    )
                 )
-            )
+            else:
+                results.append(
+                    DiagnosticResult(
+                        "CUDA GPU",
+                        "warning",
+                        "No CUDA GPU detected ( CPU-only mode)",
+                        recommendation="Install CUDA-compatible PyTorch for GPU acceleration",
+                    )
+                )
 
         # Apple Silicon MPS
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
