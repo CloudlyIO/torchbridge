@@ -14,33 +14,11 @@ permissions:
   security-events: write
   actions: read
 
+  # CodeQL requires GitHub Advanced Security (free for public repos, paid for private).
+  # Re-add this job after the repo is made public — it will work without any changes.
+  # codeql: ...
+
 jobs:
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # CodeQL requires GitHub Advanced Security (free for public repos).
-    # Until the repo is public, steps will fail; continue-on-error prevents
-    # blocking merges. Remove this line after going public.
-    continue-on-error: true
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: python
-          queries: security-extended,security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:python"
-
   bandit:
     name: Bandit Security Scan
     runs-on: ubuntu-latest
