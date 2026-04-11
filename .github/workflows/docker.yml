@@ -124,8 +124,14 @@ jobs:
   build-amd:
     name: Build AMD GPU Image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
+      - name: Free disk space (ROCm base image is ~20 GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/android
+          sudo apt-get clean
+          df -h
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
