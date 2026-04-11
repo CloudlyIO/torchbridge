@@ -8,6 +8,13 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.92] - 2026-04-11 - fix: pip-audit --skip-editable (local editable install not on PyPI)
+
+### Fixed
+- **pip-audit**: Added `--skip-editable` flag — pip-audit was failing because the editably-installed `torchbridge-ml` dev version is not published to PyPI; `--skip-editable` correctly audits only resolved dependencies (torch, numpy) for known CVEs
+
+---
+
 ## [0.5.91] - 2026-04-11 - fix: coverage threshold 75→70 (GPU-gated paths uncoverable in CPU-only CI)
 
 ### Fixed
