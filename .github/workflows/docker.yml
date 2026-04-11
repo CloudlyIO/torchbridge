@@ -121,64 +121,19 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-  build-amd:
-    name: Build AMD GPU Image
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Free disk space (ROCm base image is ~20 GB)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/android
-          sudo apt-get clean
-          df -h
-
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch,suffix=-amd
-            type=ref,event=pr,suffix=-amd
-            type=semver,pattern={{version}},suffix=-amd
-            type=semver,pattern={{major}}.{{minor}},suffix=-amd
-            type=raw,value=latest-amd,enable={{is_default_branch}}
-
-      - name: Build and push AMD image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./docker/Dockerfile.amd
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
+  # AMD build requires a large runner (ROCm base image ~20 GB exhausts standard 14 GB runner).
+  # Disabled until a self-hosted or larger runner is available.
+  # build-amd:
 
   scan-images:
     name: Scan Images for Vulnerabilities
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build-cpu, build-nvidia, build-amd]
+    needs: [build-cpu, build-nvidia]
     if: github.event_name != 'pull_request'
     strategy:
       matrix:
-        variant: [cpu, nvidia, amd]
+        variant: [cpu, nvidia]
     steps:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.35.0
