@@ -521,14 +521,18 @@ Examples:
                     ref_tracer = DivergenceTracer(model_cpu, device=torch.device("cpu"))
                     with ref_tracer:
                         with torch.no_grad():
-                            model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(x_cpu)
+                            model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(
+                                x_cpu
+                            )
                     # Run a second tracer on dev2 and compare
                     model_dev2 = model.to(dev2)
                     x_dev2 = x.to(dev2)
                     test_tracer = DivergenceTracer(model_dev2, device=dev2)
                     with test_tracer:
                         with torch.no_grad():
-                            model_dev2(input_ids=x_dev2) if is_hf_model else model_dev2(x_dev2)
+                            model_dev2(input_ids=x_dev2) if is_hf_model else model_dev2(
+                                x_dev2
+                            )
                     divergences = test_tracer.compare_with(ref_tracer)
                     for d in divergences:
                         layer_rows.append(

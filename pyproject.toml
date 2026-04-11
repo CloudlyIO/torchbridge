@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "pybind11>=2.10.0", "torch", "ninja"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbridge-ml"
-version = "0.5.87"
+version = "0.5.88"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
 authors = [{name = "TorchBridge Team"}]
 readme = "README.md"

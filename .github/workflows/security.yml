@@ -19,6 +19,10 @@ jobs:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # CodeQL requires GitHub Advanced Security (free for public repos).
+    # Until the repo is public, steps will fail; continue-on-error prevents
+    # blocking merges. Remove this line after going public.
+    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

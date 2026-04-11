@@ -357,7 +357,9 @@ Examples:
                     )
                 )
         else:
-            mps_available = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+            mps_available = (
+                hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+            )
             if mps_available:
                 # MPS provides GPU acceleration — no CUDA is expected and not a problem
                 results.append(
