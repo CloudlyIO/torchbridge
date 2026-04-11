@@ -35,7 +35,7 @@ def _load_model_file(path: str) -> nn.Module:
     except Exception:
         pass
     try:
-        loaded = torch.load(path, map_location="cpu", weights_only=False)
+        loaded = torch.load(path, map_location="cpu", weights_only=False)  # nosec B614 - caller controls path; jit.load attempted first
     except AttributeError as e:
         raise RuntimeError(
             f"Cannot load model: {e}\n"
@@ -426,7 +426,7 @@ Examples:
                 # Treat as HuggingFace model ID
                 from transformers import AutoModelForCausalLM
 
-                model = AutoModelForCausalLM.from_pretrained(
+                model = AutoModelForCausalLM.from_pretrained(  # nosec B615 - revision pinning is user's responsibility for CLI tool
                     model_path, torch_dtype=dtype
                 )
                 model_label = model_path  # HuggingFace model ID is a public identifier
@@ -735,7 +735,7 @@ Examples:
             else:
                 from transformers import AutoModelForCausalLM
 
-                model = AutoModelForCausalLM.from_pretrained(
+                model = AutoModelForCausalLM.from_pretrained(  # nosec B615 - revision pinning is user's responsibility for CLI tool
                     model_path, torch_dtype=dtype
                 )
                 model_label = model_path  # HuggingFace model ID is a public identifier

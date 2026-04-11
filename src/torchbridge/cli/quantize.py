@@ -199,7 +199,7 @@ Examples:
                 try:
                     model = torch.jit.load(model_path, map_location="cpu")
                 except Exception:
-                    model = torch.load(
+                    model = torch.load(  # nosec B614 - user controls path; jit.load attempted first
                         model_path, map_location="cpu", weights_only=not trust_source
                     )
                 if hasattr(model, "eval"):
@@ -219,7 +219,7 @@ Examples:
         try:
             from transformers import AutoModelForCausalLM
 
-            model = AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(  # nosec B615 - revision pinning is user's responsibility for CLI tool
                 model_path, torch_dtype=torch.float32
             )
             model.eval()

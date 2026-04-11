@@ -117,8 +117,8 @@ class TestExceptionLogging:
         exporter = ValidationSpanExporter.__new__(ValidationSpanExporter)
         mock_span = MagicMock()
         mock_tracer = MagicMock()
-        mock_tracer.start_as_current_span.return_value.__enter__ = (
-            lambda s, *a: mock_span
+        mock_tracer.start_as_current_span.return_value.__enter__ = lambda s, *a: (
+            mock_span
         )
         mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
             return_value=False
@@ -148,8 +148,8 @@ class TestExceptionLogging:
         exporter = ValidationSpanExporter.__new__(ValidationSpanExporter)
         mock_span = MagicMock()
         mock_tracer = MagicMock()
-        mock_tracer.start_as_current_span.return_value.__enter__ = (
-            lambda s, *a: mock_span
+        mock_tracer.start_as_current_span.return_value.__enter__ = lambda s, *a: (
+            mock_span
         )
         mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
             return_value=False

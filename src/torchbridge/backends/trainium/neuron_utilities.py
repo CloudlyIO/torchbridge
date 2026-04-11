@@ -234,7 +234,7 @@ def detect_instance_type() -> str:
             headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
             method="PUT",
         )
-        with urllib.request.urlopen(token_req, timeout=1) as token_resp:
+        with urllib.request.urlopen(token_req, timeout=1) as token_resp:  # nosec B310 - hardcoded AWS IMDSv2 endpoint
             token = token_resp.read().decode("utf-8")
 
         # Step 2: Use token to fetch metadata
@@ -242,7 +242,7 @@ def detect_instance_type() -> str:
             "http://169.254.169.254/latest/meta-data/instance-type",
             headers={"X-aws-ec2-metadata-token": token},
         )
-        with urllib.request.urlopen(metadata_req, timeout=1) as resp:
+        with urllib.request.urlopen(metadata_req, timeout=1) as resp:  # nosec B310 - hardcoded AWS IMDSv2 endpoint
             return resp.read().decode("utf-8")
     except Exception:
         logger.debug("EC2 instance type detection failed", exc_info=True)
