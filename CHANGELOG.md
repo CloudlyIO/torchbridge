@@ -8,6 +8,16 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.88] - 2026-04-11 - fix: remaining CI failures — CodeQL GHAS, AMD base image, build isolation, ruff format
+
+### Fixed
+- **CodeQL**: Added `continue-on-error: true` to CodeQL job — requires GitHub Advanced Security (free for public repos, paid for private); will auto-enable when repo goes public
+- **AMD Docker**: Updated base image `rocm6.2_ubuntu22.04_py3.10_pytorch_2.4.0` → `rocm7.2.1_ubuntu22.04_py3.10_pytorch_release_2.9.1` (old tag no longer exists on Docker Hub)
+- **NVIDIA Docker / pip-audit disk exhaustion**: Removed `pybind11>=2.10.0`, `torch`, `ninja` from `[build-system] requires` — TorchBridge is pure Python (wheel is `py3-none-any`); these caused `pip install .` to re-download torch inside the isolated build env, exhausting runner disk
+- **Ruff format**: Fixed formatting in `cli/doctor.py`, `cli/validate.py`, `test_torch_compile_compat.py` after recent edits
+
+---
+
 ## [0.5.87] - 2026-04-10 - fix: 3 CI failures blocking clean green builds
 
 ### Fixed

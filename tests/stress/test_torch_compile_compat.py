@@ -74,9 +74,9 @@ class TestTorchCompileCompat:
             last_token_compiled.flatten().unsqueeze(0),
         ).item()
         assert cos_sim > 0.99, f"Compiled LLM cosine similarity too low: {cos_sim:.4f}"
-        assert (
-            last_token_eager.argmax(-1) == last_token_compiled.argmax(-1)
-        ).all(), "Compiled LLM predicted different top token than eager"
+        assert (last_token_eager.argmax(-1) == last_token_compiled.argmax(-1)).all(), (
+            "Compiled LLM predicted different top token than eager"
+        )
 
     @pytest.mark.parametrize("mode", ["default", "reduce-overhead", "max-autotune"])
     def test_compile_modes(self, minilm_model_and_tokenizer, mode):

@@ -13,8 +13,8 @@
 # Tested on: AMD Instinct MI250X, MI300X
 # Version: see pyproject.toml
 
-# ROCm 6.2 base image with PyTorch support
-FROM rocm/pytorch:rocm6.2_ubuntu22.04_py3.10_pytorch_2.4.0 AS base
+# ROCm 7.2.1 base image with PyTorch 2.9.1
+FROM rocm/pytorch:rocm7.2.1_ubuntu22.04_py3.10_pytorch_release_2.9.1 AS base
 
 ARG TORCHBRIDGE_VERSION="0.0.0"
 
