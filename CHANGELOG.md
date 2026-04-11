@@ -8,10 +8,10 @@
 
 ## **v0.5.x - Public Release Series**
 
-## [0.5.92] - 2026-04-11 - fix: pip-audit --skip-editable (local editable install not on PyPI)
+## [0.5.92] - 2026-04-11 - fix: pip-audit CI failure (editable install incompatible with audit)
 
 ### Fixed
-- **pip-audit**: Added `--skip-editable` flag — pip-audit was failing because the editably-installed `torchbridge-ml` dev version is not published to PyPI; `--skip-editable` correctly audits only resolved dependencies (torch, numpy) for known CVEs
+- **pip-audit**: Changed CI audit step to install `torch` and `numpy` directly (not `pip install -e .`) and removed `--strict` flag — pip-audit 2.10.0 rejects editable distributions even with `--skip-editable` when `--strict` is set; auditing the declared dependencies directly is equivalent and reliable
 
 ---
 
