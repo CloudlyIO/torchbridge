@@ -8,6 +8,13 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.90] - 2026-04-11 - fix: AMD Docker runner out-of-disk
+
+### Fixed
+- **Docker AMD build**: Added disk-cleanup step before ROCm image pull — ROCm PyTorch base image is ~20 GB which exhausted the 14 GB GitHub Actions runner; free step removes dotnet/GHC/Boost/Android toolchains (~14 GB) before building; also extended timeout 30→45 min
+
+---
+
 ## [0.5.89] - 2026-04-11 - fix: bandit security findings + ruff 0.15.x format
 
 ### Fixed
