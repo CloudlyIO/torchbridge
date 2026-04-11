@@ -8,6 +8,18 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.87] - 2026-04-10 - fix: 3 CI failures blocking clean green builds
+
+### Fixed
+- **Security workflow**: `bandit --confidence-level HIGH` is invalid in bandit ≥1.8; changed to lowercase `high` (exit code 2 on every push)
+- **Docker builds**: `COPY requirements.txt` failed because the file doesn't exist; removed the dead `requirements.txt` install step from all 4 Dockerfiles (deps are handled by `pip install .` via pyproject.toml)
+- **Quantization test**: `test_memory_actually_reduces` failed on all Python versions because `_model_size_mb()` returned 0.0 for dynamically quantized models — `torch.quantize_dynamic` stores weights as packed params not tracked by `.parameters()` or `.buffers()`; added serialization fallback via `torch.save(state_dict, BytesIO)`
+
+### Tests
+- 1 integration test now passing that was failing on all 4 Python versions in CI
+
+---
+
 ## [0.5.86] - 2026-04-08 - fix: tb-doctor --ci exits 2 on Apple Silicon
 
 ### Summary

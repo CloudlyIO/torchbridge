@@ -10,6 +10,7 @@ fallback chain; quantization is performed by torchao.
 from __future__ import annotations
 
 import copy
+import io
 import logging
 import warnings
 from dataclasses import dataclass, field
@@ -78,7 +79,14 @@ def _model_size_mb(model: nn.Module) -> float:
     """Calculate model size in MB."""
     param_bytes = sum(p.numel() * p.element_size() for p in model.parameters())
     buffer_bytes = sum(b.numel() * b.element_size() for b in model.buffers())
-    return (param_bytes + buffer_bytes) / (1024 * 1024)
+    total = param_bytes + buffer_bytes
+    if total > 0:
+        return total / (1024 * 1024)
+    # Dynamically quantized models store weights as packed params that are not
+    # tracked by .parameters() or .buffers(). Fall back to serialization size.
+    buf = io.BytesIO()
+    torch.save(model.state_dict(), buf)
+    return buf.tell() / (1024 * 1024)
 
 
 class QuantizationEngine:
