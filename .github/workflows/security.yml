@@ -105,8 +105,8 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --strict --desc on --format json --output pip-audit-report.json
-          pip-audit --strict --desc on
+          pip-audit --strict --desc on --skip-editable --format json --output pip-audit-report.json
+          pip-audit --strict --desc on --skip-editable
 
       - name: Upload pip-audit Report
         uses: actions/upload-artifact@v7
