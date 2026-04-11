@@ -8,6 +8,17 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.89] - 2026-04-11 - fix: bandit security findings + ruff 0.15.x format
+
+### Fixed
+- **B324 (MD5)**: Added `usedforsecurity=False` to `hashlib.md5()` calls in `xla_compiler.py` and `neuron_compiler.py` — both use MD5 as a non-security cache key hash
+- **B310 (URL open)**: Added `# nosec B310` to AWS IMDSv2 metadata endpoint calls in `neuron_utilities.py` — hardcoded AWS instance metadata URLs are not user-supplied
+- **B614 (pytorch_load)**: Added `# nosec B614` to `torch.load` fallbacks in `validate.py` and `quantize.py` — TorchScript load is always attempted first; user controls the model path
+- **B615 (HuggingFace download)**: Added `# nosec B615` to `from_pretrained()` calls in `validate.py` and `quantize.py` — revision pinning is the user's responsibility for a CLI tool; pinning would break general-purpose model loading
+- **Ruff 0.15.x format**: Reformatted `tests/unit/test_exception_logging.py` (CI upgraded to ruff 0.15.10 which has different string-quote normalization)
+
+---
+
 ## [0.5.88] - 2026-04-11 - fix: remaining CI failures — CodeQL GHAS, AMD base image, build isolation, ruff format
 
 ### Fixed

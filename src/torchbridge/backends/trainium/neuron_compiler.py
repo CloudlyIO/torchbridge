@@ -232,7 +232,7 @@ class NeuronCompiler:
                 )
 
         combined = f"{model_str}_{config_str}_{input_info}"
-        return hashlib.md5(combined.encode()).hexdigest()
+        return hashlib.md5(combined.encode(), usedforsecurity=False).hexdigest()
 
     def _estimate_model_size(self, model: nn.Module) -> int:
         """Estimate model size in bytes."""
