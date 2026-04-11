@@ -129,20 +129,11 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-  # GPU tests run on self-hosted runners (optional)
-  test-gpu:
-    name: Test GPU
-    runs-on: [self-hosted, gpu, linux]
-    timeout-minutes: 30
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Run GPU tests
-        run: |
-          pip install -e ".[dev]"
-          pytest tests/ -v -m "gpu" --tb=short
+  # GPU tests require a self-hosted runner — disabled until one is attached
+  # test-gpu:
+  #   name: Test GPU
+  #   runs-on: [self-hosted, gpu, linux]
+  #   ...
 
   build:
     name: Build Package
