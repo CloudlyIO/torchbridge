@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "torchbridge-ml"
 version = "0.5.92"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
-authors = [{name = "TorchBridge Team"}]
+authors = [{name = "TorchBridge Team", email = "team@torchbridge.dev"}]
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
