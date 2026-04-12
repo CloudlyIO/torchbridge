@@ -16,7 +16,7 @@ The following table lists the versions of TorchBridge currently receiving securi
 If you discover a security vulnerability in TorchBridge, please report it through one of the following channels:
 
 1. **GitHub Security Advisories (preferred):** Submit a report at [https://github.com/CloudlyIO/torchbridge/security/advisories/new](https://github.com/CloudlyIO/torchbridge/security/advisories/new).
-2. **Email:** Send a detailed report to [security@torchbridge.dev](mailto:security@torchbridge.dev).
+2. **Email:** Send a detailed report to [security@torchbridge.ml](mailto:security@torchbridge.ml).
 
 When reporting, please include as much of the following information as possible:
 
