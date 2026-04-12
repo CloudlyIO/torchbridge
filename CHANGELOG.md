@@ -8,6 +8,20 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.93] - 2026-04-12 - chore: community launch metadata — official domain, author email, PyPI consistency
+
+### Changed
+- **Author email**: `dev@torchbridge.ml` (was missing from published package metadata)
+- **Homepage**: `https://torchbridge.ml` (official project website)
+- **Documentation URL**: `https://docs.torchbridge.ml`
+- **Security contact**: `security@torchbridge.ml`
+- **License copyright**: 2025-2026
+- **ReadTheDocs**: `.readthedocs.yml` added; Sphinx docs configured for auto-build
+- **GitHub Discussions**: enabled for community Q&A
+- **GitHub repo homepage**: updated to `https://torchbridge.ml`
+
+---
+
 ## [0.5.92] - 2026-04-11 - fix: pip-audit CI failure (editable install incompatible with audit)
 
 ### Fixed
