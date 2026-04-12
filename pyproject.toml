@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "torchbridge-ml"
 version = "0.5.92"
 description = "Cross-backend validation and configuration intelligence for PyTorch — NVIDIA, AMD, Trainium, and TPU"
-authors = [{name = "TorchBridge Team", email = "team@torchbridge.dev"}]
+authors = [{name = "TorchBridge Team", email = "dev@torchbridge.ml"}]
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
@@ -31,8 +31,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/CloudlyIO/torchbridge"
-Documentation = "https://torchbridge.readthedocs.io"
+Homepage = "https://torchbridge.ml"
+Documentation = "https://docs.torchbridge.ml"
 Repository = "https://github.com/CloudlyIO/torchbridge"
 "Bug Tracker" = "https://github.com/CloudlyIO/torchbridge/issues"
 
