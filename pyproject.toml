@@ -72,7 +72,7 @@ all = [
     "tokenizers>=0.14.0,<1.0.0",
     "triton>=2.1.0,<4.0.0",
     "flash-attn>=2.3.0,<4.0.0",
-    "accelerate>=0.24.0,<1.0.0",
+    "accelerate>=0.24.0,<2.0.0",
 ]
 cloud = [
     "boto3>=1.28.0,<2.0.0",
