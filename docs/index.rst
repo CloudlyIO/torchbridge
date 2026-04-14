@@ -10,6 +10,12 @@ Validate once. Trust everywhere.
    pip install torchbridge-ml
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   ROADMAP
+
+.. toctree::
    :maxdepth: 2
    :caption: Getting Started
 
@@ -21,13 +27,15 @@ Validate once. Trust everywhere.
    :maxdepth: 2
    :caption: User Guides
 
-   guides/backend-selection
    guides/cli
-   guides/deployment
-   guides/distributed-training
-   guides/hardware-setup
+   guides/backend-selection
    guides/performance-tuning
-   guides/data-handling
+   guides/distributed-training
+   guides/inference-optimization
+   guides/model-optimization
+   guides/checkpointing
+   guides/deployment
+   guides/testing
    guides/use-cases
 
 .. toctree::

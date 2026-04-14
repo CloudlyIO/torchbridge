@@ -45,7 +45,7 @@ config = TorchBridgeConfig(
 Larger batches improve GPU utilization but increase memory:
 
 ```bash
-torchbridge benchmark --model your-model --batch-sizes 1,4,8,16,32
+tb-benchmark --model your-model --batch-sizes 1,4,8,16,32
 ```
 
 **Rules of thumb:**
@@ -145,15 +145,15 @@ Compare performance across backends:
 
 ```bash
 # Quick benchmark
-torchbridge benchmark --model model.pt --quick
+tb-benchmark --model model.pt --quick
 
 # Full suite with latency percentiles
-torchbridge benchmark --model model.pt --iterations 1000 --warmup 50
+tb-benchmark --model model.pt --iterations 1000 --warmup 50
 ```
 
 ## Common Pitfalls
 
-1. **CPU fallback without knowing it** — Run `torchbridge doctor` to verify
+1. **CPU fallback without knowing it** — Run `tb-doctor` to verify
    GPU detection. If CUDA/ROCm isn't found, inference silently falls back to CPU.
 
 2. **Small batch size on large GPUs** — An A100 with batch size 1 wastes 95%

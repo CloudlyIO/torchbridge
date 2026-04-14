@@ -151,8 +151,39 @@ for backend_name in ["cuda", "rocm", "cpu"]:
         print(f"{backend_name}: {e}")
 ```
 
+## Hardware Setup
+
+Quick verification after installing drivers and PyTorch:
+
+```bash
+# NVIDIA
+python3 -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, version: {torch.version.cuda}')"
+nvidia-smi --query-gpu=name,compute_cap,memory.total --format=csv
+
+# AMD (ROCm)
+python3 -c "import torch; print(f'ROCm: {torch.version.hip}')"
+rocm-smi
+
+# TPU (XLA)
+python3 -c "import torch_xla.core.xla_model as xm; print(xm.xla_device())"
+
+# Trainium / Inferentia (NeuronX)
+neuron-ls
+
+# Apple Silicon (MPS)
+python3 -c "import torch; print(f'MPS: {torch.backends.mps.is_available()}')"
+
+# Any backend — ask TorchBridge
+tb-doctor
+```
+
+For full driver installation, follow the vendor documentation for your OS:
+- **NVIDIA CUDA:** [developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+- **AMD ROCm:** [rocm.docs.amd.com](https://rocm.docs.amd.com)
+- **Google TPU (XLA):** [github.com/pytorch/xla](https://github.com/pytorch/xla)
+- **AWS NeuronX:** [awsdocs.amazonaws.com/neuron](https://awsdocs.amazonaws.com/neuron)
+
 ## See Also
 
 - [Backends Overview](../backends/overview.md)
 - [Hardware Matrix](../reference/hardware-matrix.md)
-- [Hardware Setup](hardware-setup.md)

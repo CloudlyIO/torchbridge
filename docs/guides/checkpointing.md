@@ -100,8 +100,8 @@ Uses Young's formula to recommend optimal checkpoint interval:
 
 ```bash
 # CLI usage
-torchbridge checkpoint advisor --world-size 64
-torchbridge checkpoint advisor --world-size 256 --checkpoint-time 120 --ci
+tb-checkpoint advisor --world-size 64
+tb-checkpoint advisor --world-size 256 --checkpoint-time 120 --ci
 ```
 
 ```python
@@ -157,11 +157,11 @@ Trigger conditions:
 
 ```bash
 # Show checkpoint metadata
-torchbridge checkpoint info ./checkpoints/checkpoint_20260219
+tb-checkpoint info ./checkpoints/checkpoint_20260219
 
 # List all checkpoints
-torchbridge checkpoint list ./checkpoints
+tb-checkpoint list ./checkpoints
 
 # Get frequency recommendation (JSON for CI)
-torchbridge checkpoint advisor --world-size 128 --ci
+tb-checkpoint advisor --world-size 128 --ci
 ```

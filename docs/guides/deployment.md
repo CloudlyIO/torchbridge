@@ -249,6 +249,33 @@ Before deploying:
 - [ ] Load testing completed
 - [ ] Rollback plan documented
 
+## Privacy & Data Handling
+
+TorchBridge collects **no telemetry** and makes **no network requests**. All data stays on your machine.
+
+TorchBridge writes one file to your local filesystem during normal operation:
+
+- **`~/.torchbridge/kernel_benchmarks.json`** — kernel latency cache, keyed by hardware fingerprint. Contains only timing data and hardware metadata — no model weights, inputs, outputs, or PII.
+
+| Question | Answer |
+|----------|--------|
+| Does TorchBridge phone home? | No |
+| Telemetry sent anywhere? | No |
+| Safe for air-gapped environments? | Yes |
+| Contains model data? | No — only kernel latency timings and hardware metadata |
+
+The OTel exporter (`--otel` flag on `tb-validate`) sends validation spans to an OTLP endpoint
+**only when explicitly configured**. No endpoint is configured by default.
+
+```bash
+# Remove all locally stored data
+rm -rf ~/.torchbridge
+```
+
+If sharing diagnostic output for debugging, latency numbers, hardware model names, and
+pass/fail results are safe to share. Avoid sharing model file paths or proprietary model
+configurations.
+
 ## See Also
 
 - [CLI Reference](cli.md)

@@ -4,12 +4,16 @@ TorchBridge provides command-line tools for validation, benchmarking, and diagno
 
 ## Commands
 
-### `torchbridge benchmark`
+All commands are available as standalone entry points (`tb-benchmark`, `tb-doctor`, etc.)
+and as sub-commands of the main `torchbridge` dispatcher (`torchbridge benchmark`, etc.).
+Both forms are equivalent — use whichever fits your workflow.
+
+### `tb-benchmark`
 
 Run performance benchmarks on a model.
 
 ```bash
-torchbridge benchmark --model model.pt --batch-sizes 1,8,32 --output results.json
+tb-benchmark --model model.pt --batch-sizes 1,8,32 --output results.json
 ```
 
 **Options:**
@@ -31,13 +35,13 @@ torchbridge benchmark --model model.pt --batch-sizes 1,8,32 --output results.jso
 
 ```bash
 # Quick benchmark
-torchbridge benchmark --model model.pt --quick
+tb-benchmark --model model.pt --quick
 
 # Detailed with specific input shape
-torchbridge benchmark --model model.pt --input-shape 1,128 --iterations 500
+tb-benchmark --model model.pt --input-shape 1,128 --iterations 500
 
 # Predefined benchmark suite
-torchbridge benchmark --predefined optimization --quick
+tb-benchmark --predefined optimization --quick
 
 # CSV output
 tb-benchmark --predefined optimization --quick --format csv --output results.csv
@@ -47,12 +51,12 @@ tb-benchmark --predefined optimization --output current.json
 tb-benchmark --predefined optimization --compare-baseline current.json --regression-threshold 0.10
 ```
 
-### `torchbridge doctor`
+### `tb-doctor`
 
 System diagnostics and compatibility checking.
 
 ```bash
-torchbridge doctor
+tb-doctor
 ```
 
 **Options:**
@@ -69,13 +73,13 @@ torchbridge doctor
 
 ```bash
 # Quick check
-torchbridge doctor
+tb-doctor
 
 # Full diagnostic report
-torchbridge doctor --full-report --output system_report.json
+tb-doctor --full-report --output system_report.json
 
 # Hardware-specific check
-torchbridge doctor --category hardware --verbose
+tb-doctor --category hardware --verbose
 
 # CI/CD pipeline (JSON output, structured exit codes)
 tb-doctor --ci
@@ -88,7 +92,7 @@ tb-doctor --ci
 - Driver versions
 - TorchBridge version and configuration
 
-### `torchbridge validate`
+### `tb-validate`
 
 Cross-backend output validation — compares model outputs across two backends and reports
 numerical divergence, per-layer analysis, and multi-step agentic trace drift.
@@ -146,16 +150,23 @@ tb-validate --compare cuda cpu --model ./model.pt --ci --output report.json
 tb-validate --compare cuda rocm --model ./model.pt --cert --otel --otel-endpoint https://cloud.langfuse.com/api/public/otel
 ```
 
-## Standalone Entry Points
+## All Entry Points
 
-For CI/CD pipelines, standalone commands are available:
+TorchBridge installs these standalone commands:
 
-```bash
-tb-benchmark --model model.pt --quick
-tb-doctor --full-report
-tb-validate --compare cuda rocm --model ./model.pt --ci
-tb-advisor --mode heterogeneous --nvidia hopper:8 --amd cdna3:4
-```
+| Command | Purpose |
+|---------|---------|
+| `torchbridge` | Main dispatcher (sub-command interface) |
+| `tb-benchmark` | Performance benchmarking |
+| `tb-doctor` | System diagnostics |
+| `tb-validate` | Cross-backend validation |
+| `tb-advisor` | Hardware configuration advisor |
+| `tb-migrate` | Config migration between versions |
+| `tb-quantize` | Backend-aware quantization |
+| `tb-cache` | KV-cache configuration |
+| `tb-speculate` | Speculative decoding configuration |
+| `tb-checkpoint` | Checkpoint management |
+| `tb-adapter` | Adapter training configuration |
 
 ## Configuration
 

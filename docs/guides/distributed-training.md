@@ -65,7 +65,11 @@ model = FSDP(
 )
 ```
 
-Use `tb-advisor --model-params <B> --world-size <N>` to get backend-specific FSDP config recommendations.
+Use `tb-advisor --model-params <B> --world-size <N>` to get backend-specific FSDP config recommendations:
+
+```bash
+tb-advisor --model-params 13e9 --world-size 8 --backend nvidia
+```
 
 Sharding strategies:
 - **FULL_SHARD**: Maximum memory savings, shard parameters + gradients + optimizer
@@ -78,7 +82,7 @@ Best for: models with very wide layers (large hidden dimensions). Use PyTorch's 
 
 ```bash
 # TorchBridge advisor shows optimal parallelism strategy for your hardware
-torchbridge advisor --model-params 70e9 --world-size 8
+tb-advisor --model-params 70e9 --world-size 8
 ```
 
 ## Pipeline Parallelism
@@ -86,7 +90,7 @@ torchbridge advisor --model-params 70e9 --world-size 8
 Best for: very deep models (many layers). Use PyTorch's native `torch.distributed.pipelining` API directly.
 
 ```bash
-torchbridge advisor --model-params 70e9 --world-size 16
+tb-advisor --model-params 70e9 --world-size 16
 ```
 
 ## Memory Estimation
@@ -150,16 +154,102 @@ model = FSDP(model, cpu_offload=CPUOffload(offload_params=True))
 | Tensor Parallel | Yes | Yes | Yes | Partial |
 | Pipeline Parallel | Yes | Yes | Yes | Partial |
 
+## Topology-Aware Configuration
+
+For complex multi-node setups, use `DistributedConfig.auto()` to get backend-specific
+configuration recommendations:
+
+```python
+from torchbridge.core.config import HardwareBackend, NVIDIAArchitecture
+from torchbridge.distributed import DistributedConfig
+
+# Auto-configure for 70B model on 16 H100 GPUs across 2 nodes
+config = DistributedConfig.auto(
+    model_params=int(70e9),
+    backend=HardwareBackend.CUDA,
+    architecture=NVIDIAArchitecture.HOPPER,
+    world_size=16,
+    gpus_per_node=8,
+)
+
+# Export as TOML for reproducibility
+print(config.to_toml())
+```
+
+### FSDP2 Mixed Precision Per Backend
+
+| Backend | Architecture | Mixed Precision | Float8 All-Gather |
+|---------|-------------|-----------------|-------------------|
+| NVIDIA | Blackwell DC | FP8 | Yes |
+| NVIDIA | Hopper | BF16 | Yes |
+| NVIDIA | Ampere | BF16 | No |
+| NVIDIA | Turing | FP16 | No |
+| AMD | CDNA3/CDNA4 | BF16 | No |
+| Trainium | TRN2/TRN3 | BF16 | No |
+| TPU | v5e/v7 | BF16 | No |
+| CPU | — | FP32 | No |
+
+Multi-node training automatically uses hybrid sharding (full shard within node, replicate
+across nodes).
+
+### Pipeline Schedules
+
+TorchBridge selects the optimal pipeline schedule based on hardware:
+
+| Schedule | Bubble Ratio | Requires Async | Hardware |
+|----------|-------------|----------------|----------|
+| Zero Bubble | ~0 | Yes | Hopper+, Blackwell |
+| ZBV Zero Bubble | 0 | Yes | Hopper+ (4+ stages) |
+| Interleaved 1F1B | (p-1)/(m*(v+1)) | No | All |
+| Looped BFS | (p-1)/(m*v) | No | CUDA, AMD |
+| GPipe | (p-1)/m | No | All |
+
+### Communication Backends
+
+| Hardware | Collective | GPU Direct | Symmetric Memory |
+|----------|-----------|------------|-----------------|
+| NVIDIA | NCCL | Yes | Yes (Hopper+) |
+| AMD | RCCL | Yes | No |
+| Trainium | Neuron CC | No | No |
+| TPU | XLA | No | No |
+| CPU | Gloo | No | No |
+
+### Topology Detection
+
+`DistributedConfig.auto()` detects cluster topology automatically:
+
+1. **SLURM** — reads `SLURM_NNODES`, `SLURM_GPUS_ON_NODE`
+2. **Kubernetes** — reads `WORLD_SIZE`, `LOCAL_WORLD_SIZE`
+3. **torch.distributed** — reads standard env vars
+4. **Single-node** — falls back to local GPU count
+
+## CLI Advisor
+
+Use `tb-advisor` to get a parallelism recommendation without writing code:
+
+```bash
+# Basic recommendation
+tb-advisor --model-params 7e9 --world-size 8 --backend nvidia
+
+# JSON output for CI
+tb-advisor --model-params 70e9 --world-size 16 --gpus-per-node 8 --ci
+
+# TOML config file
+tb-advisor --model-params 32e9 --world-size 8 --toml > dist_config.toml
+
+# Detect cluster topology
+tb-advisor --model-params 1e9 --topology
+
+# Heterogeneous cluster (mixed NVIDIA + AMD)
+tb-advisor --mode heterogeneous --nvidia hopper:8 --amd cdna3:4
+
+# Disaggregated prefill/decode fleet
+tb-advisor --mode disaggregated
+```
+
 ## Debugging
 
 ```bash
-# Check distributed setup
-torchrun --nproc_per_node=2 -c "
-import torch.distributed as dist
-dist.init_process_group('nccl')
-print(f'Rank {dist.get_rank()} of {dist.get_world_size()}')
-"
-
 # Common issues:
 # - NCCL timeout: check network connectivity between nodes
 # - OOM: reduce batch size or enable gradient checkpointing
