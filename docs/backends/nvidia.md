@@ -121,5 +121,5 @@ See [Troubleshooting](../getting_started/troubleshooting.md#nvidia-issues) for c
 ## See Also
 
 - [Backends Overview](overview.md)
-- [Hardware Setup](../guides/hardware-setup.md)
+- [Hardware Setup](../guides/backend-selection.md)
 - [Hardware Matrix](../reference/hardware-matrix.md)
