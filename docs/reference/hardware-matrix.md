@@ -104,4 +104,4 @@ Cross-backend numerical consistency validated with Qwen3-0.6B. See [Cloud Valida
 
 - [Backends Overview](../backends/overview.md)
 - [Backend Selection](../guides/backend-selection.md)
-- [Hardware Setup](../guides/hardware-setup.md)
+- [Hardware Setup](../guides/backend-selection.md)

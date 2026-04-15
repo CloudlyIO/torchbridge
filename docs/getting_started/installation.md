@@ -39,7 +39,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python3 -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 ```
 
-Requires CUDA 12.4+ (12.6 recommended). Note: CUDA 12.8 with driver 580 has known FP16/BF16 GEMM issues -- prefer cu126. See [Hardware Setup](../guides/hardware-setup.md) for full CUDA/NVCC installation and the [Compatibility Matrix](../reference/compatibility-matrix.md) for details.
+Requires CUDA 12.4+ (12.6 recommended). Note: CUDA 12.8 with driver 580 has known FP16/BF16 GEMM issues -- prefer cu126. See [Hardware Setup](../guides/backend-selection.md) for full CUDA/NVCC installation and the [Compatibility Matrix](../reference/compatibility-matrix.md) for details.
 
 ### AMD (ROCm)
 
@@ -111,7 +111,7 @@ print('TorchBridge ready')
 "
 
 # System diagnostics
-torchbridge doctor
+tb-doctor
 ```
 
 For development installs (cloned repo), run the test suite to verify everything works:
@@ -124,7 +124,7 @@ python3 -m pytest tests/ -q
 After installation, run the system diagnostics command to verify your environment:
 
 ```bash
-torchbridge doctor
+tb-doctor
 ```
 
 This checks your Python version, PyTorch installation, available backends, and driver compatibility.
@@ -133,5 +133,5 @@ This checks your Python version, PyTorch installation, available backends, and d
 
 - [Quick Start](quickstart.md) -- get running with TorchBridge
 - [Compatibility Matrix](../reference/compatibility-matrix.md) -- supported versions and known issues
-- [Hardware Setup](../guides/hardware-setup.md) -- driver and toolkit installation
+- [Backend Selection](../guides/backend-selection.md) -- driver setup and backend configuration
 - [Troubleshooting](troubleshooting.md) -- common issues

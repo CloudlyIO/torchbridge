@@ -177,5 +177,5 @@ Checkpoints are portable across backends -- save on one, load on another. TorchB
 ## See Also
 
 - [Backend Selection Guide](../guides/backend-selection.md) -- how to choose the right backend
-- [Hardware Setup](../guides/hardware-setup.md) -- driver and toolkit installation
+- [Hardware Setup](../guides/backend-selection.md) -- driver and toolkit installation
 - [Hardware Matrix](../reference/hardware-matrix.md) -- full support table
