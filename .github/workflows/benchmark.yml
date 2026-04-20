@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths:
       - 'src/torchbridge/**'
-      - 'tests/benchmark/**'
+      - 'tests/unit/**'
       - 'pyproject.toml'
   push:
     branches: [main]
     paths:
       - 'src/torchbridge/**'
-      - 'tests/benchmark/**'
+      - 'tests/unit/**'
   workflow_dispatch:
 
 permissions:
@@ -41,4 +41,4 @@ jobs:
 
       - name: Run benchmark tests
         run: |
-          python -m pytest tests/benchmark/ -v -m benchmark
+          python -m pytest tests/unit/ -v -m benchmark

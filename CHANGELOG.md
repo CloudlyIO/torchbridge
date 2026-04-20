@@ -8,6 +8,14 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.95] - 2026-04-20 - fix: CI benchmark path + pytest_capture.sh Python interpreter
+
+### Fixed
+- **`benchmark.yml`**: Updated `tests/benchmark/` → `tests/unit/` (directory deleted in v0.5.94 structural cleanup; benchmark-marked tests now live in `tests/unit/`)
+- **`scripts/ci/pytest_capture.sh`**: Use correct Python interpreter (`/Library/Frameworks/Python.framework/Versions/3.11/bin/python3`, overridable via `TORCHBRIDGE_PYTHON`); python@3.14 on this Mac lacks pytest/torch
+
+---
+
 ## [0.5.94] - 2026-04-19 - refactor: structural cleanup — flatten single-file subpackages, remove dead dirs
 
 ### Changed
