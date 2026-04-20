@@ -9,7 +9,7 @@ import inspect
 import pytest
 import torch
 
-from torchbridge.precision.quantization.torchao_integration import (
+from torchbridge.precision.torchao_integration import (
     TORCHAO_AVAILABLE,
     TorchAOBackend,
 )

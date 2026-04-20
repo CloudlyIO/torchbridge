@@ -25,7 +25,7 @@ import torch.nn.functional as F
 from torchbridge.adapters.config import InitMethod
 
 if TYPE_CHECKING:
-    from torchbridge.precision.quantization.formats import QuantizationFormat
+    from torchbridge.precision.formats import QuantizationFormat
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ except ImportError:
 
 def _get_quant_callable(quant_format: QuantizationFormat):  # type: ignore[name-defined]
     """Return the torchao quantization callable for the given format."""
-    from torchbridge.precision.quantization.formats import QuantizationFormat
+    from torchbridge.precision.formats import QuantizationFormat
 
     if quant_format == QuantizationFormat.INT4_WEIGHT_ONLY:
         return int4_weight_only()
@@ -237,7 +237,7 @@ class QLoRALinear(nn.Module):
                 "Install it with: pip install torchao"
             )
 
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         if quant_format is None:
             quant_format = QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS
@@ -321,7 +321,7 @@ class QDoRALinear(nn.Module):
                 "Install it with: pip install torchao"
             )
 
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         if quant_format is None:
             quant_format = QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS

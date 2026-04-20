@@ -79,14 +79,14 @@ class TestQuantizationEngineValidation:
     """QuantizationEngine.quantize() must reject non-nn.Module inputs."""
 
     def test_quantize_non_module_raises(self):
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         engine = QuantizationEngine()
         with pytest.raises(TypeError, match="nn.Module"):
             engine.quantize({"weight": [1, 2, 3]})  # type: ignore[arg-type]
 
     def test_quantize_string_raises(self):
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         engine = QuantizationEngine()
         with pytest.raises(TypeError, match="nn.Module"):
@@ -96,7 +96,7 @@ class TestQuantizationEngineValidation:
         """Sanity: a real nn.Module must still work."""
         import torch.nn as nn
 
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         engine = QuantizationEngine()
         model = nn.Linear(4, 4)

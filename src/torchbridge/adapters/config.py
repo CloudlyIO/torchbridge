@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from torchbridge.precision.quantization.formats import QuantizationFormat
+from torchbridge.precision.formats import QuantizationFormat
 
 
 class AdapterMethod(Enum):

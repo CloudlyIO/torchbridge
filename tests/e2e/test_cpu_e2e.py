@@ -36,7 +36,7 @@ class TestCPUEndToEnd:
         assert result.value in ("cuda", "hip", "neuron", "xla", "mps", "cpu")
 
     def test_quantization_engine_cpu_format(self):
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         engine = QuantizationEngine()
         # Engine auto-detects backend; on CPU returns INT8 or similar

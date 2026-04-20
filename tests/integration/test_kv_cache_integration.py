@@ -5,9 +5,9 @@ End-to-end tests for KV-cache compatibility matrix lookups and
 dtype resolution via the QuantizedKVCache config selector.
 """
 
-from torchbridge.models.llm.kv.cache_compatibility import KVCacheCompatibilityMatrix
-from torchbridge.models.llm.kv.cache_dtype import KV_DTYPE_SPECS, KVCacheDtype
-from torchbridge.models.llm.kv.quantized_cache import (
+from torchbridge.models.kv.cache_compatibility import KVCacheCompatibilityMatrix
+from torchbridge.models.kv.cache_dtype import KV_DTYPE_SPECS, KVCacheDtype
+from torchbridge.models.kv.quantized_cache import (
     QuantizedCacheConfig,
     QuantizedKVCache,
 )

@@ -25,9 +25,9 @@ from torchbridge.core.config import (
     TorchBridgeConfig,
     TPUVersion,
 )
+from torchbridge.utils.cache import LRUCache
 
 from . import xla_compat
-from .cache_utils import LRUCache
 
 logger = logging.getLogger(__name__)
 

@@ -4,8 +4,6 @@ Shared Cache Utilities for TorchBridge
 This module provides shared caching implementations used across backends:
 - LRUCache: Generic Least Recently Used cache with statistics tracking
 
-Consolidated from:
-- backends/tpu/cache_utils.py
 """
 
 import logging

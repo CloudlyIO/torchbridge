@@ -13,7 +13,7 @@ import importlib
 
 import pytest
 
-from torchbridge.models.llm.kv.cache_dtype import KVCacheDtype
+from torchbridge.models.kv.cache_dtype import KVCacheDtype
 
 # ---------------------------------------------------------------------------
 # Deleted classes must not be importable (models/)
@@ -43,12 +43,12 @@ class TestDeletedModelClasses:
 
     def test_prefix_cache_not_importable(self):
         """PrefixCache must be deleted — it was never activated in production."""
-        from torchbridge.models.llm.kv import quantized_cache
+        from torchbridge.models.kv import quantized_cache
 
         assert not hasattr(quantized_cache, "PrefixCache")
 
     def test_prefix_cache_entry_not_importable(self):
-        from torchbridge.models.llm.kv import quantized_cache
+        from torchbridge.models.kv import quantized_cache
 
         assert not hasattr(quantized_cache, "PrefixCacheEntry")
 
@@ -82,34 +82,34 @@ class TestDeletedInferenceClasses:
 
 class TestQuantizedKVCacheNoWrappers:
     def test_no_create_cache_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "create_cache"), (
             "create_cache() was a passthrough wrapper — deleted in v0.5.77"
         )
 
     def test_no_update_cache_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "update_cache")
 
     def test_no_quantize_tensor_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "_quantize_tensor")
 
     def test_no_get_memory_usage_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "get_memory_usage")
 
     def test_no_lookup_prefix_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "lookup_prefix")
 
     def test_no_store_prefix_method(self):
-        from torchbridge.models.llm.kv.quantized_cache import QuantizedKVCache
+        from torchbridge.models.kv.quantized_cache import QuantizedKVCache
 
         assert not hasattr(QuantizedKVCache, "store_prefix")
 
@@ -121,7 +121,7 @@ class TestQuantizedKVCacheNoWrappers:
 
 class TestQuantizedKVCacheDtypeResolution:
     def test_cpu_resolves_to_passthrough(self):
-        from torchbridge.models.llm.kv.quantized_cache import (
+        from torchbridge.models.kv.quantized_cache import (
             QuantizedCacheConfig,
             QuantizedKVCache,
         )
@@ -131,7 +131,7 @@ class TestQuantizedKVCacheDtypeResolution:
         assert cache.kv_dtype == KVCacheDtype.PASSTHROUGH
 
     def test_explicit_supported_dtype_honoured(self):
-        from torchbridge.models.llm.kv.quantized_cache import (
+        from torchbridge.models.kv.quantized_cache import (
             QuantizedCacheConfig,
             QuantizedKVCache,
         )
@@ -142,7 +142,7 @@ class TestQuantizedKVCacheDtypeResolution:
 
     def test_unsupported_dtype_falls_back(self):
         """Requesting NVFP4 on CPU must fall back to PASSTHROUGH."""
-        from torchbridge.models.llm.kv.quantized_cache import (
+        from torchbridge.models.kv.quantized_cache import (
             QuantizedCacheConfig,
             QuantizedKVCache,
         )
@@ -152,7 +152,7 @@ class TestQuantizedKVCacheDtypeResolution:
         assert cache.kv_dtype == KVCacheDtype.PASSTHROUGH
 
     def test_unknown_backend_defaults_to_passthrough(self):
-        from torchbridge.models.llm.kv.quantized_cache import (
+        from torchbridge.models.kv.quantized_cache import (
             QuantizedCacheConfig,
             QuantizedKVCache,
         )

@@ -11,13 +11,13 @@ from .disaggregated import (
     DisaggregatedRoleConfig,
 )
 from .kv_handoff import KVHandoffNegotiator, KVHandoffSpec
+from .output_format import OutputFormat, OutputFormatSpec
 from .speculative import (
     SPECULATIVE_METHOD_SPECS,
     SpeculationCompatibilityMatrix,
     SpeculativeMethod,
     SpeculativeMethodSpec,
 )
-from .structured import OutputFormat, OutputFormatSpec
 
 __all__ = [
     # Disaggregated serving fleet advisor

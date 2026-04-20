@@ -14,7 +14,7 @@ class TestQuantizationEngineIsolation:
 
     def test_two_engines_are_independent_instances(self):
         """Creating two engines produces distinct objects with no shared state."""
-        from torchbridge.precision.quantization import QuantizationEngine
+        from torchbridge.precision import QuantizationEngine
 
         engine_a = QuantizationEngine()
         engine_b = QuantizationEngine()
@@ -24,7 +24,7 @@ class TestQuantizationEngineIsolation:
 
     def test_quantizing_model_a_does_not_affect_engine_for_model_b(self):
         """Quantizing model A leaves engine B's internal state unchanged."""
-        from torchbridge.precision.quantization import QuantizationEngine
+        from torchbridge.precision import QuantizationEngine
 
         model_a = nn.Linear(32, 16)
 
@@ -41,7 +41,7 @@ class TestQuantizationEngineIsolation:
 
     def test_engine_results_are_independent(self):
         """Two separate quantize() calls on different engines yield independent results."""
-        from torchbridge.precision.quantization import QuantizationEngine
+        from torchbridge.precision import QuantizationEngine
 
         model_a = nn.Linear(32, 16)
         model_b = nn.Linear(64, 32)

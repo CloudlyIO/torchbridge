@@ -108,7 +108,6 @@ jobs:
         run: |
           pytest tests/ -v --tb=short \
             -m "not gpu and not slow and not tpu and not amd" \
-            --ignore=tests/cloud_testing \
             --cov=src/torchbridge \
             --cov-report=xml \
             --cov-report=term-missing \
