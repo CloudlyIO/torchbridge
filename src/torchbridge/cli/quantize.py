@@ -134,7 +134,7 @@ Examples:
                 return 1
 
             # Set up engine
-            from torchbridge.precision.quantization import QuantizationEngine
+            from torchbridge.precision import QuantizationEngine
 
             backend_override = getattr(args, "backend", "auto")
             if backend_override != "auto":

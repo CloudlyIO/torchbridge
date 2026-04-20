@@ -14,10 +14,10 @@ from torchbridge.core.config import (
     TPUVersion,
     TrainiumArchitecture,
 )
-from torchbridge.precision.quantization.compatibility import (
+from torchbridge.precision.compatibility import (
     QuantizationCompatibilityMatrix,
 )
-from torchbridge.precision.quantization.formats import QuantizationFormat
+from torchbridge.precision.formats import QuantizationFormat
 
 # =============================================================================
 # Optimal Format Tests

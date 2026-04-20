@@ -59,10 +59,10 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the cache command."""
-        from torchbridge.models.llm.kv.cache_compatibility import (
+        from torchbridge.models.kv.cache_compatibility import (
             KVCacheCompatibilityMatrix,
         )
-        from torchbridge.models.llm.kv.cache_dtype import KV_DTYPE_SPECS
+        from torchbridge.models.kv.cache_dtype import KV_DTYPE_SPECS
 
         # Resolve backend
         backend = CacheCommand._resolve_backend(args.backend)
@@ -131,7 +131,7 @@ Examples:
             TPUVersion,
             TrainiumArchitecture,
         )
-        from torchbridge.models.llm.kv.cache_compatibility import (
+        from torchbridge.models.kv.cache_compatibility import (
             KVCacheCompatibilityMatrix,
         )
 

@@ -31,7 +31,7 @@ from torchbridge.adapters.config import AdapterConfig, AdapterMethod, InitMethod
 
 if TYPE_CHECKING:
     from torchbridge.core.config import HardwareBackend
-    from torchbridge.precision.quantization.formats import QuantizationFormat
+    from torchbridge.precision.formats import QuantizationFormat
 
 logger = logging.getLogger(__name__)
 

@@ -513,7 +513,7 @@ class TestTPUErrorPaths:
 
     def test_cache_utils_statistics(self):
         """Test LRU cache statistics tracking."""
-        from torchbridge.backends.tpu.cache_utils import LRUCache
+        from torchbridge.utils.cache import LRUCache
 
         cache = LRUCache(max_size=5)
 
@@ -537,7 +537,7 @@ class TestTPUErrorPaths:
 
     def test_cache_eviction_behavior(self):
         """Test LRU cache eviction behavior."""
-        from torchbridge.backends.tpu.cache_utils import LRUCache
+        from torchbridge.utils.cache import LRUCache
 
         cache = LRUCache(max_size=3)
 

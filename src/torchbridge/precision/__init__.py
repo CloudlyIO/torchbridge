@@ -4,20 +4,17 @@ Precision Module
 Backend-aware quantization format selection and torchao dispatch.
 """
 
-from .quantization import (
+from .compatibility import QuantizationCompatibilityMatrix
+from .engine import QuantizationEngine, QuantizationResult
+from .formats import (
     FORMAT_SPECS,
-    TORCHAO_AVAILABLE,
     FormatSpec,
-    QuantizationCompatibilityMatrix,
-    QuantizationEngine,
     QuantizationFormat,
-    QuantizationResult,
-    TorchAOBackend,
     get_format_spec,
 )
+from .torchao_integration import TORCHAO_AVAILABLE, TorchAOBackend
 
 __all__ = [
-    # Quantization subpackage
     "QuantizationFormat",
     "FormatSpec",
     "FORMAT_SPECS",

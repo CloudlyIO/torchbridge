@@ -5,8 +5,8 @@ Tests backend-aware KV dtype selection via the compatibility matrix.
 PrefixCache and cache management wrapper methods were deleted in v0.5.77.
 """
 
-from torchbridge.models.llm.kv.cache_dtype import KVCacheDtype
-from torchbridge.models.llm.kv.quantized_cache import (
+from torchbridge.models.kv.cache_dtype import KVCacheDtype
+from torchbridge.models.kv.quantized_cache import (
     QuantizedCacheConfig,
     QuantizedKVCache,
 )

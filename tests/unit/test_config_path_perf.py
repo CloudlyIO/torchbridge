@@ -42,7 +42,7 @@ class TestMatrixLookupPerf:
 
     def test_quantization_matrix_lookup_under_1ms(self):
         from torchbridge.core.config import HardwareBackend
-        from torchbridge.precision.quantization.compatibility import (
+        from torchbridge.precision.compatibility import (
             QuantizationCompatibilityMatrix,
         )
 

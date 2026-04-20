@@ -8,7 +8,7 @@ and the KV_DTYPE_SPECS registry.
 import pytest
 import torch
 
-from torchbridge.models.llm.kv.cache_dtype import (
+from torchbridge.models.kv.cache_dtype import (
     KV_DTYPE_SPECS,
     KVCacheDtype,
     KVDtypeSpec,

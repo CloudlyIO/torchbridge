@@ -18,14 +18,14 @@ class TestQuantizationFormatValidation:
 
     def test_invalid_format_string_raises_value_error(self):
         """Unknown quantization format string raises ValueError with descriptive message."""
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         with pytest.raises(ValueError, match="Unknown quantization format"):
             QuantizationFormat.from_string("totally_invalid_format_xyz")
 
     def test_valid_format_strings_parse_correctly(self):
         """All documented format strings parse without error."""
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         for fmt in QuantizationFormat:
             parsed = QuantizationFormat.from_string(fmt.value)
@@ -33,7 +33,7 @@ class TestQuantizationFormatValidation:
 
     def test_quantize_with_invalid_format_does_not_crash(self):
         """QuantizationEngine.quantize() with invalid format string never propagates uncaught."""
-        from torchbridge.precision.quantization import QuantizationEngine
+        from torchbridge.precision import QuantizationEngine
 
         model = nn.Linear(32, 16)
         engine = QuantizationEngine()

@@ -85,7 +85,7 @@ class TestQLoRALinear:
     def test_forward_shape_matches_base(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QLoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
@@ -102,7 +102,7 @@ class TestQLoRALinear:
     def test_only_adapter_params_trainable(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QLoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
@@ -129,7 +129,7 @@ class TestQLoRALinear:
     def test_merge_raises_not_implemented(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QLoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QLoRALinear(
@@ -146,7 +146,7 @@ class TestQLoRALinear:
         """INT8 base weights should use fewer bytes than FP32."""
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import LoRALinear, QLoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base_for_qlora = _make_linear(64, 32)
         base_for_lora = _make_linear(64, 32)
@@ -182,7 +182,7 @@ class TestQLoRALinear:
 
         with patch.object(layers_mod, "_TORCHAO_AVAILABLE", False):
             from torchbridge.adapters.layers import QLoRALinear
-            from torchbridge.precision.quantization.formats import QuantizationFormat
+            from torchbridge.precision.formats import QuantizationFormat
 
             base = _make_linear(64, 32)
             with pytest.raises(RuntimeError, match="torchao"):
@@ -206,7 +206,7 @@ class TestQDoRALinear:
     def test_forward_shape_matches_base(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QDoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
@@ -223,7 +223,7 @@ class TestQDoRALinear:
     def test_only_adapter_params_trainable(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QDoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
@@ -241,7 +241,7 @@ class TestQDoRALinear:
     def test_merge_raises_not_implemented(self):
         pytest.importorskip("torchao")
         from torchbridge.adapters.layers import QDoRALinear
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         base = _make_linear(64, 32)
         layer = QDoRALinear(
