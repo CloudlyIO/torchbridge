@@ -1,22 +1,22 @@
 #!/bin/bash
 # =============================================================================
-# NVIDIA Backend Validation - AWS (A10G/A100)
+# NVIDIA Backend Validation - GCP (L4/A100)
 # TorchBridge Cloud Validation
 # =============================================================================
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../common/utils.sh"
+source "$SCRIPT_DIR/utils.sh"
 
 export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"
 export BACKEND="nvidia"
-export PLATFORM="aws"
+export PLATFORM="gcp"
 
 mkdir -p "$REPORT_DIR"
 
-print_header "NVIDIA Backend Validation (AWS)"
+print_header "NVIDIA Backend Validation (GCP)"
 
 # =============================================================================
 # Setup
@@ -96,10 +96,10 @@ with open(f'{report_dir}/nvidia_test_results.json') as f:
 
 summary = test_results.get('summary', {})
 
-report = f"""# NVIDIA Backend Validation Report (AWS)
+report = f"""# NVIDIA Backend Validation Report (GCP)
 
 **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Platform:** AWS
+**Platform:** GCP
 **Backend:** NVIDIA
 
 ## Summary
@@ -124,10 +124,10 @@ report = f"""# NVIDIA Backend Validation Report (AWS)
 {"**PASSED** - All tests successful" if summary.get('failed', 0) == 0 else "**FAILED** - Review failed tests"}
 """
 
-with open(f'{report_dir}/NVIDIA_AWS_REPORT.md', 'w') as f:
+with open(f'{report_dir}/NVIDIA_GCP_REPORT.md', 'w') as f:
     f.write(report)
 
-print(f"Report saved: {report_dir}/NVIDIA_AWS_REPORT.md")
+print(f"Report saved: {report_dir}/NVIDIA_GCP_REPORT.md")
 PYEOF
 
 # =============================================================================

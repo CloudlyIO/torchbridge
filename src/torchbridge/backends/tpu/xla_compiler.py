@@ -14,9 +14,9 @@ import torch
 import torch.nn as nn
 
 from torchbridge.core.config import TPUCompilationMode, TPUConfig
+from torchbridge.utils.cache import LRUCache
 
 from . import xla_compat
-from .cache_utils import LRUCache
 from .tpu_exceptions import XLACompilationError, raise_or_warn
 
 logger = logging.getLogger(__name__)

@@ -9,7 +9,7 @@ from torchbridge.core.config import (
     TPUVersion,
     TrainiumArchitecture,
 )
-from torchbridge.precision.quantization.formats import QuantizationFormat
+from torchbridge.precision.formats import QuantizationFormat
 
 
 class TestGetOptimal:

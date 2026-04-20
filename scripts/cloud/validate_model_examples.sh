@@ -7,7 +7,7 @@
 # Adapts quantization based on available VRAM.
 #
 # Usage:
-#   ./scripts/cloud_testing/validate_model_examples.sh [--results-dir DIR]
+#   ./scripts/cloud/validate_model_examples.sh [--results-dir DIR]
 #
 # Supports: AWS (A10G/H100), GCP (T4/L4/TPU v5e), AMD (MI300X), RunPod (H100 NVL), Local (MPS)
 # =============================================================================

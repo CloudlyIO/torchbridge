@@ -4,7 +4,7 @@ TorchBridge Model Integration Module
 Provides LLM KV-cache utilities across NVIDIA, AMD, Trainium, and TPU backends.
 """
 
-from .llm import (
+from .kv import (
     KVCacheCompatibilityMatrix,
     KVCacheDtype,
     QuantizedCacheConfig,

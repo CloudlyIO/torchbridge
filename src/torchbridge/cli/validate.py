@@ -1227,7 +1227,7 @@ Examples:
         # Import check
         start = time.time()
         try:
-            from torchbridge.precision.quantization import (
+            from torchbridge.precision import (
                 QuantizationEngine,
             )
 

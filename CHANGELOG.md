@@ -8,6 +8,24 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.94] - 2026-04-19 - refactor: structural cleanup — flatten single-file subpackages, remove dead dirs
+
+### Changed
+- **`models/llm/kv/` → `models/kv/`**: Removed dead `llm/` middle layer; public API unchanged (`from torchbridge.models import KVCacheDtype` etc.)
+- **`precision/quantization/` → `precision/`**: Moved 4 quantization modules up one level; deleted passthrough subpackage; public API unchanged
+- **`inference/structured/output_format.py` → `inference/output_format.py`**: Deleted single-file subpackage; public API unchanged
+- **`backends/tpu/cache_utils.py` deleted**: Was a one-line shim re-exporting `LRUCache`; updated 3 import sites to use `torchbridge.utils.cache` directly
+- **`scripts/cloud_testing/` merged into `scripts/cloud/`**: Collapsed 5 single-file provider subdirs (`amd_cloud/`, `nvidia_aws/`, `nvidia_gcp/`, `tpu_gcp/`, `common/`) into flat `scripts/cloud/` with descriptive filenames (`validate_amd.sh`, `validate_nvidia_aws.sh`, etc.)
+
+### Removed
+- `tests/regression/` — empty directory (only contained `__init__.py`, no tests)
+- `tests/benchmark/` — single test file moved to `tests/unit/test_config_path_perf.py`
+- `tests/features/` — single test file moved to `tests/unit/test_auto_optimization.py`
+- `tests/cloud_testing/` — 4 files entirely ignored by CI; dead code removed
+- `--ignore=tests/cloud_testing` flag removed from `ci.yml` (directory no longer exists)
+
+---
+
 ## [0.5.93] - 2026-04-12 - chore: community launch metadata — official domain, author email, PyPI consistency
 
 ### Changed

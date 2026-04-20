@@ -14,10 +14,10 @@ from torchbridge.core.config import (
     TPUVersion,
     TrainiumArchitecture,
 )
-from torchbridge.models.llm.kv.cache_compatibility import (
+from torchbridge.models.kv.cache_compatibility import (
     KVCacheCompatibilityMatrix,
 )
-from torchbridge.models.llm.kv.cache_dtype import KVCacheDtype
+from torchbridge.models.kv.cache_dtype import KVCacheDtype
 
 # =============================================================================
 # Optimal Dtype Tests

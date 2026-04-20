@@ -170,7 +170,7 @@ class TestQuantizationEngineRemovedMethods:
     """_apply_bf16 must be deleted; call site inlines model.to(dtype=torch.bfloat16)."""
 
     def test_no_apply_bf16(self):
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         assert not hasattr(QuantizationEngine, "_apply_bf16"), (
             "_apply_bf16 is `return model.to(dtype=torch.bfloat16)` (Rule 1) — must be inlined"
@@ -178,7 +178,7 @@ class TestQuantizationEngineRemovedMethods:
 
     def test_quantize_still_callable(self):
         """quantize() entry point must still work."""
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         assert hasattr(QuantizationEngine, "quantize")
 
@@ -186,7 +186,7 @@ class TestQuantizationEngineRemovedMethods:
         """_apply_nvfp4 must NOT import from the deleted fp4_native module."""
         import inspect
 
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         src = inspect.getsource(QuantizationEngine._apply_nvfp4)
         assert "fp4_native" not in src, (
