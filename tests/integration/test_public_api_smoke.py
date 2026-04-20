@@ -22,7 +22,7 @@ class TestPublicAPISmoke:
         assert hw.backend is not None
 
     def test_quantization_engine_get_optimal_format(self):
-        from torchbridge.precision.quantization.engine import QuantizationEngine
+        from torchbridge.precision.engine import QuantizationEngine
 
         engine = QuantizationEngine()
         fmt = engine.get_optimal_format()

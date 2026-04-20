@@ -39,7 +39,7 @@ class TestAdapterEngine:
         from torchbridge.adapters.config import AdapterConfig, AdapterMethod
         from torchbridge.adapters.engine import AdapterEngine
         from torchbridge.core.config import HardwareBackend
-        from torchbridge.precision.quantization.formats import QuantizationFormat
+        from torchbridge.precision.formats import QuantizationFormat
 
         model = nn.Sequential(nn.Linear(32, 16))
         config = AdapterConfig(

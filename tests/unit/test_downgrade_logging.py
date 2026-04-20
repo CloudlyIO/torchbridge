@@ -16,8 +16,8 @@ class TestDowngradeLogging:
     def test_torchao_int8_failure_logs_warning(self, caplog):
         """When torchao INT8 raises, a WARNING must appear in the log."""
         from torchbridge.core.config import HardwareBackend
-        from torchbridge.precision.quantization.engine import QuantizationEngine
-        from torchbridge.precision.quantization.torchao_integration import (
+        from torchbridge.precision.engine import QuantizationEngine
+        from torchbridge.precision.torchao_integration import (
             TorchAOBackend,
         )
 
@@ -37,9 +37,7 @@ class TestDowngradeLogging:
                 "torch.quantization.quantize_dynamic",
                 side_effect=RuntimeError("quantize_dynamic unavailable"),
             ),
-            caplog.at_level(
-                logging.WARNING, logger="torchbridge.precision.quantization.engine"
-            ),
+            caplog.at_level(logging.WARNING, logger="torchbridge.precision.engine"),
         ):
             import torch.nn as nn
 
@@ -59,8 +57,8 @@ class TestDowngradeLogging:
     def test_torchao_unsupported_backend_logs_info(self, caplog):
         """When torchao is present but backend is not cuda/rocm, INFO must appear."""
         from torchbridge.core.config import HardwareBackend
-        from torchbridge.precision.quantization.engine import QuantizationEngine
-        from torchbridge.precision.quantization.torchao_integration import (
+        from torchbridge.precision.engine import QuantizationEngine
+        from torchbridge.precision.torchao_integration import (
             TorchAOBackend,
         )
 
@@ -71,14 +69,12 @@ class TestDowngradeLogging:
 
         with (
             patch.object(TorchAOBackend, "is_available_on_backend", return_value=False),
-            patch("torchbridge.precision.quantization.engine.TORCHAO_AVAILABLE", True),
+            patch("torchbridge.precision.engine.TORCHAO_AVAILABLE", True),
             patch(
                 "torch.quantization.quantize_dynamic",
                 side_effect=RuntimeError("quantize_dynamic unavailable"),
             ),
-            caplog.at_level(
-                logging.INFO, logger="torchbridge.precision.quantization.engine"
-            ),
+            caplog.at_level(logging.INFO, logger="torchbridge.precision.engine"),
         ):
             import torch.nn as nn
 

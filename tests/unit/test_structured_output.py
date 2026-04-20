@@ -4,7 +4,7 @@ Tests for Structured Output Format enum and specs.
 
 import pytest
 
-from torchbridge.inference.structured.output_format import (
+from torchbridge.inference.output_format import (
     OUTPUT_FORMAT_SPECS,
     OutputFormat,
 )

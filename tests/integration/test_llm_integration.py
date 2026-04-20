@@ -14,9 +14,9 @@ from torchbridge.core.config import (
     TPUVersion,
     TrainiumArchitecture,
 )
-from torchbridge.models.llm.kv.cache_compatibility import KVCacheCompatibilityMatrix
-from torchbridge.models.llm.kv.cache_dtype import KV_DTYPE_SPECS, KVCacheDtype
-from torchbridge.models.llm.kv.quantized_cache import (
+from torchbridge.models.kv.cache_compatibility import KVCacheCompatibilityMatrix
+from torchbridge.models.kv.cache_dtype import KV_DTYPE_SPECS, KVCacheDtype
+from torchbridge.models.kv.quantized_cache import (
     QuantizedCacheConfig,
     QuantizedKVCache,
 )

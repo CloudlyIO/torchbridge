@@ -13,7 +13,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../common/utils.sh"
+source "$SCRIPT_DIR/utils.sh"
 
 export WORK_DIR="${WORK_DIR:-$HOME/torchbridge_test}"
 export REPORT_DIR="$WORK_DIR/reports"

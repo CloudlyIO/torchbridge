@@ -7,7 +7,7 @@ and the FORMAT_SPECS registry.
 
 import pytest
 
-from torchbridge.precision.quantization.formats import (
+from torchbridge.precision.formats import (
     FORMAT_SPECS,
     FormatSpec,
     QuantizationFormat,

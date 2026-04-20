@@ -11,12 +11,12 @@ import pytest
 import torch
 import torch.nn as nn
 
-from torchbridge.precision.quantization.engine import (
+from torchbridge.precision.engine import (
     QuantizationEngine,
     QuantizationResult,
     _model_size_mb,
 )
-from torchbridge.precision.quantization.formats import QuantizationFormat
+from torchbridge.precision.formats import QuantizationFormat
 
 # =============================================================================
 # Helper fixtures
@@ -239,18 +239,14 @@ class TestWithoutTorchAO:
 
     def test_int8_works_without_torchao(self, small_model):
         """INT8 dynamic should fall back to PyTorch native without torchao."""
-        with mock.patch(
-            "torchbridge.precision.quantization.engine.TORCHAO_AVAILABLE", False
-        ):
+        with mock.patch("torchbridge.precision.engine.TORCHAO_AVAILABLE", False):
             engine = QuantizationEngine()
             result = engine.quantize(small_model, format="int8_dynamic")
             assert result.success
 
     def test_auto_works_without_torchao(self, small_model):
         """Auto strategy should still work without torchao."""
-        with mock.patch(
-            "torchbridge.precision.quantization.engine.TORCHAO_AVAILABLE", False
-        ):
+        with mock.patch("torchbridge.precision.engine.TORCHAO_AVAILABLE", False):
             engine = QuantizationEngine()
             result = engine.quantize(small_model, format="auto")
             assert result.success

@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torchbridge.precision.quantization import (
+from torchbridge.precision import (
     QuantizationEngine,
     QuantizationFormat,
 )
