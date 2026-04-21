@@ -1,0 +1,117 @@
+name: Tolerance DB Measurement
+description: Submit a measured numerical tolerance from real hardware (good first contribution)
+title: "[Tolerance]: <backend> <dtype> on <hardware>"
+labels: ["good first issue", "tolerance-db"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submitting a **measured** tolerance is one of the highest-value contributions you can make.
+        Community measurements are more trustworthy than derived tolerances — especially for hardware
+        configurations we can't access directly.
+
+        See [issue #66](https://github.com/CloudlyIO/torchbridge/issues/66) for a step-by-step guide.
+
+  - type: dropdown
+    id: journey_stage
+    attributes:
+      label: Where are you in the contributor journey?
+      options:
+        - "Day 1 — just installed, running the validation script"
+        - "Day 2 — integrating TorchBridge in my own project"
+        - "Returning contributor — submitting from a new hardware setup"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      options:
+        - nvidia
+        - amd
+        - tpu
+        - trainium
+        - inferentia
+        - mps
+        - cpu
+    validations:
+      required: true
+
+  - type: input
+    id: hardware_model
+    attributes:
+      label: Hardware Model
+      placeholder: "e.g. NVIDIA A10G, AMD MI300X, Apple M3 Pro, AWS Trainium trn1.2xlarge"
+    validations:
+      required: true
+
+  - type: input
+    id: dtype
+    attributes:
+      label: Dtype
+      placeholder: "e.g. float32, float16, bfloat16"
+    validations:
+      required: true
+
+  - type: input
+    id: max_diff
+    attributes:
+      label: Measured max_diff
+      placeholder: "e.g. 2.34e-06"
+    validations:
+      required: true
+
+  - type: input
+    id: cosine_sim
+    attributes:
+      label: Measured cosine_sim
+      placeholder: "e.g. 1.000000"
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model used for measurement
+      placeholder: "e.g. Qwen/Qwen3-0.6B"
+    validations:
+      required: true
+
+  - type: input
+    id: torchbridge_version
+    attributes:
+      label: TorchBridge version
+      placeholder: "e.g. 0.5.95"
+    validations:
+      required: true
+
+  - type: input
+    id: torch_version
+    attributes:
+      label: PyTorch version
+      placeholder: "e.g. 2.6.0+cu124"
+    validations:
+      required: true
+
+  - type: textarea
+    id: raw_output
+    attributes:
+      label: Raw validation output
+      description: Paste the full output of validate_torchbridge.py or tb-validate
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I ran the official validation script (scripts/validation/validate_torchbridge.py)
+          required: true
+        - label: I am not submitting CPU-emulated or virtualized GPU results as real hardware
+          required: true
+        - label: I understand this measurement will be attributed to this hardware model + PyTorch version
+          required: true

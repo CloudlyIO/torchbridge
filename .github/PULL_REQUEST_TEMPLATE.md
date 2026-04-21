@@ -1,76 +1,51 @@
-## Description
+## What does this PR do?
 
-<!-- Provide a brief description of the changes in this PR -->
+<!-- One sentence. If you can't write one sentence, the PR is too large. -->
 
-## Related Issues
+## Contributor journey stage
 
-<!-- Link any related issues using "Fixes #123" or "Relates to #123" -->
+<!-- Where are you in the cycle? Check one. -->
 
-## Type of Change
+- [ ] Day 1 — found a bug while testing the install
+- [ ] Day 2 — hit this while using TorchBridge on my own models
+- [ ] Planned contribution — working from an open issue
+- [ ] Maintainer — internal fix/refactor
 
-<!-- Mark relevant options with [x] -->
+## Linked issue
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Performance improvement
-- [ ] Documentation update
-- [ ] Refactoring (no functional changes)
-- [ ] CI/CD changes
-- [ ] Dependencies update
+<!-- Every PR must close or reference an issue. No exceptions. -->
 
-## Changes Made
+Closes #
 
-<!-- List the specific changes made in this PR -->
+## Changes
+
+<!-- Bullet list of what changed and why. Be specific — "fixed bug" is not enough. -->
 
 -
--
--
 
-## Testing
+## Test evidence
 
-<!-- Describe the tests you ran and how to reproduce them -->
+<!-- Paste the pytest summary line. Do not submit without this. -->
 
-### Test Commands
-```bash
-# Commands used to test these changes
-pytest tests/ -v -k "test_name"
+```
+# pytest tests/ -q -m "not gpu and not slow"
+... N passed, M skipped in Xs
 ```
 
-### Test Results
-- [ ] All existing tests pass
-- [ ] New tests added for new functionality
-- [ ] Manual testing completed
+## Ruff
 
-## Performance Impact
+<!-- Paste the output. Must be clean. -->
 
-<!-- If applicable, describe performance impact -->
-
-- [ ] No performance impact
-- [ ] Performance improvement (include benchmarks)
-- [ ] Potential performance regression (explain why it's acceptable)
-
-## Documentation
-
-- [ ] Documentation updated (if applicable)
-- [ ] CHANGELOG.md updated
-- [ ] API changes documented
+```
+# ruff check src tests
+# (no output = clean)
+```
 
 ## Checklist
 
-<!-- Ensure all items are completed before requesting review -->
-
-- [ ] My code follows the project's style guidelines (ruff check passes)
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code where necessary
-- [ ] I have added tests that prove my fix/feature works
-- [ ] New and existing unit tests pass locally
-- [ ] Any dependent changes have been merged and published
-
-## Screenshots/Outputs
-
-<!-- If applicable, add screenshots or terminal output -->
-
-## Additional Notes
-
-<!-- Any additional information that reviewers should know -->
+- [ ] Linked issue filled in above
+- [ ] Tests added or updated for every behaviour change
+- [ ] `pytest` summary pasted above — all passing
+- [ ] `ruff check src tests` clean — output pasted above
+- [ ] No new hardcoded version strings (version lives in `pyproject.toml` only)
+- [ ] `CHANGELOG.md` entry added if this changes user-visible behaviour
