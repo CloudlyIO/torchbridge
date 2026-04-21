@@ -122,8 +122,14 @@ Optional for GPU backend development: CUDA 12.0+ (NVIDIA), ROCm 6.2+ (AMD), PyTo
 git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
 python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
+```
+
+To install all optional GPU/cloud extras (heavier, may require CUDA/ROCm):
+
+```bash
 pip install -e ".[dev,all]"
-python -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
 ```
 
 ### Branch
@@ -184,6 +190,14 @@ Labels: `"measured"` (use `_m()`), `"derived"` (use `_d()`), `"fallback"` (auto-
 pytest tests/ -q -m "not gpu and not slow"
 ```
 
+Or with the project Makefile (from repo root, after `pip install -e ".[dev]"`):
+
+```bash
+make test       # pytest, skips gpu/slow
+make lint       # ruff check src tests
+make typecheck  # mypy src
+```
+
 Every behavior change needs a test. A PR without tests for the changed behavior will
 not be merged.
 
@@ -194,6 +208,26 @@ ruff check src tests
 ```
 
 Must be clean — zero violations.
+
+### Type check
+
+```bash
+mypy src
+```
+
+CI runs mypy — a PR that passes tests but fails type check will not merge.
+
+### Version consistency check
+
+TorchBridge enforces that version strings appear only in `pyproject.toml`. If you add a
+new file that references a version number, the pre-commit hook will catch it:
+
+```bash
+python scripts/ci/check_version_consistency.py
+```
+
+If it reports a drift, the fix is to remove the hardcoded version and derive it from
+`importlib.metadata.version("torchbridge-ml")` instead.
 
 ---
 
