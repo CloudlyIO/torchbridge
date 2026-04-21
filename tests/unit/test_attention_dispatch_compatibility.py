@@ -228,9 +228,9 @@ class TestRDNA2NoKernelFinding:
         kernels = AttentionDispatchMatrix.get_supported_kernels(
             HardwareBackend.AMD, AMDArchitecture.RDNA2
         )
-        assert (
-            AttentionKernelType.PYTORCH_SDPA not in kernels
-        ), "PYTORCH_SDPA should not be supported on RDNA2 in standard PyTorch builds"
+        assert AttentionKernelType.PYTORCH_SDPA not in kernels, (
+            "PYTORCH_SDPA should not be supported on RDNA2 in standard PyTorch builds"
+        )
 
     def test_rdna2_fallback_chain_is_empty(self):
         """Verify fallback chain is empty for RDNA2."""
