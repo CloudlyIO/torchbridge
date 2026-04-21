@@ -51,6 +51,9 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Requires Dependency graph + GitHub Advanced Security — available on public repos.
+    # continue-on-error until this repo is made public; remove this line after that.
+    continue-on-error: true
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
@@ -61,7 +64,6 @@ jobs:
         with:
           fail-on-severity: high
           deny-licenses: GPL-3.0, AGPL-3.0
-          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Python-2.0
 
   pip-audit:
     name: Pip Audit
