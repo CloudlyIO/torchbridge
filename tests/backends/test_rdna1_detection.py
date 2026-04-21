@@ -10,7 +10,6 @@ import pytest
 
 from torchbridge.core.config import AMDArchitecture, AMDConfig
 
-
 _RDNA1_DEVICE_NAMES = [
     "AMD Radeon RX 5700 XT",
     "AMD Radeon RX 5600 XT",
