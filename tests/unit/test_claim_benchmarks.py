@@ -167,20 +167,19 @@ class TestClaimBenchmark:
 
     def test_fail_when_below_threshold(self):
         """Should fail when speedup is below threshold."""
-        import time
-
-        # Both functions take the same time → 0% speedup, always below 50% threshold.
-        # Using lambda: None for both is flaky on Python 3.13 (nanosecond noise can
-        # accidentally exceed the threshold when both sides complete in ~0 ns).
+        # Inject controlled timing: baseline=1.0ms, optimized=1.0ms → 0% speedup.
+        # 0% is always below a 50% threshold, deterministically — no real timing needed.
         bench = ClaimBenchmark(
             name="fail_test",
-            baseline_fn=lambda: time.sleep(0.002),
-            optimized_fn=lambda: time.sleep(0.002),
+            baseline_fn=lambda: None,
+            optimized_fn=lambda: None,
             warmup=1,
             runs=3,
             threshold_pct=50.0,
         )
-        result = bench.run()
+        with patch("torchbridge.benchmarks.claim_benchmarks._time_fn") as mock_time:
+            mock_time.side_effect = [(1.0, 0.01), (1.0, 0.01)]
+            result = bench.run()
         assert result.passed is False
 
     def test_negative_threshold_for_overhead(self):
