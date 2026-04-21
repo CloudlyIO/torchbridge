@@ -15,16 +15,17 @@ GPU backends are optional. TorchBridge always falls back to CPU.
 ```bash
 git clone https://github.com/CloudlyIO/torchbridge.git
 cd torchbridge
-pip install -e .[dev,all]
+pip install -e ".[dev]"
 
 # Verify
-PYTHONPATH=src python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
+python3 -c "import torchbridge; print(f'TorchBridge v{torchbridge.__version__} ready')"
+tb-doctor
 ```
 
-### Editable Install
+To install all optional GPU/cloud extras as well (heavier, may require CUDA/ROCm):
 
 ```bash
-pip install -e .[dev,all]
+pip install -e ".[dev,all]"
 ```
 
 ## Backend-Specific Setup
