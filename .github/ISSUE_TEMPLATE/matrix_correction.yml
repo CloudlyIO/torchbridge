@@ -1,0 +1,113 @@
+name: Compatibility Matrix Correction
+description: Report or fix an incorrect entry in a TorchBridge compatibility matrix (good first contribution)
+title: "[Matrix]: <matrix-name> incorrect for <backend> <architecture>"
+labels: ["good first issue", "compatibility-matrix"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TorchBridge's configuration recommendations are built on compatibility matrices.
+        If a matrix claims something that doesn't match reality on your hardware, that's a
+        high-priority bug — please report it.
+
+        See [issue #67](https://github.com/CloudlyIO/torchbridge/issues/67) for a step-by-step guide.
+
+  - type: dropdown
+    id: journey_stage
+    attributes:
+      label: Where are you in the contributor journey?
+      options:
+        - "Day 1 — running tb-doctor or tb-validate, got a wrong recommendation"
+        - "Day 2 — TorchBridge recommended something that failed in production"
+        - "Returning contributor — found a stale entry while reading the code"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: matrix
+    attributes:
+      label: Which matrix is affected?
+      options:
+        - "Attention dispatch (attention/dispatch/compatibility.py)"
+        - "Quantization formats (precision/compatibility.py)"
+        - "KV-cache dtypes (models/kv/cache_compatibility.py)"
+        - "Speculative decoding (inference/speculative/compatibility.py)"
+        - "Adapter methods (adapters/compatibility.py)"
+        - "Compile compatibility (backends/compile_compatibility.py)"
+        - "Other / unsure"
+    validations:
+      required: true
+
+  - type: input
+    id: backend
+    attributes:
+      label: Backend + Architecture
+      placeholder: "e.g. nvidia/ampere, amd/cdna3, tpu/v5e"
+    validations:
+      required: true
+
+  - type: textarea
+    id: wrong_claim
+    attributes:
+      label: What does the matrix currently claim?
+      placeholder: |
+        e.g. "flash_attention_2: SUPPORTED on nvidia/ampere"
+        or paste the CLI output / Python API result
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: What actually happens on your hardware?
+      placeholder: |
+        e.g. "flash_attention_2 is not installed and falls back silently —
+        the matrix should report NOT_SUPPORTED or REQUIRES_EXTRA"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: CLI command or Python snippet that shows the incorrect recommendation
+      render: python
+    validations:
+      required: true
+
+  - type: input
+    id: hardware_model
+    attributes:
+      label: Hardware Model
+      placeholder: "e.g. NVIDIA RTX 4090, AMD MI300X, Google TPU v5e"
+    validations:
+      required: true
+
+  - type: input
+    id: torchbridge_version
+    attributes:
+      label: TorchBridge version
+      placeholder: "e.g. 0.5.95"
+    validations:
+      required: true
+
+  - type: input
+    id: torch_version
+    attributes:
+      label: PyTorch version
+      placeholder: "e.g. 2.6.0+cu124"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have verified this is not a missing dependency (e.g. flash-attn not installed)
+          required: false
+        - label: I can reliably reproduce this on my hardware
+          required: true
+        - label: I have searched existing issues to ensure this is not already reported
+          required: true

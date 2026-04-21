@@ -11,6 +11,19 @@ body:
         Thanks for taking the time to fill out this bug report!
         Please provide as much detail as possible to help us investigate.
 
+        New contributor? See the [Contributing Guide](https://github.com/CloudlyIO/torchbridge/blob/main/CONTRIBUTING.md) first.
+
+  - type: dropdown
+    id: journey_stage
+    attributes:
+      label: Where are you in the contributor journey?
+      options:
+        - "Day 1 — just installed TorchBridge, hit this during setup/testing"
+        - "Day 2 — integrating TorchBridge in my own project"
+        - "Returning contributor — found this while working on another fix"
+    validations:
+      required: true
+
   - type: textarea
     id: description
     attributes:
