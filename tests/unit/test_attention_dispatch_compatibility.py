@@ -42,7 +42,7 @@ class TestOptimalKernel:
             (AMDArchitecture.CDNA3, AttentionKernelType.FLASH_ATTENTION_CK),
             (AMDArchitecture.CDNA2, AttentionKernelType.PYTORCH_SDPA),
             (AMDArchitecture.RDNA3, AttentionKernelType.PYTORCH_SDPA),
-            (AMDArchitecture.RDNA2, AttentionKernelType.PYTORCH_SDPA),
+            # RDNA2 removed: no kernels supported in standard PyTorch ROCm builds
         ],
     )
     def test_amd_optimal(self, arch, expected):
@@ -198,3 +198,43 @@ class TestDefaultArchitectureFallback:
     def test_amd_default(self):
         kernels = AttentionDispatchMatrix.get_supported_kernels(HardwareBackend.AMD)
         assert AttentionKernelType.PYTORCH_SDPA in kernels
+
+
+class TestRDNA2NoKernelFinding:
+    """
+    AMD RDNA2 (gfx1011) is unsupported in standard PyTorch ROCm builds.
+
+    Finding Details:
+    - GPU: AMD Radeon Pro V520 (gfx1011 architecture)
+    - PyTorch: 2.5.1+rocm6.2
+    - HIP: 6.2
+    - PyTorch ROCm arch list: gfx900, gfx906, gfx908, gfx90a, gfx1030, gfx1100, gfx942
+    - Issue: gfx1011 is NOT in the standard PyTorch ROCm build targets
+    - All kernels fail with: HIP error: invalid device function
+
+    This test class verifies that our compatibility matrix correctly reflects
+    this limitation by marking RDNA2 with an empty kernel list.
+    """
+
+    def test_rdna2_has_no_kernels(self):
+        """Verify RDNA2 has no supported kernels in the compatibility matrix."""
+        kernels = AttentionDispatchMatrix.get_supported_kernels(
+            HardwareBackend.AMD, AMDArchitecture.RDNA2
+        )
+        assert kernels == [], f"Expected empty list for RDNA2, got {kernels}"
+
+    def test_rdna2_pytorch_sdpa_not_listed(self):
+        """Verify PYTORCH_SDPA is NOT available for RDNA2."""
+        kernels = AttentionDispatchMatrix.get_supported_kernels(
+            HardwareBackend.AMD, AMDArchitecture.RDNA2
+        )
+        assert (
+            AttentionKernelType.PYTORCH_SDPA not in kernels
+        ), "PYTORCH_SDPA should not be supported on RDNA2 in standard PyTorch builds"
+
+    def test_rdna2_fallback_chain_is_empty(self):
+        """Verify fallback chain is empty for RDNA2."""
+        chain = AttentionDispatchMatrix.get_fallback_chain(
+            AttentionKernelType.PYTORCH_SDPA, HardwareBackend.AMD, AMDArchitecture.RDNA2
+        )
+        assert chain == [], f"Expected empty fallback chain for RDNA2, got {chain}"

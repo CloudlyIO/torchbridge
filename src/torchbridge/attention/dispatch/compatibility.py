@@ -84,9 +84,18 @@ _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.RDNA3: [
         AttentionKernelType.PYTORCH_SDPA,
     ],
-    AMDArchitecture.RDNA2: [
-        AttentionKernelType.PYTORCH_SDPA,
-    ],
+    # RDNA2 (gfx1011): No kernels supported in standard PyTorch ROCm builds
+    # ─────────────────────────────────────────────────────────────────────
+    # gfx1011 is not included in the standard PyTorch ROCm compilation arch list
+    # (which includes: gfx900, gfx906, gfx908, gfx90a, gfx1030, gfx1100, gfx942).
+    # PYTORCH_SDPA fails with HIP error: invalid device function due to missing
+    # compiled kernels for gfx1011. FLASH_ATTENTION_CK and FLEX_ATTENTION also fail.
+    # Verified on: AMD Radeon Pro V520 (gfx1011), PyTorch 2.5.1+rocm6.2, HIP 6.2
+    # Users with RDNA2 hardware should either:
+    # - Use PyTorch built for their architecture, or
+    # - Use CPU fallback, or
+    # - Contact AMD/PyTorch for RDNA2 support in official builds
+    AMDArchitecture.RDNA2: [],
 }
 
 # ── Trainium kernel tables ──────────────────────────────────────────
