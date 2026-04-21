@@ -18,19 +18,24 @@
 
 OUTPUT_FILE="${TB_TEST_OUTPUT:-/tmp/tb_pytest.txt}"
 
+# Use the correct Python interpreter (python@3.14 on this Mac lacks pytest/torch)
+PYTHON="${TORCHBRIDGE_PYTHON:-/Library/Frameworks/Python.framework/Versions/3.11/bin/python3}"
+
 # ─── Batched mode ─────────────────────────────────────────────────────────────
 if [[ "$1" == "--batched" ]]; then
     shift  # consume --batched; remaining args passed to every pytest invocation
 
     # 4 batches sized to stay under macOS memory pressure threshold (~1k tests):
-    #   Batch 1: backends + benchmark + cli + distributed   (~738 tests)
-    #   Batch 2: e2e + features + integration               (~586 tests)
-    #   Batch 3: models + regression + robustness + security (~142 tests)
-    #   Batch 4: unit                                       (~1,079 tests)
+    #   Batch 1: backends + cli                (~250 tests)
+    #   Batch 2: e2e + integration             (~300 tests)
+    #   Batch 3: models + robustness + security (~150 tests)
+    #   Batch 4: unit                          (~1,400 tests)
+    # NOTE: tests/benchmark, tests/features, tests/regression, tests/distributed
+    #       were deleted in v0.5.94 structural cleanup; their tests live in tests/unit/
     BATCHES=(
-        "tests/backends tests/benchmark tests/cli tests/distributed"
-        "tests/e2e tests/features tests/integration"
-        "tests/models tests/regression tests/robustness tests/security"
+        "tests/backends tests/cli"
+        "tests/e2e tests/integration"
+        "tests/models tests/robustness tests/security"
         "tests/unit"
     )
 
@@ -51,7 +56,7 @@ if [[ "$1" == "--batched" ]]; then
         echo "════════════════════════════════════════════════════════════" | tee -a "$OUTPUT_FILE"
 
         # Run this batch, appending to the output file
-        python3 -m pytest $DIRS "$@" -q --tb=short 2>&1 | tee -a "$OUTPUT_FILE"
+        "$PYTHON" -m pytest $DIRS "$@" -q --tb=short 2>&1 | tee -a "$OUTPUT_FILE"
         BATCH_EXIT="${PIPESTATUS[0]}"
 
         if [[ $BATCH_EXIT -ne 0 ]]; then
@@ -80,7 +85,7 @@ if [[ "$1" == "--batched" ]]; then
 fi
 
 # ─── Passthrough mode ─────────────────────────────────────────────────────────
-python3 -m pytest "$@" 2>&1 | tee "$OUTPUT_FILE"
+"$PYTHON" -m pytest "$@" 2>&1 | tee "$OUTPUT_FILE"
 EXIT_CODE="${PIPESTATUS[0]}"
 
 echo ""

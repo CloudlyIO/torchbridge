@@ -52,6 +52,9 @@ jobs:
       - name: Check version consistency
         run: python scripts/ci/check_version_consistency.py
 
+      - name: Check workflow path references exist
+        run: python scripts/ci/check_workflow_paths.py
+
       - name: Check for broken internal links
         run: python scripts/ci/check_doc_links.py
 
