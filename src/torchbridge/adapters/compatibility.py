@@ -88,6 +88,10 @@ _AMD_METHODS: dict[AMDArchitecture | None, list[AdapterMethod]] = {
         AdapterMethod.LORA,
         AdapterMethod.DORA,
     ],
+    # RDNA1: QLoRA requires INT8 BLAS — not safe on gfx1010/1011/1012. LoRA only.
+    AMDArchitecture.RDNA1: [
+        AdapterMethod.LORA,
+    ],
     None: [
         AdapterMethod.QLORA,
         AdapterMethod.DORA,

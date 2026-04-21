@@ -87,6 +87,11 @@ _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.RDNA2: [
         AttentionKernelType.PYTORCH_SDPA,
     ],
+    # RDNA1 (gfx1010/1011/1012): rocBLAS has no compiled kernel for this arch.
+    # Flash-attn requires rocBLAS at compile time — PYTORCH_SDPA is the only safe option.
+    AMDArchitecture.RDNA1: [
+        AttentionKernelType.PYTORCH_SDPA,
+    ],
 }
 
 # ── Trainium kernel tables ──────────────────────────────────────────

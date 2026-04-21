@@ -48,6 +48,7 @@ class TestOptimalDtype:
             (HardwareBackend.AMD, AMDArchitecture.CDNA, KVCacheDtype.FP16),
             (HardwareBackend.AMD, AMDArchitecture.RDNA3, KVCacheDtype.BF16),
             (HardwareBackend.AMD, AMDArchitecture.RDNA2, KVCacheDtype.FP16),
+            (HardwareBackend.AMD, AMDArchitecture.RDNA1, KVCacheDtype.FP16),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN3, KVCacheDtype.BF16),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN2, KVCacheDtype.BF16),
             (HardwareBackend.TRAINIUM, TrainiumArchitecture.TRN1, KVCacheDtype.BF16),

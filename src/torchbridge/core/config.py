@@ -138,6 +138,7 @@ class AMDArchitecture(Enum):
     CDNA2 = "cdna2"  # MI200 series (MI210, MI250, MI250X)
     CDNA3 = "cdna3"  # MI300 series (MI300A, MI300X, MI325X)
     CDNA4 = "cdna4"  # MI350X, MI355X (gfx950)
+    RDNA1 = "rdna1"  # Consumer GPUs (RX 5000 series, gfx1010/1011/1012) — NOT in rocBLAS binary list
     RDNA2 = "rdna2"  # Consumer GPUs (RX 6000 series)
     RDNA3 = "rdna3"  # Consumer GPUs (RX 7000 series)
 

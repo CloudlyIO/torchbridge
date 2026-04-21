@@ -374,6 +374,28 @@ class AMDBackend(BaseBackend):
             return AMDArchitecture.RDNA3
         elif "RX 6" in device_name_upper or "6900" in device_name_upper:
             return AMDArchitecture.RDNA2
+        elif any(
+            m in device_name_upper
+            for m in [
+                "RX 5",
+                "5500",
+                "5600",
+                "5700",
+                "NAVI 14",
+                "NAVI 10",
+                "GFX1010",
+                "GFX1011",
+                "GFX1012",
+            ]
+        ):
+            # RDNA1 (gfx1010/1011/1012) is NOT in the rocBLAS binary list — BLAS calls core dump
+            logger.warning(
+                "Detected RDNA1 GPU ('%s'): gfx1010/1011/1012 is not in the rocBLAS "
+                "binary distribution. GPU compute (matmul/gemm) will core dump. "
+                "Use CPU backend or upgrade to RX 6000+ / MI-series.",
+                device_name,
+            )
+            return AMDArchitecture.RDNA1
 
         # Default to config setting or AUTO
         if self.config.architecture != AMDArchitecture.AUTO:

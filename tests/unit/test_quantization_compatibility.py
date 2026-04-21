@@ -291,3 +291,18 @@ class TestIsFormatSupported:
             QuantizationFormat.NVFP4,
             HardwareBackend.CPU,
         )
+
+    def test_rdna1_no_quantization(self):
+        """RDNA1 (gfx1010/1011/1012) has no safe quant formats — rocBLAS INT8 kernels absent."""
+        formats = QuantizationCompatibilityMatrix.get_supported_formats(
+            HardwareBackend.AMD, AMDArchitecture.RDNA1
+        )
+        assert formats == []
+
+    def test_rdna1_int8_not_supported(self):
+        """INT8 must not be reported as supported on RDNA1."""
+        assert not QuantizationCompatibilityMatrix.is_format_supported(
+            QuantizationFormat.INT8_DYNAMIC,
+            HardwareBackend.AMD,
+            AMDArchitecture.RDNA1,
+        )

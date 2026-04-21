@@ -45,6 +45,17 @@ class TestGetOptimal:
         )
         assert method == AdapterMethod.LORA
 
+    def test_amd_rdna1_lora_only(self):
+        # RDNA1 (gfx1010/1011/1012): no QLoRA — INT8 BLAS not available
+        method = AdapterCompatibilityMatrix.get_optimal(
+            HardwareBackend.AMD, AMDArchitecture.RDNA1
+        )
+        assert method == AdapterMethod.LORA
+        chain = AdapterCompatibilityMatrix.get_fallback_chain(
+            HardwareBackend.AMD, AMDArchitecture.RDNA1
+        )
+        assert AdapterMethod.QLORA not in chain
+
     def test_trainium_always_lora(self):
         for arch in [TrainiumArchitecture.TRN3, TrainiumArchitecture.TRN2, None]:
             method = AdapterCompatibilityMatrix.get_optimal(

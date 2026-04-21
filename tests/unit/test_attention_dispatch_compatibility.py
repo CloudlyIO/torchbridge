@@ -43,6 +43,7 @@ class TestOptimalKernel:
             (AMDArchitecture.CDNA2, AttentionKernelType.PYTORCH_SDPA),
             (AMDArchitecture.RDNA3, AttentionKernelType.PYTORCH_SDPA),
             (AMDArchitecture.RDNA2, AttentionKernelType.PYTORCH_SDPA),
+            (AMDArchitecture.RDNA1, AttentionKernelType.PYTORCH_SDPA),
         ],
     )
     def test_amd_optimal(self, arch, expected):
@@ -186,6 +187,23 @@ class TestAllBackendsHaveKernels:
         kernels = AttentionDispatchMatrix.get_supported_kernels(backend)
         assert len(kernels) >= 1
         assert AttentionKernelType.PYTORCH_SDPA in kernels
+
+
+class TestRDNA1Constraints:
+    """RDNA1 (gfx1010/1011/1012) must not recommend kernels that require rocBLAS."""
+
+    def test_rdna1_only_sdpa(self):
+        kernels = AttentionDispatchMatrix.get_supported_kernels(
+            HardwareBackend.AMD, AMDArchitecture.RDNA1
+        )
+        assert kernels == [AttentionKernelType.PYTORCH_SDPA]
+
+    def test_rdna1_no_flash_attn(self):
+        kernels = AttentionDispatchMatrix.get_supported_kernels(
+            HardwareBackend.AMD, AMDArchitecture.RDNA1
+        )
+        assert AttentionKernelType.FLASH_ATTENTION_CK not in kernels
+        assert AttentionKernelType.FLASH_ATTENTION_2 not in kernels
 
 
 class TestDefaultArchitectureFallback:

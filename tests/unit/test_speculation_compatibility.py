@@ -88,6 +88,11 @@ class TestOptimalMethod:
                 SpeculativeMethod.PROMPT_LOOKUP,
             ),
             (
+                HardwareBackend.AMD,
+                AMDArchitecture.RDNA1,
+                SpeculativeMethod.PROMPT_LOOKUP,
+            ),
+            (
                 HardwareBackend.TRAINIUM,
                 TrainiumArchitecture.TRN3,
                 SpeculativeMethod.PROMPT_LOOKUP,
