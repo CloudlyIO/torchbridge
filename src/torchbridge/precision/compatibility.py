@@ -94,6 +94,9 @@ _AMD_FORMATS: dict[AMDArchitecture, list[QuantizationFormat]] = {
         QuantizationFormat.INT8_DYNAMIC,
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],
+    # RDNA1 (gfx1010/1011/1012): INT8 requires rocBLAS kernels that don't exist for this arch.
+    # No quantization formats are safe — use FP32/FP16 only.
+    AMDArchitecture.RDNA1: [],
 }
 
 _TRAINIUM_FORMATS: dict[TrainiumArchitecture, list[QuantizationFormat]] = {

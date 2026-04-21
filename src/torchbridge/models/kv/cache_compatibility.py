@@ -87,6 +87,10 @@ _AMD_KV_DTYPES: dict[AMDArchitecture, list[KVCacheDtype]] = {
     AMDArchitecture.RDNA2: [
         KVCacheDtype.FP16,
     ],
+    # RDNA1: FP16 only — BF16 hardware support is absent on gfx1010/1011/1012.
+    AMDArchitecture.RDNA1: [
+        KVCacheDtype.FP16,
+    ],
 }
 
 _TRAINIUM_KV_DTYPES: dict[TrainiumArchitecture, list[KVCacheDtype]] = {

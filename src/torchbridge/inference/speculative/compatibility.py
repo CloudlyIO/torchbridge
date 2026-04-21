@@ -93,6 +93,10 @@ _AMD_METHODS: dict[AMDArchitecture, list[SpeculativeMethod]] = {
     AMDArchitecture.RDNA2: [
         SpeculativeMethod.PROMPT_LOOKUP,
     ],
+    # RDNA1: draft model requires rocBLAS matmul — not safe on gfx1010/1011/1012.
+    AMDArchitecture.RDNA1: [
+        SpeculativeMethod.PROMPT_LOOKUP,
+    ],
 }
 
 _TRAINIUM_METHODS: dict[TrainiumArchitecture, list[SpeculativeMethod]] = {
