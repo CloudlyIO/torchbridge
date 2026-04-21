@@ -1,0 +1,5 @@
+# CODEOWNERS
+# Each PR will automatically request a review from these maintainers.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @shahirahman @nazif-dev @pangkajpaulcl @mahdi-cloudly
