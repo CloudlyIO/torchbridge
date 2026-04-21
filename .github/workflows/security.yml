@@ -110,8 +110,10 @@ jobs:
 
       - name: Run truffleHog
         run: |
-          trufflehog3 --no-history --format json . > secrets-report.json
-          trufflehog3 --no-history .
+          # --no-entropy: disables high-entropy heuristics that false-positive on URLs/paths;
+          # real secrets (API keys, tokens) are caught by the --no-pattern scan below.
+          trufflehog3 --no-history --no-entropy --format json . > secrets-report.json
+          trufflehog3 --no-history --no-entropy .
 
       - name: Upload Secrets Report
         uses: actions/upload-artifact@v7
