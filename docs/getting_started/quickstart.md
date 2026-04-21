@@ -1,6 +1,6 @@
 # Quick Start
 
-Get running with TorchBridge in three steps: install, detect hardware, run your model.
+Get running with TorchBridge in three commands.
 
 ## 1. Install
 
@@ -8,130 +8,120 @@ Get running with TorchBridge in three steps: install, detect hardware, run your 
 pip install torchbridge-ml
 ```
 
-## 2. Detect Your Hardware
+## 2. Check your hardware
 
-```python
-from torchbridge.backends import BackendFactory, detect_best_backend
-
-backend = BackendFactory.create(detect_best_backend())
-print(f"Backend: {backend}")
+```bash
+tb-doctor
 ```
 
-TorchBridge automatically detects NVIDIA CUDA, AMD ROCm, AWS Trainium, Google TPU, or falls back to CPU.
+```
+ TorchBridge System Diagnostics
+==================================================
+ Python Version:        Python 3.11.0  ( Compatible)
+ PyTorch Version:       PyTorch 2.11.0 ( Compatible)
+ TorchBridge Version:   0.5.95         ( Available)
+ CUDA GPU:              NVIDIA A10G    ( Available — 24 GB)
+ CPU Cores:             8 cores        ( Available)
 
-## 3. Optimize and Run
-
-```python
-import torch
-from torchbridge import TorchBridgeConfig, UnifiedManager
-
-config = TorchBridgeConfig.for_training()
-manager = UnifiedManager(config)
-
-# Your model -- no hardware-specific code needed
-model = torch.nn.Sequential(
-    torch.nn.Linear(768, 3072),
-    torch.nn.GELU(),
-    torch.nn.Linear(3072, 768),
-)
-
-# Optimize for detected hardware
-optimized_model = manager.optimize(model)
+ Summary: 6/6 checks passed
+ System is ready for optimal TorchBridge performance!
 ```
 
-## Configuration Presets
+## 3. Validate your model
 
-TorchBridge provides presets for common workloads:
+This is the core TorchBridge command — it compares your model's numerical outputs across two backends and reports whether they're within tolerance:
 
-```python
-# Development -- fast iteration, minimal optimization
-config = TorchBridgeConfig.for_development()
+```bash
+# Compare CUDA vs CPU (works without a second GPU)
+tb-validate --compare cuda cpu --model ./model.pt
 
-# Training -- balanced speed and memory
-config = TorchBridgeConfig.for_training()
+# Compare CUDA vs ROCm
+tb-validate --compare cuda rocm --model ./model.pt
 
-# Inference -- maximum throughput
-config = TorchBridgeConfig.for_inference()
+# Per-layer divergence report — find exactly where outputs diverge
+tb-validate --compare cuda rocm --model ./model.pt --per-layer
+
+# Multi-step agentic trace — track divergence amplification across 50 autoregressive steps
+tb-validate --compare cuda rocm --model ./model.pt --trace --steps 50 --autoregressive
+
+# CI mode — exits non-zero if max_diff exceeds tolerance
+tb-validate --compare cuda rocm --model ./model.pt --ci
 ```
 
-## Training with AMP
+Example output:
 
-A training loop using PyTorch native automatic mixed precision:
+```
+TorchBridge Validation Results
+================================
+Backends:   cuda vs rocm
+Model:      ./model.pt
+Dtype:      float16
+
+max_diff:   2.10e-05
+cosine_sim: 1.000001
+Tolerance:  PASS (threshold: 1e-04)
+
+All 1/1 validation checks passed.
+```
+
+## Hardware Configuration Advisor
+
+```bash
+# What's the optimal config for a 7B model on this hardware?
+tb-advisor --model-params 7e9
+
+# Disaggregated prefill/decode fleet config
+tb-advisor --mode disaggregated --model-params 7e9 --prefill nvidia:hopper --decode amd:cdna3
+
+# Heterogeneous cluster training config (NVIDIA + AMD mixed)
+tb-advisor --mode heterogeneous --model-params 7e9 --nvidia hopper:8 --amd cdna3:4
+```
+
+## Python API
 
 ```python
-import torch
 from torchbridge.backends import BackendFactory, detect_best_backend
 
 # Auto-detect hardware
 backend = BackendFactory.create(detect_best_backend())
 device = backend.device
-
-model = YourModel().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-scaler = torch.amp.GradScaler(device.type)
-
-for inputs, targets in train_loader:
-    inputs, targets = inputs.to(device), targets.to(device)
-    with torch.amp.autocast(device.type):
-        loss = criterion(model(inputs), targets)
-    scaler.scale(loss).backward()
-    scaler.step(optimizer)
-    scaler.update()
-    optimizer.zero_grad()
+print(f"Backend: {backend}, Device: {device}")
 ```
 
-## Model Validation
-
-Verify your model works correctly on the current backend:
-
 ```python
+# Cross-backend validation
 from torchbridge import UnifiedValidator
 
 validator = UnifiedValidator()
 results = validator.validate_model(model, input_shape=(1, 768))
-print(f"Passed: {results.passed}/{results.total_tests}")
+print(f"Passed: {results.passed}/{results.total_tests} tests")
+print(f"max_diff: {results.max_diff:.2e}, cosine_sim: {results.cosine_sim:.6f}")
 ```
-
-## Model Export
-
-Use PyTorch's native APIs to export your model:
 
 ```python
-import torch
+# Hardware-aware configuration
+from torchbridge import TorchBridgeConfig, UnifiedManager
 
-sample = torch.randn(1, 768)
-
-# TorchScript
-traced = torch.jit.trace(model, sample)
-traced.save("model.pt")
-
-# ONNX
-torch.onnx.export(model, sample, "model.onnx", opset_version=17)
+config = TorchBridgeConfig.for_inference()   # or for_training()
+manager = UnifiedManager(config)
+optimized_model = manager.optimize(model)
 ```
 
-## CLI Tools
+## Runnable example
+
+A self-contained example that works on any hardware (no GPU required):
 
 ```bash
-# System diagnostics
-tb-doctor
-
-# Cross-backend validation
-tb-validate --compare cuda cpu --model model.pt
-
-# Benchmark
-tb-benchmark --predefined optimization --quick
+python examples/validate_quickstart.py
 ```
 
-## Common Pitfalls
+See [`examples/validate_quickstart.py`](../../examples/validate_quickstart.py) for the full source.
+
+## Common pitfalls
 
 ### GPU not detected (silent CPU fallback)
 
-TorchBridge falls back to CPU without error if no GPU is found. Run diagnostics to verify:
-
-```bash
-tb-doctor
-```
-
+TorchBridge falls back to CPU without error if no GPU is found. Run `tb-doctor` to verify.
 If the doctor reports CPU-only, check that your GPU drivers and the correct PyTorch build are installed.
 
 ### Device placement mismatch
@@ -146,50 +136,21 @@ model = model.to(device)
 inputs = inputs.to(device)  # Must match model device
 ```
 
-Mixing devices (e.g., model on CUDA, inputs on CPU) raises `RuntimeError`.
-
 ### Precision differences after optimization
 
-Optimized models may produce slightly different numerical outputs due to mixed precision, kernel fusion, or operator reordering. This is expected. Use `tb-validate` to confirm outputs are within tolerance:
-
-```bash
-tb-validate --compare cuda cpu --model optimized_model.pt
-```
-
-### Batch size too small for GPU utilization
-
-GPUs need enough parallel work to saturate compute. If throughput is lower than expected, increase the batch size (16--64 is a good starting range) and re-benchmark:
-
-```bash
-tb-benchmark --model model.pt --batch-sizes 1,16,32,64
-```
+Optimized models may produce slightly different outputs due to mixed precision or kernel fusion.
+This is expected. Use `tb-validate --compare` to confirm outputs are within tolerance.
 
 ### Missing optional dependencies
 
-Some features require extras. Install everything at once:
+Some features require extras:
 
 ```bash
 pip install torchbridge-ml[all]
 ```
 
-Or install only what you need: `torchbridge-ml[quantization]`, `torchbridge-ml[tracing]`.
+## Next steps
 
-### Forgetting `model.to(device)` after optimization
-
-`manager.optimize()` returns a new model object. If you move it to a device afterward, use the returned reference:
-
-```python
-optimized = manager.optimize(model)
-optimized = optimized.to(device)  # Use the optimized model, not the original
-```
-
-### Model optimization changes output slightly
-
-Small numerical differences (typically < 1e-4) are normal after optimization and do not indicate a bug. Run `tb-validate` to verify that outputs remain within acceptable tolerance for your use case.
-
-## Next Steps
-
-- [Backends Overview](../backends/overview.md) -- how the backend system works
-- [Backend Selection](../guides/backend-selection.md) -- choosing and configuring backends
-- [Distributed Training](../guides/distributed-training.md) -- multi-GPU and multi-node
-- [Deployment](../guides/deployment.md) -- serving and containerization
+- [Installation](installation.md) — backend-specific setup (CUDA, ROCm, Trainium, TPU)
+- [Troubleshooting](troubleshooting.md) — common issues and fixes
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) — how to submit a hardware tolerance measurement or matrix correction

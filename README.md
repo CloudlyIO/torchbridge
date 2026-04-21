@@ -11,6 +11,21 @@ TorchBridge **validates that your model produces correct outputs across PyTorch 
 
 ```bash
 pip install torchbridge-ml
+tb-doctor
+```
+
+```
+ TorchBridge System Diagnostics
+==================================================
+ Python Version:        Python 3.11.0  ( Compatible)
+ PyTorch Version:       PyTorch 2.11.0 ( Compatible)
+ TorchBridge Version:   0.5.95         ( Available)
+ CUDA GPU:              Not found      ( Apple Silicon MPS provides GPU acceleration)
+ Apple Silicon GPU:     Available      ( GPU acceleration enabled)
+ CPU Cores:             11 cores       ( Available)
+
+ Summary: 7/7 checks passed
+ System is ready for optimal TorchBridge performance!
 ```
 
 ### Cross-Backend Validation (the hero command)
@@ -176,6 +191,10 @@ ruff check src/ tests/
 ## Community
 
 The empirical tolerance database (`testing/tolerance_db.py`) is only as strong as the hardware it has been measured on. Contributions that add or correct tolerance entries for hardware you have access to — AMD MI350X, Trainium2, TPU v7 Ironwood, new PyTorch versions — directly expand the validation coverage for everyone. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add entries and the source-label conventions (`"measured"`, `"derived"`, `"fallback"`).
+
+**Good first contributions:**
+- [Submit a hardware tolerance measurement](https://github.com/CloudlyIO/torchbridge/issues/66) — run `tb-validate --compare` and paste the output
+- [Fix a compatibility matrix entry](https://github.com/CloudlyIO/torchbridge/issues/67) — if a recommendation doesn't match your hardware
 
 ## Versioning
 
