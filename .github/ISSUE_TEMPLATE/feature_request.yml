@@ -10,6 +10,19 @@ body:
       value: |
         Thanks for suggesting a feature! Please provide as much context as possible.
 
+        New contributor? See the [Contributing Guide](https://github.com/CloudlyIO/torchbridge/blob/main/CONTRIBUTING.md) first.
+
+  - type: dropdown
+    id: journey_stage
+    attributes:
+      label: Where are you in the contributor journey?
+      options:
+        - "Day 1 — noticed this gap while testing the install"
+        - "Day 2 — need this to use TorchBridge effectively on my project"
+        - "Returning contributor — came up while working on another improvement"
+    validations:
+      required: true
+
   - type: textarea
     id: problem
     attributes:
