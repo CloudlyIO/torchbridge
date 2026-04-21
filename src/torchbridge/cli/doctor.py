@@ -296,8 +296,22 @@ Examples:
 
             # ROCm: check whether this AMD GPU's gfx arch is in the rocBLAS binary list.
             # gfx1010/1011/1012 (RDNA1 / RX 5000 series) are absent — any BLAS call core dumps.
-            _ROCBLAS_SUPPORTED = {"gfx906", "gfx908", "gfx90a", "gfx942", "gfx1030", "gfx1100"}
-            _RDNA1_MARKERS = {"gfx1010", "gfx1011", "gfx1012", "rx 5", "navi 10", "navi 14"}
+            _ROCBLAS_SUPPORTED = {
+                "gfx906",
+                "gfx908",
+                "gfx90a",
+                "gfx942",
+                "gfx1030",
+                "gfx1100",
+            }
+            _RDNA1_MARKERS = {
+                "gfx1010",
+                "gfx1011",
+                "gfx1012",
+                "rx 5",
+                "navi 10",
+                "navi 14",
+            }
             if hasattr(torch.version, "hip") and torch.version.hip is not None:
                 gpu_name_lower = gpu_name.lower()
                 if any(m in gpu_name_lower for m in _RDNA1_MARKERS):

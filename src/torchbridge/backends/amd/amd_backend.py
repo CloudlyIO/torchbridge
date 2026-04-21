@@ -376,7 +376,17 @@ class AMDBackend(BaseBackend):
             return AMDArchitecture.RDNA2
         elif any(
             m in device_name_upper
-            for m in ["RX 5", "5500", "5600", "5700", "NAVI 14", "NAVI 10", "GFX1010", "GFX1011", "GFX1012"]
+            for m in [
+                "RX 5",
+                "5500",
+                "5600",
+                "5700",
+                "NAVI 14",
+                "NAVI 10",
+                "GFX1010",
+                "GFX1011",
+                "GFX1012",
+            ]
         ):
             # RDNA1 (gfx1010/1011/1012) is NOT in the rocBLAS binary list — BLAS calls core dump
             logger.warning(
