@@ -219,6 +219,13 @@ class TestMeasuredEntries:
         tol = db.get("cpu", "float32", model_family="decoder-small")
         assert tol.atol <= 1e-5  # CPU is reference backend
 
+    def test_decoder_small_cpu_float32_atol_measured_on_elitebook(self):
+        db = ToleranceDB()
+        tol = db.get("cpu", "float32", model_family="decoder-small")
+        assert tol.source == "measured"
+        assert 0 < tol.atol <= 1e-5
+        assert tol.rtol <= 1e-5
+
 
 # ---------------------------------------------------------------------------
 # Derived entries — larger models are looser

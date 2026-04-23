@@ -140,6 +140,7 @@ def _d(atol: float, rtol: float, notes: str = "") -> ToleranceEntry:
 
 
 _CLOUD_NOTE = "measured on Qwen3-0.6B; cloud validation v0.5.31"
+_CPU_F32_NOTE = "measured on decoder-small (6-layer transformer); HP EliteBook 840 G7 x86_64 CPU float32 PyTorch 2.11.0 2026-04-23"
 _DM_NOTE = "derived: decoder-small atol × 2 (2× more layers)"
 _DL_NOTE = "derived: decoder-small atol × 4 (4× more layers)"
 _ENC_NOTE = "derived: decoder-small atol × 0.5 (bidirectional; no KV cache)"
@@ -158,7 +159,7 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("decoder-small", "mps", "bfloat16"): _m(1e-2, 1e-3, _CLOUD_NOTE),
     ("decoder-small", "xla", "float32"): _m(0.5, 1e-2, _CLOUD_NOTE),
     ("decoder-small", "xla", "bfloat16"): _m(0.5, 1e-2, _CLOUD_NOTE),
-    ("decoder-small", "cpu", "float32"): _m(1e-6, 1e-6, _CLOUD_NOTE),
+    ("decoder-small", "cpu", "float32"): _m(2e-6, 1e-6, _CPU_F32_NOTE),
     ("decoder-small", "cpu", "float16"): _m(1e-4, 1e-4, _CLOUD_NOTE),
     ("decoder-small", "cpu", "bfloat16"): _m(1e-3, 1e-4, _CLOUD_NOTE),
     # ── decoder-medium ────────────────────────────────────────────────────
