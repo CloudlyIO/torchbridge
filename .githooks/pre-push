@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# Pre-push hook: block pushes containing commits from banned identities.
+# Catches cases where a commit slipped past pre-commit (e.g. --no-verify).
+
+_BANNED_PATTERN="shahrahman-fb|shahrahman@meta\.com"
+
+while read local_ref local_sha remote_ref remote_sha; do
+    # Nothing to push (deletion)
+    if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+        continue
+    fi
+
+    # Range: if remote ref is new (all zeros), check the full local history
+    if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+        range="$local_sha"
+    else
+        range="$remote_sha..$local_sha"
+    fi
+
+    bad=$(git log "$range" --format="%H %ae %ce" 2>/dev/null \
+          | grep -E "$_BANNED_PATTERN" | head -5)
+
+    if [ -n "$bad" ]; then
+        echo ""
+        echo "🚨 PUSH BLOCKED: banned identity found in commits being pushed:"
+        echo ""
+        echo "$bad" | while read hash ae ce; do
+            echo "   $hash  author=$ae  committer=$ce"
+        done
+        echo ""
+        echo "   Fix: run git filter-repo --mailmap to rewrite, then re-push."
+        echo "   Or:  gh auth logout && gh auth login  (as shahirahman)"
+        echo ""
+        exit 1
+    fi
+done
+
+exit 0
