@@ -14,6 +14,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  identity-check:
+    name: Contributor Identity Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for banned identities in commit history
+        run: |
+          BANNED="shahrahman-fb\|shahrahman@meta\.com"
+          BAD=$(git log --format="%H %ae %ce" | grep -E "$BANNED" || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Banned identity found in commit history:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "✅ All commit identities are clean."
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
