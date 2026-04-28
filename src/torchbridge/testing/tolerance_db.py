@@ -144,6 +144,17 @@ _DM_NOTE = "derived: decoder-small atol × 2 (2× more layers)"
 _DL_NOTE = "derived: decoder-small atol × 4 (4× more layers)"
 _ENC_NOTE = "derived: decoder-small atol × 0.5 (bidirectional; no KV cache)"
 _VL_NOTE = "derived: decoder-small atol × 3 (patch embedding variance)"
+# ── new hardware generation note constants (v0.5.69) ──────────────────────
+_BW_NOTE = "derived: Hopper (cuda) atol × 1.0 (same fp32 accumulation path, wider GEMM tiles)"
+_BWC_NOTE = "derived: Hopper/Ada (cuda) atol × 1.0 (Blackwell consumer; same accumulation path as Blackwell DC)"
+_CDNA4_NOTE = "derived: CDNA3 (rocm) atol × 1.0 (MI350X/CDNA4; no accumulation-order change vs CDNA3)"
+_XLA_V7_NOTE = "derived: TPU v5e (xla) atol × 1.0 (TPU v7 Ironwood; same XLA bf16 accumulation as v5e)"
+_NEURON_NOTE = "derived: Trn1 (trainium) atol × 1.0 (Trn3/Neuron; same NeuronCore accumulation semantics as Trn1)"
+
+
+
+
+
 
 _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     # ── decoder-small ─────────────────────────────────────────────────────
@@ -235,6 +246,92 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("encoder", "trainium", "bfloat16"): _d(5e-3, 1e-3, _ENC_NOTE),
     ("vision-language", "trainium", "float32"): _d(3e-4, 1e-5, _VL_NOTE),
     ("vision-language", "trainium", "bfloat16"): _d(3e-2, 1e-3, _VL_NOTE),
+    # ── cuda_blackwell (B100/B200, sm_100) — v0.5.69 ──────────────────────
+    # Basis: Hopper (cuda) measured entries × 1.0.
+    # Same fp32 accumulation path; wider GEMM tiles do not increase worst-case
+    # absolute error. float16 included: same reasoning applies.
+    ("decoder-small",   "cuda_blackwell", "float32"):  _d(1e-4, 1e-5, _BW_NOTE),
+    ("decoder-small",   "cuda_blackwell", "float16"):  _d(1e-3, 1e-3, _BW_NOTE),
+    ("decoder-small",   "cuda_blackwell", "bfloat16"): _d(1e-2, 1e-3, _BW_NOTE),
+    ("decoder-medium",  "cuda_blackwell", "float32"):  _d(2e-4, 1e-5, _BW_NOTE),
+    ("decoder-medium",  "cuda_blackwell", "float16"):  _d(2e-3, 1e-3, _BW_NOTE),
+    ("decoder-medium",  "cuda_blackwell", "bfloat16"): _d(2e-2, 1e-3, _BW_NOTE),
+    ("decoder-large",   "cuda_blackwell", "float32"):  _d(4e-4, 1e-5, _BW_NOTE),
+    ("decoder-large",   "cuda_blackwell", "float16"):  _d(4e-3, 1e-3, _BW_NOTE),
+    ("decoder-large",   "cuda_blackwell", "bfloat16"): _d(4e-2, 1e-3, _BW_NOTE),
+    ("encoder",         "cuda_blackwell", "float32"):  _d(5e-5, 1e-5, _BW_NOTE),
+    ("encoder",         "cuda_blackwell", "float16"):  _d(5e-4, 1e-3, _BW_NOTE),
+    ("encoder",         "cuda_blackwell", "bfloat16"): _d(5e-3, 1e-3, _BW_NOTE),
+    ("vision-language", "cuda_blackwell", "float32"):  _d(3e-4, 1e-5, _BW_NOTE),
+    ("vision-language", "cuda_blackwell", "float16"):  _d(3e-3, 1e-3, _BW_NOTE),
+    ("vision-language", "cuda_blackwell", "bfloat16"): _d(3e-2, 1e-3, _BW_NOTE),
+    # ── cuda_blackwell_consumer (RTX 5090, cc12.0) — v0.5.69 ──────────────
+    # Basis: Hopper/Ada (cuda) measured entries × 1.0.
+    # Same Blackwell µarch as DC variant; consumer FP rounding matches DC
+    # within measurement noise. float16 included for completeness.
+    ("decoder-small",   "cuda_blackwell_consumer", "float32"):  _d(1e-4, 1e-5, _BWC_NOTE),
+    ("decoder-small",   "cuda_blackwell_consumer", "float16"):  _d(1e-3, 1e-3, _BWC_NOTE),
+    ("decoder-small",   "cuda_blackwell_consumer", "bfloat16"): _d(1e-2, 1e-3, _BWC_NOTE),
+    ("decoder-medium",  "cuda_blackwell_consumer", "float32"):  _d(2e-4, 1e-5, _BWC_NOTE),
+    ("decoder-medium",  "cuda_blackwell_consumer", "float16"):  _d(2e-3, 1e-3, _BWC_NOTE),
+    ("decoder-medium",  "cuda_blackwell_consumer", "bfloat16"): _d(2e-2, 1e-3, _BWC_NOTE),
+    ("decoder-large",   "cuda_blackwell_consumer", "float32"):  _d(4e-4, 1e-5, _BWC_NOTE),
+    ("decoder-large",   "cuda_blackwell_consumer", "float16"):  _d(4e-3, 1e-3, _BWC_NOTE),
+    ("decoder-large",   "cuda_blackwell_consumer", "bfloat16"): _d(4e-2, 1e-3, _BWC_NOTE),
+    ("encoder",         "cuda_blackwell_consumer", "float32"):  _d(5e-5, 1e-5, _BWC_NOTE),
+    ("encoder",         "cuda_blackwell_consumer", "float16"):  _d(5e-4, 1e-3, _BWC_NOTE),
+    ("encoder",         "cuda_blackwell_consumer", "bfloat16"): _d(5e-3, 1e-3, _BWC_NOTE),
+    ("vision-language", "cuda_blackwell_consumer", "float32"):  _d(3e-4, 1e-5, _BWC_NOTE),
+    ("vision-language", "cuda_blackwell_consumer", "float16"):  _d(3e-3, 1e-3, _BWC_NOTE),
+    ("vision-language", "cuda_blackwell_consumer", "bfloat16"): _d(3e-2, 1e-3, _BWC_NOTE),
+    # ── rocm_cdna4 (MI350X, gfx950) — v0.5.69 ────────────────────────────
+    # Basis: CDNA3 (rocm) measured entries × 1.0.
+    # CDNA4 improves HBM3e bandwidth but does not change FP accumulation order.
+    # float16 included following the rocm pattern.
+    ("decoder-small",   "rocm_cdna4", "float32"):  _d(1e-3, 1e-4, _CDNA4_NOTE),
+    ("decoder-small",   "rocm_cdna4", "float16"):  _d(2e-3, 1e-3, _CDNA4_NOTE),
+    ("decoder-small",   "rocm_cdna4", "bfloat16"): _d(2e-2, 1e-3, _CDNA4_NOTE),
+    ("decoder-medium",  "rocm_cdna4", "float32"):  _d(2e-3, 1e-4, _CDNA4_NOTE),
+    ("decoder-medium",  "rocm_cdna4", "float16"):  _d(4e-3, 1e-3, _CDNA4_NOTE),
+    ("decoder-medium",  "rocm_cdna4", "bfloat16"): _d(4e-2, 1e-3, _CDNA4_NOTE),
+    ("decoder-large",   "rocm_cdna4", "float32"):  _d(4e-3, 1e-4, _CDNA4_NOTE),
+    ("decoder-large",   "rocm_cdna4", "float16"):  _d(8e-3, 1e-3, _CDNA4_NOTE),
+    ("decoder-large",   "rocm_cdna4", "bfloat16"): _d(8e-2, 1e-3, _CDNA4_NOTE),
+    ("encoder",         "rocm_cdna4", "float32"):  _d(5e-4, 1e-4, _CDNA4_NOTE),
+    ("encoder",         "rocm_cdna4", "float16"):  _d(1e-3, 1e-3, _CDNA4_NOTE),
+    ("encoder",         "rocm_cdna4", "bfloat16"): _d(1e-2, 1e-3, _CDNA4_NOTE),
+    ("vision-language", "rocm_cdna4", "float32"):  _d(3e-3, 1e-4, _CDNA4_NOTE),
+    ("vision-language", "rocm_cdna4", "float16"):  _d(6e-3, 1e-3, _CDNA4_NOTE),
+    ("vision-language", "rocm_cdna4", "bfloat16"): _d(6e-2, 1e-3, _CDNA4_NOTE),
+    # ── xla_v7 (TPU v7 Ironwood) — v0.5.69 ───────────────────────────────
+    # Basis: TPU v5e (xla) measured entries × 1.0.
+    # Same XLA compiler stack; bf16 matmul accumulation semantics unchanged.
+    # XLA does not expose float16 — those entries are intentionally absent.
+    ("decoder-small",   "xla_v7", "float32"):  _d(0.5,  1e-2, _XLA_V7_NOTE),
+    ("decoder-small",   "xla_v7", "bfloat16"): _d(0.5,  1e-2, _XLA_V7_NOTE),
+    ("decoder-medium",  "xla_v7", "float32"):  _d(1.0,  1e-2, _XLA_V7_NOTE),
+    ("decoder-medium",  "xla_v7", "bfloat16"): _d(1.0,  1e-2, _XLA_V7_NOTE),
+    ("decoder-large",   "xla_v7", "float32"):  _d(2.0,  1e-2, _XLA_V7_NOTE),
+    ("decoder-large",   "xla_v7", "bfloat16"): _d(2.0,  1e-2, _XLA_V7_NOTE),
+    ("encoder",         "xla_v7", "float32"):  _d(0.25, 1e-2, _XLA_V7_NOTE),
+    ("encoder",         "xla_v7", "bfloat16"): _d(0.25, 1e-2, _XLA_V7_NOTE),
+    ("vision-language", "xla_v7", "float32"):  _d(1.5,  1e-2, _XLA_V7_NOTE),
+    ("vision-language", "xla_v7", "bfloat16"): _d(1.5,  1e-2, _XLA_V7_NOTE),
+    # ── neuron (AWS Trn3) — v0.5.69 ───────────────────────────────────────
+    # Basis: Trn1 (trainium) measured entries × 1.0.
+    # Trn3 uses same NeuronCore accumulation semantics as Trn1; no principled
+    # scaling exists — nearest-generation atol used unchanged.
+    # Neuron supports float32 and bfloat16 (same as trainium).
+    ("decoder-small",   "neuron", "float32"):  _d(1e-4, 1e-5, _NEURON_NOTE),
+    ("decoder-small",   "neuron", "bfloat16"): _d(1e-2, 1e-3, _NEURON_NOTE),
+    ("decoder-medium",  "neuron", "float32"):  _d(2e-4, 1e-5, _NEURON_NOTE),
+    ("decoder-medium",  "neuron", "bfloat16"): _d(2e-2, 1e-3, _NEURON_NOTE),
+    ("decoder-large",   "neuron", "float32"):  _d(4e-4, 1e-5, _NEURON_NOTE),
+    ("decoder-large",   "neuron", "bfloat16"): _d(4e-2, 1e-3, _NEURON_NOTE),
+    ("encoder",         "neuron", "float32"):  _d(5e-5, 1e-5, _NEURON_NOTE),
+    ("encoder",         "neuron", "bfloat16"): _d(5e-3, 1e-3, _NEURON_NOTE),
+    ("vision-language", "neuron", "float32"):  _d(3e-4, 1e-5, _NEURON_NOTE),
+    ("vision-language", "neuron", "bfloat16"): _d(3e-2, 1e-3, _NEURON_NOTE),
 }
 
 
