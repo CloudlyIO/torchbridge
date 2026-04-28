@@ -338,6 +338,16 @@ class TestTableCompleteness:
         #              + 1 XLA × 2 dtypes
         #              + 1 Trainium × 2 dtypes)
         # = 5 × (12 + 2 + 2) = 5 × 16 = 80 entries
+        #
+        #
+        # New derived hardware entries:
+        # cuda_blackwell:           5 families × 3 dtypes = 15
+        # cuda_blackwell_consumer:  5 families × 3 dtypes = 15
+        # rocm_cdna4:               5 families × 3 dtypes = 15
+        # xla_v7:                   5 families × 2 dtypes = 10
+        # neuron:                   5 families × 2 dtypes = 10
+        ## Total:
+        # 80 + 15 + 15 + 15 + 10 + 10 = 145
         assert len(_FAMILY_TOLERANCE_TABLE) == 145
 
     def test_trainium_has_family_entries(self):
