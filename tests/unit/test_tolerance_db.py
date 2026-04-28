@@ -497,13 +497,16 @@ class TestFallbackWarning:
         assert tol.source in ("measured", "derived")
         assert not any("fallback" in msg.lower() for msg in caplog.messages)
 
+
 # ── v0.5.69: new hardware generation backends ─────────────────────────────────
 
 _NEW_BACKENDS_THREE_DTYPES = ["cuda_blackwell", "cuda_blackwell_consumer", "rocm_cdna4"]
 _NEW_BACKENDS_TWO_DTYPES = ["xla_v7", "neuron"]  # float32 + bfloat16 only
 
 
-@pytest.mark.parametrize("backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES)
+@pytest.mark.parametrize(
+    "backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES
+)
 @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
 def test_new_backend_decoder_small_entry_exists(backend, dtype):
     db = ToleranceDB()
@@ -511,7 +514,9 @@ def test_new_backend_decoder_small_entry_exists(backend, dtype):
     assert tol.atol > 0
 
 
-@pytest.mark.parametrize("backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES)
+@pytest.mark.parametrize(
+    "backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES
+)
 @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
 def test_new_backend_source_is_derived(backend, dtype):
     db = ToleranceDB()
@@ -519,7 +524,9 @@ def test_new_backend_source_is_derived(backend, dtype):
     assert tol.source == "derived"
 
 
-@pytest.mark.parametrize("backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES)
+@pytest.mark.parametrize(
+    "backend", _NEW_BACKENDS_THREE_DTYPES + _NEW_BACKENDS_TWO_DTYPES
+)
 @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
 def test_new_backend_notes_nonempty(backend, dtype):
     db = ToleranceDB()
