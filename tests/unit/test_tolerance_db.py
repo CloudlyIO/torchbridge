@@ -501,7 +501,7 @@ class TestFallbackWarning:
 # ── v0.5.69: new hardware generation backends ─────────────────────────────────
 
 _NEW_BACKENDS_THREE_DTYPES = ["cuda_blackwell", "cuda_blackwell_consumer", "rocm_cdna4"]
-_NEW_BACKENDS_TWO_DTYPES = ["xla_v7", "neuron"]  # float32 + bfloat16 only
+_NEW_BACKENDS_TWO_DTYPES = ["xla_v7", "trainium_trn3"]  # float32 + bfloat16 only
 
 
 @pytest.mark.parametrize(

@@ -151,8 +151,7 @@ _BW_NOTE = (
 _BWC_NOTE = "derived: Hopper/Ada (cuda) atol × 1.0 (Blackwell consumer; same accumulation path as Blackwell DC)"
 _CDNA4_NOTE = "derived: CDNA3 (rocm) atol × 1.0 (MI350X/CDNA4; no accumulation-order change vs CDNA3)"
 _XLA_V7_NOTE = "derived: TPU v5e (xla) atol × 1.0 (TPU v7 Ironwood; same XLA bf16 accumulation as v5e)"
-_NEURON_NOTE = "derived: Trn1 (trainium) atol × 1.0 (Trn3/Neuron; same NeuronCore accumulation semantics as Trn1)"
-
+_TRN3_NOTE = "derived: Trn1 (trainium) atol × 1.0 (Trn3/Neuron; same NeuronCore accumulation semantics as Trn1)"
 
 _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     # ── decoder-small ─────────────────────────────────────────────────────
@@ -323,21 +322,21 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("encoder", "xla_v7", "bfloat16"): _d(0.25, 1e-2, _XLA_V7_NOTE),
     ("vision-language", "xla_v7", "float32"): _d(1.5, 1e-2, _XLA_V7_NOTE),
     ("vision-language", "xla_v7", "bfloat16"): _d(1.5, 1e-2, _XLA_V7_NOTE),
-    # ── neuron (AWS Trn3) — v0.5.69 ───────────────────────────────────────
+    # ── trainium_trn3 (AWS Trn3) — v0.5.69 ───────────────────────────────
     # Basis: Trn1 (trainium) measured entries × 1.0.
     # Trn3 uses same NeuronCore accumulation semantics as Trn1; no principled
     # scaling exists — nearest-generation atol used unchanged.
     # Neuron supports float32 and bfloat16 (same as trainium).
-    ("decoder-small", "neuron", "float32"): _d(1e-4, 1e-5, _NEURON_NOTE),
-    ("decoder-small", "neuron", "bfloat16"): _d(1e-2, 1e-3, _NEURON_NOTE),
-    ("decoder-medium", "neuron", "float32"): _d(2e-4, 1e-5, _NEURON_NOTE),
-    ("decoder-medium", "neuron", "bfloat16"): _d(2e-2, 1e-3, _NEURON_NOTE),
-    ("decoder-large", "neuron", "float32"): _d(4e-4, 1e-5, _NEURON_NOTE),
-    ("decoder-large", "neuron", "bfloat16"): _d(4e-2, 1e-3, _NEURON_NOTE),
-    ("encoder", "neuron", "float32"): _d(5e-5, 1e-5, _NEURON_NOTE),
-    ("encoder", "neuron", "bfloat16"): _d(5e-3, 1e-3, _NEURON_NOTE),
-    ("vision-language", "neuron", "float32"): _d(3e-4, 1e-5, _NEURON_NOTE),
-    ("vision-language", "neuron", "bfloat16"): _d(3e-2, 1e-3, _NEURON_NOTE),
+    ("decoder-small", "trainium_trn3", "float32"): _d(1e-4, 1e-5, _TRN3_NOTE),
+    ("decoder-small", "trainium_trn3", "bfloat16"): _d(1e-2, 1e-3, _TRN3_NOTE),
+    ("decoder-medium", "trainium_trn3", "float32"): _d(2e-4, 1e-5, _TRN3_NOTE),
+    ("decoder-medium", "trainium_trn3", "bfloat16"): _d(2e-2, 1e-3, _TRN3_NOTE),
+    ("decoder-large", "trainium_trn3", "float32"): _d(4e-4, 1e-5, _TRN3_NOTE),
+    ("decoder-large", "trainium_trn3", "bfloat16"): _d(4e-2, 1e-3, _TRN3_NOTE),
+    ("encoder", "trainium_trn3", "float32"): _d(5e-5, 1e-5, _TRN3_NOTE),
+    ("encoder", "trainium_trn3", "bfloat16"): _d(5e-3, 1e-3, _TRN3_NOTE),
+    ("vision-language", "trainium_trn3", "float32"): _d(3e-4, 1e-5, _TRN3_NOTE),
+    ("vision-language", "trainium_trn3", "bfloat16"): _d(3e-2, 1e-3, _TRN3_NOTE),
 }
 
 
