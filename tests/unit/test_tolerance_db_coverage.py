@@ -8,12 +8,10 @@ Run with:
     python -m pytest tests/unit/test_tolerance_db_coverage.py -q
 """
 
-import pytest
-
 from torchbridge.testing.tolerance_db import (
-    ToleranceDB,
     _FAMILY_TOLERANCE_TABLE,
     MODEL_FAMILIES,
+    ToleranceDB,
 )
 
 # ---------------------------------------------------------------------------
@@ -149,7 +147,7 @@ def test_gen_scaling_backends_have_bfloat16():
                 missing.append(key)
     assert (
         not missing
-    ), f"Missing bfloat16 entries for gen-scaling backends:\n" + "\n".join(
+    ), "Missing bfloat16 entries for gen-scaling backends:\n" + "\n".join(
         f"  {f}/{b}/{d}" for f, b, d in missing
     )
 
