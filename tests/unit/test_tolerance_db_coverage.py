@@ -124,10 +124,9 @@ def test_all_model_families_covered_for_core_backends():
             for dtype in dtypes:
                 if (family, backend, dtype) not in _FAMILY_TOLERANCE_TABLE:
                     missing.append((family, backend, dtype))
-    assert (
-        not missing
-    ), f"Missing {len(missing)} entries in _FAMILY_TOLERANCE_TABLE:\n" + "\n".join(
-        f"  {f}/{b}/{d}" for f, b, d in missing
+    assert not missing, (
+        f"Missing {len(missing)} entries in _FAMILY_TOLERANCE_TABLE:\n"
+        + "\n".join(f"  {f}/{b}/{d}" for f, b, d in missing)
     )
 
 
@@ -145,10 +144,9 @@ def test_gen_scaling_backends_have_bfloat16():
             key = (family, backend, "bfloat16")
             if key not in _FAMILY_TOLERANCE_TABLE:
                 missing.append(key)
-    assert (
-        not missing
-    ), "Missing bfloat16 entries for gen-scaling backends:\n" + "\n".join(
-        f"  {f}/{b}/{d}" for f, b, d in missing
+    assert not missing, (
+        "Missing bfloat16 entries for gen-scaling backends:\n"
+        + "\n".join(f"  {f}/{b}/{d}" for f, b, d in missing)
     )
 
 
