@@ -1,0 +1,363 @@
+{
+  "backend_a": "cuda",
+  "backend_b": "cpu",
+  "steps": 50,
+  "dtype": "float32",
+  "autoregressive": true,
+  "first_divergence_step": 24,
+  "max_amplification": 1.5211267605633803,
+  "final_passed": false,
+  "step_results": [
+    {
+      "step": 1,
+      "max_diff": 6.771087646484375e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.0
+    },
+    {
+      "step": 2,
+      "max_diff": 4.267692565917969e-05,
+      "cosine_sim": 1.0000008344650269,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6302816901408451
+    },
+    {
+      "step": 3,
+      "max_diff": 4.00543212890625e-05,
+      "cosine_sim": 1.0000026226043701,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5915492957746479
+    },
+    {
+      "step": 4,
+      "max_diff": 1.8596649169921875e-05,
+      "cosine_sim": 0.9999991059303284,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.2746478873239437
+    },
+    {
+      "step": 5,
+      "max_diff": 2.956390380859375e-05,
+      "cosine_sim": 1.0000011920928955,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.43661971830985913
+    },
+    {
+      "step": 6,
+      "max_diff": 7.230043411254883e-05,
+      "cosine_sim": 1.0000011920928955,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.067781690140845
+    },
+    {
+      "step": 7,
+      "max_diff": 4.38690185546875e-05,
+      "cosine_sim": 1.0000025033950806,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.647887323943662
+    },
+    {
+      "step": 8,
+      "max_diff": 7.426738739013672e-05,
+      "cosine_sim": 1.0000004768371582,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.096830985915493
+    },
+    {
+      "step": 9,
+      "max_diff": 2.765655517578125e-05,
+      "cosine_sim": 1.0000015497207642,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.4084507042253521
+    },
+    {
+      "step": 10,
+      "max_diff": 3.4332275390625e-05,
+      "cosine_sim": 1.0000044107437134,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5070422535211268
+    },
+    {
+      "step": 11,
+      "max_diff": 2.956390380859375e-05,
+      "cosine_sim": 1.0000025033950806,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.43661971830985913
+    },
+    {
+      "step": 12,
+      "max_diff": 8.77678394317627e-05,
+      "cosine_sim": 1.0000004768371582,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.2962147887323943
+    },
+    {
+      "step": 13,
+      "max_diff": 3.790855407714844e-05,
+      "cosine_sim": 1.000002384185791,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5598591549295775
+    },
+    {
+      "step": 14,
+      "max_diff": 6.723403930664062e-05,
+      "cosine_sim": 1.000002145767212,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.9929577464788732
+    },
+    {
+      "step": 15,
+      "max_diff": 4.1484832763671875e-05,
+      "cosine_sim": 1.0000016689300537,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6126760563380281
+    },
+    {
+      "step": 16,
+      "max_diff": 6.961822509765625e-05,
+      "cosine_sim": 1.0000007152557373,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.028169014084507
+    },
+    {
+      "step": 17,
+      "max_diff": 5.9604644775390625e-05,
+      "cosine_sim": 0.9999994039535522,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.8802816901408451
+    },
+    {
+      "step": 18,
+      "max_diff": 4.172325134277344e-05,
+      "cosine_sim": 1.000000238418579,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6161971830985915
+    },
+    {
+      "step": 19,
+      "max_diff": 4.9591064453125e-05,
+      "cosine_sim": 1.0,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.7323943661971831
+    },
+    {
+      "step": 20,
+      "max_diff": 4.7206878662109375e-05,
+      "cosine_sim": 1.0000001192092896,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6971830985915493
+    },
+    {
+      "step": 21,
+      "max_diff": 6.961822509765625e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 1.028169014084507
+    },
+    {
+      "step": 22,
+      "max_diff": 3.337860107421875e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.49295774647887325
+    },
+    {
+      "step": 23,
+      "max_diff": 2.8848648071289062e-05,
+      "cosine_sim": 0.9999996423721313,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.426056338028169
+    },
+    {
+      "step": 24,
+      "max_diff": 0.000102996826171875,
+      "cosine_sim": 0.9999985694885254,
+      "within_tolerance": false,
+      "cumulative_amplification": 1.5211267605633803
+    },
+    {
+      "step": 25,
+      "max_diff": 2.47955322265625e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.36619718309859156
+    },
+    {
+      "step": 26,
+      "max_diff": 4.100799560546875e-05,
+      "cosine_sim": 1.000003695487976,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6056338028169014
+    },
+    {
+      "step": 27,
+      "max_diff": 3.4332275390625e-05,
+      "cosine_sim": 1.0000040531158447,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5070422535211268
+    },
+    {
+      "step": 28,
+      "max_diff": 5.221366882324219e-05,
+      "cosine_sim": 1.000001072883606,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.7711267605633803
+    },
+    {
+      "step": 29,
+      "max_diff": 2.5033950805664062e-05,
+      "cosine_sim": 1.0000020265579224,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.36971830985915494
+    },
+    {
+      "step": 30,
+      "max_diff": 3.528594970703125e-05,
+      "cosine_sim": 1.000004768371582,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5211267605633803
+    },
+    {
+      "step": 31,
+      "max_diff": 4.00543212890625e-05,
+      "cosine_sim": 1.0000009536743164,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5915492957746479
+    },
+    {
+      "step": 32,
+      "max_diff": 6.151199340820312e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.9084507042253521
+    },
+    {
+      "step": 33,
+      "max_diff": 3.528594970703125e-05,
+      "cosine_sim": 1.0000007152557373,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5211267605633803
+    },
+    {
+      "step": 34,
+      "max_diff": 3.4809112548828125e-05,
+      "cosine_sim": 0.9999997615814209,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5140845070422535
+    },
+    {
+      "step": 35,
+      "max_diff": 5.054473876953125e-05,
+      "cosine_sim": 1.0000033378601074,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.7464788732394366
+    },
+    {
+      "step": 36,
+      "max_diff": 4.6253204345703125e-05,
+      "cosine_sim": 1.0000003576278687,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6830985915492958
+    },
+    {
+      "step": 37,
+      "max_diff": 2.47955322265625e-05,
+      "cosine_sim": 1.0000014305114746,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.36619718309859156
+    },
+    {
+      "step": 38,
+      "max_diff": 4.7206878662109375e-05,
+      "cosine_sim": 1.0000007152557373,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6971830985915493
+    },
+    {
+      "step": 39,
+      "max_diff": 3.1948089599609375e-05,
+      "cosine_sim": 0.9999999403953552,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.47183098591549294
+    },
+    {
+      "step": 40,
+      "max_diff": 3.4809112548828125e-05,
+      "cosine_sim": 1.000003457069397,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.5140845070422535
+    },
+    {
+      "step": 41,
+      "max_diff": 2.86102294921875e-05,
+      "cosine_sim": 1.0000029802322388,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.4225352112676056
+    },
+    {
+      "step": 42,
+      "max_diff": 5.3882598876953125e-05,
+      "cosine_sim": 1.0000029802322388,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.795774647887324
+    },
+    {
+      "step": 43,
+      "max_diff": 2.574920654296875e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.38028169014084506
+    },
+    {
+      "step": 44,
+      "max_diff": 3.1948089599609375e-05,
+      "cosine_sim": 1.0000003576278687,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.47183098591549294
+    },
+    {
+      "step": 45,
+      "max_diff": 4.4345855712890625e-05,
+      "cosine_sim": 1.0000019073486328,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.6549295774647887
+    },
+    {
+      "step": 46,
+      "max_diff": 2.86102294921875e-05,
+      "cosine_sim": 1.000008225440979,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.4225352112676056
+    },
+    {
+      "step": 47,
+      "max_diff": 2.765655517578125e-05,
+      "cosine_sim": 1.0000022649765015,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.4084507042253521
+    },
+    {
+      "step": 48,
+      "max_diff": 2.956390380859375e-05,
+      "cosine_sim": 1.000002384185791,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.43661971830985913
+    },
+    {
+      "step": 49,
+      "max_diff": 3.147125244140625e-05,
+      "cosine_sim": 1.0000004768371582,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.4647887323943662
+    },
+    {
+      "step": 50,
+      "max_diff": 2.09808349609375e-05,
+      "cosine_sim": 1.0000020265579224,
+      "within_tolerance": true,
+      "cumulative_amplification": 0.30985915492957744
+    }
+  ],
+  "model": "Qwen/Qwen3-0.6B"
+}
