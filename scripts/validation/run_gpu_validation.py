@@ -33,7 +33,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--backend",
         default="cuda",
-        choices=["cuda", "rocm", "mps", "cpu"],
+        choices=["cuda", "rocm", "mps", "trainium", "cpu"],
         help="Hardware backend to validate (default: cuda)",
     )
     parser.add_argument(
@@ -68,6 +68,7 @@ def _get_thresholds(backend: str, atol: float | None, cosine_threshold: float | 
         "cuda": (1e-4, 0.9999),
         "rocm": (1e-3, 0.999),
         "mps": (1e-4, 0.9999),
+        "trainium": (1e-3, 0.999),
         "cpu": (0.0, 1.0),
     }
     default_atol, default_cos = _DEFAULTS.get(backend, (1e-3, 0.999))
@@ -131,11 +132,19 @@ def main() -> int:
             return 2
         device = torch.device("mps")
         device_name = "Apple Silicon MPS"
+    elif args.backend == "trainium":
+        try:
+            import torch_neuronx  # noqa: F401
+        except ImportError:
+            print("ERROR: torch_neuronx not installed. Activate the Neuron venv first.", file=sys.stderr)
+            return 2
+        device = torch.device("xla")
+        device_name = "AWS Trainium (NeuronCore)"
     else:
         device = torch.device("cpu")
         device_name = "CPU"
 
-    print(f"=== TorchBridge GPU Validation ===")
+    print("=== TorchBridge GPU Validation ===")
     print(f"Backend: {args.backend} ({device_name})")
     print(f"Model:   {args.model}")
     print(f"Thresholds: atol={atol:.1e}, cosine_sim>={cosine_threshold}")
