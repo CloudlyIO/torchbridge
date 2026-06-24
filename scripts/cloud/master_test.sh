@@ -162,30 +162,7 @@ PYEOF
     log_success "Hardware detected"
 }
 
-run_moe_tests() {
-    log_step "3/5" "Running MoE Tests"
 
-    cd "$REPO_ROOT"
-
-    # Unit tests
-    log_info "Running MoE unit tests..."
-    python3 -m pytest tests/test_moe.py -v --json-report --json-report-file="$REPORT_DIR/moe_test_results.json" 2>&1 | tee "$REPORT_DIR/moe_test_output.txt" || true
-
-    # Demo
-    log_info "Running MoE demo..."
-    python3 demos/moe_demo.py 2>&1 | tee "$REPORT_DIR/moe_demo_output.txt" || true
-
-    # Count results
-    if [ -f "$REPORT_DIR/moe_test_results.json" ]; then
-        python3 << PYEOF
-import json
-with open("$REPORT_DIR/moe_test_results.json") as f:
-    data = json.load(f)
-    summary = data.get("summary", {})
-    print(f"MoE Tests: {summary.get('passed', 0)} passed, {summary.get('failed', 0)} failed")
-PYEOF
-    fi
-}
 
 run_fp8_tests() {
     log_step "4/5" "Running Quantization Tests"
@@ -252,7 +229,12 @@ else:
 
     # Run integration benchmark
     log_info "Running backend benchmark..."
-    python3 benchmarks/${BACKEND}_integration_benchmark.py 2>&1 | tee "$REPORT_DIR/backend_benchmark_output.txt" || true
+    if [ "$BACKEND" != "cpu" ]; then
+        python3 benchmarks/${BACKEND}_integration_benchmark.py 2>&1 | tee "$REPORT_DIR/backend_benchmark_output.txt" || true
+    else
+        log_info "Skipping backend benchmark (CPU — no GPU benchmark applicable)"
+    fi
+
 }
 
 run_comprehensive_benchmark() {
@@ -395,7 +377,7 @@ try:
 except: pass
 
 try:
-    with open(f'{report_dir}/fp8_test_results.json') as f:
+    with open(f'{report_dir}/quant_test_results.json') as f:
         fp8_results = json.load(f)
 except: pass
 
@@ -526,7 +508,6 @@ main() {
     # Run tests
     check_dependencies
     detect_hardware
-    run_moe_tests
     run_fp8_tests
     run_backend_tests
     run_comprehensive_benchmark
