@@ -8,6 +8,14 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.96] - 2026-06-24 - fix: wire Trainium backend to tb-validate and run_gpu_validation.py
+
+### Fixed
+- **`src/torchbridge/cli/validate.py`**: Both `_resolve_device` copies (used by `--compare` and `--trace`) now handle `"trainium"` and `"neuron"` as backend names. Returns `torch.device("xla")` when `torch_neuronx` is importable; returns `None` with a clean "not available" error otherwise. Previously returned `None` unconditionally, making `tb-validate --compare trainium cpu` fail at device resolution before any backend code ran.
+- **`scripts/validation/run_gpu_validation.py`**: Added `"trainium"` to argparse `choices`; added Trainium device resolution branch in `main()` (imports `torch_neuronx`, sets `device = torch.device("xla")`); added `"trainium": (1e-3, 0.999)` fallback thresholds to `_DEFAULTS`. Also fixed pre-existing ruff F541 (bare f-string on print line).
+
+---
+
 ## [0.5.95] - 2026-04-20 - fix: CI benchmark path + pytest_capture.sh Python interpreter
 
 ### Fixed

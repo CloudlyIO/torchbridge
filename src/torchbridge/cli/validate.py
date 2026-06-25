@@ -380,6 +380,13 @@ Examples:
                 ):
                     return None
                 return torch.device("mps")
+            if name in ("trainium", "neuron"):
+                try:
+                    import torch_neuronx  # noqa: F401
+
+                    return torch.device("xla")
+                except ImportError:
+                    return None
             if name == "cpu":
                 return torch.device("cpu")
             return None  # unknown
@@ -691,6 +698,13 @@ Examples:
                 ):
                     return None
                 return torch.device("mps")
+            if name in ("trainium", "neuron"):
+                try:
+                    import torch_neuronx  # noqa: F401
+
+                    return torch.device("xla")
+                except ImportError:
+                    return None
             if name == "cpu":
                 return torch.device("cpu")
             return None
