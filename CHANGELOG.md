@@ -8,6 +8,13 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.97] - 2026-06-27 - fix: MultiStepTracer NaN + index-out-of-range on XLA/Trainium autoregressive trace
+
+### Fixed
+- **`src/torchbridge/testing/trace_validator.py`**: XLA tensors (Trainium/Neuron with `PJRT_DEVICE=CPU`) produced NaN logits on step 1 and "index out of range" on step 2 of autoregressive traces. Root cause: `model.to(torch.device("xla"))` caused LLM ops (RoPE, GQA, SiLU) to run through XLA's CPU-backed path which lacks full parity with native PyTorch CPU, and XLA→CPU tensor transfer (`.cpu()`) on the greedy next-token produced a corrupt integer > vocab_size. Fix: detect `device.type == "xla"` and run both model copies on CPU — correct because `PJRT_DEVICE=CPU` routes all XLA ops to CPU anyway.
+
+---
+
 ## [0.5.96] - 2026-06-24 - fix: wire Trainium backend to tb-validate and run_gpu_validation.py
 
 ### Fixed
