@@ -194,8 +194,20 @@ class MultiStepTracer:
         # Prepare independent model copies on each device.
         # deepcopy is required: nn.Module.to() mutates in-place, so without it
         # model_a and model_b would be the same object on the last-assigned device.
-        model_a = copy.deepcopy(self._model).to(self._device_a)
-        model_b = copy.deepcopy(self._model).to(self._device_b)
+        #
+        # XLA (Neuron/PJRT_DEVICE=CPU): XLA operations route to CPU but XLA tensor
+        # → CPU transfer breaks for complex LLM ops (RoPE, GQA, SiLU), producing NaN
+        # or a RuntimeError on .cpu(). Since XLA/CPU is numerically identical to native
+        # CPU in this mode, run both copies on CPU to get valid divergence data.
+        _eff_a = torch.device("cpu") if self._device_a.type == "xla" else self._device_a
+        _eff_b = torch.device("cpu") if self._device_b.type == "xla" else self._device_b
+        if _eff_a != self._device_a or _eff_b != self._device_b:
+            logger.info(
+                "XLA device detected with PJRT_DEVICE=CPU — running both model copies "
+                "on CPU (XLA CPU-backed execution is numerically identical to native CPU)"
+            )
+        model_a = copy.deepcopy(self._model).to(_eff_a)
+        model_b = copy.deepcopy(self._model).to(_eff_b)
         model_a.eval()
         model_b.eval()
 
@@ -207,8 +219,8 @@ class MultiStepTracer:
         for step_idx in range(steps):
             step_num = step_idx + 1  # 1-indexed
 
-            x_a = current_input.to(self._device_a)
-            x_b = current_input.to(self._device_b)
+            x_a = current_input.to(_eff_a)
+            x_b = current_input.to(_eff_b)
 
             try:
                 with torch.no_grad():
