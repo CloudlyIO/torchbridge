@@ -51,9 +51,7 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Requires Dependency graph + GitHub Advanced Security — available on public repos.
-    # continue-on-error until this repo is made public; remove this line after that.
-    continue-on-error: true
+    # Requires GitHub Advanced Security (free for public repos).
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
