@@ -7,6 +7,27 @@ This guide follows the contributor journey from first install to merged PR.
 
 ---
 
+## Quick Dev Setup
+
+If you just want to run the tests and start hacking — three commands:
+
+```bash
+git clone https://github.com/CloudlyIO/torchbridge.git && cd torchbridge
+python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
+pytest tests/ -q -m "not gpu and not slow"   # ~2 min, all green
+```
+
+Lint and type check:
+
+```bash
+ruff check src tests   # must be clean
+mypy src               # must be clean
+```
+
+That's it. The rest of this guide covers the full contributor journey.
+
+---
+
 ## The Contributor Journey
 
 ```
@@ -35,7 +56,7 @@ You've heard about TorchBridge and want to understand what it does.
 **Recommended path:**
 
 1. Read the [README](README.md) — especially the identity statement and the CLI overview
-2. Browse [docs.torchbridge.ml](https://docs.torchbridge.ml) for architecture context
+2. Browse the [docs/](docs/) directory for architecture context and guides
 3. Scan the [public ROADMAP](docs/ROADMAP.md) to see what's been built and what's next
 
 **No code needed here.** If something is confusing or missing, open a
@@ -263,5 +284,5 @@ evidence that the fix is real.
 ## Getting Help
 
 - **Discussions** — [github.com/CloudlyIO/torchbridge/discussions](https://github.com/CloudlyIO/torchbridge/discussions)
-- **Documentation** — [docs.torchbridge.ml](https://docs.torchbridge.ml)
+- **Documentation** — [docs/](docs/) (online docs at docs.torchbridge.ml coming soon)
 - **Stack Overflow** — [stackoverflow.com/questions/tagged/torchbridge](https://stackoverflow.com/questions/tagged/torchbridge)

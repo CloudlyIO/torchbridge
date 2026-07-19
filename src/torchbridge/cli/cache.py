@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Cache command for TorchBridge CLI.
 

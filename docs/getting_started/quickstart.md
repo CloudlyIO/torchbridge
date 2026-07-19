@@ -19,7 +19,7 @@ tb-doctor
 ==================================================
  Python Version:        Python 3.11.0  ( Compatible)
  PyTorch Version:       PyTorch 2.11.0 ( Compatible)
- TorchBridge Version:   0.5.95         ( Available)
+ TorchBridge Version:   0.5.97         ( Available)
  CUDA GPU:              NVIDIA A10G    ( Available — 24 GB)
  CPU Cores:             8 cores        ( Available)
 
