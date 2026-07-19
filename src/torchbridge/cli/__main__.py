@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Main entry point for the TorchBridge CLI when run as a module.
 

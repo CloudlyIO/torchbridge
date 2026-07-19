@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Backend Factory for Automatic Hardware Selection
 

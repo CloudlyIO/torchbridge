@@ -5,7 +5,7 @@ This file lists the maintainers of the TorchBridge project.
 | GitHub | Role |
 |--------|------|
 | [@shahirahman](https://github.com/shahirahman) | Lead maintainer |
-| [@nazif-dev](https://github.com/nazif-dev) | Maintainer |
+| [@ishtiak](https://github.com/ishtiak) | Maintainer |
 | [@pangkajpaulcl](https://github.com/pangkajpaulcl) | Maintainer |
 | [@mahdi-cloudly](https://github.com/mahdi-cloudly) | Maintainer |
 

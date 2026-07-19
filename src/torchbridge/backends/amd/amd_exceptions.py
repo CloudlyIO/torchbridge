@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Custom exceptions for AMD ROCm backend.
 

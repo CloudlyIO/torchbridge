@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Neuron Compiler for Trainium Optimization
 

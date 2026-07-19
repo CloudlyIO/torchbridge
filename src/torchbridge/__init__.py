@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 TorchBridge — Cross-backend validation and configuration intelligence for PyTorch.
 

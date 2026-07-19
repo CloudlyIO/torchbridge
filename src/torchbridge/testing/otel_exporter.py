@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 OpenTelemetry span exporter for TorchBridge validation results.
 
