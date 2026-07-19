@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Claim Registry — Concrete Benchmarks for TorchBridge Performance Claims
 

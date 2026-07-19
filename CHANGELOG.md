@@ -8,6 +8,21 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.98] - 2026-07-19 - chore: open-source launch readiness
+
+### Changed
+- **`README.md`**: Updated stale version references (`0.5.95` → `0.5.97`, `v0.5.93 first public release` → `v0.5.97`, validation table caption updated to current version)
+- **`docs/getting_started/quickstart.md`**: Updated `tb-doctor` example output to show v0.5.97
+- **`CONTRIBUTING.md`**: Added "Quick Dev Setup" block at top (three-command clone-install-test cheatsheet); replaced dead `docs.torchbridge.ml` links with in-repo `docs/` path; kept online docs note as "coming soon"
+- **`MAINTAINERS.md`** + **`.github/CODEOWNERS`**: Replaced `nazif-dev` with `ishtiak` as maintainer
+- **`src/**/*.py`** (107 files): Added `# SPDX-License-Identifier: Apache-2.0` header to all source files
+- **GitHub issues #92–#96**: Created 5 open `good first issue` entries covering Blackwell, CDNA4, RDNA4, TPU v7 Ironwood, and Python 3.13 compatibility
+
+### Note
+Branch protection on `main` (require 1 review + CI status checks) will be enabled immediately after the repo is made public — the GitHub API blocks this on private repos without GitHub Pro.
+
+---
+
 ## [0.5.97] - 2026-06-27 - fix: MultiStepTracer NaN + index-out-of-range on XLA/Trainium autoregressive trace
 
 ### Fixed

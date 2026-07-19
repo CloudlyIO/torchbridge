@@ -19,7 +19,7 @@ tb-doctor
 ==================================================
  Python Version:        Python 3.11.0  ( Compatible)
  PyTorch Version:       PyTorch 2.11.0 ( Compatible)
- TorchBridge Version:   0.5.95         ( Available)
+ TorchBridge Version:   0.5.97         ( Available)
  CUDA GPU:              Not found      ( Apple Silicon MPS provides GPU acceleration)
  Apple Silicon GPU:     Available      ( GPU acceleration enabled)
  CPU Cores:             11 cores       ( Available)
@@ -117,7 +117,7 @@ See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
 
 ## Cloud Hardware Validation
 
-Cross-backend numerical consistency validated on 6/8 platforms using Qwen3-0.6B (v0.5.80, re-validated 2026-03-30):
+Cross-backend numerical consistency validated on 6/8 platforms using Qwen3-0.6B (v0.5.97; most recent per-platform runs shown):
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
 |----------|----------|----------|------------|---------|--------|
@@ -198,7 +198,7 @@ The empirical tolerance database (`testing/tolerance_db.py`) is only as strong a
 
 ## Versioning
 
-v0.5.93 is the first public release. The v0.5.x series represents an extended private development and validation phase: building the backend abstraction layer, validating numerical consistency on real GPU hardware across 6 platforms, and reaching a quality bar suitable for open source. The version number reflects the maturity of the implementation, not the release count.
+v0.5.97 is the first public release. The v0.5.x series represents an extended private development and validation phase: building the backend abstraction layer, validating numerical consistency on real GPU hardware across 6 platforms, and reaching a quality bar suitable for open source. The version number reflects the maturity of the implementation, not the release count.
 
 ## License
 

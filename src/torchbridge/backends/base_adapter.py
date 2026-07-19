@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Base Adapter for All Hardware Backends
 
