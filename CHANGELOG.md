@@ -8,6 +8,22 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.99] - 2026-07-20 - feat: 2026 MoE model family support
+
+### Added
+- **ToleranceDB**: 8 new model families — `qwen3_5`, `gemma4`, `nemotron3_nano`, `deepseek_v4`, `nemotron3_ultra`, `tencent_hy3`, `minimax_m3`, `glm_5_2` — 232 new entries (13 families × 29 backend/dtype combos = 377 total, no duplicates). Derived from active-parameter accumulation scaling with MoE routing bump. Source label `"derived"` for all 8; `"measured"` pending cloud validation via community issues #92–#95.
+- **AttentionKernelType**: 4 new attention variants for 2026 MoE architectures: `DEEPSEEK_CSA_HCA` (DeepSeek V4 Combined Sliding-window + Hybrid Chunk Attention), `MINIMAX_MSA` (MiniMax M3 Lightning/Sparse Attention), `GLM_INDEX_SHARE` (GLM 5.2 IndexShare + sparse attention hybrid), `MAMBA2_HYBRID` (Nemotron Ultra Mamba-2 + Transformer MoE). Total kernel types: 7 → 11.
+- **Attention dispatch matrix**: New kernel types wired into NVIDIA Ada/Hopper/Blackwell entries; `DEEPSEEK_CSA_HCA` added to AMD CDNA3/CDNA4. `MAMBA2_HYBRID` intentionally absent from TPU/Trainium tables (state-space kernels not supported on XLA).
+- **`tb-validate --model-family`**: Help text updated to list all 13 model families.
+- **`run_gpu_validation.py`**: Added `--model-family` flag with all 13 family choices; added `trainium2` to `--backend` choices.
+- **`HARDWARE_SUPPORT.md`**: Model Family Coverage table extended with 8 new MoE families.
+
+### Changed
+- `tests/unit/test_tolerance_db_coverage.py`: `_MIN_ENTRY_COUNT` 145 → 377; test name updated to `test_entry_count_at_least_377`.
+- `tests/unit/test_attention_kernel_types.py`: expected set updated to 11 types; count assertion 7 → 11.
+
+---
+
 ## [0.5.98] - 2026-07-19 - chore: open-source launch readiness
 
 ### Changed

@@ -30,23 +30,39 @@ _NVIDIA_KERNELS: dict[NVIDIAArchitecture, list[AttentionKernelType]] = {
         AttentionKernelType.FLEX_ATTENTION,
         AttentionKernelType.FLASH_ATTENTION_3,
         AttentionKernelType.FLASH_ATTENTION_2,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
+        AttentionKernelType.MAMBA2_HYBRID,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     NVIDIAArchitecture.BLACKWELL_CONSUMER: [
         AttentionKernelType.FLEX_ATTENTION,
         AttentionKernelType.FLASH_ATTENTION_3,
         AttentionKernelType.FLASH_ATTENTION_2,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
+        AttentionKernelType.MAMBA2_HYBRID,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     NVIDIAArchitecture.HOPPER: [
         AttentionKernelType.FLEX_ATTENTION,
         AttentionKernelType.FLASH_ATTENTION_3,
         AttentionKernelType.FLASH_ATTENTION_2,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
+        AttentionKernelType.MAMBA2_HYBRID,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     NVIDIAArchitecture.ADA: [
         AttentionKernelType.FLASH_ATTENTION_2,
         AttentionKernelType.FLEX_ATTENTION,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
+        AttentionKernelType.MAMBA2_HYBRID,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     NVIDIAArchitecture.AMPERE: [
@@ -70,10 +86,12 @@ _NVIDIA_KERNELS: dict[NVIDIAArchitecture, list[AttentionKernelType]] = {
 _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.CDNA4: [
         AttentionKernelType.FLASH_ATTENTION_CK,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA3: [
         AttentionKernelType.FLASH_ATTENTION_CK,
+        AttentionKernelType.DEEPSEEK_CSA_HCA,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA2: [

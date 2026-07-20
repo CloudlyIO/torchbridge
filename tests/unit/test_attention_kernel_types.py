@@ -17,12 +17,16 @@ class TestAttentionKernelType:
             "NEURONX_SDPA",
             "PALLAS_ATTENTION",
             "PYTORCH_SDPA",
+            "DEEPSEEK_CSA_HCA",
+            "MINIMAX_MSA",
+            "GLM_INDEX_SHARE",
+            "MAMBA2_HYBRID",
         }
         actual = {member.name for member in AttentionKernelType}
         assert actual == expected
 
     def test_kernel_type_count(self):
-        assert len(AttentionKernelType) == 7
+        assert len(AttentionKernelType) == 11
 
     def test_string_values(self):
         assert AttentionKernelType.FLEX_ATTENTION.value == "flex_attention"

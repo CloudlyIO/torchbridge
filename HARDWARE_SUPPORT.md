@@ -39,6 +39,14 @@ All backends listed above cover the following model families:
 | `decoder-large` | > 20 B | Llama-3.1-70B, Qwen3-72B |
 | `encoder` | any | BERT, RoBERTa, DeBERTa |
 | `vision-language` | any | CLIP, LLaVA, InternVL |
+| `qwen3_5` | 27 B dense | Qwen3.5-27B, Qwen3.6-27B |
+| `gemma4` | 26 B total / 4 B active | Gemma 4 26B-A4B |
+| `nemotron3_nano` | 30 B total / 3 B active | Nemotron 3 Nano 30B-A3B |
+| `deepseek_v4` | 284 B – 1.6 T total / 13 – 49 B active | DeepSeek V4 Flash, DeepSeek V4 Pro |
+| `nemotron3_ultra` | 550 B total / 55 B active | Nemotron Ultra 550B |
+| `tencent_hy3` | 295 B total / 21 B active | Tencent Hunyuan 3 |
+| `minimax_m3` | ~428 B total / 23 B active | MiniMax M3 |
+| `glm_5_2` | 744 B total / 40 B active | GLM 5.2 |
 
 ## Adding a New Row
 
