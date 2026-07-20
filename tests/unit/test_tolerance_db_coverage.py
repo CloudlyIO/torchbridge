@@ -36,7 +36,7 @@ NO_FLOAT16_DTYPES = ("float32", "bfloat16")
 
 # Minimum total entries guard — update this number if you intentionally add or
 # remove entries, but never let it decrease without a corresponding PR review.
-_MIN_ENTRY_COUNT = 145
+_MIN_ENTRY_COUNT = 377
 
 
 # ---------------------------------------------------------------------------
@@ -84,24 +84,21 @@ def test_measured_entries_exist_for_core_backends():
 # ---------------------------------------------------------------------------
 
 
-def test_entry_count_at_least_145():
-    """_FAMILY_TOLERANCE_TABLE must contain exactly 145 entries.
+def test_entry_count_at_least_377():
+    """_FAMILY_TOLERANCE_TABLE must contain at least 377 entries.
 
-    Breakdown:
-      Base (80):
-        5 families × (4 non-XLA/non-Trainium backends × 3 dtypes
-                     + 1 XLA × 2 dtypes
-                     + 1 Trainium × 2 dtypes)
-        = 5 × (12 + 2 + 2) = 80
+    Breakdown (v0.5.99):
+      Per family (29 entries each):
+        Core backends: cuda/rocm/mps/cpu × 3 dtypes = 12
+        XLA: float32 + bfloat16 = 2
+        Trainium: float32 + bfloat16 = 2
+        Gen-scaling: cuda_blackwell (3) + cuda_blackwell_consumer (3)
+                     + rocm_cdna4 (3) + xla_v7 (2) + trainium_trn3 (2) = 13
+        Subtotal per family: 29
 
-      New derived hardware (65):
-        cuda_blackwell:          5 families × 3 dtypes = 15
-        cuda_blackwell_consumer: 5 families × 3 dtypes = 15
-        rocm_cdna4:              5 families × 3 dtypes = 15
-        xla_v7:                  5 families × 2 dtypes = 10
-        trainium_trn3:           5 families × 2 dtypes = 10
-
-      Total: 80 + 65 = 145
+      5 original families × 29 = 145
+      8 new MoE families (v0.5.99) × 29 = 232
+      Total: 377
     """
     count = len(_FAMILY_TOLERANCE_TABLE)
     assert count >= _MIN_ENTRY_COUNT, (

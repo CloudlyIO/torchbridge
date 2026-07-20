@@ -21,6 +21,10 @@ class AttentionKernelType(Enum):
     - NEURONX_SDPA: AWS torch-neuronx SDPA
     - PALLAS_ATTENTION: Google JAX/Pallas for TPU
     - PYTORCH_SDPA: PyTorch F.scaled_dot_product_attention (always available)
+    - DEEPSEEK_CSA_HCA: DeepSeek V4 Combined Sliding-window + Hybrid Chunk Attention (sm_89+, gfx942+)
+    - MINIMAX_MSA: MiniMax M3 Lightning/Sparse Attention (sm_89+)
+    - GLM_INDEX_SHARE: GLM 5.2 IndexShare expert-routing + sparse attention hybrid (sm_89+)
+    - MAMBA2_HYBRID: Nemotron Ultra Mamba-2 + Transformer MoE (sm_89+; NOT XLA/Trainium)
     """
 
     FLEX_ATTENTION = "flex_attention"
@@ -30,3 +34,12 @@ class AttentionKernelType(Enum):
     NEURONX_SDPA = "neuronx_sdpa"
     PALLAS_ATTENTION = "pallas_attention"
     PYTORCH_SDPA = "pytorch_sdpa"
+    # ── 2026 MoE attention variants (v0.5.99) ────────────────────────────────
+    # DEEPSEEK_CSA_HCA: DeepSeek V4 Combined Sliding-window + Hybrid Chunk Attention
+    # MINIMAX_MSA:      MiniMax M3 Lightning/Sparse Attention
+    # GLM_INDEX_SHARE:  GLM 5.2 IndexShare expert-routing + sparse attention hybrid
+    # MAMBA2_HYBRID:    Nemotron 3 Ultra Mamba-2 + Transformer MoE; NOT XLA-compatible
+    DEEPSEEK_CSA_HCA = "deepseek_csa_hca"
+    MINIMAX_MSA = "minimax_msa"
+    GLM_INDEX_SHARE = "glm_index_share"
+    MAMBA2_HYBRID = "mamba2_hybrid"
