@@ -33,13 +33,24 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--backend",
         default="cuda",
-        choices=["cuda", "rocm", "mps", "trainium", "cpu"],
+        choices=["cuda", "rocm", "mps", "trainium", "trainium2", "cpu"],
         help="Hardware backend to validate (default: cuda)",
     )
     parser.add_argument(
         "--model",
         default="Qwen/Qwen3-0.6B",
         help="HuggingFace model ID to validate (default: Qwen/Qwen3-0.6B)",
+    )
+    parser.add_argument(
+        "--model-family",
+        default=None,
+        dest="model_family",
+        choices=[
+            "decoder-small", "decoder-medium", "decoder-large", "encoder",
+            "vision-language", "qwen3_5", "gemma4", "nemotron3_nano",
+            "deepseek_v4", "nemotron3_ultra", "tencent_hy3", "minimax_m3", "glm_5_2",
+        ],
+        help="Model family for ToleranceDB lookup (overrides auto-detection from --model)",
     )
     parser.add_argument(
         "--output-json",
