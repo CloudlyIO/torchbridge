@@ -135,6 +135,8 @@ class TestFallbackChain:
         )
         assert chain == [
             AttentionKernelType.DEEPSEEK_CSA_HCA,
+            AttentionKernelType.MINIMAX_MSA,
+            AttentionKernelType.GLM_INDEX_SHARE,
             AttentionKernelType.PYTORCH_SDPA,
         ]
 
