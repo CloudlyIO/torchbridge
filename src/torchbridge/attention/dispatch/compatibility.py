@@ -100,6 +100,9 @@ _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.CDNA: [
         AttentionKernelType.PYTORCH_SDPA,
     ],
+    AMDArchitecture.RDNA4: [
+        AttentionKernelType.PYTORCH_SDPA,
+    ],
     AMDArchitecture.RDNA3: [
         AttentionKernelType.PYTORCH_SDPA,
     ],

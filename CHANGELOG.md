@@ -8,6 +8,27 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [0.5.100] - 2026-07-20 - feat: 2026 silicon coverage
+
+### Added
+- **`AMDArchitecture`**: New enum entry `RDNA4 = "rdna4"` (RX 9000 series, gfx1201).
+- **`NVIDIAArchitecture`**: New placeholder entries `BLACKWELL_ULTRA = "blackwell_ultra"` (B300, sm_103, H2 2026) and `RUBIN = "rubin"` (R200/VR200, sm_rubin, HPC 2026).
+- **`QuantizationFormat`**: New OCP microscaling formats `MXFP8`, `MXFP6`, `MXFP4` (GA on AMD gfx950/CDNA4). All include `FormatSpec` metadata. Cross-vendor incompatibility note: MXFP4 ≠ NVFP4 (different bit layouts — comparing these produces divergence by design).
+- **`precision/compatibility.py`**: CDNA4 upgraded to include MXFP8/MXFP4 as optimal formats; RDNA4 added (INT8/INT4); BLACKWELL_ULTRA and RUBIN placeholder entries; cross-vendor MXFP4↔NVFP4 incompatibility note in module.
+- **`attention/dispatch/compatibility.py`**: RDNA4 entry (`PYTORCH_SDPA` only, following consumer GPU pattern).
+- **`adapters/compatibility.py`**: RDNA4 entry (LORA only, consumer GPU tier); RDNA2/RDNA3 entries explicit (previously implicit None fallback).
+- **`distributed/fsdp.py`**: RDNA4 → FP16 precision (consumer GPU; no bf16 FSDP2 support verified).
+- **`backends/amd/amd_backend.py`**: RDNA4 detection ("RX 9" / "9070" → `AMDArchitecture.RDNA4`).
+- **`cli/advisor.py`**: RDNA4 and BLACKWELL_ULTRA/RUBIN in architecture string→enum maps.
+- **ToleranceDB**: 65 new entries — `rocm_rdna4` (13 families × 3 dtypes = 39) and `trainium2` (13 families × 2 dtypes = 26). Total: 442 entries.
+- **`run_gpu_validation.py`**: `trainium2` in `--backend` choices (already added in v0.5.99).
+- **`HARDWARE_SUPPORT.md`**: RDNA4 row; Trainium2 row; BLACKWELL_ULTRA/RUBIN placeholder rows; CDNA4 MXFP4/MXFP8 note.
+
+### Changed
+- `tests/unit/test_tolerance_db_coverage.py`: `_MIN_ENTRY_COUNT` 377→442; `GEN_SCALING_BACKENDS` extended with `rocm_rdna4` and `trainium2`.
+
+---
+
 ## [0.5.99] - 2026-07-20 - feat: 2026 MoE model family support
 
 ### Added

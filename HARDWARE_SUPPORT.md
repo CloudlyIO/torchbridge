@@ -14,14 +14,18 @@ To add a new row, follow the instructions in [CONTRIBUTING.md](CONTRIBUTING.md).
 | CUDA | Hopper (H100) | ✅ measured | ✅ measured | ✅ measured | cloud v0.5.31 |
 | CUDA | Blackwell DC (B100/B200, sm_100) | ✅ derived | — | ✅ derived | gen scaling v0.5.69 |
 | CUDA | Blackwell Consumer (RTX 5090, cc12.0) | ✅ derived | ✅ derived | ✅ derived | gen scaling v0.5.69 |
+| CUDA | Blackwell Ultra (B300, sm_103) — placeholder | — | — | — | enum only v0.5.100; H2 2026 |
+| CUDA | Rubin (R200/VR200, sm_rubin) — placeholder | — | — | — | enum only v0.5.100; HPC 2026 |
 | ROCm | CDNA3 (MI300X) | ✅ measured | ✅ measured | ✅ measured | cloud v0.5.31 |
-| ROCm | CDNA4 (MI350X, gfx950) | ✅ derived | ✅ derived | ✅ derived | gen scaling v0.5.69 |
+| ROCm | CDNA4 (MI350X, gfx950) — supports MXFP8/MXFP4 | ✅ derived | ✅ derived | ✅ derived | gen scaling v0.5.69 |
+| ROCm | RDNA4 (RX 9070 XT, gfx1201) | ✅ derived | ✅ derived | ✅ derived | silicon v0.5.100 |
 | MPS | Apple Silicon | ✅ measured | ✅ measured | ✅ measured | cloud v0.5.31 |
 | XLA | TPU v5e | ✅ measured | — | ✅ measured | cloud v0.5.31 |
 | XLA | TPU v7 Ironwood | ✅ derived | — | ✅ derived | gen scaling v0.5.69 |
 | CPU | x86 / ARM (reference) | ✅ measured | ✅ measured | ✅ measured | cloud v0.5.31 |
 | Trainium | Trn1 (NeuronCore v2) | ✅ measured | — | ✅ measured | cloud v0.5.31 |
-| Trainium | Trn3 (trainium_trn3, NeuronCore v3) | ✅ derived | — | ✅ derived | gen scaling v0.5.69 |
+| Trainium | Trn2 (trainium2, NeuronCore v3) | ✅ derived | — | ✅ derived | silicon v0.5.100 |
+| Trainium | Trn3 (trainium_trn3, NeuronCore v4) | ✅ derived | — | ✅ derived | gen scaling v0.5.69 |
 
 > **Legend**
 > - ✅ **measured** — worst-case max-diff observed on real hardware during cloud validation (Qwen3-0.6B, v0.5.31).

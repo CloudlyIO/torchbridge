@@ -101,6 +101,8 @@ class NVIDIAArchitecture(Enum):
     HOPPER = "hopper"  # H100/H200
     BLACKWELL_DC = "blackwell_dc"  # B100/B200/GB200 (sm_100, cc 10.0)
     BLACKWELL_CONSUMER = "blackwell_consumer"  # RTX 5090/5080 (sm_120, cc 12.0)
+    BLACKWELL_ULTRA = "blackwell_ultra"  # B300 (sm_103) — placeholder, H2 2026
+    RUBIN = "rubin"  # R200/VR200 (sm_rubin) — placeholder, in production HPC
 
 
 class TPUVersion(Enum):
@@ -141,6 +143,7 @@ class AMDArchitecture(Enum):
     CDNA4 = "cdna4"  # MI350X, MI355X (gfx950)
     RDNA2 = "rdna2"  # Consumer GPUs (RX 6000 series)
     RDNA3 = "rdna3"  # Consumer GPUs (RX 7000 series)
+    RDNA4 = "rdna4"  # Consumer GPUs (RX 9000 series, gfx1201)
 
 
 class TrainiumArchitecture(Enum):

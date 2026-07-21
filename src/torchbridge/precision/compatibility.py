@@ -20,6 +20,14 @@ from torchbridge.core.config import (
 
 from .formats import QuantizationFormat
 
+# Cross-vendor note: MXFP4 (OCP microscaling, AMD gfx950) and NVFP4 (NVIDIA micro-block,
+# Blackwell) use different bit layouts and are NOT numerically interchangeable.
+# Comparing models quantized with MXFP4 vs NVFP4 will show divergence by design.
+_MXFP4_NVFP4_INCOMPATIBILITY_NOTE = (
+    "MXFP4 (OCP/AMD) and NVFP4 (NVIDIA Blackwell) are cross-vendor incompatible "
+    "— different mantissa/exponent bit layouts produce divergent outputs by design."
+)
+
 logger = logging.getLogger(__name__)
 
 # Type alias for architecture values
@@ -31,6 +39,18 @@ Architecture = (
 # Each entry is an ordered list: first element = optimal, rest = fallback chain.
 
 _NVIDIA_FORMATS: dict[NVIDIAArchitecture, list[QuantizationFormat]] = {
+    # BLACKWELL_ULTRA (B300, sm_103) — placeholder; fill when hardware available H2 2026
+    NVIDIAArchitecture.BLACKWELL_ULTRA: [
+        QuantizationFormat.NVFP4,
+        QuantizationFormat.FP8_E4M3,
+        QuantizationFormat.INT8_DYNAMIC,
+    ],
+    # RUBIN (R200/VR200, sm_rubin) — placeholder; fill when hardware available
+    NVIDIAArchitecture.RUBIN: [
+        QuantizationFormat.NVFP4,
+        QuantizationFormat.FP8_E4M3,
+        QuantizationFormat.INT8_DYNAMIC,
+    ],
     NVIDIAArchitecture.BLACKWELL_DC: [
         QuantizationFormat.NVFP4,
         QuantizationFormat.FP8_E4M3,
@@ -72,6 +92,9 @@ _NVIDIA_FORMATS: dict[NVIDIAArchitecture, list[QuantizationFormat]] = {
 
 _AMD_FORMATS: dict[AMDArchitecture, list[QuantizationFormat]] = {
     AMDArchitecture.CDNA4: [
+        # gfx950 supports OCP microscaling (MXFP8/MXFP4); note MXFP4 ≠ NVFP4
+        QuantizationFormat.MXFP8,
+        QuantizationFormat.MXFP4,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT8_DYNAMIC,
     ],
@@ -84,6 +107,11 @@ _AMD_FORMATS: dict[AMDArchitecture, list[QuantizationFormat]] = {
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],
     AMDArchitecture.CDNA: [
+        QuantizationFormat.INT8_DYNAMIC,
+        QuantizationFormat.INT4_WEIGHT_ONLY,
+    ],
+    AMDArchitecture.RDNA4: [
+        # RX 9000 series (gfx1201): consumer GPU; INT8/INT4 safe, no rocBLAS FP8 guarantees
         QuantizationFormat.INT8_DYNAMIC,
         QuantizationFormat.INT4_WEIGHT_ONLY,
     ],
