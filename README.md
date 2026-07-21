@@ -5,7 +5,7 @@ TorchBridge **validates that your model produces correct outputs across PyTorch 
 1. **"Does my model produce correct outputs across backends?"** — Run it on CUDA and ROCm and get max_diff, cosine_sim, per-layer divergence, pass/fail against empirical tolerances.
 2. **"What's the optimal configuration for my model on this hardware?"** — Compatibility matrices that translate `(backend, architecture) → format/kernel/method` with fallback chains.
 
-[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE) [![Tests](https://img.shields.io/badge/tests-2%2C187%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-6%2F8%20validated-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP T4](https://img.shields.io/badge/GCP%20T4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
+[![Version](https://img.shields.io/pypi/v/torchbridge-ml?label=version&color=green)](./CHANGELOG.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE) [![Tests](https://img.shields.io/badge/tests-2%2C224%20passed-blue)](./docs/reference/hardware-matrix.md) [![Cloud GPU](https://img.shields.io/badge/platforms-5%2F8%20validated-brightgreen)](./docs/reference/cloud-validation.md) [![AWS A10G](https://img.shields.io/badge/AWS%20A10G-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![GCP L4](https://img.shields.io/badge/GCP%20L4-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![H100 NVL](https://img.shields.io/badge/H100%20NVL-PASS-brightgreen)](./docs/reference/cloud-validation.md) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org) [![PyTorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)](https://pytorch.org)
 
 ## Quick Start
 
@@ -117,21 +117,20 @@ See [Hardware Matrix](./docs/reference/hardware-matrix.md) for full details.
 
 ## Cloud Hardware Validation
 
-Cross-backend numerical consistency validated on 6/8 platforms using Qwen3-0.6B (v0.5.97; most recent per-platform runs shown):
+Cross-backend numerical consistency validated on 5 platforms using Qwen3-0.6B (v0.5.100, 2026-07-21):
 
 | Platform | Hardware | Max Diff | Cosine Sim | Latency | Status |
 |----------|----------|----------|------------|---------|--------|
-| AWS | NVIDIA A10G (24GB) | 2.10e-05 | 1.000001 | 40.0 ms | PASS |
-| GCP | NVIDIA T4 (16GB) | 2.67e-05 | 1.000001 | 50.7 ms | PASS |
-| RunPod | NVIDIA H100 NVL (100GB) | 1.67e-05 | 1.000001 | 16.2 ms | PASS |
-| Local | Apple Silicon (MPS) | 0.00e+00 | 1.000000 | 118.9 ms | PASS |
-| AWS Trainium† | Trn1.2xlarge (NeuronX) | 0.00e+00 | 1.000000 | 115.8 ms (CPU) | PASS |
-| AWS Inferentia2† | inf2.xlarge (NeuronX) | 0.00e+00 | 1.000000 | 321.8 ms (CPU) | PASS |
-| AMD DevCloud | AMD MI300X (192GB) | — | — | — | SKIPPED‡ |
-| GCP | TPU v5e | — | — | — | SKIPPED‡ |
+| Local | Apple Silicon MPS | 3.72e-05 | 1.000002 | 30.3 ms | PASS |
+| AWS | NVIDIA A10G sm_86 (24GB) | 2.62e-05 | 1.000001 | 35.8 ms | PASS |
+| GCP | NVIDIA L4 sm_89 (24GB) | 2.77e-05 | 1.000001 | 48.6 ms | PASS |
+| RunPod | NVIDIA H100 NVL sm_90 (100GB) | 2.29e-05 | 1.000001 | 17.5 ms | PASS |
+| AWS Trainium | Trn1.2xlarge (NeuronX 2.9) | 0.00e+00 | 1.000001 | 111.3 ms | PASS |
+| AMD DevCloud | AMD MI300X (192GB) | — | — | — | PENDING† |
+| GCP | TPU v5e | — | — | — | PENDING† |
+| AWS Inferentia2 | inf2.xlarge | — | — | — | PENDING† |
 
-† **CPU fallback:** NeuronX SDK compilation requires quota-enabled Trn1/Inf2 instances. These rows confirm correct CPU-path behavior; accelerator validation pending.
-‡ **Capacity unavailable:** AMD MI300X out of capacity at validation time; TPU v5e exhausted globally across 18 zones.
+† **Pending:** AMD MI300X requires user portal access to prevent runaway billing; TPU v5e quota exhausted; Inferentia2 deferred.
 
 All tested GPU backends produce semantically identical outputs (cosine similarity > 0.999).
 
@@ -161,10 +160,10 @@ src/torchbridge/
 
 ## Quality
 
-- **2,187 tests passing** (hardware-gated skips on non-GPU environments)
+- **2,224 tests passing** (hardware-gated skips on non-GPU environments)
 - **0 ruff violations** -- clean linting
 - **0 mypy errors** -- full type coverage
-- **Cloud validated** on 6/8 platforms: A10G, T4, H100 NVL, MPS (GPU); Trainium, Inferentia2 (CPU-fallback†)
+- **Cloud validated** on 5 platforms: MPS, A10G, L4, H100 NVL (GPU), Trainium (NeuronX)
 
 ```bash
 python3 -m pytest tests/ -q
@@ -179,7 +178,6 @@ ruff check src/ tests/
 | [Quick Start](./docs/getting_started/quickstart.md) | First steps with TorchBridge |
 | [Troubleshooting](./docs/getting_started/troubleshooting.md) | Common issues and fixes |
 | [Backends Overview](./docs/backends/overview.md) | How the backend system works |
-| [Backend Selection](./docs/guides/backend-selection.md) | Choosing the right backend |
 | [Backend Selection](./docs/guides/backend-selection.md) | Choosing backends + driver setup |
 | [Distributed Training](./docs/guides/distributed-training.md) | Multi-GPU and multi-node |
 | [Testing Guide](./docs/guides/testing.md) | DivergenceTracer, @cross_backend, ToleranceDB |
@@ -198,7 +196,7 @@ The empirical tolerance database (`testing/tolerance_db.py`) is only as strong a
 
 ## Versioning
 
-v0.5.97 is the first public release. The v0.5.x series represents an extended private development and validation phase: building the backend abstraction layer, validating numerical consistency on real GPU hardware across 6 platforms, and reaching a quality bar suitable for open source. The version number reflects the maturity of the implementation, not the release count.
+v0.5.100 is the first public release. The v0.5.x series represents an extended private development and validation phase: building the backend abstraction layer, validating numerical consistency on real GPU hardware across 5 platforms, and reaching a quality bar suitable for open source. The version number reflects the maturity of the implementation, not the release count.
 
 ## License
 
