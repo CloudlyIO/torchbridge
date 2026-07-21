@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/CloudlyIO/torchbridge/blob/main/CONTRIBUTING.md
     about: New contributor? Start here — covers every stage from first install to submitting a PR
   - name: Documentation
-    url: https://docs.torchbridge.ml
+    url: https://github.com/CloudlyIO/torchbridge/tree/main/docs
     about: Check the documentation for guides and API reference
   - name: Discussions
     url: https://github.com/CloudlyIO/torchbridge/discussions
