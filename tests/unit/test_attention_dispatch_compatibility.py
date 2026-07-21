@@ -105,6 +105,10 @@ class TestFallbackChain:
         assert chain == [
             AttentionKernelType.FLASH_ATTENTION_3,
             AttentionKernelType.FLASH_ATTENTION_2,
+            AttentionKernelType.DEEPSEEK_CSA_HCA,
+            AttentionKernelType.MINIMAX_MSA,
+            AttentionKernelType.GLM_INDEX_SHARE,
+            AttentionKernelType.MAMBA2_HYBRID,
             AttentionKernelType.PYTORCH_SDPA,
         ]
 
@@ -130,6 +134,7 @@ class TestFallbackChain:
             AMDArchitecture.CDNA3,
         )
         assert chain == [
+            AttentionKernelType.DEEPSEEK_CSA_HCA,
             AttentionKernelType.PYTORCH_SDPA,
         ]
 

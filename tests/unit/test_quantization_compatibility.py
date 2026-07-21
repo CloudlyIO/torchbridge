@@ -70,7 +70,7 @@ class TestOptimalFormat:
                 NVIDIAArchitecture.PASCAL,
                 QuantizationFormat.INT8_DYNAMIC,
             ),
-            (HardwareBackend.AMD, AMDArchitecture.CDNA4, QuantizationFormat.FP8_E4M3),
+            (HardwareBackend.AMD, AMDArchitecture.CDNA4, QuantizationFormat.MXFP8),
             (HardwareBackend.AMD, AMDArchitecture.CDNA3, QuantizationFormat.FP8_E4M3),
             (
                 HardwareBackend.AMD,

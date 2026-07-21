@@ -34,8 +34,8 @@ class TestQuantizationFormat:
             assert hasattr(QuantizationFormat, name), f"Missing format: {name}"
 
     def test_format_count(self):
-        """Should have exactly 10 formats."""
-        assert len(QuantizationFormat) == 8
+        """Should have exactly 11 formats."""
+        assert len(QuantizationFormat) == 11
 
     def test_string_round_trip(self):
         """Every format's value should parse back to itself."""

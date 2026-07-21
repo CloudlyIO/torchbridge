@@ -166,7 +166,9 @@ _TRN3_NOTE = "derived: Trn1 (trainium) atol × 1.0 (Trn3/Neuron; same NeuronCore
 _RDNA4_NOTE = "derived: RDNA4 (gfx1201, RX 9000 series); consumer GPU; same non-BLAS accumulation as RDNA3"
 _TRN2_NOTE = "derived: Trainium2 (TRN2, NeuronCore v3); same XLA accumulation as Trn1; measured pending Trn2 access"
 # ── 2026 MoE model families (v0.5.99) ─────────────────────────────────────
-_QWEN35_NOTE = "derived: Qwen3.5 27B dense > 20B params; same accumulation depth as decoder-large"
+_QWEN35_NOTE = (
+    "derived: Qwen3.5 27B dense > 20B params; same accumulation depth as decoder-large"
+)
 _GEMMA4_NOTE = "derived: Gemma 4 26B-A4B (4B active); sparse MoE activation; same as decoder-medium"
 _NM3NANO_NOTE = "derived: Nemotron 3 Nano 30B-A3B (3B active); Mamba-2+Transformer MoE; same as decoder-medium"
 _DSV4_NOTE = "derived: DeepSeek V4 Flash/Pro (13–49B active); MoE expert routing; decoder-large × 1.5"
@@ -443,9 +445,15 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("nemotron3_nano", "cuda_blackwell", "float32"): _d(2e-4, 1e-5, _NM3NANO_NOTE),
     ("nemotron3_nano", "cuda_blackwell", "float16"): _d(2e-3, 1e-3, _NM3NANO_NOTE),
     ("nemotron3_nano", "cuda_blackwell", "bfloat16"): _d(2e-2, 1e-3, _NM3NANO_NOTE),
-    ("nemotron3_nano", "cuda_blackwell_consumer", "float32"): _d(2e-4, 1e-5, _NM3NANO_NOTE),
-    ("nemotron3_nano", "cuda_blackwell_consumer", "float16"): _d(2e-3, 1e-3, _NM3NANO_NOTE),
-    ("nemotron3_nano", "cuda_blackwell_consumer", "bfloat16"): _d(2e-2, 1e-3, _NM3NANO_NOTE),
+    ("nemotron3_nano", "cuda_blackwell_consumer", "float32"): _d(
+        2e-4, 1e-5, _NM3NANO_NOTE
+    ),
+    ("nemotron3_nano", "cuda_blackwell_consumer", "float16"): _d(
+        2e-3, 1e-3, _NM3NANO_NOTE
+    ),
+    ("nemotron3_nano", "cuda_blackwell_consumer", "bfloat16"): _d(
+        2e-2, 1e-3, _NM3NANO_NOTE
+    ),
     ("nemotron3_nano", "rocm_cdna4", "float32"): _d(2e-3, 1e-4, _NM3NANO_NOTE),
     ("nemotron3_nano", "rocm_cdna4", "float16"): _d(4e-3, 1e-3, _NM3NANO_NOTE),
     ("nemotron3_nano", "rocm_cdna4", "bfloat16"): _d(4e-2, 1e-3, _NM3NANO_NOTE),
@@ -506,9 +514,15 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("nemotron3_ultra", "cuda_blackwell", "float32"): _d(8e-4, 1e-5, _NM3ULTRA_NOTE),
     ("nemotron3_ultra", "cuda_blackwell", "float16"): _d(8e-3, 1e-3, _NM3ULTRA_NOTE),
     ("nemotron3_ultra", "cuda_blackwell", "bfloat16"): _d(8e-2, 1e-3, _NM3ULTRA_NOTE),
-    ("nemotron3_ultra", "cuda_blackwell_consumer", "float32"): _d(8e-4, 1e-5, _NM3ULTRA_NOTE),
-    ("nemotron3_ultra", "cuda_blackwell_consumer", "float16"): _d(8e-3, 1e-3, _NM3ULTRA_NOTE),
-    ("nemotron3_ultra", "cuda_blackwell_consumer", "bfloat16"): _d(8e-2, 1e-3, _NM3ULTRA_NOTE),
+    ("nemotron3_ultra", "cuda_blackwell_consumer", "float32"): _d(
+        8e-4, 1e-5, _NM3ULTRA_NOTE
+    ),
+    ("nemotron3_ultra", "cuda_blackwell_consumer", "float16"): _d(
+        8e-3, 1e-3, _NM3ULTRA_NOTE
+    ),
+    ("nemotron3_ultra", "cuda_blackwell_consumer", "bfloat16"): _d(
+        8e-2, 1e-3, _NM3ULTRA_NOTE
+    ),
     ("nemotron3_ultra", "rocm_cdna4", "float32"): _d(8e-3, 1e-4, _NM3ULTRA_NOTE),
     ("nemotron3_ultra", "rocm_cdna4", "float16"): _d(1.6e-2, 1e-3, _NM3ULTRA_NOTE),
     ("nemotron3_ultra", "rocm_cdna4", "bfloat16"): _d(1.6e-1, 1e-3, _NM3ULTRA_NOTE),
