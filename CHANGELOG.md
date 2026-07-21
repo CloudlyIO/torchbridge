@@ -8,7 +8,7 @@
 
 ## **v0.5.x - Public Release Series**
 
-## [0.5.100] - 2026-07-20 - feat: 2026 silicon coverage
+## [0.5.100] - 2026-07-21 - feat: 2026 silicon coverage
 
 ### Added
 - **`AMDArchitecture`**: New enum entry `RDNA4 = "rdna4"` (RX 9000 series, gfx1201).
