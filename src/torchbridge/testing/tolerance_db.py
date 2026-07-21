@@ -123,6 +123,9 @@ _TOLERANCE_TABLE: dict[tuple[str, str], TolerancePair] = {
     # Trainium / Inferentia2 (PrivateUse1 / CPU-backed)
     ("trainium", "float32"): TolerancePair(atol=1e-4, rtol=1e-5),
     ("trainium", "bfloat16"): TolerancePair(atol=1e-2, rtol=1e-3),
+    # Trainium2 (NeuronCore v3) — same tolerance tier as Trainium1; measured when hardware available
+    ("trainium2", "float32"): TolerancePair(atol=1e-4, rtol=1e-5),
+    ("trainium2", "bfloat16"): TolerancePair(atol=1e-2, rtol=1e-3),
 }
 
 # Default fallback if key not found
