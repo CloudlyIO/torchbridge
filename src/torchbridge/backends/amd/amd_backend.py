@@ -371,6 +371,8 @@ class AMDBackend(BaseBackend):
             return AMDArchitecture.CDNA2
         elif "MI50" in device_name_upper or "MI60" in device_name_upper:
             return AMDArchitecture.CDNA
+        elif "RX 9" in device_name_upper or "9070" in device_name_upper:
+            return AMDArchitecture.RDNA4
         elif "RX 7" in device_name_upper or "7900" in device_name_upper:
             return AMDArchitecture.RDNA3
         elif "RX 6" in device_name_upper or "6900" in device_name_upper:

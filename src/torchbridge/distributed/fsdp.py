@@ -69,6 +69,7 @@ _MIXED_PRECISION_MAP: dict[
         AMDArchitecture.CDNA4: MixedPrecisionChoice.BF16,
         AMDArchitecture.CDNA3: MixedPrecisionChoice.BF16,
         AMDArchitecture.CDNA2: MixedPrecisionChoice.BF16,
+        AMDArchitecture.RDNA4: MixedPrecisionChoice.FP16,
         None: MixedPrecisionChoice.BF16,
     },
     HardwareBackend.TRAINIUM: {

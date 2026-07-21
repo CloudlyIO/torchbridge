@@ -22,6 +22,10 @@ class QuantizationFormat(Enum):
     FP8_E4M3 = "fp8_e4m3"
     FP8_E5M2 = "fp8_e5m2"
     NVFP4 = "nvfp4"
+    # OCP microscaling formats — GA on AMD gfx950 (CDNA4); MXFP4 ≠ NVFP4 (different bit layout)
+    MXFP8 = "mxfp8"
+    MXFP6 = "mxfp6"
+    MXFP4 = "mxfp4"
     BF16 = "bf16"
 
     @classmethod
@@ -112,6 +116,30 @@ FORMAT_SPECS: dict[QuantizationFormat, FormatSpec] = {
         display_name="NVFP4 (Blackwell DC)",
         perplexity_tolerance_pct=2.0,
         memory_reduction_pct=87.5,
+        requires_calibration=False,
+        requires_torchao=False,
+    ),
+    QuantizationFormat.MXFP8: FormatSpec(
+        bits=8,
+        display_name="MXFP8 (OCP microscaling, CDNA4)",
+        perplexity_tolerance_pct=1.0,
+        memory_reduction_pct=50.0,
+        requires_calibration=False,
+        requires_torchao=False,
+    ),
+    QuantizationFormat.MXFP6: FormatSpec(
+        bits=6,
+        display_name="MXFP6 (OCP microscaling, CDNA4)",
+        perplexity_tolerance_pct=1.5,
+        memory_reduction_pct=62.5,
+        requires_calibration=False,
+        requires_torchao=False,
+    ),
+    QuantizationFormat.MXFP4: FormatSpec(
+        bits=4,
+        display_name="MXFP4 (OCP microscaling, CDNA4; NOT interchangeable with NVFP4)",
+        perplexity_tolerance_pct=2.5,
+        memory_reduction_pct=75.0,
         requires_calibration=False,
         requires_torchao=False,
     ),

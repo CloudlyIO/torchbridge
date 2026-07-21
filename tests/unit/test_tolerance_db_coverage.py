@@ -28,6 +28,9 @@ GEN_SCALING_BACKENDS = (
     "rocm_cdna4",
     "xla_v7",
     "trainium_trn3",
+    # Added in v0.5.100
+    "rocm_rdna4",
+    "trainium2",
 )
 
 # dtype sets per backend (XLA / Trainium / Neuron don't expose float16)
@@ -36,7 +39,7 @@ NO_FLOAT16_DTYPES = ("float32", "bfloat16")
 
 # Minimum total entries guard — update this number if you intentionally add or
 # remove entries, but never let it decrease without a corresponding PR review.
-_MIN_ENTRY_COUNT = 377
+_MIN_ENTRY_COUNT = 442
 
 
 # ---------------------------------------------------------------------------
@@ -84,21 +87,20 @@ def test_measured_entries_exist_for_core_backends():
 # ---------------------------------------------------------------------------
 
 
-def test_entry_count_at_least_377():
-    """_FAMILY_TOLERANCE_TABLE must contain at least 377 entries.
+def test_entry_count_at_least_442():
+    """_FAMILY_TOLERANCE_TABLE must contain at least 442 entries.
 
-    Breakdown (v0.5.99):
-      Per family (29 entries each):
+    Breakdown (v0.5.100):
+      Per family (34 entries each after v0.5.100):
         Core backends: cuda/rocm/mps/cpu × 3 dtypes = 12
         XLA: float32 + bfloat16 = 2
         Trainium: float32 + bfloat16 = 2
-        Gen-scaling: cuda_blackwell (3) + cuda_blackwell_consumer (3)
-                     + rocm_cdna4 (3) + xla_v7 (2) + trainium_trn3 (2) = 13
-        Subtotal per family: 29
+        Gen-scaling (v0.5.69): cuda_blackwell(3) + cuda_blackwell_consumer(3)
+                                + rocm_cdna4(3) + xla_v7(2) + trainium_trn3(2) = 13
+        Gen-scaling (v0.5.100): rocm_rdna4(3) + trainium2(2) = 5
+        Subtotal per family: 34
 
-      5 original families × 29 = 145
-      8 new MoE families (v0.5.99) × 29 = 232
-      Total: 377
+      13 families × 34 = 442
     """
     count = len(_FAMILY_TOLERANCE_TABLE)
     assert count >= _MIN_ENTRY_COUNT, (
