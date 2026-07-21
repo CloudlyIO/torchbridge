@@ -87,11 +87,15 @@ _AMD_KERNELS: dict[AMDArchitecture, list[AttentionKernelType]] = {
     AMDArchitecture.CDNA4: [
         AttentionKernelType.FLASH_ATTENTION_CK,
         AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA3: [
         AttentionKernelType.FLASH_ATTENTION_CK,
         AttentionKernelType.DEEPSEEK_CSA_HCA,
+        AttentionKernelType.MINIMAX_MSA,
+        AttentionKernelType.GLM_INDEX_SHARE,
         AttentionKernelType.PYTORCH_SDPA,
     ],
     AMDArchitecture.CDNA2: [

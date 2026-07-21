@@ -58,6 +58,8 @@ _MIXED_PRECISION_MAP: dict[
 ] = {
     HardwareBackend.CUDA: {
         NVIDIAArchitecture.BLACKWELL_DC: MixedPrecisionChoice.FP8,
+        NVIDIAArchitecture.BLACKWELL_ULTRA: MixedPrecisionChoice.FP8,
+        NVIDIAArchitecture.RUBIN: MixedPrecisionChoice.FP8,
         NVIDIAArchitecture.BLACKWELL_CONSUMER: MixedPrecisionChoice.BF16,
         NVIDIAArchitecture.HOPPER: MixedPrecisionChoice.BF16,
         NVIDIAArchitecture.ADA: MixedPrecisionChoice.BF16,
@@ -94,6 +96,8 @@ _MULTI_NODE_STRATEGY = ShardingStrategy.HYBRID_SHARD
 _FLOAT8_ALLGATHER_ARCHS: set[NVIDIAArchitecture] = {
     NVIDIAArchitecture.HOPPER,
     NVIDIAArchitecture.BLACKWELL_DC,
+    NVIDIAArchitecture.BLACKWELL_ULTRA,
+    NVIDIAArchitecture.RUBIN,
     NVIDIAArchitecture.BLACKWELL_CONSUMER,
 }
 

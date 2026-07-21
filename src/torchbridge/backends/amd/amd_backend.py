@@ -259,7 +259,16 @@ class AMDBackend(BaseBackend):
                 device_name = torch.cuda.get_device_name(0)
                 is_amd = any(
                     marker in device_name.upper()
-                    for marker in ["AMD", "RADEON", "MI200", "MI300", "MI250", "MI210"]
+                    for marker in [
+                        "AMD",
+                        "RADEON",
+                        "MI200",
+                        "MI300",
+                        "MI250",
+                        "MI210",
+                        "RX 9",
+                        "9070",
+                    ]
                 )
                 if is_amd:
                     logger.info("ROCm detected: %s", device_name)

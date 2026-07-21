@@ -376,6 +376,8 @@ class NVIDIAConfig:
             NVIDIAArchitecture.HOPPER,
             NVIDIAArchitecture.BLACKWELL_DC,
             NVIDIAArchitecture.BLACKWELL_CONSUMER,
+            NVIDIAArchitecture.BLACKWELL_ULTRA,
+            NVIDIAArchitecture.RUBIN,
         ]:
             self.fp8_enabled = True
             self.tensor_core_version = (
@@ -384,6 +386,8 @@ class NVIDIAConfig:
                 in [
                     NVIDIAArchitecture.BLACKWELL_DC,
                     NVIDIAArchitecture.BLACKWELL_CONSUMER,
+                    NVIDIAArchitecture.BLACKWELL_ULTRA,
+                    NVIDIAArchitecture.RUBIN,
                 ]
                 else 4
             )
@@ -722,6 +726,10 @@ class AMDConfig:
             # MI50/MI60 - older data center
             self.enable_matrix_cores = False
             self.allow_bf16 = False
+        elif self.architecture == AMDArchitecture.RDNA4:
+            # RX 9000 series (gfx1201) — consumer; BF16 supported in ROCm 7.2+
+            self.enable_matrix_cores = False
+            self.allow_bf16 = True
         else:
             # Consumer GPUs (RDNA2/RDNA3)
             self.enable_matrix_cores = False

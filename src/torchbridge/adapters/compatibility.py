@@ -40,6 +40,18 @@ _NVIDIA_METHODS: dict[NVIDIAArchitecture | None, list[AdapterMethod]] = {
         AdapterMethod.DORA,
         AdapterMethod.LORA,
     ],
+    NVIDIAArchitecture.BLACKWELL_ULTRA: [
+        AdapterMethod.QDORA,
+        AdapterMethod.QLORA,
+        AdapterMethod.DORA,
+        AdapterMethod.LORA,
+    ],
+    NVIDIAArchitecture.RUBIN: [
+        AdapterMethod.QDORA,
+        AdapterMethod.QLORA,
+        AdapterMethod.DORA,
+        AdapterMethod.LORA,
+    ],
     NVIDIAArchitecture.BLACKWELL_CONSUMER: [
         AdapterMethod.QLORA,
         AdapterMethod.QDORA,
