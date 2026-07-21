@@ -450,6 +450,8 @@ def _parse_hetero_spec(spec: str, vendor: str) -> tuple:
         "blackwell_dc": NVIDIAArchitecture.BLACKWELL_DC,
         "blackwell": NVIDIAArchitecture.BLACKWELL_DC,
         "blackwell_consumer": NVIDIAArchitecture.BLACKWELL_CONSUMER,
+        "blackwell_ultra": NVIDIAArchitecture.BLACKWELL_ULTRA,
+        "rubin": NVIDIAArchitecture.RUBIN,
     }
     _AMD_ARCH_MAP = {
         "cdna": AMDArchitecture.CDNA,
@@ -458,6 +460,7 @@ def _parse_hetero_spec(spec: str, vendor: str) -> tuple:
         "cdna4": AMDArchitecture.CDNA4,
         "rdna2": AMDArchitecture.RDNA2,
         "rdna3": AMDArchitecture.RDNA3,
+        "rdna4": AMDArchitecture.RDNA4,
     }
 
     parts = spec.lower().split(":", 1)

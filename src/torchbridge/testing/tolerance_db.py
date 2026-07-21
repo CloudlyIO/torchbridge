@@ -162,6 +162,9 @@ _BWC_NOTE = "derived: Hopper/Ada (cuda) atol × 1.0 (Blackwell consumer; same ac
 _CDNA4_NOTE = "derived: CDNA3 (rocm) atol × 1.0 (MI350X/CDNA4; no accumulation-order change vs CDNA3)"
 _XLA_V7_NOTE = "derived: TPU v5e (xla) atol × 1.0 (TPU v7 Ironwood; same XLA bf16 accumulation as v5e)"
 _TRN3_NOTE = "derived: Trn1 (trainium) atol × 1.0 (Trn3/Neuron; same NeuronCore accumulation semantics as Trn1)"
+# ── 2026 silicon coverage (v0.5.100) ──────────────────────────────────────
+_RDNA4_NOTE = "derived: RDNA4 (gfx1201, RX 9000 series); consumer GPU; same non-BLAS accumulation as RDNA3"
+_TRN2_NOTE = "derived: Trainium2 (TRN2, NeuronCore v3); same XLA accumulation as Trn1; measured pending Trn2 access"
 # ── 2026 MoE model families (v0.5.99) ─────────────────────────────────────
 _QWEN35_NOTE = "derived: Qwen3.5 27B dense > 20B params; same accumulation depth as decoder-large"
 _GEMMA4_NOTE = "derived: Gemma 4 26B-A4B (4B active); sparse MoE activation; same as decoder-medium"
@@ -606,6 +609,76 @@ _FAMILY_TOLERANCE_TABLE: dict[tuple[str, str, str], ToleranceEntry] = {
     ("glm_5_2", "xla_v7", "bfloat16"): _d(4.0, 1e-2, _GLM52_NOTE),
     ("glm_5_2", "trainium_trn3", "float32"): _d(8e-4, 1e-5, _GLM52_NOTE),
     ("glm_5_2", "trainium_trn3", "bfloat16"): _d(8e-2, 1e-3, _GLM52_NOTE),
+    # ── rocm_rdna4 — RDNA4 (RX 9000 series, gfx1201) — v0.5.100 ─────────────
+    # Derived from RDNA3/rocm consumer GPU values; no rocBLAS FP8; same accumulation.
+    ("decoder-small", "rocm_rdna4", "float32"): _d(1e-3, 1e-4, _RDNA4_NOTE),
+    ("decoder-small", "rocm_rdna4", "float16"): _d(2e-3, 1e-3, _RDNA4_NOTE),
+    ("decoder-small", "rocm_rdna4", "bfloat16"): _d(2e-2, 1e-3, _RDNA4_NOTE),
+    ("decoder-medium", "rocm_rdna4", "float32"): _d(2e-3, 1e-4, _RDNA4_NOTE),
+    ("decoder-medium", "rocm_rdna4", "float16"): _d(4e-3, 1e-3, _RDNA4_NOTE),
+    ("decoder-medium", "rocm_rdna4", "bfloat16"): _d(4e-2, 1e-3, _RDNA4_NOTE),
+    ("decoder-large", "rocm_rdna4", "float32"): _d(4e-3, 1e-4, _RDNA4_NOTE),
+    ("decoder-large", "rocm_rdna4", "float16"): _d(8e-3, 1e-3, _RDNA4_NOTE),
+    ("decoder-large", "rocm_rdna4", "bfloat16"): _d(8e-2, 1e-3, _RDNA4_NOTE),
+    ("encoder", "rocm_rdna4", "float32"): _d(5e-4, 1e-4, _RDNA4_NOTE),
+    ("encoder", "rocm_rdna4", "float16"): _d(1e-3, 1e-3, _RDNA4_NOTE),
+    ("encoder", "rocm_rdna4", "bfloat16"): _d(1e-2, 1e-3, _RDNA4_NOTE),
+    ("vision-language", "rocm_rdna4", "float32"): _d(3e-3, 1e-4, _RDNA4_NOTE),
+    ("vision-language", "rocm_rdna4", "float16"): _d(6e-3, 1e-3, _RDNA4_NOTE),
+    ("vision-language", "rocm_rdna4", "bfloat16"): _d(6e-2, 1e-3, _RDNA4_NOTE),
+    ("qwen3_5", "rocm_rdna4", "float32"): _d(4e-3, 1e-4, _RDNA4_NOTE),
+    ("qwen3_5", "rocm_rdna4", "float16"): _d(8e-3, 1e-3, _RDNA4_NOTE),
+    ("qwen3_5", "rocm_rdna4", "bfloat16"): _d(8e-2, 1e-3, _RDNA4_NOTE),
+    ("gemma4", "rocm_rdna4", "float32"): _d(2e-3, 1e-4, _RDNA4_NOTE),
+    ("gemma4", "rocm_rdna4", "float16"): _d(4e-3, 1e-3, _RDNA4_NOTE),
+    ("gemma4", "rocm_rdna4", "bfloat16"): _d(4e-2, 1e-3, _RDNA4_NOTE),
+    ("nemotron3_nano", "rocm_rdna4", "float32"): _d(2e-3, 1e-4, _RDNA4_NOTE),
+    ("nemotron3_nano", "rocm_rdna4", "float16"): _d(4e-3, 1e-3, _RDNA4_NOTE),
+    ("nemotron3_nano", "rocm_rdna4", "bfloat16"): _d(4e-2, 1e-3, _RDNA4_NOTE),
+    ("deepseek_v4", "rocm_rdna4", "float32"): _d(6e-3, 1e-4, _RDNA4_NOTE),
+    ("deepseek_v4", "rocm_rdna4", "float16"): _d(1.2e-2, 1e-3, _RDNA4_NOTE),
+    ("deepseek_v4", "rocm_rdna4", "bfloat16"): _d(1.2e-1, 1e-3, _RDNA4_NOTE),
+    ("nemotron3_ultra", "rocm_rdna4", "float32"): _d(8e-3, 1e-4, _RDNA4_NOTE),
+    ("nemotron3_ultra", "rocm_rdna4", "float16"): _d(1.6e-2, 1e-3, _RDNA4_NOTE),
+    ("nemotron3_ultra", "rocm_rdna4", "bfloat16"): _d(1.6e-1, 1e-3, _RDNA4_NOTE),
+    ("tencent_hy3", "rocm_rdna4", "float32"): _d(6e-3, 1e-4, _RDNA4_NOTE),
+    ("tencent_hy3", "rocm_rdna4", "float16"): _d(1.2e-2, 1e-3, _RDNA4_NOTE),
+    ("tencent_hy3", "rocm_rdna4", "bfloat16"): _d(1.2e-1, 1e-3, _RDNA4_NOTE),
+    ("minimax_m3", "rocm_rdna4", "float32"): _d(6e-3, 1e-4, _RDNA4_NOTE),
+    ("minimax_m3", "rocm_rdna4", "float16"): _d(1.2e-2, 1e-3, _RDNA4_NOTE),
+    ("minimax_m3", "rocm_rdna4", "bfloat16"): _d(1.2e-1, 1e-3, _RDNA4_NOTE),
+    ("glm_5_2", "rocm_rdna4", "float32"): _d(8e-3, 1e-4, _RDNA4_NOTE),
+    ("glm_5_2", "rocm_rdna4", "float16"): _d(1.6e-2, 1e-3, _RDNA4_NOTE),
+    ("glm_5_2", "rocm_rdna4", "bfloat16"): _d(1.6e-1, 1e-3, _RDNA4_NOTE),
+    # ── trainium2 — AWS Trainium2 (TRN2, NeuronCore v3) — v0.5.100 ───────────
+    # Derived from trainium (Trn1) measured values; Trn2 uses same XLA accumulation.
+    # Neuron SDK 2.26+ FP8 path not yet measured on Trn2 — use Trn1 baseline.
+    ("decoder-small", "trainium2", "float32"): _d(1e-4, 1e-5, _TRN2_NOTE),
+    ("decoder-small", "trainium2", "bfloat16"): _d(1e-2, 1e-3, _TRN2_NOTE),
+    ("decoder-medium", "trainium2", "float32"): _d(2e-4, 1e-5, _TRN2_NOTE),
+    ("decoder-medium", "trainium2", "bfloat16"): _d(2e-2, 1e-3, _TRN2_NOTE),
+    ("decoder-large", "trainium2", "float32"): _d(4e-4, 1e-5, _TRN2_NOTE),
+    ("decoder-large", "trainium2", "bfloat16"): _d(4e-2, 1e-3, _TRN2_NOTE),
+    ("encoder", "trainium2", "float32"): _d(5e-5, 1e-5, _TRN2_NOTE),
+    ("encoder", "trainium2", "bfloat16"): _d(5e-3, 1e-3, _TRN2_NOTE),
+    ("vision-language", "trainium2", "float32"): _d(3e-4, 1e-5, _TRN2_NOTE),
+    ("vision-language", "trainium2", "bfloat16"): _d(3e-2, 1e-3, _TRN2_NOTE),
+    ("qwen3_5", "trainium2", "float32"): _d(4e-4, 1e-5, _TRN2_NOTE),
+    ("qwen3_5", "trainium2", "bfloat16"): _d(4e-2, 1e-3, _TRN2_NOTE),
+    ("gemma4", "trainium2", "float32"): _d(2e-4, 1e-5, _TRN2_NOTE),
+    ("gemma4", "trainium2", "bfloat16"): _d(2e-2, 1e-3, _TRN2_NOTE),
+    ("nemotron3_nano", "trainium2", "float32"): _d(2e-4, 1e-5, _TRN2_NOTE),
+    ("nemotron3_nano", "trainium2", "bfloat16"): _d(2e-2, 1e-3, _TRN2_NOTE),
+    ("deepseek_v4", "trainium2", "float32"): _d(6e-4, 1e-5, _TRN2_NOTE),
+    ("deepseek_v4", "trainium2", "bfloat16"): _d(6e-2, 1e-3, _TRN2_NOTE),
+    ("nemotron3_ultra", "trainium2", "float32"): _d(8e-4, 1e-5, _TRN2_NOTE),
+    ("nemotron3_ultra", "trainium2", "bfloat16"): _d(8e-2, 1e-3, _TRN2_NOTE),
+    ("tencent_hy3", "trainium2", "float32"): _d(6e-4, 1e-5, _TRN2_NOTE),
+    ("tencent_hy3", "trainium2", "bfloat16"): _d(6e-2, 1e-3, _TRN2_NOTE),
+    ("minimax_m3", "trainium2", "float32"): _d(6e-4, 1e-5, _TRN2_NOTE),
+    ("minimax_m3", "trainium2", "bfloat16"): _d(6e-2, 1e-3, _TRN2_NOTE),
+    ("glm_5_2", "trainium2", "float32"): _d(8e-4, 1e-5, _TRN2_NOTE),
+    ("glm_5_2", "trainium2", "bfloat16"): _d(8e-2, 1e-3, _TRN2_NOTE),
 }
 
 

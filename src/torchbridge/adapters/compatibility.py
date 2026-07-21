@@ -89,6 +89,16 @@ _AMD_METHODS: dict[AMDArchitecture | None, list[AdapterMethod]] = {
         AdapterMethod.LORA,
         AdapterMethod.DORA,
     ],
+    AMDArchitecture.RDNA4: [
+        # Consumer GPU (RX 9000 series) — LORA only (no rocBLAS BLAS guarantees)
+        AdapterMethod.LORA,
+    ],
+    AMDArchitecture.RDNA3: [
+        AdapterMethod.LORA,
+    ],
+    AMDArchitecture.RDNA2: [
+        AdapterMethod.LORA,
+    ],
     None: [
         AdapterMethod.QLORA,
         AdapterMethod.DORA,
