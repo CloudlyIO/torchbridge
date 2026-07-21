@@ -334,21 +334,17 @@ class TestTableCompleteness:
             assert (family, "xla", "float16") not in _FAMILY_TOLERANCE_TABLE
 
     def test_family_table_size(self):
-        # 5 families × (4 non-XLA non-Trainium backends × 3 dtypes
-        #              + 1 XLA × 2 dtypes
-        #              + 1 Trainium × 2 dtypes)
-        # = 5 × (12 + 2 + 2) = 5 × 16 = 80 entries
-        #
-        #
-        # New derived hardware entries:
-        # cuda_blackwell:           5 families × 3 dtypes = 15
-        # cuda_blackwell_consumer:  5 families × 3 dtypes = 15
-        # rocm_cdna4:               5 families × 3 dtypes = 15
-        # xla_v7:                   5 families × 2 dtypes = 10
-        # neuron:                   5 families × 2 dtypes = 10
-        ## Total:
-        # 80 + 15 + 15 + 15 + 10 + 10 = 145
-        assert len(_FAMILY_TOLERANCE_TABLE) == 145
+        # 13 families × 34 entries each = 442 total (v0.5.100)
+        # Per family breakdown:
+        #   Core backends: cuda/rocm/mps/cpu × 3 dtypes = 12
+        #   XLA: float32 + bfloat16 = 2
+        #   Trainium: float32 + bfloat16 = 2
+        #   Gen-scaling (v0.5.69): cuda_blackwell(3) + cuda_blackwell_consumer(3)
+        #                          + rocm_cdna4(3) + xla_v7(2) + trainium_trn3(2) = 13
+        #   Gen-scaling (v0.5.100): rocm_rdna4(3) + trainium2(2) = 5
+        #   Subtotal per family: 34
+        # 13 families × 34 = 442
+        assert len(_FAMILY_TOLERANCE_TABLE) == 442
 
     def test_trainium_has_family_entries(self):
         db = ToleranceDB()
@@ -363,9 +359,9 @@ class TestTableCompleteness:
 
 
 class TestAPI:
-    def test_families_returns_all_five(self):
+    def test_families_returns_all_families(self):
         db = ToleranceDB()
-        assert len(db.families()) == 5
+        assert len(db.families()) == 13
 
     def test_families_sorted(self):
         db = ToleranceDB()
