@@ -46,9 +46,19 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         dest="model_family",
         choices=[
-            "decoder-small", "decoder-medium", "decoder-large", "encoder",
-            "vision-language", "qwen3_5", "gemma4", "nemotron3_nano",
-            "deepseek_v4", "nemotron3_ultra", "tencent_hy3", "minimax_m3", "glm_5_2",
+            "decoder-small",
+            "decoder-medium",
+            "decoder-large",
+            "encoder",
+            "vision-language",
+            "qwen3_5",
+            "gemma4",
+            "nemotron3_nano",
+            "deepseek_v4",
+            "nemotron3_ultra",
+            "tencent_hy3",
+            "minimax_m3",
+            "glm_5_2",
         ],
         help="Model family for ToleranceDB lookup (overrides auto-detection from --model)",
     )
@@ -72,26 +82,35 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _get_thresholds(backend: str, atol: float | None, cosine_threshold: float | None):
-    """Return (atol, cosine_threshold) — from TolerationDB or CLI overrides."""
+def _get_thresholds(
+    backend: str,
+    model_family: str | None,
+    atol: float | None,
+    cosine_threshold: float | None,
+):
+    """Return (atol, cosine_threshold) — from ToleranceDB or CLI overrides."""
     # Defaults from CLAUDE.md validation thresholds
     _DEFAULTS = {
         "cuda": (1e-4, 0.9999),
         "rocm": (1e-3, 0.999),
         "mps": (1e-4, 0.9999),
         "trainium": (1e-3, 0.999),
+        "trainium2": (1e-3, 0.999),
         "cpu": (0.0, 1.0),
     }
     default_atol, default_cos = _DEFAULTS.get(backend, (1e-3, 0.999))
 
     try:
-        from torchbridge.testing.tolerance_db import TolerationDB
+        from torchbridge.testing.tolerance_db import ToleranceDB
 
-        db = TolerationDB()
-        entry = db.get(model_family="qwen", backend=backend, dtype="float32")
+        db = ToleranceDB()
+        # trainium2 shares the trainium base tolerance key
+        db_backend = "trainium" if backend == "trainium2" else backend
+        entry = db.get(
+            db_backend, "float32", model_family=model_family or "decoder-small"
+        )
         if entry is not None:
             default_atol = entry.atol
-            default_cos = entry.cosine_threshold
     except Exception:
         pass  # fall back to hardcoded defaults
 
@@ -125,15 +144,23 @@ def main() -> int:
     try:
         from transformers import AutoModelForCausalLM, AutoTokenizer
     except ImportError:
-        print("ERROR: transformers not installed. Run: pip install transformers", file=sys.stderr)
+        print(
+            "ERROR: transformers not installed. Run: pip install transformers",
+            file=sys.stderr,
+        )
         return 2
 
-    atol, cosine_threshold = _get_thresholds(args.backend, args.atol, args.cosine_threshold)
+    atol, cosine_threshold = _get_thresholds(
+        args.backend, args.model_family, args.atol, args.cosine_threshold
+    )
 
     # Determine device
     if args.backend in ("cuda", "rocm"):
         if not torch.cuda.is_available():
-            print("ERROR: CUDA/ROCm requested but torch.cuda.is_available() is False", file=sys.stderr)
+            print(
+                "ERROR: CUDA/ROCm requested but torch.cuda.is_available() is False",
+                file=sys.stderr,
+            )
             return 2
         device = torch.device("cuda")
         device_name = torch.cuda.get_device_name(0)
@@ -143,14 +170,21 @@ def main() -> int:
             return 2
         device = torch.device("mps")
         device_name = "Apple Silicon MPS"
-    elif args.backend == "trainium":
+    elif args.backend in ("trainium", "trainium2"):
         try:
             import torch_neuronx  # noqa: F401
         except ImportError:
-            print("ERROR: torch_neuronx not installed. Activate the Neuron venv first.", file=sys.stderr)
+            print(
+                "ERROR: torch_neuronx not installed. Activate the Neuron venv first.",
+                file=sys.stderr,
+            )
             return 2
         device = torch.device("xla")
-        device_name = "AWS Trainium (NeuronCore)"
+        device_name = (
+            "AWS Trainium2 (NeuronCore v3)"
+            if args.backend == "trainium2"
+            else "AWS Trainium (NeuronCore)"
+        )
     else:
         device = torch.device("cpu")
         device_name = "CPU"
@@ -178,7 +212,7 @@ def main() -> int:
         "cosine_threshold": cosine_threshold,
     }
 
-    if args.backend == "trainium":
+    if args.backend in ("trainium", "trainium2"):
         # Trainium with PJRT_DEVICE=CPU routes XLA to CPU. XLA tensors do not
         # support .cpu() transfer, so we validate reproducibility instead of
         # GPU/CPU divergence: run two identical forward passes, compare outputs.
@@ -228,7 +262,7 @@ def main() -> int:
             torch.cuda.synchronize()
         latency_ms = (time.perf_counter() - t0) / 100 * 1000
 
-    passed = max_diff < atol and cos_sim >= cosine_threshold
+    passed = max_diff <= atol and cos_sim >= cosine_threshold
     status = "PASSED" if passed else "FAILED"
 
     print(f"\nMax diff:   {max_diff:.2e}  (threshold: < {atol:.1e})")
@@ -236,12 +270,14 @@ def main() -> int:
     print(f"Latency:    {latency_ms:.1f} ms")
     print(f"\nStatus: {status}")
 
-    result.update({
-        "max_diff": max_diff,
-        "cosine_sim": cos_sim,
-        "latency_ms": latency_ms,
-        "status": status,
-    })
+    result.update(
+        {
+            "max_diff": max_diff,
+            "cosine_sim": cos_sim,
+            "latency_ms": latency_ms,
+            "status": status,
+        }
+    )
     _write_result(args.output_json, result)
     return 0 if passed else 1
 

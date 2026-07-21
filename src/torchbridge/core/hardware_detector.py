@@ -226,7 +226,6 @@ class HardwareDetector:
 
     def _detect_nvidia_architecture(self, props) -> NVIDIAArchitecture:
         """Detect specific NVIDIA architecture."""
-        props.name.lower()
         major, _minor = props.major, props.minor
 
         # Blackwell Consumer (compute capability 12.0+)

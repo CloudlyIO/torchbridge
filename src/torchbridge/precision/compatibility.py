@@ -92,8 +92,9 @@ _NVIDIA_FORMATS: dict[NVIDIAArchitecture, list[QuantizationFormat]] = {
 
 _AMD_FORMATS: dict[AMDArchitecture, list[QuantizationFormat]] = {
     AMDArchitecture.CDNA4: [
-        # gfx950 supports OCP microscaling (MXFP8/MXFP4); note MXFP4 ≠ NVFP4
+        # gfx950 supports OCP microscaling (MXFP8/MXFP6/MXFP4); note MXFP4 ≠ NVFP4
         QuantizationFormat.MXFP8,
+        QuantizationFormat.MXFP6,
         QuantizationFormat.MXFP4,
         QuantizationFormat.FP8_E4M3,
         QuantizationFormat.INT8_DYNAMIC,

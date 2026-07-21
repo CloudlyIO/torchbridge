@@ -1560,8 +1560,9 @@ def main():
         dest="model_family",
         help=(
             "Model family for tolerance lookup with --compare "
-            "(choices: decoder-small, decoder-medium, decoder-large, "
-            "encoder, vision-language). Defaults to backend+dtype tolerances."
+            "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
+            "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
+            "tencent_hy3, minimax_m3, glm_5_2). Defaults to backend+dtype tolerances."
         ),
     )
 
