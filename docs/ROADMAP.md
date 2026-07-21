@@ -41,7 +41,7 @@ TorchBridge v0.5.x is production-ready for its core use cases:
 - **Observability** — OpenTelemetry span export for validation results, structured exit codes for CI/CD
 - **11 CLI tools** — `tb-validate`, `tb-benchmark`, `tb-doctor`, `tb-advisor`, `tb-migrate`, `tb-quantize`, `tb-cache`, `tb-speculate`, `tb-checkpoint`, `tb-adapter`, and `torchbridge` dispatcher
 
-Current test coverage: 2,139 tests, 0 ruff violations, 0 mypy errors, Apache 2.0.
+Current test coverage: 2,224 tests, 0 ruff violations, 0 mypy errors, Apache 2.0.
 
 ---
 

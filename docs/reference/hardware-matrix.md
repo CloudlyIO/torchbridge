@@ -39,6 +39,7 @@ Complete hardware support table for TorchBridge backends.
 | **CDNA 3** | MI300X, MI300A | gfx942 | 192 GB HBM3 | Yes | Yes | Yes | Yes | No | Yes |
 | **CDNA 3** | MI325X | gfx942 | 256 GB HBM3e | Yes | Yes | Yes | Yes | No | Yes |
 | **CDNA 2** | MI200, MI250X | gfx90a | 128 GB HBM2e | Yes | Yes | Yes | No | No | Yes |
+| **RDNA 4** | RX 9070 XT | gfx1201 | 16 GB GDDR6 | Yes | Yes | Yes | No | No | No |
 | **RDNA 3** | RX 7900 XTX | gfx1100 | 24 GB GDDR6 | Yes | Yes | Yes | No | No | No |
 | **RDNA 2** | RX 6900 XT | gfx1030 | 16 GB GDDR6 | Yes | Yes | No | No | No | No |
 
@@ -91,17 +92,20 @@ Cross-backend numerical consistency validated with Qwen3-0.6B. See [Cloud Valida
 
 | Configuration | Platform | Max Diff | Cosine Sim | Latency | Last Validated |
 |--------------|----------|----------|------------|---------|----------------|
-| NVIDIA H100 NVL (Hopper) | RunPod | 1.67e-05 | 1.000001 | 16.2 ms | v0.5.80 |
-| Apple Silicon (MPS) | Local Mac | 0.00e+00 | 1.000000 | 118.9 ms | v0.5.80 |
-| NVIDIA A10G (Ampere) | AWS g5.xlarge | 2.10e-05 | 1.000001 | 40.0 ms | v0.5.80 |
-| NVIDIA T4 (Turing) | GCP n1 + T4 | 2.67e-05 | 1.000001 | 50.7 ms | v0.5.80 |
-| AMD MI300X (CDNA3) | AMD Developer Cloud | 4.82e-05 | 1.000001 | 30.0 ms | v0.5.45 |
-| TPU v5e | GCP TPU VM | 1.08e-01 | 0.999980 | 47.5 ms | v0.5.45 |
+| Apple Silicon (MPS) | Local Mac | 3.72e-05 | 1.000002 | 30.3 ms | v0.5.100 |
+| NVIDIA A10G (Ampere) | AWS g5.xlarge | 2.62e-05 | 1.000001 | 35.8 ms | v0.5.100 |
+| NVIDIA L4 (Ada Lovelace) | GCP g2-standard-4 | 2.77e-05 | 1.000001 | 48.6 ms | v0.5.100 |
+| NVIDIA H100 NVL (Hopper) | RunPod | 2.29e-05 | 1.000001 | 17.5 ms | v0.5.100 |
+| AWS Trainium (NeuronX 2.9) | trn1.2xlarge | 0.00e+00 | 1.000001 | 111.3 ms | v0.5.100 |
+| AMD MI300X (CDNA3) | AMD Developer Cloud | — | — | — | Pending† |
+| TPU v5e | GCP TPU VM | — | — | — | Pending† |
 | CPU (x86) | Local | Full test suite | — | — | ongoing |
 | CPU (ARM/Apple Silicon) | Local | Full test suite | — | — | ongoing |
+
+> † Pending — infrastructure access constraints. See [Cloud Validation](cloud-validation.md) for details.
 
 ## See Also
 
 - [Backends Overview](../backends/overview.md)
 - [Backend Selection](../guides/backend-selection.md)
-- [Hardware Setup](../guides/backend-selection.md)
+- [Cloud Validation](cloud-validation.md)
