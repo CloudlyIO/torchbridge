@@ -177,7 +177,7 @@ src/torchbridge/
 ├── models/       # LLM KV cache advisor
 ├── checkpoint/   # DCP wrapper with cross-backend metadata normalization
 ├── adapters/     # Adapter compatibility matrix + config (LoRA/QLoRA/DoRA)
-├── benchmarks/   # 5 claim benchmarks with real measured results
+├── benchmarks/   # Claim benchmarks — measured results in docs/benchmarks.md
 ├── testing/      # DivergenceTracer, ToleranceDB, OTel exporter, trace validator
 ├── validation/   # UnifiedValidator — model structure, hardware, numerical stability
 ├── cli/          # 11 CLI entry points (torchbridge + 10 tb-* commands)
