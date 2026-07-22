@@ -25,7 +25,7 @@ All validations compare GPU/accelerator logits against CPU baseline on the same 
 | AWS | A10G sm_86 | 2.62e-05 | 1.000001 | 35.8 ms | PASS |
 | GCP | L4 sm_89 | 2.77e-05 | 1.000001 | 48.6 ms | PASS |
 | RunPod | H100 NVL sm_90 | 2.29e-05 | 1.000001 | 17.5 ms | PASS |
-| AWS Trainium | trn1.2xlarge (NeuronX 2.9) | 0.00e+00 | 1.000001 | 111.3 ms | PASS |
+| AWS Trainium | trn1.2xlarge (NeuronX 2.9) | 2.77e-05 | 1.000001 | 31.5 ms | PASS |
 | AMD DevCloud† | MI300X | — | — | — | PENDING |
 | GCP† | TPU v5e | — | — | — | PENDING |
 | AWS Inferentia2† | inf2.xlarge | — | — | — | PENDING |
@@ -77,7 +77,7 @@ equivalence and is the primary metric for XLA backends.
 
 | Run | Platforms | Model | Result |
 |-----|-----------|-------|--------|
-| v0.5.100 (2026-07-21) | MPS, A10G, L4, H100 NVL, Trainium (NeuronX 2.9) | Qwen3-0.6B | 5/5 PASS — max_diff ≤ 3.72e-05 on all GPU platforms |
+| v0.5.100 (2026-07-22) | MPS, A10G, L4, H100 NVL, Trainium (NeuronX 2.9) | Qwen3-0.6B | 5/5 PASS — max_diff ≤ 3.72e-05 on all platforms (NeuronCore real chip) |
 | v0.5.80 (2026-03-30) | MPS, A10G, T4, H100 NVL, Trainium†, Inferentia2† | Qwen3-0.6B | 4 GPU PASS + 2 CPU† PASS; AMD + TPU SKIPPED |
 | v0.5.67 (2026-03-10) | AMD MI300X, AWS A10G, GCP T4 | Qwen3-0.6B | 3/3 PASS |
 

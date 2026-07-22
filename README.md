@@ -125,7 +125,7 @@ Cross-backend numerical consistency validated on 5 platforms using Qwen3-0.6B (v
 | AWS | NVIDIA A10G sm_86 (24GB) | 2.62e-05 | 1.000001 | 35.8 ms | PASS |
 | GCP | NVIDIA L4 sm_89 (24GB) | 2.77e-05 | 1.000001 | 48.6 ms | PASS |
 | RunPod | NVIDIA H100 NVL sm_90 (100GB) | 2.29e-05 | 1.000001 | 17.5 ms | PASS |
-| AWS Trainium | Trn1.2xlarge (NeuronX 2.9) | 0.00e+00 | 1.000001 | 111.3 ms | PASS |
+| AWS Trainium | Trn1.2xlarge (NeuronX 2.9) | 2.77e-05 | 1.000001 | 31.5 ms | PASS |
 | AMD DevCloud | AMD MI300X (192GB) | — | — | — | PENDING† |
 | GCP | TPU v5e | — | — | — | PENDING† |
 | AWS Inferentia2 | inf2.xlarge | — | — | — | PENDING† |
