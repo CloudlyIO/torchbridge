@@ -213,23 +213,41 @@ def main() -> int:
     }
 
     if args.backend in ("trainium", "trainium2"):
-        # Trainium with PJRT_DEVICE=CPU routes XLA to CPU. XLA tensors do not
-        # support .cpu() transfer, so we validate reproducibility instead of
-        # GPU/CPU divergence: run two identical forward passes, compare outputs.
+        try:
+            import torch_xla.core.xla_model as xm  # noqa: F401
+        except ImportError:
+            print("ERROR: torch_xla not installed.", file=sys.stderr)
+            return 2
+
+        # Move model and inputs to NeuronCore via XLA device
+        print("Moving model to NeuronCore (first forward triggers XLA compilation)...",
+              flush=True)
+        model_xla = model.to(device)
+        inputs_xla = {k: v.to(device) for k, v in inputs.items()}
+
+        # First forward — triggers NeuronX compilation, may take several minutes
         with torch.no_grad():
-            out2 = model(**inputs)
-        logits1 = cpu_out.logits[:, -1, :]
-        logits2 = out2.logits[:, -1, :]
-        max_diff = float(torch.abs(logits1 - logits2).max())
+            xla_out = model_xla(**inputs_xla)
+        xm.mark_step()  # flush XLA graph to NeuronCore
+
+        # Transfer result to CPU for comparison against CPU baseline
+        xla_logits = xla_out.logits[:, -1, :].cpu()
+        cpu_logits = cpu_out.logits[:, -1, :]
+
+        max_diff = float(torch.abs(cpu_logits - xla_logits).max())
         cos_sim = float(
             F.cosine_similarity(
-                logits1.flatten().unsqueeze(0),
-                logits2.flatten().unsqueeze(0),
+                cpu_logits.flatten().unsqueeze(0),
+                xla_logits.flatten().unsqueeze(0),
             )
         )
+
+        # Latency benchmark — steady-state after compilation
         t0 = time.perf_counter()
         for _ in range(10):
-            model(**inputs)
+            with torch.no_grad():
+                model_xla(**inputs_xla)
+            xm.mark_step()
         latency_ms = (time.perf_counter() - t0) / 10 * 1000
     else:
         # Move model to target device and compare against CPU baseline

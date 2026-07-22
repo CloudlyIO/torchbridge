@@ -96,7 +96,7 @@ Cross-backend numerical consistency validated with Qwen3-0.6B. See [Cloud Valida
 | NVIDIA A10G (Ampere) | AWS g5.xlarge | 2.62e-05 | 1.000001 | 35.8 ms | v0.5.100 |
 | NVIDIA L4 (Ada Lovelace) | GCP g2-standard-4 | 2.77e-05 | 1.000001 | 48.6 ms | v0.5.100 |
 | NVIDIA H100 NVL (Hopper) | RunPod | 2.29e-05 | 1.000001 | 17.5 ms | v0.5.100 |
-| AWS Trainium (NeuronX 2.9) | trn1.2xlarge | 0.00e+00 | 1.000001 | 111.3 ms | v0.5.100 |
+| AWS Trainium (NeuronX 2.9) | trn1.2xlarge | 2.77e-05 | 1.000001 | 31.5 ms | v0.5.100 |
 | AMD MI300X (CDNA3) | AMD Developer Cloud | — | — | — | Pending† |
 | TPU v5e | GCP TPU VM | — | — | — | Pending† |
 | CPU (x86) | Local | Full test suite | — | — | ongoing |
