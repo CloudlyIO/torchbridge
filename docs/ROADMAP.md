@@ -61,7 +61,7 @@ caused it and why? Attribution turns a flag into a fix.
 
 ### Tolerance DB Expansion
 
-The current tolerance DB covers 13 model families × 13 backends × 3 dtypes = 442 entries.
+The current tolerance DB covers 13 model families × 13 backends = 442 entries (8 CUDA/AMD/MPS backends at 3 dtypes, 5 XLA/Trainium backends at 2 dtypes — fp16 omitted where unsupported).
 Real-world coverage should extend to:
 
 - 10+ model families (diffusion, audio, video, code generation, multimodal)
