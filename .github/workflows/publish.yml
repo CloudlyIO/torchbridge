@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - run: pip install ruff pytest
+      - run: pip install -e ".[dev]"
       - run: python scripts/ci/check_release_readiness.py
 
   build:
