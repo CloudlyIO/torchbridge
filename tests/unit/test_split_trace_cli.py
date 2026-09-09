@@ -1,0 +1,403 @@
+"""
+Unit tests for the record/replay half of tb-validate --trace.
+
+A cross-vendor pair such as ``cuda vs rocm`` cannot run in one process: a torch
+install is built against CUDA or ROCm but never both, and both expose GPUs as
+device ``cuda``, so one process can only drive one vendor. The split workflow is therefore two commands with
+the *same* ``--compare`` pair: the first machine records its half, the second
+replays that exact token sequence and compares.
+
+The consequence for device resolution is the point of most of these tests. In
+record mode only backend A exists locally; in replay mode only backend B does.
+Demanding both would make the workflow impossible on the very machines it is for.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+
+import pytest
+import torch
+
+from torchbridge.cli.validate import ValidateCommand
+
+
+def _args(**kw):
+    d = {
+        "compare": ["cpu", "cpu"],
+        "trace": True,
+        "steps": 3,
+        "autoregressive": False,
+        "model": None,
+        "input_shape": "1,4",
+        "per_layer": False,
+        "dtype": "float32",
+        "output": None,
+        "trace_output": None,
+        "ci": False,
+        "verbose": False,
+        "model_family": None,
+        "cert": None,
+        "record": None,
+        "replay": None,
+        "compare_records": None,
+    }
+    d.update(kw)
+    return argparse.Namespace(**d)
+
+
+@pytest.fixture
+def saved_model(tmp_path):
+    """One model on disk, so record and replay load identical weights.
+
+    The default smoke model is initialised randomly per invocation, so a split
+    across two processes would compare two different models. Real runs pass
+    --model for the same reason.
+    """
+    import torch.nn as nn
+
+    torch.manual_seed(0)
+    model = nn.Sequential(nn.Linear(4, 4), nn.ReLU(), nn.Linear(4, 4))
+    path = tmp_path / "m.pt"
+    torch.save(model, path)
+    return str(path)
+
+
+class TestRecord:
+    def test_record_writes_a_file_and_succeeds(self, tmp_path):
+        out = tmp_path / "a.pt"
+        assert ValidateCommand._run_trace(_args(record=str(out))) == 0
+        assert out.exists() and out.stat().st_size > 0
+
+    def test_recorded_file_reloads_with_the_right_shape(self, tmp_path):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        out = tmp_path / "a.pt"
+        ValidateCommand._run_trace(_args(record=str(out), steps=3))
+        rec = SplitTraceRecord.load(str(out))
+        assert rec.role == "record"
+        assert rec.backend == "cpu"
+        assert rec.steps == 3
+        assert len(rec.token_inputs) == 3
+
+    def test_record_does_not_need_backend_b_present(self, tmp_path):
+        """The other vendor's chip is on the other machine, by definition."""
+        out = tmp_path / "a.pt"
+        rc = ValidateCommand._run_trace(_args(compare=["cpu", "rocm"], record=str(out)))
+        assert rc == 0, "record mode wrongly demanded the remote backend"
+
+
+class TestReplay:
+    def _record(self, tmp_path, model=None, **kw):
+        out = tmp_path / "a.pt"
+        ValidateCommand._run_trace(_args(record=str(out), model=model, **kw))
+        return str(out)
+
+    def test_replay_produces_a_comparison(self, tmp_path, saved_model):
+        src = self._record(tmp_path, model=saved_model)
+        res = tmp_path / "r.json"
+        rc = ValidateCommand._run_trace(
+            _args(replay=src, model=saved_model, trace_output=str(res))
+        )
+        assert rc == 0
+        saved = json.loads(res.read_text())
+        assert saved["steps"] == 3
+        assert saved["backend_a"] == "cpu" and saved["backend_b"] == "cpu"
+
+    def test_cpu_against_cpu_replay_shows_no_divergence(self, tmp_path, saved_model):
+        """The control case: same backend, same weights, must agree exactly.
+
+        This is what proves record-and-replay adds no error of its own, so any
+        divergence a real cross-vendor run reports comes from the hardware.
+        """
+        src = self._record(tmp_path, model=saved_model)
+        res = tmp_path / "r.json"
+        rc = ValidateCommand._run_trace(
+            _args(replay=src, model=saved_model, trace_output=str(res))
+        )
+        assert rc == 0
+        saved = json.loads(res.read_text())
+        assert saved["first_divergence_step"] is None
+        assert saved["max_amplification"] == 1.0
+        assert saved["final_passed"] is True
+
+    def test_replay_does_not_need_backend_a_present(self, tmp_path, saved_model):
+        src = self._record(tmp_path, model=saved_model)
+        rc = ValidateCommand._run_trace(
+            _args(compare=["rocm", "cpu"], replay=src, model=saved_model)
+        )
+        assert rc == 0, "replay mode wrongly demanded the recording backend"
+
+    def test_different_weights_are_reported_not_hidden(self, tmp_path, caplog):
+        """Two halves from different models must not pass silently.
+
+        Each record stores a fingerprint of the weights. Without that check, a
+        mismatched checkpoint would look like hardware divergence.
+        """
+        import logging
+
+        src = self._record(tmp_path)  # random weights
+        with caplog.at_level(logging.WARNING):
+            ValidateCommand._run_trace(_args(replay=src))  # different random weights
+        joined = " ".join(r.message.lower() for r in caplog.records)
+        assert "fingerprint" in joined or "mismatch" in joined
+
+    def test_replay_records_the_tolerance_used(self, tmp_path):
+        src = self._record(tmp_path)
+        res = tmp_path / "r.json"
+        ValidateCommand._run_trace(
+            _args(replay=src, trace_output=str(res), model_family="decoder-large")
+        )
+        saved = json.loads(res.read_text())
+        assert saved["model_family"] == "decoder-large"
+        assert saved["atol"] is not None
+
+
+class TestCompareRecordsOffline:
+    def test_a_record_and_its_saved_replay_compare_offline(self, tmp_path, saved_model):
+        """--replay with --record keeps the second half, so it can be re-checked.
+
+        Rented machines are destroyed straight after their half is taken, so
+        keeping both halves is what allows a later re-comparison — for instance
+        under a different tolerance — without paying for the hardware again.
+        """
+        a, b = tmp_path / "a.pt", tmp_path / "b.pt"
+        ValidateCommand._run_trace(_args(record=str(a), model=saved_model))
+        ValidateCommand._run_trace(
+            _args(replay=str(a), record=str(b), model=saved_model)
+        )
+        assert b.exists(), "--replay with --record did not save the second half"
+
+        res = tmp_path / "r.json"
+        rc = ValidateCommand._run_trace(
+            _args(compare_records=[str(a), str(b)], trace_output=str(res))
+        )
+        assert rc == 0
+        assert json.loads(res.read_text())["final_passed"] is True
+
+
+class TestErrors:
+    def test_missing_record_file_fails_cleanly(self, tmp_path, capsys):
+        rc = ValidateCommand._run_trace(_args(replay=str(tmp_path / "nope.pt")))
+        assert rc == 1
+        assert "nope.pt" in capsys.readouterr().out
+
+    def test_compare_records_needs_a_record_and_its_replay(self, tmp_path, capsys):
+        """Two independent records are not a pair — they saw different inputs.
+
+        The exactness of the split rests on the follower being fed the leader's
+        recorded tokens. Two separate recordings share nothing, so pairing them
+        must be refused rather than producing a meaningless number.
+        """
+        a, b = tmp_path / "a.pt", tmp_path / "b.pt"
+        ValidateCommand._run_trace(_args(record=str(a)))
+        ValidateCommand._run_trace(_args(record=str(b)))
+        rc = ValidateCommand._run_trace(_args(compare_records=[str(a), str(b)]))
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "replay" in out, out
+
+    def test_ci_mode_errors_stay_json(self, tmp_path, capsys):
+        ValidateCommand._run_trace(_args(replay=str(tmp_path / "nope.pt"), ci=True))
+        assert "error" in json.loads(capsys.readouterr().out.strip())
+
+
+class TestFlagsRegistered:
+    def test_record_replay_flags_exist(self):
+        parser = argparse.ArgumentParser()
+        sub = parser.add_subparsers(dest="cmd")
+        ValidateCommand.register(sub)
+        a = parser.parse_args(
+            ["validate", "--compare", "cuda", "rocm", "--trace", "--record", "x.pt"]
+        )
+        assert a.record == "x.pt"
+
+    def test_replay_flag_parses(self):
+        parser = argparse.ArgumentParser()
+        sub = parser.add_subparsers(dest="cmd")
+        ValidateCommand.register(sub)
+        a = parser.parse_args(
+            ["validate", "--compare", "cuda", "rocm", "--trace", "--replay", "x.pt"]
+        )
+        assert a.replay == "x.pt"
+
+
+class TestRecordFilesAreLoadedSafely:
+    """A record file arrives from another machine, so it is untrusted input.
+
+    ``torch.load`` with ``weights_only=False`` unpickles arbitrary objects, which
+    means a tampered record could execute code on the machine reading it. The
+    split workflow's whole point is copying a file off a rented box, so that is
+    exactly the threat model. The payload is tensors, strings, bools and ints —
+    all of which ``weights_only=True`` supports — so nothing is given up.
+    """
+
+    def test_loader_does_not_unpickle_arbitrary_objects(self):
+        import inspect
+
+        from torchbridge.testing import trace_validator
+
+        source = inspect.getsource(trace_validator.SplitTraceRecord.load)
+        assert "weights_only=True" in source, (
+            "record files come from another machine; loading them with "
+            "weights_only=False allows code execution from a tampered file"
+        )
+
+    def test_a_saved_record_still_round_trips(self, tmp_path):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        rec = SplitTraceRecord(
+            backend="cuda", dtype="float32", autoregressive=True, is_lm=False
+        )
+        rec.token_inputs = [torch.zeros(1, 4)]
+        rec.outputs = [torch.ones(1, 4)]
+        rec.env = {"torch": "2.11.0", "model_fingerprint": "abc"}
+        path = tmp_path / "r.pt"
+        rec.save(str(path))
+
+        back = SplitTraceRecord.load(str(path))
+        assert back.backend == "cuda"
+        assert back.steps == 1
+        assert torch.equal(back.outputs[0], torch.ones(1, 4))
+        assert back.env["model_fingerprint"] == "abc"
+
+
+class TestEnvValuesArePlainStrings:
+    """``_capture_env`` is annotated ``dict[str, str]`` and must hold real strings.
+
+    ``torch.__version__`` is a ``TorchVersion`` object, not a ``str``. Storing it
+    raw both breaks the annotation and makes the saved record unloadable under
+    ``weights_only=True``, because that mode refuses unknown globals.
+    """
+
+    def test_every_captured_value_is_a_str(self):
+        import torch.nn as nn
+
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env = _capture_env(torch.device("cpu"), nn.Linear(2, 2))
+        wrong = {k: type(v).__name__ for k, v in env.items() if type(v) is not str}
+        assert not wrong, wrong
+
+    def test_torch_version_is_captured_as_text(self):
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env = _capture_env(torch.device("cpu"))
+        assert env["torch"] == str(torch.__version__)
+        assert type(env["torch"]) is str
+
+
+class TestDtypeMismatchIsNotSilent:
+    """Two halves recorded under different dtypes must not compare quietly.
+
+    ``compare_records()`` looks the tolerance up from ``record_a.dtype``, so a
+    mismatched pair is judged by the *recording* half's limit while half the
+    data came from a different precision. That is the same silent-wrong-answer
+    shape the vendor check exists to remove, so it raises.
+
+    ``replay()``'s warning also said the lookup would use the replay dtype,
+    which was simply untrue.
+    """
+
+    def _pair(self, dtype_a, dtype_b):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        a = SplitTraceRecord(
+            backend="cuda",
+            dtype=dtype_a,
+            autoregressive=False,
+            is_lm=False,
+            role="record",
+        )
+        b = SplitTraceRecord(
+            backend="rocm",
+            dtype=dtype_b,
+            autoregressive=False,
+            is_lm=False,
+            role="replay",
+        )
+        for rec in (a, b):
+            rec.token_inputs = [torch.zeros(1, 4)]
+            rec.outputs = [torch.zeros(1, 4)]
+            rec.env = {"torch": "2.0", "transformers": "4.0", "model_fingerprint": "x"}
+        return a, b
+
+    def test_mismatched_dtypes_are_refused(self):
+        from torchbridge.testing.trace_validator import compare_records
+
+        with pytest.raises(ValueError, match="dtype"):
+            compare_records(*self._pair("float32", "bfloat16"))
+
+    def test_matching_dtypes_still_compare(self):
+        from torchbridge.testing.trace_validator import compare_records
+
+        assert compare_records(*self._pair("float32", "float32")).final_passed is True
+
+    def test_replay_warning_names_the_recorded_dtype(self):
+        """The message must not claim the replay dtype decides the tolerance."""
+        import inspect
+
+        from torchbridge.testing import trace_validator
+
+        source = inspect.getsource(trace_validator.MultiStepTracer.replay)
+        assert "use the replay dtype" not in source, (
+            "the tolerance comes from record_a.dtype, so this message is wrong"
+        )
+
+
+class TestSplitModeDeviceContract:
+    """The tracer is annotated ``torch.device``, so it must not receive None.
+
+    In record mode backend B is absent locally and in replay mode backend A is,
+    which is the whole point of splitting. Passing the missing side through as
+    None violates the constructor's own contract and only works today because
+    nothing touches the unused half.
+    """
+
+    @staticmethod
+    def _args(**kw):
+        import argparse
+
+        d = {
+            "compare": ["cpu", "rocm"],
+            "trace": True,
+            "steps": 2,
+            "autoregressive": False,
+            "model": None,
+            "input_shape": "1,4",
+            "per_layer": False,
+            "dtype": "float32",
+            "output": None,
+            "trace_output": None,
+            "ci": False,
+            "verbose": False,
+            "model_family": None,
+            "cert": None,
+            "record": None,
+            "replay": None,
+            "compare_records": None,
+        }
+        d.update(kw)
+        return argparse.Namespace(**d)
+
+    def test_record_mode_never_passes_none_as_a_device(self, tmp_path):
+        from unittest.mock import patch
+
+        from torchbridge.cli.validate import ValidateCommand
+        from torchbridge.testing import trace_validator
+
+        seen = {}
+        real = trace_validator.MultiStepTracer
+
+        def _spy(*a, **kw):
+            seen.update(kw)
+            return real(*a, **kw)
+
+        with patch.object(trace_validator, "MultiStepTracer", _spy):
+            ValidateCommand._run_trace(self._args(record=str(tmp_path / "a.pt")))
+
+        assert seen.get("device_a") is not None
+        assert seen.get("device_b") is not None, (
+            "backend B is absent in record mode, but the tracer still needs a device"
+        )

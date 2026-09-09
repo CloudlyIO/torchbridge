@@ -7,16 +7,21 @@ All tests run on CPU — no GPU required.
 
 from __future__ import annotations
 
+import copy
+
 import pytest
 import torch
 import torch.nn as nn
 
 from torchbridge.testing.trace_validator import (
+    RECORD_FORMAT_VERSION,
     MultiStepTracer,
+    SplitTraceRecord,
     TraceStepResult,
     TraceValidationResult,
     _extract_tensor,
     _greedy_token,
+    compare_records,
 )
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -556,6 +561,343 @@ class TestGreedyToken:
         assert token.shape == (batch_size,)
 
 
+# ── Split trace: record / replay / compare ───────────────────────────────────
+
+
+class _FakeLMOutput:
+    def __init__(self, logits: torch.Tensor) -> None:
+        self.logits = logits
+
+
+class _TinyLM(nn.Module):
+    """Deterministic pseudo-LM over token ids, for autoregressive tests."""
+
+    def __init__(self, vocab: int = 37, dim: int = 16, seed: int = 0) -> None:
+        super().__init__()
+        torch.manual_seed(seed)
+        self.emb = nn.Embedding(vocab, dim)
+        self.proj = nn.Linear(dim, vocab)
+
+    def forward(self, input_ids: torch.Tensor) -> _FakeLMOutput:
+        return _FakeLMOutput(self.proj(self.emb(input_ids)))
+
+
+def _perturbed(model: _TinyLM, offset: float = 3e-5) -> _TinyLM:
+    """A copy with slightly shifted weights, standing in for a second backend."""
+    clone = copy.deepcopy(model)
+    with torch.no_grad():
+        clone.proj.weight += offset
+    return clone
+
+
+def _split_tracer(model: nn.Module) -> MultiStepTracer:
+    cpu = torch.device("cpu")
+    return MultiStepTracer(
+        model=model,
+        device_a=cpu,
+        device_b=cpu,
+        backend_a="cuda",
+        backend_b="rocm",
+        dtype="float32",
+        is_lm=True,
+    )
+
+
+class TestSplitTraceEquivalence:
+    """A split trace must reproduce a single-process run exactly, not approximately.
+
+    This is the property that makes cross-vendor comparison possible at all:
+    ``run`` derives the next token only from backend A, so backend B never
+    influences the input trajectory and can be replayed on another machine.
+    """
+
+    def test_record_replay_matches_single_process_run(self):
+        model = _TinyLM()
+        tracer = _split_tracer(model)
+        prompt = torch.randint(0, 37, (1, 6))
+
+        single = tracer.run(prompt.clone(), steps=12, autoregressive=True)
+
+        record = tracer.record(prompt.clone(), steps=12, autoregressive=True)
+        split = compare_records(record, tracer.replay(record))
+
+        assert split.steps == single.steps
+        assert split.max_amplification == single.max_amplification
+        assert split.first_divergence_step == single.first_divergence_step
+        assert split.final_passed == single.final_passed
+        for s_single, s_split in zip(single.step_results, split.step_results):
+            assert s_split.max_diff == s_single.max_diff
+            assert s_split.cumulative_amplification == s_single.cumulative_amplification
+            assert s_split.within_tolerance == s_single.within_tolerance
+
+    def test_matches_ground_truth_under_real_divergence(self):
+        """With two genuinely different models, every metric must still match."""
+        model_a = _TinyLM()
+        model_b = _perturbed(model_a)
+        prompt = torch.randint(0, 37, (1, 6))
+        steps = 15
+
+        # Hand-rolled two-model loop: the definition the split must reproduce.
+        ma = copy.deepcopy(model_a).eval()
+        mb = copy.deepcopy(model_b).eval()
+        current = prompt.clone()
+        expected_diffs = []
+        expected_inputs = []
+        for _ in range(steps):
+            with torch.no_grad():
+                raw_a = ma(input_ids=current)
+                raw_b = mb(input_ids=current)
+            expected_inputs.append(current.clone())
+            expected_diffs.append(
+                float((raw_a.logits[:, -1, :] - raw_b.logits[:, -1, :]).abs().max())
+            )
+            current = torch.cat([current, _greedy_token(raw_a).unsqueeze(-1)], dim=-1)
+
+        record = _split_tracer(model_a).record(
+            prompt.clone(), steps=steps, autoregressive=True
+        )
+        replayed = _split_tracer(model_b).replay(record)
+        result = compare_records(record, replayed)
+
+        assert result.step_results[0].max_diff > 0.0, "divergence must be non-zero"
+        for expected, actual in zip(expected_inputs, record.token_inputs):
+            assert torch.equal(expected, actual)
+        for expected, step in zip(expected_diffs, result.step_results):
+            assert step.max_diff == expected
+
+    def test_backend_names_come_from_the_two_halves(self):
+        model = _TinyLM()
+        tracer = _split_tracer(model)
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        result = compare_records(record, tracer.replay(record))
+        assert result.backend_a == "cuda"
+        assert result.backend_b == "rocm"
+
+
+class TestSplitTraceRoundTrip:
+    def test_save_load_preserves_record(self, tmp_path):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(
+            torch.randint(0, 37, (1, 5)), steps=6, autoregressive=True
+        )
+
+        path = str(tmp_path / "record.pt")
+        record.save(path)
+        loaded = SplitTraceRecord.load(path)
+
+        assert loaded.backend == record.backend
+        assert loaded.dtype == record.dtype
+        assert loaded.autoregressive == record.autoregressive
+        assert loaded.is_lm == record.is_lm
+        assert loaded.env == record.env
+        assert loaded.steps == record.steps
+        for before, after in zip(record.token_inputs, loaded.token_inputs):
+            assert torch.equal(before, after)
+        for before, after in zip(record.outputs, loaded.outputs):
+            assert torch.equal(before, after)
+
+    def test_load_rejects_a_future_format_version(self, tmp_path):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        record.format_version = RECORD_FORMAT_VERSION + 1
+
+        path = str(tmp_path / "future.pt")
+        record.save(path)
+        with pytest.raises(ValueError, match="format"):
+            SplitTraceRecord.load(path)
+
+    def test_steps_property_counts_completed_outputs(self):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=7)
+        assert record.steps == 7 == len(record.outputs)
+
+
+class TestSplitTraceGuards:
+    def test_rejects_halves_fed_different_inputs(self):
+        """A replay that did not follow the record is not a valid comparison."""
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(
+            torch.randint(0, 37, (1, 5)), steps=6, autoregressive=True
+        )
+        replayed = tracer.replay(record)
+        replayed.token_inputs[2] = replayed.token_inputs[2] + 1
+
+        with pytest.raises(ValueError, match="different inputs"):
+            compare_records(record, replayed)
+
+    def test_rejects_the_same_record_used_as_both_halves(self):
+        """Passing one record twice is always meaningless, so it must raise.
+
+        Distinct from two records that merely share a backend name: that pair is
+        the split path's control run and only warns. What cannot be allowed is a
+        follower that was never replayed, because then nothing was compared.
+        """
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        with pytest.raises(ValueError, match="replay"):
+            compare_records(record, record)
+
+    def test_rejects_a_follower_that_is_not_a_replay(self):
+        tracer = _split_tracer(_TinyLM())
+        a = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        b = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        b.backend = "rocm"
+        with pytest.raises(ValueError, match="replay"):
+            compare_records(a, b)
+
+    def test_rejects_empty_records(self):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        empty = SplitTraceRecord(
+            backend="rocm", dtype="float32", autoregressive=False, is_lm=True
+        )
+        with pytest.raises(ValueError, match="at least one completed step"):
+            compare_records(record, empty)
+
+    def test_replay_rejects_an_empty_record(self):
+        tracer = _split_tracer(_TinyLM())
+        empty = SplitTraceRecord(
+            backend="cuda", dtype="float32", autoregressive=False, is_lm=True
+        )
+        with pytest.raises(ValueError, match="no steps to replay"):
+            tracer.replay(empty)
+
+    def test_record_rejects_bad_steps_and_empty_input(self):
+        tracer = _split_tracer(_TinyLM())
+        with pytest.raises(ValueError, match="steps must be >= 1"):
+            tracer.record(torch.randint(0, 37, (1, 4)), steps=0)
+        with pytest.raises(ValueError, match="non-empty"):
+            tracer.record(torch.empty(0, dtype=torch.long), steps=3)
+
+    def test_env_mismatch_warns_by_default_but_still_compares(self, caplog):
+        """A version mismatch must be visible, because it invalidates the result."""
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=4)
+        replayed = tracer.replay(record)
+        replayed.env = {**replayed.env, "torch": "0.0.0-fake"}
+
+        with caplog.at_level("WARNING"):
+            result = compare_records(record, replayed)
+        assert result.steps == 4
+        assert "different environments" in caplog.text
+
+    def test_strict_env_raises_on_version_mismatch(self):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=4)
+        replayed = tracer.replay(record)
+        replayed.env = {**replayed.env, "torch": "0.0.0-fake"}
+
+        with pytest.raises(ValueError, match="different environments"):
+            compare_records(record, replayed, strict_env=True)
+
+    def test_unequal_step_counts_compare_the_common_prefix(self):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(
+            torch.randint(0, 37, (1, 5)), steps=8, autoregressive=True
+        )
+        replayed = tracer.replay(record)
+        del replayed.token_inputs[5:]
+        del replayed.outputs[5:]
+
+        result = compare_records(record, replayed)
+        assert result.steps == 5
+        assert len(result.step_results) == 5
+
+    def test_rejects_reversed_arguments(self):
+        """Order matters: atol comes from record_a's backend, so a swap changes the verdict."""
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=3)
+        replayed = tracer.replay(record)
+
+        with pytest.raises(ValueError, match="reversed"):
+            compare_records(replayed, record)
+
+
+class TestSplitTraceModelFingerprint:
+    """Both halves must have loaded the same weights.
+
+    ``run`` deep-copies one model so this is structural, but a split trace calls
+    ``from_pretrained`` twice on two machines. A checkpoint that drifts between
+    them would masquerade as backend divergence.
+    """
+
+    def test_fingerprint_is_recorded(self):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        assert record.env["model_fingerprint"]
+        assert record.env["model_fingerprint"] != "unavailable"
+
+    def test_identical_weights_produce_identical_fingerprints(self):
+        model = _TinyLM()
+        tracer = _split_tracer(model)
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        replayed = tracer.replay(record)
+        assert record.env["model_fingerprint"] == replayed.env["model_fingerprint"]
+
+    def test_drifted_weights_warn_and_strict_env_raises(self, caplog):
+        model_a = _TinyLM()
+        model_b = _perturbed(model_a)
+        prompt = torch.randint(0, 37, (1, 5))
+
+        record = _split_tracer(model_a).record(prompt, steps=4, autoregressive=True)
+        replayed = _split_tracer(model_b).replay(record)
+
+        assert record.env["model_fingerprint"] != replayed.env["model_fingerprint"], (
+            "a perturbed checkpoint must change the fingerprint"
+        )
+
+        # Warn-level, not fatal: a legitimate cross-backend run may load weights
+        # that differ in the low bits, so the comparison must still be possible.
+        with caplog.at_level("WARNING"):
+            result = compare_records(record, replayed)
+        assert result.steps == 4
+        assert "model_fingerprint" in caplog.text
+
+        with pytest.raises(ValueError, match="model_fingerprint"):
+            compare_records(record, replayed, strict_env=True)
+
+    def test_fingerprint_detects_a_structural_difference(self):
+        """A different shape must change the fingerprint, not just different values."""
+        from torchbridge.testing.trace_validator import _model_fingerprint
+
+        assert _model_fingerprint(_TinyLM(vocab=37, dim=16)) != _model_fingerprint(
+            _TinyLM(vocab=37, dim=24)
+        )
+
+    def test_fingerprint_is_stable_across_calls(self):
+        from torchbridge.testing.trace_validator import _model_fingerprint
+
+        model = _TinyLM()
+        assert _model_fingerprint(model) == _model_fingerprint(model)
+
+
+class TestReportedStepCount:
+    def test_run_reports_steps_actually_measured(self):
+        """An early break must not leave `steps` at the requested count."""
+
+        class _FailsAfterFour(nn.Module):
+            """Raises on its 5th forward call.
+
+            The tracer deep-copies the model per device, so each copy keeps its
+            own counter — 4 steps complete, then step 5 breaks the loop.
+            """
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.calls = 0
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                self.calls += 1
+                if self.calls > 4:
+                    raise RuntimeError("simulated backend failure")
+                return x
+
+        tracer = _make_tracer(_FailsAfterFour())
+        result = tracer.run(torch.randn(1, 4), steps=10)
+        assert result.steps == len(result.step_results) == 4
+        assert result.steps != 10, "must not report the requested count"
+
+
 class TestModelFamilyReachesToleranceDB:
     """The 3D tolerance table is useless if the family never reaches the lookup.
 
@@ -788,3 +1130,82 @@ class TestToleranceLookupUsesKeywordArgument:
         _lookup_tolerance(_RecordingDB(), "cuda", "float32", None)
         _lookup_tolerance(_RecordingDB(), "cuda", "float32", "decoder-large")
         assert seen == [None, "decoder-large"]
+
+
+class TestOfflineCompareRecordsProvenance:
+    """The split path backs the cross-vendor claim, so it needs the same audit
+    trail as the in-process path: which family, and which atol it selected."""
+
+    def _records(self):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        common = {"dtype": "float32", "autoregressive": False, "is_lm": False}
+        a = SplitTraceRecord(backend="cuda", role="record", **common)
+        b = SplitTraceRecord(backend="rocm", role="replay", **common)
+        for rec in (a, b):
+            rec.token_inputs = [torch.zeros(1, 4)]
+            rec.env = {"torch": "2.0", "transformers": "4.0", "model_fingerprint": "x"}
+        a.outputs = [torch.zeros(1, 4)]
+        b.outputs = [torch.zeros(1, 4)]
+        return a, b
+
+    def test_family_is_recorded(self):
+        from torchbridge.testing.trace_validator import compare_records
+
+        a, b = self._records()
+        d = compare_records(a, b, model_family="decoder-large").to_dict()
+        assert d["model_family"] == "decoder-large"
+
+    def test_atol_is_recorded(self):
+        from torchbridge.testing.trace_validator import compare_records
+
+        a, b = self._records()
+        d = compare_records(a, b, model_family="decoder-large").to_dict()
+        assert d["atol"] is not None and d["atol"] > 0
+
+
+class TestSameBackendComparisonIsAllowedWithAWarning:
+    """Comparing two records from the same backend is the split-path control run.
+
+    It proves record-and-replay adds no error of its own: the same backend on
+    both sides must agree exactly. Refusing it outright removes that check, so it
+    warns instead — the warning still catches the real mistake of pairing two
+    records from one machine by accident.
+    """
+
+    def _records(self, backend_a, backend_b):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        common = {"dtype": "float32", "autoregressive": False, "is_lm": False}
+        a = SplitTraceRecord(backend=backend_a, role="record", **common)
+        b = SplitTraceRecord(backend=backend_b, role="replay", **common)
+        for rec in (a, b):
+            rec.token_inputs = [torch.zeros(1, 4)]
+            rec.outputs = [torch.zeros(1, 4)]
+            rec.env = {"torch": "2.0", "transformers": "4.0", "model_fingerprint": "x"}
+        return a, b
+
+    def test_same_backend_comparison_succeeds(self):
+        from torchbridge.testing.trace_validator import compare_records
+
+        result = compare_records(*self._records("cpu", "cpu"))
+        assert result.final_passed is True
+        assert result.first_divergence_step is None
+
+    def test_same_backend_comparison_warns(self, caplog):
+        import logging
+
+        from torchbridge.testing.trace_validator import compare_records
+
+        with caplog.at_level(logging.WARNING):
+            compare_records(*self._records("cpu", "cpu"))
+        assert any("same backend" in r.message.lower() for r in caplog.records)
+
+    def test_different_backends_do_not_warn(self, caplog):
+        import logging
+
+        from torchbridge.testing.trace_validator import compare_records
+
+        with caplog.at_level(logging.WARNING):
+            compare_records(*self._records("cuda", "rocm"))
+        assert not any("same backend" in r.message.lower() for r in caplog.records)

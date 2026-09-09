@@ -27,11 +27,26 @@
   included in `to_dict()`, so a saved run records which limit judged it. They
   are appended after `final_passed`, leaving the positional constructor
   signature unchanged for existing callers.
+- **`core/hardware_detector.py`**: `is_rocm_build()` as the single source of
+  truth for whether torch was built against ROCm.
+- **`cli/validate.py`**: `resolve_backend_device()`,
+  `explain_unavailable_backend()` and `same_device_pair()` as module-level
+  functions, replacing two duplicated nested resolvers.
+- **`trace_validator.py`**: split trace support — `SplitTraceRecord`, `record()`,
+  `replay()` and `compare_records()`, for comparing backends that cannot share a
+  machine.
+- **`cli/validate.py`**: `--record`, `--replay` and `--compare-records` flags for
+  the split trace workflow. `--compare-records` needs no accelerator.
 
 ### Changed
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
   caller-supplied tolerance database must now accept the third argument;
   `ToleranceDB` already declared it optional.
+- **`trace_validator.py`**: `SplitTraceRecord.load()` uses `weights_only=True`.
+  A record arrives from another machine, so it is untrusted input.
+- **`trace_validator.py`**: two records sharing a backend name now warn instead
+  of raising, since that is the split path's control run. A follower whose role
+  is not `replay` still raises.
 
 ### Fixed
 - **Trace tolerance**: traces were judged against the strictest tolerance row
@@ -40,6 +55,12 @@
   that model's tolerance.
 - **Unknown `--model-family`**: a mistyped value was silently accepted and the
   coarse tolerance row applied. It is now refused, with the valid names listed.
+- **`--compare cuda rocm`**: both halves resolved to the same device, so the run
+  compared one GPU against itself and reported near-zero divergence with no
+  error. A ROCm build exposes AMD GPUs through the `cuda` device type, so the
+  device object cannot distinguish the vendors.
+- **`--compare rocm gpu` / `--compare cuda gpu`**: the same collision through the
+  `gpu` alias.
 
 ---
 

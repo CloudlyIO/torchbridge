@@ -52,14 +52,99 @@ def non_decoder_trait(model: Any) -> str | None:
     return None
 
 
+def _is_rocm_build() -> bool:
+    """True when this torch was built against ROCm rather than CUDA.
+
+    ROCm builds expose AMD GPUs through the ``cuda`` device type, so the device
+    object alone cannot tell the two vendors apart. ``torch.version.hip`` is set
+    only on a ROCm build, which makes it the one reliable discriminator.
+    """
+    from torchbridge.core.hardware_detector import is_rocm_build
+
+    return is_rocm_build()
+
+
+def resolve_backend_device(name: str) -> torch.device | None:
+    """Resolve a backend name to a device, or ``None`` if unavailable here.
+
+    ``cuda`` and ``rocm`` both map to ``torch.device("cuda")`` because a ROCm
+    build reuses that device type for AMD hardware, and a torch install is built
+    against one vendor or the other — never both. Accepting either name on
+    either build would let ``--compare cuda rocm`` resolve both halves to the
+    same physical GPU: divergence collapses to ~0, every step passes, and
+    nothing in the report reveals it. Each vendor name is therefore refused on
+    the other vendor's build. ``gpu`` stays deliberately neutral and means
+    "whichever accelerator this machine has".
+
+    Args:
+        name: Backend name as typed on the command line, any case.
+
+    Returns:
+        The device to run on, or ``None`` when this machine cannot provide it.
+        Callers turn ``None`` into a user-facing error.
+    """
+    name = name.lower()
+    if name in ("cuda", "rocm", "gpu"):
+        if not torch.cuda.is_available():
+            return None
+        rocm_build = _is_rocm_build()
+        if name == "cuda" and rocm_build:
+            return None
+        if name == "rocm" and not rocm_build:
+            return None
+        return torch.device("cuda")
+    if name == "mps":
+        if not (hasattr(torch.backends, "mps") and torch.backends.mps.is_available()):
+            return None
+        return torch.device("mps")
+    if name in ("trainium", "neuron"):
+        try:
+            import torch_neuronx  # noqa: F401
+
+            return torch.device("xla")
+        except ImportError:
+            return None
+    if name == "cpu":
+        return torch.device("cpu")
+    return None  # unknown
+
+
+def explain_unavailable_backend(name: str) -> str:
+    """Explain why :func:`resolve_backend_device` refused ``name``.
+
+    The bare "not available" wording is actively misleading for the vendor
+    mismatch: the machine does have a GPU, it is simply the other vendor's. The
+    cross-vendor case also has a real answer — the split record/replay trace —
+    so the message points at it rather than leaving a dead end.
+    """
+    name = name.lower()
+    if name in ("cuda", "rocm") and torch.cuda.is_available():
+        rocm_build = _is_rocm_build()
+        mismatch: tuple[str, str] | None = None
+        if name == "cuda" and rocm_build:
+            mismatch = ("ROCm/AMD", "cuda")
+        elif name == "rocm" and not rocm_build:
+            mismatch = ("CUDA/NVIDIA", "rocm")
+        if mismatch is not None:
+            have, want = mismatch
+            return (
+                f"Backend '{want}' cannot run here: this is a {have} build of torch. "
+                f"One torch install targets one vendor, and both expose GPUs as "
+                f"device 'cuda', so a single process cannot drive both — record one "
+                f"side and replay it on the other machine."
+            )
+    return f"Backend '{name}' not available on this machine."
+
+
 def infer_model_family(model: Any) -> str | None:
     """Work out the tolerance family from a loaded model's parameter count.
 
-    ToleranceDB documents its own size boundaries — under 2B parameters is
-    decoder-small, 2B to 20B is decoder-medium, above that decoder-large — so
-    the family is derivable and does not need typing. It is worth deriving: an
-    omitted --model-family silently selects the strictest row, which is the
-    original bug arriving by way of a forgotten flag.
+    ``ToleranceDB`` documents its own size boundaries — under 2B parameters is
+    ``decoder-small``, 2B to 20B is ``decoder-medium``, above that
+    ``decoder-large`` — so the family is derivable and does not need typing. It
+    is worth deriving: an omitted ``--model-family`` silently selects the
+    strictest row, which is the original bug arriving by way of a forgotten
+    flag.
 
     Only the dense decoder families are inferred, and :func:`non_decoder_trait`
     enforces that rather than leaving it to the docstring. An encoder or a
@@ -84,17 +169,35 @@ def infer_model_family(model: Any) -> str | None:
     return "decoder-large"
 
 
+def _split_trace_mode(args) -> str:
+    """Which half of a split trace this invocation is, if any.
+
+    Returns ``"record"``, ``"replay"``, ``"compare_records"`` or ``"none"``.
+    """
+    if getattr(args, "compare_records", None):
+        return "compare_records"
+    # --replay wins when both are given: that combination means "replay this
+    # record, keep my half in the --record file, and compare". Keeping the second
+    # half is what allows a later offline re-comparison once the rented machine
+    # is gone.
+    if getattr(args, "replay", None):
+        return "replay"
+    if getattr(args, "record", None):
+        return "record"
+    return "none"
+
+
 def resolve_family_for_run(args, model: Any) -> tuple[str | None, str | None]:
     """Pick the family for this run: what was asked for, else what can be derived.
 
-    An explicit --model-family always wins — the operator may know something a
-    parameter count cannot show, such as an MoE model's active size. Only when
+    An explicit ``--model-family`` always wins — the operator may know something
+    a parameter count cannot show, such as an MoE model's active size. Only when
     nothing was given is the family inferred, and the caller reports what was
     chosen so the run is never judged by a limit nobody saw.
 
     Returns:
-        (family, note). ``note`` is a line to print when the value was inferred
-        rather than supplied, otherwise None.
+        ``(family, note)``. ``note`` is a line to print when the value was
+        inferred rather than supplied, otherwise ``None``.
     """
     explicit = getattr(args, "model_family", None)
     if explicit is not None:
@@ -118,10 +221,10 @@ def resolve_family_for_run(args, model: Any) -> tuple[str | None, str | None]:
 def validate_model_family(name: str | None) -> str | None:
     """Return an error message if ``name`` is not a family the database knows.
 
-    ToleranceDB.get answers an unknown family with the coarse (backend, dtype)
-    row and gives no indication that it did, so a single mistyped character
-    quietly applies the wrong tolerance. Refusing up front keeps that failure
-    visible instead of folding it into the result.
+    ``ToleranceDB.get`` answers an unknown family with the coarse
+    ``(backend, dtype)`` row and gives no indication that it did, so a single
+    mistyped character quietly applies the wrong tolerance. Refusing up front
+    keeps that failure visible instead of folding it into the result.
     """
     if name is None:
         return None
@@ -135,6 +238,28 @@ def validate_model_family(name: str | None) -> str | None:
         f"to the coarser (backend, dtype) row without saying so. "
         f"Valid families: {', '.join(sorted(known))}"
     )
+
+
+def same_device_pair(name_a: str, name_b: str) -> bool:
+    """True when two *different* backend names resolve to one physical device.
+
+    Refusing ``cuda`` on an AMD build closes ``--compare cuda rocm``, but ``gpu``
+    is an alias for whatever accelerator is present, so ``--compare rocm gpu``
+    re-opens the same hole under another name: both halves run on one GPU,
+    divergence collapses to ~0 and every step passes.
+
+    An explicit self-pair is deliberate — ``--compare cpu cpu`` is the control
+    run that proves the tracer adds no noise of its own — so identical names are
+    never flagged. A pair that cannot resolve is the caller's existing
+    "not available" error and is not this function's concern.
+    """
+    if name_a.lower() == name_b.lower():
+        return False
+    dev_a = resolve_backend_device(name_a)
+    dev_b = resolve_backend_device(name_b)
+    if dev_a is None or dev_b is None:
+        return False
+    return dev_a == dev_b
 
 
 def _load_model_file(path: str) -> nn.Module:
@@ -346,13 +471,48 @@ Examples:
         )
 
         parser.add_argument(
+            "--record",
+            type=str,
+            metavar="FILE",
+            default=None,
+            help=(
+                "Split trace: run only the first backend of --compare and save its "
+                "step-by-step record to FILE (requires --trace). Use on the machine "
+                "that has that backend, then --replay the file on the other one."
+            ),
+        )
+
+        parser.add_argument(
+            "--replay",
+            type=str,
+            metavar="FILE",
+            default=None,
+            help=(
+                "Split trace: replay a --record file on the second backend of "
+                "--compare and report the comparison (requires --trace)."
+            ),
+        )
+
+        parser.add_argument(
+            "--compare-records",
+            nargs=2,
+            metavar=("FILE_A", "FILE_B"),
+            dest="compare_records",
+            default=None,
+            help=(
+                "Compare two saved --record files offline. Needs no accelerator "
+                "(requires --trace)."
+            ),
+        )
+
+        parser.add_argument(
             "--model-family",
             type=str,
             metavar="FAMILY",
             default=None,
             dest="model_family",
             help=(
-                "Model family for tolerance lookup with --compare "
+                "Model family for tolerance lookup, used by both --compare and --trace "
                 "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
                 "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
                 "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
@@ -487,30 +647,6 @@ Examples:
         ci_mode = getattr(args, "ci", False)
         dtype = getattr(torch, dtype_str)
 
-        # Resolve backend names → torch.device
-        def _resolve_device(name: str) -> torch.device | None:
-            name = name.lower()
-            if name in ("cuda", "rocm", "gpu"):
-                if not torch.cuda.is_available():
-                    return None
-                return torch.device("cuda")
-            if name == "mps":
-                if not (
-                    hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
-                ):
-                    return None
-                return torch.device("mps")
-            if name in ("trainium", "neuron"):
-                try:
-                    import torch_neuronx  # noqa: F401
-
-                    return torch.device("xla")
-                except ImportError:
-                    return None
-            if name == "cpu":
-                return torch.device("cpu")
-            return None  # unknown
-
         family_error = validate_model_family(getattr(args, "model_family", None))
         if family_error:
             if ci_mode:
@@ -519,11 +655,11 @@ Examples:
                 print(f"Error: {family_error}")
             return 1
 
-        dev1 = _resolve_device(backend1)
-        dev2 = _resolve_device(backend2)
+        dev1 = resolve_backend_device(backend1)
+        dev2 = resolve_backend_device(backend2)
 
         if dev1 is None:
-            msg = f"Backend '{backend1}' not available on this machine."
+            msg = explain_unavailable_backend(backend1)
             if ci_mode:
                 print(json.dumps({"error": msg, "backend": backend1}))
             else:
@@ -531,9 +667,22 @@ Examples:
             return 1
 
         if dev2 is None:
-            msg = f"Backend '{backend2}' not available on this machine."
+            msg = explain_unavailable_backend(backend2)
             if ci_mode:
                 print(json.dumps({"error": msg, "backend": backend2}))
+            else:
+                print(f"Error: {msg}")
+            return 1
+
+        if same_device_pair(backend1, backend2):
+            msg = (
+                f"'{backend1}' and '{backend2}' resolve to the same device on this "
+                f"machine, so this would compare it against itself and report ~0 "
+                f"divergence. Use two genuinely different backends, or record one "
+                f"side and replay it on the other machine."
+            )
+            if ci_mode:
+                print(json.dumps({"error": msg}))
             else:
                 print(f"Error: {msg}")
             return 1
@@ -698,6 +847,9 @@ Examples:
             "cosine_sim": cos_sim,
             "tolerance_atol": tol.atol,
             "tolerance_rtol": tol.rtol,
+            # The verdict uses atol alone. Naming the rule stops the rtol value
+            # above from reading as though it had been part of the decision.
+            "tolerance_rule": "atol_only",
             "passed": passed,
             "duration_ms": round(duration_ms, 3),
             "per_layer": layer_rows,
@@ -725,7 +877,9 @@ Examples:
                 else ""
             )
             print(
-                f"  Tolerance  : atol={tol.atol:.0e}  rtol={tol.rtol:.0e}  ({b1_key}/{dtype_str}){tol_annotation}"
+                f"  Tolerance  : atol={tol.atol:.0e} (applied)  "
+                f"rtol={tol.rtol:.0e} (not applied)  "
+                f"({b1_key}/{dtype_str}){tol_annotation}"
             )
             print(f"  Duration   : {duration_ms:.1f}ms")
             print(f"  Status     : {status_str}")
@@ -790,6 +944,85 @@ Examples:
         return 0 if passed else 1
 
     @staticmethod
+    def _compare_saved_records(args) -> int:
+        """Compare two saved --record files. Needs no accelerator at all.
+
+        The offline half of the split workflow: both machines can be gone by the
+        time this runs, which is the point — rented instances are destroyed right
+        after their half is recorded.
+        """
+        import json as _json
+
+        from torchbridge.testing.trace_validator import (
+            SplitTraceRecord,
+            compare_records,
+        )
+
+        ci_mode = getattr(args, "ci", False)
+        path_a, path_b = args.compare_records
+
+        def _fail(message: str) -> int:
+            if ci_mode:
+                print(_json.dumps({"error": message}))
+            else:
+                print(f"Error: {message}")
+            return 1
+
+        records = []
+        for path in (path_a, path_b):
+            try:
+                records.append(SplitTraceRecord.load(path))
+            except Exception as exc:
+                return _fail(f"Could not read record file {path}: {exc}")
+
+        family_error = validate_model_family(getattr(args, "model_family", None))
+        if family_error:
+            return _fail(family_error)
+
+        try:
+            result = compare_records(
+                records[0],
+                records[1],
+                model_family=getattr(args, "model_family", None),
+            )
+        except Exception as exc:
+            return _fail(f"Comparison failed: {exc}")
+
+        result_dict = result.to_dict()
+        result_dict["record_a"] = Path(path_a).name
+        result_dict["record_b"] = Path(path_b).name
+
+        output_path = getattr(args, "trace_output", None) or getattr(
+            args, "output", None
+        )
+        if output_path:
+            try:
+                Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "w") as f:
+                    _json.dump(result_dict, f, indent=2)
+            except Exception as exc:
+                logger.warning("Could not save result to %s: %s", output_path, exc)
+
+        if ci_mode:
+            print(_json.dumps(result_dict))
+        else:
+            print(
+                f"Offline comparison: {records[0].backend} vs {records[1].backend}"
+                f"  ({result.steps} steps, {result.dtype})"
+            )
+            if result.first_divergence_step is not None:
+                print(f"First divergence at step : {result.first_divergence_step}")
+            else:
+                print("First divergence at step : None (all steps passed)")
+            print(f"Max amplification        : {result.max_amplification:.1f}x")
+            print(
+                f"Status                   : "
+                f"{'PASSED' if result.final_passed else 'FAILED'}"
+            )
+
+        return 0 if result.final_passed else 1
+
+    @staticmethod
     def _run_trace(args) -> int:
         """Execute multi-step trace validation and return exit code."""
         import torch.nn as nn
@@ -805,6 +1038,18 @@ Examples:
         output_path = getattr(args, "output", None)
         trace_output_path = getattr(args, "trace_output", None)
         ci_mode = getattr(args, "ci", False)
+        split_mode = _split_trace_mode(args)
+
+        def _fail(message: str) -> int:
+            if ci_mode:
+                print(json.dumps({"error": message}))
+            else:
+                print(f"Error: {message}")
+            return 1
+
+        if split_mode == "compare_records":
+            return ValidateCommand._compare_saved_records(args)
+
         dtype = getattr(torch, dtype_str)
 
         # Validate steps range
@@ -816,30 +1061,6 @@ Examples:
                 print(f"Error: {msg}")
             return 1
 
-        # Resolve backend names → torch.device (same logic as _run_compare)
-        def _resolve_device(name: str) -> torch.device | None:
-            name = name.lower()
-            if name in ("cuda", "rocm", "gpu"):
-                if not torch.cuda.is_available():
-                    return None
-                return torch.device("cuda")
-            if name == "mps":
-                if not (
-                    hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
-                ):
-                    return None
-                return torch.device("mps")
-            if name in ("trainium", "neuron"):
-                try:
-                    import torch_neuronx  # noqa: F401
-
-                    return torch.device("xla")
-                except ImportError:
-                    return None
-            if name == "cpu":
-                return torch.device("cpu")
-            return None
-
         family_error = validate_model_family(getattr(args, "model_family", None))
         if family_error:
             if ci_mode:
@@ -848,24 +1069,26 @@ Examples:
                 print(f"Error: {family_error}")
             return 1
 
-        dev_a = _resolve_device(backend_a)
-        dev_b = _resolve_device(backend_b)
+        dev_a = resolve_backend_device(backend_a)
+        dev_b = resolve_backend_device(backend_b)
 
-        if dev_a is None:
-            msg = f"Backend '{backend_a}' not available on this machine."
-            if ci_mode:
-                print(json.dumps({"error": msg, "backend": backend_a}))
-            else:
-                print(f"Error: {msg}")
-            return 1
+        # Which backends must exist here depends on the mode. A split trace runs
+        # on two machines precisely because the pair cannot coexist, so demanding
+        # both would make the workflow impossible on the machines it is for:
+        # record uses backend A only, replay uses backend B only.
+        if split_mode != "replay" and dev_a is None:
+            return _fail(explain_unavailable_backend(backend_a))
 
-        if dev_b is None:
-            msg = f"Backend '{backend_b}' not available on this machine."
-            if ci_mode:
-                print(json.dumps({"error": msg, "backend": backend_b}))
-            else:
-                print(f"Error: {msg}")
-            return 1
+        if split_mode != "record" and dev_b is None:
+            return _fail(explain_unavailable_backend(backend_b))
+
+        if split_mode == "none" and same_device_pair(backend_a, backend_b):
+            return _fail(
+                f"'{backend_a}' and '{backend_b}' resolve to the same device on this "
+                f"machine, so this would compare it against itself and report ~0 "
+                f"divergence. Use two genuinely different backends, or record one "
+                f"side and replay it on the other machine."
+            )
 
         # Load model
         is_lm = False
@@ -918,10 +1141,17 @@ Examples:
             # --ci consumers parse stdout as JSON, so nothing else may be printed.
             print(family_note)
 
+        # In a split trace one backend is absent locally by design: record uses
+        # only backend A, replay only backend B. The tracer is annotated
+        # torch.device, so the unused side gets CPU as a placeholder rather than
+        # None. It is never touched — record() reads device_a, replay() reads
+        # device_b — but passing None would break the constructor's contract and
+        # would fail the moment anything else looked at the other half.
+        _unused_side = torch.device("cpu")
         tracer = MultiStepTracer(
             model=model,
-            device_a=dev_a,
-            device_b=dev_b,
+            device_a=dev_a if dev_a is not None else _unused_side,
+            device_b=dev_b if dev_b is not None else _unused_side,
             backend_a=backend_a,
             backend_b=backend_b,
             dtype=dtype_str,
@@ -933,7 +1163,53 @@ Examples:
         )
 
         try:
-            result = tracer.run(input_ids=x, steps=steps, autoregressive=autoregressive)
+            if split_mode == "record":
+                rec = tracer.record(
+                    input_ids=x, steps=steps, autoregressive=autoregressive
+                )
+                rec.save(args.record)
+                if ci_mode:
+                    print(
+                        json.dumps(
+                            {
+                                "mode": "record",
+                                "backend": rec.backend,
+                                "dtype": rec.dtype,
+                                "steps": rec.steps,
+                                "file": args.record,
+                            }
+                        )
+                    )
+                else:
+                    print(
+                        f"Recorded {rec.steps} step(s) of '{rec.backend}' to "
+                        f"{args.record}\nReplay it on the other machine with:\n"
+                        f"  tb-validate --compare {backend_a} {backend_b} --trace "
+                        f"--steps {steps} --replay {args.record}"
+                    )
+                return 0
+
+            if split_mode == "replay":
+                from torchbridge.testing.trace_validator import (
+                    SplitTraceRecord,
+                    compare_records,
+                )
+
+                try:
+                    leader = SplitTraceRecord.load(args.replay)
+                except Exception as exc:
+                    return _fail(f"Could not read record file {args.replay}: {exc}")
+
+                follower = tracer.replay(leader)
+                if getattr(args, "record", None):
+                    follower.save(args.record)
+                    if not ci_mode:
+                        print(f"Saved this half to {args.record}")
+                result = compare_records(leader, follower, model_family=trace_family)
+            else:
+                result = tracer.run(
+                    input_ids=x, steps=steps, autoregressive=autoregressive
+                )
         except Exception as e:
             msg = f"Trace failed: {e}"
             if ci_mode:
@@ -1706,13 +1982,48 @@ def main():
     )
 
     parser.add_argument(
+        "--record",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help=(
+            "Split trace: run only the first backend of --compare and save its "
+            "step-by-step record to FILE (requires --trace). Use on the machine "
+            "that has that backend, then --replay the file on the other one."
+        ),
+    )
+
+    parser.add_argument(
+        "--replay",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help=(
+            "Split trace: replay a --record file on the second backend of "
+            "--compare and report the comparison (requires --trace)."
+        ),
+    )
+
+    parser.add_argument(
+        "--compare-records",
+        nargs=2,
+        metavar=("FILE_A", "FILE_B"),
+        dest="compare_records",
+        default=None,
+        help=(
+            "Compare two saved --record files offline. Needs no accelerator "
+            "(requires --trace)."
+        ),
+    )
+
+    parser.add_argument(
         "--model-family",
         type=str,
         metavar="FAMILY",
         default=None,
         dest="model_family",
         help=(
-            "Model family for tolerance lookup with --compare "
+            "Model family for tolerance lookup, used by both --compare and --trace "
             "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
             "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
             "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
