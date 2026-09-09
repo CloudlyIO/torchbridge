@@ -40,6 +40,15 @@
 - **`SplitTraceRecord`**: `model_family` is stored in the artifact, so an
   offline `compare_records()` applies the same tolerance the recording run did
   instead of falling back to the coarse row.
+- **`cli/validate.py`**: `tpu` and `xla` accepted as backend names, gated on
+  `torch_xla`. Without them a rented TPU could not be selected at all.
+- **`trace_validator.py`**: `_xla_is_cpu_backed()`; the XLA-to-CPU substitution
+  now happens only when `PJRT_DEVICE=CPU`.
+- **`TraceValidationResult`**: `rtol`, `tolerance_rule`, `input`, `env_a` and
+  `env_b` fields, included in `to_dict()`. A result now records the real device,
+  the library versions, a weight fingerprint and a description of the input.
+- **`scripts/paper/build_tables.py`**: renders trace result files as a Markdown
+  table. Tolerates result files written before the provenance fields existed.
 
 ### Changed
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
@@ -80,6 +89,15 @@
 - **`trace_validator.py`**: two records sharing a backend name now warn instead
   of raising, since that is the split path's control run. A follower whose role
   is not `replay` still raises.
+- **`trace_validator.py`**: backend aliases share one tolerance key — `neuron`
+  with `trainium` and `tpu` with `xla`, so the tolerance no longer depends on
+  which alias was typed. `gpu` follows the local build: the `rocm` key on a
+  ROCm torch, the `cuda` key otherwise, because the same name means a different
+  vendor's chip on each.
+- **`trace_validator.py`**: a tolerance whose source is `fallback` now warns, so
+  a verdict resting on an unmeasured default says so.
+- **`cli/validate.py`**: the `--compare` tolerance line marks `atol` as applied
+  and `rtol` as not applied. `rtol` is still not used in the verdict.
 
 ### Fixed
 - **Trace tolerance**: traces were judged against the strictest tolerance row
@@ -94,6 +112,16 @@
   device object cannot distinguish the vendors.
 - **`--compare rocm gpu` / `--compare cuda gpu`**: the same collision through the
   `gpu` alias.
+- **XLA runs**: both model copies were moved to the CPU whenever the device type
+  was `xla`, without checking whether the XLA device was actually CPU-backed. A
+  TPU or Trainium run therefore reported CPU-versus-CPU zeros under the
+  accelerator's name.
+- **Tolerance for `tpu` and `neuron`**: neither had a table entry, so both fell
+  back to an unmeasured default while `xla` and `trainium` had measured values
+  for the same hardware.
+- **Result files**: recorded only the backend name typed by the caller, with no
+  record of the real hardware, the library versions, the input, or the tolerance
+  that produced the verdict.
 
 ---
 

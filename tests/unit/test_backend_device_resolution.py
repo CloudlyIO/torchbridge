@@ -341,3 +341,56 @@ class TestOneSharedVendorCheck:
             assert is_rocm_build() is False
         with patch.object(torch.version, "hip", "6.0.32830", create=True):
             assert is_rocm_build() is True
+
+
+class TestTpuAndXlaNames:
+    """The CLI must be able to name a TPU at all.
+
+    Before this, the accepted names were cuda, rocm, gpu, mps, trainium, neuron
+    and cpu. A rented TPU could not be addressed, and the workaround — passing
+    ``trainium`` — wrote the wrong hardware name into the results file.
+    """
+
+    @contextmanager
+    def _torch_xla_installed(self, present: bool):
+        import sys
+
+        with patch.dict(sys.modules, {"torch_xla": object() if present else None}):
+            yield
+
+    def test_tpu_resolves_when_torch_xla_is_present(self):
+        with self._torch_xla_installed(True):
+            assert resolve_backend_device("tpu") == torch.device("xla")
+
+    def test_xla_resolves_when_torch_xla_is_present(self):
+        with self._torch_xla_installed(True):
+            assert resolve_backend_device("xla") == torch.device("xla")
+
+    def test_tpu_is_refused_without_torch_xla(self):
+        with self._torch_xla_installed(False):
+            assert resolve_backend_device("tpu") is None
+
+    def test_name_is_case_insensitive(self):
+        with self._torch_xla_installed(True):
+            assert resolve_backend_device("TPU") == torch.device("xla")
+
+    def test_tpu_and_trainium_are_flagged_as_one_device(self):
+        """On one machine they are the same device, so pairing them is refused.
+
+        Both accelerator paths must be importable for this to be a real pair —
+        trainium needs torch_neuronx, tpu needs torch_xla.
+        """
+        import sys
+
+        from torchbridge.cli.validate import same_device_pair
+
+        with patch.dict(
+            sys.modules, {"torch_xla": object(), "torch_neuronx": object()}
+        ):
+            assert same_device_pair("tpu", "trainium") is True
+
+    def test_tpu_against_cpu_is_a_real_pair(self):
+        from torchbridge.cli.validate import same_device_pair
+
+        with self._torch_xla_installed(True):
+            assert same_device_pair("tpu", "cpu") is False

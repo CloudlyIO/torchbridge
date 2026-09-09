@@ -104,6 +104,17 @@ def resolve_backend_device(name: str) -> torch.device | None:
             return torch.device("xla")
         except ImportError:
             return None
+    if name in ("tpu", "xla"):
+        # A TPU is reached through torch_xla, the same device type Trainium uses.
+        # Without these names a rented TPU could not be addressed at all, and the
+        # workaround — passing "trainium" — wrote the wrong hardware into the
+        # results file.
+        try:
+            import torch_xla  # noqa: F401
+
+            return torch.device("xla")
+        except ImportError:
+            return None
     if name == "cpu":
         return torch.device("cpu")
     return None  # unknown
@@ -451,7 +462,7 @@ Examples:
             "--compare",
             nargs=2,
             metavar=("BACKEND1", "BACKEND2"),
-            help="Compare model outputs across two backends (e.g. --compare cuda cpu)",
+            help="Compare model outputs across two backends (e.g. --compare cuda cpu). Names: cuda, rocm, gpu, mps, tpu, xla, trainium, neuron, cpu",
         )
 
         parser.add_argument(
@@ -2039,7 +2050,7 @@ def main():
         "--compare",
         nargs=2,
         metavar=("BACKEND1", "BACKEND2"),
-        help="Compare model outputs across two backends (e.g. --compare cuda cpu)",
+        help="Compare model outputs across two backends (e.g. --compare cuda cpu). Names: cuda, rocm, gpu, mps, tpu, xla, trainium, neuron, cpu",
     )
 
     parser.add_argument(
