@@ -81,6 +81,15 @@ class TraceValidationResult:
     dtype: str
     autoregressive: bool
 
+    model_family: str | None = None
+    """Family used for the tolerance lookup, or None if the coarse table was used."""
+
+    atol: float | None = None
+    """The absolute tolerance actually applied — it decides every verdict below."""
+
+    atol_source: str | None = None
+    """Where that tolerance came from: measured, derived, or fallback."""
+
     step_results: list[TraceStepResult] = field(default_factory=list)
 
     first_divergence_step: int | None = None
@@ -100,6 +109,11 @@ class TraceValidationResult:
             "steps": self.steps,
             "dtype": self.dtype,
             "autoregressive": self.autoregressive,
+            # Without these a saved run cannot be re-checked: the family selects
+            # the tolerance, and the tolerance decides pass/fail.
+            "model_family": self.model_family,
+            "atol": self.atol,
+            "atol_source": self.atol_source,
             "first_divergence_step": self.first_divergence_step,
             "max_amplification": self.max_amplification,
             "final_passed": self.final_passed,
@@ -131,6 +145,9 @@ class MultiStepTracer:
             (HuggingFace-style). If False, model output is used directly.
         tolerance_db: Custom tolerance database. Defaults to the built-in
             empirically calibrated database.
+        model_family: Optional model-family string (e.g. "decoder-large") used
+            for the 3D ToleranceDB lookup. When omitted the lookup falls back to
+            the coarser (backend, dtype) table.
     """
 
     def __init__(
@@ -143,6 +160,7 @@ class MultiStepTracer:
         dtype: str = "float32",
         is_lm: bool = False,
         tolerance_db: ToleranceDB | None = None,
+        model_family: str | None = None,
     ) -> None:
         self._model = model
         self._device_a = device_a
@@ -152,6 +170,7 @@ class MultiStepTracer:
         self._dtype = dtype.lower()
         self._is_lm = is_lm
         self._tol_db = tolerance_db if tolerance_db is not None else ToleranceDB()
+        self._model_family = model_family
 
     def run(
         self,
@@ -182,7 +201,9 @@ class MultiStepTracer:
                 "input_ids must be non-empty (got a tensor with 0 elements)"
             )
 
-        tol = self._tol_db.get(self._backend_a, self._dtype)
+        tol = _lookup_tolerance(
+            self._tol_db, self._backend_a, self._dtype, self._model_family
+        )
 
         result = TraceValidationResult(
             backend_a=self._backend_a,
@@ -190,6 +211,9 @@ class MultiStepTracer:
             steps=steps,
             dtype=self._dtype,
             autoregressive=autoregressive,
+            model_family=self._model_family,
+            atol=float(tol.atol),
+            atol_source=getattr(tol, "source", None),
         )
 
         # Prepare independent model copies on each device.
@@ -303,6 +327,26 @@ class MultiStepTracer:
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _lookup_tolerance(
+    db: Any, backend: str, dtype: str, model_family: str | None
+) -> Any:
+    """Look up a tolerance entry, always passing the family.
+
+    Branching on whether a family was supplied would leave two code paths and
+    still break a two-argument get() the moment a family *is* given, so it
+    buys nothing. Catching the resulting TypeError and retrying without the
+    family would be worse: a genuine bug inside a database would be swallowed
+    and the coarse (backend, dtype) row applied silently — exactly the failure
+    this argument exists to prevent. ToleranceDB already declares
+    model_family optional, so accepting it is the contract for any substitute
+    database.
+    """
+    # By keyword, not position: a substitute database may declare the family
+    # keyword-only, and a positional call raises TypeError against that
+    # signature. It is still always sent, so no silent fallback is reintroduced.
+    return db.get(backend, dtype, model_family=model_family)
 
 
 def _extract_tensor(output: Any, is_lm: bool) -> torch.Tensor:

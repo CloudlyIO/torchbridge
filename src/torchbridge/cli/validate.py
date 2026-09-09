@@ -14,11 +14,82 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import torch
 import torch.nn as nn
 
 logger = logging.getLogger(__name__)
+
+
+def infer_model_family(model: Any) -> str | None:
+    """Work out the tolerance family from a loaded model's parameter count.
+
+    ToleranceDB documents its own size boundaries — under 2B parameters is
+    decoder-small, 2B to 20B is decoder-medium, above that decoder-large — so
+    the family is derivable and does not need typing. It is worth deriving: an
+    omitted --model-family silently selects the strictest row, which is the
+    original bug arriving by way of a forgotten flag.
+
+    Only the dense decoder families are inferred. The MoE entries turn on active
+    versus total parameters, which a plain count cannot distinguish, so those
+    must still be passed explicitly.
+
+    Returns:
+        A family name, or None when there are no parameters to count — the
+        caller then decides whether to proceed or refuse.
+    """
+    total = sum(p.numel() for p in model.parameters())
+    if total == 0:
+        return None
+    if total < 2_000_000_000:
+        return "decoder-small"
+    if total <= 20_000_000_000:
+        return "decoder-medium"
+    return "decoder-large"
+
+
+def resolve_family_for_run(args, model: Any) -> tuple[str | None, str | None]:
+    """Pick the family for this run: what was asked for, else what can be derived.
+
+    An explicit --model-family always wins — the operator may know something a
+    parameter count cannot show, such as an MoE model's active size. Only when
+    nothing was given is the family inferred, and the caller reports what was
+    chosen so the run is never judged by a limit nobody saw.
+
+    Returns:
+        (family, note). ``note`` is a line to print when the value was inferred
+        rather than supplied, otherwise None.
+    """
+    explicit = getattr(args, "model_family", None)
+    if explicit is not None:
+        return explicit, None
+    inferred = infer_model_family(model)
+    if inferred is None:
+        return None, None
+    return inferred, f"Model family: {inferred} (inferred from parameter count)"
+
+
+def validate_model_family(name: str | None) -> str | None:
+    """Return an error message if ``name`` is not a family the database knows.
+
+    ToleranceDB.get answers an unknown family with the coarse (backend, dtype)
+    row and gives no indication that it did, so a single mistyped character
+    quietly applies the wrong tolerance. Refusing up front keeps that failure
+    visible instead of folding it into the result.
+    """
+    if name is None:
+        return None
+    from torchbridge.testing.tolerance_db import ToleranceDB
+
+    known = ToleranceDB().families()
+    if name.lower() in {f.lower() for f in known}:
+        return None
+    return (
+        f"Unknown --model-family '{name}'. The tolerance database would fall back "
+        f"to the coarser (backend, dtype) row without saying so. "
+        f"Valid families: {', '.join(sorted(known))}"
+    )
 
 
 def _load_model_file(path: str) -> nn.Module:
@@ -393,6 +464,14 @@ Examples:
                 return torch.device("cpu")
             return None  # unknown
 
+        family_error = validate_model_family(getattr(args, "model_family", None))
+        if family_error:
+            if ci_mode:
+                print(json.dumps({"error": family_error}))
+            else:
+                print(f"Error: {family_error}")
+            return 1
+
         dev1 = _resolve_device(backend1)
         dev2 = _resolve_device(backend2)
 
@@ -507,7 +586,10 @@ Examples:
         tol_db = ToleranceDB()
         # Use backend1 tolerance (primary backend)
         b1_key = backend1.lower() if backend1.lower() != "rocm" else "rocm"
-        model_family = getattr(args, "model_family", None)
+        model_family, family_note = resolve_family_for_run(args, model)
+        if family_note and not ci_mode:
+            # --ci consumers parse stdout as JSON, so nothing else may be printed.
+            print(family_note)
         tol = tol_db.get(b1_key, dtype_str, model_family=model_family)
         passed = max_diff <= tol.atol
 
@@ -711,6 +793,14 @@ Examples:
                 return torch.device("cpu")
             return None
 
+        family_error = validate_model_family(getattr(args, "model_family", None))
+        if family_error:
+            if ci_mode:
+                print(json.dumps({"error": family_error}))
+            else:
+                print(f"Error: {family_error}")
+            return 1
+
         dev_a = _resolve_device(backend_a)
         dev_b = _resolve_device(backend_b)
 
@@ -776,6 +866,11 @@ Examples:
         # Run trace
         from torchbridge.testing.trace_validator import MultiStepTracer
 
+        trace_family, family_note = resolve_family_for_run(args, model)
+        if family_note and not ci_mode:
+            # --ci consumers parse stdout as JSON, so nothing else may be printed.
+            print(family_note)
+
         tracer = MultiStepTracer(
             model=model,
             device_a=dev_a,
@@ -784,6 +879,10 @@ Examples:
             backend_b=backend_b,
             dtype=dtype_str,
             is_lm=is_lm,
+            # --model-family is registered for the whole validate command and is
+            # already honoured by --compare; without this it parses fine here and
+            # is silently dropped, sending the trace to the coarser table.
+            model_family=trace_family,
         )
 
         try:
