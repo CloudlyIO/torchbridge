@@ -176,6 +176,7 @@ class SplitTraceRecord:
     env: dict[str, str] = field(default_factory=dict)
     role: str = "record"
     format_version: int = RECORD_FORMAT_VERSION
+    model_family: str | None = None
 
     @property
     def steps(self) -> int:
@@ -200,6 +201,7 @@ class SplitTraceRecord:
                 "env": self.env,
                 "role": self.role,
                 "format_version": self.format_version,
+                "model_family": self.model_family,
             },
             path,
         )
@@ -233,6 +235,7 @@ class SplitTraceRecord:
             outputs=payload["outputs"],
             env=payload.get("env", {}),
             role=payload.get("role", "record"),
+            model_family=payload.get("model_family"),
             format_version=version,
         )
 
@@ -479,6 +482,11 @@ class MultiStepTracer:
             is_lm=self._is_lm,
             env=_capture_env(self._device_a, self._model),
             role="record",
+            # Carried in the artifact, not left to the compare host's command
+            # line. compare_records() runs offline, possibly on a third machine,
+            # and without this it falls back to the coarse tolerance row — the
+            # same silent wrong-limit bug this workflow exists to avoid.
+            model_family=self._model_family,
         )
 
         model = copy.deepcopy(self._model).to(self._device_a)
@@ -546,6 +554,7 @@ class MultiStepTracer:
             is_lm=record.is_lm,
             env=_capture_env(self._device_b, self._model),
             role="replay",
+            model_family=self._model_family,
         )
 
         model = copy.deepcopy(self._model).to(self._device_b)
@@ -671,7 +680,23 @@ def compare_records(
         )
 
     db = tolerance_db if tolerance_db is not None else ToleranceDB()
-    tol = _lookup_tolerance(db, record_a.backend, record_a.dtype, model_family)
+    # An explicit argument wins — the operator may know something the artifact
+    # does not. Otherwise the family travels with the record, so an offline
+    # comparison applies the same limit the recording run would have.
+    family = model_family if model_family is not None else record_a.model_family
+    if (
+        model_family is None
+        and record_b.model_family is not None
+        and record_b.model_family != record_a.model_family
+    ):
+        logger.warning(
+            "The two halves record different model families (%r and %r); "
+            "using %r from the recorded half",
+            record_a.model_family,
+            record_b.model_family,
+            record_a.model_family,
+        )
+    tol = _lookup_tolerance(db, record_a.backend, record_a.dtype, family)
 
     result = TraceValidationResult(
         backend_a=record_a.backend,
@@ -679,7 +704,7 @@ def compare_records(
         steps=n_steps,
         dtype=record_a.dtype,
         autoregressive=record_a.autoregressive,
-        model_family=model_family,
+        model_family=family,
         atol=float(tol.atol),
         atol_source=getattr(tol, "source", None),
     )
@@ -829,14 +854,18 @@ def _model_fingerprint(model: nn.Module) -> str:
         hasher.update(key.encode())
         hasher.update(str(tuple(tensor.shape)).encode())
         hasher.update(str(tensor.dtype).encode())
-        flat = tensor.detach().reshape(-1).float().cpu()
+        # Slice first, convert second. Converting the whole parameter to float32
+        # on the host before taking 16 values costs a full copy of the model —
+        # for an 8B bfloat16 checkpoint the embedding alone is ~2.5 GB as
+        # float32, and this runs twice per trace. Only the sample is moved.
+        flat = tensor.detach().reshape(-1)
         if flat.numel() <= 2 * _FINGERPRINT_SAMPLE:
             sample = flat
         else:
             sample = torch.cat(
                 [flat[:_FINGERPRINT_SAMPLE], flat[-_FINGERPRINT_SAMPLE:]]
             )
-        hasher.update(sample.numpy().tobytes())
+        hasher.update(sample.float().cpu().numpy().tobytes())
 
     return hasher.hexdigest()[:16]
 

@@ -1167,6 +1167,24 @@ Examples:
                 rec = tracer.record(
                     input_ids=x, steps=steps, autoregressive=autoregressive
                 )
+                # record() stops at the first step that raises and returns what
+                # it has, so a run that failed immediately yields an empty
+                # record. Saving that and exiting 0 reports success and leaves a
+                # file the next stage rejects — on a rented machine that is a
+                # booking spent on nothing. A short record is refused too: the
+                # comparison would silently cover fewer steps than asked for.
+                if rec.steps == 0:
+                    return _fail(
+                        "Recording produced no steps — the model failed on the "
+                        "first step. Nothing was written; see the warnings above."
+                    )
+                if rec.steps < steps:
+                    return _fail(
+                        f"Recording stopped after {rec.steps} of {steps} step(s). "
+                        f"Nothing was written, because a short record would "
+                        f"compare fewer steps than requested without saying so; "
+                        f"see the warnings above."
+                    )
                 rec.save(args.record)
                 if ci_mode:
                     print(

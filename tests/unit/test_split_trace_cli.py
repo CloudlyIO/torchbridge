@@ -401,3 +401,153 @@ class TestSplitModeDeviceContract:
         assert seen.get("device_b") is not None, (
             "backend B is absent in record mode, but the tracer still needs a device"
         )
+
+
+class TestFailedRecordingIsNotReportedAsSuccess:
+    """record() returns whatever it managed before an exception stopped it.
+
+    Saving that and exiting 0 tells the operator the recording worked, while the
+    next stage rejects the file for having no steps. On a rented machine that is
+    a paid booking spent on an artifact nobody can use, discovered later.
+    """
+
+    @staticmethod
+    def _break_after(n_steps):
+        """A tracer whose record() stops after n_steps, as a failing model would."""
+        from torchbridge.testing import trace_validator
+
+        real = trace_validator.MultiStepTracer
+
+        class _Short(real):  # type: ignore[misc,valid-type]
+            def record(self, input_ids, steps, autoregressive=False):
+                # Truncate rather than ask for fewer steps: record() rejects
+                # steps=0 up front, so requesting it would exercise argument
+                # validation instead of the "inference died partway" path this
+                # stands in for.
+                rec = super().record(
+                    input_ids=input_ids, steps=steps, autoregressive=autoregressive
+                )
+                del rec.outputs[n_steps:]
+                del rec.token_inputs[n_steps:]
+                return rec
+
+        return _Short
+
+    def test_empty_recording_fails_and_writes_nothing(self, tmp_path):
+        from unittest.mock import patch
+
+        from torchbridge.testing import trace_validator
+
+        out = tmp_path / "a.pt"
+        with patch.object(trace_validator, "MultiStepTracer", self._break_after(0)):
+            rc = ValidateCommand._run_trace(_args(record=str(out), steps=3))
+
+        assert rc == 1
+        assert not out.exists(), "a failed recording must not leave an artifact"
+
+    def test_short_recording_fails_and_writes_nothing(self, tmp_path):
+        """A partial record would compare fewer steps than asked for, and the
+        result would not say so."""
+        from unittest.mock import patch
+
+        from torchbridge.testing import trace_validator
+
+        out = tmp_path / "a.pt"
+        with patch.object(trace_validator, "MultiStepTracer", self._break_after(1)):
+            rc = ValidateCommand._run_trace(_args(record=str(out), steps=3))
+
+        assert rc == 1
+        assert not out.exists()
+
+    def test_complete_recording_still_succeeds(self, tmp_path):
+        out = tmp_path / "a.pt"
+        assert ValidateCommand._run_trace(_args(record=str(out), steps=3)) == 0
+        assert out.exists()
+
+
+class TestRecordedFamilyTravelsWithTheArtifact:
+    """compare_records() runs offline, possibly on a third machine. If the
+    family is not in the file it falls back to the coarse tolerance row, which
+    is the bug the whole tolerance change exists to prevent."""
+
+    def test_family_is_written_into_the_record(self, tmp_path):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        out = tmp_path / "a.pt"
+        ValidateCommand._run_trace(
+            _args(record=str(out), model_family="decoder-large", steps=2)
+        )
+        assert SplitTraceRecord.load(str(out)).model_family == "decoder-large"
+
+    def test_offline_compare_uses_the_recorded_family(self, tmp_path):
+        """No --model-family on the compare host, yet the recorded one is used."""
+        from torchbridge.testing.trace_validator import (
+            SplitTraceRecord,
+            compare_records,
+        )
+
+        a = tmp_path / "a.pt"
+        b = tmp_path / "b.pt"
+        ValidateCommand._run_trace(
+            _args(record=str(a), model_family="decoder-large", steps=2)
+        )
+        ValidateCommand._run_trace(
+            _args(replay=str(a), record=str(b), model_family="decoder-large", steps=2)
+        )
+
+        result = compare_records(
+            SplitTraceRecord.load(str(a)), SplitTraceRecord.load(str(b))
+        )
+        assert result.model_family == "decoder-large"
+
+    def test_explicit_family_still_overrides_the_record(self, tmp_path):
+        from torchbridge.testing.trace_validator import (
+            SplitTraceRecord,
+            compare_records,
+        )
+
+        a = tmp_path / "a.pt"
+        b = tmp_path / "b.pt"
+        ValidateCommand._run_trace(
+            _args(record=str(a), model_family="decoder-large", steps=2)
+        )
+        ValidateCommand._run_trace(
+            _args(replay=str(a), record=str(b), model_family="decoder-large", steps=2)
+        )
+
+        result = compare_records(
+            SplitTraceRecord.load(str(a)),
+            SplitTraceRecord.load(str(b)),
+            model_family="decoder-small",
+        )
+        assert result.model_family == "decoder-small"
+
+
+class TestFingerprintDoesNotCopyTheWholeModel:
+    """The docstring promises endpoint sampling. Converting the full parameter
+    to float32 on the host first would copy the entire model — ~2.5 GB for an
+    8B checkpoint's embedding alone — twice per trace."""
+
+    def test_only_the_sample_is_converted_and_moved(self):
+        from torchbridge.testing.trace_validator import _model_fingerprint
+
+        big = torch.nn.Linear(2048, 512, bias=False).to(torch.bfloat16)
+        moved = []
+
+        real_float = torch.Tensor.float
+
+        def _spy_float(self, *a, **kw):
+            moved.append(self.numel())
+            return real_float(self, *a, **kw)
+
+        torch.Tensor.float = _spy_float  # type: ignore[method-assign]
+        try:
+            _model_fingerprint(big)
+        finally:
+            torch.Tensor.float = real_float  # type: ignore[method-assign]
+
+        assert moved, "the fingerprint must still convert its sample"
+        assert max(moved) <= 16, (
+            f"converted a tensor of {max(moved)} elements; only the 16-value "
+            f"sample should be converted, not the whole parameter"
+        )

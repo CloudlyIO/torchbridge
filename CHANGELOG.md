@@ -37,12 +37,21 @@
   machine.
 - **`cli/validate.py`**: `--record`, `--replay` and `--compare-records` flags for
   the split trace workflow. `--compare-records` needs no accelerator.
+- **`SplitTraceRecord`**: `model_family` is stored in the artifact, so an
+  offline `compare_records()` applies the same tolerance the recording run did
+  instead of falling back to the coarse row.
 
 ### Changed
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
   caller-supplied tolerance database must now accept the third argument;
   `ToleranceDB` already declared it optional.
 - **`trace_validator.py`**: `SplitTraceRecord.load()` uses `weights_only=True`.
+- **`cli/validate.py`**: `--record` refuses to write an empty or short record.
+  Recording stops at the first step that raises, and saving the remainder while
+  exiting 0 reported a failed run as successful.
+- **`trace_validator.py`**: `_model_fingerprint()` slices each parameter before
+  converting it, rather than copying the whole tensor to host float32 to read 16
+  values. On an 8B checkpoint that was a multi-GB copy, twice per trace.
   A record arrives from another machine, so it is untrusted input.
 - **`trace_validator.py`**: two records sharing a backend name now warn instead
   of raising, since that is the split path's control run. A follower whose role
