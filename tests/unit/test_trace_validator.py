@@ -1209,3 +1209,64 @@ class TestSameBackendComparisonIsAllowedWithAWarning:
         with caplog.at_level(logging.WARNING):
             compare_records(*self._records("cuda", "rocm"))
         assert not any("same backend" in r.message.lower() for r in caplog.records)
+
+
+class TestSplitTraceRoleAndCompleteness:
+    """Two guards that decide whether a comparison means anything.
+
+    record_a supplies the backend name, the dtype and the tolerance for the
+    whole result, so which half lands there is not a detail. And a comparison
+    that stopped early measured something other than the trace requested.
+    """
+
+    @staticmethod
+    def _halves(steps=3):
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=steps)
+        return record, tracer.replay(record)
+
+    def test_two_replay_halves_are_refused(self):
+        """Previously only the reversed pair was rejected, so a follower could
+        become the primary side and supply the tolerance."""
+        _, replayed = self._halves()
+        with pytest.raises(ValueError, match="recorded half and one replayed"):
+            compare_records(replayed, replayed)
+
+    def test_two_recorded_halves_are_refused(self):
+        record, _ = self._halves()
+        with pytest.raises(ValueError, match="recorded half and one replayed"):
+            compare_records(record, record)
+
+    def test_the_reversed_pair_still_says_so(self):
+        record, replayed = self._halves()
+        with pytest.raises(ValueError, match="reversed"):
+            compare_records(replayed, record)
+
+    def test_a_correct_pair_still_compares(self):
+        record, replayed = self._halves()
+        assert compare_records(record, replayed).final_passed is True
+
+    def test_a_truncated_replay_cannot_pass(self):
+        """The surviving steps all agree, so every per-step number says PASS.
+        The verdict must still be False: those are not the steps asked for."""
+        record, replayed = self._halves(steps=5)
+        del replayed.outputs[3:]
+        del replayed.token_inputs[3:]
+
+        result = compare_records(record, replayed)
+        assert all(s.within_tolerance for s in result.step_results)
+        assert result.steps == 3
+        assert result.final_passed is False
+
+    def test_a_shape_change_mid_trace_cannot_pass(self):
+        record, replayed = self._halves(steps=4)
+        replayed.outputs[2] = torch.zeros(1, 1)
+
+        result = compare_records(record, replayed)
+        assert result.final_passed is False
+
+    def test_a_complete_comparison_still_passes(self):
+        record, replayed = self._halves(steps=4)
+        result = compare_records(record, replayed)
+        assert result.steps == 4
+        assert result.final_passed is True

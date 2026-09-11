@@ -123,11 +123,51 @@ class TestReplay:
         assert saved["final_passed"] is True
 
     def test_replay_does_not_need_backend_a_present(self, tmp_path, saved_model):
+        """The recorded chip is on the other machine, by definition.
+
+        The record has to *claim* that backend, though. Recording on cpu and
+        then replaying under --compare rocm cpu is the failure Copilot found:
+        the result takes its names from the file, so it came out labelled
+        "cpu vs cpu" while the operator had asked about rocm.
+        """
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
         src = self._record(tmp_path, model=saved_model)
+        leader = SplitTraceRecord.load(src)
+        leader.backend = "rocm"  # as a real AMD machine would have written it
+        remote = str(tmp_path / "rocm.pt")
+        leader.save(remote)
+
+        rc = ValidateCommand._run_trace(
+            _args(compare=["rocm", "cpu"], replay=remote, model=saved_model)
+        )
+        assert rc == 0, "replay mode wrongly demanded the recording backend"
+
+    def test_replay_refuses_a_record_from_a_different_backend(
+        self, tmp_path, saved_model
+    ):
+        """The result is labelled from the record, so a mismatched pair answers
+        a question the operator did not ask — and exits 0 doing it."""
+        src = self._record(tmp_path, model=saved_model)  # recorded on cpu
         rc = ValidateCommand._run_trace(
             _args(compare=["rocm", "cpu"], replay=src, model=saved_model)
         )
-        assert rc == 0, "replay mode wrongly demanded the recording backend"
+        assert rc == 1
+
+    def test_replay_refuses_a_follower_as_its_input(self, tmp_path, saved_model):
+        """Replaying a replay yields a second follower, and the comparison then
+        has no recorded half at all."""
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        src = self._record(tmp_path, model=saved_model)
+        follower = tmp_path / "b.pt"
+        ValidateCommand._run_trace(
+            _args(replay=src, record=str(follower), model=saved_model)
+        )
+        assert SplitTraceRecord.load(str(follower)).role == "replay"
+
+        rc = ValidateCommand._run_trace(_args(replay=str(follower), model=saved_model))
+        assert rc == 1
 
     def test_different_weights_are_reported_not_hidden(self, tmp_path, caplog):
         """Two halves from different models must not pass silently.

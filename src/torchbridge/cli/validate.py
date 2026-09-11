@@ -1218,6 +1218,26 @@ Examples:
                 except Exception as exc:
                     return _fail(f"Could not read record file {args.replay}: {exc}")
 
+                # The result takes its backend names from the record, not from
+                # this command line. Replaying a cpu record under
+                # --compare cuda rocm therefore produced a file labelled
+                # "cpu vs rocm" and exited 0, quietly answering a question
+                # nobody asked.
+                if leader.role != "record":
+                    return _fail(
+                        f"{args.replay} has role {leader.role!r}, not 'record' — "
+                        f"--replay needs the leading half, the file written by "
+                        f"--record on the other machine."
+                    )
+                if leader.backend != backend_a:
+                    return _fail(
+                        f"{args.replay} was recorded on {leader.backend!r}, but "
+                        f"this run asks for {backend_a!r} as the first backend. "
+                        f"Either replay it against --compare {leader.backend} "
+                        f"{backend_b}, or record a new leading half on "
+                        f"{backend_a!r}."
+                    )
+
                 follower = tracer.replay(leader)
                 if getattr(args, "record", None):
                     follower.save(args.record)

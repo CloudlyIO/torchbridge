@@ -49,6 +49,18 @@
 - **`cli/validate.py`**: `--record` refuses to write an empty or short record.
   Recording stops at the first step that raises, and saving the remainder while
   exiting 0 reported a failed run as successful.
+- **`compare_records()`**: requires `record_a.role == "record"` and
+  `record_b.role == "replay"` directly. Rejecting only the reversed pair let
+  two replay halves through, promoting a follower to the primary side — which
+  is the side that supplies the backend, dtype and tolerance.
+- **`compare_records()`**: a comparison that did not cover every recorded step
+  can no longer report `final_passed`. A replay that died partway, or a shape
+  change mid-trace, used to pass on the prefix and exit 0.
+- **`cli/validate.py`**: `--replay` checks the record's role and that its
+  backend matches the requested first backend. The result is labelled from the
+  file, so a mismatched pair answered a different question and exited 0.
+- **`MultiStepTracer.replay()`**: refuses a record whose role is not
+  `"record"`.
 - **`trace_validator.py`**: `_model_fingerprint()` slices each parameter before
   converting it, rather than copying the whole tensor to host float32 to read 16
   values. On an 8B checkpoint that was a multi-GB copy, twice per trace.

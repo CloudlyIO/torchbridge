@@ -545,6 +545,13 @@ class MultiStepTracer:
         Raises:
             ValueError: If ``record`` contains no steps.
         """
+        if record.role != "record":
+            # A library-level invariant, separate from the CLI's backend check:
+            # replaying a follower produces a second follower, and
+            # compare_records() then has no recorded half at all.
+            raise ValueError(
+                f"can only replay a record with role 'record', got {record.role!r}"
+            )
         if not record.token_inputs:
             raise ValueError("record contains no steps to replay")
         if record.dtype != self._dtype:
@@ -641,11 +648,22 @@ def compare_records(
     # Order is not cosmetic: the tolerance threshold is looked up from
     # record_a's backend, so swapping the arguments changes atol and therefore
     # first_divergence_step.
-    if record_a.role == "replay" and record_b.role == "record":
+    # Both roles are checked directly. Rejecting only the reversed pair left
+    # two replay halves accepted, which silently promotes a follower to the
+    # primary side — and the primary side supplies the backend name, the dtype
+    # and the tolerance for the whole comparison.
+    if record_a.role != "record" or record_b.role != "replay":
         raise ValueError(
-            "arguments are reversed — pass the recorded half first and the "
-            "replayed half second, or the tolerance lookup uses the wrong backend"
+            f"a comparison needs one recorded half and one replayed half, but "
+            f"got roles {record_a.role!r} and {record_b.role!r}"
+            + (
+                " — the arguments are reversed; pass the recorded half first"
+                if record_a.role == "replay" and record_b.role == "record"
+                else " — the second half must come from replay() on the other "
+                "machine, otherwise the two halves were never fed the same inputs"
+            )
         )
+
     if record_a.dtype != record_b.dtype:
         # The tolerance comes from record_a.dtype, so a mismatched pair would be
         # judged by one half's precision while half the data came from another.
@@ -655,16 +673,6 @@ def compare_records(
             f"({record_a.dtype!r} and {record_b.dtype!r}); the tolerance is "
             f"looked up from the recorded half, so the comparison would apply "
             f"the wrong limit to half the data"
-        )
-    if record_b.role != "replay":
-        # The follower must have been produced by replay(), because that is what
-        # guarantees it saw the leader's exact inputs. Two independent recordings
-        # — or the same record passed twice — share no trajectory, so any number
-        # derived from them would be meaningless rather than merely imprecise.
-        raise ValueError(
-            f"the second half has role {record_b.role!r}, not 'replay' — it must "
-            f"come from replay() on the other machine, otherwise the two halves "
-            f"were never fed the same inputs"
         )
 
     mismatches = _env_mismatches(record_a.env, record_b.env)
@@ -774,8 +782,27 @@ def compare_records(
             result.max_amplification = amplification
 
     result.steps = len(result.step_results)
-    result.final_passed = bool(result.step_results) and all(
-        s.within_tolerance for s in result.step_results
+    # Every pair the halves offered has to have been compared. Without this a
+    # replay that died after three good steps, or a shape change at step four,
+    # reports final_passed on the prefix and the CLI exits 0 — having measured
+    # something other than the trace that was asked for. The per-step numbers
+    # are still returned, because a partial trace is worth reading; it just
+    # cannot be called a pass.
+    complete = (
+        len(result.step_results) == len(record_a.outputs) == len(record_b.outputs)
+    )
+    if not complete:
+        logger.warning(
+            "compared %d step(s) of %d recorded and %d replayed — the result "
+            "cannot pass, because the requested trace was not measured in full",
+            len(result.step_results),
+            len(record_a.outputs),
+            len(record_b.outputs),
+        )
+    result.final_passed = (
+        complete
+        and bool(result.step_results)
+        and all(s.within_tolerance for s in result.step_results)
     )
     return result
 
