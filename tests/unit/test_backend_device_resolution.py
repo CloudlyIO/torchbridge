@@ -394,3 +394,48 @@ class TestTpuAndXlaNames:
 
         with self._torch_xla_installed(True):
             assert same_device_pair("tpu", "cpu") is False
+
+
+class TestNonTraceCompareUsesTheCanonicalKey:
+    """--compare and --trace must judge the same chip by the same limit.
+
+    Only MultiStepTracer canonicalised the backend name. The plain --compare
+    path looked the raw name up, so tpu, neuron and gpu found no row and took
+    the 1.0e-3 safe default. The verdict depended on which alias was typed.
+    """
+
+    @pytest.mark.parametrize(
+        "alias,canonical",
+        [("tpu", "xla"), ("neuron", "trainium"), ("xla", "xla"), ("cuda", "cuda")],
+    )
+    @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
+    def test_alias_and_canonical_name_get_the_same_tolerance(
+        self, alias, canonical, dtype
+    ):
+        from torchbridge.testing.tolerance_db import ToleranceDB
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        db = ToleranceDB()
+        assert db.get(_tolerance_key(alias), dtype).atol == pytest.approx(
+            db.get(canonical, dtype).atol
+        )
+
+    @pytest.mark.parametrize("alias", ["tpu", "neuron", "gpu"])
+    def test_the_aliases_no_longer_land_on_the_fallback(self, alias):
+        """Each of these used to return the safe default with source
+        'fallback', which is the database saying nobody measured it."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        entry = ToleranceDB().get(_tolerance_key(alias), "float32")
+        assert getattr(entry, "source", None) == "measured"
+
+    def test_the_compare_path_reads_the_canonical_key(self):
+        """Pins the wiring, not just the helper: _run_compare must call it."""
+        import inspect
+
+        from torchbridge.cli.validate import ValidateCommand
+
+        src = inspect.getsource(ValidateCommand._run_compare)
+        assert "_tolerance_key(backend1)" in src
+        assert "backend1.lower() if backend1.lower()" not in src
