@@ -209,6 +209,15 @@ class SplitTraceRecord:
     role: str = "record"
     format_version: int = RECORD_FORMAT_VERSION
     model_family: str | None = None
+    tolerance_key: str | None = None
+    """The ToleranceDB key resolved on the machine that produced this half.
+
+    ``backend`` keeps the name the operator typed, because that is what the
+    result should be labelled with. This holds what it resolved to. They differ
+    for ``gpu``, which means "whichever accelerator this machine has" — and
+    :func:`compare_records` can run offline on a third machine, where reading
+    ``torch.version.hip`` answers a question about the wrong computer.
+    """
 
     @property
     def steps(self) -> int:
@@ -234,6 +243,7 @@ class SplitTraceRecord:
                 "role": self.role,
                 "format_version": self.format_version,
                 "model_family": self.model_family,
+                "tolerance_key": self.tolerance_key,
             },
             path,
         )
@@ -268,6 +278,7 @@ class SplitTraceRecord:
             env=payload.get("env", {}),
             role=payload.get("role", "record"),
             model_family=payload.get("model_family"),
+            tolerance_key=payload.get("tolerance_key"),
             format_version=version,
         )
 
@@ -537,6 +548,7 @@ class MultiStepTracer:
             is_lm=self._is_lm,
             env=_capture_env(self._device_a, self._model),
             role="record",
+            tolerance_key=_tolerance_key(self._backend_a),
             # Carried in the artifact, not left to the compare host's command
             # line. compare_records() runs offline, possibly on a third machine,
             # and without this it falls back to the coarse tolerance row — the
@@ -621,6 +633,7 @@ class MultiStepTracer:
             env=_capture_env(self._device_b, self._model),
             role="replay",
             model_family=self._model_family,
+            tolerance_key=_tolerance_key(self._backend_b),
         )
 
         model = copy.deepcopy(self._model).to(self._device_b)
@@ -769,7 +782,12 @@ def compare_records(
             record_b.model_family,
             record_a.model_family,
         )
-    tol = _lookup_tolerance(db, record_a.backend, record_a.dtype, family)
+    # The key the recording machine resolved, not one resolved here. An AMD
+    # half saved under the `gpu` alias would otherwise be judged by CUDA's
+    # limit whenever the comparison runs on a machine that is not ROCm — and
+    # this comparison is designed to run anywhere, including a laptop.
+    key = record_a.tolerance_key or _tolerance_key(record_a.backend)
+    tol = _lookup_tolerance(db, key, record_a.dtype, family)
 
     result = TraceValidationResult(
         backend_a=record_a.backend,

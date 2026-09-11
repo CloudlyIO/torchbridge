@@ -40,6 +40,11 @@
 - **`SplitTraceRecord`**: `model_family` is stored in the artifact, so an
   offline `compare_records()` applies the same tolerance the recording run did
   instead of falling back to the coarse row.
+- **`SplitTraceRecord`**: `tolerance_key` stores the ToleranceDB key the
+  recording machine resolved. `gpu` means whichever accelerator that machine
+  had, so resolving it again on the compare host judged an AMD half by CUDA's
+  limit. `backend` still holds the name the operator typed, which is what the
+  result is labelled with.
 - **`cli/validate.py`**: `tpu` and `xla` accepted as backend names, gated on
   `torch_xla`. Without them a rented TPU could not be selected at all.
 - **`trace_validator.py`**: `_xla_is_cpu_backed()`; the XLA-to-CPU substitution
