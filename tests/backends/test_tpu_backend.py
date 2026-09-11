@@ -161,7 +161,14 @@ class TestTPUAdapter:
         assert result.optimization_time >= 0
 
     def test_tpu_optimizer_inference_optimization(self):
-        """Test inference-specific optimization."""
+        """Test inference-specific optimization.
+
+        The optimised model is asserted to be callable, not to be an
+        ``nn.Module``. On the XLA path ``compile_model()`` returns a
+        ``torch.compile`` callable, which has no ``.training`` — the previous
+        assertion only held because torch_xla was absent and the compiler
+        handed the original module straight back.
+        """
         config = TorchBridgeConfig()
         optimizer = TPUAdapter(config)
 
@@ -171,8 +178,24 @@ class TestTPUAdapter:
         result = optimizer.optimize_for_inference(model, sample_input)
 
         assert result is not None
-        assert result.optimized_model is not None
-        assert not result.optimized_model.training  # Should be in eval mode
+        assert callable(result.optimized_model)
+
+    def test_inference_optimised_model_still_computes(self):
+        """Callable is not enough: it has to produce the right answer.
+
+        Needs torch_xla, and needs its input on the XLA device in bfloat16 —
+        the adapter converts the model to bfloat16, so an fp32 input fails in
+        the HLO verifier. That conversion is the adapter's own doing and is
+        asserted here so it stays deliberate.
+        """
+        xm = pytest.importorskip("torch_xla.core.xla_model")
+
+        optimizer = TPUAdapter(TorchBridgeConfig())
+        model = nn.Sequential(nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 10))
+        result = optimizer.optimize_for_inference(model, torch.randn(8, 64))
+
+        x = torch.randn(8, 64, dtype=torch.bfloat16).to(xm.xla_device())
+        assert tuple(result.optimized_model(x).shape) == (8, 10)
 
     def test_tpu_optimizer_training_optimization(self):
         """Test training-specific optimization."""
@@ -435,12 +458,31 @@ class TestTPUErrorHandling:
         # Should complete without sample input validation
 
     def test_backend_without_xla(self):
-        """Test backend operations without XLA available."""
-        config = TorchBridgeConfig()
-        backend = TPUBackend(config)
+        """The CPU fallback taken when PyTorch/XLA cannot be imported.
 
-        # Should work with CPU fallback
+        The absence is simulated rather than inherited from the machine.
+        Reading it off the environment meant this asserted "torch_xla is not
+        installed here" — true on CI and nowhere near the fallback it is named
+        for, which consequently had never run. With torch_xla present it
+        failed, because the device really was `xla`.
+        """
+        import sys
+        from unittest.mock import patch
+
+        config = TorchBridgeConfig()
+        with patch.dict(sys.modules, {"torch_xla": None}):
+            with pytest.warns(RuntimeWarning, match="PyTorch/XLA not available"):
+                backend = TPUBackend(config)
+
         assert backend.device.type == "cpu"
+
+    def test_backend_uses_xla_when_it_is_available(self):
+        """The other side of the same branch, so the fallback test cannot pass
+        by accident on a machine that simply lacks torch_xla."""
+        pytest.importorskip("torch_xla")
+
+        backend = TPUBackend(TorchBridgeConfig())
+        assert backend.device.type == "xla"
 
 
 class TestTPUErrorPaths:

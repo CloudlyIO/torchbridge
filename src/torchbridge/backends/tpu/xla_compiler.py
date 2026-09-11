@@ -9,6 +9,7 @@ import hashlib
 import logging
 import time
 import warnings
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -72,7 +73,7 @@ class XLACompiler:
         model: nn.Module,
         sample_inputs: torch.Tensor | tuple | None = None,
         use_cache: bool = True,
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """
         Compile model for TPU execution.
 
@@ -133,7 +134,7 @@ class XLACompiler:
 
     def _compile_torch_xla(
         self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using PyTorch/XLA torch.compile."""
         try:
             # Sync for XLA compilation using compatibility layer
@@ -146,7 +147,7 @@ class XLACompiler:
 
                 if backend is not None:
                     # Use specific backend (openxla for 2.9+, aot_torchxla_trace_once for older)
-                    compiled_model: nn.Module = torch.compile(  # type: ignore[assignment]
+                    compiled_model = torch.compile(
                         model,
                         backend=backend,
                         dynamic=self.config.enable_xla_dynamic_shapes,
@@ -154,7 +155,7 @@ class XLACompiler:
                 else:
                     # For torch_xla 2.9+ without explicit backend, use default compilation
                     # torch.compile works directly with XLA tensors
-                    compiled_model = torch.compile(  # type: ignore[assignment]
+                    compiled_model = torch.compile(
                         model, dynamic=self.config.enable_xla_dynamic_shapes
                     )
                 return compiled_model
@@ -174,7 +175,7 @@ class XLACompiler:
 
     def _compile_xla_direct(
         self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using direct XLA compilation."""
         try:
             # Force XLA compilation with sample inputs
@@ -210,7 +211,7 @@ class XLACompiler:
 
     def _compile_pjit(
         self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using JAX pjit (experimental)."""
         if not self.config.enable_jax_integration:
             warnings.warn(
@@ -270,7 +271,7 @@ class XLACompiler:
 
     def optimize_for_inference(
         self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """
         Optimize model specifically for inference.
 
@@ -299,7 +300,7 @@ class XLACompiler:
 
     def optimize_for_training(
         self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """
         Optimize model specifically for training.
 

@@ -98,6 +98,62 @@ jobs:
       - name: Run mypy
         run: mypy src/torchbridge --ignore-missing-imports
 
+  xla-cpu:
+    name: XLA Tests (torch_xla, CPU-backed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # torch_xla runs on the CPU when PJRT_DEVICE=CPU, so every XLA code path
+    # can be exercised without a TPU and without spend. Without this job the
+    # XLA branches are never taken in CI: the TPU tests all pass purely
+    # because torch_xla is absent, and two of them were asserting the
+    # environment rather than the behaviour they were named for.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          # Pinned: torch_xla publishes a wheel per Python minor, and 2.9.0
+          # has cp313. Widening this needs the wheel checked first.
+          python-version: "3.13"
+
+      - name: Install torch and torch_xla
+        run: |
+          python -m pip install --upgrade pip
+          # torch first, from the CPU index, because torch_xla 2.9 is built
+          # against torch 2.9 and a newer torch breaks it at the C++ ABI.
+          pip install torch==2.9.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install torch_xla==2.9.0
+          # --no-deps so the project's torch>=2.0,<3.0 range cannot pull the
+          # pin back out from under torch_xla.
+          pip install -e . --no-deps
+          pip install pytest transformers
+
+      - name: Confirm XLA is really present
+        env:
+          PJRT_DEVICE: CPU
+        run: |
+          python - <<'EOF'
+          import torch, torch_xla
+          import torch_xla.core.xla_model as xm
+          from torchbridge.backends.tpu.xla_compat import get_device_hw_type
+          print(f"torch {torch.__version__} | torch_xla {torch_xla.__version__}")
+          print(f"device {xm.xla_device()} | hw {get_device_hw_type()}")
+          assert str(xm.xla_device()).startswith("xla"), "no XLA device — the job would prove nothing"
+          EOF
+
+      - name: Run the TPU and XLA tests against a real torch_xla
+        env:
+          PJRT_DEVICE: CPU
+        run: |
+          # Listed explicitly rather than running tests/, because most of the
+          # suite has nothing to do with XLA and this job pins an older torch.
+          # Add new XLA-touching files here as they arrive.
+          pytest tests/backends/test_tpu_backend.py \
+                 tests/backends/test_tpu_config.py \
+                 tests/unit/test_trace_validator.py \
+                 -v --tb=short
+
   test:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}

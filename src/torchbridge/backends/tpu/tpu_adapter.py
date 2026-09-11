@@ -8,6 +8,7 @@ XLA compilation, and TPU-specific optimizations.
 
 import logging
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,7 +28,15 @@ logger = logging.getLogger(__name__)
 class TPUOptimizationResult:
     """Result of TPU optimization process."""
 
-    optimized_model: nn.Module
+    optimized_model: nn.Module | Callable[..., Any]
+    """The optimised model.
+
+    Not always an ``nn.Module``: on the XLA path the compiler returns a
+    ``torch.compile`` callable, which has no ``.eval()``, ``.parameters()`` or
+    ``.training``. Callers must treat this as callable and nothing more. The
+    annotation said ``nn.Module`` and was kept true only by torch_xla being
+    absent, where the compiler hands the original module straight back.
+    """
     backend: TPUBackend
     compiler: XLACompiler
     optimization_time: float
