@@ -45,8 +45,11 @@
   had, so resolving it again on the compare host judged an AMD half by CUDA's
   limit. `backend` still holds the name the operator typed, which is what the
   result is labelled with.
-- **`cli/validate.py`**: `tpu` and `xla` accepted as backend names, gated on
-  `torch_xla`. Without them a rented TPU could not be selected at all.
+- **`cli/validate.py`**: `tpu` and `xla` accepted as backend names. Without
+  them a rented TPU could not be selected at all. `tpu` additionally requires
+  the XLA device to report TPU hardware — a Neuron host imports `torch_xla`
+  too, so the import alone would have let a Trainium run be labelled `tpu`.
+  `xla` stays generic, because it claims no vendor.
 - **`trace_validator.py`**: `_xla_is_cpu_backed()`; the XLA-to-CPU substitution
   now happens only when `PJRT_DEVICE=CPU`.
 - **`TraceValidationResult`**: `rtol`, `tolerance_rule`, `input`, `env_a` and
@@ -54,6 +57,10 @@
   the library versions, a weight fingerprint and a description of the input.
 - **`scripts/paper/build_tables.py`**: renders trace result files as a Markdown
   table. Tolerates result files written before the provenance fields existed.
+- **`_capture_env()`**: an XLA half records `xla_hw`, `vendor`, `pjrt_device`
+  and the `torch_xla` version, via the TPU backend's existing hardware query.
+  A result that said only `device_type: xla` could not distinguish TPU from
+  Trainium, or either from a `PJRT_DEVICE=CPU` run.
 
 ### Changed
 - **`cli/validate.py` (behaviour change)**: the non-trace `--compare` path

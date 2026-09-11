@@ -343,6 +343,17 @@ class TestOneSharedVendorCheck:
             assert is_rocm_build() is True
 
 
+def _fake_torch_xla():
+    """A stand-in module object, not a bare object().
+
+    Provenance capture reads torch_xla.__version__, so a placeholder without
+    one turns "torch_xla is installed" into an AttributeError.
+    """
+    import types
+
+    return types.SimpleNamespace(__version__="2.9.0")
+
+
 class TestTpuAndXlaNames:
     """The CLI must be able to name a TPU at all.
 
@@ -352,11 +363,22 @@ class TestTpuAndXlaNames:
     """
 
     @contextmanager
-    def _torch_xla_installed(self, present: bool):
+    def _torch_xla_installed(self, present: bool, hw: str = "TPU"):
+        """torch_xla importable, and the XLA device reporting hardware ``hw``.
+
+        The import alone says nothing about the vendor — a Neuron host imports
+        the same module — so the hardware query has to be part of the fixture.
+        """
         import sys
 
-        with patch.dict(sys.modules, {"torch_xla": object() if present else None}):
-            yield
+        with patch.dict(
+            sys.modules, {"torch_xla": _fake_torch_xla() if present else None}
+        ):
+            with patch(
+                "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+                return_value=hw,
+            ):
+                yield
 
     def test_tpu_resolves_when_torch_xla_is_present(self):
         with self._torch_xla_installed(True):
@@ -385,9 +407,31 @@ class TestTpuAndXlaNames:
         from torchbridge.cli.validate import same_device_pair
 
         with patch.dict(
-            sys.modules, {"torch_xla": object(), "torch_neuronx": object()}
+            sys.modules, {"torch_xla": _fake_torch_xla(), "torch_neuronx": object()}
         ):
-            assert same_device_pair("tpu", "trainium") is True
+            with patch(
+                "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+                return_value="TPU",
+            ):
+                assert same_device_pair("tpu", "trainium") is True
+
+    def test_tpu_is_refused_on_a_neuron_host(self):
+        """Trainium imports torch_xla too. Accepting "tpu" on that import alone
+        would run a Neuron device and write "tpu" into the results file — the
+        same mislabelling this whole change exists to remove."""
+        with self._torch_xla_installed(True, hw="NEURON"):
+            assert resolve_backend_device("tpu") is None
+
+    def test_xla_still_resolves_on_a_neuron_host(self):
+        """`xla` claims no vendor, so it stays generic and keeps working."""
+        with self._torch_xla_installed(True, hw="NEURON"):
+            assert resolve_backend_device("xla") == torch.device("xla")
+
+    def test_tpu_is_refused_when_the_hardware_is_unknown(self):
+        """No answer is not a yes: naming the chip wrongly is worse than
+        refusing and asking for `xla`."""
+        with self._torch_xla_installed(True, hw="UNKNOWN"):
+            assert resolve_backend_device("tpu") is None
 
     def test_tpu_against_cpu_is_a_real_pair(self):
         from torchbridge.cli.validate import same_device_pair
