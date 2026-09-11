@@ -1106,10 +1106,51 @@ def _capture_env(
             env["vendor"] = "rocm" if hip else "cuda"
             if hip:
                 env["hip"] = str(hip)
+        elif device.type == "xla":
+            # "xla" alone cannot say what ran: TPU and Trainium both present
+            # under it, and a PJRT_DEVICE=CPU run presents under it too. A
+            # result that cannot name its own hardware is not provenance.
+            env.update(_xla_env())
         else:
             env["device"] = str(device)
     except Exception:  # pragma: no cover - driver-dependent
         env["device"] = str(device)
+
+    return env
+
+
+def _xla_env() -> dict[str, str]:
+    """Hardware detail for an XLA device, via the backend's own query.
+
+    Reuses ``backends/tpu/xla_compat`` rather than calling ``torch_xla``
+    directly: that module already handles the 2.9+ API change and falls back to
+    ``PJRT_DEVICE``. Everything is best-effort, because a missing field is
+    better than a wrong one.
+    """
+    env: dict[str, str] = {"device": "xla"}
+
+    pjrt = os.environ.get("PJRT_DEVICE", "")
+    if pjrt:
+        env["pjrt_device"] = str(pjrt)
+
+    try:
+        from torchbridge.backends.tpu.xla_compat import get_device_hw_type
+
+        hw = get_device_hw_type()
+        if hw and hw != "UNKNOWN":
+            env["xla_hw"] = str(hw)
+            # NEURON is what PJRT calls Trainium. Naming the vendor separately
+            # keeps a reader from having to know that.
+            env["vendor"] = "trainium" if hw.upper() == "NEURON" else hw.lower()
+    except Exception:  # pragma: no cover - torch_xla is optional
+        logger.debug("XLA hardware query failed", exc_info=True)
+
+    try:
+        import torch_xla
+
+        env["torch_xla"] = str(torch_xla.__version__)
+    except Exception:  # pragma: no cover - torch_xla is optional
+        pass
 
     return env
 

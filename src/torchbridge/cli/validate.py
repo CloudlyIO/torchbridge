@@ -111,13 +111,34 @@ def resolve_backend_device(name: str) -> torch.device | None:
         # results file.
         try:
             import torch_xla  # noqa: F401
-
-            return torch.device("xla")
         except ImportError:
             return None
+        if name == "tpu" and not _xla_hardware_is_tpu():
+            # A Neuron host imports torch_xla too, so accepting "tpu" purely on
+            # that import would run Trainium and write "tpu" into the result.
+            # "xla" stays generic, because it does not claim a vendor.
+            return None
+        return torch.device("xla")
     if name == "cpu":
         return torch.device("cpu")
     return None  # unknown
+
+
+def _xla_hardware_is_tpu() -> bool:
+    """Whether the XLA device on this machine is actually a TPU.
+
+    Trainium presents through the same ``xla`` device type and imports the same
+    ``torch_xla``, so the import proves nothing about the vendor. Defers to the
+    TPU backend's own detection, which already handles the torch_xla 2.9 API
+    change and falls back to ``PJRT_DEVICE``.
+    """
+    try:
+        from torchbridge.backends.tpu.xla_compat import get_device_hw_type
+
+        return get_device_hw_type().upper() == "TPU"
+    except Exception:
+        logger.debug("TPU hardware check failed", exc_info=True)
+        return False
 
 
 def explain_unavailable_backend(name: str) -> str:

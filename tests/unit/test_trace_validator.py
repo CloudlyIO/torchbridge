@@ -1768,3 +1768,70 @@ class TestOfflineComparisonUsesTheRecordingMachinesVendor:
         path = str(tmp_path / "a.pt")
         rec.save(path)
         assert SplitTraceRecord.load(path).tolerance_key == "rocm"
+
+
+class TestXlaProvenanceNamesTheHardware:
+    """A result that says only "xla" cannot say what ran.
+
+    TPU and Trainium both present under that device type, and a
+    PJRT_DEVICE=CPU run does too. Verified against a mocked XLA boundary —
+    there is no TPU or Neuron host to confirm it on, so what is pinned here is
+    that the query is asked and its answer recorded, not what real hardware
+    returns.
+    """
+
+    @staticmethod
+    def _env_for(hw, pjrt=None):
+        import os
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env_patch = {"PJRT_DEVICE": pjrt} if pjrt else {}
+        with patch.dict(os.environ, env_patch, clear=False):
+            with patch(
+                "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+                return_value=hw,
+            ):
+                return _capture_env(torch.device("xla"))
+
+    def test_a_tpu_run_records_tpu(self):
+        env = self._env_for("TPU")
+        assert env["xla_hw"] == "TPU"
+        assert env["vendor"] == "tpu"
+
+    def test_a_neuron_run_records_trainium_not_tpu(self):
+        """PJRT calls it NEURON; the result should name the vendor a reader
+        would recognise, and must not say TPU."""
+        env = self._env_for("NEURON")
+        assert env["xla_hw"] == "NEURON"
+        assert env["vendor"] == "trainium"
+
+    def test_the_pjrt_device_is_recorded_when_set(self):
+        env = self._env_for("TPU", pjrt="TPU")
+        assert env["pjrt_device"] == "TPU"
+
+    def test_an_unknown_hardware_answer_is_omitted_not_guessed(self):
+        """A missing field is better than a wrong one."""
+        env = self._env_for("UNKNOWN")
+        assert "xla_hw" not in env
+        assert env["device"] == "xla"
+
+    def test_a_failing_query_does_not_break_the_trace(self):
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _capture_env
+
+        with patch(
+            "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+            side_effect=RuntimeError("no runtime"),
+        ):
+            env = _capture_env(torch.device("xla"))
+        assert env["device"] == "xla"
+
+    def test_non_xla_devices_are_unaffected(self):
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env = _capture_env(torch.device("cpu"))
+        assert "xla_hw" not in env
+        assert env["device_type"] == "cpu"
