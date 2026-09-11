@@ -61,6 +61,9 @@
   file, so a mismatched pair answered a different question and exited 0.
 - **`MultiStepTracer.replay()`**: refuses a record whose role is not
   `"record"`.
+- **`_model_fingerprint()`**: the docstring and the mismatch warning now state
+  that endpoint sampling is a one-way signal — a difference proves the weights
+  differ, a match does not prove they agree.
 - **`trace_validator.py`**: `_model_fingerprint()` slices each parameter before
   converting it, rather than copying the whole tensor to host float32 to read 16
   values. On an 8B checkpoint that was a multi-GB copy, twice per trace.

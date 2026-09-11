@@ -1270,3 +1270,37 @@ class TestSplitTraceRoleAndCompleteness:
         result = compare_records(record, replayed)
         assert result.steps == 4
         assert result.final_passed is True
+
+
+class TestFingerprintStatesItsBlindSpot:
+    """Endpoint sampling cannot see an interior edit. The warning has to say so,
+    because a reader who takes fingerprint silence as proof of matching weights
+    will attribute a checkpoint difference to the backend."""
+
+    def test_an_interior_edit_is_genuinely_invisible(self):
+        """Pins the limitation itself, so a later change to the sampling that
+        closed this gap would fail here and prompt updating the warning."""
+        from torchbridge.testing.trace_validator import _model_fingerprint
+
+        model = torch.nn.Linear(256, 256, bias=False)
+        before = _model_fingerprint(model)
+        with torch.no_grad():
+            model.weight[128, 128] += 1.0
+        assert _model_fingerprint(model) == before
+
+    def test_a_fingerprint_mismatch_warning_names_the_blind_spot(self, caplog):
+        import logging
+
+        from torchbridge.testing.trace_validator import compare_records
+
+        tracer = _split_tracer(_TinyLM())
+        record = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        replayed = tracer.replay(record)
+        replayed.env = dict(replayed.env, model_fingerprint="different")
+
+        with caplog.at_level(logging.WARNING):
+            compare_records(record, replayed)
+
+        assert any("does not prove they match" in r.message for r in caplog.records), (
+            "the warning must say that silence is not proof"
+        )

@@ -682,6 +682,12 @@ def compare_records(
             f"({'; '.join(mismatches)}) — measured divergence may reflect the "
             f"libraries rather than the backends"
         )
+        if any(m.startswith("model_fingerprint") for m in mismatches):
+            message += (
+                "; note the fingerprint samples each parameter's ends, so it "
+                "proves the weights differ but its silence does not prove they "
+                "match"
+            )
         if strict_env:
             raise ValueError(message)
         logger.warning(message)
@@ -874,6 +880,14 @@ def _model_fingerprint(model: nn.Module) -> str:
     bfloat16 is ~16 GB, and hashing it twice per run would dominate the runtime.
     Key names, shapes and dtypes are hashed in full, so a structural difference
     is always caught.
+
+    **This is a one-way signal.** A difference proves the weights differ; a
+    match does not prove they agree, because an edit confined to the interior
+    of a large parameter changes no sampled value. That is why the comparison
+    only ever warns on a mismatch and never decides a verdict from one. Closing
+    the gap would mean hashing the full checkpoint on both machines, which
+    costs more than the trace it guards — so the limitation is stated rather
+    than removed.
     """
     hasher = hashlib.sha256()
     try:
