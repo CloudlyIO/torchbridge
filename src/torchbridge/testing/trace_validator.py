@@ -400,8 +400,13 @@ class MultiStepTracer:
         # Capture provenance from the *effective* devices: if a substitution
         # happened, the file must show what really ran, not what was requested.
         result.input = _describe_input(input_ids)
-        result.env_a = _capture_env(_eff_a, self._model)
-        result.env_b = _capture_env(_eff_b, self._model)
+        # One model, so one fingerprint. run() deep-copies from a single
+        # source, and _capture_env() would otherwise hash the whole checkpoint
+        # once per side — two passes over an 8B model to produce the same
+        # sixteen hex characters twice.
+        fingerprint = _model_fingerprint(self._model)
+        result.env_a = _capture_env(_eff_a, self._model, fingerprint=fingerprint)
+        result.env_b = _capture_env(_eff_b, self._model, fingerprint=fingerprint)
 
         model_a = copy.deepcopy(self._model).to(_eff_a)
         model_b = copy.deepcopy(self._model).to(_eff_b)
@@ -1074,9 +1079,20 @@ def _model_fingerprint(model: nn.Module) -> str:
 
 
 def _capture_env(
-    device: torch.device, model: nn.Module | None = None
+    device: torch.device,
+    model: nn.Module | None = None,
+    fingerprint: str | None = None,
 ) -> dict[str, str]:
-    """Record the library, weight and hardware provenance of one split-trace half."""
+    """Record the library, weight and hardware provenance of one split-trace half.
+
+    Args:
+        device: The device that actually ran this half.
+        model: Fingerprinted to prove both halves loaded the same weights.
+        fingerprint: A fingerprint already computed for this model. Pass it when
+            capturing both sides of an in-process run, where the two halves are
+            copies of one model — hashing it twice reads the whole checkpoint
+            for a second time to reach the same answer.
+    """
     # str() on every value, not cosmetic: torch.__version__ is a TorchVersion
     # object, and a record holding one cannot be reloaded under
     # weights_only=True — which is how these files must be read, since they
@@ -1087,7 +1103,9 @@ def _capture_env(
         "device_type": str(device.type),
     }
 
-    if model is not None:
+    if fingerprint is not None:
+        env["model_fingerprint"] = fingerprint
+    elif model is not None:
         env["model_fingerprint"] = _model_fingerprint(model)
 
     try:  # transformers is an optional dependency

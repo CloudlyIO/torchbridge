@@ -61,6 +61,11 @@
   and the `torch_xla` version, via the TPU backend's existing hardware query.
   A result that said only `device_type: xla` could not distinguish TPU from
   Trainium, or either from a `PJRT_DEVICE=CPU` run.
+- **`_capture_env()`**: accepts a precomputed `fingerprint`, so an in-process
+  trace hashes its model once instead of once per side.
+- **`scripts/paper/build_tables.py`**: an absent `first_divergence_step` renders
+  as `not recorded` rather than `none`. `none` is a measurement — the run
+  finished and nothing diverged — which a file predating the field never made.
 
 ### Changed
 - **`cli/validate.py` (behaviour change)**: the non-trace `--compare` path

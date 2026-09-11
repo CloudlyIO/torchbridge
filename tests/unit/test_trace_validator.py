@@ -8,6 +8,7 @@ All tests run on CPU — no GPU required.
 from __future__ import annotations
 
 import copy
+from contextlib import contextmanager
 
 import pytest
 import torch
@@ -1361,23 +1362,97 @@ class TestXlaIsNotSilentlyRunOnCpu:
         assert "PJRT_DEVICE" in message
         assert "--record" in message and "--replay" in message
 
-    def test_record_does_not_refuse_on_a_real_xla_device(self, monkeypatch):
-        """record() is the supported route, so it must stay open.
+    @staticmethod
+    @contextmanager
+    def _xla_runs_on_cpu():
+        """Let an ``xla`` device flow through the code without a TPU.
 
-        It never substitutes, and each half stays on its own machine, so the
-        XLA-to-CPU transfer problem that motivated the fallback never arises.
+        Moving a tensor or a module to ``xla`` needs a runtime this machine
+        does not have, so both moves are redirected to CPU. Everything else —
+        the device object the tracer holds, and every branch that tests
+        ``device.type`` — stays exactly as it would on real hardware, which is
+        the part under test. Passing ``torch.device("cpu")`` as a stand-in, as
+        this test used to, skipped those branches entirely and would have
+        passed even if record() refused XLA outright.
         """
+        real_tensor_to = torch.Tensor.to
+        real_module_to = nn.Module.to
+
+        def _redirect(target):
+            return any(
+                getattr(a, "type", None) == "xla"
+                or (isinstance(a, str) and a.startswith("xla"))
+                for a in target
+            )
+
+        def tensor_to(self, *a, **kw):
+            return (
+                real_tensor_to(self) if _redirect(a) else real_tensor_to(self, *a, **kw)
+            )
+
+        def module_to(self, *a, **kw):
+            return self if _redirect(a) else real_module_to(self, *a, **kw)
+
+        torch.Tensor.to = tensor_to
+        nn.Module.to = module_to
+        try:
+            yield
+        finally:
+            torch.Tensor.to = real_tensor_to
+            nn.Module.to = real_module_to
+
+    def test_run_refuses_a_real_xla_device(self, monkeypatch):
+        """The guard under test: without PJRT_DEVICE=CPU, an in-process run on
+        an XLA device is refused rather than silently moved to the CPU."""
         monkeypatch.delenv("PJRT_DEVICE", raising=False)
         tracer = MultiStepTracer(
             model=_IdentityModel(),
-            device_a=torch.device("cpu"),  # stands in for the accelerator
+            device_a=torch.device("xla"),
             device_b=torch.device("cpu"),
             backend_a="tpu",
             backend_b="cpu",
             dtype="float32",
         )
-        rec = tracer.record(torch.randn(1, 8), steps=3)
+        with self._xla_runs_on_cpu():
+            with pytest.raises(RuntimeError, match="PJRT_DEVICE"):
+                tracer.run(torch.randn(1, 8), steps=2)
+
+    def test_record_does_not_refuse_on_a_real_xla_device(self, monkeypatch):
+        """record() is the supported route, so it must stay open.
+
+        It never substitutes, and each half stays on its own machine, so the
+        XLA-to-CPU transfer problem that motivated the fallback never arises.
+        Run with a genuine xla device object, so the refusal above is actually
+        reachable from here and is shown not to fire.
+        """
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="tpu",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with self._xla_runs_on_cpu():
+            rec = tracer.record(torch.randn(1, 8), steps=3)
         assert rec.steps == 3 and rec.backend == "tpu"
+
+    def test_a_cpu_backed_xla_run_is_allowed(self, monkeypatch):
+        """PJRT_DEVICE=CPU is the one case the substitution was safe for, and
+        the comment always claimed it — now the code checks it."""
+        monkeypatch.setenv("PJRT_DEVICE", "CPU")
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="xla",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with self._xla_runs_on_cpu():
+            result = tracer.run(torch.randn(1, 8), steps=2)
+        assert result.steps == 2
 
 
 class TestUnmeasuredToleranceIsSurfaced:

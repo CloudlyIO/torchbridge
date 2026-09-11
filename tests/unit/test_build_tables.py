@@ -280,3 +280,81 @@ class TestResultConstructorContractAcrossTheStack:
                 or f.default_factory is not dataclasses.MISSING
             )
             assert has_default, f"{f.name} has no default"
+
+
+class TestMissingDivergenceFieldIsNotReportedAsClean:
+    """``none`` is a measurement; an absent field is not.
+
+    The script exists to read files written before the provenance fields, so
+    every key can be missing. Rendering an absent ``first_divergence_step`` as
+    ``none`` claims the run completed with no divergence — a statement the file
+    never made.
+    """
+
+    @staticmethod
+    def _write(tmp_path, name, payload):
+        import json
+
+        base = {
+            "backend_a": "cuda",
+            "backend_b": "cpu",
+            "dtype": "float32",
+            "steps": 3,
+            "max_amplification": 1.0,
+            "step_results": [],
+        }
+        base.update(payload)
+        f = tmp_path / name
+        f.write_text(json.dumps(base))
+        return f
+
+    def test_an_explicit_null_still_reads_as_none(self, tmp_path):
+        self._write(tmp_path, "a.json", {"first_divergence_step": None})
+        table = render_markdown(collect_rows(str(tmp_path)))
+        assert "| none |" in table
+
+    def test_a_step_number_still_reads_as_that_step(self, tmp_path):
+        self._write(tmp_path, "a.json", {"first_divergence_step": 7})
+        table = render_markdown(collect_rows(str(tmp_path)))
+        assert "| step 7 |" in table
+
+    def test_an_absent_field_reads_as_not_recorded(self, tmp_path):
+        self._write(tmp_path, "a.json", {})
+        table = render_markdown(collect_rows(str(tmp_path)))
+        assert "| none |" not in table
+        assert "not recorded" in table
+
+
+class TestFingerprintIsComputedOncePerRun:
+    """run() deep-copies one model, so both halves share weights by
+    construction. Fingerprinting each side separately reads the whole
+    checkpoint twice to produce the same sixteen characters."""
+
+    def test_a_trace_hashes_the_model_only_once(self):
+        from unittest.mock import patch
+
+        import torch
+
+        from torchbridge.testing import trace_validator
+
+        calls = []
+        real = trace_validator._model_fingerprint
+
+        def _spy(model):
+            calls.append(model)
+            return real(model)
+
+        tracer = trace_validator.MultiStepTracer(
+            model=torch.nn.Linear(4, 4),
+            device_a=torch.device("cpu"),
+            device_b=torch.device("cpu"),
+            backend_a="cpu",
+            backend_b="cpu",
+            dtype="float32",
+            is_lm=False,
+        )
+        with patch.object(trace_validator, "_model_fingerprint", _spy):
+            result = tracer.run(input_ids=torch.randn(1, 4), steps=2)
+
+        assert len(calls) == 1, f"hashed the model {len(calls)} times"
+        assert result.env_a["model_fingerprint"] == result.env_b["model_fingerprint"]
