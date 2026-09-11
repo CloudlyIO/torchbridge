@@ -179,10 +179,27 @@ class TestRealCommittedFiles:
     runs — and still guards the numbers — on the branch that holds them.
     """
 
-    def test_the_committed_results_produce_rows(self):
+    def test_every_recorded_dtype_produces_a_row(self):
+        """Named by dtype rather than by a count. The directory also holds a
+        sanity run and a hardware report, which are not trace results and are
+        skipped — so a bare count asserts something about the directory's
+        housekeeping instead of about the script."""
         rows = collect_rows("results/paper1")
-        assert len(rows) >= 4, f"only found {len(rows)}"
-        assert any(r["dtype"] == "bfloat16" for r in rows)
+        assert {r["dtype"] for r in rows} == {"bfloat16", "float16", "float32"}
+
+    def test_no_committed_result_is_silently_dropped(self):
+        """Every trace result on disk has to appear. A parse failure that
+        skipped one would leave a table quietly missing a row."""
+        import json
+        from pathlib import Path
+
+        trace_files = [
+            f
+            for f in Path("results/paper1").glob("*.json")
+            if "step_results" in json.loads(f.read_text())
+        ]
+        rows = collect_rows("results/paper1")
+        assert len(rows) == len(trace_files)
 
     def test_the_known_a10g_numbers_appear(self):
         rows = collect_rows("results/paper1")
