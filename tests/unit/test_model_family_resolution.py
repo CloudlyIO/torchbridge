@@ -364,3 +364,62 @@ class TestResultConstructorContract:
         result = TraceValidationResult("cpu", "cuda", 1, "float32", True, [step])
         assert result.step_results == [step]
         assert result.model_family is None
+
+
+class TestHumanTraceOutputShowsTheLimit:
+    """A human reading the trace has to see what judged it.
+
+    The family note only appeared when the family was *inferred*, so a run with
+    an explicit --model-family printed no tolerance at all and the reader could
+    not tell which limit produced the PASS lines above.
+    """
+
+    @staticmethod
+    def _trace_args(**kw):
+        import argparse
+
+        d = {
+            "compare": ["cpu", "cpu"],
+            "trace": True,
+            "steps": 2,
+            "autoregressive": False,
+            "model": None,
+            "input_shape": "1,4",
+            "per_layer": False,
+            "dtype": "float32",
+            "output": None,
+            "trace_output": None,
+            "ci": False,
+            "verbose": False,
+            "model_family": None,
+            "cert": None,
+        }
+        d.update(kw)
+        return argparse.Namespace(**d)
+
+    def test_explicit_family_run_still_prints_the_tolerance(self, capsys):
+        from torchbridge.cli.validate import ValidateCommand
+
+        ValidateCommand._run_trace(self._trace_args(model_family="decoder-large"))
+        out = capsys.readouterr().out
+        assert "Family   : decoder-large" in out
+        assert "Tolerance: atol" in out
+
+    def test_inferred_family_run_prints_it_too(self, capsys):
+        from torchbridge.cli.validate import ValidateCommand
+
+        ValidateCommand._run_trace(self._trace_args())
+        out = capsys.readouterr().out
+        assert "Family   :" in out
+        assert "Tolerance: atol" in out
+
+    def test_ci_mode_stdout_stays_pure_json(self, capsys):
+        """--ci consumers parse stdout, so the new lines must not appear."""
+        import json
+
+        from torchbridge.cli.validate import ValidateCommand
+
+        ValidateCommand._run_trace(
+            self._trace_args(ci=True, model_family="decoder-large")
+        )
+        json.loads(capsys.readouterr().out)

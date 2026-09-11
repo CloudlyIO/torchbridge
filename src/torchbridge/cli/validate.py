@@ -959,6 +959,13 @@ Examples:
                 print("         (no --model given; using smoke Linear)")
             print(f"Steps    : {steps}  ({mode_str})")
             print(f"dtype    : {dtype_str}")
+            # The limit that decides every PASS below, and where it came from.
+            # Printing the family only when it was inferred left an explicit
+            # --model-family run showing no tolerance at all, so a reader could
+            # not tell what judged the numbers they were looking at.
+            print(f"Family   : {result.model_family or 'none (coarse table)'}")
+            if result.atol is not None:
+                print(f"Tolerance: atol {result.atol:.1e} ({result.atol_source})")
             print()
 
             # Print step table (all steps for short runs, every 5th for long)
