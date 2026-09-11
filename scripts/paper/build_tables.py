@@ -72,7 +72,12 @@ def load_result(path: str | Path) -> dict[str, Any] | None:
         "dtype": data["dtype"],
         "steps": data.get("steps"),
         "autoregressive": bool(data.get("autoregressive")),
+        # Kept apart from the value: an explicit null means the run completed
+        # with no divergence, while an absent key means the file predates the
+        # field. Collapsing both to None reports "we never recorded this" as
+        # "every step passed", which is a claim the file does not make.
         "first_divergence_step": data.get("first_divergence_step"),
+        "has_divergence_field": "first_divergence_step" in data,
         "max_amplification": data.get("max_amplification"),
         "peak_step": peak_amplification_step(data),
         "final_passed": data.get("final_passed"),
@@ -111,6 +116,19 @@ def _tolerance_cell(row: dict[str, Any]) -> str:
     return f"{row['atol']:.1e} ({row['atol_source']})"
 
 
+def _divergence_cell(row: dict[str, Any]) -> str:
+    """``step N``, ``none``, or ``not recorded`` when the file never had it.
+
+    ``none`` is a measurement: the run finished and no step diverged. A file
+    written before the field existed made no such measurement, and printing
+    ``none`` for it claims a clean run on no evidence.
+    """
+    if not row["has_divergence_field"]:
+        return NOT_RECORDED
+    first = row["first_divergence_step"]
+    return "none" if first is None else f"step {first}"
+
+
 def _verdict_cell(row: dict[str, Any]) -> str:
     """PASS, FAIL, or ``not recorded`` when the file never stored a verdict.
 
@@ -135,7 +153,7 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
     )
     lines = [header, "|" + "---|" * 9]
     for r in rows:
-        first = r["first_divergence_step"]
+        first = _divergence_cell(r)
         lines.append(
             "| {model} | {a} vs {b} | {dtype} | {steps} | {first} | {amp} | "
             "{tol} | {inp} | {verdict} |".format(
@@ -144,7 +162,7 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
                 b=r["backend_b"],
                 dtype=r["dtype"],
                 steps=r["steps"] if r["steps"] is not None else "?",
-                first="none" if first is None else f"step {first}",
+                first=first,
                 amp=_amplification_cell(r),
                 tol=_tolerance_cell(r),
                 inp=r["input"],
