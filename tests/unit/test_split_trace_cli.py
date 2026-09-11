@@ -640,3 +640,100 @@ class TestTrajectoryIsNormalisedBeforeTheLoop:
             input_ids=torch.randn(1, 4), steps=2, autoregressive=True
         )
         assert all(t.device.type == "cpu" for t in rec.token_inputs)
+
+
+class TestReplayCommandCarriesTheRunSettings:
+    """The printed command is what the operator runs on the second machine.
+
+    Written out by hand it omitted --model, so following it verbatim built a
+    freshly initialised smoke model there. The fingerprint mismatch only warns,
+    so a verdict came out of two different sets of weights.
+    """
+
+    def test_the_model_is_included(self, tmp_path, saved_model, capsys):
+        ValidateCommand._run_trace(
+            _args(record=str(tmp_path / "a.pt"), model=saved_model)
+        )
+        assert f"--model {saved_model}" in capsys.readouterr().out
+
+    def test_family_dtype_and_shape_are_included(self, tmp_path, saved_model, capsys):
+        ValidateCommand._run_trace(
+            _args(
+                record=str(tmp_path / "a.pt"),
+                model=saved_model,
+                model_family="decoder-large",
+                dtype="float32",
+                input_shape="1,4",
+                autoregressive=False,
+            )
+        )
+        out = capsys.readouterr().out
+        assert "--model-family decoder-large" in out
+        assert "--dtype float32" in out
+        assert "--input-shape 1,4" in out
+
+    def test_autoregressive_is_carried_over(self, tmp_path, saved_model, capsys):
+        ValidateCommand._run_trace(
+            _args(record=str(tmp_path / "a.pt"), model=saved_model, autoregressive=True)
+        )
+        assert "--autoregressive" in capsys.readouterr().out
+
+    def test_a_smoke_model_recording_says_it_is_not_a_measurement(
+        self, tmp_path, capsys
+    ):
+        ValidateCommand._run_trace(_args(record=str(tmp_path / "a.pt")))
+        out = capsys.readouterr().out
+        assert "no --model was given" in out
+        assert "measure the weights rather than the backends" in out
+
+
+class TestSplitFlagsAreDispatchedCorrectly:
+    """The split flags are read only inside the trace path, so reaching
+    execute() without --trace dropped them without a word."""
+
+    def test_compare_records_needs_no_backend_pair(self, tmp_path, saved_model):
+        """The documented command. Both backend names come from the files, so
+        requiring --compare made it impossible to run."""
+        import argparse
+
+        a = tmp_path / "a.pt"
+        b = tmp_path / "b.pt"
+        ValidateCommand._run_trace(_args(record=str(a), model=saved_model))
+        ValidateCommand._run_trace(
+            _args(replay=str(a), record=str(b), model=saved_model)
+        )
+
+        rc = ValidateCommand.execute(
+            argparse.Namespace(
+                compare=None,
+                trace=False,
+                compare_records=[str(a), str(b)],
+                ci=False,
+                verbose=False,
+                model_family=None,
+                output=None,
+                trace_output=None,
+                level="standard",
+            )
+        )
+        assert rc == 0
+
+    @pytest.mark.parametrize("flag", ["record", "replay"])
+    def test_a_split_flag_without_trace_is_refused(self, flag, tmp_path, capsys):
+        import argparse
+
+        rc = ValidateCommand.execute(
+            argparse.Namespace(
+                **{
+                    "compare": None,
+                    "trace": False,
+                    "compare_records": None,
+                    flag: str(tmp_path / "x.pt"),
+                    "ci": False,
+                    "verbose": False,
+                    "level": "standard",
+                }
+            )
+        )
+        assert rc == 1
+        assert "split trace" in capsys.readouterr().out

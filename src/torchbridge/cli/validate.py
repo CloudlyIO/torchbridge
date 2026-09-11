@@ -169,12 +169,51 @@ def infer_model_family(model: Any) -> str | None:
     return "decoder-large"
 
 
+def _replay_command(args, backend_a: str, backend_b: str, steps: int) -> str:
+    """The command that replays this record on the other machine.
+
+    Built from the arguments this run actually used, rather than written out
+    by hand. A hand-written line omitted --model and --model-family, so
+    following it verbatim loaded a freshly initialised smoke model on the
+    second machine; the weight fingerprint only warns, so a verdict still came
+    out. It also goes stale the moment a flag is added.
+    """
+    import shlex
+
+    parts = [
+        "tb-validate",
+        "--compare",
+        backend_a,
+        backend_b,
+        "--trace",
+        "--steps",
+        str(steps),
+        "--replay",
+        shlex.quote(args.record),
+    ]
+    # Everything that changes what the second half computes, or how it is
+    # judged, has to cross the machine boundary with it.
+    for flag, value in (
+        ("--model", getattr(args, "model", None)),
+        ("--model-family", getattr(args, "model_family", None)),
+        ("--dtype", getattr(args, "dtype", None)),
+        ("--input-shape", getattr(args, "input_shape", None)),
+    ):
+        if value:
+            parts += [flag, shlex.quote(str(value))]
+    if getattr(args, "autoregressive", False):
+        parts.append("--autoregressive")
+    return " ".join(parts)
+
+
 def _split_trace_mode(args) -> str:
     """Which half of a split trace this invocation is, if any.
 
     Returns ``"record"``, ``"replay"``, ``"compare_records"`` or ``"none"``.
     """
     if getattr(args, "compare_records", None):
+        # execute() handles this case before _run_trace() is reached, so this
+        # branch serves direct library callers only. See _run_trace().
         return "compare_records"
     # --replay wins when both are given: that combination means "replay this
     # record, keep my half in the --record file, and compare". Keeping the second
@@ -500,8 +539,8 @@ Examples:
             dest="compare_records",
             default=None,
             help=(
-                "Compare two saved --record files offline. Needs no accelerator "
-                "(requires --trace)."
+                "Compare two saved --record files offline. Needs no accelerator, "
+                "no backend pair and no model — both names come from the files."
             ),
         )
 
@@ -552,17 +591,40 @@ Examples:
     @staticmethod
     def execute(args) -> int:
         """Execute the validate command."""
-        # --compare short-circuits the standard pipeline
         compare = getattr(args, "compare", None)
-        if isinstance(compare, (list, tuple)) and len(compare) == 2:
-            if getattr(args, "trace", False) is True:
+        has_pair = isinstance(compare, (list, tuple)) and len(compare) == 2
+        tracing = getattr(args, "trace", False) is True
+
+        # Offline record comparison runs before the --compare requirement. It
+        # needs no accelerator and no backend pair — both names come out of the
+        # files — so demanding --compare made the documented command impossible.
+        if getattr(args, "compare_records", None):
+            return ValidateCommand._compare_saved_records(args)
+
+        # --compare short-circuits the standard pipeline
+        if has_pair:
+            if tracing:
                 return ValidateCommand._run_trace(args)
             return ValidateCommand._run_compare(args)
 
         # --trace without --compare is an error
-        if getattr(args, "trace", False) is True:
+        if tracing:
             print("Error: --trace requires --compare BACKEND1 BACKEND2")
             return 1
+
+        # The split flags are read only inside the trace path. Reaching here
+        # with one set means it would be dropped without a word, and the
+        # command would quietly run the ordinary pipeline instead.
+        for flag, value in (
+            ("--record", getattr(args, "record", None)),
+            ("--replay", getattr(args, "replay", None)),
+        ):
+            if value:
+                print(
+                    f"Error: {flag} is part of a split trace and needs "
+                    f"--trace --compare BACKEND1 BACKEND2"
+                )
+                return 1
 
         ci_mode = getattr(args, "ci", False)
         level = getattr(args, "level", "standard")
@@ -1048,6 +1110,11 @@ Examples:
             return 1
 
         if split_mode == "compare_records":
+            # Unreachable from the command line: execute() intercepts
+            # --compare-records before the --compare requirement, because the
+            # offline comparison needs neither a backend pair nor a device.
+            # Kept so a library caller who builds args and calls _run_trace()
+            # directly still lands in the right place rather than tracing.
             return ValidateCommand._compare_saved_records(args)
 
         dtype = getattr(torch, dtype_str)
@@ -1202,9 +1269,20 @@ Examples:
                     print(
                         f"Recorded {rec.steps} step(s) of '{rec.backend}' to "
                         f"{args.record}\nReplay it on the other machine with:\n"
-                        f"  tb-validate --compare {backend_a} {backend_b} --trace "
-                        f"--steps {steps} --replay {args.record}"
+                        f"  {_replay_command(args, backend_a, backend_b, steps)}"
                     )
+                    if smoke_model:
+                        # A record made from the smoke model is a mechanism
+                        # check, not a measurement: the other machine builds its
+                        # own randomly initialised copy, so the two halves never
+                        # shared weights.
+                        print(
+                            "\nNote: no --model was given, so this records the "
+                            "built-in smoke model. The replay machine will "
+                            "initialise its own copy with different weights, so "
+                            "the comparison will measure the weights rather than "
+                            "the backends. Pass --model for a real run."
+                        )
                 return 0
 
             if split_mode == "replay":
@@ -2049,8 +2127,8 @@ def main():
         dest="compare_records",
         default=None,
         help=(
-            "Compare two saved --record files offline. Needs no accelerator "
-            "(requires --trace)."
+            "Compare two saved --record files offline. Needs no accelerator, "
+            "no backend pair and no model — both names come from the files."
         ),
     )
 

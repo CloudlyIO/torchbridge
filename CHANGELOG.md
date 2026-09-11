@@ -64,6 +64,15 @@
 - **`_model_fingerprint()`**: the docstring and the mismatch warning now state
   that endpoint sampling is a one-way signal — a difference proves the weights
   differ, a match does not prove they agree.
+- **`cli/validate.py`**: `--compare-records` is dispatched before the
+  `--compare` requirement, so the documented offline comparison runs without a
+  backend pair. `--record`/`--replay` outside trace mode are refused instead of
+  silently dropped.
+- **`cli/validate.py`**: the replay command printed after `--record` is built
+  from the run's own arguments, so it carries `--model`, `--model-family`,
+  `--dtype`, `--input-shape` and `--autoregressive`. Recording without
+  `--model` now says the comparison would measure the weights, not the
+  backends.
 - **`trace_validator.py`**: `_model_fingerprint()` slices each parameter before
   converting it, rather than copying the whole tensor to host float32 to read 16
   values. On an 8B checkpoint that was a multi-GB copy, twice per trace.
