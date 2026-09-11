@@ -1691,3 +1691,80 @@ class TestGpuAliasFollowsTheLocalVendor:
         assert _tolerance_key("neuron") == "trainium"
         assert _tolerance_key("tpu") == "xla"
         assert _tolerance_key("cuda") == "cuda"
+
+
+class TestOfflineComparisonUsesTheRecordingMachinesVendor:
+    """`gpu` means "whichever accelerator this machine has", so resolving it on
+    the compare host answers a question about the wrong computer.
+
+    compare_records() is built to run anywhere — the point of the offline path
+    is that both rented machines can be gone. An AMD half saved under `gpu`
+    must not pick up CUDA's limit because the laptop doing the comparison is
+    not a ROCm build.
+    """
+
+    @staticmethod
+    def _pair(tolerance_key=None):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        halves = []
+        for role, backend in (("record", "gpu"), ("replay", "cpu")):
+            rec = SplitTraceRecord(
+                backend=backend,
+                dtype="float32",
+                autoregressive=False,
+                is_lm=False,
+                role=role,
+            )
+            rec.token_inputs = [torch.zeros(1, 4)]
+            rec.outputs = [torch.zeros(1, 4)]
+            rec.env = {"torch": "2.0", "transformers": "4.0"}
+            halves.append(rec)
+        halves[0].tolerance_key = tolerance_key
+        return halves
+
+    def test_an_amd_half_keeps_the_rocm_limit_on_a_non_rocm_host(self):
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        result = compare_records(*self._pair(tolerance_key="rocm"))
+        assert result.atol == pytest.approx(ToleranceDB().get("rocm", "float32").atol)
+
+    def test_an_nvidia_half_keeps_the_cuda_limit(self):
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        result = compare_records(*self._pair(tolerance_key="cuda"))
+        assert result.atol == pytest.approx(ToleranceDB().get("cuda", "float32").atol)
+
+    def test_the_two_vendors_really_do_differ(self):
+        """Guards the test above: if these limits were equal it would prove
+        nothing."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        assert db.get("rocm", "float32").atol != db.get("cuda", "float32").atol
+
+    def test_a_record_without_the_key_falls_back_to_local_resolution(self):
+        """Records written before this field still compare, on the old terms."""
+        result = compare_records(*self._pair(tolerance_key=None))
+        assert result.atol is not None
+
+    def test_record_stores_the_resolved_key(self):
+        """_split_tracer names backend_a "cuda", so the stored key is the one
+        this machine resolved for it, not the literal alias."""
+        tracer = _split_tracer(_TinyLM())
+        rec = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        assert rec.tolerance_key == "cuda"
+
+    def test_replay_stores_its_own_side_s_key(self):
+        tracer = _split_tracer(_TinyLM())
+        rec = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        assert tracer.replay(rec).tolerance_key == "rocm"
+
+    def test_the_key_survives_a_save_and_load(self, tmp_path):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        rec = _split_tracer(_TinyLM()).record(torch.randint(0, 37, (1, 4)), steps=2)
+        rec.tolerance_key = "rocm"
+        path = str(tmp_path / "a.pt")
+        rec.save(path)
+        assert SplitTraceRecord.load(path).tolerance_key == "rocm"
