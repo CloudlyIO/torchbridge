@@ -51,6 +51,26 @@
   table. Tolerates result files written before the provenance fields existed.
 
 ### Changed
+- **`cli/validate.py` (behaviour change)**: the non-trace `--compare` path
+  now canonicalises the backend name before the tolerance lookup, as `--trace`
+  already did. `tpu`, `neuron` and `gpu` previously found no row and silently
+  took the 1.0e-3 safe default. Six alias/dtype combinations change limit:
+
+  | alias | dtype | before | after |
+  |---|---|---|---|
+  | `tpu` | float32 | 1.0e-03 fallback | 5.0e-01 measured (`xla`) |
+  | `tpu` | bfloat16 | 1.0e-03 fallback | 5.0e-01 measured (`xla`) |
+  | `neuron` | float32 | 1.0e-03 fallback | 1.0e-04 measured (`trainium`) |
+  | `neuron` | bfloat16 | 1.0e-03 fallback | 1.0e-02 measured (`trainium`) |
+  | `gpu` | float32 | 1.0e-03 fallback | 1.0e-04 on CUDA, 1.0e-03 on ROCm |
+  | `gpu` | bfloat16 | 1.0e-03 fallback | 1.0e-02 on CUDA, 2.0e-02 on ROCm |
+
+  `neuron` float32 becomes ten times stricter, as does `gpu` float32 **on a
+  CUDA build**; a run that passed against the fallback may now fail, correctly,
+  since the fallback was a number nobody measured. On a ROCm build `gpu`
+  resolves to the `rocm` row, whose float32 limit is also 1.0e-03, so the value
+  is unchanged there and only its source becomes `measured`. `cuda`, `rocm`,
+  `cpu`, `mps`, `xla` and `trainium` named directly are unaffected.
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
   caller-supplied tolerance database must now accept the third argument;
   `ToleranceDB` already declared it optional.

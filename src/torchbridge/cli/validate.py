@@ -861,8 +861,13 @@ Examples:
         from torchbridge.testing.tolerance_db import ToleranceDB
 
         tol_db = ToleranceDB()
-        # Use backend1 tolerance (primary backend)
-        b1_key = backend1.lower() if backend1.lower() != "rocm" else "rocm"
+        # Use backend1 tolerance (primary backend), through the same canonical
+        # key the trace path uses. Looking the raw name up meant tpu, neuron and
+        # gpu found no row and silently took the 1.0e-3 safe default, so the
+        # limit depended on which alias was typed for the same chip.
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        b1_key = _tolerance_key(backend1)
         model_family, family_note = resolve_family_for_run(args, model)
         if family_note and not ci_mode:
             # --ci consumers parse stdout as JSON, so nothing else may be printed.
