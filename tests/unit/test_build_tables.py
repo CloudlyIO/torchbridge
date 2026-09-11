@@ -161,9 +161,15 @@ class TestRendering:
 RESULTS_DIR = Path("results/paper1")
 
 
+# Keyed on the A10G files themselves, not on the directory. The directory can
+# exist and hold unrelated runs — a local control sweep, say — and then a bare
+# is_dir() check turns "these results are elsewhere" into a failure.
+_A10G_RESULTS = sorted(RESULTS_DIR.glob("*a10g*.json")) if RESULTS_DIR.is_dir() else []
+
+
 @pytest.mark.skipif(
-    not RESULTS_DIR.is_dir(),
-    reason="results/paper1 lives on the paper-1 results branch, not on main",
+    not _A10G_RESULTS,
+    reason="the A10G traces live on the paper-1 results branch, not on main",
 )
 class TestRealCommittedFiles:
     """The script must work on the real result files, where those are present.
@@ -215,3 +221,45 @@ class TestUnknownVerdictIsNotReportedAsFailure:
         p = _write(tmp_path, "none.json", payload)
         out = render_markdown([load_result(p)])
         assert "FAIL" not in out
+
+
+class TestResultConstructorContractAcrossTheStack:
+    """Every provenance field added by this stack sits after the released ones.
+
+    ``TraceValidationResult`` is public and was constructible positionally with
+    ``step_results`` sixth. Three commits here add fields; if any of them lands
+    ahead of ``step_results``, a caller written against the last release binds
+    its step list to the wrong name and gets a result that looks valid.
+    """
+
+    def test_released_positional_prefix_is_unchanged(self):
+        import dataclasses
+
+        from torchbridge.testing.trace_validator import TraceValidationResult
+
+        released = [
+            "backend_a",
+            "backend_b",
+            "steps",
+            "dtype",
+            "autoregressive",
+            "step_results",
+            "first_divergence_step",
+            "max_amplification",
+            "final_passed",
+        ]
+        names = [f.name for f in dataclasses.fields(TraceValidationResult)]
+        assert names[: len(released)] == released
+
+    def test_every_new_field_is_optional(self):
+        """A positional caller supplies none of them, so each needs a default."""
+        import dataclasses
+
+        from torchbridge.testing.trace_validator import TraceValidationResult
+
+        for f in dataclasses.fields(TraceValidationResult)[9:]:
+            has_default = (
+                f.default is not dataclasses.MISSING
+                or f.default_factory is not dataclasses.MISSING
+            )
+            assert has_default, f"{f.name} has no default"
