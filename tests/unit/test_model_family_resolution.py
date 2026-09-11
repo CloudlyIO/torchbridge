@@ -12,6 +12,9 @@ Nothing here needs a GPU.
 
 from __future__ import annotations
 
+import pytest
+import torch
+
 
 class TestUnknownModelFamilyIsRefused:
     """A mistyped family silently selects the coarse table — the same class of
@@ -239,3 +242,125 @@ class TestInferenceNoteRespectsCiMode:
 
         ValidateCommand._run_trace(self._args(ci=True, trace=True))
         json.loads(capsys.readouterr().out.strip())
+
+
+class _Config:
+    """Stand-in for a HuggingFace config, carrying only the attributes read."""
+
+    def __init__(self, **kw):
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+
+class _ModelWithConfig(torch.nn.Module):
+    def __init__(self, config, params: int = 1_000):
+        super().__init__()
+        self.config = config
+        self.w = torch.nn.Parameter(torch.zeros(params))
+
+
+class TestArchitectureGuard:
+    """A parameter count separates decoder sizes and nothing else.
+
+    An encoder of the same size belongs in the ``encoder`` row and a
+    vision-language model in ``vision-language``, both tighter than the decoder
+    rows; an MoE model's row turns on active rather than total parameters. So a
+    count is not evidence for those, and inferring from it would reintroduce the
+    wrong-tolerance bug this PR exists to fix.
+    """
+
+    def test_encoder_decoder_is_not_inferred(self):
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(is_encoder_decoder=True))
+        assert infer_model_family(model) is None
+        assert non_decoder_trait(model) == "encoder-decoder"
+
+    def test_vision_language_is_not_inferred(self):
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(vision_config=_Config(hidden_size=8)))
+        assert infer_model_family(model) is None
+        assert non_decoder_trait(model) == "vision-language"
+
+    @pytest.mark.parametrize(
+        "attr", ["num_experts", "num_local_experts", "n_routed_experts"]
+    )
+    def test_mixture_of_experts_is_not_inferred(self, attr):
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(**{attr: 64}))
+        assert infer_model_family(model) is None
+        assert non_decoder_trait(model) == "mixture-of-experts"
+
+    def test_dense_decoder_config_still_infers(self):
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(is_encoder_decoder=False, num_experts=0))
+        assert non_decoder_trait(model) is None
+        assert infer_model_family(model) == "decoder-small"
+
+    def test_bare_module_without_config_still_infers(self):
+        """A traced model or a test stand-in carries no config. Refusing those
+        would disable inference for every non-HuggingFace model."""
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = torch.nn.Linear(4, 4)
+        assert non_decoder_trait(model) is None
+        assert infer_model_family(model) == "decoder-small"
+
+    def test_refusal_is_reported_not_silent(self):
+        """The coarse row is still used, but the run has to say so. Silence is
+        the original bug in a different disguise."""
+        import argparse
+
+        from torchbridge.cli.validate import resolve_family_for_run
+
+        model = _ModelWithConfig(_Config(is_encoder_decoder=True))
+        family, note = resolve_family_for_run(
+            argparse.Namespace(model_family=None), model
+        )
+        assert family is None
+        assert note is not None
+        assert "encoder-decoder" in note
+        assert "--model-family" in note
+
+    def test_explicit_family_still_wins_over_the_guard(self):
+        """The operator may know what the config cannot show."""
+        import argparse
+
+        from torchbridge.cli.validate import resolve_family_for_run
+
+        model = _ModelWithConfig(_Config(num_experts=64))
+        family, note = resolve_family_for_run(
+            argparse.Namespace(model_family="deepseek_v4"), model
+        )
+        assert family == "deepseek_v4"
+        assert note is None
+
+
+class TestResultConstructorContract:
+    """The new provenance fields must not shift the positional signature.
+
+    ``TraceValidationResult`` is public and was constructible positionally with
+    ``step_results`` sixth. Inserting the new fields ahead of it would bind a
+    caller's step list to ``model_family`` and produce a result that looks valid.
+    """
+
+    def test_sixth_positional_is_still_step_results(self):
+        from torchbridge.testing.trace_validator import (
+            TraceStepResult,
+            TraceValidationResult,
+        )
+
+        step = TraceStepResult(
+            step=1,
+            max_diff=0.0,
+            cosine_sim=1.0,
+            within_tolerance=True,
+            cumulative_amplification=1.0,
+        )
+        # Exactly how a caller written against the previous release builds one.
+        result = TraceValidationResult("cpu", "cuda", 1, "float32", True, [step])
+        assert result.step_results == [step]
+        assert result.model_family is None

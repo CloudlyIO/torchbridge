@@ -22,6 +22,36 @@ import torch.nn as nn
 logger = logging.getLogger(__name__)
 
 
+def non_decoder_trait(model: Any) -> str | None:
+    """Name the architecture trait that makes a parameter count meaningless.
+
+    A count separates decoder-small from decoder-medium from decoder-large and
+    nothing else. An encoder of the same size belongs in the ``encoder`` row and
+    a vision-language model in ``vision-language``, both of which carry tighter
+    limits; an MoE model's row turns on active rather than total parameters. For
+    those, a count is not evidence, so nothing is inferred and the operator is
+    asked.
+
+    Returns:
+        The trait name, or None when the model looks like a dense decoder or
+        carries no config to judge by.
+    """
+    config = getattr(model, "config", None)
+    if config is None:
+        # A bare nn.Module — a traced model or a test stand-in. There is nothing
+        # to read, and treating that as suspicious would refuse to infer for
+        # every non-HuggingFace model.
+        return None
+    if getattr(config, "is_encoder_decoder", False):
+        return "encoder-decoder"
+    if getattr(config, "vision_config", None) is not None:
+        return "vision-language"
+    for attr in ("num_experts", "num_local_experts", "n_routed_experts"):
+        if getattr(config, attr, None):
+            return "mixture-of-experts"
+    return None
+
+
 def infer_model_family(model: Any) -> str | None:
     """Work out the tolerance family from a loaded model's parameter count.
 
@@ -31,14 +61,19 @@ def infer_model_family(model: Any) -> str | None:
     omitted --model-family silently selects the strictest row, which is the
     original bug arriving by way of a forgotten flag.
 
-    Only the dense decoder families are inferred. The MoE entries turn on active
-    versus total parameters, which a plain count cannot distinguish, so those
-    must still be passed explicitly.
+    Only the dense decoder families are inferred, and :func:`non_decoder_trait`
+    enforces that rather than leaving it to the docstring. An encoder or a
+    vision-language model of the same size belongs in a different row, and the
+    MoE entries turn on active versus total parameters, which a plain count
+    cannot distinguish. Those must still be passed explicitly.
 
     Returns:
-        A family name, or None when there are no parameters to count — the
-        caller then decides whether to proceed or refuse.
+        A family name, or None when there are no parameters to count or the
+        model is not a dense decoder — the caller then decides whether to
+        proceed or refuse.
     """
+    if non_decoder_trait(model) is not None:
+        return None
     total = sum(p.numel() for p in model.parameters())
     if total == 0:
         return None
@@ -66,6 +101,16 @@ def resolve_family_for_run(args, model: Any) -> tuple[str | None, str | None]:
         return explicit, None
     inferred = infer_model_family(model)
     if inferred is None:
+        trait = non_decoder_trait(model)
+        if trait is not None:
+            # Silence here would be the original bug wearing a different hat:
+            # the run still happens, judged by the coarse row, and nothing says so.
+            return None, (
+                f"Model family: not inferred — this looks like a {trait} model, "
+                "where a parameter count does not identify the family. "
+                "Pass --model-family to set it; the coarse backend+dtype row is "
+                "used until then."
+            )
         return None, None
     return inferred, f"Model family: {inferred} (inferred from parameter count)"
 
@@ -310,7 +355,9 @@ Examples:
                 "Model family for tolerance lookup with --compare "
                 "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
                 "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
-                "tencent_hy3, minimax_m3, glm_5_2). Defaults to backend+dtype tolerances."
+                "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
+                "is inferred from its parameter count; anything else falls back to the "
+                "coarse backend+dtype row."
             ),
         )
 
@@ -1661,7 +1708,9 @@ def main():
             "Model family for tolerance lookup with --compare "
             "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
             "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
-            "tencent_hy3, minimax_m3, glm_5_2). Defaults to backend+dtype tolerances."
+            "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
+            "is inferred from its parameter count; anything else falls back to the "
+            "coarse backend+dtype row."
         ),
     )
 

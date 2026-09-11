@@ -81,15 +81,6 @@ class TraceValidationResult:
     dtype: str
     autoregressive: bool
 
-    model_family: str | None = None
-    """Family used for the tolerance lookup, or None if the coarse table was used."""
-
-    atol: float | None = None
-    """The absolute tolerance actually applied — it decides every verdict below."""
-
-    atol_source: str | None = None
-    """Where that tolerance came from: measured, derived, or fallback."""
-
     step_results: list[TraceStepResult] = field(default_factory=list)
 
     first_divergence_step: int | None = None
@@ -100,6 +91,19 @@ class TraceValidationResult:
 
     final_passed: bool = True
     """True only if all step_results have within_tolerance=True."""
+
+    # Appended rather than grouped with the other tolerance fields on purpose.
+    # This dataclass is public and was constructible positionally, with
+    # step_results sixth; inserting ahead of it would silently bind a caller's
+    # step list to model_family. New fields go at the end.
+    model_family: str | None = None
+    """Family used for the tolerance lookup, or None if the coarse table was used."""
+
+    atol: float | None = None
+    """The absolute tolerance actually applied — it decides every verdict below."""
+
+    atol_source: str | None = None
+    """Where that tolerance came from: measured, derived, or fallback."""
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""

@@ -19,9 +19,14 @@
   dropped it.
 - **`cli/validate.py`**: `infer_model_family()` derives the family from a loaded
   model's parameter count when the flag is omitted, using the size boundaries
-  documented in `tolerance_db.py`.
+  documented in `tolerance_db.py`. Inference covers dense decoders only —
+  `non_decoder_trait()` withholds it for encoder-decoder, vision-language and
+  MoE models, where a count does not identify the row, and the run says so
+  instead of guessing.
 - **`TraceValidationResult`**: `model_family`, `atol` and `atol_source` fields,
-  included in `to_dict()`, so a saved run records which limit judged it.
+  included in `to_dict()`, so a saved run records which limit judged it. They
+  are appended after `final_passed`, leaving the positional constructor
+  signature unchanged for existing callers.
 
 ### Changed
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
