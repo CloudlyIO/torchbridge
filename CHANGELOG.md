@@ -82,6 +82,12 @@
   is not `replay` still raises.
 
 ### Fixed
+- **ROCm detection consistency**: `backends/backend_factory.py` and
+  `attention/dispatch/dispatcher.py` tested `torch.version.hip is not None`,
+  which classifies an empty HIP version string as ROCm, while
+  `is_rocm_build()` uses truthiness and classifies it as CUDA. Backend
+  availability and CK kernel dispatch therefore disagreed with the hardware
+  detector on that one value. Both now call the shared helper.
 - **Trace tolerance**: traces were judged against the strictest tolerance row
   regardless of model size, because the model family never reached
   `ToleranceDB.get()`. On a larger model this reports divergence that is within
