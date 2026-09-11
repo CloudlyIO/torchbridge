@@ -347,7 +347,11 @@ class MultiStepTracer:
         model_b.eval()
 
         # Initialise running input (may grow in autoregressive mode)
-        current_input = input_ids.clone()
+        # Pinned to CPU because the running trajectory is grown by
+        # concatenating next_token.cpu() each step. A caller who passes
+        # input_ids already on the accelerator — the natural thing to do —
+        # would otherwise hit a device mismatch on the first append.
+        current_input = input_ids.detach().clone().cpu()
 
         step1_max_diff: float | None = None
 
@@ -492,7 +496,11 @@ class MultiStepTracer:
         model = copy.deepcopy(self._model).to(self._device_a)
         model.eval()
 
-        current_input = input_ids.clone()
+        # Pinned to CPU because the running trajectory is grown by
+        # concatenating next_token.cpu() each step. A caller who passes
+        # input_ids already on the accelerator — the natural thing to do —
+        # would otherwise hit a device mismatch on the first append.
+        current_input = input_ids.detach().clone().cpu()
 
         for step_idx in range(steps):
             step_num = step_idx + 1

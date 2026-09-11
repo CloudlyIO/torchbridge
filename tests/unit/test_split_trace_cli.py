@@ -551,3 +551,52 @@ class TestFingerprintDoesNotCopyTheWholeModel:
             f"converted a tensor of {max(moved)} elements; only the 16-value "
             f"sample should be converted, not the whole parameter"
         )
+
+
+class TestTrajectoryIsNormalisedBeforeTheLoop:
+    """The running trajectory is grown with ``next_token.cpu()``, so a caller
+    passing ``input_ids`` already on the accelerator hit a device mismatch on
+    the first append. It is now detached and moved to CPU up front.
+
+    The device half of that cannot be reproduced here: it needs two device
+    types, and this machine has only CPU, where the buggy and fixed versions
+    behave identically. The detach half is checkable and is checked below; the
+    rest rests on reading the code, and is recorded as such rather than covered
+    by a test that would pass either way.
+    """
+
+    @staticmethod
+    def _tracer(**kw):
+        from torchbridge.testing.trace_validator import MultiStepTracer
+
+        d = {
+            "model": torch.nn.Linear(4, 4),
+            "device_a": torch.device("cpu"),
+            "device_b": torch.device("cpu"),
+            "backend_a": "cpu",
+            "backend_b": "cpu",
+            "dtype": "float32",
+            "is_lm": False,
+        }
+        d.update(kw)
+        return MultiStepTracer(**d)
+
+    def test_recorded_trajectory_carries_no_autograd_history(self):
+        """clone() alone keeps grad_fn, so the record would pickle a piece of
+        the caller's graph into an artifact meant to hold plain tensors."""
+        given = torch.randn(1, 4, requires_grad=True)
+        rec = self._tracer().record(input_ids=given, steps=2, autoregressive=True)
+        assert all(not t.requires_grad for t in rec.token_inputs)
+        assert all(t.grad_fn is None for t in rec.token_inputs)
+
+    def test_the_caller_s_tensor_is_not_mutated(self):
+        given = torch.randn(1, 4)
+        before = given.clone()
+        self._tracer().record(input_ids=given, steps=2, autoregressive=True)
+        assert torch.equal(given, before)
+
+    def test_recorded_trajectory_is_cpu(self):
+        rec = self._tracer().record(
+            input_ids=torch.randn(1, 4), steps=2, autoregressive=True
+        )
+        assert all(t.device.type == "cpu" for t in rec.token_inputs)
