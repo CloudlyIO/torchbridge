@@ -14,11 +14,127 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import torch
 import torch.nn as nn
 
 logger = logging.getLogger(__name__)
+
+
+def non_decoder_trait(model: Any) -> str | None:
+    """Name the architecture trait that makes a parameter count meaningless.
+
+    A count separates decoder-small from decoder-medium from decoder-large and
+    nothing else. An encoder of the same size belongs in the ``encoder`` row and
+    a vision-language model in ``vision-language``, both of which carry tighter
+    limits; an MoE model's row turns on active rather than total parameters. For
+    those, a count is not evidence, so nothing is inferred and the operator is
+    asked.
+
+    Returns:
+        The trait name, or None when the model looks like a dense decoder or
+        carries no config to judge by.
+    """
+    config = getattr(model, "config", None)
+    if config is None:
+        # A bare nn.Module — a traced model or a test stand-in. There is nothing
+        # to read, and treating that as suspicious would refuse to infer for
+        # every non-HuggingFace model.
+        return None
+    if getattr(config, "is_encoder_decoder", False):
+        return "encoder-decoder"
+    if getattr(config, "vision_config", None) is not None:
+        return "vision-language"
+    for attr in ("num_experts", "num_local_experts", "n_routed_experts"):
+        if getattr(config, attr, None):
+            return "mixture-of-experts"
+    return None
+
+
+def infer_model_family(model: Any) -> str | None:
+    """Work out the tolerance family from a loaded model's parameter count.
+
+    ToleranceDB documents its own size boundaries — under 2B parameters is
+    decoder-small, 2B to 20B is decoder-medium, above that decoder-large — so
+    the family is derivable and does not need typing. It is worth deriving: an
+    omitted --model-family silently selects the strictest row, which is the
+    original bug arriving by way of a forgotten flag.
+
+    Only the dense decoder families are inferred, and :func:`non_decoder_trait`
+    enforces that rather than leaving it to the docstring. An encoder or a
+    vision-language model of the same size belongs in a different row, and the
+    MoE entries turn on active versus total parameters, which a plain count
+    cannot distinguish. Those must still be passed explicitly.
+
+    Returns:
+        A family name, or None when there are no parameters to count or the
+        model is not a dense decoder — the caller then decides whether to
+        proceed or refuse.
+    """
+    if non_decoder_trait(model) is not None:
+        return None
+    total = sum(p.numel() for p in model.parameters())
+    if total == 0:
+        return None
+    if total < 2_000_000_000:
+        return "decoder-small"
+    if total <= 20_000_000_000:
+        return "decoder-medium"
+    return "decoder-large"
+
+
+def resolve_family_for_run(args, model: Any) -> tuple[str | None, str | None]:
+    """Pick the family for this run: what was asked for, else what can be derived.
+
+    An explicit --model-family always wins — the operator may know something a
+    parameter count cannot show, such as an MoE model's active size. Only when
+    nothing was given is the family inferred, and the caller reports what was
+    chosen so the run is never judged by a limit nobody saw.
+
+    Returns:
+        (family, note). ``note`` is a line to print when the value was inferred
+        rather than supplied, otherwise None.
+    """
+    explicit = getattr(args, "model_family", None)
+    if explicit is not None:
+        return explicit, None
+    inferred = infer_model_family(model)
+    if inferred is None:
+        trait = non_decoder_trait(model)
+        if trait is not None:
+            # Silence here would be the original bug wearing a different hat:
+            # the run still happens, judged by the coarse row, and nothing says so.
+            return None, (
+                f"Model family: not inferred — this looks like a {trait} model, "
+                "where a parameter count does not identify the family. "
+                "Pass --model-family to set it; the coarse backend+dtype row is "
+                "used until then."
+            )
+        return None, None
+    return inferred, f"Model family: {inferred} (inferred from parameter count)"
+
+
+def validate_model_family(name: str | None) -> str | None:
+    """Return an error message if ``name`` is not a family the database knows.
+
+    ToleranceDB.get answers an unknown family with the coarse (backend, dtype)
+    row and gives no indication that it did, so a single mistyped character
+    quietly applies the wrong tolerance. Refusing up front keeps that failure
+    visible instead of folding it into the result.
+    """
+    if name is None:
+        return None
+    from torchbridge.testing.tolerance_db import ToleranceDB
+
+    known = ToleranceDB().families()
+    if name.lower() in {f.lower() for f in known}:
+        return None
+    return (
+        f"Unknown --model-family '{name}'. The tolerance database would fall back "
+        f"to the coarser (backend, dtype) row without saying so. "
+        f"Valid families: {', '.join(sorted(known))}"
+    )
 
 
 def _load_model_file(path: str) -> nn.Module:
@@ -239,7 +355,9 @@ Examples:
                 "Model family for tolerance lookup with --compare "
                 "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
                 "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
-                "tencent_hy3, minimax_m3, glm_5_2). Defaults to backend+dtype tolerances."
+                "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
+                "is inferred from its parameter count; anything else falls back to the "
+                "coarse backend+dtype row."
             ),
         )
 
@@ -393,6 +511,14 @@ Examples:
                 return torch.device("cpu")
             return None  # unknown
 
+        family_error = validate_model_family(getattr(args, "model_family", None))
+        if family_error:
+            if ci_mode:
+                print(json.dumps({"error": family_error}))
+            else:
+                print(f"Error: {family_error}")
+            return 1
+
         dev1 = _resolve_device(backend1)
         dev2 = _resolve_device(backend2)
 
@@ -507,7 +633,10 @@ Examples:
         tol_db = ToleranceDB()
         # Use backend1 tolerance (primary backend)
         b1_key = backend1.lower() if backend1.lower() != "rocm" else "rocm"
-        model_family = getattr(args, "model_family", None)
+        model_family, family_note = resolve_family_for_run(args, model)
+        if family_note and not ci_mode:
+            # --ci consumers parse stdout as JSON, so nothing else may be printed.
+            print(family_note)
         tol = tol_db.get(b1_key, dtype_str, model_family=model_family)
         passed = max_diff <= tol.atol
 
@@ -711,6 +840,14 @@ Examples:
                 return torch.device("cpu")
             return None
 
+        family_error = validate_model_family(getattr(args, "model_family", None))
+        if family_error:
+            if ci_mode:
+                print(json.dumps({"error": family_error}))
+            else:
+                print(f"Error: {family_error}")
+            return 1
+
         dev_a = _resolve_device(backend_a)
         dev_b = _resolve_device(backend_b)
 
@@ -776,6 +913,11 @@ Examples:
         # Run trace
         from torchbridge.testing.trace_validator import MultiStepTracer
 
+        trace_family, family_note = resolve_family_for_run(args, model)
+        if family_note and not ci_mode:
+            # --ci consumers parse stdout as JSON, so nothing else may be printed.
+            print(family_note)
+
         tracer = MultiStepTracer(
             model=model,
             device_a=dev_a,
@@ -784,6 +926,10 @@ Examples:
             backend_b=backend_b,
             dtype=dtype_str,
             is_lm=is_lm,
+            # --model-family is registered for the whole validate command and is
+            # already honoured by --compare; without this it parses fine here and
+            # is silently dropped, sending the trace to the coarser table.
+            model_family=trace_family,
         )
 
         try:
@@ -813,6 +959,13 @@ Examples:
                 print("         (no --model given; using smoke Linear)")
             print(f"Steps    : {steps}  ({mode_str})")
             print(f"dtype    : {dtype_str}")
+            # The limit that decides every PASS below, and where it came from.
+            # Printing the family only when it was inferred left an explicit
+            # --model-family run showing no tolerance at all, so a reader could
+            # not tell what judged the numbers they were looking at.
+            print(f"Family   : {result.model_family or 'none (coarse table)'}")
+            if result.atol is not None:
+                print(f"Tolerance: atol {result.atol:.1e} ({result.atol_source})")
             print()
 
             # Print step table (all steps for short runs, every 5th for long)
@@ -1562,7 +1715,9 @@ def main():
             "Model family for tolerance lookup with --compare "
             "(choices: decoder-small, decoder-medium, decoder-large, encoder, vision-language, "
             "qwen3_5, gemma4, nemotron3_nano, deepseek_v4, nemotron3_ultra, "
-            "tencent_hy3, minimax_m3, glm_5_2). Defaults to backend+dtype tolerances."
+            "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
+            "is inferred from its parameter count; anything else falls back to the "
+            "coarse backend+dtype row."
         ),
     )
 

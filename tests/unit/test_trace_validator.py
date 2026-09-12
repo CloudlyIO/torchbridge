@@ -257,7 +257,7 @@ class TestPassFail:
         from torchbridge.testing.tolerance_db import ToleranceDB, TolerancePair
 
         class _AlwaysFailDB(ToleranceDB):
-            def get(self, backend, dtype):
+            def get(self, backend, dtype, model_family=None):
                 # atol=-1.0 → within_tol = max_diff <= -1.0, always False
                 return TolerancePair(atol=-1.0, rtol=0.0)
 
@@ -307,7 +307,7 @@ class TestPassFail:
         from torchbridge.testing.tolerance_db import ToleranceDB, TolerancePair
 
         class _ZeroAtolDB(ToleranceDB):
-            def get(self, backend, dtype):
+            def get(self, backend, dtype, model_family=None):
                 # atol=0 means even 0.0 diff is within tolerance (0 <= 0 is True)
                 return TolerancePair(atol=1e10, rtol=0.0)
 
@@ -554,3 +554,237 @@ class TestGreedyToken:
         token = _greedy_token(obj)
         assert token is not None
         assert token.shape == (batch_size,)
+
+
+class TestModelFamilyReachesToleranceDB:
+    """The 3D tolerance table is useless if the family never reaches the lookup.
+
+    ToleranceDB stores atol under (model_family, backend, dtype) because a
+    deeper model accumulates more error. When the family is dropped the trace
+    silently falls back to the coarser (backend, dtype) row, which is too
+    strict for a large model and turns an acceptable run into a failure.
+    """
+
+    class _RecordingDB:
+        """Captures the arguments the tracer actually passes."""
+
+        def __init__(self, atol=1.0):
+            self.calls = []
+            self._atol = atol
+
+        def get(self, backend, dtype, model_family=None):
+            self.calls.append((backend, dtype, model_family))
+            from torchbridge.testing.tolerance_db import TolerancePair
+
+            return TolerancePair(atol=self._atol, rtol=0.0)
+
+    def _tracer(self, db, model_family):
+        cpu = torch.device("cpu")
+        return MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a="cuda",
+            backend_b="cpu",
+            dtype="float32",
+            tolerance_db=db,
+            model_family=model_family,
+        )
+
+    def test_family_is_forwarded_to_the_lookup(self):
+        db = self._RecordingDB()
+        self._tracer(db, "decoder-large").run(torch.randn(1, 8), steps=2)
+        assert db.calls == [("cuda", "float32", "decoder-large")]
+
+    def test_no_family_still_looks_up_without_one(self):
+        db = self._RecordingDB()
+        self._tracer(db, None).run(torch.randn(1, 8), steps=2)
+        assert db.calls == [("cuda", "float32", None)]
+
+    def test_family_changes_the_verdict(self):
+        """A difference between the two atols must flip pass/fail."""
+        from torchbridge.testing.tolerance_db import TolerancePair
+
+        class _FamilyAwareDB:
+            def get(self, backend, dtype, model_family=None):
+                atol = 4.0e-4 if model_family == "decoder-large" else 1.0e-4
+                return TolerancePair(atol=atol, rtol=0.0)
+
+        class _DriftingModel(nn.Module):
+            """Second copy returns the first copy's output shifted by 2.0e-4."""
+
+            calls = 0
+
+            def forward(self, x):
+                out = x.clone()
+                if _DriftingModel.calls % 2 == 1:
+                    out = out + 2.0e-4
+                _DriftingModel.calls += 1
+                return out
+
+        def verdict(family):
+            _DriftingModel.calls = 0
+            cpu = torch.device("cpu")
+            tracer = MultiStepTracer(
+                model=_DriftingModel(),
+                device_a=cpu,
+                device_b=cpu,
+                backend_a="cuda",
+                backend_b="cpu",
+                dtype="float32",
+                tolerance_db=_FamilyAwareDB(),
+                model_family=family,
+            )
+            return tracer.run(torch.randn(1, 8), steps=5)
+
+        strict = verdict(None)
+        loose = verdict("decoder-large")
+        assert strict.final_passed is False
+        assert strict.first_divergence_step == 1
+        assert loose.final_passed is True
+        assert loose.first_divergence_step is None
+
+    def test_family_is_always_passed_even_when_absent(self):
+        """The third argument goes on every call, not only when a family is set.
+
+        Branching on "was a family given" looks safer but is not: a database with
+        a two-argument ``get`` still breaks the moment a family *is* supplied, so
+        the branch buys nothing and leaves two code paths where one will do.
+        ToleranceDB already declares ``model_family`` optional, so the contract
+        for any substitute database is simply to accept it.
+        """
+        db = self._RecordingDB()
+        self._tracer(db, None).run(torch.randn(1, 8), steps=1)
+        backend, dtype, family = db.calls[0]
+        assert (backend, dtype, family) == ("cuda", "float32", None)
+
+    def test_database_without_a_family_parameter_fails_loudly(self):
+        """A substitute DB that cannot take the family must raise, not fall back.
+
+        Silently retrying without the family would reinstate the coarse-table
+        bug this class exists to prevent.
+        """
+        from torchbridge.testing.tolerance_db import TolerancePair
+
+        class _TwoArgDB:
+            def get(self, backend, dtype):  # deliberately missing model_family
+                return TolerancePair(atol=1.0, rtol=0.0)
+
+        cpu = torch.device("cpu")
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a="cuda",
+            backend_b="cpu",
+            tolerance_db=_TwoArgDB(),
+        )
+        with pytest.raises(TypeError):
+            tracer.run(torch.randn(1, 8), steps=2)
+
+
+class TestCliForwardsModelFamilyToTrace:
+    """--model-family is accepted in trace mode; it must not be dropped there."""
+
+    def test_run_trace_passes_model_family_to_the_tracer(self):
+        import argparse
+        from unittest.mock import patch
+
+        from torchbridge.cli.validate import ValidateCommand
+
+        args = argparse.Namespace(
+            compare=["cpu", "cpu"],
+            trace=True,
+            steps=2,
+            autoregressive=False,
+            model=None,
+            input_shape="1,4",
+            dtype="float32",
+            output=None,
+            trace_output=None,
+            ci=False,
+            verbose=False,
+            model_family="decoder-large",
+        )
+        seen = {}
+        real = MultiStepTracer
+
+        def _spy(*a, **kw):
+            seen.update(kw)
+            return real(*a, **kw)
+
+        with patch("torchbridge.testing.trace_validator.MultiStepTracer", _spy):
+            ValidateCommand._run_trace(args)
+
+        assert seen.get("model_family") == "decoder-large"
+
+
+class TestResultRecordsTheToleranceUsed:
+    """A result file must say which tolerance decided its verdict.
+
+    first_divergence_step and final_passed both depend on the atol that was
+    applied, and the family selects it. Without the family in the JSON, a saved
+    run cannot be re-checked or defended later.
+    """
+
+    def _run(self, family):
+        cpu = torch.device("cpu")
+        return MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a="cuda",
+            backend_b="cpu",
+            dtype="float32",
+            model_family=family,
+        ).run(torch.randn(1, 8), steps=2)
+
+    def test_family_appears_in_the_dict(self):
+        assert self._run("decoder-large").to_dict()["model_family"] == "decoder-large"
+
+    def test_absent_family_is_recorded_as_null(self):
+        assert self._run(None).to_dict()["model_family"] is None
+
+    def test_atol_actually_applied_is_recorded(self):
+        d = self._run("decoder-large").to_dict()
+        assert d["atol"] == pytest.approx(4.0e-4)
+
+
+class TestToleranceLookupUsesKeywordArgument:
+    """The family must be passed by keyword, not position.
+
+    A substitute database may legitimately declare it keyword-only —
+    ``def get(self, backend, dtype, *, model_family=None)`` — and a positional
+    call raises ``TypeError`` against that signature. The CLI already calls
+    ``ToleranceDB.get`` with the keyword, so using it here costs nothing and
+    removes an avoidable incompatibility. It does not reintroduce the silent
+    fallback: the argument is still always sent.
+    """
+
+    def test_keyword_only_database_is_supported(self):
+        from torchbridge.testing.tolerance_db import TolerancePair
+        from torchbridge.testing.trace_validator import _lookup_tolerance
+
+        class _KeywordOnlyDB:
+            def get(self, backend, dtype, *, model_family=None):
+                assert model_family == "decoder-large"
+                return TolerancePair(atol=1.0e-4, rtol=0.0)
+
+        entry = _lookup_tolerance(_KeywordOnlyDB(), "cuda", "float32", "decoder-large")
+        assert entry.atol == pytest.approx(1.0e-4)
+
+    def test_family_is_still_always_sent(self):
+        """Using the keyword must not turn into "only send it sometimes"."""
+        from torchbridge.testing.tolerance_db import TolerancePair
+        from torchbridge.testing.trace_validator import _lookup_tolerance
+
+        seen = []
+
+        class _RecordingDB:
+            def get(self, backend, dtype, model_family=None):
+                seen.append(model_family)
+                return TolerancePair(atol=1.0, rtol=0.0)
+
+        _lookup_tolerance(_RecordingDB(), "cuda", "float32", None)
+        _lookup_tolerance(_RecordingDB(), "cuda", "float32", "decoder-large")
+        assert seen == [None, "decoder-large"]

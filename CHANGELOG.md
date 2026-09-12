@@ -8,6 +8,41 @@
 
 ## **v0.5.x - Public Release Series**
 
+## [Unreleased]
+
+### Added
+- **`MultiStepTracer`**: `model_family` parameter, passed through to the
+  `ToleranceDB` lookup. Previously only `(backend, dtype)` was sent, so every
+  trace used the base row regardless of model size.
+- **`cli/validate.py`**: `--model-family` is now honoured by `--trace`. The flag
+  already existed and was already used by `--compare`; only the trace path
+  dropped it.
+- **`cli/validate.py`**: `infer_model_family()` derives the family from a loaded
+  model's parameter count when the flag is omitted, using the size boundaries
+  documented in `tolerance_db.py`. Inference covers dense decoders only —
+  `non_decoder_trait()` withholds it for encoder-decoder, vision-language and
+  MoE models, where a count does not identify the row, and the run says so
+  instead of guessing.
+- **`TraceValidationResult`**: `model_family`, `atol` and `atol_source` fields,
+  included in `to_dict()`, so a saved run records which limit judged it. They
+  are appended after `final_passed`, leaving the positional constructor
+  signature unchanged for existing callers.
+
+### Changed
+- **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
+  caller-supplied tolerance database must now accept the third argument;
+  `ToleranceDB` already declared it optional.
+
+### Fixed
+- **Trace tolerance**: traces were judged against the strictest tolerance row
+  regardless of model size, because the model family never reached
+  `ToleranceDB.get()`. On a larger model this reports divergence that is within
+  that model's tolerance.
+- **Unknown `--model-family`**: a mistyped value was silently accepted and the
+  coarse tolerance row applied. It is now refused, with the valid names listed.
+
+---
+
 ## [0.5.100] - 2026-07-21 - feat: 2026 silicon coverage
 
 ### Added
