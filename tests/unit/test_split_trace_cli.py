@@ -737,3 +737,97 @@ class TestSplitFlagsAreDispatchedCorrectly:
         )
         assert rc == 1
         assert "split trace" in capsys.readouterr().out
+
+
+class TestSplitDispatchDoesNotFireOnNonValues:
+    """The split flags are shape-checked, not truth-tested.
+
+    `execute()` is called across the suite with a MagicMock as args, where
+    every attribute is a truthy Mock. A bare `if getattr(args, ...)` therefore
+    fired on all of them and sent ordinary validation runs into the offline
+    record comparison. Eight pre-existing CLI tests broke that way, and only
+    the full CI command surfaced it — `tests/unit` alone does not reach them.
+    """
+
+    @staticmethod
+    def _plain_args(**kw):
+        import argparse
+
+        d = {
+            "level": "quick",
+            "model": None,
+            "output": None,
+            "ci": True,
+            "verbose": False,
+            "compare": None,
+            "trace": False,
+            "compare_records": None,
+            "record": None,
+            "replay": None,
+        }
+        d.update(kw)
+        return argparse.Namespace(**d)
+
+    def test_a_mock_args_object_does_not_reach_compare_records(self):
+        from unittest.mock import MagicMock
+
+        from torchbridge.cli.validate import ValidateCommand
+
+        args = MagicMock()
+        args.level = "quick"
+        args.model = None
+        args.output = None
+        args.ci = True
+        args.verbose = False
+
+        # Must not raise: the old truth test unpacked the Mock as a file pair.
+        assert ValidateCommand.execute(args) in (0, 1, 2)
+
+    def test_a_single_path_is_not_treated_as_a_record_pair(self):
+        """--compare-records is nargs=2. One value is not a pair."""
+        from torchbridge.cli.validate import ValidateCommand
+
+        rc = ValidateCommand.execute(self._plain_args(compare_records=["only_one.pt"]))
+        assert rc in (0, 1, 2)
+
+    def test_a_real_pair_still_dispatches(self, tmp_path, saved_model):
+        """The behaviour the shape check must not cost us."""
+        from torchbridge.cli.validate import ValidateCommand
+
+        a, b = tmp_path / "a.pt", tmp_path / "b.pt"
+        ValidateCommand._run_trace(_args(record=str(a), model=saved_model))
+        ValidateCommand._run_trace(
+            _args(replay=str(a), record=str(b), model=saved_model)
+        )
+
+        assert (
+            ValidateCommand.execute(
+                self._plain_args(compare_records=[str(a), str(b)], ci=True)
+            )
+            == 0
+        )
+
+    def test_a_non_string_record_flag_is_not_refused(self):
+        """The refusal is for a real path the user typed, not for a stand-in."""
+        from unittest.mock import MagicMock
+
+        from torchbridge.cli.validate import ValidateCommand
+
+        args = MagicMock()
+        args.level = "quick"
+        args.model = None
+        args.output = None
+        args.ci = True
+        args.verbose = False
+        args.compare = None
+        args.trace = False
+        args.compare_records = None
+
+        assert ValidateCommand.execute(args) in (0, 1, 2)
+
+    def test_a_real_record_path_without_trace_is_still_refused(self, tmp_path):
+        """The guard itself must keep working."""
+        from torchbridge.cli.validate import ValidateCommand
+
+        rc = ValidateCommand.execute(self._plain_args(record=str(tmp_path / "x.pt")))
+        assert rc == 1

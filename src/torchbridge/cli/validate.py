@@ -598,7 +598,13 @@ Examples:
         # Offline record comparison runs before the --compare requirement. It
         # needs no accelerator and no backend pair — both names come out of the
         # files — so demanding --compare made the documented command impossible.
-        if getattr(args, "compare_records", None):
+        #
+        # Shape-checked rather than truth-tested, the same way `compare` is
+        # above: --compare-records is nargs=2, so a real value is a pair. A
+        # bare truth test also fires on anything non-empty, which includes the
+        # MagicMock that several CLI tests pass as args.
+        records = getattr(args, "compare_records", None)
+        if isinstance(records, (list, tuple)) and len(records) == 2:
             return ValidateCommand._compare_saved_records(args)
 
         # --compare short-circuits the standard pipeline
@@ -619,7 +625,9 @@ Examples:
             ("--record", getattr(args, "record", None)),
             ("--replay", getattr(args, "replay", None)),
         ):
-            if value:
+            # str, not truthiness: both flags carry a path, and a truth test
+            # would also fire on a stand-in object from a test's arg namespace.
+            if isinstance(value, str) and value:
                 print(
                     f"Error: {flag} is part of a split trace and needs "
                     f"--trace --compare BACKEND1 BACKEND2"
