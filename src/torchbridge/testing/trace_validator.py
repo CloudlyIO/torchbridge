@@ -4,8 +4,14 @@ Multi-Step Trace Validator
 
 Runs N sequential forward passes on two hardware backends and tracks per-step
 numerical divergence. Detects the compounding divergence pattern specific to
-agentic AI: a single-step divergence of 2e-5 can amplify 500× or more over
-50 reasoning steps, causing backends to branch semantically.
+agentic AI: a small single-step divergence can grow across reasoning steps
+until backends branch semantically.
+
+The largest amplification measured so far is 10.75x — Qwen3-0.6B, A10G vs
+CPU, bfloat16, 50 autoregressive steps. Higher values are expected at larger
+model scale and more steps, but have not been measured. This docstring
+previously asserted "500x or more", which no run in this repository supports;
+scripts/paper/build_tables.py renders the real figures from the result files.
 
 Two modes:
 - Standard (autoregressive=False): same input repeated N times. Measures

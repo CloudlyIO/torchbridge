@@ -148,6 +148,11 @@
   and `rtol` as not applied. `rtol` is still not used in the verdict.
 
 ### Fixed
+- **`trace_validator.py` module docstring**: said a single-step divergence
+  "can amplify 500× or more over 50 reasoning steps". No run in this repository
+  supports that. It now states the largest figure actually measured — 10.75×,
+  Qwen3-0.6B, A10G vs CPU, bfloat16, 50 autoregressive steps — and says higher
+  values are expected but unmeasured.
 - **Trace tolerance**: traces were judged against the strictest tolerance row
   regardless of model size, because the model family never reached
   `ToleranceDB.get()`. On a larger model this reports divergence that is within
