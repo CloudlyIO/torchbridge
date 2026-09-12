@@ -162,6 +162,13 @@ Branch protection on `main` (require 1 review + CI status checks) will be enable
   never run, and it failed outright once `torch_xla` was installed. The
   absence is now simulated. `test_tpu_optimizer_inference_optimization`
   asserted `.training` on a `torch.compile` callable for the same reason.
+- **`XLACompiler` methods now accept a callable as well as returning one.**
+  `compile_model()` can be handed its own previous output — `TPUAdapter`
+  compiles, then passes the result into the compiler's
+  `optimize_for_inference()`, which compiles again. The helpers reached from
+  there (`_estimate_model_size`, `optimize_for_inference`,
+  `optimize_for_training`, `_validate_optimization`) now tolerate an object
+  with no `.parameters()`, `.eval()` or `.train()`.
 - **`XLACompiler` and `TPUOptimizationResult` claimed to return `nn.Module`**
   while the XLA path returns a `torch.compile` callable, with
   `# type: ignore[assignment]` silencing the mismatch. A caller treating the

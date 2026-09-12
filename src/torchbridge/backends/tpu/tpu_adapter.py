@@ -261,7 +261,9 @@ class TPUAdapter:
         return model
 
     def _validate_optimization(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None,
     ) -> None:
         """Validate that optimization was successful."""
 
@@ -270,11 +272,18 @@ class TPUAdapter:
             return
 
         try:
-            # Determine the model's dtype (check first parameter)
+            # Determine the model's dtype (check first parameter).
+            # Guarded because compile_model() returns a torch.compile callable
+            # on the XLA path. Today it hands back an OptimizedModule, which is
+            # still an nn.Module — but the annotation now permits a bare
+            # callable, and a bare callable has no .parameters(). The except
+            # below would swallow the AttributeError and downgrade validation
+            # to a warning, so the failure would be silent rather than loud.
             model_dtype = None
-            for param in model.parameters():
-                model_dtype = param.dtype
-                break
+            if isinstance(model, nn.Module):
+                for param in model.parameters():
+                    model_dtype = param.dtype
+                    break
 
             # Move inputs to TPU and match dtype if model uses bfloat16
             def prepare_input(inp: torch.Tensor) -> torch.Tensor:
@@ -293,7 +302,8 @@ class TPUAdapter:
                 )
 
             # Test forward pass
-            model.eval()
+            if isinstance(model, nn.Module):
+                model.eval()
             with torch.no_grad():
                 model(sample_inputs)
 
