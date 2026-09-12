@@ -923,3 +923,29 @@ class TestStrictEnv:
             )
         )
         assert rc == 0
+
+    def test_strict_env_refuses_on_the_replay_path_too(self, tmp_path, capsys):
+        """The flag has to work where the guide actually tells you to use it.
+
+        There are two places a pair of halves gets compared: `--compare-records`
+        (offline, both files on disk) and `--replay` (the second machine, live).
+        The cross-vendor procedure passes --strict-env to the *replay*, so a
+        suite that only covered the offline path would leave the documented
+        usage unverified — the two call sites are threaded separately.
+        """
+        from torchbridge.cli.validate import ValidateCommand
+
+        lead = tmp_path / "lead.rec"
+        # No --model: this process and the replay below each build their own
+        # smoke model, so the fingerprints differ, as they would if someone
+        # dropped --model on the second machine.
+        assert ValidateCommand.execute(_args(record=str(lead))) == 0
+
+        rc = ValidateCommand.execute(_args(replay=str(lead), strict_env=True))
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "different environments" in out
+        assert "model_fingerprint" in out
+        # It must refuse rather than report — a failing verdict would also be
+        # rc 1, so the absence of the table is the thing that distinguishes them.
+        assert "Status" not in out
