@@ -593,6 +593,20 @@ Examples:
         )
 
         parser.add_argument(
+            "--strict-env",
+            action="store_true",
+            dest="strict_env",
+            help=(
+                "Refuse a split-trace comparison whose two halves were produced "
+                "under different environments, instead of warning. Without it a "
+                "mismatched torch version — or a mismatched weight fingerprint, "
+                "which is proof the two machines loaded different weights — still "
+                "yields a PASS verdict. Use it for any run whose number will be "
+                "published."
+            ),
+        )
+
+        parser.add_argument(
             "--otel",
             action="store_true",
             default=False,
@@ -1091,6 +1105,11 @@ Examples:
                 records[0],
                 records[1],
                 model_family=getattr(args, "model_family", None),
+                # `is True` rather than a bare truth test: args is a MagicMock
+                # in tests/cli/test_validate.py, where every attribute is
+                # truthy, and silently switching those runs to strict mode is
+                # the same failure the --record/--replay dispatch already hit.
+                strict_env=getattr(args, "strict_env", False) is True,
             )
         except Exception as exc:
             return _fail(f"Comparison failed: {exc}")
@@ -1366,7 +1385,12 @@ Examples:
                     follower.save(args.record)
                     if not ci_mode:
                         print(f"Saved this half to {args.record}")
-                result = compare_records(leader, follower, model_family=trace_family)
+                result = compare_records(
+                    leader,
+                    follower,
+                    model_family=trace_family,
+                    strict_env=getattr(args, "strict_env", False) is True,
+                )
             else:
                 result = tracer.run(
                     input_ids=x, steps=steps, autoregressive=autoregressive
@@ -2190,6 +2214,20 @@ def main():
             "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
             "is inferred from its parameter count; anything else falls back to the "
             "coarse backend+dtype row."
+        ),
+    )
+
+    parser.add_argument(
+        "--strict-env",
+        action="store_true",
+        dest="strict_env",
+        help=(
+            "Refuse a split-trace comparison whose two halves were produced "
+            "under different environments, instead of warning. Without it a "
+            "mismatched torch version — or a mismatched weight fingerprint, "
+            "which is proof the two machines loaded different weights — still "
+            "yields a PASS verdict. Use it for any run whose number will be "
+            "published."
         ),
     )
 

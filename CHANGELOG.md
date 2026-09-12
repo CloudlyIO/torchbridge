@@ -11,6 +11,15 @@
 ## [Unreleased]
 
 ### Added
+- **`cli/validate.py`**: `--strict-env` makes a split-trace comparison refuse a
+  pair whose two halves were produced under different environments, instead of
+  warning and carrying on. Without it a *provably* different weight fingerprint
+  — the state a mistyped `--model` on the second machine produces — still
+  yields a PASS verdict, so the published number would describe the two random
+  initialisations rather than the two backends. `compare_records()` already
+  took `strict_env`; nothing exposed it, so an operator had no way to ask for
+  it. Off by default: a slightly mismatched pair is still worth measuring
+  sometimes, and changing the default is a behaviour change for existing users.
 - **`MultiStepTracer`**: `model_family` parameter, passed through to the
   `ToleranceDB` lookup. Previously only `(backend, dtype)` was sent, so every
   trace used the base row regardless of model size.
