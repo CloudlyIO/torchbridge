@@ -879,9 +879,9 @@ class TestStrictEnv:
         # A verdict is still produced — that is the behaviour the flag exists
         # to override, so it has to be asserted, not assumed.
         assert rc in (0, 1)
-        assert any(
-            "different environments" in r.message for r in caplog.records
-        ), "the mismatch must at least be reported"
+        assert any("different environments" in r.message for r in caplog.records), (
+            "the mismatch must at least be reported"
+        )
 
     def test_strict_env_refuses_the_same_pair(self, tmp_path, capsys):
         lead, follow = self._mismatched_pair(tmp_path)
@@ -909,9 +909,7 @@ class TestStrictEnv:
         lead = tmp_path / "lead.rec"
         follow = tmp_path / "follow.rec"
         # Same --model on both halves: identical weights, identical fingerprint.
-        assert (
-            ValidateCommand.execute(_args(model=saved_model, record=str(lead))) == 0
-        )
+        assert ValidateCommand.execute(_args(model=saved_model, record=str(lead))) == 0
         ValidateCommand.execute(
             _args(model=saved_model, replay=str(lead), record=str(follow))
         )
