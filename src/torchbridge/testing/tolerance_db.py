@@ -100,6 +100,36 @@ MODEL_FAMILIES: tuple[str, ...] = (
 # Base tolerance table — (backend, dtype) — measured on Qwen3-0.6B
 # ---------------------------------------------------------------------------
 
+_UNVERIFIED_KEYS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("xla", "float32"),
+        ("xla", "bfloat16"),
+    }
+)
+"""Table entries whose measurement cannot be substantiated.
+
+``get()`` labels anything in ``_TOLERANCE_TABLE`` as ``"measured"`` purely by
+virtue of being there. For ``xla`` that label does not hold up:
+
+* The CHANGELOG for v0.5.31 (2026-02-21) claims a GCP TPU v5e run and points at
+  ``reports/cloud_validation/2026-02-21/``. Those files are not in the
+  repository and never were — no such path appears anywhere in its history.
+* ``docs/reference/cloud-validation.md`` records TPU as ``PENDING`` with
+  "quota exhausted", and its validation history says "AMD + TPU SKIPPED".
+* ``docs/reference/hardware-matrix.md`` has a measured row for A10G and for
+  Trainium, and none for TPU or XLA.
+
+So the project contradicts itself and the artifact that would settle it is
+missing. Reporting ``"fallback"`` makes the trace validator warn, which is the
+correct signal for a number nobody can trace to a run — 0.5 on logits is loose
+enough that almost anything passes, so a TPU result judged by it would carry no
+information.
+
+The values are left untouched. Replacing them with invented ones would be the
+same mistake in the other direction; they should be re-measured on real TPU
+hardware and registered with ``register()``.
+"""
+
 _TOLERANCE_TABLE: dict[tuple[str, str], TolerancePair] = {
     # CUDA (NVIDIA) — tight tolerances; exact parity expected
     ("cuda", "float32"): TolerancePair(atol=1e-4, rtol=1e-5),
@@ -765,12 +795,26 @@ class ToleranceDB:
         if model_family is not None:
             entry = self._family_table.get((model_family.strip().lower(), b, d))
             if entry is not None:
+                if (b, d) in _UNVERIFIED_KEYS:
+                    # The family rows for an unverified backend are the same
+                    # unverifiable number, or derived from it. This is the path
+                    # a real run takes — decoder-small is Qwen3-0.6B — so
+                    # leaving it labelled "measured" would defeat the point.
+                    return ToleranceEntry(
+                        atol=entry.atol,
+                        rtol=entry.rtol,
+                        source="fallback",
+                        notes=f"unverified — see _UNVERIFIED_KEYS ({entry.notes})",
+                    )
                 return entry
 
         if (b, d) in self._table:
             base = self._table[(b, d)]
             source = "measured" if (b, d) in _TOLERANCE_TABLE else "derived"
             notes = "base (backend, dtype) lookup — no model-family entry"
+            if (b, d) in _UNVERIFIED_KEYS:
+                source = "fallback"
+                notes = "unverified — see _UNVERIFIED_KEYS"
         else:
             base = _DEFAULT_TOLERANCE
             source = "fallback"

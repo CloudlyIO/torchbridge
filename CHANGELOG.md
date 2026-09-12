@@ -68,6 +68,17 @@
   finished and nothing diverged — which a file predating the field never made.
 
 ### Changed
+- **`ToleranceDB`: the `xla` tolerances now report `source="fallback"`.** They
+  were labelled `"measured"` because `get()` labels anything in the table that
+  way, not because a measurement was found. The v0.5.31 changelog claims a GCP
+  TPU v5e run and points at `reports/cloud_validation/2026-02-21/`, which is not
+  in the repository and never was; `cloud-validation.md` records TPU as
+  `PENDING` and its history says "AMD + TPU SKIPPED"; `hardware-matrix.md` has
+  a measured row for A10G and Trainium and none for TPU. The family rows
+  (`decoder-small/medium/large` × `xla`) are relabelled too — `decoder-small` is
+  the row a Qwen3-0.6B run actually hits. Values are unchanged; at 0.5 on logits
+  almost anything passes, so a TPU result judged by it carries no information
+  until the number is re-measured on real hardware.
 - **`cli/validate.py` (behaviour change)**: the non-trace `--compare` path
   now canonicalises the backend name before the tolerance lookup, as `--trace`
   already did. `tpu`, `neuron` and `gpu` previously found no row and silently
