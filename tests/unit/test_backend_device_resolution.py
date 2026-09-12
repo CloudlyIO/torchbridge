@@ -464,15 +464,28 @@ class TestNonTraceCompareUsesTheCanonicalKey:
             db.get(canonical, dtype).atol
         )
 
-    @pytest.mark.parametrize("alias", ["tpu", "neuron", "gpu"])
-    def test_the_aliases_no_longer_land_on_the_fallback(self, alias):
-        """Each of these used to return the safe default with source
-        'fallback', which is the database saying nobody measured it."""
+    @pytest.mark.parametrize("alias", ["neuron", "gpu"])
+    def test_the_aliases_no_longer_land_on_the_safe_default(self, alias):
+        """Each of these used to return the coarse 1.0e-3 default because the
+        raw name had no row at all."""
         from torchbridge.testing.tolerance_db import ToleranceDB
         from torchbridge.testing.trace_validator import _tolerance_key
 
         entry = ToleranceDB().get(_tolerance_key(alias), "float32")
-        assert getattr(entry, "source", None) == "measured"
+        assert entry.source == "measured"
+        assert entry.atol != 1e-3
+
+    def test_tpu_reaches_the_xla_row_even_though_it_is_unverified(self):
+        """tpu is the exception. It now reaches the xla entry rather than the
+        coarse default — the alias fix working — but that entry is flagged
+        unverified, so it still reports "fallback". The atol separates the two
+        cases: 0.5 is the xla row, 1.0e-3 was the default."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        entry = ToleranceDB().get(_tolerance_key("tpu"), "float32")
+        assert entry.atol == 0.5
+        assert entry.source == "fallback"
 
     def test_the_compare_path_reads_the_canonical_key(self):
         """Pins the wiring, not just the helper: _run_compare must call it."""

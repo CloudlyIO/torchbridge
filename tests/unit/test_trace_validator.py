@@ -1491,9 +1491,12 @@ class TestUnmeasuredToleranceIsSurfaced:
         joined = " ".join(r.message.lower() for r in caplog.records)
         assert "fallback" in joined or "not measured" in joined
 
-    def test_tpu_is_no_longer_a_fallback_after_the_alias_fix(self):
-        """tpu resolves to the measured xla row rather than a safe default."""
-        assert self._run("tpu").to_dict()["atol_source"] == "measured"
+    def test_tpu_resolves_to_the_xla_row_not_the_safe_default(self):
+        """The alias fix: tpu reaches the xla entry instead of the coarse
+        1.0e-3 default. Both now report "fallback", but for different reasons —
+        the xla row is flagged unverified, whereas the old default meant no row
+        existed at all. The atol is what distinguishes them."""
+        assert self._run("tpu").to_dict()["atol"] == 0.5
 
 
 class TestBackendAliasesShareOneToleranceKey:
@@ -1910,3 +1913,62 @@ class TestXlaProvenanceNamesTheHardware:
         env = _capture_env(torch.device("cpu"))
         assert "xla_hw" not in env
         assert env["device_type"] == "cpu"
+
+
+class TestUnverifiedXlaToleranceIsNotCalledMeasured:
+    """The xla rows carry a number nobody can trace to a run.
+
+    The v0.5.31 changelog claims a GCP TPU v5e validation and points at report
+    files that are not in the repository and never were; cloud-validation.md
+    records TPU as PENDING and its history says "AMD + TPU SKIPPED"; and
+    hardware-matrix.md has a measured row for A10G and Trainium but none for
+    TPU. Labelling 0.5 "measured" on that basis would let a TPU run pass
+    against a limit loose enough to accept almost anything, and say nothing.
+    """
+
+    @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
+    @pytest.mark.parametrize(
+        "family", [None, "decoder-small", "decoder-medium", "decoder-large"]
+    )
+    def test_every_xla_lookup_reports_fallback(self, dtype, family):
+        """Including the family path — decoder-small is Qwen3-0.6B, so that is
+        the row a real run actually hits."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        entry = ToleranceDB().get("xla", dtype, model_family=family)
+        assert entry.source == "fallback"
+
+    def test_the_values_are_left_alone(self):
+        """Marking it unverified must not invent a replacement number."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        assert db.get("xla", "float32").atol == 0.5
+        assert db.get("xla", "float32", model_family="decoder-large").atol == 2.0
+
+    @pytest.mark.parametrize("backend", ["cuda", "rocm", "cpu", "mps", "trainium"])
+    def test_other_backends_keep_their_labels(self, backend):
+        """Guards the blast radius: only xla changes."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        assert ToleranceDB().get(backend, "float32").source == "measured"
+
+    def test_a_trace_on_xla_warns_about_the_tolerance(self, caplog):
+        """The warning already exists for fallback entries; this makes the xla
+        path reach it, which is the whole point of the relabelling."""
+        import logging
+
+        from torchbridge.testing.trace_validator import MultiStepTracer
+
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("cpu"),
+            device_b=torch.device("cpu"),
+            backend_a="xla",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with caplog.at_level(logging.WARNING):
+            tracer.run(torch.randn(1, 8), steps=2)
+
+        assert any("fallback" in r.message for r in caplog.records)
