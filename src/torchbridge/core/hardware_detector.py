@@ -17,6 +17,18 @@ from .config import NVIDIAArchitecture, TPUVersion
 logger = logging.getLogger(__name__)
 
 
+def is_rocm_build() -> bool:
+    """True when this torch was built against ROCm rather than CUDA.
+
+    The single source of truth for the question. ROCm builds expose AMD GPUs
+    through the ``cuda`` device type, so a device object cannot distinguish the
+    vendors and ``torch.version.hip`` is the only reliable signal. It is unset on
+    a CUDA build, and an empty string has been seen in the wild, so truthiness is
+    checked rather than ``is not None``.
+    """
+    return bool(getattr(torch.version, "hip", None))
+
+
 class HardwareType(Enum):
     """Available hardware types."""
 
@@ -137,7 +149,7 @@ class HardwareDetector:
             return None
 
         # Check if running on ROCm (HIP backend)
-        is_rocm = hasattr(torch.version, "hip") and torch.version.hip is not None
+        is_rocm = is_rocm_build()
 
         if not is_rocm:
             return None

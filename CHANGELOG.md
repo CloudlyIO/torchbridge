@@ -27,11 +27,59 @@
   included in `to_dict()`, so a saved run records which limit judged it. They
   are appended after `final_passed`, leaving the positional constructor
   signature unchanged for existing callers.
+- **`core/hardware_detector.py`**: `is_rocm_build()` as the single source of
+  truth for whether torch was built against ROCm.
+- **`cli/validate.py`**: `resolve_backend_device()`,
+  `explain_unavailable_backend()` and `same_device_pair()` as module-level
+  functions, replacing two duplicated nested resolvers.
+- **`trace_validator.py`**: split trace support — `SplitTraceRecord`, `record()`,
+  `replay()` and `compare_records()`, for comparing backends that cannot share a
+  machine.
+- **`cli/validate.py`**: `--record`, `--replay` and `--compare-records` flags for
+  the split trace workflow. `--compare-records` needs no accelerator.
+- **`SplitTraceRecord`**: `model_family` is stored in the artifact, so an
+  offline `compare_records()` applies the same tolerance the recording run did
+  instead of falling back to the coarse row.
 
 ### Changed
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
   caller-supplied tolerance database must now accept the third argument;
   `ToleranceDB` already declared it optional.
+- **`trace_validator.py`**: `SplitTraceRecord.load()` uses `weights_only=True`.
+- **`cli/validate.py`**: `--record` refuses to write an empty or short record.
+  Recording stops at the first step that raises, and saving the remainder while
+  exiting 0 reported a failed run as successful.
+- **`compare_records()`**: requires `record_a.role == "record"` and
+  `record_b.role == "replay"` directly. Rejecting only the reversed pair let
+  two replay halves through, promoting a follower to the primary side — which
+  is the side that supplies the backend, dtype and tolerance.
+- **`compare_records()`**: a comparison that did not cover every recorded step
+  can no longer report `final_passed`. A replay that died partway, or a shape
+  change mid-trace, used to pass on the prefix and exit 0.
+- **`cli/validate.py`**: `--replay` checks the record's role and that its
+  backend matches the requested first backend. The result is labelled from the
+  file, so a mismatched pair answered a different question and exited 0.
+- **`MultiStepTracer.replay()`**: refuses a record whose role is not
+  `"record"`.
+- **`_model_fingerprint()`**: the docstring and the mismatch warning now state
+  that endpoint sampling is a one-way signal — a difference proves the weights
+  differ, a match does not prove they agree.
+- **`cli/validate.py`**: `--compare-records` is dispatched before the
+  `--compare` requirement, so the documented offline comparison runs without a
+  backend pair. `--record`/`--replay` outside trace mode are refused instead of
+  silently dropped.
+- **`cli/validate.py`**: the replay command printed after `--record` is built
+  from the run's own arguments, so it carries `--model`, `--model-family`,
+  `--dtype`, `--input-shape` and `--autoregressive`. Recording without
+  `--model` now says the comparison would measure the weights, not the
+  backends.
+- **`trace_validator.py`**: `_model_fingerprint()` slices each parameter before
+  converting it, rather than copying the whole tensor to host float32 to read 16
+  values. On an 8B checkpoint that was a multi-GB copy, twice per trace.
+  A record arrives from another machine, so it is untrusted input.
+- **`trace_validator.py`**: two records sharing a backend name now warn instead
+  of raising, since that is the split path's control run. A follower whose role
+  is not `replay` still raises.
 
 ### Fixed
 - **Trace tolerance**: traces were judged against the strictest tolerance row
@@ -40,6 +88,12 @@
   that model's tolerance.
 - **Unknown `--model-family`**: a mistyped value was silently accepted and the
   coarse tolerance row applied. It is now refused, with the valid names listed.
+- **`--compare cuda rocm`**: both halves resolved to the same device, so the run
+  compared one GPU against itself and reported near-zero divergence with no
+  error. A ROCm build exposes AMD GPUs through the `cuda` device type, so the
+  device object cannot distinguish the vendors.
+- **`--compare rocm gpu` / `--compare cuda gpu`**: the same collision through the
+  `gpu` alias.
 
 ---
 
