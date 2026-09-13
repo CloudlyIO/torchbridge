@@ -38,16 +38,46 @@ class TestTorchCompileCompat:
         assert max_diff < 1e-4, f"Compiled vs eager diverged: {max_diff}"
 
     def test_dinov2_compile(self, dinov2_model_for_stress):
-        """DINOv2 compiles and produces valid output."""
+        """DINOv2 compiles and stays close to eager across several inputs.
+
+        This test was flaky by construction and nobody could see it, because
+        torchvision was never installed and the whole file skipped.
+
+        Two reasons it was flaky. The input was `torch.randn(...)` with no
+        seed, so every run measured a different thing; and the bound sat on top
+        of the measurement rather than above it. Measured here over 12 seeds,
+        torch 2.14 / CPU:
+
+            min 5.341e-05   median 7.439e-05   max 1.144e-04
+
+        The old `assert max_diff < 1e-4` therefore failed on roughly one input
+        in twelve. It passed when run alone and failed inside the full suite —
+        the classic shape of a test whose result depends on the draw.
+
+        Seeding makes the measurement reproducible; sweeping several seeds
+        makes the bound cover the distribution instead of one lucky draw. The
+        bound is 2e-4, about 75% above the largest value observed.
+
+        Note what this number is not: it is a test bound for compiled-vs-eager
+        on one model, taken on this machine. It is not a ToleranceDB entry and
+        must not be copied into one — those come from hardware runs.
+        """
         compiled = _try_compile(dinov2_model_for_stress)
 
-        image = torch.randn(1, 3, 224, 224)
-        with torch.no_grad():
-            eager_out = dinov2_model_for_stress(image).last_hidden_state
-            compiled_out = _try_compiled_forward(compiled, image).last_hidden_state
+        worst = 0.0
+        for seed in (0, 1, 2, 3):
+            torch.manual_seed(seed)
+            image = torch.randn(1, 3, 224, 224)
+            with torch.no_grad():
+                eager_out = dinov2_model_for_stress(image).last_hidden_state
+                compiled_out = _try_compiled_forward(compiled, image).last_hidden_state
+            worst = max(worst, torch.abs(eager_out - compiled_out).max().item())
 
-        max_diff = torch.abs(eager_out - compiled_out).max().item()
-        assert max_diff < 1e-4, f"Compiled vs eager diverged: {max_diff}"
+        assert worst < 2e-4, (
+            f"Compiled vs eager diverged: {worst:.3e}. Observed range when this "
+            f"bound was set was 5.3e-05 to 1.14e-04 over 12 seeds; a value "
+            f"beyond 2e-4 is a real change, not a different draw."
+        )
 
     def test_qwen3_compile_forward(self, qwen3_model):
         """Qwen3 LLM forward pass compiles without error and agrees with eager on top token."""
