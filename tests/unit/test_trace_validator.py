@@ -1916,14 +1916,33 @@ class TestXlaProvenanceNamesTheHardware:
 
 
 class TestUnverifiedXlaToleranceIsNotCalledMeasured:
-    """The xla rows carry a number nobody can trace to a run.
+    """The xla and trainium2 rows carry numbers nobody can trace to a run.
 
-    The v0.5.31 changelog claims a GCP TPU v5e validation and points at report
-    files that are not in the repository and never were; cloud-validation.md
-    records TPU as PENDING and its history says "AMD + TPU SKIPPED"; and
-    hardware-matrix.md has a measured row for A10G and Trainium but none for
-    TPU. Labelling 0.5 "measured" on that basis would let a TPU run pass
-    against a limit loose enough to accept almost anything, and say nothing.
+    For ``xla``, the v0.5.31 changelog does claim a GCP TPU v5e validation —
+    but read the row it records: "CPU-only (XLA device; inference on CPU after
+    `.to("cpu")`)", and no max_diff, where every other platform in that table
+    has one. The accompanying "Fixed" entry says the same thing from the other
+    side. The run happened; it ran on CPU. cloud-validation.md has listed TPU
+    as PENDING ever since.
+
+    That exact defect is documented elsewhere in the project, which is the
+    strongest evidence it is real: the Trainium validation was "comparing CPU
+    to CPU because PJRT_DEVICE=CPU routed XLA to CPU" until `xm.mark_step()`
+    was added to flush to the chip (2026-07-22). Trainium was re-run after that
+    fix and now has a genuine number. XLA never was.
+
+    For ``trainium2`` there is no claim at all — it appears in no validation
+    round, and the table's own comment says "same tolerance tier as Trainium1;
+    measured when hardware available", with values byte-identical to
+    trainium1's.
+
+    Note what is deliberately *not* here. ``rocm`` looks unverified if you read
+    only cloud-validation.md's current status table, which says PENDING — but
+    v0.5.67 (2026-03-10) records MI300X VF on ROCm 6.2, 25/25 API tests,
+    max_diff 3.65e-02, cos_sim 0.999678. The PENDING refers to re-validating on
+    the current release. Nor does any of this turn on the report files being
+    absent from the repository: ``reports/cloud_validation/`` is gitignored by
+    policy, so their absence is evidence of nothing.
     """
 
     @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
@@ -1946,9 +1965,40 @@ class TestUnverifiedXlaToleranceIsNotCalledMeasured:
         assert db.get("xla", "float32").atol == 0.5
         assert db.get("xla", "float32", model_family="decoder-large").atol == 2.0
 
+    @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
+    @pytest.mark.parametrize(
+        "family", [None, "decoder-small", "decoder-medium", "decoder-large"]
+    )
+    def test_every_trainium2_lookup_reports_fallback(self, dtype, family):
+        """trainium2 never appears in any validation round.
+
+        Its numbers are byte-identical to trainium1's, and the table says so in
+        a comment. trainium1 has a real NeuronCore measurement; trainium2 has
+        trainium1's number and a note promising to measure it later.
+        """
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        entry = ToleranceDB().get("trainium2", dtype, model_family=family)
+        assert entry.source == "fallback"
+
+    def test_trainium2_keeps_trainium1_values(self):
+        """Relabelling must not change what the numbers are."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        for dtype in ("float32", "bfloat16"):
+            assert db.get("trainium2", dtype).atol == db.get("trainium", dtype).atol
+
     @pytest.mark.parametrize("backend", ["cuda", "rocm", "cpu", "mps", "trainium"])
     def test_other_backends_keep_their_labels(self, backend):
-        """Guards the blast radius: only xla changes."""
+        """Guards the blast radius: only xla and trainium2 change.
+
+        ``rocm`` is the one worth naming. Read cloud-validation.md's status
+        table alone and it looks unverified (PENDING); v0.5.67 records a real
+        MI300X run with numbers. It stays measured, and this asserts that — a
+        relabelling that swept up rocm would silently reclassify the backend
+        the headline cross-vendor comparison is judged against.
+        """
         from torchbridge.testing.tolerance_db import ToleranceDB
 
         assert ToleranceDB().get(backend, "float32").source == "measured"

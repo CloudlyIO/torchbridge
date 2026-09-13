@@ -11,6 +11,14 @@
 ## [Unreleased]
 
 ### Added
+- **`ToleranceDB`**: the `trainium2` rows now report `source="fallback"`
+  alongside `xla`. They appear in no validation round, their values are
+  byte-identical to trainium1's, and the table's own comment says "same
+  tolerance tier as Trainium1; measured when hardware available". `rocm` is
+  deliberately **not** included — it looks unverified in the current status
+  table (PENDING), but v0.5.67 records a real MI300X run with numbers, and a
+  test now asserts rocm keeps its label so a future sweep cannot pull it in.
+  The tolerance values are unchanged; only the provenance label differs.
 - **`cli/validate.py`**: `--strict-env` makes a split-trace comparison refuse a
   pair whose two halves were produced under different environments, instead of
   warning and carrying on. Without it a *provably* different weight fingerprint

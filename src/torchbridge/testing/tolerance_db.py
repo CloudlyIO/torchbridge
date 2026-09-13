@@ -104,30 +104,60 @@ _UNVERIFIED_KEYS: frozenset[tuple[str, str]] = frozenset(
     {
         ("xla", "float32"),
         ("xla", "bfloat16"),
+        ("trainium2", "float32"),
+        ("trainium2", "bfloat16"),
     }
 )
 """Table entries whose measurement cannot be substantiated.
 
 ``get()`` labels anything in ``_TOLERANCE_TABLE`` as ``"measured"`` purely by
-virtue of being there. For ``xla`` that label does not hold up:
+virtue of being there — membership *is* the evidence standard, and nothing ties
+a row to a run. Checked against the project's own
+``docs/reference/cloud-validation.md``, which opens
+"**5/8 validated** — 4 GPU PASS, 1 Trainium PASS, 3 PENDING", three backends
+do not survive that check:
 
-* The CHANGELOG for v0.5.31 (2026-02-21) claims a GCP TPU v5e run and points at
-  ``reports/cloud_validation/2026-02-21/``. Those files are not in the
-  repository and never were — no such path appears anywhere in its history.
-* ``docs/reference/cloud-validation.md`` records TPU as ``PENDING`` with
-  "quota exhausted", and its validation history says "AMD + TPU SKIPPED".
-* ``docs/reference/hardware-matrix.md`` has a measured row for A10G and for
-  Trainium, and none for TPU or XLA.
+``xla`` (2 rows)
+    The CHANGELOG for v0.5.31 (2026-02-21) claims a GCP TPU v5e run and points
+    at ``reports/cloud_validation/2026-02-21/``. Those files are not in the
+    repository and never were: ``git log --all --diff-filter=A -- "reports/*"``
+    is empty, so they were never committed rather than deleted later.
+    ``cloud-validation.md`` lists TPU v5e as ``PENDING``, and
+    ``hardware-matrix.md`` has no XLA row at all.
 
-So the project contradicts itself and the artifact that would settle it is
-missing. Reporting ``"fallback"`` makes the trace validator warn, which is the
-correct signal for a number nobody can trace to a run — 0.5 on logits is loose
-enough that almost anything passes, so a TPU result judged by it would carry no
-information.
+``trainium2`` (2 rows)
+    Absent from ``cloud-validation.md`` entirely — the validated Trainium row is
+    ``trn1.2xlarge``, NeuronCore v2, not v3. The table's own comment says
+    "same tolerance tier as Trainium1; **measured when hardware available**",
+    and the values are byte-identical to trainium1's. The file is stating that
+    it copied them.
 
-The values are left untouched. Replacing them with invented ones would be the
-same mistake in the other direction; they should be re-measured on real TPU
-hardware and registered with ``register()``.
+Everything else keeps ``"measured"``, each with a run behind it:
+
+* ``cuda`` — A10G, T4, H100 NVL and L4, with max_diff recorded for each.
+* ``mps`` — max_diff 4.58e-05 (v0.5.31), 3.72e-05 (v0.5.100).
+* ``rocm`` — MI300X VF on ROCm 6.2, 25/25 API tests, max_diff 3.65e-02,
+  cos_sim 0.999678 (v0.5.67, 2026-03-10). The later "PENDING" in
+  cloud-validation.md refers to re-validation on the current release, not to
+  the absence of any run.
+* ``trainium`` — real NeuronCore, max_diff 2.77e-05, neuronx-cc reporting
+  "Compiler status PASS" (2026-07-22). Note that this run exists *because* an
+  earlier one had the same defect as the TPU one above — it compared CPU to CPU
+  until ``xm.mark_step()`` was added to flush to the chip.
+* ``cpu`` — the reference backend, measurable on any machine.
+
+The reports these numbers come from live under ``reports/cloud_validation/``,
+which is gitignored by policy. Their absence from the repository is therefore
+not evidence either way, and is not what any entry above turns on.
+
+Reporting ``"fallback"`` makes the trace validator warn, which is the correct
+signal for a number nobody can trace to a run.
+
+**The values themselves are untouched, and this changes no verdict.** ``get()``
+returns the same atol either way; only the provenance label differs. Inventing
+replacement numbers would be the same mistake in the other direction. They
+should be re-measured on the real hardware and registered with ``register()``,
+and until then the database should not claim an evidence it does not have.
 """
 
 _TOLERANCE_TABLE: dict[tuple[str, str], TolerancePair] = {
