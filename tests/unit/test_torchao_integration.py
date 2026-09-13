@@ -103,8 +103,9 @@ class TestRocmDetectionAgreesWithHardwareDetector:
 
     def test_empty_hip_string_is_not_rocm(self):
         """The exact input that split the two answers apart."""
-        import torch
         from unittest.mock import patch
+
+        import torch
 
         from torchbridge.core.hardware_detector import is_rocm_build
         from torchbridge.precision.torchao_integration import TorchAOBackend
@@ -119,8 +120,9 @@ class TestRocmDetectionAgreesWithHardwareDetector:
         Without this, the test above would pass just as well if the check
         always returned False.
         """
-        import torch
         from unittest.mock import patch
+
+        import torch
 
         from torchbridge.core.hardware_detector import is_rocm_build
         from torchbridge.precision.torchao_integration import TorchAOBackend
@@ -131,8 +133,9 @@ class TestRocmDetectionAgreesWithHardwareDetector:
 
     def test_the_two_agree_for_every_hip_value(self):
         """Agreement is the invariant, not any particular verdict."""
-        import torch
         from unittest.mock import patch
+
+        import torch
 
         from torchbridge.core.hardware_detector import is_rocm_build
         from torchbridge.precision.torchao_integration import TorchAOBackend
