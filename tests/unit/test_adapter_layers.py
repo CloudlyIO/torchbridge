@@ -160,12 +160,26 @@ class TestQLoRALinear:
         )
         lora = LoRALinear(base_for_lora, rank=4, alpha=8.0, dropout=0.0)
 
+        def _real_bytes(t: torch.Tensor) -> int:
+            """Bytes a tensor actually occupies, seeing inside subclasses.
+
+            `untyped_storage().nbytes()` reports the *logical* storage of a
+            quantized tensor, not its contents. For an Int8Tensor wrapping a
+            64x32 weight it answers 8192 — the float32 size — while the int8
+            data underneath is 2048. Measured that way, quantization looks
+            free, which is what this test was accidentally asserting.
+
+            `__tensor_flatten__` is the standard subclass protocol and names
+            the inner tensors (qdata, scale, zero_point), so it survives
+            torchao renaming things again.
+            """
+            if hasattr(t, "__tensor_flatten__"):
+                names, _ = t.__tensor_flatten__()
+                return sum(_real_bytes(getattr(t, n)) for n in names)
+            return t.untyped_storage().nbytes()
+
         def _param_bytes(module: nn.Module) -> int:
-            return sum(
-                p.untyped_storage().nbytes()
-                for p in module.parameters()
-                if hasattr(p, "untyped_storage")
-            )
+            return sum(_real_bytes(p.data) for p in module.parameters())
 
         qlora_bytes = _param_bytes(qlora)
         lora_bytes = _param_bytes(lora)

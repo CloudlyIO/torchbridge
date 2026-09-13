@@ -25,35 +25,35 @@ import torch.nn.functional as F
 
 from torchbridge.adapters.config import InitMethod
 
+# torchao is optional, and it renamed its quantization entry points. Asked
+# through torchao_compat rather than imported directly here: the `except
+# ImportError` that used to sit in this file reported that rename as an absent
+# package, so `pip install torchao` was the advice given to someone who already
+# had it. See that module's docstring.
+from torchbridge.precision.torchao_compat import (
+    TORCHAO_AVAILABLE as _TORCHAO_AVAILABLE,
+)
+from torchbridge.precision.torchao_compat import (
+    int4_config,
+    int8_dynamic_config,
+    quantize_model,
+    unavailable_reason,
+)
+
 if TYPE_CHECKING:
     from torchbridge.precision.formats import QuantizationFormat
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Optional torchao import
-# ---------------------------------------------------------------------------
-
-try:
-    from torchao.quantization import (
-        int4_weight_only,
-        int8_dynamic_activation_int8_weight,
-        quantize_,
-    )
-
-    _TORCHAO_AVAILABLE = True
-except ImportError:
-    _TORCHAO_AVAILABLE = False
-
 
 def _get_quant_callable(quant_format: QuantizationFormat):  # type: ignore[name-defined]
-    """Return the torchao quantization callable for the given format."""
+    """Return the torchao quantization config for the given format."""
     from torchbridge.precision.formats import QuantizationFormat
 
     if quant_format == QuantizationFormat.INT4_WEIGHT_ONLY:
-        return int4_weight_only()
+        return int4_config()
     if quant_format == QuantizationFormat.INT8_DYNAMIC_ACTIVATIONS:
-        return int8_dynamic_activation_int8_weight()
+        return int8_dynamic_config()
     raise ValueError(f"Unsupported quantization format for QLoRA: {quant_format}")
 
 
@@ -233,10 +233,7 @@ class QLoRALinear(nn.Module):
         super().__init__()
 
         if not _TORCHAO_AVAILABLE:
-            raise RuntimeError(
-                "torchao is required for QLoRALinear. "
-                "Install it with: pip install torchao"
-            )
+            raise RuntimeError(unavailable_reason("QLoRALinear"))
 
         from torchbridge.precision.formats import QuantizationFormat
 
@@ -245,7 +242,7 @@ class QLoRALinear(nn.Module):
 
         # Quantize base in-place before freezing
         quant_callable = _get_quant_callable(quant_format)
-        quantize_(base_linear, quant_callable)
+        quantize_model(base_linear, quant_callable)
 
         # Freeze all base parameters (weight is now an AffineQuantizedTensor)
         for p in base_linear.parameters():
@@ -317,10 +314,7 @@ class QDoRALinear(nn.Module):
         super().__init__()
 
         if not _TORCHAO_AVAILABLE:
-            raise RuntimeError(
-                "torchao is required for QDoRALinear. "
-                "Install it with: pip install torchao"
-            )
+            raise RuntimeError(unavailable_reason("QDoRALinear"))
 
         from torchbridge.precision.formats import QuantizationFormat
 
@@ -333,7 +327,7 @@ class QDoRALinear(nn.Module):
 
         # Quantize base in-place
         quant_callable = _get_quant_callable(quant_format)
-        quantize_(base_linear, quant_callable)
+        quantize_model(base_linear, quant_callable)
 
         for p in base_linear.parameters():
             p.requires_grad_(False)

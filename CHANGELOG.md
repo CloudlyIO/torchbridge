@@ -10,6 +10,30 @@
 
 ## [Unreleased]
 
+### Fixed
+- **torchao support**: torchao renamed its quantization entry points
+  (`int4_weight_only` → `Int4WeightOnlyConfig`,
+  `int8_dynamic_activation_int8_weight` → `Int8DynamicActivationInt8WeightConfig`,
+  and the FP8 pair likewise). Two `try: ... except ImportError` blocks caught
+  that rename and concluded torchao was *not installed*, so every QLoRA and
+  QDoRA construction failed with "Install it with: pip install torchao" —
+  advice that cannot help someone who already has it. `pyproject.toml` allows
+  `torchao>=0.4.0,<1.0.0`, a range spanning the rename, so the broken version
+  is one the declared dependency permits. New `precision/torchao_compat.py`
+  accepts either spelling from one place, and reports *why* torchao is
+  unusable rather than guessing.
+- **Silent no-op quantization**: `quantize_` with
+  `Int4WeightOnlyConfig(group_size=128)` on a layer narrower than 128 returns
+  normally and leaves the weight unquantized, with no error and no log. A
+  caller that asked for INT4 got float32 and was told nothing.
+  `quantize_model()` now verifies the weights actually changed and refuses a
+  no-op, naming the group-size mismatch when that is the cause.
+- **ROCm detection, third site**: `precision/torchao_integration.py` tested
+  `torch.version.hip is not None`, which calls an empty HIP version string
+  ROCm while `hardware_detector.is_rocm_build()` calls it CUDA. PR #119 fixed
+  the same mistake in `dispatcher.py` and `backend_factory.py`; this copy was
+  outside that diff.
+
 ### Added
 - **`MultiStepTracer`**: `model_family` parameter, passed through to the
   `ToleranceDB` lookup. Previously only `(backend, dtype)` was sent, so every
