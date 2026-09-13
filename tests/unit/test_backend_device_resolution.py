@@ -396,16 +396,23 @@ class TestTpuAndXlaNames:
         with self._torch_xla_installed(True):
             assert resolve_backend_device("TPU") == torch.device("xla")
 
-    def test_tpu_and_trainium_are_flagged_as_one_device(self):
-        """On one machine they are the same device, so pairing them is refused.
+    def test_tpu_and_trainium_are_flagged_as_one_device(self, monkeypatch):
+        """When both resolve, they are one device, so pairing them is refused.
 
-        Both accelerator paths must be importable for this to be a real pair —
-        trainium needs torch_neuronx, tpu needs torch_xla.
+        Each name now needs more than an import: tpu needs xla_device_hw to say
+        TPU, trainium needs a Neuron runtime signal. Both are supplied here, a
+        combination no real machine presents — which is the point. The guard
+        has to hold for a pair that resolves, and after the hardware checks the
+        only way to reach that state is to construct it.
+
+        test_tpu_is_refused_on_a_neuron_host covers what an actual Neuron host
+        does: tpu does not resolve at all, so the pair never forms.
         """
         import sys
 
         from torchbridge.cli.validate import same_device_pair
 
+        monkeypatch.setenv("NEURON_RT_VISIBLE_CORES", "0")
         with patch.dict(
             sys.modules, {"torch_xla": _fake_torch_xla(), "torch_neuronx": object()}
         ):
@@ -414,6 +421,28 @@ class TestTpuAndXlaNames:
                 return_value="TPU",
             ):
                 assert same_device_pair("tpu", "trainium") is True
+
+    def test_the_pair_does_not_form_without_neuron_hardware(self, monkeypatch):
+        """And with the SDK alone, trainium does not resolve, so there is no pair.
+
+        Without this, the test above would pass just as well if the Neuron
+        hardware check did nothing.
+        """
+        import sys
+
+        from torchbridge.cli.validate import resolve_backend_device, same_device_pair
+
+        monkeypatch.delenv("NEURON_RT_VISIBLE_CORES", raising=False)
+        monkeypatch.setenv("PJRT_DEVICE", "CPU")
+        with patch.dict(
+            sys.modules, {"torch_xla": _fake_torch_xla(), "torch_neuronx": object()}
+        ):
+            with patch(
+                "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+                return_value="TPU",
+            ):
+                assert resolve_backend_device("trainium") is None
+                assert same_device_pair("tpu", "trainium") is False
 
     def test_tpu_is_refused_on_a_neuron_host(self):
         """Trainium imports torch_xla too. Accepting "tpu" on that import alone
@@ -496,3 +525,124 @@ class TestNonTraceCompareUsesTheCanonicalKey:
         src = inspect.getsource(ValidateCommand._run_compare)
         assert "_tolerance_key(backend1)" in src
         assert "backend1.lower() if backend1.lower()" not in src
+
+
+class TestTrainiumNeedsRealHardware:
+    """Importing torch_neuronx is not evidence a NeuronCore exists.
+
+    The original check was `import torch_neuronx` succeeding, which proves the
+    SDK is installed and nothing more. The first trn1 instance this project was
+    given had the SDK and no device — "No neuron device available", CPU
+    fallback — and the run wrote `trainium` into a results file holding
+    CPU-vs-CPU numbers.
+
+    Shah fixed the same failure in run_gpu_validation.py on 2026-07-22
+    ("comparing CPU to CPU because PJRT_DEVICE=CPU routed XLA to CPU"), but the
+    tb-validate path — which is what the experiment guide runs for the 50-step
+    trace — never got that fix.
+    """
+
+    @staticmethod
+    def _with_sdk(monkeypatch):
+        """Neuron SDK importable, so only the hardware question is left."""
+        import sys
+        import types
+
+        monkeypatch.setitem(
+            sys.modules, "torch_neuronx", types.ModuleType("torch_neuronx")
+        )
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        monkeypatch.delenv("NEURON_RT_VISIBLE_CORES", raising=False)
+
+    def test_pjrt_device_cpu_is_refused(self, monkeypatch):
+        """The decisive case: XLA routed to CPU, whatever silicon is present.
+
+        The project sets PJRT_DEVICE=CPU itself to avoid a CLI SIGABRT, so this
+        is not an exotic configuration — it is the default one to fall into.
+        """
+        from torchbridge.cli.validate import resolve_backend_device
+
+        self._with_sdk(monkeypatch)
+        monkeypatch.setenv("PJRT_DEVICE", "CPU")
+        assert resolve_backend_device("trainium") is None
+        assert resolve_backend_device("neuron") is None
+
+    def test_sdk_present_but_no_device_is_refused(self, monkeypatch):
+        """No PJRT_DEVICE, no NEURON_RT_VISIBLE_CORES, no /dev/neuron*."""
+        from torchbridge.cli.validate import resolve_backend_device
+
+        self._with_sdk(monkeypatch)
+        monkeypatch.setattr(
+            "torchbridge.cli.validate.Path",
+            _FakePath(neuron_devices=[]),
+        )
+        assert resolve_backend_device("trainium") is None
+
+    @pytest.mark.parametrize(
+        "env", [{"PJRT_DEVICE": "NEURON"}, {"NEURON_RT_VISIBLE_CORES": "0"}]
+    )
+    def test_real_neuron_signals_are_accepted(self, monkeypatch, env):
+        """It has to accept as well as refuse.
+
+        A check that refused everything would pass the two tests above and make
+        Trainium unrunnable, which is the same bug pointing the other way.
+        """
+        import torch
+
+        from torchbridge.cli.validate import resolve_backend_device
+
+        self._with_sdk(monkeypatch)
+        for k, v in env.items():
+            monkeypatch.setenv(k, v)
+        assert resolve_backend_device("trainium") == torch.device("xla")
+
+    def test_dev_neuron_device_file_is_accepted(self, monkeypatch):
+        """`ls /dev/neuron*` is what the runbook checks by hand."""
+        import torch
+
+        from torchbridge.cli.validate import resolve_backend_device
+
+        self._with_sdk(monkeypatch)
+        monkeypatch.setattr(
+            "torchbridge.cli.validate.Path",
+            _FakePath(neuron_devices=["/dev/neuron0"]),
+        )
+        assert resolve_backend_device("trainium") == torch.device("xla")
+
+    def test_missing_sdk_is_still_refused(self, monkeypatch):
+        """The original behaviour has to survive."""
+        import sys
+
+        from torchbridge.cli.validate import resolve_backend_device
+
+        monkeypatch.setitem(sys.modules, "torch_neuronx", None)
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        assert resolve_backend_device("trainium") is None
+
+
+class _FakePath:
+    """Stands in for pathlib.Path so /dev can be controlled.
+
+    Only `Path("/dev").glob("neuron*")` is used by the code under test; every
+    other call is delegated, so replacing the name does not disturb the rest of
+    the module.
+    """
+
+    def __init__(self, neuron_devices):
+        self._devices = neuron_devices
+
+    def __call__(self, arg):
+        import pathlib
+
+        if str(arg) == "/dev":
+            return _FakeDevDir(self._devices)
+        return pathlib.Path(arg)
+
+
+class _FakeDevDir:
+    def __init__(self, devices):
+        self._devices = devices
+
+    def glob(self, pattern):
+        assert pattern == "neuron*", pattern
+        return iter(self._devices)

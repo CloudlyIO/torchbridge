@@ -11,6 +11,16 @@
 ## [Unreleased]
 
 ### Added
+- **`resolve_backend_device`**: `trainium`/`neuron` now require evidence of a
+  reachable NeuronCore, not merely that `torch_neuronx` imports. The SDK
+  importing proves the SDK is installed; the first trn1 instance this project
+  was given had the SDK and no device, and the run wrote `trainium` into a file
+  holding CPU-vs-CPU numbers. `PJRT_DEVICE=CPU` — which the project sets itself
+  to avoid a CLI SIGABRT — is refused outright, since XLA operations then go to
+  the CPU whatever silicon is present. `PJRT_DEVICE=NEURON`,
+  `NEURON_RT_VISIBLE_CORES`, or a `/dev/neuron*` device file each suffice. The
+  equivalent fix landed in `run_gpu_validation.py` on 2026-07-22; the
+  `tb-validate` path, which is what the 50-step trace runs, never got it.
 - **`ToleranceDB`**: the `trainium2` rows now report `source="fallback"`
   alongside `xla`. They appear in no validation round, their values are
   byte-identical to trainium1's, and the table's own comment says "same

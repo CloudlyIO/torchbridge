@@ -9,6 +9,7 @@ with multiple levels: quick, standard, full, and cloud.
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -98,12 +99,11 @@ def resolve_backend_device(name: str) -> torch.device | None:
             return None
         return torch.device("mps")
     if name in ("trainium", "neuron"):
-        try:
-            import torch_neuronx  # noqa: F401
-
-            return torch.device("xla")
-        except ImportError:
+        if not _neuron_hardware_is_present():
+            # Importing torch_neuronx proves the SDK is installed, not that a
+            # NeuronCore is reachable. See _neuron_hardware_is_present.
             return None
+        return torch.device("xla")
     if name in ("tpu", "xla"):
         # A TPU is reached through torch_xla, the same device type Trainium uses.
         # Without these names a rented TPU could not be addressed at all, and the
@@ -122,6 +122,53 @@ def resolve_backend_device(name: str) -> torch.device | None:
     if name == "cpu":
         return torch.device("cpu")
     return None  # unknown
+
+
+def _neuron_hardware_is_present() -> bool:
+    """Whether a real NeuronCore is reachable, not merely the SDK installed.
+
+    ``import torch_neuronx`` succeeding was the whole test before this. It
+    proves the Neuron SDK is present and nothing else. On the trn1 instance
+    this project was first given, the SDK imported, ``torch.device("xla")``
+    resolved, and there was no NeuronCore behind it — "No neuron device
+    available", CPU fallback. The run produced CPU-vs-CPU numbers with
+    ``trainium`` written into the results file.
+
+    That is not hypothetical, and it is not only that instance. Shah's fix of
+    2026-07-22 describes exactly it, in a different file:
+
+        The Trainium branch in run_gpu_validation.py was comparing CPU to CPU
+        because PJRT_DEVICE=CPU (set to prevent CLI SIGABRT) routed XLA to CPU.
+
+    That fix landed in ``run_gpu_validation.py``. This path never got it, so
+    ``tb-validate --compare trainium cpu`` — what the experiment guide actually
+    runs for the 50-step trace — still had the hole.
+
+    ``PJRT_DEVICE=CPU`` is decisive on its own: whatever hardware is in the
+    machine, XLA operations are going to the CPU, so the comparison would be
+    CPU against CPU. The positive signals are the ones the Neuron runtime
+    itself sets or creates, and any one of them is enough — requiring all three
+    would refuse a genuine Trainium, which is the same failure pointing the
+    other way.
+
+    The equivalent check for TPU is :func:`_xla_hardware_is_tpu`. Trainium
+    needs a different one because ``xla_device_hw`` reports "TPU" only for
+    Google's chips.
+    """
+    try:
+        import torch_neuronx  # noqa: F401
+    except ImportError:
+        return False
+
+    if os.environ.get("PJRT_DEVICE", "").upper() == "CPU":
+        return False
+    if os.environ.get("PJRT_DEVICE", "").upper() == "NEURON":
+        return True
+    if os.environ.get("NEURON_RT_VISIBLE_CORES"):
+        return True
+    # The driver creates these; `ls /dev/neuron*` is what the runbook checks by
+    # hand on the instance.
+    return any(Path("/dev").glob("neuron*"))
 
 
 def _xla_hardware_is_tpu() -> bool:
