@@ -151,6 +151,7 @@ jobs:
           # Add new XLA-touching files here as they arrive.
           pytest tests/backends/test_tpu_backend.py \
                  tests/backends/test_tpu_config.py \
+                 tests/backends/test_xla_compat.py \
                  tests/unit/test_trace_validator.py \
                  -v --tb=short
 
@@ -193,8 +194,19 @@ jobs:
             --cov-fail-under=70
 
       - name: Run TorchBridge validation
-        run: python -m torchbridge.cli.validate --ci --level quick
-        continue-on-error: true
+        # --ci documents its exit codes as 0=all pass, 1=failures, 2=warnings
+        # only. A GitHub runner has no GPU, so "No CUDA GPU detected" is always
+        # a warning and this step always exited 2 — which is why it carried
+        # continue-on-error, and why a genuine failure here would have been
+        # invisible. Accept 2, fail on 1.
+        run: |
+          rc=0
+          python -m torchbridge.cli.validate --ci --level quick || rc=$?
+          if [ "$rc" = "1" ]; then
+            echo "::error::tb-validate reported failures (exit 1)"
+            exit 1
+          fi
+          echo "tb-validate exit $rc (0=pass, 2=warnings only) — accepted"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
