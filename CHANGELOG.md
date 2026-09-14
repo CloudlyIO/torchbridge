@@ -214,6 +214,10 @@
 ## [0.5.100] - 2026-07-21 - feat: 2026 silicon coverage
 
 ### Added
+- **CI job `XLA Tests (torch_xla, CPU-backed)`**: installs `torch_xla` and runs
+  the TPU and trace tests with `PJRT_DEVICE=CPU`. XLA branches were never taken
+  in CI, so the TPU suite passed purely because the package was missing. Needs
+  no TPU and no spend.
 - **`AMDArchitecture`**: New enum entry `RDNA4 = "rdna4"` (RX 9000 series, gfx1201).
 - **`NVIDIAArchitecture`**: New placeholder entries `BLACKWELL_ULTRA = "blackwell_ultra"` (B300, sm_103, H2 2026) and `RUBIN = "rubin"` (R200/VR200, sm_rubin, HPC 2026).
 - **`QuantizationFormat`**: New OCP microscaling formats `MXFP8`, `MXFP6`, `MXFP4` (GA on AMD gfx950/CDNA4). All include `FormatSpec` metadata. Cross-vendor incompatibility note: MXFP4 ≠ NVFP4 (different bit layouts — comparing these produces divergence by design).
@@ -266,6 +270,24 @@ Branch protection on `main` (require 1 review + CI status checks) will be enable
 ## [0.5.97] - 2026-06-27 - fix: MultiStepTracer NaN + index-out-of-range on XLA/Trainium autoregressive trace
 
 ### Fixed
+- **TPU tests asserted the environment, not the behaviour.**
+  `test_backend_without_xla` never made XLA unavailable — it relied on the
+  machine not having `torch_xla`, so the CPU fallback it is named for had
+  never run, and it failed outright once `torch_xla` was installed. The
+  absence is now simulated. `test_tpu_optimizer_inference_optimization`
+  asserted `.training` on a `torch.compile` callable for the same reason.
+- **`XLACompiler` methods now accept a callable as well as returning one.**
+  `compile_model()` can be handed its own previous output — `TPUAdapter`
+  compiles, then passes the result into the compiler's
+  `optimize_for_inference()`, which compiles again. The helpers reached from
+  there (`_estimate_model_size`, `optimize_for_inference`,
+  `optimize_for_training`, `_validate_optimization`) now tolerate an object
+  with no `.parameters()`, `.eval()` or `.train()`.
+- **`XLACompiler` and `TPUOptimizationResult` claimed to return `nn.Module`**
+  while the XLA path returns a `torch.compile` callable, with
+  `# type: ignore[assignment]` silencing the mismatch. A caller treating the
+  result as a module — `.eval()`, `.parameters()`, `.to()` — breaks on real
+  hardware. The annotations now say `nn.Module | Callable[..., Any]`.
 - **`src/torchbridge/testing/trace_validator.py`**: XLA tensors (Trainium/Neuron with `PJRT_DEVICE=CPU`) produced NaN logits on step 1 and "index out of range" on step 2 of autoregressive traces. Root cause: `model.to(torch.device("xla"))` caused LLM ops (RoPE, GQA, SiLU) to run through XLA's CPU-backed path which lacks full parity with native PyTorch CPU, and XLA→CPU tensor transfer (`.cpu()`) on the greedy next-token produced a corrupt integer > vocab_size. Fix: detect `device.type == "xla"` and run both model copies on CPU — correct because `PJRT_DEVICE=CPU` routes all XLA ops to CPU anyway.
 
 ---
