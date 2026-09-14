@@ -42,6 +42,7 @@ def _args(**kw):
         "record": None,
         "replay": None,
         "compare_records": None,
+        "strict_env": False,
     }
     d.update(kw)
     return argparse.Namespace(**d)
@@ -831,3 +832,120 @@ class TestSplitDispatchDoesNotFireOnNonValues:
 
         rc = ValidateCommand.execute(self._plain_args(record=str(tmp_path / "x.pt")))
         assert rc == 1
+
+
+class TestStrictEnv:
+    """--strict-env turns the environment warning into a refusal.
+
+    Without it a split-trace comparison whose halves carry *provably* different
+    weights still reports a verdict: the fingerprint mismatch is logged and the
+    run continues. That is defensible as a default — the fingerprint samples
+    each parameter's ends, so silence is not proof of a match, and a project
+    may well want a number out of a slightly mismatched pair.
+
+    It is not defensible for a figure that goes in a paper. A mistyped --model
+    on the second machine produces exactly this state, and the result measures
+    the two random initialisations rather than the two backends. The flag is
+    what lets the operator of a cross-vendor run say "refuse instead".
+    """
+
+    @staticmethod
+    def _mismatched_pair(tmp_path):
+        """A record/replay pair whose halves ran different weights.
+
+        Built through the real record/replay path rather than by hand, so the
+        roles, backends and step counts are whatever the CLI actually writes —
+        only the fingerprints differ, which is the condition under test.
+        """
+        from torchbridge.cli.validate import ValidateCommand
+
+        lead = tmp_path / "lead.rec"
+        follow = tmp_path / "follow.rec"
+        # No --model, so each invocation initialises its own smoke model: the
+        # weights differ, and the fingerprints record that they differ.
+        assert ValidateCommand.execute(_args(record=str(lead))) == 0
+        # The replay's own exit code is not the subject here and is expected to
+        # be 1: two different models diverge far past any tolerance. What this
+        # helper needs is the pair of files.
+        ValidateCommand.execute(_args(replay=str(lead), record=str(follow)))
+        assert lead.exists() and follow.exists()
+        return lead, follow
+
+    def test_mismatch_is_only_a_warning_by_default(self, tmp_path, caplog):
+        lead, follow = self._mismatched_pair(tmp_path)
+        rc = ValidateCommand.execute(
+            _args(compare=None, trace=False, compare_records=[str(lead), str(follow)])
+        )
+        # A verdict is still produced — that is the behaviour the flag exists
+        # to override, so it has to be asserted, not assumed.
+        assert rc in (0, 1)
+        assert any("different environments" in r.message for r in caplog.records), (
+            "the mismatch must at least be reported"
+        )
+
+    def test_strict_env_refuses_the_same_pair(self, tmp_path, capsys):
+        lead, follow = self._mismatched_pair(tmp_path)
+        rc = ValidateCommand.execute(
+            _args(
+                compare=None,
+                trace=False,
+                compare_records=[str(lead), str(follow)],
+                strict_env=True,
+            )
+        )
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "different environments" in out
+        assert "model_fingerprint" in out
+
+    def test_strict_env_does_not_refuse_a_matched_pair(self, tmp_path, saved_model):
+        """The flag must reject mismatches, not everything.
+
+        A test that only checked the refusal would pass just as well if
+        --strict-env made every comparison fail.
+        """
+        from torchbridge.cli.validate import ValidateCommand
+
+        lead = tmp_path / "lead.rec"
+        follow = tmp_path / "follow.rec"
+        # Same --model on both halves: identical weights, identical fingerprint.
+        assert ValidateCommand.execute(_args(model=saved_model, record=str(lead))) == 0
+        ValidateCommand.execute(
+            _args(model=saved_model, replay=str(lead), record=str(follow))
+        )
+        assert lead.exists() and follow.exists()
+        rc = ValidateCommand.execute(
+            _args(
+                compare=None,
+                trace=False,
+                compare_records=[str(lead), str(follow)],
+                strict_env=True,
+            )
+        )
+        assert rc == 0
+
+    def test_strict_env_refuses_on_the_replay_path_too(self, tmp_path, capsys):
+        """The flag has to work where the guide actually tells you to use it.
+
+        There are two places a pair of halves gets compared: `--compare-records`
+        (offline, both files on disk) and `--replay` (the second machine, live).
+        The cross-vendor procedure passes --strict-env to the *replay*, so a
+        suite that only covered the offline path would leave the documented
+        usage unverified — the two call sites are threaded separately.
+        """
+        from torchbridge.cli.validate import ValidateCommand
+
+        lead = tmp_path / "lead.rec"
+        # No --model: this process and the replay below each build their own
+        # smoke model, so the fingerprints differ, as they would if someone
+        # dropped --model on the second machine.
+        assert ValidateCommand.execute(_args(record=str(lead))) == 0
+
+        rc = ValidateCommand.execute(_args(replay=str(lead), strict_env=True))
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "different environments" in out
+        assert "model_fingerprint" in out
+        # It must refuse rather than report — a failing verdict would also be
+        # rc 1, so the absence of the table is the thing that distinguishes them.
+        assert "Status" not in out
