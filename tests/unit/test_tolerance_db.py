@@ -209,10 +209,16 @@ class TestMeasuredEntries:
         tol = db.get("rocm", "float32", model_family="decoder-small")
         assert tol.source == "measured"
 
-    def test_decoder_small_xla_bfloat16_is_measured(self):
+    def test_decoder_small_xla_bfloat16_is_flagged_unverified(self):
+        """Was asserted as "measured". The measurement it referred to cannot be
+        found: the v0.5.31 changelog claims a TPU v5e run and points at report
+        files that are not in the repository, while cloud-validation.md records
+        TPU as PENDING and hardware-matrix.md has no XLA row. The value is
+        unchanged; only the label it carries is."""
         db = ToleranceDB()
         tol = db.get("xla", "bfloat16", model_family="decoder-small")
-        assert tol.source == "measured"
+        assert tol.source == "fallback"
+        assert tol.atol == 0.5
 
     def test_decoder_small_cpu_float32_is_tight(self):
         db = ToleranceDB()
