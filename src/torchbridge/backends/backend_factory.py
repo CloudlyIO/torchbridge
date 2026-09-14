@@ -324,7 +324,9 @@ class BackendFactory:
             # ROCm uses the CUDA API via HIP
             if torch.cuda.is_available():
                 # Check if it's actually ROCm, not CUDA
-                if hasattr(torch.version, "hip") and torch.version.hip is not None:
+                from torchbridge.core.hardware_detector import is_rocm_build
+
+                if is_rocm_build():
                     return True
                 # Alternative check
                 if "rocm" in str(torch.__config__.show()).lower():

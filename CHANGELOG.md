@@ -175,6 +175,12 @@
   and `rtol` as not applied. `rtol` is still not used in the verdict.
 
 ### Fixed
+- **ROCm detection consistency**: `backends/backend_factory.py` and
+  `attention/dispatch/dispatcher.py` tested `torch.version.hip is not None`,
+  which classifies an empty HIP version string as ROCm, while
+  `is_rocm_build()` uses truthiness and classifies it as CUDA. Backend
+  availability and CK kernel dispatch therefore disagreed with the hardware
+  detector on that one value. Both now call the shared helper.
 - **`trace_validator.py` module docstring**: said a single-step divergence
   "can amplify 500× or more over 50 reasoning steps". No run in this repository
   supports that. It now states the largest figure actually measured — 10.75×,
