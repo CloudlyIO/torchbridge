@@ -188,10 +188,15 @@ class AttentionDispatcher:
         """
         try:
             import flash_attn  # noqa: F401
-            import torch
 
-            # CK kernels only activate on ROCm (torch.version.hip is set)
-            return getattr(torch.version, "hip", None) is not None
+            # CK kernels only activate on ROCm. Asked through the shared
+            # helper rather than inspected here: an empty HIP version string
+            # has been seen in the wild, and an `is not None` test called that
+            # ROCm while the hardware detector called it CUDA. One question,
+            # two answers, depending on which module you asked.
+            from torchbridge.core.hardware_detector import is_rocm_build
+
+            return is_rocm_build()
         except (ImportError, ModuleNotFoundError):
             return False
 

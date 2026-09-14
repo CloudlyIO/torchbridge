@@ -100,6 +100,66 @@ MODEL_FAMILIES: tuple[str, ...] = (
 # Base tolerance table — (backend, dtype) — measured on Qwen3-0.6B
 # ---------------------------------------------------------------------------
 
+_UNVERIFIED_KEYS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("xla", "float32"),
+        ("xla", "bfloat16"),
+        ("trainium2", "float32"),
+        ("trainium2", "bfloat16"),
+    }
+)
+"""Table entries whose measurement cannot be substantiated.
+
+``get()`` labels anything in ``_TOLERANCE_TABLE`` as ``"measured"`` purely by
+virtue of being there — membership *is* the evidence standard, and nothing ties
+a row to a run. Checked against the project's own
+``docs/reference/cloud-validation.md``, which opens
+"**5/8 validated** — 4 GPU PASS, 1 Trainium PASS, 3 PENDING", three backends
+do not survive that check:
+
+``xla`` (2 rows)
+    The CHANGELOG for v0.5.31 (2026-02-21) claims a GCP TPU v5e run and points
+    at ``reports/cloud_validation/2026-02-21/``. Those files are not in the
+    repository and never were: ``git log --all --diff-filter=A -- "reports/*"``
+    is empty, so they were never committed rather than deleted later.
+    ``cloud-validation.md`` lists TPU v5e as ``PENDING``, and
+    ``hardware-matrix.md`` has no XLA row at all.
+
+``trainium2`` (2 rows)
+    Absent from ``cloud-validation.md`` entirely — the validated Trainium row is
+    ``trn1.2xlarge``, NeuronCore v2, not v3. The table's own comment says
+    "same tolerance tier as Trainium1; **measured when hardware available**",
+    and the values are byte-identical to trainium1's. The file is stating that
+    it copied them.
+
+Everything else keeps ``"measured"``, each with a run behind it:
+
+* ``cuda`` — A10G, T4, H100 NVL and L4, with max_diff recorded for each.
+* ``mps`` — max_diff 4.58e-05 (v0.5.31), 3.72e-05 (v0.5.100).
+* ``rocm`` — MI300X VF on ROCm 6.2, 25/25 API tests, max_diff 3.65e-02,
+  cos_sim 0.999678 (v0.5.67, 2026-03-10). The later "PENDING" in
+  cloud-validation.md refers to re-validation on the current release, not to
+  the absence of any run.
+* ``trainium`` — real NeuronCore, max_diff 2.77e-05, neuronx-cc reporting
+  "Compiler status PASS" (2026-07-22). Note that this run exists *because* an
+  earlier one had the same defect as the TPU one above — it compared CPU to CPU
+  until ``xm.mark_step()`` was added to flush to the chip.
+* ``cpu`` — the reference backend, measurable on any machine.
+
+The reports these numbers come from live under ``reports/cloud_validation/``,
+which is gitignored by policy. Their absence from the repository is therefore
+not evidence either way, and is not what any entry above turns on.
+
+Reporting ``"fallback"`` makes the trace validator warn, which is the correct
+signal for a number nobody can trace to a run.
+
+**The values themselves are untouched, and this changes no verdict.** ``get()``
+returns the same atol either way; only the provenance label differs. Inventing
+replacement numbers would be the same mistake in the other direction. They
+should be re-measured on the real hardware and registered with ``register()``,
+and until then the database should not claim an evidence it does not have.
+"""
+
 _TOLERANCE_TABLE: dict[tuple[str, str], TolerancePair] = {
     # CUDA (NVIDIA) — tight tolerances; exact parity expected
     ("cuda", "float32"): TolerancePair(atol=1e-4, rtol=1e-5),
@@ -765,12 +825,26 @@ class ToleranceDB:
         if model_family is not None:
             entry = self._family_table.get((model_family.strip().lower(), b, d))
             if entry is not None:
+                if (b, d) in _UNVERIFIED_KEYS:
+                    # The family rows for an unverified backend are the same
+                    # unverifiable number, or derived from it. This is the path
+                    # a real run takes — decoder-small is Qwen3-0.6B — so
+                    # leaving it labelled "measured" would defeat the point.
+                    return ToleranceEntry(
+                        atol=entry.atol,
+                        rtol=entry.rtol,
+                        source="fallback",
+                        notes=f"unverified — see _UNVERIFIED_KEYS ({entry.notes})",
+                    )
                 return entry
 
         if (b, d) in self._table:
             base = self._table[(b, d)]
             source = "measured" if (b, d) in _TOLERANCE_TABLE else "derived"
             notes = "base (backend, dtype) lookup — no model-family entry"
+            if (b, d) in _UNVERIFIED_KEYS:
+                source = "fallback"
+                notes = "unverified — see _UNVERIFIED_KEYS"
         else:
             base = _DEFAULT_TOLERANCE
             source = "fallback"

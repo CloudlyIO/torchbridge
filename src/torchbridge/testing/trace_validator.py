@@ -4,8 +4,14 @@ Multi-Step Trace Validator
 
 Runs N sequential forward passes on two hardware backends and tracks per-step
 numerical divergence. Detects the compounding divergence pattern specific to
-agentic AI: a single-step divergence of 2e-5 can amplify 500× or more over
-50 reasoning steps, causing backends to branch semantically.
+agentic AI: a small single-step divergence can grow across reasoning steps
+until backends branch semantically.
+
+The largest amplification measured so far is 10.75x — Qwen3-0.6B, A10G vs
+CPU, bfloat16, 50 autoregressive steps. Higher values are expected at larger
+model scale and more steps, but have not been measured. This docstring
+previously asserted "500x or more", which no run in this repository supports;
+scripts/paper/build_tables.py renders the real figures from the result files.
 
 Two modes:
 - Standard (autoregressive=False): same input repeated N times. Measures
@@ -40,6 +46,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import logging
+import os
 import platform
 from dataclasses import dataclass, field
 from typing import Any
@@ -110,6 +117,32 @@ class TraceValidationResult:
     atol_source: str | None = None
     """Where that tolerance came from: measured, derived, or fallback."""
 
+    rtol: float | None = None
+    """The relative tolerance the database supplied. Recorded, not applied."""
+
+    tolerance_rule: str | None = None
+    """Which rule decided the verdicts. ``"atol_only"`` today.
+
+    The database gives both an absolute and a relative limit, and the trace uses
+    only the absolute one. Applying both would be looser and would change
+    verdicts, so it is a decision rather than a fix. Naming the rule here keeps
+    the result unambiguous without altering a single number.
+    """
+
+    input: dict[str, Any] = field(default_factory=dict)
+    """Description of the input the run was measured on — see _describe_input."""
+
+    env_a: dict[str, str] = field(default_factory=dict)
+    """Hardware and library provenance of the backend_a side."""
+
+    env_b: dict[str, str] = field(default_factory=dict)
+    """Hardware and library provenance of the backend_b side.
+
+    Recorded per side because the two devices differ — that difference is the
+    whole measurement. ``backend_a`` holds the name the caller typed; this holds
+    what actually ran, which is what makes a saved result checkable later.
+    """
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
         return {
@@ -123,6 +156,11 @@ class TraceValidationResult:
             "model_family": self.model_family,
             "atol": self.atol,
             "atol_source": self.atol_source,
+            "rtol": self.rtol,
+            "tolerance_rule": self.tolerance_rule,
+            "input": self.input,
+            "env_a": self.env_a,
+            "env_b": self.env_b,
             "first_divergence_step": self.first_divergence_step,
             "max_amplification": self.max_amplification,
             "final_passed": self.final_passed,
@@ -177,6 +215,15 @@ class SplitTraceRecord:
     role: str = "record"
     format_version: int = RECORD_FORMAT_VERSION
     model_family: str | None = None
+    tolerance_key: str | None = None
+    """The ToleranceDB key resolved on the machine that produced this half.
+
+    ``backend`` keeps the name the operator typed, because that is what the
+    result should be labelled with. This holds what it resolved to. They differ
+    for ``gpu``, which means "whichever accelerator this machine has" — and
+    :func:`compare_records` can run offline on a third machine, where reading
+    ``torch.version.hip`` answers a question about the wrong computer.
+    """
 
     @property
     def steps(self) -> int:
@@ -202,6 +249,7 @@ class SplitTraceRecord:
                 "role": self.role,
                 "format_version": self.format_version,
                 "model_family": self.model_family,
+                "tolerance_key": self.tolerance_key,
             },
             path,
         )
@@ -236,6 +284,7 @@ class SplitTraceRecord:
             env=payload.get("env", {}),
             role=payload.get("role", "record"),
             model_family=payload.get("model_family"),
+            tolerance_key=payload.get("tolerance_key"),
             format_version=version,
         )
 
@@ -324,6 +373,8 @@ class MultiStepTracer:
             model_family=self._model_family,
             atol=float(tol.atol),
             atol_source=getattr(tol, "source", None),
+            rtol=float(getattr(tol, "rtol", 0.0) or 0.0),
+            tolerance_rule="atol_only",
         )
 
         # Prepare independent model copies on each device.
@@ -334,6 +385,17 @@ class MultiStepTracer:
         # → CPU transfer breaks for complex LLM ops (RoPE, GQA, SiLU), producing NaN
         # or a RuntimeError on .cpu(). Since XLA/CPU is numerically identical to native
         # CPU in this mode, run both copies on CPU to get valid divergence data.
+        if (
+            self._device_a.type == "xla" or self._device_b.type == "xla"
+        ) and not _xla_is_cpu_backed():
+            raise RuntimeError(
+                "an XLA device was requested but PJRT_DEVICE is not CPU, so this "
+                "is real accelerator hardware. Substituting CPU here would report "
+                "CPU-vs-CPU numbers under the accelerator's name, and running both "
+                "halves in one process needs XLA-to-CPU tensor transfer, which "
+                "breaks for LLM ops. Use --record on this machine and --replay on "
+                "the other instead."
+            )
         _eff_a = torch.device("cpu") if self._device_a.type == "xla" else self._device_a
         _eff_b = torch.device("cpu") if self._device_b.type == "xla" else self._device_b
         if _eff_a != self._device_a or _eff_b != self._device_b:
@@ -341,6 +403,17 @@ class MultiStepTracer:
                 "XLA device detected with PJRT_DEVICE=CPU — running both model copies "
                 "on CPU (XLA CPU-backed execution is numerically identical to native CPU)"
             )
+        # Capture provenance from the *effective* devices: if a substitution
+        # happened, the file must show what really ran, not what was requested.
+        result.input = _describe_input(input_ids)
+        # One model, so one fingerprint. run() deep-copies from a single
+        # source, and _capture_env() would otherwise hash the whole checkpoint
+        # once per side — two passes over an 8B model to produce the same
+        # sixteen hex characters twice.
+        fingerprint = _model_fingerprint(self._model)
+        result.env_a = _capture_env(_eff_a, self._model, fingerprint=fingerprint)
+        result.env_b = _capture_env(_eff_b, self._model, fingerprint=fingerprint)
+
         model_a = copy.deepcopy(self._model).to(_eff_a)
         model_b = copy.deepcopy(self._model).to(_eff_b)
         model_a.eval()
@@ -486,6 +559,7 @@ class MultiStepTracer:
             is_lm=self._is_lm,
             env=_capture_env(self._device_a, self._model),
             role="record",
+            tolerance_key=_tolerance_key(self._backend_a),
             # Carried in the artifact, not left to the compare host's command
             # line. compare_records() runs offline, possibly on a third machine,
             # and without this it falls back to the coarse tolerance row — the
@@ -570,6 +644,7 @@ class MultiStepTracer:
             env=_capture_env(self._device_b, self._model),
             role="replay",
             model_family=self._model_family,
+            tolerance_key=_tolerance_key(self._backend_b),
         )
 
         model = copy.deepcopy(self._model).to(self._device_b)
@@ -718,7 +793,12 @@ def compare_records(
             record_b.model_family,
             record_a.model_family,
         )
-    tol = _lookup_tolerance(db, record_a.backend, record_a.dtype, family)
+    # The key the recording machine resolved, not one resolved here. An AMD
+    # half saved under the `gpu` alias would otherwise be judged by CUDA's
+    # limit whenever the comparison runs on a machine that is not ROCm — and
+    # this comparison is designed to run anywhere, including a laptop.
+    key = record_a.tolerance_key or _tolerance_key(record_a.backend)
+    tol = _lookup_tolerance(db, key, record_a.dtype, family)
 
     result = TraceValidationResult(
         backend_a=record_a.backend,
@@ -728,7 +808,14 @@ def compare_records(
         autoregressive=record_a.autoregressive,
         model_family=family,
         atol=float(tol.atol),
+        input=(
+            _describe_input(record_a.token_inputs[0]) if record_a.token_inputs else {}
+        ),
+        env_a=dict(record_a.env),
+        env_b=dict(record_b.env),
         atol_source=getattr(tol, "source", None),
+        rtol=float(getattr(tol, "rtol", 0.0) or 0.0),
+        tolerance_rule="atol_only",
     )
 
     step1_max_diff: float | None = None
@@ -816,26 +903,6 @@ def compare_records(
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
-def _lookup_tolerance(
-    db: Any, backend: str, dtype: str, model_family: str | None
-) -> Any:
-    """Look up a tolerance entry, always passing the family.
-
-    Branching on whether a family was supplied would leave two code paths and
-    still break a two-argument get() the moment a family *is* given, so it
-    buys nothing. Catching the resulting TypeError and retrying without the
-    family would be worse: a genuine bug inside a database would be swallowed
-    and the coarse (backend, dtype) row applied silently — exactly the failure
-    this argument exists to prevent. ToleranceDB already declares
-    model_family optional, so accepting it is the contract for any substitute
-    database.
-    """
-    # By keyword, not position: a substitute database may declare the family
-    # keyword-only, and a positional call raises TypeError against that
-    # signature. It is still always sent, so no silent fallback is reintroduced.
-    return db.get(backend, dtype, model_family=model_family)
-
-
 def _extract_tensor(output: Any, is_lm: bool) -> torch.Tensor:
     """Extract a flat tensor from model output."""
     if is_lm:
@@ -854,6 +921,77 @@ def _extract_tensor(output: Any, is_lm: bool) -> torch.Tensor:
     raise TypeError(f"Cannot extract tensor from model output of type {type(output)}")
 
 
+def _xla_is_cpu_backed() -> bool:
+    """True when XLA operations are routed to the CPU rather than an accelerator.
+
+    ``PJRT_DEVICE=CPU`` is the only configuration in which substituting native
+    CPU for an XLA device is numerically equivalent. Without this check the
+    substitution also fires on a real TPU or NeuronCore, where it silently
+    reports CPU-vs-CPU numbers under the accelerator's name.
+    """
+    return os.environ.get("PJRT_DEVICE", "").upper() == "CPU"
+
+
+_BACKEND_ALIASES = {"neuron": "trainium", "tpu": "xla"}
+"""Names that denote the same device as another key in :class:`ToleranceDB`.
+
+Without this, the two names for one chip get different limits: ``trainium`` has
+a measured entry while ``neuron`` has none and falls back to a looser default.
+The tolerance a run is judged by must not depend on which alias was typed.
+
+``gpu`` is deliberately absent here — it is resolved separately, because unlike
+these it does not name a fixed device.
+"""
+
+
+def _tolerance_key(backend: str) -> str:
+    """Canonical ToleranceDB key for a backend name.
+
+    ``gpu`` is handled apart from the fixed aliases because it means "whichever
+    accelerator this machine has", so its tolerance has to follow the build.
+    Mapping it to ``cuda`` unconditionally would apply NVIDIA's limit to an AMD
+    run — 1.0e-4 instead of 1.0e-3, ten times stricter and from the wrong
+    vendor. That is precisely the failure this table exists to remove.
+    """
+    name = backend.lower()
+    if name == "gpu":
+        return "rocm" if getattr(torch.version, "hip", None) else "cuda"
+    return _BACKEND_ALIASES.get(name, name)
+
+
+def _lookup_tolerance(
+    db: Any, backend: str, dtype: str, model_family: str | None
+) -> Any:
+    """Look up a tolerance entry, always passing the family.
+
+    Branching on whether a family was supplied would leave two code paths and
+    still break a two-argument ``get`` the moment a family *is* given, so it
+    buys nothing. Catching the resulting :class:`TypeError` and retrying without
+    the family would be worse: a genuine bug inside a database would be
+    swallowed and the coarse ``(backend, dtype)`` row applied silently — exactly
+    the failure this argument exists to prevent. :class:`ToleranceDB` already
+    declares ``model_family`` optional, so accepting it is the contract for any
+    substitute database.
+    """
+    # By keyword, not position: a substitute database may declare the family
+    # keyword-only, and a positional call raises TypeError against that
+    # signature. It is still always sent, so no silent fallback is reintroduced.
+    entry = db.get(_tolerance_key(backend), dtype, model_family=model_family)
+    if getattr(entry, "source", None) == "fallback":
+        # The database says it had no entry and used a safe default. Fine for
+        # exploration, not for a reported result: the verdict below rests on a
+        # number nobody measured, and until now nothing said so.
+        logger.warning(
+            "Tolerance for backend %r / dtype %r is a fallback, not measured "
+            "(atol=%s). Any pass or fail from this run is judged against an "
+            "unmeasured default.",
+            backend,
+            dtype,
+            getattr(entry, "atol", "?"),
+        )
+    return entry
+
+
 _ENV_COMPARED_KEYS = ("torch", "transformers", "model_fingerprint")
 """Env keys whose mismatch invalidates a split comparison.
 
@@ -865,6 +1003,33 @@ comparison.
 
 _FINGERPRINT_SAMPLE = 8
 """Elements taken from each end of a parameter when fingerprinting."""
+
+
+def _describe_input(x: torch.Tensor) -> dict[str, Any]:
+    """Describe the trace input without storing it.
+
+    A saved result has to say what it was measured on. The default trace input
+    is ``torch.ones(shape)`` — one token repeated — and a reader cannot tell
+    that from the numbers alone. ``synthetic`` makes it explicit rather than
+    leaving it to be discovered later.
+
+    The tensor is not stored: a real prompt could be large, and its contents do
+    not belong in a shared artifact. Shape, dtype and a fingerprint are enough
+    to answer the question and to notice two runs measured on different inputs.
+    """
+    flat = x.detach().reshape(-1)
+    unique = int(torch.unique(flat).numel())
+    digest = hashlib.sha256(flat.to(torch.float64).cpu().numpy().tobytes()).hexdigest()[
+        :16
+    ]
+    return {
+        "shape": list(x.shape),
+        "dtype": str(x.dtype),
+        "unique_values": unique,
+        # True when every element is identical — the repeated-token case.
+        "synthetic": unique <= 1,
+        "fingerprint": digest,
+    }
 
 
 def _model_fingerprint(model: nn.Module) -> str:
@@ -920,9 +1085,20 @@ def _model_fingerprint(model: nn.Module) -> str:
 
 
 def _capture_env(
-    device: torch.device, model: nn.Module | None = None
+    device: torch.device,
+    model: nn.Module | None = None,
+    fingerprint: str | None = None,
 ) -> dict[str, str]:
-    """Record the library, weight and hardware provenance of one split-trace half."""
+    """Record the library, weight and hardware provenance of one split-trace half.
+
+    Args:
+        device: The device that actually ran this half.
+        model: Fingerprinted to prove both halves loaded the same weights.
+        fingerprint: A fingerprint already computed for this model. Pass it when
+            capturing both sides of an in-process run, where the two halves are
+            copies of one model — hashing it twice reads the whole checkpoint
+            for a second time to reach the same answer.
+    """
     # str() on every value, not cosmetic: torch.__version__ is a TorchVersion
     # object, and a record holding one cannot be reloaded under
     # weights_only=True — which is how these files must be read, since they
@@ -933,7 +1109,9 @@ def _capture_env(
         "device_type": str(device.type),
     }
 
-    if model is not None:
+    if fingerprint is not None:
+        env["model_fingerprint"] = fingerprint
+    elif model is not None:
         env["model_fingerprint"] = _model_fingerprint(model)
 
     try:  # transformers is an optional dependency
@@ -952,10 +1130,51 @@ def _capture_env(
             env["vendor"] = "rocm" if hip else "cuda"
             if hip:
                 env["hip"] = str(hip)
+        elif device.type == "xla":
+            # "xla" alone cannot say what ran: TPU and Trainium both present
+            # under it, and a PJRT_DEVICE=CPU run presents under it too. A
+            # result that cannot name its own hardware is not provenance.
+            env.update(_xla_env())
         else:
             env["device"] = str(device)
     except Exception:  # pragma: no cover - driver-dependent
         env["device"] = str(device)
+
+    return env
+
+
+def _xla_env() -> dict[str, str]:
+    """Hardware detail for an XLA device, via the backend's own query.
+
+    Reuses ``backends/tpu/xla_compat`` rather than calling ``torch_xla``
+    directly: that module already handles the 2.9+ API change and falls back to
+    ``PJRT_DEVICE``. Everything is best-effort, because a missing field is
+    better than a wrong one.
+    """
+    env: dict[str, str] = {"device": "xla"}
+
+    pjrt = os.environ.get("PJRT_DEVICE", "")
+    if pjrt:
+        env["pjrt_device"] = str(pjrt)
+
+    try:
+        from torchbridge.backends.tpu.xla_compat import get_device_hw_type
+
+        hw = get_device_hw_type()
+        if hw and hw != "UNKNOWN":
+            env["xla_hw"] = str(hw)
+            # NEURON is what PJRT calls Trainium. Naming the vendor separately
+            # keeps a reader from having to know that.
+            env["vendor"] = "trainium" if hw.upper() == "NEURON" else hw.lower()
+    except Exception:  # pragma: no cover - torch_xla is optional
+        logger.debug("XLA hardware query failed", exc_info=True)
+
+    try:
+        import torch_xla
+
+        env["torch_xla"] = str(torch_xla.__version__)
+    except Exception:  # pragma: no cover - torch_xla is optional
+        pass
 
     return env
 

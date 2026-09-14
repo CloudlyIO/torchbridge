@@ -35,6 +35,33 @@
   outside that diff.
 
 ### Added
+- **`resolve_backend_device`**: `trainium`/`neuron` now require evidence of a
+  reachable NeuronCore, not merely that `torch_neuronx` imports. The SDK
+  importing proves the SDK is installed; the first trn1 instance this project
+  was given had the SDK and no device, and the run wrote `trainium` into a file
+  holding CPU-vs-CPU numbers. `PJRT_DEVICE=CPU` — which the project sets itself
+  to avoid a CLI SIGABRT — is refused outright, since XLA operations then go to
+  the CPU whatever silicon is present. `PJRT_DEVICE=NEURON`,
+  `NEURON_RT_VISIBLE_CORES`, or a `/dev/neuron*` device file each suffice. The
+  equivalent fix landed in `run_gpu_validation.py` on 2026-07-22; the
+  `tb-validate` path, which is what the 50-step trace runs, never got it.
+- **`ToleranceDB`**: the `trainium2` rows now report `source="fallback"`
+  alongside `xla`. They appear in no validation round, their values are
+  byte-identical to trainium1's, and the table's own comment says "same
+  tolerance tier as Trainium1; measured when hardware available". `rocm` is
+  deliberately **not** included — it looks unverified in the current status
+  table (PENDING), but v0.5.67 records a real MI300X run with numbers, and a
+  test now asserts rocm keeps its label so a future sweep cannot pull it in.
+  The tolerance values are unchanged; only the provenance label differs.
+- **`cli/validate.py`**: `--strict-env` makes a split-trace comparison refuse a
+  pair whose two halves were produced under different environments, instead of
+  warning and carrying on. Without it a *provably* different weight fingerprint
+  — the state a mistyped `--model` on the second machine produces — still
+  yields a PASS verdict, so the published number would describe the two random
+  initialisations rather than the two backends. `compare_records()` already
+  took `strict_env`; nothing exposed it, so an operator had no way to ask for
+  it. Off by default: a slightly mismatched pair is still worth measuring
+  sometimes, and changing the default is a behaviour change for existing users.
 - **`MultiStepTracer`**: `model_family` parameter, passed through to the
   `ToleranceDB` lookup. Previously only `(backend, dtype)` was sent, so every
   trace used the base row regardless of model size.
@@ -64,8 +91,65 @@
 - **`SplitTraceRecord`**: `model_family` is stored in the artifact, so an
   offline `compare_records()` applies the same tolerance the recording run did
   instead of falling back to the coarse row.
+- **`SplitTraceRecord`**: `tolerance_key` stores the ToleranceDB key the
+  recording machine resolved. `gpu` means whichever accelerator that machine
+  had, so resolving it again on the compare host judged an AMD half by CUDA's
+  limit. `backend` still holds the name the operator typed, which is what the
+  result is labelled with.
+- **`cli/validate.py`**: `tpu` and `xla` accepted as backend names. Without
+  them a rented TPU could not be selected at all. `tpu` additionally requires
+  the XLA device to report TPU hardware — a Neuron host imports `torch_xla`
+  too, so the import alone would have let a Trainium run be labelled `tpu`.
+  `xla` stays generic, because it claims no vendor.
+- **`trace_validator.py`**: `_xla_is_cpu_backed()`; the XLA-to-CPU substitution
+  now happens only when `PJRT_DEVICE=CPU`.
+- **`TraceValidationResult`**: `rtol`, `tolerance_rule`, `input`, `env_a` and
+  `env_b` fields, included in `to_dict()`. A result now records the real device,
+  the library versions, a weight fingerprint and a description of the input.
+- **`scripts/paper/build_tables.py`**: renders trace result files as a Markdown
+  table. Tolerates result files written before the provenance fields existed.
+- **`_capture_env()`**: an XLA half records `xla_hw`, `vendor`, `pjrt_device`
+  and the `torch_xla` version, via the TPU backend's existing hardware query.
+  A result that said only `device_type: xla` could not distinguish TPU from
+  Trainium, or either from a `PJRT_DEVICE=CPU` run.
+- **`_capture_env()`**: accepts a precomputed `fingerprint`, so an in-process
+  trace hashes its model once instead of once per side.
+- **`scripts/paper/build_tables.py`**: an absent `first_divergence_step` renders
+  as `not recorded` rather than `none`. `none` is a measurement — the run
+  finished and nothing diverged — which a file predating the field never made.
 
 ### Changed
+- **`ToleranceDB`: the `xla` tolerances now report `source="fallback"`.** They
+  were labelled `"measured"` because `get()` labels anything in the table that
+  way, not because a measurement was found. The v0.5.31 changelog claims a GCP
+  TPU v5e run and points at `reports/cloud_validation/2026-02-21/`, which is not
+  in the repository and never was; `cloud-validation.md` records TPU as
+  `PENDING` and its history says "AMD + TPU SKIPPED"; `hardware-matrix.md` has
+  a measured row for A10G and Trainium and none for TPU. The family rows
+  (`decoder-small/medium/large` × `xla`) are relabelled too — `decoder-small` is
+  the row a Qwen3-0.6B run actually hits. Values are unchanged; at 0.5 on logits
+  almost anything passes, so a TPU result judged by it carries no information
+  until the number is re-measured on real hardware.
+- **`cli/validate.py` (behaviour change)**: the non-trace `--compare` path
+  now canonicalises the backend name before the tolerance lookup, as `--trace`
+  already did. `tpu`, `neuron` and `gpu` previously found no row and silently
+  took the 1.0e-3 safe default. Six alias/dtype combinations change limit:
+
+  | alias | dtype | before | after |
+  |---|---|---|---|
+  | `tpu` | float32 | 1.0e-03 fallback | 5.0e-01 measured (`xla`) |
+  | `tpu` | bfloat16 | 1.0e-03 fallback | 5.0e-01 measured (`xla`) |
+  | `neuron` | float32 | 1.0e-03 fallback | 1.0e-04 measured (`trainium`) |
+  | `neuron` | bfloat16 | 1.0e-03 fallback | 1.0e-02 measured (`trainium`) |
+  | `gpu` | float32 | 1.0e-03 fallback | 1.0e-04 on CUDA, 1.0e-03 on ROCm |
+  | `gpu` | bfloat16 | 1.0e-03 fallback | 1.0e-02 on CUDA, 2.0e-02 on ROCm |
+
+  `neuron` float32 becomes ten times stricter, as does `gpu` float32 **on a
+  CUDA build**; a run that passed against the fallback may now fail, correctly,
+  since the fallback was a number nobody measured. On a ROCm build `gpu`
+  resolves to the `rocm` row, whose float32 limit is also 1.0e-03, so the value
+  is unchanged there and only its source becomes `measured`. `cuda`, `rocm`,
+  `cpu`, `mps`, `xla` and `trainium` named directly are unaffected.
 - **`trace_validator.py`**: the tolerance lookup always passes `model_family`. A
   caller-supplied tolerance database must now accept the third argument;
   `ToleranceDB` already declared it optional.
@@ -104,8 +188,28 @@
 - **`trace_validator.py`**: two records sharing a backend name now warn instead
   of raising, since that is the split path's control run. A follower whose role
   is not `replay` still raises.
+- **`trace_validator.py`**: backend aliases share one tolerance key — `neuron`
+  with `trainium` and `tpu` with `xla`, so the tolerance no longer depends on
+  which alias was typed. `gpu` follows the local build: the `rocm` key on a
+  ROCm torch, the `cuda` key otherwise, because the same name means a different
+  vendor's chip on each.
+- **`trace_validator.py`**: a tolerance whose source is `fallback` now warns, so
+  a verdict resting on an unmeasured default says so.
+- **`cli/validate.py`**: the `--compare` tolerance line marks `atol` as applied
+  and `rtol` as not applied. `rtol` is still not used in the verdict.
 
 ### Fixed
+- **ROCm detection consistency**: `backends/backend_factory.py` and
+  `attention/dispatch/dispatcher.py` tested `torch.version.hip is not None`,
+  which classifies an empty HIP version string as ROCm, while
+  `is_rocm_build()` uses truthiness and classifies it as CUDA. Backend
+  availability and CK kernel dispatch therefore disagreed with the hardware
+  detector on that one value. Both now call the shared helper.
+- **`trace_validator.py` module docstring**: said a single-step divergence
+  "can amplify 500× or more over 50 reasoning steps". No run in this repository
+  supports that. It now states the largest figure actually measured — 10.75×,
+  Qwen3-0.6B, A10G vs CPU, bfloat16, 50 autoregressive steps — and says higher
+  values are expected but unmeasured.
 - **Trace tolerance**: traces were judged against the strictest tolerance row
   regardless of model size, because the model family never reached
   `ToleranceDB.get()`. On a larger model this reports divergence that is within
@@ -118,6 +222,16 @@
   device object cannot distinguish the vendors.
 - **`--compare rocm gpu` / `--compare cuda gpu`**: the same collision through the
   `gpu` alias.
+- **XLA runs**: both model copies were moved to the CPU whenever the device type
+  was `xla`, without checking whether the XLA device was actually CPU-backed. A
+  TPU or Trainium run therefore reported CPU-versus-CPU zeros under the
+  accelerator's name.
+- **Tolerance for `tpu` and `neuron`**: neither had a table entry, so both fell
+  back to an unmeasured default while `xla` and `trainium` had measured values
+  for the same hardware.
+- **Result files**: recorded only the backend name typed by the caller, with no
+  record of the real hardware, the library versions, the input, or the tolerance
+  that produced the verdict.
 
 ---
 
