@@ -9,6 +9,7 @@ import hashlib
 import logging
 import time
 import warnings
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -69,10 +70,10 @@ class XLACompiler:
 
     def compile_model(
         self,
-        model: nn.Module,
+        model: nn.Module | Callable[..., Any],
         sample_inputs: torch.Tensor | tuple | None = None,
         use_cache: bool = True,
-    ) -> nn.Module:
+    ) -> nn.Module | Callable[..., Any]:
         """
         Compile model for TPU execution.
 
@@ -132,8 +133,10 @@ class XLACompiler:
         return compiled_model
 
     def _compile_torch_xla(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None,
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using PyTorch/XLA torch.compile."""
         try:
             # Sync for XLA compilation using compatibility layer
@@ -146,7 +149,7 @@ class XLACompiler:
 
                 if backend is not None:
                     # Use specific backend (openxla for 2.9+, aot_torchxla_trace_once for older)
-                    compiled_model: nn.Module = torch.compile(  # type: ignore[assignment]
+                    compiled_model = torch.compile(
                         model,
                         backend=backend,
                         dynamic=self.config.enable_xla_dynamic_shapes,
@@ -154,7 +157,7 @@ class XLACompiler:
                 else:
                     # For torch_xla 2.9+ without explicit backend, use default compilation
                     # torch.compile works directly with XLA tensors
-                    compiled_model = torch.compile(  # type: ignore[assignment]
+                    compiled_model = torch.compile(
                         model, dynamic=self.config.enable_xla_dynamic_shapes
                     )
                 return compiled_model
@@ -173,8 +176,10 @@ class XLACompiler:
             return model
 
     def _compile_xla_direct(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None,
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using direct XLA compilation."""
         try:
             # Force XLA compilation with sample inputs
@@ -209,8 +214,10 @@ class XLACompiler:
             return model
 
     def _compile_pjit(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
-    ) -> nn.Module:
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None,
+    ) -> nn.Module | Callable[..., Any]:
         """Compile using JAX pjit (experimental)."""
         if not self.config.enable_jax_integration:
             warnings.warn(
@@ -236,7 +243,9 @@ class XLACompiler:
             return model
 
     def _generate_cache_key(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None,
     ) -> str:
         """Generate cache key for model compilation."""
         # Create hash based on model structure and config
@@ -260,8 +269,15 @@ class XLACompiler:
         combined = f"{model_str}_{config_str}_{input_info}"
         return hashlib.md5(combined.encode(), usedforsecurity=False).hexdigest()
 
-    def _estimate_model_size(self, model: nn.Module) -> int:
-        """Estimate model size in bytes."""
+    def _estimate_model_size(self, model: nn.Module | Callable[..., Any]) -> int:
+        """Estimate model size in bytes, or 0 when it cannot be counted.
+
+        compile_model() may be handed an already-compiled callable, which has
+        no parameters to count. The figure is only logged, so returning 0 is
+        better than raising inside a compile path.
+        """
+        if not isinstance(model, nn.Module):
+            return 0
         total_params = 0
         for param in model.parameters():
             total_params += param.numel()
@@ -269,8 +285,10 @@ class XLACompiler:
         return total_params * 4
 
     def optimize_for_inference(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
-    ) -> nn.Module:
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None = None,
+    ) -> nn.Module | Callable[..., Any]:
         """
         Optimize model specifically for inference.
 
@@ -281,13 +299,15 @@ class XLACompiler:
         Returns:
             Optimized model
         """
-        # Set model to eval mode
-        model.eval()
+        # Set model to eval mode. Guarded: the adapter passes this method the
+        # result of a previous compile_model(), which need not be an nn.Module.
+        if isinstance(model, nn.Module):
+            model.eval()
 
         # Apply inference-specific optimizations
         with torch.no_grad():
             # Freeze batch norm statistics
-            for module in model.modules():
+            for module in model.modules() if isinstance(model, nn.Module) else []:
                 if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
                     module.eval()
                     module.track_running_stats = False
@@ -298,8 +318,10 @@ class XLACompiler:
         return optimized_model
 
     def optimize_for_training(
-        self, model: nn.Module, sample_inputs: torch.Tensor | tuple | None = None
-    ) -> nn.Module:
+        self,
+        model: nn.Module | Callable[..., Any],
+        sample_inputs: torch.Tensor | tuple | None = None,
+    ) -> nn.Module | Callable[..., Any]:
         """
         Optimize model specifically for training.
 
@@ -310,8 +332,10 @@ class XLACompiler:
         Returns:
             Optimized model
         """
-        # Set model to training mode
-        model.train()
+        # Set model to training mode. Guarded for the same reason as
+        # optimize_for_inference: this may receive an already-compiled callable.
+        if isinstance(model, nn.Module):
+            model.train()
 
         # Enable gradient checkpointing if configured
         if self.config.gradient_checkpointing:
