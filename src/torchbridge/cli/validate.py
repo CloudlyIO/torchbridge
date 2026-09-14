@@ -9,6 +9,7 @@ with multiple levels: quick, standard, full, and cloud.
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -98,15 +99,93 @@ def resolve_backend_device(name: str) -> torch.device | None:
             return None
         return torch.device("mps")
     if name in ("trainium", "neuron"):
+        if not _neuron_hardware_is_present():
+            # Importing torch_neuronx proves the SDK is installed, not that a
+            # NeuronCore is reachable. See _neuron_hardware_is_present.
+            return None
+        return torch.device("xla")
+    if name in ("tpu", "xla"):
+        # A TPU is reached through torch_xla, the same device type Trainium uses.
+        # Without these names a rented TPU could not be addressed at all, and the
+        # workaround — passing "trainium" — wrote the wrong hardware into the
+        # results file.
         try:
-            import torch_neuronx  # noqa: F401
-
-            return torch.device("xla")
+            import torch_xla  # noqa: F401
         except ImportError:
             return None
+        if name == "tpu" and not _xla_hardware_is_tpu():
+            # A Neuron host imports torch_xla too, so accepting "tpu" purely on
+            # that import would run Trainium and write "tpu" into the result.
+            # "xla" stays generic, because it does not claim a vendor.
+            return None
+        return torch.device("xla")
     if name == "cpu":
         return torch.device("cpu")
     return None  # unknown
+
+
+def _neuron_hardware_is_present() -> bool:
+    """Whether a real NeuronCore is reachable, not merely the SDK installed.
+
+    ``import torch_neuronx`` succeeding was the whole test before this. It
+    proves the Neuron SDK is present and nothing else. On the trn1 instance
+    this project was first given, the SDK imported, ``torch.device("xla")``
+    resolved, and there was no NeuronCore behind it — "No neuron device
+    available", CPU fallback. The run produced CPU-vs-CPU numbers with
+    ``trainium`` written into the results file.
+
+    That is not hypothetical, and it is not only that instance. Shah's fix of
+    2026-07-22 describes exactly it, in a different file:
+
+        The Trainium branch in run_gpu_validation.py was comparing CPU to CPU
+        because PJRT_DEVICE=CPU (set to prevent CLI SIGABRT) routed XLA to CPU.
+
+    That fix landed in ``run_gpu_validation.py``. This path never got it, so
+    ``tb-validate --compare trainium cpu`` — what the experiment guide actually
+    runs for the 50-step trace — still had the hole.
+
+    ``PJRT_DEVICE=CPU`` is decisive on its own: whatever hardware is in the
+    machine, XLA operations are going to the CPU, so the comparison would be
+    CPU against CPU. The positive signals are the ones the Neuron runtime
+    itself sets or creates, and any one of them is enough — requiring all three
+    would refuse a genuine Trainium, which is the same failure pointing the
+    other way.
+
+    The equivalent check for TPU is :func:`_xla_hardware_is_tpu`. Trainium
+    needs a different one because ``xla_device_hw`` reports "TPU" only for
+    Google's chips.
+    """
+    try:
+        import torch_neuronx  # noqa: F401
+    except ImportError:
+        return False
+
+    if os.environ.get("PJRT_DEVICE", "").upper() == "CPU":
+        return False
+    if os.environ.get("PJRT_DEVICE", "").upper() == "NEURON":
+        return True
+    if os.environ.get("NEURON_RT_VISIBLE_CORES"):
+        return True
+    # The driver creates these; `ls /dev/neuron*` is what the runbook checks by
+    # hand on the instance.
+    return any(Path("/dev").glob("neuron*"))
+
+
+def _xla_hardware_is_tpu() -> bool:
+    """Whether the XLA device on this machine is actually a TPU.
+
+    Trainium presents through the same ``xla`` device type and imports the same
+    ``torch_xla``, so the import proves nothing about the vendor. Defers to the
+    TPU backend's own detection, which already handles the torch_xla 2.9 API
+    change and falls back to ``PJRT_DEVICE``.
+    """
+    try:
+        from torchbridge.backends.tpu.xla_compat import get_device_hw_type
+
+        return get_device_hw_type().upper() == "TPU"
+    except Exception:
+        logger.debug("TPU hardware check failed", exc_info=True)
+        return False
 
 
 def explain_unavailable_backend(name: str) -> str:
@@ -451,7 +530,7 @@ Examples:
             "--compare",
             nargs=2,
             metavar=("BACKEND1", "BACKEND2"),
-            help="Compare model outputs across two backends (e.g. --compare cuda cpu)",
+            help="Compare model outputs across two backends (e.g. --compare cuda cpu). Names: cuda, rocm, gpu, mps, tpu, xla, trainium, neuron, cpu",
         )
 
         parser.add_argument(
@@ -557,6 +636,20 @@ Examples:
                 "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
                 "is inferred from its parameter count; anything else falls back to the "
                 "coarse backend+dtype row."
+            ),
+        )
+
+        parser.add_argument(
+            "--strict-env",
+            action="store_true",
+            dest="strict_env",
+            help=(
+                "Refuse a split-trace comparison whose two halves were produced "
+                "under different environments, instead of warning. Without it a "
+                "mismatched torch version — or a mismatched weight fingerprint, "
+                "which is proof the two machines loaded different weights — still "
+                "yields a PASS verdict. Use it for any run whose number will be "
+                "published."
             ),
         )
 
@@ -850,8 +943,13 @@ Examples:
         from torchbridge.testing.tolerance_db import ToleranceDB
 
         tol_db = ToleranceDB()
-        # Use backend1 tolerance (primary backend)
-        b1_key = backend1.lower() if backend1.lower() != "rocm" else "rocm"
+        # Use backend1 tolerance (primary backend), through the same canonical
+        # key the trace path uses. Looking the raw name up meant tpu, neuron and
+        # gpu found no row and silently took the 1.0e-3 safe default, so the
+        # limit depended on which alias was typed for the same chip.
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        b1_key = _tolerance_key(backend1)
         model_family, family_note = resolve_family_for_run(args, model)
         if family_note and not ci_mode:
             # --ci consumers parse stdout as JSON, so nothing else may be printed.
@@ -1054,6 +1152,11 @@ Examples:
                 records[0],
                 records[1],
                 model_family=getattr(args, "model_family", None),
+                # `is True` rather than a bare truth test: args is a MagicMock
+                # in tests/cli/test_validate.py, where every attribute is
+                # truthy, and silently switching those runs to strict mode is
+                # the same failure the --record/--replay dispatch already hit.
+                strict_env=getattr(args, "strict_env", False) is True,
             )
         except Exception as exc:
             return _fail(f"Comparison failed: {exc}")
@@ -1329,7 +1432,12 @@ Examples:
                     follower.save(args.record)
                     if not ci_mode:
                         print(f"Saved this half to {args.record}")
-                result = compare_records(leader, follower, model_family=trace_family)
+                result = compare_records(
+                    leader,
+                    follower,
+                    model_family=trace_family,
+                    strict_env=getattr(args, "strict_env", False) is True,
+                )
             else:
                 result = tracer.run(
                     input_ids=x, steps=steps, autoregressive=autoregressive
@@ -2047,7 +2155,7 @@ def main():
         "--compare",
         nargs=2,
         metavar=("BACKEND1", "BACKEND2"),
-        help="Compare model outputs across two backends (e.g. --compare cuda cpu)",
+        help="Compare model outputs across two backends (e.g. --compare cuda cpu). Names: cuda, rocm, gpu, mps, tpu, xla, trainium, neuron, cpu",
     )
 
     parser.add_argument(
@@ -2153,6 +2261,20 @@ def main():
             "tencent_hy3, minimax_m3, glm_5_2). When omitted, a dense decoder's family "
             "is inferred from its parameter count; anything else falls back to the "
             "coarse backend+dtype row."
+        ),
+    )
+
+    parser.add_argument(
+        "--strict-env",
+        action="store_true",
+        dest="strict_env",
+        help=(
+            "Refuse a split-trace comparison whose two halves were produced "
+            "under different environments, instead of warning. Without it a "
+            "mismatched torch version — or a mismatched weight fingerprint, "
+            "which is proof the two machines loaded different weights — still "
+            "yields a PASS verdict. Use it for any run whose number will be "
+            "published."
         ),
     )
 

@@ -8,6 +8,7 @@ All tests run on CPU — no GPU required.
 from __future__ import annotations
 
 import copy
+from contextlib import contextmanager
 
 import pytest
 import torch
@@ -1304,3 +1305,720 @@ class TestFingerprintStatesItsBlindSpot:
         assert any("does not prove they match" in r.message for r in caplog.records), (
             "the warning must say that silence is not proof"
         )
+
+
+class TestXlaIsNotSilentlyRunOnCpu:
+    """An XLA device must never be quietly swapped for the CPU.
+
+    TPU and Trainium both present as device type ``xla``. Substituting native
+    CPU is numerically equivalent only when ``PJRT_DEVICE=CPU``, which is a
+    CPU-backed XLA runtime. Doing it unconditionally means a real accelerator
+    run reports CPU-vs-CPU zeros under the accelerator's name — a fabricated
+    result that passes, with nothing in the output to reveal it.
+    """
+
+    def _tracer(self):
+        return MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="tpu",
+            backend_b="cpu",
+            dtype="float32",
+        )
+
+    def test_real_xla_device_refuses_instead_of_running_on_cpu(self, monkeypatch):
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        with pytest.raises(RuntimeError, match="record"):
+            self._tracer().run(torch.randn(1, 8), steps=3)
+
+    def test_tpu_pjrt_device_also_refuses(self, monkeypatch):
+        monkeypatch.setenv("PJRT_DEVICE", "TPU")
+        with pytest.raises(RuntimeError, match="record"):
+            self._tracer().run(torch.randn(1, 8), steps=3)
+
+    def test_cpu_backed_xla_still_falls_back(self, monkeypatch):
+        """The one case where substitution is genuinely equivalent is preserved."""
+        monkeypatch.setenv("PJRT_DEVICE", "CPU")
+        result = self._tracer().run(torch.randn(1, 8), steps=3)
+        assert result.final_passed is True
+        assert len(result.step_results) == 3
+
+    def test_lowercase_pjrt_value_is_accepted(self, monkeypatch):
+        monkeypatch.setenv("PJRT_DEVICE", "cpu")
+        assert self._tracer().run(torch.randn(1, 8), steps=2).final_passed is True
+
+    def test_no_xla_device_is_unaffected(self, monkeypatch):
+        """A plain cpu-vs-cpu run must not be touched by any of this."""
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        tracer = _make_tracer(_IdentityModel())
+        assert tracer.run(torch.randn(1, 8), steps=3).final_passed is True
+
+    def test_the_error_says_which_device_and_what_to_do(self, monkeypatch):
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        with pytest.raises(RuntimeError) as exc:
+            self._tracer().run(torch.randn(1, 8), steps=2)
+        message = str(exc.value)
+        assert "PJRT_DEVICE" in message
+        assert "--record" in message and "--replay" in message
+
+    @staticmethod
+    @contextmanager
+    def _xla_runs_on_cpu():
+        """Let an ``xla`` device flow through the code without a TPU.
+
+        Moving a tensor or a module to ``xla`` needs a runtime this machine
+        does not have, so both moves are redirected to CPU. Everything else —
+        the device object the tracer holds, and every branch that tests
+        ``device.type`` — stays exactly as it would on real hardware, which is
+        the part under test. Passing ``torch.device("cpu")`` as a stand-in, as
+        this test used to, skipped those branches entirely and would have
+        passed even if record() refused XLA outright.
+        """
+        real_tensor_to = torch.Tensor.to
+        real_module_to = nn.Module.to
+
+        def _redirect(target):
+            return any(
+                getattr(a, "type", None) == "xla"
+                or (isinstance(a, str) and a.startswith("xla"))
+                for a in target
+            )
+
+        def tensor_to(self, *a, **kw):
+            return (
+                real_tensor_to(self) if _redirect(a) else real_tensor_to(self, *a, **kw)
+            )
+
+        def module_to(self, *a, **kw):
+            return self if _redirect(a) else real_module_to(self, *a, **kw)
+
+        torch.Tensor.to = tensor_to
+        nn.Module.to = module_to
+        try:
+            yield
+        finally:
+            torch.Tensor.to = real_tensor_to
+            nn.Module.to = real_module_to
+
+    def test_run_refuses_a_real_xla_device(self, monkeypatch):
+        """The guard under test: without PJRT_DEVICE=CPU, an in-process run on
+        an XLA device is refused rather than silently moved to the CPU."""
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="tpu",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with self._xla_runs_on_cpu():
+            with pytest.raises(RuntimeError, match="PJRT_DEVICE"):
+                tracer.run(torch.randn(1, 8), steps=2)
+
+    def test_record_does_not_refuse_on_a_real_xla_device(self, monkeypatch):
+        """record() is the supported route, so it must stay open.
+
+        It never substitutes, and each half stays on its own machine, so the
+        XLA-to-CPU transfer problem that motivated the fallback never arises.
+        Run with a genuine xla device object, so the refusal above is actually
+        reachable from here and is shown not to fire.
+        """
+        monkeypatch.delenv("PJRT_DEVICE", raising=False)
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="tpu",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with self._xla_runs_on_cpu():
+            rec = tracer.record(torch.randn(1, 8), steps=3)
+        assert rec.steps == 3 and rec.backend == "tpu"
+
+    def test_a_cpu_backed_xla_run_is_allowed(self, monkeypatch):
+        """PJRT_DEVICE=CPU is the one case the substitution was safe for, and
+        the comment always claimed it — now the code checks it."""
+        monkeypatch.setenv("PJRT_DEVICE", "CPU")
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("xla"),
+            device_b=torch.device("cpu"),
+            backend_a="xla",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with self._xla_runs_on_cpu():
+            result = tracer.run(torch.randn(1, 8), steps=2)
+        assert result.steps == 2
+
+
+class TestUnmeasuredToleranceIsSurfaced:
+    """A verdict reached with an unmeasured fallback tolerance must say so.
+
+    ``ToleranceDB`` answers an unknown backend with a safe default and marks the
+    entry ``source="fallback"``. That is sensible for exploration and wrong for a
+    paper: the run passes or fails against a number nobody measured, and today
+    nothing in the result reveals which. The signal already exists on the entry;
+    it simply was not being read.
+    """
+
+    def _run(self, backend_a):
+        cpu = torch.device("cpu")
+        return MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a=backend_a,
+            backend_b="cpu",
+            dtype="float32",
+        ).run(torch.randn(1, 8), steps=2)
+
+    def test_measured_backend_is_marked_measured(self):
+        assert self._run("cuda").to_dict()["atol_source"] == "measured"
+
+    def test_unmeasured_backend_is_marked_fallback(self):
+        """A backend the table has never seen, so the default is all there is."""
+        assert self._run("some-future-chip").to_dict()["atol_source"] == "fallback"
+
+    def test_fallback_is_warned_about(self, caplog):
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            self._run("some-future-chip")
+        joined = " ".join(r.message.lower() for r in caplog.records)
+        assert "fallback" in joined or "not measured" in joined
+
+    def test_tpu_resolves_to_the_xla_row_not_the_safe_default(self):
+        """The alias fix: tpu reaches the xla entry instead of the coarse
+        1.0e-3 default. Both now report "fallback", but for different reasons —
+        the xla row is flagged unverified, whereas the old default meant no row
+        existed at all. The atol is what distinguishes them."""
+        assert self._run("tpu").to_dict()["atol"] == 0.5
+
+
+class TestBackendAliasesShareOneToleranceKey:
+    """An alias must not change the tolerance for identical hardware.
+
+    ``neuron`` and ``trainium`` name the same chip, and ``tpu`` is how the CLI
+    exposes the XLA path. Today the table has ``trainium`` and ``xla`` but not
+    ``neuron`` or ``tpu``, so the two names for one device get different limits —
+    ``trainium`` a measured 1.0e-4, ``neuron`` an unmeasured 1.0e-3.
+    """
+
+    def _atol(self, backend):
+        cpu = torch.device("cpu")
+        result = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a=backend,
+            backend_b="cpu",
+            dtype="float32",
+        ).run(torch.randn(1, 8), steps=2)
+        return result.to_dict()["atol"], result.to_dict()["atol_source"]
+
+    def test_neuron_matches_trainium(self):
+        assert self._atol("neuron") == self._atol("trainium")
+
+    def test_tpu_matches_xla(self):
+        assert self._atol("tpu") == self._atol("xla")
+
+    def test_an_unrelated_backend_is_untouched(self):
+        atol, source = self._atol("cuda")
+        assert atol == pytest.approx(1.0e-4)
+        assert source == "measured"
+
+
+class TestNormalRunRecordsProvenance:
+    """A normal trace result must say which hardware produced it.
+
+    The split path already captures this per half. The in-process path recorded
+    only the backend *name the caller typed* — which is precisely the field that
+    lies when a name and the real device disagree, as in the cuda/rocm and XLA
+    cases. Rented machines are destroyed after each run, so whatever the file
+    omits is unrecoverable.
+    """
+
+    def _dict(self):
+        cpu = torch.device("cpu")
+        return (
+            MultiStepTracer(
+                model=_IdentityModel(),
+                device_a=cpu,
+                device_b=cpu,
+                backend_a="cuda",
+                backend_b="cpu",
+                dtype="float32",
+            )
+            .run(torch.randn(1, 8), steps=2)
+            .to_dict()
+        )
+
+    def test_both_sides_are_recorded_separately(self):
+        d = self._dict()
+        assert "env_a" in d and "env_b" in d
+
+    def test_library_versions_are_recorded(self):
+        env = self._dict()["env_a"]
+        assert env["torch"] == torch.__version__
+        assert "platform" in env
+
+    def test_real_device_is_recorded_not_the_typed_name(self):
+        """The point of the field: what actually ran, not what was asked for."""
+        d = self._dict()
+        assert d["backend_a"] == "cuda"  # what we typed
+        assert d["env_a"]["device_type"] == "cpu"  # what actually ran
+
+    def test_weight_fingerprint_is_recorded(self):
+        assert "model_fingerprint" in self._dict()["env_a"]
+
+    def test_both_halves_share_the_same_fingerprint(self):
+        """One model is deep-copied, so a difference here means a real problem."""
+        d = self._dict()
+        assert d["env_a"]["model_fingerprint"] == d["env_b"]["model_fingerprint"]
+
+    def test_result_is_json_serialisable(self):
+        import json
+
+        json.dumps(self._dict())
+
+
+class TestInputIsDescribedInTheResult:
+    """A result must describe the input it was measured on.
+
+    Our figures were all measured on ``torch.ones(1, 64)`` — one token repeated
+    sixty-four times. Whether that is a fair test is a methodology question for
+    the supervisor, and changing it would invalidate every completed run. What
+    is not a judgement call is that the file should say what the input was: right
+    now the question cannot be answered from the saved results at all.
+
+    The tensor itself is not stored. A description is enough to answer the
+    question and to spot two runs measured on different inputs, and it avoids
+    writing a real prompt's contents into a shared artifact.
+    """
+
+    def _dict(self, x):
+        cpu = torch.device("cpu")
+        return (
+            MultiStepTracer(
+                model=_IdentityModel(),
+                device_a=cpu,
+                device_b=cpu,
+                backend_a="cpu",
+                backend_b="cpu",
+            )
+            .run(x, steps=2)
+            .to_dict()
+        )
+
+    def test_shape_and_dtype_are_recorded(self):
+        d = self._dict(torch.ones(1, 64, dtype=torch.long))["input"]
+        assert d["shape"] == [1, 64]
+        assert d["dtype"] == "torch.int64"
+
+    def test_a_single_repeated_value_is_flagged_synthetic(self):
+        d = self._dict(torch.ones(1, 64, dtype=torch.long))["input"]
+        assert d["synthetic"] is True
+        assert d["unique_values"] == 1
+
+    def test_varied_input_is_not_flagged_synthetic(self):
+        d = self._dict(torch.randn(1, 32))["input"]
+        assert d["synthetic"] is False
+        assert d["unique_values"] > 1
+
+    def test_the_same_input_gives_the_same_fingerprint(self):
+        a = self._dict(torch.ones(1, 8, dtype=torch.long))["input"]["fingerprint"]
+        b = self._dict(torch.ones(1, 8, dtype=torch.long))["input"]["fingerprint"]
+        assert a == b
+
+    def test_a_different_input_gives_a_different_fingerprint(self):
+        a = self._dict(torch.ones(1, 8, dtype=torch.long))["input"]["fingerprint"]
+        b = self._dict(torch.zeros(1, 8, dtype=torch.long))["input"]["fingerprint"]
+        assert a != b
+
+    def test_the_tensor_itself_is_not_stored(self):
+        import json
+
+        d = self._dict(torch.ones(1, 64, dtype=torch.long))
+        json.dumps(d)  # must stay serialisable
+        assert "values" not in d["input"] and "data" not in d["input"]
+
+
+class TestToleranceRuleIsExplicit:
+    """The result must state which tolerance rule was applied.
+
+    The database supplies two limits per entry, ``atol`` and ``rtol``, and the
+    trace applies only ``atol`` (``max_diff <= tol.atol``). Meanwhile the
+    single-step path prints ``rtol`` and writes ``tolerance_rtol`` into its
+    output, which reads as though both were used.
+
+    Starting to apply ``rtol`` is not a code decision: ``atol + rtol*|b|`` is
+    looser, so it would change verdicts and alter how every completed run reads.
+    That is the supervisor's call. What can be fixed without touching a single
+    number is the ambiguity — say which rule ran, and record the limit that was
+    available but unused.
+    """
+
+    def _dict(self):
+        cpu = torch.device("cpu")
+        return (
+            MultiStepTracer(
+                model=_IdentityModel(),
+                device_a=cpu,
+                device_b=cpu,
+                backend_a="cuda",
+                backend_b="cpu",
+                dtype="float32",
+            )
+            .run(torch.randn(1, 8), steps=2)
+            .to_dict()
+        )
+
+    def test_the_applied_rule_is_named(self):
+        assert self._dict()["tolerance_rule"] == "atol_only"
+
+    def test_the_unused_limit_is_still_recorded(self):
+        d = self._dict()
+        assert d["rtol"] == pytest.approx(1.0e-5)
+        assert d["atol"] == pytest.approx(1.0e-4)
+
+    def test_verdicts_are_unchanged_by_this(self):
+        """Recording the rule must not alter any pass or fail.
+
+        A real difference of 2.0e-4 against cuda/float32's atol of 1.0e-4 must
+        still fail. Applying rtol as well would have loosened the threshold and
+        turned this into a pass, which is exactly the change not being made.
+        """
+
+        class _DriftingModel(nn.Module):
+            """Second copy returns the first copy's output shifted by 2.0e-4."""
+
+            calls = 0
+
+            def forward(self, x):
+                out = x.clone()
+                if _DriftingModel.calls % 2 == 1:
+                    out = out + 2.0e-4
+                _DriftingModel.calls += 1
+                return out
+
+        _DriftingModel.calls = 0
+        cpu = torch.device("cpu")
+        result = MultiStepTracer(
+            model=_DriftingModel(),
+            device_a=cpu,
+            device_b=cpu,
+            backend_a="cuda",
+            backend_b="cpu",
+            dtype="float32",
+        ).run(torch.ones(1, 8), steps=3)
+        assert result.final_passed is False
+        assert result.first_divergence_step == 1
+
+
+class TestGpuAliasFollowsTheLocalVendor:
+    """``gpu`` means the local accelerator, so its tolerance must follow the build.
+
+    ``gpu`` is deliberately neutral in the resolver — it resolves to whichever
+    accelerator this machine has. Hard-mapping it to ``cuda`` therefore applies
+    NVIDIA's limit to an AMD run: 1.0e-4 instead of 1.0e-3, ten times stricter,
+    and from the wrong vendor entirely.
+
+    That is the exact failure this alias table exists to remove — a tolerance
+    that changes with the name typed rather than the hardware used.
+    """
+
+    def test_gpu_maps_to_rocm_on_a_rocm_build(self):
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        with patch.object(torch.version, "hip", "6.0.32830", create=True):
+            assert _tolerance_key("gpu") == "rocm"
+
+    def test_gpu_maps_to_cuda_on_a_cuda_build(self):
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        with patch.object(torch.version, "hip", None, create=True):
+            assert _tolerance_key("gpu") == "cuda"
+
+    def test_the_two_builds_give_different_limits(self):
+        """If they agreed, the mapping would not matter and neither would this."""
+        from unittest.mock import patch
+
+        from torchbridge.testing.tolerance_db import ToleranceDB
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        db = ToleranceDB()
+        with patch.object(torch.version, "hip", "6.0.32830", create=True):
+            rocm_atol = db.get(_tolerance_key("gpu"), "float32").atol
+        with patch.object(torch.version, "hip", None, create=True):
+            cuda_atol = db.get(_tolerance_key("gpu"), "float32").atol
+        assert rocm_atol != cuda_atol
+        assert rocm_atol == pytest.approx(1.0e-3)
+        assert cuda_atol == pytest.approx(1.0e-4)
+
+    def test_the_other_aliases_are_unaffected(self):
+        from torchbridge.testing.trace_validator import _tolerance_key
+
+        assert _tolerance_key("neuron") == "trainium"
+        assert _tolerance_key("tpu") == "xla"
+        assert _tolerance_key("cuda") == "cuda"
+
+
+class TestOfflineComparisonUsesTheRecordingMachinesVendor:
+    """`gpu` means "whichever accelerator this machine has", so resolving it on
+    the compare host answers a question about the wrong computer.
+
+    compare_records() is built to run anywhere — the point of the offline path
+    is that both rented machines can be gone. An AMD half saved under `gpu`
+    must not pick up CUDA's limit because the laptop doing the comparison is
+    not a ROCm build.
+    """
+
+    @staticmethod
+    def _pair(tolerance_key=None):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        halves = []
+        for role, backend in (("record", "gpu"), ("replay", "cpu")):
+            rec = SplitTraceRecord(
+                backend=backend,
+                dtype="float32",
+                autoregressive=False,
+                is_lm=False,
+                role=role,
+            )
+            rec.token_inputs = [torch.zeros(1, 4)]
+            rec.outputs = [torch.zeros(1, 4)]
+            rec.env = {"torch": "2.0", "transformers": "4.0"}
+            halves.append(rec)
+        halves[0].tolerance_key = tolerance_key
+        return halves
+
+    def test_an_amd_half_keeps_the_rocm_limit_on_a_non_rocm_host(self):
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        result = compare_records(*self._pair(tolerance_key="rocm"))
+        assert result.atol == pytest.approx(ToleranceDB().get("rocm", "float32").atol)
+
+    def test_an_nvidia_half_keeps_the_cuda_limit(self):
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        result = compare_records(*self._pair(tolerance_key="cuda"))
+        assert result.atol == pytest.approx(ToleranceDB().get("cuda", "float32").atol)
+
+    def test_the_two_vendors_really_do_differ(self):
+        """Guards the test above: if these limits were equal it would prove
+        nothing."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        assert db.get("rocm", "float32").atol != db.get("cuda", "float32").atol
+
+    def test_a_record_without_the_key_falls_back_to_local_resolution(self):
+        """Records written before this field still compare, on the old terms."""
+        result = compare_records(*self._pair(tolerance_key=None))
+        assert result.atol is not None
+
+    def test_record_stores_the_resolved_key(self):
+        """_split_tracer names backend_a "cuda", so the stored key is the one
+        this machine resolved for it, not the literal alias."""
+        tracer = _split_tracer(_TinyLM())
+        rec = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        assert rec.tolerance_key == "cuda"
+
+    def test_replay_stores_its_own_side_s_key(self):
+        tracer = _split_tracer(_TinyLM())
+        rec = tracer.record(torch.randint(0, 37, (1, 4)), steps=2)
+        assert tracer.replay(rec).tolerance_key == "rocm"
+
+    def test_the_key_survives_a_save_and_load(self, tmp_path):
+        from torchbridge.testing.trace_validator import SplitTraceRecord
+
+        rec = _split_tracer(_TinyLM()).record(torch.randint(0, 37, (1, 4)), steps=2)
+        rec.tolerance_key = "rocm"
+        path = str(tmp_path / "a.pt")
+        rec.save(path)
+        assert SplitTraceRecord.load(path).tolerance_key == "rocm"
+
+
+class TestXlaProvenanceNamesTheHardware:
+    """A result that says only "xla" cannot say what ran.
+
+    TPU and Trainium both present under that device type, and a
+    PJRT_DEVICE=CPU run does too. Verified against a mocked XLA boundary —
+    there is no TPU or Neuron host to confirm it on, so what is pinned here is
+    that the query is asked and its answer recorded, not what real hardware
+    returns.
+    """
+
+    @staticmethod
+    def _env_for(hw, pjrt=None):
+        import os
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env_patch = {"PJRT_DEVICE": pjrt} if pjrt else {}
+        with patch.dict(os.environ, env_patch, clear=False):
+            with patch(
+                "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+                return_value=hw,
+            ):
+                return _capture_env(torch.device("xla"))
+
+    def test_a_tpu_run_records_tpu(self):
+        env = self._env_for("TPU")
+        assert env["xla_hw"] == "TPU"
+        assert env["vendor"] == "tpu"
+
+    def test_a_neuron_run_records_trainium_not_tpu(self):
+        """PJRT calls it NEURON; the result should name the vendor a reader
+        would recognise, and must not say TPU."""
+        env = self._env_for("NEURON")
+        assert env["xla_hw"] == "NEURON"
+        assert env["vendor"] == "trainium"
+
+    def test_the_pjrt_device_is_recorded_when_set(self):
+        env = self._env_for("TPU", pjrt="TPU")
+        assert env["pjrt_device"] == "TPU"
+
+    def test_an_unknown_hardware_answer_is_omitted_not_guessed(self):
+        """A missing field is better than a wrong one."""
+        env = self._env_for("UNKNOWN")
+        assert "xla_hw" not in env
+        assert env["device"] == "xla"
+
+    def test_a_failing_query_does_not_break_the_trace(self):
+        from unittest.mock import patch
+
+        from torchbridge.testing.trace_validator import _capture_env
+
+        with patch(
+            "torchbridge.backends.tpu.xla_compat.get_device_hw_type",
+            side_effect=RuntimeError("no runtime"),
+        ):
+            env = _capture_env(torch.device("xla"))
+        assert env["device"] == "xla"
+
+    def test_non_xla_devices_are_unaffected(self):
+        from torchbridge.testing.trace_validator import _capture_env
+
+        env = _capture_env(torch.device("cpu"))
+        assert "xla_hw" not in env
+        assert env["device_type"] == "cpu"
+
+
+class TestUnverifiedXlaToleranceIsNotCalledMeasured:
+    """The xla and trainium2 rows carry numbers nobody can trace to a run.
+
+    For ``xla``, the v0.5.31 changelog does claim a GCP TPU v5e validation —
+    but read the row it records: "CPU-only (XLA device; inference on CPU after
+    `.to("cpu")`)", and no max_diff, where every other platform in that table
+    has one. The accompanying "Fixed" entry says the same thing from the other
+    side. The run happened; it ran on CPU. cloud-validation.md has listed TPU
+    as PENDING ever since.
+
+    That exact defect is documented elsewhere in the project, which is the
+    strongest evidence it is real: the Trainium validation was "comparing CPU
+    to CPU because PJRT_DEVICE=CPU routed XLA to CPU" until `xm.mark_step()`
+    was added to flush to the chip (2026-07-22). Trainium was re-run after that
+    fix and now has a genuine number. XLA never was.
+
+    For ``trainium2`` there is no claim at all — it appears in no validation
+    round, and the table's own comment says "same tolerance tier as Trainium1;
+    measured when hardware available", with values byte-identical to
+    trainium1's.
+
+    Note what is deliberately *not* here. ``rocm`` looks unverified if you read
+    only cloud-validation.md's current status table, which says PENDING — but
+    v0.5.67 (2026-03-10) records MI300X VF on ROCm 6.2, 25/25 API tests,
+    max_diff 3.65e-02, cos_sim 0.999678. The PENDING refers to re-validating on
+    the current release. Nor does any of this turn on the report files being
+    absent from the repository: ``reports/cloud_validation/`` is gitignored by
+    policy, so their absence is evidence of nothing.
+    """
+
+    @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
+    @pytest.mark.parametrize(
+        "family", [None, "decoder-small", "decoder-medium", "decoder-large"]
+    )
+    def test_every_xla_lookup_reports_fallback(self, dtype, family):
+        """Including the family path — decoder-small is Qwen3-0.6B, so that is
+        the row a real run actually hits."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        entry = ToleranceDB().get("xla", dtype, model_family=family)
+        assert entry.source == "fallback"
+
+    def test_the_values_are_left_alone(self):
+        """Marking it unverified must not invent a replacement number."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        assert db.get("xla", "float32").atol == 0.5
+        assert db.get("xla", "float32", model_family="decoder-large").atol == 2.0
+
+    @pytest.mark.parametrize("dtype", ["float32", "bfloat16"])
+    @pytest.mark.parametrize(
+        "family", [None, "decoder-small", "decoder-medium", "decoder-large"]
+    )
+    def test_every_trainium2_lookup_reports_fallback(self, dtype, family):
+        """trainium2 never appears in any validation round.
+
+        Its numbers are byte-identical to trainium1's, and the table says so in
+        a comment. trainium1 has a real NeuronCore measurement; trainium2 has
+        trainium1's number and a note promising to measure it later.
+        """
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        entry = ToleranceDB().get("trainium2", dtype, model_family=family)
+        assert entry.source == "fallback"
+
+    def test_trainium2_keeps_trainium1_values(self):
+        """Relabelling must not change what the numbers are."""
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        db = ToleranceDB()
+        for dtype in ("float32", "bfloat16"):
+            assert db.get("trainium2", dtype).atol == db.get("trainium", dtype).atol
+
+    @pytest.mark.parametrize("backend", ["cuda", "rocm", "cpu", "mps", "trainium"])
+    def test_other_backends_keep_their_labels(self, backend):
+        """Guards the blast radius: only xla and trainium2 change.
+
+        ``rocm`` is the one worth naming. Read cloud-validation.md's status
+        table alone and it looks unverified (PENDING); v0.5.67 records a real
+        MI300X run with numbers. It stays measured, and this asserts that — a
+        relabelling that swept up rocm would silently reclassify the backend
+        the headline cross-vendor comparison is judged against.
+        """
+        from torchbridge.testing.tolerance_db import ToleranceDB
+
+        assert ToleranceDB().get(backend, "float32").source == "measured"
+
+    def test_a_trace_on_xla_warns_about_the_tolerance(self, caplog):
+        """The warning already exists for fallback entries; this makes the xla
+        path reach it, which is the whole point of the relabelling."""
+        import logging
+
+        from torchbridge.testing.trace_validator import MultiStepTracer
+
+        tracer = MultiStepTracer(
+            model=_IdentityModel(),
+            device_a=torch.device("cpu"),
+            device_b=torch.device("cpu"),
+            backend_a="xla",
+            backend_b="cpu",
+            dtype="float32",
+        )
+        with caplog.at_level(logging.WARNING):
+            tracer.run(torch.randn(1, 8), steps=2)
+
+        assert any("fallback" in r.message for r in caplog.records)
