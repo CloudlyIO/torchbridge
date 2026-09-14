@@ -12,20 +12,20 @@ import logging
 
 import torch.nn as nn
 
+# torchao renamed its quantization entry points. Asked through torchao_compat
+# rather than imported directly: the soft import that used to sit here caught
+# that rename as an ImportError and concluded the package was absent, so
+# `pip install torchao` was the advice handed to someone who already had it.
+from torchbridge.precision.torchao_compat import (
+    TORCHAO_AVAILABLE,
+    fp8_dynamic_config,
+    int4_config,
+    int8_dynamic_config,
+    quantize_model,
+    unavailable_reason,
+)
+
 logger = logging.getLogger(__name__)
-
-# Soft import
-try:
-    import torchao  # noqa: F401
-    from torchao.quantization import (
-        int4_weight_only,
-        int8_dynamic_activation_int8_weight,
-        quantize_,
-    )
-
-    TORCHAO_AVAILABLE = True
-except ImportError:
-    TORCHAO_AVAILABLE = False
 
 
 class TorchAOBackend:
@@ -55,19 +55,23 @@ class TorchAOBackend:
         if backend == "rocm":
             # torchao ROCm support: INT8 works; FP8 is experimental.
             # Check that the running PyTorch is a ROCm build.
-            import torch
+            #
+            # Asked through the shared helper. `is not None` used to be written
+            # out here, and an empty HIP version string — which has been seen in
+            # the wild — makes that answer True while hardware_detector answers
+            # False. PR #119 fixed the same mistake in dispatcher.py and
+            # backend_factory.py; this was the third copy, and it was outside
+            # that PR's diff.
+            from torchbridge.core.hardware_detector import is_rocm_build
 
-            return getattr(torch.version, "hip", None) is not None
+            return is_rocm_build()
         # CUDA is the primary supported backend; CPU supports INT8 dynamic
         return backend in ("cuda", "cpu")
 
     @staticmethod
     def _require_torchao() -> None:
         if not TORCHAO_AVAILABLE:
-            raise RuntimeError(
-                "torchao is required for this quantization format. "
-                "Install with: pip install torchao"
-            )
+            raise RuntimeError(unavailable_reason("this quantization format"))
 
     @staticmethod
     def quantize_int8_dynamic(model: nn.Module) -> nn.Module:
@@ -77,7 +81,7 @@ class TorchAOBackend:
         is unavailable (handled by the engine, not here).
         """
         TorchAOBackend._require_torchao()
-        quantize_(model, int8_dynamic_activation_int8_weight())
+        quantize_model(model, int8_dynamic_config())
         return model
 
     @staticmethod
@@ -87,7 +91,7 @@ class TorchAOBackend:
     ) -> nn.Module:
         """Apply INT4 weight-only quantization via torchao."""
         TorchAOBackend._require_torchao()
-        quantize_(model, int4_weight_only(group_size=group_size))
+        quantize_model(model, int4_config(group_size=group_size))
         return model
 
     @staticmethod
@@ -98,7 +102,7 @@ class TorchAOBackend:
         quantizes activations dynamically per token and weights statically.
         """
         TorchAOBackend._require_torchao()
-        quantize_(model, int8_dynamic_activation_int8_weight())
+        quantize_model(model, int8_dynamic_config())
         return model
 
     @staticmethod
@@ -106,12 +110,11 @@ class TorchAOBackend:
         """Apply FP8 quantization via torchao (if supported)."""
         TorchAOBackend._require_torchao()
         try:
-            from torchao.quantization import float8_dynamic_activation_float8_weight
-
-            quantize_(model, float8_dynamic_activation_float8_weight())
-            return model
-        except (ImportError, AttributeError) as exc:
+            return quantize_model(model, fp8_dynamic_config())
+        except RuntimeError as exc:
+            # fp8_dynamic_config() already distinguishes "torchao unusable"
+            # from "this build has no FP8", so its message is carried through
+            # rather than replaced by a guess about which one happened.
             raise RuntimeError(
-                "torchao FP8 quantization not available in this version. "
-                "The engine will fall back to TorchBridge native FP8."
+                f"{exc} The engine will fall back to TorchBridge native FP8."
             ) from exc

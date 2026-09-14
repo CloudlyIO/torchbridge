@@ -101,7 +101,45 @@ class TestQLoRAPipeline:
         engine = AdapterEngine(config=config, backend=HardwareBackend.CPU)
         result = engine.inject(model)
 
+        # The docstring's claim, asserted directly: only the adapter matrices
+        # carry gradients. The ratio below is a consequence of this, not a
+        # substitute for it.
+        trainable = {n for n, p in model.named_parameters() if p.requires_grad}
+        assert trainable, "nothing is trainable — inject() did not attach adapters"
+        assert all("lora_A" in n or "lora_B" in n for n in trainable), (
+            f"something other than the adapter matrices is trainable: "
+            f"{sorted(n for n in trainable if 'lora_' not in n)}"
+        )
+
+        # The 5% threshold this test used to assert was never reachable for
+        # this model. Linear(256,128)+Linear(128,64) is 41152 base parameters;
+        # rank-4 adapters on both add 1536 + 768 = 2304; 2304/43456 = 5.30%.
+        # The bound was picked without doing that arithmetic, and the test was
+        # skipped on every run (importorskip("torchao")), so it never failed.
+        #
+        # The real property is that the ratio shrinks as the model grows —
+        # adapter cost is linear in width, base cost quadratic — which is the
+        # claim worth defending, and it holds at any size.
         ratio = result.trainable_params / result.total_params
-        assert ratio < 0.05, (
-            f"QLoRA trainable ratio {ratio:.3f} should be < 5% of total params"
+        assert ratio == pytest.approx(2304 / 43456, rel=1e-3), (
+            f"unexpected trainable ratio {ratio:.4f}; if the adapter shapes "
+            f"changed on purpose, recompute the expected value rather than "
+            f"loosening the bound"
+        )
+
+        wide = nn.Sequential(nn.Linear(2048, 2048))
+        wide_engine = AdapterEngine(
+            config=AdapterConfig(
+                method=AdapterMethod.QLORA,
+                target_modules=["0"],
+                rank=4,
+                alpha=8.0,
+            ),
+            backend=HardwareBackend.CPU,
+        )
+        wide_result = wide_engine.inject(wide)
+        wide_ratio = wide_result.trainable_params / wide_result.total_params
+        assert wide_ratio < ratio / 10, (
+            f"the adapter share should fall away as the model grows: "
+            f"{wide_ratio:.5f} at 2048 wide vs {ratio:.4f} at 256"
         )
