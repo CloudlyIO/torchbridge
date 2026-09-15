@@ -1,0 +1,222 @@
+{
+  "platform": "aws-a10g",
+  "timestamp": "2026-06-03T06:55:42.504572+00:00",
+  "torchbridge_version": "0.5.95",
+  "pytorch_version": "2.12.0+cu130",
+  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "gpu_name": "NVIDIA A10G",
+  "gpu_count": 1,
+  "cuda_version": "13.0",
+  "rocm_version": "N/A",
+  "environment": {
+    "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+    "platform": "Linux-6.17.0-1017-aws-x86_64-with-glibc2.39",
+    "pytorch": "2.12.0+cu130",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "rocm_version": "N/A",
+    "device_count": 1,
+    "mps_available": false,
+    "gpu_names": [
+      "NVIDIA A10G"
+    ],
+    "compute_capability": "8.6",
+    "gpu_memory_gb": 22.1,
+    "neuronx_available": false,
+    "xla_available": false
+  },
+  "tests": [
+    {
+      "name": "torchbridge_importable",
+      "passed": true,
+      "value": "0.5.95",
+      "expected": null,
+      "message": "TorchBridge 0.5.95 imported successfully",
+      "error": ""
+    },
+    {
+      "name": "detect_best_backend",
+      "passed": true,
+      "value": "BackendType.NVIDIA",
+      "expected": null,
+      "message": "Detected backend: BackendType.NVIDIA",
+      "error": ""
+    },
+    {
+      "name": "backend_factory_create",
+      "passed": true,
+      "value": "NVIDIABackend",
+      "expected": null,
+      "message": "Created NVIDIABackend",
+      "error": ""
+    },
+    {
+      "name": "backend_device_info",
+      "passed": true,
+      "value": "DeviceInfo(backend='nvidia', device_type='cuda:0', device_id=0, device_name='NVIDIA A10G', compute_capability='8.6', total_memory_bytes=23686938624, driver_version='13.0', is_available=True, propertie",
+      "expected": null,
+      "message": "get_device_info() returned data",
+      "error": ""
+    },
+    {
+      "name": "available_backends_includes_detected",
+      "passed": true,
+      "value": "['BackendType.NVIDIA', 'BackendType.AMD', 'BackendType.CPU']",
+      "expected": null,
+      "message": "Available backends: ['BackendType.NVIDIA', 'BackendType.AMD', 'BackendType.CPU']",
+      "error": ""
+    },
+    {
+      "name": "quantization_engine_init",
+      "passed": false,
+      "value": null,
+      "expected": null,
+      "message": "No module named 'torchbridge.precision.quantization'",
+      "error": "Traceback (most recent call last):\n  File \"/home/ubuntu/torchbridge/scripts/validation/validate_torchbridge.py\", line 283, in test_quantization_engine\n    from torchbridge.precision.quantization import (\nModuleNotFoundError: No module named 'torchbridge.precision.quantization'\n"
+    },
+    {
+      "name": "attention_dispatcher_type",
+      "passed": true,
+      "value": "AttentionDispatcher",
+      "expected": null,
+      "message": "AttentionDispatcher initialized: AttentionDispatcher",
+      "error": ""
+    },
+    {
+      "name": "attention_backend_set",
+      "passed": true,
+      "value": "cuda",
+      "expected": null,
+      "message": "Attention dispatcher backend: cuda",
+      "error": ""
+    },
+    {
+      "name": "attention_select_kernel",
+      "passed": true,
+      "value": "{'kernel_type': 'flex_attention', 'implementation_name': 'flex_attention', 'used_fallback': True, 'fallback_chain': ['pytorch_sdpa'], 'warnings': ['flash_attention_2 not available at runtime, trying next']}",
+      "expected": null,
+      "message": "Selected kernel: flex_attention (fallback)",
+      "error": ""
+    },
+    {
+      "name": "attention_sdpa_in_chain",
+      "passed": true,
+      "value": "flex_attention",
+      "expected": null,
+      "message": "PYTORCH_SDPA should always be in fallback chain",
+      "error": ""
+    },
+    {
+      "name": "attention_select_kernel_seq128",
+      "passed": true,
+      "value": "flex_attention",
+      "expected": null,
+      "message": "Kernel for seq_len=128: flex_attention",
+      "error": ""
+    },
+    {
+      "name": "attention_select_kernel_seq1024",
+      "passed": true,
+      "value": "flex_attention",
+      "expected": null,
+      "message": "Kernel for seq_len=1024: flex_attention",
+      "error": ""
+    },
+    {
+      "name": "attention_select_kernel_seq4096",
+      "passed": true,
+      "value": "flex_attention",
+      "expected": null,
+      "message": "Kernel for seq_len=4096: flex_attention",
+      "error": ""
+    },
+    {
+      "name": "adapter_optimal_method",
+      "passed": true,
+      "value": "qlora",
+      "expected": null,
+      "message": "Optimal adapter method: qlora for cuda",
+      "error": ""
+    },
+    {
+      "name": "adapter_fallback_chain",
+      "passed": true,
+      "value": "['qlora', 'dora', 'lora']",
+      "expected": null,
+      "message": "Adapter fallback chain: ['qlora', 'dora', 'lora']",
+      "error": ""
+    },
+    {
+      "name": "adapter_lora_always_available",
+      "passed": true,
+      "value": "['qlora', 'dora', 'lora']",
+      "expected": null,
+      "message": "LORA should always be in fallback chain",
+      "error": ""
+    },
+    {
+      "name": "distributed_config_auto_1gpu",
+      "passed": true,
+      "value": "{'fsdp_sharding': 'ShardingStrategy.FULL_SHARD', 'pipeline_schedule': 'present', 'collective_backend': 'present'}",
+      "expected": null,
+      "message": "DistributedConfig.auto() for 1B params, world_size=1",
+      "error": ""
+    },
+    {
+      "name": "distributed_config_auto_8gpu",
+      "passed": true,
+      "value": "generated",
+      "expected": null,
+      "message": "DistributedConfig.auto() for 7B params, world_size=8",
+      "error": ""
+    },
+    {
+      "name": "distributed_config_toml_export",
+      "passed": true,
+      "value": "576 chars",
+      "expected": null,
+      "message": "TOML export produced output",
+      "error": ""
+    },
+    {
+      "name": "unified_manager_auto_optimize",
+      "passed": true,
+      "value": "{'optimized_type': 'Sequential', 'elapsed_ms': 95.0}",
+      "expected": null,
+      "message": "auto_optimize completed in 95.0ms, returned Sequential",
+      "error": ""
+    }
+  ],
+  "inference": {
+    "model": "Qwen/Qwen3-0.6B",
+    "prompt": "The capital of France is",
+    "passed": true,
+    "error": null,
+    "device": "NVIDIA A10G",
+    "baseline_device": "CPU",
+    "vanilla": {
+      "max_diff": 0.046875,
+      "cosine_sim": 0.99951171875,
+      "latency_ms": 37.9,
+      "passed": true
+    },
+    "torchbridge": {
+      "max_diff": 0.03485107421875,
+      "cosine_sim": 0.9998725056648254,
+      "latency_ms": 36.76,
+      "optimization_time_ms": 1338.0,
+      "latency_ratio_vs_vanilla": 0.97,
+      "latency_regression_ok": true,
+      "output_matches_baseline": true,
+      "passed": true
+    }
+  },
+  "summary": {
+    "total_api_tests": 20,
+    "passed": 19,
+    "failed": 1,
+    "pass_rate_pct": 95.0,
+    "inference_comparison_passed": true,
+    "overall_passed": false
+  }
+}
