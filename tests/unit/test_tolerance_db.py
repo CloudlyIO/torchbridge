@@ -534,3 +534,45 @@ def test_new_backend_notes_nonempty(backend, dtype):
     db = ToleranceDB()
     tol = db.get(backend, dtype, model_family="decoder-small")
     assert tol.notes != ""
+
+
+class TestPaper1ReferenceModels:
+    """The reference model per family has to stay consistent with the families.
+
+    A family name typo here would not raise anywhere — the dict is read by
+    people, not by the lookup path — so it would sit wrong until someone
+    noticed by eye.
+    """
+
+    def test_every_key_is_a_real_family(self):
+        from torchbridge.testing.tolerance_db import (
+            MODEL_FAMILIES,
+            PAPER1_REFERENCE_MODELS,
+        )
+
+        unknown = sorted(set(PAPER1_REFERENCE_MODELS) - set(MODEL_FAMILIES))
+        assert not unknown, f"not families in MODEL_FAMILIES: {unknown}"
+
+    def test_the_families_with_a_planned_run_are_covered(self):
+        """The four families Paper 1 plans to run.
+
+        decoder-large is deliberately absent: no model has been chosen for it.
+        Asserting the exact set makes adding one a conscious edit rather than
+        something that drifts in.
+        """
+        from torchbridge.testing.tolerance_db import PAPER1_REFERENCE_MODELS
+
+        assert set(PAPER1_REFERENCE_MODELS) == {
+            "decoder-small",
+            "decoder-medium",
+            "encoder",
+            "vision-language",
+        }
+
+    def test_decoder_small_names_the_model_every_measured_row_came_from(self):
+        """The measured rows say "measured on Qwen3-0.6B" in this file's own
+        header. If the reference model for decoder-small ever changes, those
+        rows stop describing what they claim to."""
+        from torchbridge.testing.tolerance_db import PAPER1_REFERENCE_MODELS
+
+        assert PAPER1_REFERENCE_MODELS["decoder-small"] == "Qwen/Qwen3-0.6B"
