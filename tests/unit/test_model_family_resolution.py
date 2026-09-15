@@ -293,6 +293,63 @@ class TestArchitectureGuard:
         assert infer_model_family(model) is None
         assert non_decoder_trait(model) == "mixture-of-experts"
 
+    def test_a_text_encoder_is_not_inferred(self):
+        """BERT, RoBERTa and DeBERTa set is_decoder=False; decoders omit it.
+
+        Before this branch existed all three fell through to the size check and
+        came back decoder-small, whose cuda/float32 atol is 1e-4 against the
+        encoder row's 5e-5. A run without --model-family was therefore judged at
+        twice the divergence it should have been, and recorded the wrong family
+        in its result file.
+        """
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(is_decoder=False, vocab_size=30522))
+        assert non_decoder_trait(model) == "encoder"
+        assert infer_model_family(model) is None
+
+    def test_a_vision_backbone_is_not_inferred(self):
+        """DINOv2 and ViT describe their input in pixels and have no vocabulary.
+
+        They carry no is_decoder either, so the text-encoder branch above does
+        not catch them. Checked against the real facebook/dinov2-small config,
+        which has image_size=518, patch_size=14 and no vocab_size.
+        """
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(image_size=518, patch_size=14))
+        assert non_decoder_trait(model) == "vision-backbone"
+        assert infer_model_family(model) is None
+
+    def test_a_decoder_that_names_an_image_size_is_still_inferred(self):
+        """image_size alone must not disqualify a model.
+
+        The branch requires a missing vocab_size as well, so a decoder that
+        happens to carry an image dimension keeps inferring. Without that second
+        condition this would refuse a perfectly ordinary text decoder.
+        """
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        model = _ModelWithConfig(_Config(image_size=336, vocab_size=32000))
+        assert non_decoder_trait(model) is None
+        assert infer_model_family(model) == "decoder-small"
+
+    def test_an_absent_is_decoder_does_not_read_as_an_encoder(self):
+        """Causal decoder configs do not define is_decoder at all.
+
+        The check is `is False`, not `not ...`, because getattr's None default
+        is falsy and would make every decoder look like an encoder — turning a
+        fix for the encoder rows into a regression on the decoder ones, which
+        are what every run so far has used.
+        """
+        from torchbridge.cli.validate import infer_model_family, non_decoder_trait
+
+        cfg = _Config(vocab_size=151936)
+        assert not hasattr(cfg, "is_decoder")
+        model = _ModelWithConfig(cfg)
+        assert non_decoder_trait(model) is None
+        assert infer_model_family(model) == "decoder-small"
+
     def test_dense_decoder_config_still_infers(self):
         from torchbridge.cli.validate import infer_model_family, non_decoder_trait
 

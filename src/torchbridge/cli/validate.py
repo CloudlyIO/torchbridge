@@ -33,6 +33,20 @@ def non_decoder_trait(model: Any) -> str | None:
     those, a count is not evidence, so nothing is inferred and the operator is
     asked.
 
+    Until this grew the ``encoder`` and ``vision-backbone`` branches it caught
+    only encoder-decoders, vision-language models and MoE, which left every
+    plain encoder falling through to the size check::
+
+        bert-base-uncased   trait=None  ->  decoder-small
+        roberta-base        trait=None  ->  decoder-small
+        dinov2-small        trait=None  ->  decoder-small
+
+    All three belong in the ``encoder`` row, whose ``cuda``/``float32`` atol is
+    5e-5 against decoder-small's 1e-4. So a run without ``--model-family`` was
+    judged at twice the divergence it should have been, and wrote
+    ``model_family: decoder-small`` into the result file. The docstring already
+    said these "must still be passed explicitly"; nothing enforced it.
+
     Returns:
         The trait name, or None when the model looks like a dense decoder or
         carries no config to judge by.
@@ -47,6 +61,20 @@ def non_decoder_trait(model: Any) -> str | None:
         return "encoder-decoder"
     if getattr(config, "vision_config", None) is not None:
         return "vision-language"
+    # A config that sets is_decoder=False is stating it is not one. BERT,
+    # RoBERTa and DeBERTa all carry the attribute; a causal decoder config does
+    # not define it at all, so `is False` rather than `not ...` keeps an absent
+    # attribute from reading as an encoder.
+    if getattr(config, "is_decoder", None) is False:
+        return "encoder"
+    # A vision backbone describes its input in pixels and has no token
+    # vocabulary. DINOv2 and ViT land here. A vision-language model is already
+    # caught above by its vision_config, so this is the image-only case.
+    if (
+        getattr(config, "image_size", None) is not None
+        and getattr(config, "vocab_size", None) is None
+    ):
+        return "vision-backbone"
     for attr in ("num_experts", "num_local_experts", "n_routed_experts"):
         if getattr(config, attr, None):
             return "mixture-of-experts"

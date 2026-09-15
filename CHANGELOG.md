@@ -11,6 +11,23 @@
 ## [Unreleased]
 
 ### Fixed
+- **`non_decoder_trait` let every plain encoder through.** It caught
+  encoder-decoders, vision-language models and MoE, but not BERT, RoBERTa,
+  DeBERTa or DINOv2, all of which fell through to the parameter-count check and
+  came back `decoder-small`. The `encoder` row's cuda/float32 atol is 5e-5
+  against decoder-small's 1e-4, so a run without `--model-family` was judged at
+  twice the divergence it should have been and recorded the wrong family in its
+  result file. Now detects an explicit `is_decoder=False` (text encoders) and an
+  `image_size` with no `vocab_size` (vision backbones). Dense decoders are
+  unaffected — verified against the real Qwen3-0.6B config.
+
+### Added
+- **`PAPER1_REFERENCE_MODELS`** in `tolerance_db.py`: the model each family is
+  exercised with, so a result filed under a family can be traced to the weights
+  behind it. Records a caveat with it — `facebook/dinov2-small` is a vision
+  transformer filling a row derived for *text* encoders.
+
+### Fixed
 - **torchao support**: torchao renamed its quantization entry points
   (`int4_weight_only` → `Int4WeightOnlyConfig`,
   `int8_dynamic_activation_int8_weight` → `Int8DynamicActivationInt8WeightConfig`,
