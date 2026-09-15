@@ -1,0 +1,11 @@
+{
+  "backend": "cuda",
+  "device_name": "NVIDIA A10G",
+  "model": "Qwen/Qwen3-0.6B",
+  "atol_threshold": 0.0001,
+  "cosine_threshold": 0.9999,
+  "max_diff": 1.9550323486328125e-05,
+  "cosine_sim": 1.0000011920928955,
+  "latency_ms": 40.430956099999094,
+  "status": "PASSED"
+}
