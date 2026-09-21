@@ -199,7 +199,15 @@ def build_inputs(
     if kind == CAUSAL_LM:
         return {"input_ids": torch.ones(*shape, dtype=torch.long)}
 
-    return {"": torch.randn(*shape, dtype=dtype)}  # tensor kind, passed positionally
+    # A plain tensor model takes its input positionally and has no keyword to
+    # key on. Returning {"": tensor} looked harmless and is not: the caller
+    # splats this dict, and `model(**{"": t})` raises "unexpected keyword
+    # argument ''" from inside the model. Callers must use the positional path
+    # for this kind, so say so here rather than handing back a broken mapping.
+    raise ValueError(
+        f"build_inputs() has no keyword form for kind '{kind}' — a plain tensor "
+        f"model is called positionally. Pass the tensor directly instead."
+    )
 
 
 def _vision_language_inputs(
@@ -242,9 +250,15 @@ def _vision_language_inputs(
     # A smooth deterministic gradient. Zeros would work too, but an all-zero
     # image drives parts of the tower to constant activations, and a constant
     # output makes a divergence comparison vacuous rather than clean.
-    row = np.linspace(0, 255, width, dtype=np.uint8)
-    plane = np.tile(row, (height, 1))
-    image = np.stack([plane, plane.T, (plane // 2)], axis=-1)
+    # Three distinct channels, each built at (height, width). An earlier
+    # version used plane.T for the green channel, which is only (height, width)
+    # when the image is square — a non-square --input-shape made np.stack fail
+    # on mismatched shapes.
+    cols = np.linspace(0, 255, width, dtype=np.uint8)
+    rows = np.linspace(0, 255, height, dtype=np.uint8)
+    red = np.tile(cols, (height, 1))
+    green = np.tile(rows, (width, 1)).T
+    image = np.stack([red, green, red // 2], axis=-1)
 
     messages = [
         {
@@ -291,7 +305,10 @@ def extract_output_tensor(output: Any, kind: str) -> torch.Tensor:
     if kind in (CAUSAL_LM, VISION_LANGUAGE):
         logits = getattr(output, "logits", None)
         if isinstance(logits, torch.Tensor):
-            return logits[:, -1, :] if logits.ndim >= 2 else logits
+            # (batch, seq, vocab) needs the last position; (batch, vocab) is
+            # already one position and indexing it three ways raises
+            # IndexError. The bound is 3, not 2.
+            return logits[:, -1, :] if logits.ndim >= 3 else logits
 
     for attr in ("last_hidden_state", "pooler_output"):
         value = getattr(output, attr, None)

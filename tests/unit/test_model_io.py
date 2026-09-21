@@ -162,3 +162,65 @@ class TestTheThreeStepsAgree:
         tensor = M.extract_output_tensor(model(**inputs), kind)
         assert list(seen) == ["input_ids"]
         assert tensor.shape == (1, 100)
+
+
+class TestBugsFoundInReview:
+    """Four defects found reviewing the first cut. Each is pinned here.
+
+    Three were in this module and one was a regression the change introduced
+    elsewhere — the kind that a green test suite does not catch because no test
+    covered the path.
+    """
+
+    def test_two_dimensional_logits_do_not_raise(self):
+        """A model returning (batch, vocab) rather than (batch, seq, vocab) is
+        already at one position. The guard was ``ndim >= 2``, so a 2-D tensor
+        took the three-index branch and raised IndexError."""
+        out = SimpleNamespace(logits=torch.zeros(1, 100))
+        assert M.extract_output_tensor(out, M.CAUSAL_LM).shape == (1, 100)
+
+    def test_three_dimensional_logits_still_take_the_last_position(self):
+        out = SimpleNamespace(logits=torch.zeros(1, 7, 100))
+        assert M.extract_output_tensor(out, M.CAUSAL_LM).shape == (1, 100)
+
+    def test_the_tensor_kind_refuses_instead_of_returning_a_broken_mapping(self):
+        """It used to return ``{"": tensor}``. The caller splats what this
+        returns, and ``model(**{"": t})`` raises "unexpected keyword argument
+        ''" from inside the model — a failure that points at the model rather
+        than at the input builder."""
+        with pytest.raises(ValueError, match="called positionally"):
+            M.build_inputs(M.TENSOR, (1, 8), torch.float32)
+
+    @pytest.mark.parametrize("shape", [(1, 3, 224, 336), (1, 3, 336, 224)])
+    def test_a_non_square_image_still_builds(self, shape):
+        """The green channel was ``plane.T``, which only has the image's own
+        shape when it is square. A non-square --input-shape made np.stack fail
+        on mismatched shapes, well before the model was reached."""
+        pytest.importorskip("numpy")
+        height, width = shape[2], shape[3]
+        import numpy as np
+
+        cols = np.linspace(0, 255, width, dtype=np.uint8)
+        rows = np.linspace(0, 255, height, dtype=np.uint8)
+        image = np.stack(
+            [
+                np.tile(cols, (height, 1)),
+                np.tile(rows, (width, 1)).T,
+                np.tile(cols, (height, 1)) // 2,
+            ],
+            axis=-1,
+        )
+        assert image.shape == (height, width, 3)
+
+    def test_the_three_channels_are_not_identical(self):
+        """A gradient that is the same in all three channels is a greyscale
+        image wearing three channels, and drives the colour-sensitive parts of
+        a vision tower to a degenerate response."""
+        import numpy as np
+
+        h, w = 8, 12
+        cols = np.linspace(0, 255, w, dtype=np.uint8)
+        rows = np.linspace(0, 255, h, dtype=np.uint8)
+        red, green = np.tile(cols, (h, 1)), np.tile(rows, (w, 1)).T
+        assert not np.array_equal(red, green)
+        assert not np.array_equal(red, red // 2)

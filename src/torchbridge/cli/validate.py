@@ -1022,23 +1022,31 @@ Examples:
                 try:
                     from torchbridge.testing.divergence import DivergenceTracer
 
-                    model_cpu = model.to("cpu")
-                    x_cpu = x.to("cpu")
-                    ref_tracer = DivergenceTracer(model_cpu, device=torch.device("cpu"))
-                    with ref_tracer:
-                        with torch.no_grad():
-                            model_cpu(input_ids=x_cpu) if is_hf_model else model_cpu(
-                                x_cpu
-                            )
-                    # Run a second tracer on dev2 and compare
-                    model_dev2 = model.to(dev2)
-                    x_dev2 = x.to(dev2)
-                    test_tracer = DivergenceTracer(model_dev2, device=dev2)
-                    with test_tracer:
-                        with torch.no_grad():
-                            model_dev2(input_ids=x_dev2) if is_hf_model else model_dev2(
-                                x_dev2
-                            )
+                    # Same call shape as the main comparison. This path used
+                    # to build its own `input_ids=x` call, which broke the
+                    # moment the input became a per-kind mapping: `x` is None
+                    # for a HuggingFace model now, and a vision model never
+                    # wanted input_ids in the first place.
+                    def _trace_on(device: torch.device) -> "DivergenceTracer":
+                        moved = model.to(device)
+                        tracer_here = DivergenceTracer(moved, device=device)
+                        with tracer_here:
+                            with torch.no_grad():
+                                if is_hf_model:
+                                    moved(
+                                        **{
+                                            k: v.to(device)
+                                            if isinstance(v, torch.Tensor)
+                                            else v
+                                            for k, v in model_inputs.items()
+                                        }
+                                    )
+                                else:
+                                    moved(x.to(device))
+                        return tracer_here
+
+                    ref_tracer = _trace_on(torch.device("cpu"))
+                    test_tracer = _trace_on(dev2)
                     divergences = test_tracer.compare_with(ref_tracer)
                     for d in divergences:
                         layer_rows.append(
