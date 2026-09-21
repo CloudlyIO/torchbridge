@@ -914,6 +914,14 @@ def _extract_tensor(output: Any, is_lm: bool) -> torch.Tensor:
             return logits
     if isinstance(output, torch.Tensor):
         return output
+    # A vision backbone returns a ModelOutput with no logits — it has no
+    # vocabulary to score over. Its comparable tensor is the hidden state.
+    # ModelOutput is an OrderedDict subclass, not a tuple, so the sequence
+    # branch below never sees it and this would otherwise raise.
+    for attr in ("last_hidden_state", "pooler_output"):
+        value = getattr(output, attr, None)
+        if isinstance(value, torch.Tensor):
+            return value
     if isinstance(output, (tuple, list)) and len(output) > 0:
         first = output[0]
         if isinstance(first, torch.Tensor):

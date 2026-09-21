@@ -898,12 +898,16 @@ Examples:
                     model_path
                 ).name  # filename only — avoid leaking full filesystem path
             else:
-                # Treat as HuggingFace model ID
-                from transformers import AutoModelForCausalLM
+                # Treat as HuggingFace model ID. The AutoModel class, the input
+                # and the output extraction all follow from the model's kind —
+                # see cli/model_io.py for why the three travel together.
+                from transformers import AutoConfig
 
-                model = AutoModelForCausalLM.from_pretrained(  # nosec B615 - revision pinning is user's responsibility for CLI tool
-                    model_path, torch_dtype=dtype
-                )
+                from torchbridge.cli import model_io
+
+                hf_config = AutoConfig.from_pretrained(model_path)  # nosec B615
+                model_kind = model_io.infer_model_kind(hf_config)
+                model, _ = model_io.load_for_validation(model_path, dtype)
                 model_label = model_path  # HuggingFace model ID is a public identifier
                 is_hf_model = True
         except Exception as e:
@@ -918,29 +922,48 @@ Examples:
         if smoke_model and dtype != torch.float32:
             model = model.to(dtype=dtype)
 
-        # Build input tensor
+        # Build input tensor. A vision model needs pixels, not token IDs, and
+        # needs them at the size its own config names — dinov2-small wants 518,
+        # not the 224 that ViT habits suggest, and not the CLI's token-shaped
+        # default of 1,64.
         if is_hf_model:
-            # HuggingFace: use token IDs
-            x = torch.ones(*input_shape, dtype=torch.long)
+            from torchbridge.cli import model_io
+
+            resolved_shape = model_io.default_input_shape(
+                model_kind, hf_config, tuple(input_shape)
+            )
+            model_inputs = model_io.build_inputs(
+                model_kind, resolved_shape, dtype, hf_config
+            )
+            # The reported shape has to be the one that ran. Printing the
+            # requested 1,64 for a run that actually fed 1x3x518x518 pixels
+            # describes an experiment nobody performed.
+            input_shape = resolved_shape
+            x = None
         else:
+            model_inputs = None
             x = torch.randn(*input_shape, dtype=dtype)
 
         # Run inference on both devices
         t0 = time.perf_counter()
         try:
-            m1 = model.to(dev1)
-            x1 = x.to(dev1)
-            with torch.no_grad():
-                out1 = m1(input_ids=x1) if is_hf_model else m1(x1)
-            logits1 = out1.logits[:, -1, :] if is_hf_model else out1
-            logits1_cpu = logits1.float().cpu()
+            from torchbridge.cli import model_io
 
-            m2 = model.to(dev2)
-            x2 = x.to(dev2)
-            with torch.no_grad():
-                out2 = m2(input_ids=x2) if is_hf_model else m2(x2)
-            logits2 = out2.logits[:, -1, :] if is_hf_model else out2
-            logits2_cpu = logits2.float().cpu()
+            def _run_on(device: torch.device) -> torch.Tensor:
+                """One forward pass, with the call shape this model wants."""
+                moved = model.to(device)
+                with torch.no_grad():
+                    if not is_hf_model:
+                        return moved(x.to(device))
+                    on_device = {
+                        k: v.to(device) if isinstance(v, torch.Tensor) else v
+                        for k, v in model_inputs.items()
+                    }
+                    raw = moved(**on_device)
+                return model_io.extract_output_tensor(raw, model_kind)
+
+            logits1_cpu = _run_on(dev1).float().cpu()
+            logits2_cpu = _run_on(dev2).float().cpu()
         except torch.cuda.OutOfMemoryError:
             msg = "CUDA out of memory. Try a smaller --input-shape."
             if ci_mode:
@@ -1299,6 +1322,10 @@ Examples:
         # Load model
         is_lm = False
         smoke_model = False
+        # Set for every branch: the smoke model and a file on disk are both
+        # plain tensor models, and the checks below read this unconditionally.
+        trace_kind = "tensor"
+        hf_config = None
         model: nn.Module
         try:
             if model_path is None:
@@ -1315,13 +1342,19 @@ Examples:
                     model_path
                 ).name  # filename only — avoid leaking full filesystem path
             else:
-                from transformers import AutoModelForCausalLM
+                from transformers import AutoConfig
 
-                model = AutoModelForCausalLM.from_pretrained(  # nosec B615 - revision pinning is user's responsibility for CLI tool
-                    model_path, torch_dtype=dtype
-                )
+                from torchbridge.cli import model_io
+
+                hf_config = AutoConfig.from_pretrained(model_path)  # nosec B615
+                trace_kind = model_io.infer_model_kind(hf_config)
+                model, _ = model_io.load_for_validation(model_path, dtype)
                 model_label = model_path  # HuggingFace model ID is a public identifier
-                is_lm = True
+                # is_lm drives the tracer's autoregressive step: it appends the
+                # argmax token to the input and runs again. Only a text decoder
+                # has a next token, so a vision or vision-language model is not
+                # an LM for that purpose even though it loads from the Hub.
+                is_lm = trace_kind == model_io.CAUSAL_LM
         except Exception as e:
             msg = f"Failed to load model: {e}"
             if ci_mode:
@@ -1333,8 +1366,31 @@ Examples:
         if smoke_model and dtype != torch.float32:
             model = model.to(dtype=dtype)
 
-        # Build initial input
-        if is_lm:
+        # Build initial input. The tracer carries one tensor from step to step,
+        # which a vision backbone is fine with — it takes a single pixel tensor
+        # positionally — but a vision-language model is not: it needs an image
+        # *and* text together, packed by its own processor. Rather than feed it
+        # half an input and report whatever comes back, the trace refuses and
+        # names the command that does work.
+        if trace_kind == "vision-language":
+            return _fail(
+                "Multi-step tracing is not supported for vision-language "
+                "models. The tracer advances one tensor per step, and this "
+                "model needs an image and text together, packed by its "
+                "processor.\n"
+                "For the calibration the paper needs, run the single-step "
+                "comparison instead:\n"
+                f"  tb-validate --compare {backend_a} {backend_b} "
+                f"--model {model_path} --model-family vision-language"
+            )
+        if trace_kind == "vision":
+            from torchbridge.cli import model_io
+
+            input_shape = model_io.default_input_shape(
+                trace_kind, hf_config, tuple(input_shape)
+            )
+            x = torch.randn(*input_shape, dtype=dtype)
+        elif is_lm:
             x = torch.ones(*input_shape, dtype=torch.long)
         else:
             x = torch.randn(*input_shape, dtype=dtype)
