@@ -96,6 +96,44 @@ MODEL_FAMILIES: tuple[str, ...] = (
 )
 
 
+#: The model each family is exercised with for the Paper 1 runs.
+#:
+#: ``MODEL_FAMILIES`` above names example architectures per family; this names
+#: the one actually run, so a result filed under a family can be traced to the
+#: weights that produced it. Every measured row in this file so far comes from
+#: ``decoder-small``.
+#:
+#: These are reference points, not a constraint — any model may be traced. The
+#: value of writing them down is that two runs filed under the same family
+#: should be comparable, which they are not if each picked its own model.
+PAPER1_REFERENCE_MODELS: dict[str, str] = {
+    "decoder-small": "Qwen/Qwen3-0.6B",
+    "decoder-medium": "Qwen/Qwen3-8B",
+    "encoder": "facebook/dinov2-small",
+    "vision-language": "Qwen/Qwen2.5-VL-3B-Instruct",
+}
+"""Reference model per family for the Paper 1 experiments.
+
+``decoder-large`` is absent: no model has been chosen, and inventing one here
+would read as a decision nobody made.
+
+**One of these does not fit the row it is filed under, and it is worth knowing
+before the number is published.** ``encoder`` is described above as
+"Encoder-only — BERT, RoBERTa, DeBERTa", and its atol is derived as
+"decoder-small × 0.5 (bidirectional; no KV cache)" — a statement about a
+*text* encoder. ``facebook/dinov2-small`` is a vision transformer: it has no
+token vocabulary, takes 518×518 images in 14-pixel patches, and its divergence
+behaviour has no reason to follow a rule derived from bidirectional text
+attention.
+
+It was chosen because its tests already run (#120 added torchvision, which they
+need). That is a good reason to reach for it and not a reason to believe the
+measurement belongs in this row. Either the row's derivation should be revisited
+once there is a real encoder measurement, or a text encoder should be run
+alongside it.
+"""
+
+
 # ---------------------------------------------------------------------------
 # Base tolerance table — (backend, dtype) — measured on Qwen3-0.6B
 # ---------------------------------------------------------------------------
