@@ -14,6 +14,7 @@ just that each works alone.
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -146,6 +147,86 @@ class TestTheThreeStepsAgree:
         assert list(seen) == ["pixel_values"], "vision model was not given pixels"
         assert seen["pixel_values"].shape == (1, 3, 32, 32)
         assert tensor.shape == (1, 5, 384)
+
+    def test_a_vision_language_pipeline_feeds_both_halves_and_reads_logits(self):
+        """The third kind, and the one that needed the most machinery.
+
+        Qwen2.5-VL will not take a plain (1,3,H,W) image. It uses dynamic
+        resolution and wants a flattened patch sequence plus an
+        ``image_grid_thw``, which only its own processor knows how to build —
+        a hand-built tensor fails with "'NoneType' object has no attribute
+        'tolist'", an error that names nothing useful.
+
+        The processor is stubbed rather than downloaded so this runs offline,
+        but everything around it is real: the kind comes from the config, the
+        shape from the vision_config, and the output goes through the same
+        extractor the CLI uses.
+        """
+        cfg = _cfg(
+            vision_config=_cfg(image_size=224, num_channels=3),
+            vocab_size=151936,
+        )
+        cfg._name_or_path = "stub/vl-model"
+        kind = M.infer_model_kind(cfg)
+        assert kind == M.VISION_LANGUAGE
+        shape = M.default_input_shape(kind, cfg, (1, 64))
+        assert shape == (1, 3, 224, 224), "a token-shaped default must not survive"
+
+        captured = {}
+
+        class _StubProcessor:
+            """Stands in for Qwen2_5_VLProcessor, returning its real keys."""
+
+            def apply_chat_template(self, messages, **kw):
+                captured["messages"] = messages
+                return "<|im_start|>user<|image_pad|>Describe this image.<|im_end|>"
+
+            def __call__(self, text, images, return_tensors):
+                captured["text"] = text
+                captured["images"] = images
+                return {
+                    "input_ids": torch.ones(1, 89, dtype=torch.long),
+                    "attention_mask": torch.ones(1, 89, dtype=torch.long),
+                    "pixel_values": torch.zeros(256, 1176),
+                    "image_grid_thw": torch.ones(1, 3, dtype=torch.long),
+                }
+
+        stub = SimpleNamespace(from_pretrained=lambda *a, **k: _StubProcessor())
+        with patch.dict(
+            "sys.modules", {"transformers": SimpleNamespace(AutoProcessor=stub)}
+        ):
+            inputs = M.build_inputs(kind, shape, torch.float32, cfg)
+
+        # Both halves present. Omitting either takes a branch that is not the
+        # one under test: without the image the vision tower never runs, and
+        # without the text there is nothing to produce logits over.
+        assert "pixel_values" in inputs
+        assert "input_ids" in inputs
+        # The packing the model actually requires, which a hand-built tensor
+        # would not carry.
+        assert "image_grid_thw" in inputs
+
+        # Index tensors must stay integral even when the run is in a float
+        # dtype — a float token id is not a low-precision id, it is a crash.
+        assert inputs["input_ids"].dtype == torch.long
+        assert inputs["image_grid_thw"].dtype == torch.long
+        assert inputs["pixel_values"].dtype == torch.float32
+
+        # The prompt goes through the chat template, so the image placeholder
+        # is present. Without it the image is never attended to and the run
+        # passes while measuring the text half alone.
+        assert captured["messages"][0]["content"][0]["type"] == "image"
+        assert len(captured["images"]) == 1
+
+        seen = {}
+
+        def model(**kw):
+            seen.update(kw)
+            return SimpleNamespace(logits=torch.zeros(1, 89, 151936))
+
+        tensor = M.extract_output_tensor(model(**inputs), kind)
+        assert set(seen) == set(inputs), "the model was not given every input"
+        assert tensor.shape == (1, 151936), "logits must be the last position"
 
     def test_a_decoder_pipeline_feeds_token_ids_and_reads_logits(self):
         cfg = _cfg(vocab_size=100)

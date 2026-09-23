@@ -909,7 +909,16 @@ def _extract_tensor(output: Any, is_lm: bool) -> torch.Tensor:
         # HuggingFace: use last-position logits
         logits = getattr(output, "logits", output)
         if isinstance(logits, torch.Tensor):
-            if logits.ndim >= 2:
+            # (batch, seq, vocab) needs the last position. (batch, vocab) is
+            # already one position, and indexing it three ways raises
+            # IndexError. The bound is 3, not 2.
+            #
+            # cli/model_io.extract_output_tensor() carries the same rule. The
+            # two are separate because this one also drives the replay path,
+            # which reads is_lm out of a recorded payload — but they must not
+            # disagree, and they did: this copy kept the off-by-one after the
+            # other was fixed.
+            if logits.ndim >= 3:
                 return logits[:, -1, :]  # (batch, vocab)
             return logits
     if isinstance(output, torch.Tensor):
