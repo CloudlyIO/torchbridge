@@ -2022,3 +2022,57 @@ class TestUnverifiedXlaToleranceIsNotCalledMeasured:
             tracer.run(torch.randn(1, 8), steps=2)
 
         assert any("fallback" in r.message for r in caplog.records)
+
+
+class TestExtractTensorShapeGuard:
+    """``_extract_tensor`` must not assume logits are three-dimensional.
+
+    ``cli/model_io.extract_output_tensor`` carries the same rule and was fixed
+    first. This copy kept the off-by-one, and nothing caught it: reintroducing
+    the bug on purpose left the whole suite green. That is the failure being
+    closed here — not only the wrong bound, but the absence of anything that
+    would notice.
+
+    The two copies exist for a reason (this one also drives replay, which reads
+    ``is_lm`` from a recorded payload) but they must agree.
+    """
+
+    def test_two_dimensional_logits_do_not_raise(self):
+        """(batch, vocab) is already one position. Indexing it three ways
+        raises IndexError rather than returning the last position."""
+        from types import SimpleNamespace
+
+        from torchbridge.testing.trace_validator import _extract_tensor
+
+        out = SimpleNamespace(logits=torch.zeros(1, 100))
+        assert _extract_tensor(out, is_lm=True).shape == (1, 100)
+
+    def test_three_dimensional_logits_take_the_last_position(self):
+        from types import SimpleNamespace
+
+        from torchbridge.testing.trace_validator import _extract_tensor
+
+        out = SimpleNamespace(logits=torch.zeros(1, 7, 100))
+        assert _extract_tensor(out, is_lm=True).shape == (1, 100)
+
+    def test_a_bare_two_dimensional_tensor_is_also_safe(self):
+        """Some models return the tensor itself rather than a ModelOutput, and
+        the getattr default sends it down the same branch."""
+        from torchbridge.testing.trace_validator import _extract_tensor
+
+        assert _extract_tensor(torch.zeros(1, 100), is_lm=True).shape == (1, 100)
+
+    def test_the_two_extractors_agree(self):
+        """A regression in either copy shows up as a disagreement here, which
+        is the property that actually matters."""
+        from types import SimpleNamespace
+
+        from torchbridge.cli.model_io import CAUSAL_LM, extract_output_tensor
+        from torchbridge.testing.trace_validator import _extract_tensor
+
+        for shape in [(1, 100), (1, 7, 100), (2, 3, 50)]:
+            out = SimpleNamespace(logits=torch.zeros(*shape))
+            assert (
+                _extract_tensor(out, is_lm=True).shape
+                == extract_output_tensor(out, CAUSAL_LM).shape
+            ), f"the two extractors disagree for logits of shape {shape}"
